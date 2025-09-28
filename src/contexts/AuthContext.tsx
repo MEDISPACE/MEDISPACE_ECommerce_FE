@@ -1,18 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import { authService } from '../services/authService'
+import type { User, RegisterRequest } from '../types/user'
 
 type ReactNode = React.ReactNode
-
-interface User {
-  id: string
-  email: string
-  name: string
-  role?: string
-}
 
 interface AuthContextType {
   isAuthenticated: boolean
   user: User | null
   login: (email: string, password: string) => Promise<boolean>
+  register: (userData: RegisterRequest) => Promise<boolean>
   logout: () => void
   loading: boolean
 }
@@ -40,18 +36,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const token = localStorage.getItem('medispace_auth_token')
+        const token = authService.getAccessToken()
         const userData = localStorage.getItem('medispace_user_data')
 
         if (token && userData) {
-          const parsedUser = JSON.parse(userData)
+          const parsedUser = JSON.parse(userData) as User
           setUser(parsedUser)
           setIsAuthenticated(true)
+
+          // Optionally verify token by fetching user profile
+          try {
+            const currentUser = await authService.getMe()
+            setUser(currentUser)
+            localStorage.setItem('medispace_user_data', JSON.stringify(currentUser))
+          } catch {
+            console.log('Failed to fetch current user, using cached data')
+          }
         }
       } catch (error) {
         console.error('Auth check failed:', error)
-        localStorage.removeItem('medispace_auth_token')
-        localStorage.removeItem('medispace_user_data')
+        authService.clearTokens()
       } finally {
         setLoading(false)
       }
@@ -66,24 +70,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setLoading(true)
 
-      // Demo credentials
-      if (email === 'demo@medispace.com' && password === '123456') {
-        const demoUser = {
-          id: 'demo-user-1',
-          email: 'demo@medispace.com',
-          name: 'Demo User',
-          role: 'customer',
+      const response = await authService.login({ email, password })
+
+      if (response.result) {
+        const { accessToken, refreshToken } = response.result
+        authService.saveTokens(accessToken, refreshToken)
+
+        // Get user profile after login
+        try {
+          const userProfile = await authService.getMe()
+          setUser(userProfile)
+          setIsAuthenticated(true)
+          localStorage.setItem('medispace_user_data', JSON.stringify(userProfile))
+          return true
+        } catch (profileError) {
+          console.error('Failed to fetch user profile:', profileError)
+          authService.clearTokens()
+          return false
         }
-
-        const demoToken = 'demo-token-123'
-
-        localStorage.setItem('medispace_auth_token', demoToken)
-        localStorage.setItem('medispace_user_data', JSON.stringify(demoUser))
-
-        setUser(demoUser)
-        setIsAuthenticated(true)
-
-        return true
       }
 
       return false
@@ -95,17 +99,55 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }
 
-  const logout = () => {
-    localStorage.removeItem('medispace_auth_token')
-    localStorage.removeItem('medispace_user_data')
-    setUser(null)
-    setIsAuthenticated(false)
+  const register = async (userData: RegisterRequest): Promise<boolean> => {
+    try {
+      setLoading(true)
+
+      const response = await authService.register(userData)
+
+      if (response.userId) {
+        const { accessToken, refreshToken } = response.userId
+        authService.saveTokens(accessToken, refreshToken)
+
+        // Get user profile after registration
+        try {
+          const userProfile = await authService.getMe()
+          setUser(userProfile)
+          setIsAuthenticated(true)
+          localStorage.setItem('medispace_user_data', JSON.stringify(userProfile))
+          return true
+        } catch (profileError) {
+          console.error('Failed to fetch user profile after registration:', profileError)
+          authService.clearTokens()
+          return false
+        }
+      }
+
+      return false
+    } catch (error) {
+      console.error('Registration failed:', error)
+      return false
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const logout = async () => {
+    try {
+      await authService.logout()
+    } catch (_error) {
+      console.error('Logout failed:', _error)
+    } finally {
+      setUser(null)
+      setIsAuthenticated(false)
+    }
   }
 
   const value = {
     isAuthenticated,
     user,
     login,
+    register,
     logout,
     loading,
   }

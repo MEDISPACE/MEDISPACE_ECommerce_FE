@@ -46,10 +46,7 @@ export default function LoginPage() {
       // Show loading toast
       toast.loading('Đang đăng nhập...')
 
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-
-      // Attempt login with AuthContext
+      // Attempt login with AuthContext (now uses real API)
       const loginSuccess = await login(formData.email, formData.password)
 
       if (loginSuccess) {
@@ -62,12 +59,19 @@ export default function LoginPage() {
 
         // Success animation will handle redirect
       } else {
-        throw new Error('Invalid credentials')
+        throw new Error('Đăng nhập thất bại')
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Login failed:', error)
       toast.dismiss()
-      toast.auth.loginError()
+
+      // Handle specific error messages
+      const errorMessage = (error as { message?: string })?.message || 'Đăng nhập thất bại'
+      if (errorMessage.includes('Email or password is not correct')) {
+        toast.error('Email hoặc mật khẩu không chính xác')
+      } else {
+        toast.error(errorMessage)
+      }
     } finally {
       setIsLoading(false)
     }

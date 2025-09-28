@@ -29,7 +29,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        {children}
+        <AuthProvider>
+          {children}
+          <Toaster position='top-right' />
+        </AuthProvider>
         <ScrollRestoration />
         <Scripts />
       </body>
@@ -38,10 +41,5 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function Root() {
-  return (
-    <AuthProvider>
-      <Outlet />
-      <Toaster position='top-right' />
-    </AuthProvider>
-  )
+  return <Outlet />
 }

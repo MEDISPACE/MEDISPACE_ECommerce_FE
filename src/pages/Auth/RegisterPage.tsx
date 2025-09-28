@@ -1,15 +1,20 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { Eye, EyeOff, User, Phone, Mail, Lock, UserPlus, Sparkles, Users } from 'lucide-react'
+import { User, Phone, Mail, Lock, UserPlus, Sparkles, Users } from 'lucide-react'
 import { toast } from '~/utils/toast'
+import { useAuth } from '~/contexts/AuthContext'
 import LoadingSpinner from '~/components/ui/LoadingSpinner'
 import GoogleLoginButton from './GoogleLoginButton'
 import SuccessAnimation from '~/components/ui/SuccessAnimation'
 import { validateRegisterForm } from '~/utils/validation'
+import { ValidatedInput } from '~/components/forms/ValidatedInput'
+import { ValidatedRadioGroup } from '~/components/forms/ValidatedRadioGroup'
+import type { RegisterRequest, ApiErrorResponse } from '~/types/user'
 import '~/style/Register.css'
 
 export default function RegisterPage() {
   const navigate = useNavigate()
+  const { register } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -18,11 +23,15 @@ export default function RegisterPage() {
     firstName: '',
     lastName: '',
     gender: '',
-    phone: '',
+    phoneNumber: '',
     email: '',
     password: '',
     confirmPassword: '',
   })
+
+  // Validation errors state for real-time feedback
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+  const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({})
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -30,13 +39,73 @@ export default function RegisterPage() {
       ...prev,
       [name]: value,
     }))
+
+    // Chỉ validate real-time nếu field đã được touch
+    if (touchedFields[name]) {
+      validateField(name, value)
+    }
+  }
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const { name } = e.target
+    setTouchedFields((prev) => ({ ...prev, [name]: true }))
+    validateField(name, formData[name as keyof typeof formData])
+  }
+
+  const validateField = (fieldName: string, value: string) => {
+    let error = ''
+
+    switch (fieldName) {
+      case 'firstName':
+      case 'lastName':
+        if (!value.trim()) {
+          error = `${fieldName === 'firstName' ? 'Họ' : 'Tên'} là bắt buộc`
+        } else if (value.length < 2) {
+          error = `${fieldName === 'firstName' ? 'Họ' : 'Tên'} phải có ít nhất 2 ký tự`
+        }
+        break
+      case 'email':
+        if (!value.trim()) {
+          error = 'Email là bắt buộc'
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+          error = 'Email không đúng định dạng'
+        }
+        break
+      case 'password':
+        if (!value) {
+          error = 'Mật khẩu là bắt buộc'
+        } else if (value.length < 6) {
+          error = 'Mật khẩu phải có ít nhất 6 ký tự'
+        } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/.test(value)) {
+          error = 'Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt'
+        }
+        break
+      case 'confirmPassword':
+        if (!value) {
+          error = 'Xác nhận mật khẩu là bắt buộc'
+        } else if (value !== formData.password) {
+          error = 'Mật khẩu xác nhận không khớp'
+        }
+        break
+      case 'phoneNumber':
+        if (value && !/^[0-9]{10,11}$/.test(value.replace(/\s/g, ''))) {
+          error = 'Số điện thoại không đúng định dạng'
+        }
+        break
+    }
+
+    setValidationErrors((prev) => ({
+      ...prev,
+      [fieldName]: error,
+    }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Validate form data
-    const validation = validateRegisterForm(formData)
+    // Validate form data - map phoneNumber to phone for validation function
+    const validationData = { ...formData, phone: formData.phoneNumber }
+    const validation = validateRegisterForm(validationData)
 
     if (!validation.isValid) {
       toast.auth.validationError(validation.firstError || 'Vui lòng kiểm tra thông tin')
@@ -49,18 +118,54 @@ export default function RegisterPage() {
       // Show loading toast
       toast.loading('Đang tạo tài khoản...', { id: 'register' })
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2500))
+      // Prepare register data according to backend API
+      const registerData: RegisterRequest = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        password: formData.password,
+        confirm_password: formData.confirmPassword,
+        phoneNumber: formData.phoneNumber,
+        gender: formData.gender === 'male' ? 0 : 1, // Convert to number as backend expects
+      }
 
-      // Success - Show success animation
-      console.log('Register data:', formData)
-      setShowSuccess(true)
+      // Call register API through AuthContext
+      const registerSuccess = await register(registerData)
 
-      // Handle registration logic here
-      // Success animation will handle redirect
-    } catch (error) {
+      if (registerSuccess) {
+        toast.dismiss()
+        console.log('Registration successful:', registerData.email)
+        setShowSuccess(true)
+        // Success animation will handle redirect
+      } else {
+        throw new Error('Đăng ký thất bại')
+      }
+    } catch (error: unknown) {
       console.error('Registration failed:', error)
-      toast.error('Đăng ký thất bại. Vui lòng thử lại!', { id: 'register' })
+      toast.dismiss()
+
+      // Handle backend validation errors
+      const apiError = error as ApiErrorResponse
+
+      if (apiError.errors) {
+        // Show first validation error as toast
+        const firstError = Object.values(apiError.errors)[0]
+        if (firstError.path === 'password') {
+          toast.error('Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường và 1 số')
+        } else if (firstError.path === 'email' && firstError.msg.includes('already exists')) {
+          toast.error('Email đã được sử dụng. Vui lòng chọn email khác.')
+        } else {
+          toast.error(firstError.msg)
+        }
+      } else {
+        // Generic error message
+        const errorMessage = apiError.message || 'Đăng ký thất bại'
+        if (errorMessage.includes('Email already exists')) {
+          toast.error('Email đã được sử dụng. Vui lòng chọn email khác.')
+        } else {
+          toast.error(errorMessage)
+        }
+      }
     } finally {
       setIsLoading(false)
     }
@@ -80,7 +185,7 @@ export default function RegisterPage() {
         <p className='register-subtitle'>Trở thành thành viên để mua sắm dễ dàng hơn</p>
 
         {/* Register Form */}
-        <form onSubmit={handleSubmit} className='register-form' style={{ position: 'relative' }}>
+        <form className='register-form' onSubmit={handleSubmit} noValidate>
           {isLoading && (
             <div className='form-loading-overlay'>
               <LoadingSpinner size='md' variant='activity' text='Đang tạo tài khoản...' />
@@ -88,176 +193,115 @@ export default function RegisterPage() {
           )}
           {/* First Name & Last Name */}
           <div className='register-input-row'>
-            <div className='register-input-group'>
-              <label htmlFor='firstName' className='register-label'>
-                <User size={16} className='register-label-icon' />
-                Họ
-              </label>
-              <div className='register-input-wrapper'>
-                <User size={18} className='register-input-icon' />
-                <input
-                  type='text'
-                  id='firstName'
-                  name='firstName'
-                  value={formData.firstName}
-                  onChange={handleInputChange}
-                  className='register-input'
-                  placeholder='Nhập họ'
-                  required
-                />
-              </div>
-            </div>
-            <div className='register-input-group'>
-              <label htmlFor='lastName' className='register-label'>
-                <User size={16} className='register-label-icon' />
-                Tên
-              </label>
-              <div className='register-input-wrapper'>
-                <User size={18} className='register-input-icon' />
-                <input
-                  type='text'
-                  id='lastName'
-                  name='lastName'
-                  value={formData.lastName}
-                  onChange={handleInputChange}
-                  className='register-input'
-                  placeholder='Nhập tên'
-                  required
-                />
-              </div>
-            </div>
+            <ValidatedInput
+              label='Họ'
+              name='firstName'
+              type='text'
+              value={formData.firstName}
+              placeholder='Nhập họ'
+              icon={<User size={16} className='register-label-icon' />}
+              error={validationErrors.firstName}
+              isTouched={touchedFields.firstName}
+              onChange={handleInputChange}
+              onBlur={handleBlur}
+              required
+            />
+            <ValidatedInput
+              label='Tên'
+              name='lastName'
+              type='text'
+              value={formData.lastName}
+              placeholder='Nhập tên'
+              icon={<User size={16} className='register-label-icon' />}
+              error={validationErrors.lastName}
+              isTouched={touchedFields.lastName}
+              onChange={handleInputChange}
+              onBlur={handleBlur}
+              required
+            />
           </div>
 
           {/* Gender */}
-          <div className='register-input-group'>
-            <label className='register-label'>
-              <Users size={16} className='register-label-icon' />
-              Giới tính
-            </label>
-            <div className='register-gender-group'>
-              <label className='register-gender-option'>
-                <input
-                  type='radio'
-                  name='gender'
-                  value='male'
-                  checked={formData.gender === 'male'}
-                  onChange={handleInputChange}
-                  className='register-gender-radio'
-                />
-                <span className='register-gender-custom'></span>
-                <span className='register-gender-text'>Nam</span>
-              </label>
-
-              <label className='register-gender-option'>
-                <input
-                  type='radio'
-                  name='gender'
-                  value='female'
-                  checked={formData.gender === 'female'}
-                  onChange={handleInputChange}
-                  className='register-gender-radio'
-                />
-                <span className='register-gender-custom'></span>
-                <span className='register-gender-text'>Nữ</span>
-              </label>
-            </div>
-          </div>
+          <ValidatedRadioGroup
+            label='Giới tính'
+            name='gender'
+            value={formData.gender}
+            options={[
+              { value: 'male', label: 'Nam' },
+              { value: 'female', label: 'Nữ' },
+            ]}
+            icon={<Users size={16} className='register-label-icon' />}
+            error={validationErrors.gender}
+            isTouched={touchedFields.gender}
+            onChange={handleInputChange}
+            onBlur={handleBlur}
+          />
 
           {/* Phone Number */}
-          <div className='register-input-group'>
-            <label htmlFor='phone' className='register-label'>
-              <Phone size={16} className='register-label-icon' />
-              Số điện thoại
-            </label>
-            <div className='register-input-wrapper'>
-              <Phone size={18} className='register-input-icon' />
-              <input
-                type='tel'
-                id='phone'
-                name='phone'
-                value={formData.phone}
-                onChange={handleInputChange}
-                className='register-input'
-                placeholder='Nhập số điện thoại'
-                required
-              />
-            </div>
-          </div>
+          <ValidatedInput
+            label='Số điện thoại'
+            name='phoneNumber'
+            type='tel'
+            value={formData.phoneNumber}
+            placeholder='Nhập số điện thoại'
+            icon={<Phone size={16} className='register-label-icon' />}
+            error={validationErrors.phoneNumber || validationErrors.phone}
+            isTouched={touchedFields.phoneNumber}
+            onChange={handleInputChange}
+            onBlur={handleBlur}
+            required
+          />
 
           {/* Email */}
-          <div className='register-input-group'>
-            <label htmlFor='email' className='register-label'>
-              <Mail size={16} className='register-label-icon' />
-              Email
-            </label>
-            <div className='register-input-wrapper'>
-              <Mail size={18} className='register-input-icon' />
-              <input
-                type='email'
-                id='email'
-                name='email'
-                value={formData.email}
-                onChange={handleInputChange}
-                className='register-input'
-                placeholder='Nhập địa chỉ email'
-                required
-              />
-            </div>
-          </div>
+          <ValidatedInput
+            label='Email'
+            name='email'
+            type='email'
+            value={formData.email}
+            placeholder='Nhập địa chỉ email'
+            icon={<Mail size={16} className='register-label-icon' />}
+            error={validationErrors.email}
+            isTouched={touchedFields.email}
+            onChange={handleInputChange}
+            onBlur={handleBlur}
+            required
+          />
 
           {/* Password */}
-          <div className='register-input-group'>
-            <label htmlFor='password' className='register-label'>
-              <Lock size={16} className='register-label-icon' />
-              Mật khẩu
-            </label>
-            <div className='register-input-wrapper'>
-              <Lock size={18} className='register-input-icon' />
-              <input
-                type={showPassword ? 'text' : 'password'}
-                id='password'
-                name='password'
-                value={formData.password}
-                onChange={handleInputChange}
-                className='register-input register-password-input'
-                placeholder='Nhập mật khẩu'
-                required
-                minLength={6}
-              />
-              <button type='button' className='register-password-toggle' onClick={() => setShowPassword(!showPassword)}>
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-          </div>
+          <ValidatedInput
+            label='Mật khẩu'
+            name='password'
+            type='password'
+            value={formData.password}
+            placeholder='Nhập mật khẩu'
+            icon={<Lock size={16} className='register-label-icon' />}
+            error={validationErrors.password}
+            isTouched={touchedFields.password}
+            showPassword={showPassword}
+            onTogglePassword={() => setShowPassword(!showPassword)}
+            onChange={handleInputChange}
+            onBlur={handleBlur}
+            required
+            minLength={6}
+          />
 
           {/* Confirm Password */}
-          <div className='register-input-group'>
-            <label htmlFor='confirmPassword' className='register-label'>
-              <Lock size={16} className='register-label-icon' />
-              Xác nhận mật khẩu
-            </label>
-            <div className='register-input-wrapper'>
-              <Lock size={18} className='register-input-icon' />
-              <input
-                type={showConfirmPassword ? 'text' : 'password'}
-                id='confirmPassword'
-                name='confirmPassword'
-                value={formData.confirmPassword}
-                onChange={handleInputChange}
-                className='register-input register-password-input'
-                placeholder='Nhập lại mật khẩu'
-                required
-                minLength={6}
-              />
-              <button
-                type='button'
-                className='register-password-toggle'
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              >
-                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-          </div>
+          <ValidatedInput
+            label='Xác nhận mật khẩu'
+            name='confirmPassword'
+            type='password'
+            value={formData.confirmPassword}
+            placeholder='Nhập lại mật khẩu'
+            icon={<Lock size={16} className='register-label-icon' />}
+            error={validationErrors.confirmPassword}
+            isTouched={touchedFields.confirmPassword}
+            showPassword={showConfirmPassword}
+            onTogglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
+            onChange={handleInputChange}
+            onBlur={handleBlur}
+            required
+            minLength={6}
+          />
 
           {/* Register Button */}
           <button type='submit' className={`register-button ${isLoading ? 'loading-button' : ''}`} disabled={isLoading}>
