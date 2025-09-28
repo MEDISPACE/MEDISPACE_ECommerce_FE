@@ -1,0 +1,92 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { Toaster } from 'sonner'
+
+// Context
+import { AuthProvider } from './contexts/AuthContext'
+
+// Layouts
+import AuthLayout from '~/layouts/AuthLayout'
+import MainLayout from '~/layouts/MainLayout'
+import ProtectedRoute from '~/routes/ProtectedRoute'
+
+// Styles
+import './styles/globals.css'
+
+// Auth Pages
+import LoginPage from './pages/Auth/LoginPage'
+import RegisterPage from './pages/Auth/RegisterPage'
+import ForgotPasswordPage from './pages/Auth/ForgotPasswordPage'
+
+// Main Pages
+import HomePage from './pages/Home/HomePage'
+import DashboardPage from './pages/Dashboard/DashboardPage'
+import ProductsPage from './pages/Products/ProductsPage'
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Public Routes with MainLayout */}
+          <Route path='/' element={<MainLayout />}>
+            <Route
+              index
+              element={
+                <ProtectedRoute requireAuth={false}>
+                  <HomePage />
+                </ProtectedRoute>
+              }
+            />
+          </Route>
+
+          {/* Auth Routes - redirect authenticated users away */}
+          <Route
+            path='/auth'
+            element={
+              <ProtectedRoute requireAuth={false}>
+                <AuthLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path='login' element={<LoginPage />} />
+            <Route path='register' element={<RegisterPage />} />
+            <Route path='forgot-password' element={<ForgotPasswordPage />} />
+          </Route>
+
+          {/* Protected Routes */}
+          <Route
+            path='/dashboard'
+            element={
+              <ProtectedRoute>
+                <MainLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<DashboardPage />} />
+          </Route>
+
+          <Route
+            path='/products'
+            element={
+              <ProtectedRoute>
+                <MainLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<ProductsPage />} />
+          </Route>
+
+          {/* Backward compatibility & redirects */}
+          <Route path='/login' element={<Navigate to='/auth/login' replace />} />
+          <Route path='/register' element={<Navigate to='/auth/register' replace />} />
+          <Route path='/forgot-password' element={<Navigate to='/auth/forgot-password' replace />} />
+
+          {/* Catch-all route */}
+          <Route path='*' element={<Navigate to='/' replace />} />
+        </Routes>
+
+        <Toaster position='top-right' />
+      </BrowserRouter>
+    </AuthProvider>
+  )
+}

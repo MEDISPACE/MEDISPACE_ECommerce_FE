@@ -1,0 +1,204 @@
+/* MEDISPACE Auth Layout Enhancements */
+
+/* Trust indicators animations */
+@keyframes float-gentle {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes pulse-soft {
+  0%, 100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Trust indicators container */
+.trust-indicators {
+  animation: float-gentle 6s ease-in-out infinite;
+}
+
+.trust-indicator-item {
+  animation: pulse-soft 4s ease-in-out infinite;
+  transition: all 0.3s ease;
+}
+
+.trust-indicator-item:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+}
+
+/* MEDISPACE brand shimmer effect */
+.medispace-brand {
+  background: linear-gradient(
+    90deg,
+    rgba(34, 211, 238, 0.8) 0%,
+    rgba(59, 130, 246, 0.8) 25%,
+    rgba(147, 51, 234, 0.8) 50%,
+    rgba(59, 130, 246, 0.8) 75%,
+    rgba(34, 211, 238, 0.8) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glassmorphism effects for trust badges */
+.trust-badge {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+}
+
+.trust-badge:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(34, 211, 238, 0.3);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(34, 211, 238, 0.1) inset;
+}
+
+/* Page transition effects */
+.auth-page-enter {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.auth-page-enter-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition: all 300ms ease-out;
+}
+
+.auth-page-exit {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.auth-page-exit-active {
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: all 300ms ease-in;
+}
+
+/* Legal disclaimer styling */
+.legal-disclaimer {
+  font-size: 11px;
+  line-height: 1.4;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.legal-disclaimer a,
+.legal-disclaimer .link {
+  transition: all 0.2s ease;
+  text-decoration: none;
+  border-bottom: 1px dotted transparent;
+}
+
+.legal-disclaimer a:hover,
+.legal-disclaimer .link:hover {
+  border-bottom-color: currentColor;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .trust-indicators {
+    animation: none;
+  }
+  
+  .trust-badge {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  
+  .legal-disclaimer {
+    font-size: 10px;
+    max-width: 280px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .trust-indicators,
+  .trust-indicator-item,
+  .medispace-brand {
+    animation: none;
+  }
+  
+  .auth-page-enter-active,
+  .auth-page-exit-active {
+    transition: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .trust-badge {
+    background: rgba(0, 0, 0, 0.8);
+    border-color: rgba(255, 255, 255, 0.6);
+    color: white;
+  }
+  
+  .legal-disclaimer {
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  }
+}
+
+/* Dark theme adjustments */
+@media (prefers-color-scheme: dark) {
+  .trust-badge {
+    background: rgba(0, 0, 0, 0.4);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+  
+  .legal-disclaimer {
+    color: rgba(255, 255, 255, 0.7);
+  }
+}
+
+/* Focus states for accessibility */
+.trust-badge:focus-visible {
+  outline: 2px solid rgba(34, 211, 238, 0.6);
+  outline-offset: 2px;
+}
+
+/* Loading state for trust indicators */
+.trust-indicators.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.trust-indicators.loading .trust-indicator-item {
+  animation: pulse-soft 1s ease-in-out infinite;
+}
+
+/* Success state animations */
+.auth-success-glow {
+  box-shadow: 
+    0 0 20px rgba(34, 211, 238, 0.4),
+    0 0 40px rgba(34, 211, 238, 0.2),
+    0 0 60px rgba(34, 211, 238, 0.1);
+  animation: pulse-soft 2s ease-in-out infinite;
+}

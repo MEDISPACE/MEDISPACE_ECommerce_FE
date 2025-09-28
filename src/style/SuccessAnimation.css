@@ -1,0 +1,230 @@
+/* MEDISPACE Success Animation Styles */
+
+/* Triangle shape for confetti */
+.clip-triangle {
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+}
+
+/* Enhanced glow animations */
+@keyframes success-glow {
+  0%, 100% {
+    box-shadow: 
+      0 0 20px rgba(0, 191, 255, 0.3),
+      0 0 40px rgba(0, 191, 255, 0.2),
+      0 0 60px rgba(0, 191, 255, 0.1);
+  }
+  50% {
+    box-shadow: 
+      0 0 30px rgba(0, 191, 255, 0.5),
+      0 0 60px rgba(0, 191, 255, 0.3),
+      0 0 90px rgba(0, 191, 255, 0.2);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.3;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes sparkle {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.8;
+  }
+  25% {
+    transform: scale(1.2) rotate(90deg);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.8) rotate(180deg);
+    opacity: 0.6;
+  }
+  75% {
+    transform: scale(1.1) rotate(270deg);
+    opacity: 1;
+  }
+}
+
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* Success overlay */
+.success-overlay {
+  animation: success-glow 2s ease-in-out infinite;
+}
+
+.success-icon {
+  animation: float 3s ease-in-out infinite;
+}
+
+.success-sparkle {
+  animation: sparkle 2s ease-in-out infinite;
+}
+
+.success-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 3s ease infinite;
+}
+
+/* Confetti physics */
+.confetti-particle {
+  animation: confetti-fall 3s ease-out forwards;
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-100vh) rotate(0deg) scale(0);
+    opacity: 1;
+  }
+  10% {
+    transform: translateY(-80vh) rotate(36deg) scale(1);
+    opacity: 1;
+  }
+  90% {
+    transform: translateY(100vh) rotate(360deg) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(110vh) rotate(396deg) scale(0);
+    opacity: 0;
+  }
+}
+
+/* Enhanced backdrop blur for success modal */
+.success-backdrop {
+  backdrop-filter: blur(8px) saturate(180%);
+  -webkit-backdrop-filter: blur(8px) saturate(180%);
+  background: rgba(0, 0, 0, 0.4);
+}
+
+/* Success card glassmorphism */
+.success-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+}
+
+/* Progress bar animation */
+@keyframes progress-fill {
+  0% {
+    width: 0%;
+    opacity: 0.7;
+  }
+  100% {
+    width: 100%;
+    opacity: 1;
+  }
+}
+
+.success-progress {
+  animation: progress-fill 3s linear forwards;
+}
+
+/* MEDISPACE brand colors for success states */
+.success-primary {
+  color: #0066CC;
+}
+
+.success-secondary {
+  color: #4A90E2;
+}
+
+.success-accent {
+  color: #00BFFF;
+}
+
+.success-gradient-primary {
+  background: linear-gradient(135deg, #0066CC, #4A90E2, #00BFFF);
+}
+
+.success-gradient-success {
+  background: linear-gradient(135deg, #10B981, #00BFFF, #0066CC);
+}
+
+.success-gradient-warning {
+  background: linear-gradient(135deg, #F59E0B, #00BFFF, #0066CC);
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .success-card {
+    margin: 1rem;
+    padding: 1.5rem;
+  }
+  
+  .confetti-particle {
+    animation-duration: 2.5s;
+  }
+  
+  @keyframes confetti-fall {
+    0% {
+      transform: translateY(-100vh) rotate(0deg) scale(0);
+    }
+    10% {
+      transform: translateY(-80vh) rotate(36deg) scale(0.8);
+    }
+    90% {
+      transform: translateY(100vh) rotate(360deg) scale(0.8);
+    }
+    100% {
+      transform: translateY(110vh) rotate(396deg) scale(0);
+    }
+  }
+}
+
+/* Dark theme support */
+@media (prefers-color-scheme: dark) {
+  .success-card {
+    background: rgba(30, 41, 59, 0.95);
+    border-color: rgba(71, 85, 105, 0.5);
+    color: #e2e8f0;
+  }
+  
+  .success-backdrop {
+    background: rgba(0, 0, 0, 0.6);
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .success-icon,
+  .success-sparkle,
+  .success-gradient,
+  .confetti-particle {
+    animation: none;
+  }
+  
+  .success-overlay {
+    animation: none;
+    box-shadow: 0 0 20px rgba(0, 191, 255, 0.3);
+  }
+}
