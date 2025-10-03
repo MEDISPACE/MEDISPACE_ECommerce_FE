@@ -99,8 +99,8 @@ class AuthService {
 
   async getMe(): Promise<User> {
     try {
-      const response = await apiClient.get<{ result: User }>('/users/me')
-      return response.data.result
+      const response = await apiClient.get<{ user: User }>('/users/me')
+      return response.data.user
     } catch (error) {
       const axiosError = error as AxiosError<{ message: string }>
       throw axiosError.response?.data || { message: 'Failed to get user profile' }

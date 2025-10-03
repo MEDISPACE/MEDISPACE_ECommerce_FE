@@ -41,12 +41,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         if (token && userData) {
           const parsedUser = JSON.parse(userData) as User
+          // console.log('Parsed user from localStorage:', parsedUser) // Debug log
           setUser(parsedUser)
           setIsAuthenticated(true)
 
           // Optionally verify token by fetching user profile
           try {
             const currentUser = await authService.getMe()
+            // console.log('Current user from API:', currentUser) // Debug log
             setUser(currentUser)
             localStorage.setItem('medispace_user_data', JSON.stringify(currentUser))
           } catch {
@@ -79,6 +81,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Get user profile after login
         try {
           const userProfile = await authService.getMe()
+          console.log('User profile fetched:', userProfile) // Debug log
           setUser(userProfile)
           setIsAuthenticated(true)
           localStorage.setItem('medispace_user_data', JSON.stringify(userProfile))

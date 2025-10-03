@@ -1,9 +1,9 @@
-import ForgotPasswordPage from '../../pages/Auth/ForgotPasswordPage'
+import ForgotPasswordPage from '~/components/auth/ForgotPasswordPage'
 
 export function meta() {
   return [
     { title: 'Quên mật khẩu | MEDISPACE' },
-    { name: 'description', content: 'Khôi phục mật khẩu tài khoản MEDISPACE của bạn' },
+    { name: 'description', content: 'Đặt lại mật khẩu cho tài khoản MEDISPACE của bạn' },
   ]
 }
 

@@ -1,9 +1,9 @@
-import RegisterPage from '../../pages/Auth/RegisterPage'
+import RegisterPage from '~/components/auth/RegisterPage'
 
 export function meta() {
   return [
     { title: 'Đăng ký | MEDISPACE' },
-    { name: 'description', content: 'Tạo tài khoản MEDISPACE để trải nghiệm dịch vụ mua thuốc trực tuyến' },
+    { name: 'description', content: 'Tạo tài khoản MEDISPACE để mua thuốc trực tuyến an toàn' },
   ]
 }
 
