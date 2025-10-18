@@ -1,216 +1,290 @@
-import { motion } from 'framer-motion'
-import { useNavigate } from 'react-router'
-import { ShoppingCart, Heart, Eye, FileText, Package } from 'lucide-react'
-import { Button } from '~/components/ui/button'
-import { Badge } from '~/components/ui/badge'
-import { ImageWithFallback } from '~/components/ui/ImageWithFallback'
-import '~/style/Products.css'
-
-interface PharmaceuticalProduct {
-  id: string
-  name: string // Tên thuốc
-  activeIngredient: string // Hoạt chất
-  dosage: string // Hàm lượng: "500mg", "10mg/5ml"
-  dosageForm: string // Dạng: "Viên nén", "Siro", "Kem bôi"
-  packaging: string // "30 viên/hộp", "100ml/chai"
-  manufacturer: string // Nhà sản xuất
-  price: number
-  originalPrice?: number
-  image: string
-  category: string // Nhóm thuốc: "Kháng sinh", "Giảm đau"
-  inStock: boolean
-  prescription: boolean // Bắt buộc có toa thuốc
-  registrationNumber?: string // Số đăng ký thuốc
-  origin?: string // Xuất xứ
-  expiryDate?: string // Hạn sử dụng
-  discount?: number
-}
+import { Heart, ShoppingCart } from 'lucide-react'
+import { Link } from 'react-router'
+import { Button } from '../ui/button'
+import { Badge } from '../ui/badge'
+import { Card, CardContent } from '../ui/card'
+import { ImageWithFallback } from '../shared/ImageWithFallback'
+import { RxBadge, OTCBadge } from './MedicalBadge'
 
 interface ProductCardProps {
-  product: PharmaceuticalProduct
+  product: {
+    id: string
+    name: string
+    slug: string
+    brand: string
+    image: string
+    originalPrice?: number
+    salePrice: number
+    rating: number
+    reviewCount: number
+    inStock: boolean
+    isPrescription?: boolean
+    isOnSale?: boolean
+    discountPercentage?: number
+    unit?: string // Đơn vị: Hộp, Gói, Lọ, Viên
+    packaging?: string // Thông tin đóng gói: "Hộp 10 vi x 10 viên"
+    needsConsultation?: boolean // Cần tư vấn dược sĩ
+  }
+  variant?: 'grid' | 'list'
+  onAddToCart?: (productId: string) => void
+  onToggleWishlist?: (productId: string) => void
+  isInWishlist?: boolean
 }
 
-export default function ProductCard({ product }: ProductCardProps) {
-  const navigate = useNavigate()
-  const discountPercentage = product.originalPrice
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
-    : 0
-
-  const handleProductClick = () => {
-    navigate(`/products/${product.id}`)
+export function ProductCard({
+  product,
+  variant = 'grid',
+  onAddToCart,
+  onToggleWishlist,
+  isInWishlist = false,
+}: ProductCardProps) {
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (onAddToCart) {
+      onAddToCart(product.id)
+    }
   }
 
+  const handleToggleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (onToggleWishlist) {
+      onToggleWishlist(product.id)
+    }
+  }
+
+  const isConsultationRequired = product.needsConsultation || product.isPrescription
+
+  // ==================== LIST VARIANT ====================
+  if (variant === 'list') {
+    return (
+      <Link to={`/products/${product.slug}`} className='block'>
+        <Card
+          className={`group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm border hover:border-blue-300 ${
+            isConsultationRequired ? 'border-2 border-blue-300' : 'border-blue-100'
+          } ${!product.inStock ? 'opacity-75' : ''}`}
+        >
+          <CardContent className='p-4'>
+            <div className='flex gap-4'>
+              {/* Image Section */}
+              <div className='relative flex-shrink-0'>
+                <div className='w-32 h-32 overflow-hidden bg-gray-50 rounded-xl flex items-center justify-center p-3 border border-gray-100'>
+                  <ImageWithFallback
+                    src={product.image}
+                    alt={product.name}
+                    className={`w-full h-full object-contain transition-transform duration-300 ${
+                      !product.inStock ? 'grayscale' : 'group-hover:scale-110'
+                    }`}
+                  />
+                  {/* Out of stock overlay */}
+                  {!product.inStock && (
+                    <div className='absolute inset-0 bg-black/40 flex items-center justify-center rounded-xl'>
+                      <div className='bg-gray-600 text-white px-3 py-1.5 rounded-full text-xs'>Hết hàng</div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Badges */}
+                <div className='absolute top-2 left-2'>
+                  {!product.inStock ? null : product.isPrescription ? <RxBadge size='sm' /> : <OTCBadge size='sm' />}
+                </div>
+
+                {product.isOnSale && product.inStock && (
+                  <div className='absolute top-2 right-2'>
+                    <Badge className='bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full'>
+                      -{product.discountPercentage}%
+                    </Badge>
+                  </div>
+                )}
+              </div>
+
+              {/* Content Section */}
+              <div className='flex-1 min-w-0 flex flex-col'>
+                {/* Title & Brand */}
+                <div className='mb-2'>
+                  <h3 className='line-clamp-2 group-hover:text-blue-600 transition-colors mb-1'>{product.name}</h3>
+                  <p className='text-sm text-gray-500'>{product.brand}</p>
+                </div>
+
+                {/* Packaging */}
+                {product.packaging && <p className='text-xs text-gray-500 mb-3 line-clamp-1'>{product.packaging}</p>}
+
+                {/* Price & Actions Row */}
+                <div className='mt-auto flex items-center justify-between gap-4'>
+                  {/* Price Section */}
+                  <div>
+                    <div className='flex items-baseline gap-2 mb-1'>
+                      <span className={`font-semibold ${!product.inStock ? 'text-gray-400' : 'text-blue-600'}`}>
+                        {product.salePrice.toLocaleString('vi-VN')}đ
+                      </span>
+                      <span className='text-xs text-gray-500'>/ {product.unit?.split(',')[0] || 'Hộp'}</span>
+                    </div>
+                    <div className='flex items-center gap-2'>
+                      {product.originalPrice && product.originalPrice > product.salePrice && product.inStock && (
+                        <span className='text-xs text-gray-400 line-through'>
+                          {product.originalPrice.toLocaleString('vi-VN')}đ
+                        </span>
+                      )}
+                      {!product.inStock && <span className='text-xs text-red-500 font-medium'>Tạm hết hàng</span>}
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className='flex items-center gap-2 flex-shrink-0'>
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      onClick={handleToggleWishlist}
+                      className='text-gray-400 hover:text-red-500 bg-white/80 backdrop-blur-sm w-9 h-9 p-0 rounded-full shadow-md hover:shadow-lg transition-all'
+                    >
+                      <Heart className={`w-4 h-4 ${isInWishlist ? 'fill-red-500 text-red-500' : ''}`} />
+                    </Button>
+
+                    {!product.inStock ? (
+                      <Button size='sm' disabled className='bg-gray-300 text-gray-500 cursor-not-allowed h-9 px-4'>
+                        Hết hàng
+                      </Button>
+                    ) : isConsultationRequired ? (
+                      <Button
+                        size='sm'
+                        onClick={(e) => {
+                          e.preventDefault()
+                          window.location.href = `/products/${product.slug}`
+                        }}
+                        variant='outline'
+                        className='border-blue-500 text-blue-600 hover:bg-blue-50 h-9 px-4'
+                      >
+                        Xem chi tiết
+                      </Button>
+                    ) : (
+                      <Button
+                        size='sm'
+                        onClick={handleAddToCart}
+                        className='bg-blue-600 hover:bg-blue-700 text-white h-9 px-4 gap-1'
+                      >
+                        <ShoppingCart className='w-4 h-4' />
+                        <span>Chọn mua</span>
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </Link>
+    )
+  }
+
+  // ==================== GRID VARIANT ====================
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={product.inStock ? { y: -4, scale: 1.015 } : { y: -1, scale: 1.005 }}
-      transition={{ duration: 0.4, ease: 'easeOut' }}
-      onClick={handleProductClick}
-      className={`group relative rounded-2xl overflow-hidden transition-all duration-500 h-full flex flex-col cursor-pointer ${
-        product.inStock
-          ? 'product-card-glass'
-          : 'bg-gray-50/80 border-2 border-dashed border-gray-300/60 shadow-sm hover:shadow-md hover:shadow-gray-400/10'
-      }`}
-      role='article'
-      aria-label={`${product.name} - ${product.inStock ? 'Còn hàng' : 'Hết hàng'}`}
-    >
-      {/* Discount Badge - only show for in-stock items */}
-      {discountPercentage > 0 && product.inStock && (
-        <div className='absolute top-2 left-2 z-10'>
-          <Badge className='medispace-gradient text-white shadow-lg text-xs filter-badge'>-{discountPercentage}%</Badge>
-        </div>
-      )}
+    <Link to={`/products/${product.slug}`} className='block h-full'>
+      <Card
+        className={`group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm relative overflow-hidden h-full ${
+          isConsultationRequired ? 'border-2 border-blue-300' : 'border border-blue-100 hover:border-blue-300'
+        } ${!product.inStock ? 'opacity-75' : ''}`}
+      >
+        <CardContent className='p-0 flex flex-col h-full'>
+          {/* Image Section */}
+          <div className='relative'>
+            <div className='aspect-square overflow-hidden bg-gray-50 flex items-center justify-center p-4'>
+              <ImageWithFallback
+                src={product.image}
+                alt={product.name}
+                className={`w-full h-full object-contain transition-transform duration-300 ${
+                  !product.inStock ? 'grayscale' : 'group-hover:scale-105'
+                }`}
+              />
+              {/* Out of stock overlay */}
+              {!product.inStock && (
+                <div className='absolute inset-0 bg-black/40 flex items-center justify-center'>
+                  <div className='bg-gray-600 text-white w-16 h-16 rounded-full flex items-center justify-center text-xs'>
+                    Hết hàng
+                  </div>
+                </div>
+              )}
+            </div>
 
-      {/* Quick Actions - only show for in-stock items */}
-      {product.inStock && (
-        <div className='absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col gap-1 transform translate-x-2 group-hover:translate-x-0'>
-          <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+            {/* Top badges */}
+            <div className='absolute top-3 left-3'>
+              {!product.inStock ? null : product.isPrescription ? <RxBadge size='sm' /> : <OTCBadge size='sm' />}
+            </div>
+
+            {product.isOnSale && product.inStock && (
+              <div className='absolute top-3 right-3'>
+                <Badge className='bg-orange-500 text-white text-xs px-2 py-1 rounded-full'>
+                  -{product.discountPercentage}%
+                </Badge>
+              </div>
+            )}
+
+            {/* Wishlist button */}
             <Button
-              size='sm'
               variant='ghost'
-              className='bg-white/95 backdrop-blur-md hover:bg-white shadow-lg rounded-full p-2 h-auto border border-[#0066CC]/20 hover:border-[#0066CC]/40'
-            >
-              <Heart className='w-3 h-3 text-[#0066CC] hover:text-red-500 transition-colors' />
-            </Button>
-          </motion.div>
-          <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-            <Button
               size='sm'
-              variant='ghost'
-              className='bg-white/95 backdrop-blur-md hover:bg-white shadow-lg rounded-full p-2 h-auto border border-[#0066CC]/20 hover:border-[#0066CC]/40'
+              onClick={handleToggleWishlist}
+              className='absolute bottom-3 right-3 text-gray-400 hover:text-red-500 bg-white/80 backdrop-blur-sm w-8 h-8 p-0 rounded-full shadow-md hover:shadow-lg transition-all'
             >
-              <Eye className='w-3 h-3 text-[#0066CC] transition-colors' />
+              <Heart className={`w-4 h-4 ${isInWishlist ? 'fill-red-500 text-red-500' : ''}`} />
             </Button>
-          </motion.div>
-        </div>
-      )}
+          </div>
 
-      {/* Product Image */}
-      <div className='relative aspect-square overflow-hidden bg-gradient-to-br from-[#f8fafc] to-[#e2e8f0] flex items-center justify-center'>
-        <ImageWithFallback
-          src={product.image}
-          alt={product.name}
-          className={`w-full h-full object-cover transition-all duration-700 ease-out ${
-            product.inStock ? 'group-hover:scale-115' : 'grayscale-[45%] opacity-70 brightness-90'
-          }`}
-        />
+          {/* Content Section */}
+          <div className='p-3 flex flex-col flex-1'>
+            {/* Product title */}
+            <h3 className='mb-2 group-hover:text-blue-600 transition-colors line-clamp-2 text-sm leading-tight'>
+              {product.name}
+            </h3>
 
-        {/* Out of Stock Overlay */}
-        {!product.inStock && (
-          <div className='absolute inset-0 flex items-center justify-center z-20'>
-            <div className='bg-black/75 backdrop-blur-sm rounded-full w-20 h-20 flex items-center justify-center shadow-xl border-2 border-white/20'>
-              <span className='text-white font-bold text-sm text-center leading-tight'>
-                Tạm
-                <br />
-                Hết
-              </span>
+            {/* Price section */}
+            <div className='mb-2'>
+              <div className='flex items-baseline gap-1'>
+                <span className={`font-semibold ${!product.inStock ? 'text-gray-400' : 'text-blue-600'}`}>
+                  {product.salePrice.toLocaleString('vi-VN')}đ
+                </span>
+                <span className='text-xs text-gray-500'>/ {product.unit?.split(',')[0] || 'Hộp'}</span>
+              </div>
+              {product.originalPrice && product.originalPrice > product.salePrice && product.inStock && (
+                <span className='text-xs text-gray-400 line-through'>
+                  {product.originalPrice.toLocaleString('vi-VN')}đ
+                </span>
+              )}
+              {!product.inStock && <p className='text-xs text-red-500 font-medium mt-1'>Tạm hết hàng</p>}
+            </div>
+
+            {/* Packaging info */}
+            {product.packaging && <p className='text-xs text-gray-500 line-clamp-1 mb-3'>{product.packaging}</p>}
+
+            {/* Action button */}
+            <div className='mt-auto'>
+              {!product.inStock ? (
+                <Button disabled className='w-full text-sm h-8 bg-gray-300 text-gray-500 cursor-not-allowed'>
+                  Hết hàng
+                </Button>
+              ) : isConsultationRequired ? (
+                <Button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    window.location.href = `/products/${product.slug}`
+                  }}
+                  variant='outline'
+                  className='w-full border-blue-500 text-blue-600 hover:bg-blue-50 text-sm h-8'
+                >
+                  Xem chi tiết
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleAddToCart}
+                  className='w-full text-sm h-8 bg-blue-600 hover:bg-blue-700 text-white'
+                >
+                  Chọn mua
+                </Button>
+              )}
             </div>
           </div>
-        )}
-
-        {/* Fallback placeholder */}
-        <div className='absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 opacity-0 group-hover:opacity-0'>
-          <div className='text-gray-400 text-center'>
-            <Package className='w-12 h-12 mx-auto mb-2' />
-            <span className='text-sm'>Đang tải...</span>
-          </div>
-        </div>
-
-        {/* Overlay gradient - only for in-stock items */}
-        {product.inStock && (
-          <div className='absolute inset-0 bg-gradient-to-t from-[#0066CC]/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500' />
-        )}
-
-        {/* Corner decoration - only for in-stock items */}
-        {product.inStock && (
-          <div className='absolute bottom-0 right-0 w-16 h-16 bg-gradient-to-tl from-[#0066CC]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500' />
-        )}
-      </div>
-
-      {/* Product Info */}
-      <div className='p-4 flex-1 flex flex-col'>
-        {/* Header: Category */}
-        <div className='mb-3'>
-          <span className='text-sm font-medium text-[#0066CC] uppercase tracking-wide'>{product.category}</span>
-        </div>
-
-        {/* Drug Name - Prominent */}
-        <div className='mb-2'>
-          <h3
-            className={`font-semibold line-clamp-2 transition-colors duration-300 leading-snug flex items-start gap-1.5 ${
-              product.inStock
-                ? 'text-foreground group-hover:text-[#0066CC]'
-                : 'text-muted-foreground group-hover:text-foreground'
-            }`}
-          >
-            <span className='flex-1'>{product.name}</span>
-            {product.prescription && <FileText className='w-4 h-4 text-[#0066CC] flex-shrink-0 mt-0.5' />}
-          </h3>
-        </div>
-
-        {/* Active Ingredient + Dosage */}
-        <div className='mb-4'>
-          <p className='text-xs text-foreground font-medium leading-relaxed'>
-            <span className='text-[#0066CC]'>{product.activeIngredient}</span>
-            <span className='text-muted-foreground mx-1'>•</span>
-            <span className='font-semibold'>{product.dosage}</span>
-          </p>
-          <p className='text-xs text-muted-foreground mt-1'>
-            {product.dosageForm} • {product.packaging}
-          </p>
-        </div>
-
-        {/* Price Section */}
-        <div className='mb-4'>
-          <div className='flex items-baseline gap-2 flex-wrap'>
-            <span className={`text-lg font-bold ${product.inStock ? 'text-[#0066CC]' : 'text-muted-foreground'}`}>
-              {product.price.toLocaleString('vi-VN')}₫
-            </span>
-            {product.originalPrice && (
-              <span className='text-xs text-muted-foreground line-through'>
-                {product.originalPrice.toLocaleString('vi-VN')}₫
-              </span>
-            )}
-          </div>
-
-          {/* Status & Savings Row */}
-          <div className='flex items-center justify-between mt-1'>
-            {!product.inStock ? (
-              <span className='text-xs text-red-500 font-medium'>Tạm hết hàng</span>
-            ) : discountPercentage > 0 ? (
-              <span className='text-xs text-green-600 font-medium'>Tiết kiệm {discountPercentage}%</span>
-            ) : (
-              <span className='text-xs text-green-600 font-medium'>Còn hàng</span>
-            )}
-          </div>
-        </div>
-
-        {/* Action Button */}
-        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className='mt-auto'>
-          <Button
-            onClick={(e) => e.stopPropagation()}
-            className={`w-full h-10 shadow-lg hover:shadow-xl transition-all duration-500 rounded-lg font-medium text-sm backdrop-blur-sm ${
-              product.prescription
-                ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border border-amber-300/30 hover:border-amber-200/50 shadow-amber-200/25 hover:shadow-amber-300/40'
-                : 'bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8] text-white border border-blue-300/20 hover:border-blue-200/40 shadow-blue-200/20 hover:shadow-blue-300/30 disabled:from-gray-300 disabled:to-gray-400 disabled:text-gray-500 disabled:border-gray-300/20 disabled:shadow-gray-200/20 disabled:hover:shadow-lg disabled:cursor-not-allowed'
-            }`}
-            disabled={!product.inStock}
-          >
-            {product.prescription ? (
-              <>
-                <FileText className='w-4 h-4 mr-2' />
-                <span>Tư vấn thuốc</span>
-              </>
-            ) : (
-              <>
-                <ShoppingCart className='w-4 h-4 mr-2' />
-                <span>Thêm vào giỏ</span>
-              </>
-            )}
-          </Button>
-        </motion.div>
-      </div>
-    </motion.div>
+        </CardContent>
+      </Card>
+    </Link>
   )
 }

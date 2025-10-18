@@ -1,604 +1,858 @@
-import React, { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router'
-import { motion } from 'framer-motion'
+import { useState, useMemo, useRef } from 'react'
+import { useParams, Link } from 'react-router'
+import { PageTransition } from '../shared/PageTransition'
 import {
-  ArrowLeft,
-  ShoppingCart,
   Heart,
+  ShoppingCart,
   Share2,
+  Truck,
   Shield,
-  AlertTriangle,
-  Package2,
+  RotateCcw,
+  Star,
+  ThumbsUp,
+  BadgeAlert,
   FileText,
-  MapPin,
-  Phone,
-  Plus,
-  Minus,
-  Check,
+  MessageCircle,
+  Info,
   Eye,
+  ChevronLeft,
+  ChevronRight,
+  X,
 } from 'lucide-react'
-import { Button } from '~/components/ui/button'
-import { Badge } from '~/components/ui/badge'
-import { Card, CardContent } from '~/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
-import { ImageWithFallback } from '~/components/ui/ImageWithFallback'
-import { toast } from 'sonner'
-import '~/style/Products.css'
+import { RatingStars } from '../shared/RatingStars'
+import { PriceDisplay } from './PriceDisplay'
+import { QuantityInput } from './QuantityInput'
+import { ProductCard } from './ProductCard'
+import { Button } from '../ui/button'
+import { Badge } from '../ui/badge'
+import { Card, CardContent } from '../ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
+import { Separator } from '../ui/separator'
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
+import { Dialog, DialogContent, DialogClose, DialogTitle, DialogDescription } from '../ui/dialog'
+import { ImageWithFallback } from '~/components/shared/ImageWithFallback'
+import { mockProducts, mockReviews } from '~/utils/mockData'
+import { addToCart, buyNow, toggleWishlist, showPrescriptionWarning } from '../../utils/cartUtils'
+import { useImageLightbox, useCarousel } from '../../hooks'
+import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
+import {
+  getProductId,
+  getProductImage,
+  getProductImages,
+  getProductRating,
+  getProductReviewCount,
+  getProductSalePrice,
+  isProductInStock,
+  isProductPrescription,
+  getBrandName,
+  createLegacyProduct,
+} from '../../utils/productHelpers'
 
-interface PharmaceuticalProduct {
-  id: string
-  name: string
-  activeIngredient: string
-  dosage: string
-  dosageForm: string
-  packaging: string
-  manufacturer: string
-  price: number
-  originalPrice?: number
-  image: string
-  category: string
-  inStock: boolean
-  prescription: boolean
-  registrationNumber?: string
-  origin?: string
-  expiryDate?: string
-  discount?: number
-  description?: string
-  indications?: string[]
-  contraindications?: string[]
-  sideEffects?: string[]
-  dosageInstructions?: string
-  storage?: string
-  warnings?: string[]
-}
-
-// Mock data - sau này sẽ fetch từ API
-const mockProducts: PharmaceuticalProduct[] = [
-  {
-    id: '1',
-    name: 'Paracetamol 500mg',
-    activeIngredient: 'Paracetamol',
-    dosage: '500mg',
-    dosageForm: 'Viên nén',
-    packaging: '30 viên/hộp',
-    manufacturer: 'Công ty Dược phẩm A',
-    price: 25000,
-    originalPrice: 30000,
-    image: 'https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=400',
-    category: 'Thuốc giảm đau',
-    inStock: true,
-    prescription: false,
-    registrationNumber: 'VD-12345-16',
-    origin: 'Việt Nam',
-    expiryDate: '2026-12-31',
-    discount: 17,
-    description:
-      'Thuốc giảm đau, hạ sốt hiệu quả và an toàn. Được sử dụng rộng rãi cho các trường hợp đau nhẹ đến vừa và sốt.',
-    indications: ['Giảm đau nhẹ đến vừa', 'Hạ sốt', 'Đau đầu, đau răng', 'Đau cơ, đau khớp'],
-    contraindications: ['Quá mẫn với paracetamol', 'Suy gan nặng', 'Nghiện rượu mạn tính'],
-    sideEffects: ['Hiếm gặp: buồn nôn, nôn', 'Rất hiếm: phát ban da', 'Rối loạn chức năng gan khi dùng quá liều'],
-    dosageInstructions: 'Người lớn: 1-2 viên/lần, 3-4 lần/ngày. Không vượt quá 8 viên/24h. Uống sau ăn.',
-    storage: 'Bảo quản ở nhiệt độ dưới 30°C, nơi khô ráo, tránh ánh sáng trực tiếp.',
-    warnings: ['Không dùng quá liều', 'Không dùng chung với rượu', 'Ngưng thuốc nếu có dấu hiệu dị ứng'],
-  },
-  {
-    id: '2',
-    name: 'Amoxicillin 500mg',
-    activeIngredient: 'Amoxicillin',
-    dosage: '500mg',
-    dosageForm: 'Viên nang',
-    packaging: '20 viên/hộp',
-    manufacturer: 'Công ty Dược phẩm B',
-    price: 45000,
-    originalPrice: 50000,
-    image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400',
-    category: 'Kháng sinh',
-    inStock: true,
-    prescription: true,
-    registrationNumber: 'VD-54321-18',
-    origin: 'Việt Nam',
-    expiryDate: '2025-08-15',
-    discount: 10,
-    description: 'Kháng sinh phổ rộng nhóm Penicillin, điều trị nhiễm khuẩn do vi khuẩn nhạy cảm.',
-    indications: [
-      'Nhiễm khuẩn đường hô hấp',
-      'Nhiễm khuẩn đường tiết niệu',
-      'Nhiễm khuẩn da và mô mềm',
-      'Nhiễm khuẩn tai mũi họng',
-    ],
-    contraindications: ['Quá mẫn với Penicillin', 'Tiền sử dị ứng với beta-lactam', 'Mononucleosis nhiễm khuẩn'],
-    sideEffects: ['Rối loạn tiêu hóa: tiêu chảy, buồn nôn', 'Phát ban da', 'Phản ứng dị ứng'],
-    dosageInstructions: 'Người lớn: 500mg x 3 lần/ngày, uống trước bữa ăn 1 giờ. Điều trị 7-10 ngày.',
-    storage: 'Bảo quản ở nhiệt độ phòng, tránh ẩm.',
-    warnings: [
-      'Chỉ dùng theo chỉ định của bác sĩ',
-      'Hoàn thành toàn bộ liệu trình điều trị',
-      'Ngưng thuốc nếu có dấu hiệu dị ứng',
-    ],
-  },
-]
-
-export default function ProductDetailPage() {
-  const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
-  const [product, setProduct] = useState<PharmaceuticalProduct | null>(null)
+export function ProductDetailPage() {
+  const { slug } = useParams()
   const [quantity, setQuantity] = useState(1)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isFavorite, setIsFavorite] = useState(false)
-  const [activeTab, setActiveTab] = useState('overview')
+  const [isInWishlist, setIsInWishlist] = useState(false)
+  const [selectedImage, setSelectedImage] = useState(0)
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false)
+  const [currentSlide, setCurrentSlide] = useState(0)
 
-  useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      const foundProduct = mockProducts.find((p) => p.id === id)
-      setProduct(foundProduct || null)
-      setIsLoading(false)
-    }, 800)
-  }, [id])
+  const thumbnailScrollRef = useRef<HTMLDivElement>(null)
+  const carouselRef = useRef<HTMLDivElement>(null)
 
-  const handleQuantityChange = (type: 'increase' | 'decrease') => {
-    if (type === 'increase') {
-      setQuantity((prev) => prev + 1)
-    } else if (type === 'decrease' && quantity > 1) {
-      setQuantity((prev) => prev - 1)
-    }
+  // Find product by slug
+  const rawProduct = mockProducts.find((p) => p.slug === slug)
+  const product = rawProduct ? createLegacyProduct(rawProduct) : undefined
+
+  // Related products (mock) - memoized for performance
+  const relatedProducts = useMemo(
+    () =>
+      rawProduct
+        ? mockProducts
+            .filter((p) => getBrandName(p) === getBrandName(rawProduct) && getProductId(p) !== getProductId(rawProduct))
+            .slice(0, 12)
+        : [],
+    [rawProduct],
+  )
+
+  // Use custom hooks - temporarily disabled due to type conflicts
+  // const breadcrumbItems = useBreadcrumb({ product: rawProduct })
+  const breadcrumbItems = [
+    { label: 'Trang chủ', href: '/' },
+    { label: 'Sản phẩm', href: '/products' },
+    { label: product?.name || 'Chi tiết sản phẩm', href: '#' },
+  ]
+
+  const lightbox = useImageLightbox({
+    images: product ? getProductImages(product) : [],
+    initialIndex: 0,
+  })
+
+  const carousel = useCarousel({
+    itemsCount: relatedProducts.length,
+    autoScroll: false,
+  })
+
+  if (!product) {
+    return (
+      <div className='max-w-7xl mx-auto px-4 py-6'>
+        <UniversalBreadcrumb items={breadcrumbItems} />
+        <div className='text-center py-12'>
+          <h2 className='text-2xl font-bold text-gray-900 mb-2'>Sản phẩm không tồn tại</h2>
+          <p className='text-gray-600 mb-6'>Sản phẩm bạn đang tìm kiếm không có trong hệ thống.</p>
+          <Button onClick={() => window.history.back()}>Quay lại</Button>
+        </div>
+      </div>
+    )
   }
 
   const handleAddToCart = () => {
-    if (!product?.inStock) {
-      toast.error('Sản phẩm hiện tại hết hàng')
+    if (!product) return
+    if (isProductPrescription(product)) {
+      showPrescriptionWarning(product.name)
       return
     }
-    toast.success(`Đã thêm ${quantity} ${product?.name} vào giỏ hàng`)
+    addToCart(getProductId(product), product.name, quantity)
   }
 
-  const handleToggleFavorite = () => {
-    setIsFavorite(!isFavorite)
-    toast.success(isFavorite ? 'Đã xóa khỏi yêu thích' : 'Đã thêm vào yêu thích')
+  const handleBuyNow = () => {
+    if (!product) return
+    if (isProductPrescription(product)) {
+      showPrescriptionWarning(product.name)
+      return
+    }
+    buyNow(getProductId(product), product.name, quantity)
   }
 
-  const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href)
-    toast.success('Đã sao chép link sản phẩm')
+  const handleWishlistToggle = () => {
+    if (!product) return
+    const newWishlistState = toggleWishlist(getProductId(product), product.name)
+    setIsInWishlist(newWishlistState)
   }
 
-  if (isLoading) {
-    return (
-      <div className='min-h-screen bg-gradient-to-br from-blue-50/30 via-cyan-50/20 to-blue-100/30'>
-        <div className='container mx-auto px-4 py-8'>
-          <div className='animate-pulse'>
-            <div className='h-8 bg-gray-200 rounded-lg w-32 mb-6'></div>
-            <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
-              <div className='h-96 bg-gray-200 rounded-2xl'></div>
-              <div className='space-y-4'>
-                <div className='h-8 bg-gray-200 rounded w-3/4'></div>
-                <div className='h-6 bg-gray-200 rounded w-1/2'></div>
-                <div className='h-12 bg-gray-200 rounded'></div>
+  // Thumbnail gallery scroll handlers
+  const scrollThumbnails = (direction: 'left' | 'right') => {
+    if (!thumbnailScrollRef.current) return
+    const scrollAmount = 96 // width of thumbnail (80px) + gap (16px)
+    const newScrollLeft = thumbnailScrollRef.current.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount)
+    thumbnailScrollRef.current.scrollTo({
+      left: newScrollLeft,
+      behavior: 'smooth',
+    })
+  }
+
+  const scrollToSlide = (index: number) => {
+    carousel.goToSlide(index)
+  }
+
+  // Lightbox handlers
+  const handleOpenLightbox = () => {
+    lightbox.open()
+  }
+
+  const getItemsPerSlide = () => {
+    if (typeof window === 'undefined') return 4
+    if (window.innerWidth < 640) return 1
+    if (window.innerWidth < 768) return 2
+    if (window.innerWidth < 1024) return 3
+    return 4
+  }
+
+  const maxSlides = Math.ceil(relatedProducts.length / getItemsPerSlide())
+
+  const handlePrevSlide = () => {
+    setCurrentSlide((prev) => Math.max(0, prev - 1))
+  }
+
+  const handleNextSlide = () => {
+    setCurrentSlide((prev) => Math.min(maxSlides - 1, prev + 1))
+  }
+
+  const handlePrevImage = () => {
+    setSelectedImage((prev) => (prev === 0 ? product.images.length - 1 : prev - 1))
+  }
+
+  const handleNextImage = () => {
+    setSelectedImage((prev) => (prev === product.images.length - 1 ? 0 : prev + 1))
+  }
+
+  return (
+    <PageTransition>
+      <div className='max-w-7xl mx-auto px-4 py-6'>
+        {/* Product Info Section */}
+        <div className='grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12'>
+          {/* Product Images */}
+          <div>
+            <div className='relative mb-4'>
+              <div
+                className='aspect-square overflow-hidden rounded-xl border border-blue-100 bg-white/80 backdrop-blur-sm cursor-zoom-in'
+                onClick={() => lightbox.open()}
+                role='button'
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    lightbox.open()
+                  }
+                }}
+                aria-label='Click to view full size image'
+              >
+                <ImageWithFallback
+                  src={product.images[lightbox.currentIndex] || product.image}
+                  alt={product.name}
+                  className='w-full h-full object-cover hover:scale-105 transition-transform duration-300'
+                />
+              </div>
+
+              {/* Badges - Top Left */}
+              <div className='absolute top-4 left-4 flex flex-col gap-2 z-20'>
+                {product.isPrescription && (
+                  <Badge className='bg-red-600 text-white font-medium shadow-lg'>Rx - Kê đơn</Badge>
+                )}
+                {product.isOnSale && <Badge className='bg-orange-500 text-white shadow-lg'>Sale</Badge>}
+              </div>
+
+              {/* Image counter badge - Bottom Left */}
+              {product.images.length > 1 && (
+                <div className='absolute bottom-4 left-4 z-20 bg-gradient-to-r from-blue-600 to-cyan-500 text-white px-3 py-1.5 rounded-lg shadow-lg backdrop-blur-sm'>
+                  <span className='font-medium text-sm'>
+                    {lightbox.currentIndex + 1}/{product.images.length}
+                  </span>
+                </div>
+              )}
+
+              {/* Zoom button - Bottom Right - Glassmorphism */}
+              <Button
+                variant='secondary'
+                size='sm'
+                onClick={handleOpenLightbox}
+                className='absolute bottom-4 right-4 z-20 bg-white/80 backdrop-blur-lg border border-blue-100 shadow-lg hover:shadow-xl transition-all'
+              >
+                <Eye className='w-4 h-4 mr-2' />
+                Xem ảnh lớn
+              </Button>
+            </div>
+
+            {/* Thumbnail Gallery */}
+            <div className='w-full'>
+              {/* Centered gallery wrapper with max-width */}
+              <div className='relative group mx-auto' style={{ maxWidth: '440px' }}>
+                {/* Navigation arrows - only show if more than 5 images */}
+                {product.images.length > 5 && (
+                  <>
+                    <button
+                      onClick={() => scrollThumbnails('left')}
+                      className='absolute -left-3 top-1/2 -translate-y-1/2 z-20 bg-white/90 backdrop-blur-lg border border-blue-100 shadow-lg hover:shadow-xl rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-blue-50 disabled:opacity-0 p-2'
+                      aria-label='Scroll left'
+                    >
+                      <ChevronLeft className='w-4 h-4 text-blue-600' />
+                    </button>
+                    <button
+                      onClick={() => scrollThumbnails('right')}
+                      className='absolute -right-3 top-1/2 -translate-y-1/2 z-20 bg-white/90 backdrop-blur-lg border border-blue-100 shadow-lg hover:shadow-xl rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-blue-50 disabled:opacity-0 p-2'
+                      aria-label='Scroll right'
+                    >
+                      <ChevronRight className='w-4 h-4 text-blue-600' />
+                    </button>
+                  </>
+                )}
+
+                {/* Thumbnail gallery with smooth scroll */}
+                <div
+                  ref={thumbnailScrollRef}
+                  className='relative flex gap-2 overflow-x-auto p-2 scroll-smooth scrollbar-hide'
+                  style={{
+                    scrollbarWidth: 'none',
+                    msOverflowStyle: 'none',
+                    WebkitOverflowScrolling: 'touch',
+                  }}
+                >
+                  {product.images.map((image, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedImage(index)}
+                      className={`relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
+                        selectedImage === index
+                          ? 'border-blue-500 shadow-lg scale-105 ring-2 ring-blue-200'
+                          : 'border-blue-100 hover:border-blue-300 hover:shadow-md'
+                      }`}
+                    >
+                      <ImageWithFallback
+                        src={image}
+                        alt={`${product.name} ${index + 1}`}
+                        className='w-full h-full object-cover'
+                      />
+                      {/* Active indicator */}
+                      {selectedImage === index && (
+                        <div className='absolute inset-0 bg-blue-600/10 pointer-events-none' />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Scroll indicator dots - show for 2-8 images - Always centered */}
+              {product.images.length > 1 && product.images.length <= 8 && (
+                <div className='flex justify-center gap-1.5 mt-3'>
+                  {product.images.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedImage(index)}
+                      className={`h-1.5 rounded-full transition-all ${
+                        selectedImage === index ? 'w-6 bg-blue-600' : 'w-1.5 bg-blue-200 hover:bg-blue-300'
+                      }`}
+                      aria-label={`View image ${index + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Product Details */}
+          <div className='space-y-6'>
+            <div>
+              <h1 className='text-2xl lg:text-3xl font-bold text-gray-900 mb-2'>{product.name}</h1>
+              <div className='flex items-center gap-4 mb-2'>
+                <span className='text-blue-600 hover:underline cursor-pointer'>{getBrandName(product)}</span>
+                <span className='text-gray-400'>|</span>
+                <span className='text-sm text-gray-500'>SKU: {product.sku}</span>
+              </div>
+
+              <div className='flex items-center gap-2 mb-4'>
+                <RatingStars
+                  rating={getProductRating(product)}
+                  size='lg'
+                  reviewCount={getProductReviewCount(product)}
+                />
+                <span className='text-blue-600 hover:underline cursor-pointer text-sm'>Xem đánh giá</span>
+              </div>
+            </div>
+
+            {/* Price */}
+            <div>
+              <PriceDisplay originalPrice={product.originalPrice} salePrice={product.salePrice || 0} size='lg' />
+            </div>
+
+            {/* Stock Status */}
+            <div className='flex items-center gap-2'>
+              <div className={`w-3 h-3 rounded-full ${product.inStock ? 'bg-green-500' : 'bg-red-500'}`} />
+              <span className={`font-medium ${product.inStock ? 'text-green-600' : 'text-red-600'}`}>
+                {product.inStock ? `Còn hàng (${product.stockQuantity} sản phẩm)` : 'Hết hàng'}
+              </span>
+            </div>
+
+            {/* Quantity - Only show for non-prescription drugs */}
+            {!product.isPrescription && (
+              <div className='flex items-center gap-4'>
+                <span className='font-medium text-gray-700'>Số lượng:</span>
+                <QuantityInput
+                  value={quantity}
+                  onChange={setQuantity}
+                  max={product.stockQuantity}
+                  disabled={!product.inStock}
+                />
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className='space-y-4'>
+              {product.isPrescription ? (
+                /* Prescription Required Actions */
+                <div className='space-y-4'>
+                  <div className='bg-red-50 border border-red-200 rounded-xl p-4 shadow-sm'>
+                    <div className='flex items-center gap-2 text-red-800 font-medium'>
+                      <BadgeAlert className='w-5 h-5 flex-shrink-0' />
+                      <span>THUỐC KÊ ĐƠN - CẦN TƯ VẤN TỪ DƯỢC SĨ</span>
+                    </div>
+                  </div>
+
+                  <div className='flex gap-3'>
+                    <Link to={`/prescription/upload?product=${product.slug}`} className='flex-1'>
+                      <Button className='w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 h-12 shadow-lg hover:shadow-xl transition-all'>
+                        <FileText className='w-5 h-5 mr-2' />
+                        Upload đơn thuốc
+                      </Button>
+                    </Link>
+                    <Link to={`/consultation/chat?product=${product.slug}`} className='flex-1'>
+                      <Button
+                        variant='outline'
+                        className='w-full border-2 border-purple-200 text-purple-600 hover:bg-purple-50 hover:border-purple-300 h-12 shadow-md hover:shadow-lg transition-all'
+                      >
+                        <MessageCircle className='w-5 h-5 mr-2' />
+                        Chat dược sĩ
+                      </Button>
+                    </Link>
+                  </div>
+
+                  <div className='bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-2 shadow-sm'>
+                    <div className='text-sm text-blue-800'>
+                      <div className='flex items-start gap-2'>
+                        <Info className='w-5 h-5 flex-shrink-0 mt-0.5' />
+                        <div>
+                          <p className='font-medium mb-1'>Lưu ý:</p>
+                          <ul className='space-y-1 text-sm'>
+                            <li>• Cần có đơn thuốc hợp lệ từ bác sĩ</li>
+                            <li>• Dược sĩ sẽ xác minh trước khi bán</li>
+                            <li>• Tư vấn miễn phí với dược sĩ 24/7</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Regular OTC Actions */
+                <div className='flex gap-3'>
+                  <Button
+                    onClick={handleAddToCart}
+                    disabled={!product.inStock}
+                    variant='outline'
+                    className='flex-1 border-2 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 h-12 shadow-md hover:shadow-lg transition-all'
+                  >
+                    <ShoppingCart className='w-5 h-5 mr-2' />
+                    Thêm giỏ hàng
+                  </Button>
+                  <Button
+                    onClick={handleBuyNow}
+                    disabled={!product.inStock}
+                    className='flex-1 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 h-12 shadow-lg hover:shadow-xl transition-all'
+                  >
+                    Mua ngay
+                  </Button>
+                </div>
+              )}
+
+              <div className='flex gap-2'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={handleWishlistToggle}
+                  className={`flex-1 border-2 transition-all ${
+                    isInWishlist
+                      ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100'
+                      : 'border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300'
+                  }`}
+                >
+                  <Heart className={`w-4 h-4 mr-2 ${isInWishlist ? 'fill-red-600' : ''}`} />
+                  {isInWishlist ? 'Đã yêu thích' : 'Yêu thích'}
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  className='flex-1 border-2 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 transition-all'
+                >
+                  So sánh sản phẩm
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  className='border-2 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 transition-all'
+                >
+                  <Share2 className='w-4 h-4' />
+                </Button>
+              </div>
+            </div>
+
+            {/* Additional Info */}
+            <div className='space-y-3 pt-4 border-t border-blue-100'>
+              <div className='grid grid-cols-2 gap-4 text-sm'>
+                <div>
+                  <span className='text-gray-600'>Xuất xứ:</span>
+                  <span className='ml-2 font-medium'>{product.origin}</span>
+                </div>
+                <div>
+                  <span className='text-gray-600'>Đơn vị:</span>
+                  <span className='ml-2 font-medium'>{product.unit}</span>
+                </div>
+              </div>
+
+              <div className='text-sm'>
+                <span className='text-gray-600'>Hạn sử dụng:</span>
+                <span className='ml-2 font-medium'>{product.expiryInfo}</span>
+              </div>
+
+              <div className='flex items-center gap-1 text-blue-600 text-sm'>
+                <Truck className='w-4 h-4' />
+                <span>Giao hàng nhanh trong 2-4h tại TP.HCM</span>
+              </div>
+            </div>
+
+            {/* Trust Badges */}
+            <div className='flex justify-between items-center pt-4 border-t border-blue-100'>
+              <div className='flex items-center gap-1 text-sm text-gray-600'>
+                <Shield className='w-4 h-4 text-green-500' />
+                <span>Thanh toán an toàn</span>
+              </div>
+              <div className='flex items-center gap-1 text-sm text-gray-600'>
+                <Truck className='w-4 h-4 text-blue-500' />
+                <span>Giao hàng nhanh</span>
+              </div>
+              <div className='flex items-center gap-1 text-sm text-gray-600'>
+                <RotateCcw className='w-4 h-4 text-blue-500' />
+                <span>Đổi trả 7 ngày</span>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    )
-  }
 
-  if (!product) {
-    return (
-      <div className='min-h-screen bg-gradient-to-br from-blue-50/30 via-cyan-50/20 to-blue-100/30 flex items-center justify-center'>
-        <Card className='p-8 text-center'>
-          <h2 className='text-2xl mb-4'>Không tìm thấy sản phẩm</h2>
-          <Button onClick={() => navigate('/products')} className='bg-[#0066CC] hover:bg-[#4A90E2]'>
-            Quay lại danh sách sản phẩm
-          </Button>
-        </Card>
-      </div>
-    )
-  }
+        {/* Product Details Tabs */}
+        <Tabs defaultValue='description' className='mb-12'>
+          <TabsList className='grid w-full grid-cols-6 bg-blue-50/80 backdrop-blur-sm border border-blue-100'>
+            <TabsTrigger value='description'>Mô tả</TabsTrigger>
+            <TabsTrigger value='ingredients'>Thành phần</TabsTrigger>
+            <TabsTrigger value='uses'>Công dụng</TabsTrigger>
+            <TabsTrigger value='instructions'>Cách dùng</TabsTrigger>
+            <TabsTrigger value='warnings'>Chú ý</TabsTrigger>
+            <TabsTrigger value='reviews'>Đánh giá ({product.reviewCount})</TabsTrigger>
+          </TabsList>
 
-  const discountPercentage = product.originalPrice
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
-    : 0
-
-  return (
-    <div className='min-h-screen bg-gradient-to-br from-blue-50/30 via-cyan-50/20 to-blue-100/30'>
-      <div className='container mx-auto px-4 py-8 max-w-[1440px]'>
-        {/* Back Navigation */}
-        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className='mb-6'>
-          <Button
-            variant='ghost'
-            onClick={() => navigate('/products')}
-            className='hover:bg-white/60 backdrop-blur-sm border border-white/40'
-          >
-            <ArrowLeft className='w-4 h-4 mr-2' />
-            Quay lại danh sách sản phẩm
-          </Button>
-        </motion.div>
-
-        {/* Main Product Section */}
-        <div className='grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8'>
-          {/* Product Image */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            className='relative'
-          >
-            <Card className='overflow-hidden backdrop-blur-md bg-white/90 border border-white/40 shadow-xl'>
-              <CardContent className='p-0'>
-                <div className='relative aspect-square bg-gradient-to-br from-gray-50 to-gray-100'>
-                  <ImageWithFallback src={product.image} alt={product.name} className='w-full h-full object-cover' />
-
-                  {/* Prescription Badge */}
-                  {product.prescription && (
-                    <div className='absolute top-4 left-4'>
-                      <Badge className='bg-amber-500/90 text-white backdrop-blur-sm'>
-                        <FileText className='w-3 h-3 mr-1' />
-                        Kê đơn
-                      </Badge>
-                    </div>
-                  )}
-
-                  {/* Discount Badge */}
-                  {discountPercentage > 0 && (
-                    <div className='absolute top-4 right-4'>
-                      <Badge className='bg-red-500 text-white'>-{discountPercentage}%</Badge>
-                    </div>
-                  )}
-
-                  {/* Stock Status */}
-                  {!product.inStock && (
-                    <div className='absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center'>
-                      <div className='bg-white/90 backdrop-blur-sm rounded-full px-6 py-3 border border-white/40'>
-                        <span className='text-gray-800 font-semibold'>Tạm hết hàng</span>
-                      </div>
-                    </div>
-                  )}
+          <TabsContent value='description' className='mt-6'>
+            <Card className='border-blue-100 shadow-sm'>
+              <CardContent className='p-6'>
+                <div className='prose max-w-none'>
+                  <p className='text-gray-700 leading-relaxed'>{product.description}</p>
+                  <p className='text-gray-700 leading-relaxed mt-4'>
+                    Sản phẩm chất lượng cao, được sản xuất theo tiêu chuẩn GMP, đảm bảo an toàn và hiệu quả cho người sử
+                    dụng.
+                  </p>
                 </div>
               </CardContent>
             </Card>
-          </motion.div>
+          </TabsContent>
 
-          {/* Product Info */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className='space-y-6'
-          >
-            {/* Product Title & Basic Info */}
-            <div>
-              <h1 className='text-3xl font-bold text-foreground mb-2'>{product.name}</h1>
-              <p className='text-muted-foreground mb-4'>{product.description}</p>
+          <TabsContent value='ingredients' className='mt-6'>
+            <Card className='border-blue-100 shadow-sm'>
+              <CardContent className='p-6'>
+                <div className='space-y-4'>
+                  {product.ingredients?.map((ingredient, index) => (
+                    <div key={index} className='flex justify-between py-2 border-b border-blue-50 last:border-0'>
+                      <span className='font-medium'>{ingredient}</span>
+                      <span className='text-gray-600'>Chính</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-              <div className='flex flex-wrap gap-2 mb-4'>
-                <Badge variant='outline' className='border-[#0066CC]/30 text-[#0066CC]'>
-                  {product.category}
-                </Badge>
-                <Badge variant='outline' className='border-gray-300'>
-                  {product.dosageForm} • {product.dosage}
-                </Badge>
-                <Badge variant='outline' className='border-gray-300'>
-                  {product.packaging}
-                </Badge>
+          <TabsContent value='uses' className='mt-6'>
+            <Card className='border-blue-100 shadow-sm'>
+              <CardContent className='p-6'>
+                <ul className='space-y-2'>
+                  {product.uses?.map((use, index) => (
+                    <li key={index} className='flex items-start gap-2'>
+                      <div className='w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0' />
+                      <span>{use}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value='instructions' className='mt-6'>
+            <Card className='border-blue-100 shadow-sm'>
+              <CardContent className='p-6'>
+                <div className='prose max-w-none'>
+                  <p className='text-gray-700 leading-relaxed'>{product.instructions}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value='warnings' className='mt-6'>
+            <Card className='border-blue-100 shadow-sm'>
+              <CardContent className='p-6'>
+                <div className='space-y-3'>
+                  {product.warnings?.map((warning, index) => (
+                    <div
+                      key={index}
+                      className='flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg'
+                    >
+                      <div className='w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0' />
+                      <span className='text-yellow-800'>{warning}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value='reviews' className='mt-6'>
+            <div className='space-y-6'>
+              {/* Review Summary */}
+              <Card className='border-blue-100 shadow-sm'>
+                <CardContent className='p-6'>
+                  <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                    <div className='text-center'>
+                      <div className='text-4xl font-bold text-blue-600 mb-2'>{product.rating.toFixed(1)}</div>
+                      <RatingStars rating={product.rating} size='lg' showRating={false} />
+                      <div className='text-sm text-gray-600 mt-2'>{product.reviewCount} đánh giá</div>
+                    </div>
+
+                    <div className='space-y-2'>
+                      {[5, 4, 3, 2, 1].map((rating) => (
+                        <div key={rating} className='flex items-center gap-2'>
+                          <span className='text-sm w-8'>{rating} ⭐</span>
+                          <div className='flex-1 bg-gray-200 rounded-full h-2'>
+                            <div
+                              className='bg-yellow-400 h-2 rounded-full'
+                              style={{
+                                width: `${rating === 5 ? 70 : rating === 4 ? 20 : 10}%`,
+                              }}
+                            />
+                          </div>
+                          <span className='text-sm text-gray-600 w-8'>
+                            {rating === 5 ? '70%' : rating === 4 ? '20%' : '10%'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <Separator className='my-6' />
+
+                  <Button className='w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 shadow-lg hover:shadow-xl transition-all'>
+                    <Star className='w-4 h-4 mr-2' />
+                    Viết đánh giá
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Reviews List */}
+              <div className='space-y-4'>
+                {mockReviews.map((review) => (
+                  <Card key={review.id} className='border-blue-100 shadow-sm hover:shadow-md transition-shadow'>
+                    <CardContent className='p-6'>
+                      <div className='flex items-start gap-4'>
+                        <Avatar>
+                          <AvatarImage src={review.userAvatar} />
+                          <AvatarFallback className='bg-blue-100 text-blue-600'>
+                            {review.userName.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+
+                        <div className='flex-1'>
+                          <div className='flex items-center gap-2 mb-2'>
+                            <span className='font-medium'>{review.userName}</span>
+                            <span className='text-gray-400'>•</span>
+                            <span className='text-sm text-gray-500'>{review.date}</span>
+                          </div>
+
+                          <RatingStars rating={review.rating} size='sm' showRating={false} />
+
+                          <p className='text-gray-700 mt-3 leading-relaxed'>{review.comment}</p>
+
+                          {review.images && review.images.length > 0 && (
+                            <div className='flex gap-2 mt-4'>
+                              {review.images.map((image, index) => (
+                                <div
+                                  key={index}
+                                  className='w-20 h-20 rounded-lg overflow-hidden border border-blue-100'
+                                >
+                                  <ImageWithFallback
+                                    src={image}
+                                    alt={`Review ${index + 1}`}
+                                    className='w-full h-full object-cover'
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          <div className='flex items-center gap-4 mt-4'>
+                            <Button variant='ghost' size='sm' className='text-gray-500 hover:text-blue-600'>
+                              <ThumbsUp className='w-4 h-4 mr-1' />
+                              Hữu ích ({review.helpful})
+                            </Button>
+                            <Button variant='ghost' size='sm' className='text-gray-500 hover:text-blue-600'>
+                              Trả lời
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             </div>
+          </TabsContent>
+        </Tabs>
 
-            {/* Price Section */}
-            <Card className='backdrop-blur-md bg-white/90 border border-white/40 shadow-lg'>
-              <CardContent className='p-6'>
-                <div className='flex items-center gap-4 mb-4'>
-                  <div className='price-highlight text-3xl font-bold text-[#0066CC]'>
-                    {product.price.toLocaleString('vi-VN')}₫
-                  </div>
-                  {product.originalPrice && (
-                    <div className='text-lg text-muted-foreground line-through'>
-                      {product.originalPrice.toLocaleString('vi-VN')}₫
-                    </div>
-                  )}
-                </div>
-
-                {/* Quantity Selector */}
-                <div className='flex items-center gap-4 mb-6'>
-                  <span className='text-sm font-medium text-foreground'>Số lượng:</span>
-                  <div className='flex items-center border border-gray-200 rounded-lg'>
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      onClick={() => handleQuantityChange('decrease')}
-                      disabled={quantity <= 1}
-                      className='h-8 w-8 p-0'
-                    >
-                      <Minus className='w-4 h-4' />
-                    </Button>
-                    <span className='px-4 py-1 min-w-[60px] text-center font-medium'>{quantity}</span>
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      onClick={() => handleQuantityChange('increase')}
-                      className='h-8 w-8 p-0'
-                    >
-                      <Plus className='w-4 h-4' />
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className='grid grid-cols-2 gap-3'>
-                  <Button
-                    onClick={handleAddToCart}
-                    disabled={!product.inStock}
-                    className={`${
-                      product.inStock
-                        ? 'bg-[#0066CC] hover:bg-[#4A90E2] text-white'
-                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    } transition-all duration-300`}
+        {/* Related Products */}
+        {relatedProducts.length > 0 && (
+          <div>
+            <h2 className='text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent mb-6'>
+              Sản phẩm liên quan
+            </h2>
+            {/* Carousel Container */}
+            <div className='relative group'>
+              {/* Navigation Arrows - Only show if more than items per slide */}
+              {relatedProducts.length > getItemsPerSlide() && (
+                <>
+                  {/* Previous Button */}
+                  <button
+                    onClick={handlePrevSlide}
+                    className='absolute -left-12 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/90 backdrop-blur-lg border-2 border-blue-100 shadow-lg hover:shadow-xl hover:bg-gradient-to-r hover:from-blue-600 hover:to-cyan-500 hover:border-blue-400 transition-all opacity-0 group-hover:opacity-100 hover:scale-110 group/btn'
+                    aria-label='Previous products'
                   >
-                    <ShoppingCart className='w-4 h-4 mr-2' />
-                    {product.inStock ? 'Thêm vào giỏ' : 'Hết hàng'}
-                  </Button>
+                    <ChevronLeft className='w-5 h-5 text-blue-600 group-hover/btn:text-white transition-colors' />
+                  </button>
 
-                  <div className='grid grid-cols-2 gap-2'>
-                    <Button
-                      variant='outline'
-                      onClick={handleToggleFavorite}
-                      className={`${
-                        isFavorite ? 'bg-red-50 border-red-200 text-red-600' : ''
-                      } hover:bg-red-50 border border-white/40`}
+                  {/* Next Button */}
+                  <button
+                    onClick={handleNextSlide}
+                    className='absolute -right-16 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/90 backdrop-blur-lg border-2 border-blue-100 shadow-lg hover:shadow-xl hover:bg-gradient-to-r hover:from-blue-600 hover:to-cyan-500 hover:border-blue-400 transition-all opacity-0 group-hover:opacity-100 hover:scale-110 group/btn'
+                    aria-label='Next products'
+                  >
+                    <ChevronRight className='w-5 h-5 text-blue-600 group-hover/btn:text-white transition-colors' />
+                  </button>
+                </>
+              )}
+
+              {/* Carousel - Smooth horizontal scroll */}
+              <div
+                ref={carouselRef}
+                className='overflow-hidden scroll-smooth'
+                style={{
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none',
+                }}
+              >
+                <div className='flex gap-6'>
+                  {relatedProducts.map((relatedProduct) => (
+                    <div
+                      key={getProductId(relatedProduct)}
+                      className='flex-shrink-0 w-full sm:w-[calc(50%-12px)] md:w-[calc(33.333%-16px)] lg:w-[calc(25%-18px)]'
                     >
-                      <Heart className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
-                    </Button>
-
-                    <Button variant='outline' onClick={handleShare} className='hover:bg-blue-50 border border-white/40'>
-                      <Share2 className='w-4 h-4' />
-                    </Button>
-                  </div>
+                      <ProductCard
+                        product={{
+                          id: getProductId(relatedProduct),
+                          name: relatedProduct.name,
+                          slug: relatedProduct.slug,
+                          brand: getBrandName(relatedProduct),
+                          image: getProductImage(relatedProduct),
+                          originalPrice: relatedProduct.originalPrice,
+                          salePrice: getProductSalePrice(relatedProduct) || 0,
+                          rating: getProductRating(relatedProduct),
+                          reviewCount: getProductReviewCount(relatedProduct),
+                          inStock: isProductInStock(relatedProduct),
+                          isPrescription: isProductPrescription(relatedProduct),
+                          isOnSale: relatedProduct.isOnSale,
+                          discountPercentage: relatedProduct.discountPercentage,
+                          unit: relatedProduct.unit,
+                          packaging: relatedProduct.packaging,
+                          needsConsultation: relatedProduct.needsConsultation,
+                        }}
+                        variant='grid'
+                      />
+                    </div>
+                  ))}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
 
-            {/* Key Product Info */}
-            <Card className='backdrop-blur-md bg-white/90 border border-white/40 shadow-lg'>
-              <CardContent className='p-6'>
-                <h3 className='font-semibold text-foreground mb-4'>Thông tin cơ bản</h3>
-                <div className='space-y-3 text-sm'>
-                  <div className='flex justify-between'>
-                    <span className='text-muted-foreground'>Ho\u1ea1t ch\u1ea5t:</span>
-                    <span className='font-medium'>{product.activeIngredient}</span>
-                  </div>
-                  <div className='flex justify-between'>
-                    <span className='text-muted-foreground'>Nh\u00e0 s\u1ea3n xu\u1ea5t:</span>
-                    <span className='font-medium'>{product.manufacturer}</span>
-                  </div>
-                  {product.origin && (
-                    <div className='flex justify-between'>
-                      <span className='text-muted-foreground'>Xuất xứ:</span>
-                      <span className='font-medium'>{product.origin}</span>
-                    </div>
-                  )}
-                  {product.registrationNumber && (
-                    <div className='flex justify-between'>
-                      <span className='text-muted-foreground'>Số đăng ký:</span>
-                      <span className='font-medium'>{product.registrationNumber}</span>
-                    </div>
-                  )}
-                  {product.expiryDate && (
-                    <div className='flex justify-between'>
-                      <span className='text-muted-foreground'>Hạn sử dụng:</span>
-                      <span className='font-medium'>{new Date(product.expiryDate).toLocaleDateString('vi-VN')}</span>
-                    </div>
-                  )}
+              {/* Dots Indicator - Only show if multiple slides */}
+              {maxSlides > 1 && (
+                <div className='flex justify-center gap-2 mt-6'>
+                  {Array.from({ length: maxSlides }).map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => scrollToSlide(index)}
+                      className={`h-2 rounded-full transition-all ${
+                        currentSlide === index
+                          ? 'w-8 bg-gradient-to-r from-blue-600 to-cyan-500'
+                          : 'w-2 bg-blue-200 hover:bg-blue-300'
+                      }`}
+                      aria-label={`Go to slide ${index + 1}`}
+                    />
+                  ))}
                 </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </div>
-
-        {/* Detailed Information Tabs */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-        >
-          <Card className='backdrop-blur-md bg-white/90 border border-white/40 shadow-xl'>
-            <CardContent className='p-6'>
-              <Tabs value={activeTab} onValueChange={setActiveTab} className='w-full'>
-                <TabsList className='grid w-full grid-cols-5 mb-6'>
-                  <TabsTrigger value='overview'>Tổng quan</TabsTrigger>
-                  <TabsTrigger value='indications'>Chỉ định</TabsTrigger>
-                  <TabsTrigger value='dosage'>Liều dùng</TabsTrigger>
-                  <TabsTrigger value='warnings'>Cảnh báo</TabsTrigger>
-                  <TabsTrigger value='storage'>Bảo quản</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value='overview' className='space-y-4'>
-                  <div className='prose max-w-none'>
-                    <p className='text-muted-foreground leading-relaxed'>{product.description}</p>
-
-                    {product.indications && product.indications.length > 0 && (
-                      <div className='mt-6'>
-                        <h4 className='font-semibold text-foreground mb-3'>Công dụng chính:</h4>
-                        <div className='grid grid-cols-1 md:grid-cols-2 gap-2'>
-                          {product.indications.map((indication, index) => (
-                            <div key={index} className='flex items-center gap-2'>
-                              <Check className='w-4 h-4 text-green-600 flex-shrink-0' />
-                              <span className='text-sm text-muted-foreground'>{indication}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </TabsContent>
-
-                <TabsContent value='indications' className='space-y-4'>
-                  {product.indications && (
-                    <div>
-                      <h4 className='font-semibold text-foreground mb-4 flex items-center gap-2'>
-                        <Check className='w-5 h-5 text-green-600' />
-                        Chỉ định sử dụng
-                      </h4>
-                      <ul className='space-y-2'>
-                        {product.indications.map((indication, index) => (
-                          <li key={index} className='flex items-start gap-3'>
-                            <div className='w-2 h-2 bg-[#0066CC] rounded-full mt-2 flex-shrink-0'></div>
-                            <span className='text-muted-foreground'>{indication}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {product.contraindications && (
-                    <div className='mt-6'>
-                      <h4 className='font-semibold text-foreground mb-4 flex items-center gap-2'>
-                        <AlertTriangle className='w-5 h-5 text-red-600' />
-                        Chống chỉ định
-                      </h4>
-                      <ul className='space-y-2'>
-                        {product.contraindications.map((contraindication, index) => (
-                          <li key={index} className='flex items-start gap-3'>
-                            <div className='w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0'></div>
-                            <span className='text-muted-foreground'>{contraindication}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </TabsContent>
-
-                <TabsContent value='dosage' className='space-y-4'>
-                  {product.dosageInstructions && (
-                    <div>
-                      <h4 className='font-semibold text-foreground mb-4'>Cách dùng và liều dùng</h4>
-                      <div className='bg-blue-50 border border-blue-200 rounded-lg p-4'>
-                        <p className='text-foreground'>{product.dosageInstructions}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {product.sideEffects && (
-                    <div className='mt-6'>
-                      <h4 className='font-semibold text-foreground mb-4 flex items-center gap-2'>
-                        <Eye className='w-5 h-5 text-orange-600' />
-                        Tác dụng phụ
-                      </h4>
-                      <ul className='space-y-2'>
-                        {product.sideEffects.map((effect, index) => (
-                          <li key={index} className='flex items-start gap-3'>
-                            <div className='w-2 h-2 bg-orange-500 rounded-full mt-2 flex-shrink-0'></div>
-                            <span className='text-muted-foreground'>{effect}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </TabsContent>
-
-                <TabsContent value='warnings' className='space-y-4'>
-                  {product.warnings && (
-                    <div>
-                      <h4 className='font-semibold text-foreground mb-4 flex items-center gap-2'>
-                        <Shield className='w-5 h-5 text-red-600' />
-                        Cảnh báo quan trọng
-                      </h4>
-                      <div className='space-y-3'>
-                        {product.warnings.map((warning, index) => (
-                          <div
-                            key={index}
-                            className='flex items-start gap-3 bg-red-50 border border-red-200 rounded-lg p-3'
-                          >
-                            <AlertTriangle className='w-5 h-5 text-red-600 flex-shrink-0 mt-0.5' />
-                            <span className='text-foreground'>{warning}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {product.prescription && (
-                    <div className='mt-6 bg-amber-50 border border-amber-200 rounded-lg p-4'>
-                      <div className='flex items-start gap-3'>
-                        <FileText className='w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5' />
-                        <div>
-                          <p className='font-semibold text-amber-800 mb-1'>Thuốc kê đơn</p>
-                          <p className='text-sm text-amber-700'>
-                            Sản phẩm này yêu cầu có đơn thuốc của bác sĩ. Vui lòng tham khảo ý kiến chuyên gia y tế
-                            trước khi sử dụng.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </TabsContent>
-
-                <TabsContent value='storage' className='space-y-4'>
-                  {product.storage && (
-                    <div>
-                      <h4 className='font-semibold text-foreground mb-4 flex items-center gap-2'>
-                        <Package2 className='w-5 h-5 text-blue-600' />
-                        Hướng dẫn bảo quản
-                      </h4>
-                      <div className='bg-blue-50 border border-blue-200 rounded-lg p-4'>
-                        <p className='text-foreground'>{product.storage}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className='mt-6 grid grid-cols-1 md:grid-cols-2 gap-4'>
-                    <div className='bg-green-50 border border-green-200 rounded-lg p-4'>
-                      <h5 className='font-semibold text-green-800 mb-2'>✓ Nên làm</h5>
-                      <ul className='text-sm text-green-700 space-y-1'>
-                        <li>• Để nơi khô ráo, thoáng mát</li>
-                        <li>• Đậy kín nắp sau khi sử dụng</li>
-                        <li>• Kiểm tra hạn sử dụng</li>
-                      </ul>
-                    </div>
-
-                    <div className='bg-red-50 border border-red-200 rounded-lg p-4'>
-                      <h5 className='font-semibold text-red-800 mb-2'>✗ Không nên</h5>
-                      <ul className='text-sm text-red-700 space-y-1'>
-                        <li>• Để nơi có ánh sáng trực tiếp</li>
-                        <li>• Bảo quản trong tủ lạnh (trừ khi có chỉ định)</li>
-                        <li>• Để xa tầm tay trẻ em</li>
-                      </ul>
-                    </div>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Emergency Contact */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
-          className='mt-8'
-        >
-          <Card className='backdrop-blur-md bg-gradient-to-r from-red-50/90 to-orange-50/90 border border-red-200/40 shadow-lg'>
-            <CardContent className='p-6'>
-              <div className='flex items-center gap-3 mb-4'>
-                <Phone className='w-5 h-5 text-red-600' />
-                <h3 className='font-semibold text-red-800'>Hỗ trợ khẩn cấp</h3>
-              </div>
-              <p className='text-sm text-red-700 mb-3'>
-                Nếu bạn gặp phản ứng bất thường sau khi sử dụng thuốc, hãy liên hệ ngay:
-              </p>
-              <div className='flex flex-wrap gap-4'>
-                <Button variant='outline' className='border-red-300 text-red-700 hover:bg-red-100'>
-                  <Phone className='w-4 h-4 mr-2' />
-                  Hotline: 1900-xxxx
-                </Button>
-                <Button variant='outline' className='border-red-300 text-red-700 hover:bg-red-100'>
-                  <MapPin className='w-4 h-4 mr-2' />
-                  Tìm hiệu thuốc gần nhất
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
-    </div>
+
+      {/* Image Lightbox - Full screen modal */}
+      <Dialog open={isLightboxOpen} onOpenChange={setIsLightboxOpen}>
+        <DialogContent className='max-w-[95vw] max-h-[95vh] p-0 bg-black/95 backdrop-blur-xl border-blue-500/20 overflow-hidden'>
+          {/* Accessibility: Hidden title and description for screen readers */}
+          <DialogTitle className='sr-only'>{product.name} - Xem ảnh chi tiết</DialogTitle>
+          <DialogDescription className='sr-only'>
+            Lightbox hiển thị ảnh {selectedImage + 1} trong số {product.images.length} ảnh của {product.name}. Sử dụng
+            phím mũi tên trái/phải để chuyển ảnh, ESC để đóng.
+          </DialogDescription>
+
+          {/* Close button - Top right */}
+          <DialogClose className='absolute top-4 right-4 z-50 p-2 rounded-full bg-white/10 backdrop-blur-lg border border-white/20 shadow-lg hover:bg-white/20 transition-all group'>
+            <X className='w-5 h-5 text-white group-hover:rotate-90 transition-transform duration-300' />
+          </DialogClose>
+
+          {/* Image container */}
+          <div className='relative w-full h-[90vh] flex items-center justify-center p-8'>
+            {/* Main image */}
+            <ImageWithFallback
+              src={product.images[selectedImage] || product.image}
+              alt={`${product.name} - Image ${selectedImage + 1}`}
+              className='max-w-full max-h-full object-contain rounded-lg shadow-2xl'
+            />
+
+            {/* Counter badge - Top left */}
+            <div className='absolute top-4 left-4 z-40 bg-gradient-to-r from-blue-600 to-cyan-500 text-white px-4 py-2 rounded-lg shadow-lg backdrop-blur-sm'>
+              <span className='font-medium'>
+                {selectedImage + 1} / {product.images.length}
+              </span>
+            </div>
+
+            {/* Navigation arrows */}
+            {product.images.length > 1 && (
+              <>
+                {/* Previous button */}
+                <button
+                  onClick={handlePrevImage}
+                  className='absolute left-4 top-1/2 -translate-y-1/2 z-40 p-3 rounded-full bg-white/10 backdrop-blur-lg border border-white/20 shadow-lg hover:bg-white/20 transition-all group'
+                  aria-label='Previous image'
+                >
+                  <ChevronLeft className='w-6 h-6 text-white group-hover:scale-110 transition-transform' />
+                </button>
+
+                {/* Next button */}
+                <button
+                  onClick={handleNextImage}
+                  className='absolute right-4 top-1/2 -translate-y-1/2 z-40 p-3 rounded-full bg-white/10 backdrop-blur-lg border border-white/20 shadow-lg hover:bg-white/20 transition-all group'
+                  aria-label='Next image'
+                >
+                  <ChevronRight className='w-6 h-6 text-white group-hover:scale-110 transition-transform' />
+                </button>
+              </>
+            )}
+
+            {/* Product info overlay - Bottom */}
+            <div className='absolute bottom-4 left-1/2 -translate-x-1/2 z-40 bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl px-6 py-3 shadow-lg max-w-2xl'>
+              <h3 className='text-white font-medium text-center line-clamp-1'>{product.name}</h3>
+              {product.isPrescription && (
+                <Badge className='bg-red-600 text-white text-xs mt-2 mx-auto block w-fit'>Rx - Kê đơn</Badge>
+              )}
+            </div>
+
+            {/* Thumbnail navigation - Bottom (optional for many images) */}
+            {product.images.length > 1 && product.images.length <= 8 && (
+              <div className='absolute bottom-20 left-1/2 -translate-x-1/2 z-40 flex gap-2'>
+                {product.images.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImage(index)}
+                    className={`h-2 rounded-full transition-all ${
+                      selectedImage === index ? 'w-8 bg-white' : 'w-2 bg-white/40 hover:bg-white/60'
+                    }`}
+                    aria-label={`View image ${index + 1}`}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </PageTransition>
   )
 }

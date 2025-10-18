@@ -1,99 +1,226 @@
-// Product related types for MEDISPACE
-
+// Main Product interface matching backend schema
 export interface Product {
-  id: string
-  slug: string
+  _id: string // MongoDB ObjectId as string
   name: string
-  description: string
-  shortDescription?: string
-  price: number
-  originalPrice?: number
-  discount?: number
-  images: string[]
-  thumbnail: string
-  category: string // Changed to string for easier rendering
-  brand?: string
+  slug: string
   sku: string
-  stock: number
-  isInStock: boolean
+  barcode?: string
+
+  // Basic Information
+  shortDescription: string
+  categoryId: string // ObjectId as string
+  brandId?: string // ObjectId as string
+
+  // Inventory Summary
+  stockQuantity: number
+  maxOrderQuantity: number
+
+  // Product Status & Classification
+  status: 'active' | 'discontinued' | 'out_of_stock'
+  isActive: boolean
   requiresPrescription: boolean
 
-  // Rating and reviews
+  // Featured Media
+  featuredImage?: string
+
+  // Audit Information
+  createdAt: string // ISO date string
+  updatedAt: string // ISO date string
+  createdBy: string // ObjectId as string
+  lastModifiedBy?: string // ObjectId as string
+
+  // Extended properties for UI (populated from references)
+  category?: Category
+  brand?: Brand
+
+  // Legacy properties for backward compatibility
+  id?: string // Alias for _id
+  description?: string // Alias for shortDescription
+  image?: string // Alias for featuredImage
+  images?: string[]
+  inStock?: boolean // Computed from stockQuantity > 0
+  isPrescription?: boolean // Alias for requiresPrescription
   rating?: number
   reviewCount?: number
-
-  // Medical specific
-  activeIngredient?: string
-  dosage?: string
-  form: 'tablet' | 'capsule' | 'syrup' | 'injection' | 'cream' | 'other'
-  manufacturer?: string
-  contraindications?: string[]
-  sideEffects?: string[]
-  drugInteractions?: string[]
-  ageRestrictions?: AgeGroup[]
-  pregnancyCategory?: 'A' | 'B' | 'C' | 'D' | 'X'
-
-  // SEO & metadata
-  metaTitle?: string
-  metaDescription?: string
+  price?: number
+  originalPrice?: number
+  salePrice?: number
+  discountPercentage?: number
+  onSale?: boolean
+  isOnSale?: boolean
+  needsConsultation?: boolean
+  origin?: string
+  unit?: string
+  packaging?: string
+  expiryInfo?: string
+  ingredients?: string[]
+  uses?: string[]
+  instructions?: string
+  warnings?: string[]
   tags?: string[]
+}
+
+// Brand interface matching backend schema
+export interface Brand {
+  _id: string
+  name: string
+  slug: string
+  logo?: string
+  description?: string
+  website?: string
+  country?: string
+  isActive: boolean
+  productCount: number
+  createdAt: string
+
+  // Legacy properties
+  id?: string // Alias for _id
+}
+
+// Category interface matching backend schema
+export interface Category {
+  _id: string
+  name: string
+  slug: string
+  description?: string
+  parentId?: string
+
+  // Hierarchy Management
+  level: number
+  path: string
+  productCount: number
+
+  // Display Properties
+  icon?: string
+  thumbnailImage?: string
+  sortOrder: number
+  isActive: boolean
 
   // Timestamps
   createdAt: string
   updatedAt: string
-}
 
-export interface ProductCategory {
-  id: string
-  slug: string
-  name: string
-  description?: string
-  image?: string
-  parentId?: string
-  children?: ProductCategory[]
-  productCount?: number
+  // Extended properties
+  subcategories?: Category[]
+
+  // Legacy properties
+  id?: string // Alias for _id
+  image?: string // Alias for thumbnailImage
 }
 
 export interface ProductFilter {
-  category?: string
-  brand?: string
-  minPrice?: number
-  maxPrice?: number
+  categories: string[]
+  brands: string[]
+  priceRange: [number, number]
+  rating: number
   inStock?: boolean
-  requiresPrescription?: boolean
-  page?: number
-  limit?: number
-  sort?: 'name' | 'price' | 'created' | 'popular'
-  order?: 'asc' | 'desc'
-  search?: string
+  isPrescription?: boolean
 }
 
-export interface AgeGroup {
-  min?: number
-  max?: number
-  unit: 'years' | 'months'
-  description?: string
-}
-
-export interface ProductReview {
+export interface CartItem {
   id: string
-  productId: string
+  product: Product
+  quantity: number
+  selected: boolean
+}
+
+export interface Review {
+  id: string
   userId: string
   userName: string
+  userAvatar?: string
   rating: number
-  title?: string
   comment: string
-  verified: boolean
+  images?: string[]
+  date: string
   helpful: number
-  createdAt: string
 }
 
-export interface ProductVariant {
+export interface Address {
   id: string
-  productId: string
+  fullName: string
+  phone: string
+  email?: string
+  address: string
+  province: string
+  district: string
+  ward: string
+  isDefault: boolean
+}
+
+export interface ShippingMethod {
+  id: string
   name: string
-  value: string
-  price?: number
-  stock?: number
-  sku?: string
+  description: string
+  price: number
+  estimatedDays: string
+}
+
+export interface PaymentMethod {
+  id: string
+  name: string
+  description: string
+  icon: string
+  type: 'cod' | 'banking' | 'ewallet' | 'credit'
+}
+
+export interface PrescriptionUpload {
+  id: string
+  customerId: string
+  productId?: string
+  prescriptionImages: string[]
+  patientName?: string
+  contactPhone: string
+  notes?: string
+  status: 'pending' | 'reviewing' | 'approved' | 'rejected' | 'completed'
+  pharmacistId?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ChatMessage {
+  id: string
+  senderId: string
+  senderType: 'customer' | 'pharmacist'
+  message: string
+  images?: string[]
+  timestamp: string
+  isRead: boolean
+}
+
+export interface ChatSession {
+  id: string
+  customerId: string
+  pharmacistId?: string
+  productId?: string
+  prescriptionId?: string
+  status: 'active' | 'waiting' | 'completed'
+  messages: ChatMessage[]
+  createdAt: string
+  updatedAt: string
+}
+
+export interface PharmacistOrder {
+  id: string
+  customerId: string
+  pharmacistId: string
+  prescriptionId?: string
+  items: {
+    productId: string
+    quantity: number
+    price: number
+  }[]
+  customerInfo: {
+    name: string
+    phone: string
+    email?: string
+  }
+  shippingAddress: Address
+  paymentMethod: string
+  notes?: string
+  subtotal: number
+  shippingFee: number
+  total: number
+  status: 'created' | 'confirmed' | 'preparing' | 'shipping' | 'delivered' | 'cancelled'
+  createdAt: string
 }

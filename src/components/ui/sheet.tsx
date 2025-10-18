@@ -10,21 +10,35 @@ function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
   return <SheetPrimitive.Root data-slot='sheet' {...props} />
 }
 
-function SheetTrigger({ ...props }: React.ComponentProps<typeof SheetPrimitive.Trigger>) {
-  return <SheetPrimitive.Trigger data-slot='sheet-trigger' {...props} />
-}
+const SheetTrigger = React.forwardRef<
+  React.ElementRef<typeof SheetPrimitive.Trigger>,
+  React.ComponentProps<typeof SheetPrimitive.Trigger>
+>(({ ...props }, ref) => {
+  return <SheetPrimitive.Trigger ref={ref} data-slot='sheet-trigger' {...props} />
+})
 
-function SheetClose({ ...props }: React.ComponentProps<typeof SheetPrimitive.Close>) {
-  return <SheetPrimitive.Close data-slot='sheet-close' {...props} />
-}
+SheetTrigger.displayName = 'SheetTrigger'
+
+const SheetClose = React.forwardRef<
+  React.ElementRef<typeof SheetPrimitive.Close>,
+  React.ComponentProps<typeof SheetPrimitive.Close>
+>(({ ...props }, ref) => {
+  return <SheetPrimitive.Close ref={ref} data-slot='sheet-close' {...props} />
+})
+
+SheetClose.displayName = 'SheetClose'
 
 function SheetPortal({ ...props }: React.ComponentProps<typeof SheetPrimitive.Portal>) {
   return <SheetPrimitive.Portal data-slot='sheet-portal' {...props} />
 }
 
-function SheetOverlay({ className, ...props }: React.ComponentProps<typeof SheetPrimitive.Overlay>) {
+const SheetOverlay = React.forwardRef<
+  React.ElementRef<typeof SheetPrimitive.Overlay>,
+  React.ComponentProps<typeof SheetPrimitive.Overlay>
+>(({ className, ...props }, ref) => {
   return (
     <SheetPrimitive.Overlay
+      ref={ref}
       data-slot='sheet-overlay'
       className={cn(
         'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/50',
@@ -33,7 +47,9 @@ function SheetOverlay({ className, ...props }: React.ComponentProps<typeof Sheet
       {...props}
     />
   )
-}
+})
+
+SheetOverlay.displayName = 'SheetOverlay'
 
 function SheetContent({
   className,

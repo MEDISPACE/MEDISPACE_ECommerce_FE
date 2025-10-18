@@ -1,6 +1,6 @@
 // API services for products
 import { apiClient } from '../../services/apiClient'
-import type { Product, ProductCategory, ProductFilter } from '../../types/product'
+import type { ProductFilter } from '../../types/product'
 
 class ProductsAPI {
   // Get all products with filtering

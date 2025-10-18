@@ -1,6 +1,6 @@
 // API services for prescriptions (Medical specific)
 import { apiClient } from '~/services/apiClient'
-import type { Prescription, PrescriptionUpload } from '~/types/prescription'
+import type { PrescriptionUpload } from '~/types/prescription'
 
 class PrescriptionsAPI {
   // Get user prescriptions

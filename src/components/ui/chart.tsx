@@ -95,12 +95,12 @@ const ChartTooltip = RechartsPrimitive.Tooltip
 
 function ChartTooltipContent({
   active,
-  payload,
+  payload = [],
   className,
   indicator = 'dot',
   hideLabel = false,
   hideIndicator = false,
-  label,
+  label = '',
   labelFormatter,
   labelClassName,
   formatter,
@@ -114,6 +114,9 @@ function ChartTooltipContent({
     indicator?: 'line' | 'dot' | 'dashed'
     nameKey?: string
     labelKey?: string
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    payload?: any[]
+    label?: string
   }) {
   const { config } = useChart()
 
@@ -148,13 +151,14 @@ function ChartTooltipContent({
   return (
     <div
       className={cn(
-        'border-gray-300/50 bg-white grid min-w-[8rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl',
+        'border-border/50 bg-background grid min-w-[8rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl',
         className,
       )}
     >
       {!nestLabel ? tooltipLabel : null}
       <div className='grid gap-1.5'>
-        {payload.map((item, index) => {
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        {payload.map((item: any, index: number) => {
           const key = `${nameKey || item.name || item.dataKey || 'value'}`
           const itemConfig = getPayloadConfigFromPayload(config, item, key)
           const indicatorColor = color || item.payload.fill || item.color
@@ -219,14 +223,16 @@ const ChartLegend = RechartsPrimitive.Legend
 function ChartLegendContent({
   className,
   hideIcon = false,
-  payload,
+  payload = [],
   verticalAlign = 'bottom',
   nameKey,
-}: React.ComponentProps<'div'> &
-  Pick<RechartsPrimitive.LegendProps, 'payload' | 'verticalAlign'> & {
-    hideIcon?: boolean
-    nameKey?: string
-  }) {
+}: React.ComponentProps<'div'> & {
+  hideIcon?: boolean
+  nameKey?: string
+  verticalAlign?: 'top' | 'bottom'
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  payload?: any[]
+}) {
   const { config } = useChart()
 
   if (!payload?.length) {
@@ -235,7 +241,8 @@ function ChartLegendContent({
 
   return (
     <div className={cn('flex items-center justify-center gap-4', verticalAlign === 'top' ? 'pb-3' : 'pt-3', className)}>
-      {payload.map((item) => {
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      {payload.map((item: any) => {
         const key = `${nameKey || item.dataKey || 'value'}`
         const itemConfig = getPayloadConfigFromPayload(config, item, key)
 

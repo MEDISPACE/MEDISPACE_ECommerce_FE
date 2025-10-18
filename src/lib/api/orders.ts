@@ -1,6 +1,6 @@
 // API services for orders
 import { apiClient } from '../../services/apiClient'
-import type { Order, CreateOrderRequest, OrderFilter } from '../../types/order'
+import type { CreateOrderRequest, OrderFilter } from '../../types/order'
 
 class OrdersAPI {
   // Get user orders

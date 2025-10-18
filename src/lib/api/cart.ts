@@ -1,6 +1,6 @@
 // API services for shopping cart
 import { apiClient } from '~/services/apiClient'
-import type { CartItem, AddToCartRequest } from '~/types/cart'
+import type { AddToCartRequest } from '~/types/cart'
 
 class CartAPI {
   // Get current cart

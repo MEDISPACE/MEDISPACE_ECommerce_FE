@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { authService } from '../services/authService'
-import type { User, RegisterRequest } from '../types/user'
+import type { User } from '../types/user'
+import type { RegisterRequest, RegisterResponse } from '../types/api'
 
 type ReactNode = React.ReactNode
 
@@ -106,24 +107,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setLoading(true)
 
-      const response = await authService.register(userData)
+      const response: RegisterResponse = await authService.register(userData)
 
       if (response.userId) {
-        const { accessToken, refreshToken } = response.userId
-        authService.saveTokens(accessToken, refreshToken)
-
-        // Get user profile after registration
-        try {
-          const userProfile = await authService.getMe()
-          setUser(userProfile)
-          setIsAuthenticated(true)
-          localStorage.setItem('medispace_user_data', JSON.stringify(userProfile))
-          return true
-        } catch (profileError) {
-          console.error('Failed to fetch user profile after registration:', profileError)
-          authService.clearTokens()
-          return false
-        }
+        // Registration successful, but user needs to login to get tokens
+        // The userId is just a confirmation, not tokens
+        return true
       }
 
       return false

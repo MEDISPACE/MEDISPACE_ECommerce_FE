@@ -1,4 +1,5 @@
-import AccountLayout from '~/components/account/AccountLayout'
+import { Outlet } from 'react-router'
+import { AccountLayout } from '~/components/layout/AccountLayout'
 
 export function meta() {
   return [
@@ -8,5 +9,9 @@ export function meta() {
 }
 
 export default function AccountLayoutRoute() {
-  return <AccountLayout />
+  return (
+    <AccountLayout>
+      <Outlet />
+    </AccountLayout>
+  )
 }

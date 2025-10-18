@@ -1,11 +1,13 @@
 import { apiClient } from './apiClient'
-import type { LoginRequest, RegisterRequest, AuthResponse, User, ApiErrorResponse } from '../types/user'
+import type { User } from '../types/user'
+import type { LoginRequest, RegisterRequest, RegisterResponse, AuthResponse, ApiErrorResponse } from '../types/api'
 import type { AxiosError } from 'axios'
+import { API_ENDPOINTS } from '../constants'
 
 class AuthService {
   async login(credentials: LoginRequest): Promise<AuthResponse> {
     try {
-      const response = await apiClient.post<AuthResponse>('/users/login', credentials)
+      const response = await apiClient.post<AuthResponse>(API_ENDPOINTS.AUTH.LOGIN, credentials)
       return response.data
     } catch (error) {
       const axiosError = error as AxiosError<ApiErrorResponse>
@@ -13,9 +15,9 @@ class AuthService {
     }
   }
 
-  async register(userData: RegisterRequest): Promise<AuthResponse> {
+  async register(userData: RegisterRequest): Promise<RegisterResponse> {
     try {
-      const response = await apiClient.post<AuthResponse>('/users/register', userData)
+      const response = await apiClient.post<RegisterResponse>(API_ENDPOINTS.AUTH.REGISTER, userData)
       return response.data
     } catch (error) {
       const axiosError = error as AxiosError<ApiErrorResponse>
@@ -27,7 +29,7 @@ class AuthService {
     try {
       const refreshToken = localStorage.getItem('medispace_refresh_token')
       if (refreshToken) {
-        await apiClient.post('/users/logout', { refreshToken })
+        await apiClient.post(API_ENDPOINTS.AUTH.LOGOUT, { refreshToken })
       }
     } catch (error) {
       console.error('Logout API call failed:', error)
@@ -44,7 +46,7 @@ class AuthService {
         throw new Error('No refresh token available')
       }
 
-      const response = await apiClient.post<AuthResponse>('/users/refresh-token', {
+      const response = await apiClient.post<AuthResponse>(API_ENDPOINTS.AUTH.REFRESH_TOKEN, {
         refreshToken,
       })
       return response.data
@@ -56,7 +58,7 @@ class AuthService {
 
   async verifyEmail(emailVerifyToken: string): Promise<AuthResponse> {
     try {
-      const response = await apiClient.post<AuthResponse>('/users/verify-email', {
+      const response = await apiClient.post<AuthResponse>(API_ENDPOINTS.AUTH.VERIFY_EMAIL, {
         emailVerifyToken,
       })
       return response.data
@@ -68,7 +70,7 @@ class AuthService {
 
   async resendVerifyEmail(): Promise<void> {
     try {
-      await apiClient.post('/users/resend-verify-email')
+      await apiClient.post(API_ENDPOINTS.AUTH.RESEND_VERIFY_EMAIL)
     } catch (error) {
       const axiosError = error as AxiosError<AuthResponse>
       throw axiosError.response?.data || { message: 'Failed to resend verification email' }
@@ -77,7 +79,7 @@ class AuthService {
 
   async forgotPassword(email: string): Promise<void> {
     try {
-      await apiClient.post('/users/forgot-password', { email })
+      await apiClient.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, { email })
     } catch (error) {
       const axiosError = error as AxiosError<AuthResponse>
       throw axiosError.response?.data || { message: 'Failed to send reset password email' }
@@ -86,7 +88,7 @@ class AuthService {
 
   async resetPassword(forgotPasswordToken: string, password: string, confirmPassword: string): Promise<void> {
     try {
-      await apiClient.post('/users/reset-password', {
+      await apiClient.post(API_ENDPOINTS.AUTH.RESET_PASSWORD, {
         forgotPasswordToken,
         password,
         confirm_password: confirmPassword,
@@ -99,7 +101,7 @@ class AuthService {
 
   async getMe(): Promise<User> {
     try {
-      const response = await apiClient.get<{ user: User }>('/users/me')
+      const response = await apiClient.get<{ user: User }>(API_ENDPOINTS.USERS.ME)
       return response.data.user
     } catch (error) {
       const axiosError = error as AxiosError<{ message: string }>

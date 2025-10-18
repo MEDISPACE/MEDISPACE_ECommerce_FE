@@ -1,319 +1,288 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
+import {
+  ShoppingCart,
+  User,
+  Menu,
+  Phone,
+  MapPin,
+  ChevronDown,
+  LogOut,
+  Settings,
+  Package,
+  FileText,
+  Heart,
+} from 'lucide-react'
+import { Button } from '../ui/button'
+import { Badge } from '../ui/badge'
 import { Link, useNavigate } from 'react-router'
-import { useAuth } from '~/contexts/AuthContext'
-import { LogIn, LogOut, User, ShoppingCart, Search, Menu, Heart, Package, X } from 'lucide-react'
-import { Button } from '~/components/ui/button'
-import { Badge } from '~/components/ui/badge'
+import { mockCategories, type Category } from '../../utils/mockCategoryData'
+import { UnifiedMegaMenu } from './UnifiedMegaMenu'
+import { EnhancedSearchBar } from '../shared/EnhancedSearchBar'
+import { useAuth } from '../../contexts/AuthContext'
+import { UserRole } from '../../types/user'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu'
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 
-export default function Header() {
-  const { isAuthenticated, user, logout } = useAuth()
+export function Header() {
   const navigate = useNavigate()
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchFocused, setSearchFocused] = useState(false)
+  const { user, isAuthenticated, logout } = useAuth()
+  const [activeMegaMenuCategory, setActiveMegaMenuCategory] = useState<Category | null>(null)
+  const [isMegaMenuVisible, setIsMegaMenuVisible] = useState(false)
 
-  const handleLogout = () => {
-    logout()
-    navigate('/')
-  }
-
-  const handleLoginClick = () => {
-    navigate('/auth/login')
-  }
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (searchQuery.trim()) {
-      navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`)
-      setSearchQuery('')
-      setSearchFocused(false)
+  const handleSearch = (query: string) => {
+    if (query.trim()) {
+      navigate(`/search?q=${encodeURIComponent(query.trim())}`)
     }
   }
 
-  const handleSearchClear = () => {
-    setSearchQuery('')
-    setSearchFocused(true)
+  const handleCategoryHover = (category: Category) => {
+    setActiveMegaMenuCategory(category)
+    setIsMegaMenuVisible(true)
   }
 
+  const handleNavigationMouseLeave = () => {
+    setIsMegaMenuVisible(false)
+    setActiveMegaMenuCategory(null)
+  }
+
+  const handleMegaMenuClose = () => {
+    setIsMegaMenuVisible(false)
+    setActiveMegaMenuCategory(null)
+  }
   return (
-    <header className='sticky top-0 z-50 w-full border-b border-white/20 bg-white/95 backdrop-blur-xl shadow-lg shadow-blue-500/5 supports-[backdrop-filter]:bg-white/80'>
-      <div className='container mx-auto px-4'>
-        {/* Top Row - Emergency & Quick Actions */}
-        <div className='hidden lg:flex items-center justify-between py-2 border-b border-gray-100/50'>
-          <div className='flex items-center gap-6 text-xs text-gray-600'>
+    <header className='bg-white border-b border-gray-200 sticky top-0 z-50'>
+      {/* Top bar */}
+      <div className='bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 text-white py-2'>
+        <div className='max-w-7xl mx-auto px-4 flex justify-between items-center text-sm'>
+          <div className='flex items-center gap-4'>
             <div className='flex items-center gap-1'>
-              <Package className='h-3 w-3 text-[#0066CC]' />
-              <span>
-                Tư vấn 24/7: <strong className='text-[#0066CC]'>1900-xxxx</strong>
-              </span>
+              <Phone className='w-4 h-4' />
+              <span>Hotline: 1800 6928</span>
+            </div>
+            <div className='flex items-center gap-1'>
+              <MapPin className='w-4 h-4' />
+              <span>Tìm nhà thuốc gần bạn</span>
             </div>
           </div>
-          <div className='flex items-center gap-2'>
-            <Button
-              variant='ghost'
-              size='sm'
-              className='text-xs h-7 px-3 text-amber-600 hover:text-amber-700 hover:bg-amber-50 transition-all duration-200'
-            >
-              📋 Upload đơn thuốc
-            </Button>
-            <Button
-              variant='ghost'
-              size='sm'
-              className='text-xs h-7 px-3 text-green-600 hover:text-green-700 hover:bg-green-50 transition-all duration-200'
-            >
-              🩺 Tư vấn trực tuyến
-            </Button>
+          <div className='hidden md:flex items-center gap-4'>
+            <span>Miễn phí giao hàng từ 300.000đ</span>
+            <span>•</span>
+            <span>Giao hàng nhanh 2h</span>
           </div>
         </div>
+      </div>
 
-        {/* Main Header Row */}
-        <div className='flex h-16 items-center justify-between'>
+      {/* Main header */}
+      <div className='max-w-7xl mx-auto px-4 py-4'>
+        <div className='flex items-center justify-between'>
           {/* Logo */}
-          <Link to='/' className='flex items-center space-x-3 group'>
-            <div className='h-10 w-10 rounded-xl bg-gradient-to-br from-[#0066CC] to-[#4A90E2] flex items-center justify-center shadow-lg shadow-blue-500/25 group-hover:shadow-blue-500/40 transition-all duration-300 group-hover:scale-105'>
-              <Package className='h-5 w-5 text-white' />
-            </div>
-            <div className='flex flex-col'>
-              <span className='text-xl font-bold bg-gradient-to-r from-[#0066CC] to-[#4A90E2] bg-clip-text text-transparent'>
-                MEDISPACE
-              </span>
-              <span className='text-xs text-gray-500 -mt-1'>Nhà thuốc trực tuyến</span>
-            </div>
+          <Link to='/' className='flex items-center group'>
+            <img
+              src='/src/assets/MEDISPACE_Logo_Final.svg'
+              alt='MEDISPACE - Sức khỏe trong tầm tay'
+              className='h-8 md:h-12 w-auto object-contain transition-transform group-hover:scale-105'
+            />
           </Link>
 
-          {/* Navigation - Desktop */}
-          <nav className='hidden lg:flex items-center space-x-8'>
-            <Link
-              to='/'
-              className='text-sm font-medium text-gray-700 hover:text-[#0066CC] transition-all duration-200 relative group'
-            >
-              Trang chủ
-              <span className='absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#0066CC] to-[#4A90E2] transition-all duration-200 group-hover:w-full'></span>
-            </Link>
-            <Link
-              to='/products'
-              className='text-sm font-medium text-gray-700 hover:text-[#0066CC] transition-all duration-200 relative group'
-            >
-              Sản phẩm
-              <span className='absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#0066CC] to-[#4A90E2] transition-all duration-200 group-hover:w-full'></span>
-            </Link>
-            <Link
-              to='/categories'
-              className='text-sm font-medium text-gray-700 hover:text-[#0066CC] transition-all duration-200 relative group'
-            >
-              Danh mục thuốc
-              <span className='absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#0066CC] to-[#4A90E2] transition-all duration-200 group-hover:w-full'></span>
-            </Link>
-            <Link
-              to='/consultation'
-              className='text-sm font-medium text-amber-600 hover:text-amber-700 transition-all duration-200 relative group'
-            >
-              💊 Tư vấn thuốc
-              <span className='absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-200 group-hover:w-full'></span>
-            </Link>
-          </nav>
+          {/* Enhanced Search */}
+          <EnhancedSearchBar onSearch={handleSearch} />
 
-          {/* Enhanced Search Bar - Desktop */}
-          <div className='hidden md:flex flex-1 max-w-lg mx-8'>
-            <form onSubmit={handleSearchSubmit} className='relative w-full group'>
-              <div
-                className={`absolute left-4 top-1/2 transform -translate-y-1/2 transition-all duration-300 ${
-                  searchFocused ? 'text-[#0066CC] scale-110' : 'text-gray-400'
-                }`}
-              >
-                <Search className='h-4 w-4' />
-              </div>
-              <input
-                type='text'
-                placeholder='Tìm thuốc theo tên hoặc hoạt chất...'
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => setSearchFocused(true)}
-                onBlur={() => setSearchFocused(false)}
-                className={`w-full pl-12 pr-12 py-3 bg-white/90 backdrop-blur-sm border-2 rounded-2xl shadow-lg transition-all duration-300 focus:outline-none ${
-                  searchFocused
-                    ? 'border-[#0066CC] shadow-xl shadow-[#0066CC]/20 bg-white scale-[1.02]'
-                    : 'border-gray-200/50 hover:border-gray-300/70 shadow-gray-200/20'
-                } placeholder:text-gray-400 text-sm`}
-              />
-              {searchQuery && (
-                <button
-                  type='button'
-                  onClick={handleSearchClear}
-                  className='absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-all duration-200 hover:scale-110'
-                >
-                  <X className='h-4 w-4' />
-                </button>
-              )}
-              {searchFocused && (
-                <div className='absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl border border-gray-200/50 rounded-xl shadow-xl z-50'>
-                  <div className='p-3 text-xs text-gray-500 border-b border-gray-100'>
-                    <div className='flex flex-wrap gap-2'>
-                      <span className='bg-blue-50 text-blue-600 px-2 py-1 rounded-lg'>Paracetamol</span>
-                      <span className='bg-blue-50 text-blue-600 px-2 py-1 rounded-lg'>Vitamin C</span>
-                      <span className='bg-blue-50 text-blue-600 px-2 py-1 rounded-lg'>Thuốc ho</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </form>
-          </div>
-
-          {/* Enhanced User Actions */}
-          <div className='flex items-center space-x-1'>
-            {/* Search - Mobile */}
-            <Button
-              variant='ghost'
-              size='sm'
-              className='md:hidden p-2 hover:bg-blue-50 hover:text-[#0066CC] transition-all duration-200'
-            >
-              <Search className='h-4 w-4' />
-            </Button>
-
-            {/* Wishlist */}
-            {isAuthenticated && (
-              <Button
-                variant='ghost'
-                size='sm'
-                className='relative p-2 hover:bg-red-50 hover:text-red-600 transition-all duration-200'
-              >
-                <Heart className='h-4 w-4' />
-                <Badge
-                  variant='destructive'
-                  className='absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-xs bg-gradient-to-r from-red-500 to-red-600 border-0'
-                >
+          {/* Actions */}
+          <div className='flex items-center gap-4'>
+            {/* Cart */}
+            <Link to='/cart' className='relative'>
+              <Button variant='ghost' size='sm' className='flex items-center gap-2'>
+                <ShoppingCart className='w-5 h-5' />
+                <span className='hidden md:inline'>Giỏ hàng</span>
+                <Badge className='absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center'>
                   3
                 </Badge>
               </Button>
-            )}
+            </Link>
 
-            {/* Enhanced Cart */}
-            <Button
-              variant='ghost'
-              size='sm'
-              className='relative p-2 hover:bg-green-50 hover:text-green-600 transition-all duration-200 group'
-            >
-              <ShoppingCart className='h-4 w-4' />
-              <Badge
-                variant='destructive'
-                className='absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-xs bg-gradient-to-r from-green-500 to-green-600 border-0 group-hover:scale-110 transition-transform duration-200'
-              >
-                2
-              </Badge>
-            </Button>
-
-            {/* Auth Actions */}
+            {/* Account */}
             {isAuthenticated ? (
-              <div className='flex items-center space-x-2 ml-2'>
-                {/* User Menu */}
-                <Button
-                  variant='ghost'
-                  size='sm'
-                  className='hidden md:flex items-center space-x-2 px-3 hover:bg-blue-50 hover:text-[#0066CC] transition-all duration-200'
-                >
-                  <User className='h-4 w-4' />
-                  <span className='text-sm'>{user ? `${user.firstName} ${user.lastName}` : 'Tài khoản'}</span>
-                </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant='ghost' size='sm' className='flex items-center gap-2 hover:bg-blue-50'>
+                    <Avatar className='h-6 w-6'>
+                      <AvatarImage src={user?.avatar} />
+                      <AvatarFallback className='bg-blue-100 text-blue-600 text-xs'>
+                        {user?.firstName?.charAt(0) || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className='hidden md:inline text-sm'>
+                      {user?.firstName} {user?.lastName}
+                    </span>
+                    <ChevronDown className='h-4 w-4' />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align='end' className='w-56 bg-white/95 backdrop-blur-lg border-blue-100'>
+                  <DropdownMenuLabel className='text-blue-900'>
+                    <div className='flex flex-col space-y-1'>
+                      <p className='text-sm font-medium'>
+                        {user?.firstName} {user?.lastName}
+                      </p>
+                      <p className='text-xs text-blue-600'>{user?.email}</p>
+                      <div className='text-xs text-gray-500 capitalize font-normal mt-1'>
+                        {user?.role === UserRole.Admin
+                          ? 'Quản trị viên'
+                          : user?.role === UserRole.Pharmacist
+                            ? 'Dược sĩ'
+                            : 'Khách hàng'}
+                      </div>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator className='bg-blue-100' />
 
-                {/* Logout */}
-                <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={handleLogout}
-                  className='flex items-center space-x-2 border-gray-200/50 hover:border-red-300 hover:bg-red-50 hover:text-red-600 transition-all duration-200'
-                >
-                  <LogOut className='h-4 w-4' />
-                  <span className='hidden sm:inline'>Đăng xuất</span>
-                </Button>
-              </div>
+                  {/* Role-specific dashboard links */}
+                  {user?.role === UserRole.Admin && (
+                    <DropdownMenuItem asChild className='cursor-pointer hover:bg-blue-50'>
+                      <Link to='/admin/dashboard' className='flex items-center gap-2'>
+                        <Settings className='h-4 w-4' />
+                        <span>Admin Dashboard</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+
+                  {user?.role === UserRole.Pharmacist && (
+                    <DropdownMenuItem asChild className='cursor-pointer hover:bg-blue-50'>
+                      <Link to='/pharmacist/dashboard' className='flex items-center gap-2'>
+                        <Settings className='h-4 w-4' />
+                        <span>Dược sĩ Dashboard</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+
+                  <DropdownMenuItem asChild className='cursor-pointer hover:bg-blue-50'>
+                    <Link to='/account' className='flex items-center gap-2'>
+                      <User className='h-4 w-4' />
+                      <span>Thông tin tài khoản</span>
+                    </Link>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem asChild className='cursor-pointer hover:bg-blue-50'>
+                    <Link to='/account/orders' className='flex items-center gap-2'>
+                      <Package className='h-4 w-4' />
+                      <span>Đơn hàng của tôi</span>
+                    </Link>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem asChild className='cursor-pointer hover:bg-blue-50'>
+                    <Link to='/account/prescriptions' className='flex items-center gap-2'>
+                      <FileText className='h-4 w-4' />
+                      <span>Đơn thuốc</span>
+                    </Link>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem asChild className='cursor-pointer hover:bg-blue-50'>
+                    <Link to='/account/wishlist' className='flex items-center gap-2'>
+                      <Heart className='h-4 w-4' />
+                      <span>Yêu thích</span>
+                    </Link>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem asChild className='cursor-pointer hover:bg-blue-50'>
+                    <Link to='/account/notifications' className='flex items-center gap-2'>
+                      <Settings className='h-4 w-4' />
+                      <span>Cài đặt</span>
+                    </Link>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator className='bg-blue-100' />
+
+                  <DropdownMenuItem
+                    className='cursor-pointer text-red-600 hover:bg-red-50 hover:text-red-700'
+                    onClick={() => logout()}
+                  >
+                    <LogOut className='h-4 w-4 mr-2' />
+                    <span>Đăng xuất</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
-              <div className='flex items-center space-x-2 ml-2'>
-                {/* Login Button */}
-                <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={handleLoginClick}
-                  className='flex items-center space-x-2 bg-white/50 backdrop-blur-sm border-gray-200/50 hover:border-[#0066CC]/50 hover:bg-blue-50 hover:text-[#0066CC] transition-all duration-200'
-                >
-                  <LogIn className='h-4 w-4' />
-                  <span>Đăng nhập</span>
+              <Link to='/login' className='flex items-center gap-2'>
+                <Button variant='ghost' size='sm' className='flex items-center gap-2 hover:bg-blue-50'>
+                  <User className='w-5 h-5' />
+                  <span className='hidden md:inline'>Đăng nhập</span>
                 </Button>
-
-                {/* Register Button */}
-                <Button
-                  size='sm'
-                  onClick={() => navigate('/auth/register')}
-                  className='bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8] text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-200 hover:scale-105 backdrop-blur-sm'
-                >
-                  <span>Đăng ký</span>
-                </Button>
-              </div>
+              </Link>
             )}
 
-            {/* Mobile Menu */}
-            <Button variant='ghost' size='sm' className='md:hidden p-2 hover:bg-gray-50 transition-all duration-200'>
-              <Menu className='h-4 w-4' />
+            {/* Mobile menu */}
+            <Button variant='ghost' size='sm' className='md:hidden'>
+              <Menu className='w-5 h-5' />
             </Button>
           </div>
         </div>
+      </div>
 
-        {/* Enhanced Mobile Search */}
-        <div className='md:hidden pb-4'>
-          <form onSubmit={handleSearchSubmit} className='relative'>
-            <div
-              className={`absolute left-4 top-1/2 transform -translate-y-1/2 transition-all duration-300 ${
-                searchFocused ? 'text-[#0066CC] scale-110' : 'text-gray-400'
-              }`}
-            >
-              <Search className='h-4 w-4' />
-            </div>
-            <input
-              type='text'
-              placeholder='Tìm thuốc theo tên hoặc hoạt chất...'
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setSearchFocused(false)}
-              className={`w-full pl-12 pr-12 py-3 bg-white/90 backdrop-blur-sm border-2 rounded-2xl shadow-lg transition-all duration-300 focus:outline-none ${
-                searchFocused
-                  ? 'border-[#0066CC] shadow-xl shadow-[#0066CC]/20 bg-white'
-                  : 'border-gray-200/50 hover:border-gray-300/70'
-              } placeholder:text-gray-400 text-sm`}
-            />
-            {searchQuery && (
-              <button
-                type='button'
-                onClick={handleSearchClear}
-                className='absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-all duration-200 hover:scale-110'
+      {/* Navigation */}
+      <div className='border-t border-gray-200 relative'>
+        <div className='max-w-7xl mx-auto px-4'>
+          <nav className='flex items-center gap-8 py-3 relative' onMouseLeave={handleNavigationMouseLeave}>
+            {/* Mobile menu button */}
+            <div className='lg:hidden'>
+              <Link
+                to='/categories'
+                className='flex items-center px-3 py-2 text-primary-500 font-medium hover:text-primary-600 transition-colors duration-200'
               >
-                <X className='h-4 w-4' />
-              </button>
-            )}
-          </form>
+                <Menu className='w-4 h-4 mr-2' />
+                Danh mục
+              </Link>
+            </div>
 
-          {/* Mobile Quick Actions */}
-          <div className='flex items-center justify-center gap-2 mt-3 pt-3 border-t border-gray-100/50'>
-            <Button
-              variant='ghost'
-              size='sm'
-              className='text-xs h-8 px-3 text-amber-600 hover:text-amber-700 hover:bg-amber-50 transition-all duration-200'
+            {/* Desktop Categories with unified mega menu */}
+            <div className='hidden lg:flex items-center gap-8'>
+              {mockCategories.map((category) => (
+                <div key={category.id} className='relative' onMouseEnter={() => handleCategoryHover(category)}>
+                  <Link
+                    to={`/categories/${category.slug}`}
+                    className={`relative flex items-center px-2 py-3 font-medium transition-colors duration-200 group ${
+                      activeMegaMenuCategory?.id === category.id ? 'text-blue-600' : 'text-gray-700 hover:text-blue-600'
+                    }`}
+                  >
+                    {category.name}
+                    <ChevronDown className='w-3 h-3 ml-1 opacity-60' />
+                    <span
+                      className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-blue-600 to-cyan-500 transition-all duration-300 ${
+                        activeMegaMenuCategory?.id === category.id ? 'w-full' : 'w-0 group-hover:w-full'
+                      }`}
+                    ></span>
+                  </Link>
+                </div>
+              ))}
+            </div>
+
+            <Link
+              to='/health-corner'
+              className='relative px-2 py-3 text-gray-700 font-medium hover:text-blue-600 transition-colors duration-200 group'
             >
-              📋 Upload đơn
-            </Button>
-            <Button
-              variant='ghost'
-              size='sm'
-              className='text-xs h-8 px-3 text-green-600 hover:text-green-700 hover:bg-green-50 transition-all duration-200'
+              Bệnh & Góc sức khỏe
+              <span className='absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-cyan-500 group-hover:w-full transition-all duration-300'></span>
+            </Link>
+
+            <Link
+              to='/consultation/chat'
+              className='px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-cyan-600 to-blue-800 hover:from-blue-700 hover:via-cyan-700 hover:to-blue-900 text-white font-medium hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-200 border-0'
             >
-              🩺 Tư vấn
-            </Button>
-            <Button
-              variant='ghost'
-              size='sm'
-              className='text-xs h-8 px-3 text-red-600 hover:text-red-700 hover:bg-red-50 transition-all duration-200'
-            >
-              🚨 Cấp cứu
-            </Button>
-          </div>
+              Tư vấn dược sĩ
+            </Link>
+
+            {/* Unified Mega Menu */}
+            <UnifiedMegaMenu
+              activeCategory={activeMegaMenuCategory}
+              isVisible={isMegaMenuVisible}
+              onClose={handleMegaMenuClose}
+            />
+          </nav>
         </div>
       </div>
     </header>

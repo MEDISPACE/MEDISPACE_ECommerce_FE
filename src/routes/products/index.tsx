@@ -1,4 +1,4 @@
-import ProductsPage from '~/components/products/ProductsPage'
+import { ProductsListingPage } from '~/components/products'
 
 export function meta() {
   return [
@@ -8,5 +8,5 @@ export function meta() {
 }
 
 export default function Products() {
-  return <ProductsPage />
+  return <ProductsListingPage />
 }
