@@ -45,46 +45,17 @@ export interface User {
   medicalProfile?: MedicalProfile
   lisenseNumber?: string
   isOnline?: boolean
+  emailVerifyToken?: string
+  forgotPasswordToken?: string
   createdAt?: string
   updatedAt?: string
 }
 
+// Request/Response types matching backend
 export interface LoginRequest {
   email: string
   password: string
 }
 
-export interface RegisterRequest {
-  firstName: string
-  lastName: string
-  email: string
-  password: string
-  confirm_password: string
-  phoneNumber?: string
-  gender?: number
-}
-
-export interface AuthResponse {
-  message: string
-  result?: {
-    accessToken: string
-    refreshToken: string
-  }
-  userId?: {
-    accessToken: string
-    refreshToken: string
-  }
-}
-
-export interface ApiErrorResponse {
-  message: string
-  errors?: {
-    [key: string]: {
-      msg: string
-      type: string
-      value?: unknown
-      path: string
-      location: string
-    }
-  }
-}
+// Note: API types moved to types/api.ts to avoid conflicts
+// These are kept for backward compatibility

@@ -5,14 +5,10 @@ import * as SliderPrimitive from '@radix-ui/react-slider'
 
 import { cn } from '~/utils/lib'
 
-function Slider({
-  className,
-  defaultValue,
-  value,
-  min = 0,
-  max = 100,
-  ...props
-}: React.ComponentProps<typeof SliderPrimitive.Root>) {
+const Slider = React.forwardRef<
+  React.ElementRef<typeof SliderPrimitive.Root>,
+  React.ComponentProps<typeof SliderPrimitive.Root>
+>(({ className, defaultValue, value, min = 0, max = 100, ...props }, ref) => {
   const _values = React.useMemo(
     () => (Array.isArray(value) ? value : Array.isArray(defaultValue) ? defaultValue : [min, max]),
     [value, defaultValue, min, max],
@@ -20,6 +16,7 @@ function Slider({
 
   return (
     <SliderPrimitive.Root
+      ref={ref}
       data-slot='slider'
       defaultValue={defaultValue}
       value={value}
@@ -51,6 +48,8 @@ function Slider({
       ))}
     </SliderPrimitive.Root>
   )
-}
+})
+
+Slider.displayName = 'Slider'
 
 export { Slider }

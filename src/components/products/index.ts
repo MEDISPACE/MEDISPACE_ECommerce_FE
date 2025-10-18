@@ -1,0 +1,12 @@
+// Products components barrel export
+export { ComparisonTable } from './ComparisonTable'
+export { DrugInteractionChecker } from './DrugInteractionChecker'
+export { FilterSidebar } from './FilterSidebar'
+export { MedicalBadge } from './MedicalBadge'
+export { PriceDisplay } from './PriceDisplay'
+export { ProductCard } from './ProductCard'
+export { ProductComparisonPage } from './ProductComparisonPage'
+export { ProductDetailPage } from './ProductDetailPage'
+export { ProductSearchWidget } from './ProductSearchWidget'
+export { ProductsListingPage } from './ProductsListingPage'
+export { QuantityInput } from './QuantityInput'

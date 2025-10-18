@@ -1,0 +1,184 @@
+import { useEffect } from "react";
+import { Link, useSearchParams } from "react-router";
+import { CheckCircle, Package, MapPin, CreditCard, ArrowRight, Home, FileText } from "lucide-react";
+import { Button } from "../ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Separator } from "../ui/separator";
+import { Badge } from "../ui/badge";
+import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
+
+export function OrderSuccessPage() {
+  const [searchParams] = useSearchParams();
+  const orderId = searchParams.get("orderId") || "DH2025001";
+  const orderTotal = searchParams.get("total") || "1,250,000";
+
+  useEffect(() => {
+    // Scroll to top on mount
+    window.scrollTo(0, 0);
+  }, []);
+
+  const breadcrumbItems = [
+    { label: "Trang chủ", href: "/" },
+    { label: "Thanh toán", href: "/cart/checkout" },
+    { label: "Đặt hàng thành công" }
+  ];
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-12">
+        <UniversalBreadcrumb items={breadcrumbItems} />
+        {/* Success Animation */}
+        <div className="text-center mb-8 animate-slide-in-up">
+          <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-green-400 to-green-600 shadow-lg mb-6 animate-float">
+            <CheckCircle className="w-14 h-14 text-white" />
+          </div>
+          <h1 className="bg-gradient-to-r from-green-600 via-green-500 to-emerald-500 bg-clip-text text-transparent mb-3">
+            Đặt hàng thành công!
+          </h1>
+          <p className="text-xl text-gray-600">
+            Cảm ơn bạn đã tin tưởng và mua sắm tại <span className="text-blue-600">MEDISPACE</span>
+          </p>
+        </div>
+
+        {/* Order Information Card */}
+        <Card className="bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 mb-6 animate-slide-in-up">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50">
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Package className="w-6 h-6 text-blue-600" />
+                <span className="text-blue-900">Thông tin đơn hàng</span>
+              </div>
+              <Badge className="bg-green-100 text-green-800 border-green-200">
+                Đã xác nhận
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6 space-y-4">
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Mã đơn hàng</p>
+                <p className="text-lg font-mono text-blue-600">#{orderId}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Tổng tiền</p>
+                <p className="text-lg text-gray-900">{orderTotal}₫</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Phương thức thanh toán</p>
+                <div className="flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-gray-600" />
+                  <span className="text-gray-900">Thanh toán khi nhận hàng (COD)</span>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Thời gian giao hàng dự kiến</p>
+                <p className="text-gray-900">2-3 ngày làm việc</p>
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <MapPin className="w-5 h-5 text-blue-600 mt-1" />
+                <div className="flex-1">
+                  <p className="text-sm text-blue-800 mb-1">Địa chỉ giao hàng</p>
+                  <p className="text-gray-900">123 Nguyễn Văn Linh, Phường Tân Phú, Quận 7, TP. HCM</p>
+                  <p className="text-sm text-gray-600 mt-1">SĐT: 0901234567</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <p className="text-sm text-yellow-800">
+                📧 <strong>Thông tin đơn hàng đã được gửi đến email của bạn.</strong> Vui lòng kiểm tra hộp thư để theo dõi tình trạng đơn hàng.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Next Steps */}
+        <Card className="bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 mb-6 animate-slide-in-up">
+          <CardHeader>
+            <CardTitle className="text-blue-900">Bước tiếp theo</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-start gap-4 p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors">
+              <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center flex-shrink-0">
+                1
+              </div>
+              <div className="flex-1">
+                <p className="text-gray-900">
+                  Chúng tôi sẽ xác nhận đơn hàng và liên hệ với bạn trong vòng <strong>30 phút</strong>
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="w-10 h-10 rounded-full bg-green-600 text-white flex items-center justify-center flex-shrink-0">
+                2
+              </div>
+              <div className="flex-1">
+                <p className="text-gray-900">
+                  Dược sĩ sẽ kiểm tra và chuẩn bị đơn hàng của bạn
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+              <div className="w-10 h-10 rounded-full bg-purple-600 text-white flex items-center justify-center flex-shrink-0">
+                3
+              </div>
+              <div className="flex-1">
+                <p className="text-gray-900">
+                  Đơn hàng sẽ được giao đến địa chỉ của bạn trong <strong>2-3 ngày</strong>
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in">
+          <Button
+            asChild
+            className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white shadow-lg"
+          >
+            <Link to="/account/orders" className="gap-2">
+              <FileText className="w-5 h-5" />
+              Xem đơn hàng của tôi
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </Button>
+
+          <Button
+            asChild
+            variant="outline"
+            className="border-2 border-blue-500 text-blue-600 hover:bg-blue-50"
+          >
+            <Link to="/" className="gap-2">
+              <Home className="w-5 h-5" />
+              Về trang chủ
+            </Link>
+          </Button>
+        </div>
+
+        {/* Support Information */}
+        <div className="mt-8 text-center">
+          <p className="text-gray-600 mb-2">Cần hỗ trợ? Liên hệ với chúng tôi</p>
+          <div className="flex flex-wrap justify-center gap-4 text-sm">
+            <a href="tel:19001234" className="text-blue-600 hover:text-blue-700 hover:underline">
+              📞 Hotline: 1900 1234
+            </a>
+            <span className="text-gray-300">|</span>
+            <a href="mailto:support@medispace.vn" className="text-blue-600 hover:text-blue-700 hover:underline">
+              ✉️ support@medispace.vn
+            </a>
+            <span className="text-gray-300">|</span>
+            <Link to="/contact" className="text-blue-600 hover:text-blue-700 hover:underline">
+              💬 Chat với dược sĩ
+            </Link>
+          </div>
+        </div>
+      </div>
+  );
+}
