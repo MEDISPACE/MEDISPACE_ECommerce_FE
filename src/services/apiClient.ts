@@ -1,5 +1,6 @@
 import axios from 'axios'
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError, InternalAxiosRequestConfig } from 'axios'
+import { API_ENDPOINTS } from '../constants'
 
 // API base URL - Vite environment variables
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
@@ -85,8 +86,12 @@ class ApiClient {
     return this.client.delete(url, config)
   }
 
+  async patch<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    return this.client.patch(url, data, config)
+  }
+
   private async refreshToken(refreshToken: string) {
-    return axios.post(`${API_BASE_URL}/users/refresh-token`, {
+    return axios.post(`${API_BASE_URL}${API_ENDPOINTS.AUTH.REFRESH_TOKEN}`, {
       refreshToken,
     })
   }
