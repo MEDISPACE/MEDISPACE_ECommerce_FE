@@ -11,12 +11,11 @@ import { Separator } from '../ui/separator'
 import { Badge } from '../ui/badge'
 import { ImageWithFallback } from '~/components/shared/ImageWithFallback'
 import { addToCart, toggleWishlist } from '~/utils/cartUtils'
-import type { CartItem } from '~/types/product'
-import { mockCartItems, mockProducts } from '../../utils/mockData'
+import type { CartItem, Product } from '~/types/product'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
 
 export function ShoppingCartPage() {
-  const [cartItems, setCartItems] = useState<CartItem[]>(mockCartItems)
+  const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [couponCode, setCouponCode] = useState('')
   const [appliedCoupons, setAppliedCoupons] = useState<string[]>([])
 
@@ -57,8 +56,8 @@ export function ShoppingCartPage() {
   // Handle move to wishlist
   const handleMoveToWishlist = (itemId: string) => {
     const item = cartItems.find((item) => item.id === itemId)
-    if (item) {
-      toggleWishlist(item.product.id, item.product.name)
+    if (item && item.product._id) {
+      toggleWishlist(item.product._id, item.product.name)
       handleRemoveItem(itemId)
     }
   }
@@ -76,8 +75,8 @@ export function ShoppingCartPage() {
     setAppliedCoupons((prev) => prev.filter((c) => c !== coupon))
   }
 
-  // Recommended products
-  const recommendedProducts = mockProducts.slice(0, 4)
+  // Recommended products - TODO: Replace with real API call
+  const recommendedProducts: Product[] = []
 
   // Check if all items are selected
   const allSelected = cartItems.length > 0 && cartItems.every((item) => item.selected)
@@ -108,28 +107,30 @@ export function ShoppingCartPage() {
               <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
                 {recommendedProducts.map((product) => (
                   <ProductCard
-                    key={product.id}
+                    key={product._id}
                     product={{
-                      id: product.id,
+                      id: product._id,
                       name: product.name,
                       slug: product.slug,
-                      brand: product.brand,
-                      image: product.image,
-                      originalPrice: product.originalPrice,
-                      salePrice: product.salePrice ?? product.originalPrice ?? 0,
-                      rating: product.rating,
-                      reviewCount: product.reviewCount,
-                      inStock: product.inStock,
-                      isPrescription: product.isPrescription,
-                      isOnSale: product.isOnSale,
+                      brand: product.brand?.name || 'Unknown Brand',
+                      image: product.images?.[0] || product.featuredImage || '/placeholder-product.jpg',
+                      originalPrice: product.discountPercentage && product.discountPercentage > 0 ? Math.round((product.price || 0) / (1 - (product.discountPercentage / 100))) : undefined,
+                      salePrice: product.price || 0,
+                      rating: product.rating || 0,
+                      reviewCount: product.reviewCount || 0,
+                      inStock: product.stockQuantity > 0,
+                      isPrescription: product.requiresPrescription,
+                      isOnSale: (product.discountPercentage || 0) > 0,
+                      discountPercentage: product.discountPercentage || 0,
+                      unit: product.unit,
+                      packaging: product.packaging,
+                      needsConsultation: product.needsConsultation,
                     }}
                     onAddToCart={(productId) => {
-                      const prod = mockProducts.find((p) => p.id === productId)
-                      if (prod) addToCart(productId, prod.name, 1)
+                      addToCart(productId, product.name, 1)
                     }}
                     onToggleWishlist={(productId) => {
-                      const prod = mockProducts.find((p) => p.id === productId)
-                      if (prod) toggleWishlist(productId, prod.name)
+                      toggleWishlist(productId, product.name)
                     }}
                   />
                 ))}
@@ -209,7 +210,7 @@ export function ShoppingCartPage() {
                         >
                           {item.product.name}
                         </Link>
-                        <p className='text-sm text-gray-500 mb-2'>{item.product.brand}</p>
+                        <p className='text-sm text-gray-500 mb-2'>{item.product.brand?.name || 'Unknown Brand'}</p>
                         <p className='text-xs text-gray-400 mb-2'>SKU: {item.product.sku}</p>
 
                         <div className='flex items-center justify-between'>
@@ -447,36 +448,6 @@ export function ShoppingCartPage() {
             </div>
           </div>
         </div>
-
-        {/* Continue Shopping */}
-        {recommendedProducts.length > 0 && (
-          <div className='mt-12'>
-            <h3 className='text-xl font-bold text-blue-800 mb-6'>Có thể bạn quan tâm</h3>
-            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
-              {recommendedProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={{
-                    id: product.id,
-                    name: product.name,
-                    slug: product.slug,
-                    brand: product.brand,
-                    image: product.image,
-                    originalPrice: product.originalPrice,
-                    salePrice: product.salePrice ?? product.originalPrice ?? 0,
-                    rating: product.rating,
-                    reviewCount: product.reviewCount,
-                    inStock: product.inStock,
-                    isPrescription: product.isPrescription,
-                    isOnSale: product.isOnSale,
-                  }}
-                  onAddToCart={(productId) => console.log('Add to cart:', productId)}
-                  onToggleWishlist={(productId) => console.log('Toggle wishlist:', productId)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
       </div>
   )
 }

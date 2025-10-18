@@ -29,23 +29,22 @@ interface UseProductListingReturn {
   totalPages: number
 
   // Actions
-  handleSearch: (e: React.FormEvent) => void
+  handleSearch: (query: string) => void
   resetFilters: () => void
 }
 
 export function useProductListing({
   products,
-  defaultResultsPerPage = 12,
+  defaultResultsPerPage = 20,
 }: UseProductListingOptions): UseProductListingReturn {
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [searchParams] = useSearchParams()
 
   // States
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [sortBy, setSortBy] = useState('newest')
+  const [sortBy, setSortBy] = useState(searchParams.get('sort') || 'newest')
   const [resultsPerPage, setResultsPerPage] = useState(defaultResultsPerPage)
   const [currentPage, setCurrentPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '')
-
   const [filters, setFilters] = useState<ProductFilter>({
     categories: [],
     brands: [],
@@ -62,40 +61,40 @@ export function useProductListing({
       if (
         searchQuery &&
         !product.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !product.description.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !product.brand.toLowerCase().includes(searchQuery.toLowerCase())
+        !(product.shortDescription?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) &&
+        !(product.brand?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false)
       ) {
         return false
       }
 
       // Category filter
-      if (filters.categories.length > 0 && !filters.categories.includes(product.categorySlug)) {
+      if (filters.categories.length > 0 && !filters.categories.includes(product.category?.slug || '')) {
         return false
       }
 
       // Brand filter
-      if (filters.brands.length > 0 && !filters.brands.includes(product.brand)) {
+      if (filters.brands.length > 0 && !filters.brands.includes(product.brand?.name || '')) {
         return false
       }
 
       // Price filter
-      const productPrice = product.salePrice || product.originalPrice || 0
+      const productPrice = product.price || 0
       if (productPrice < filters.priceRange[0] || productPrice > filters.priceRange[1]) {
         return false
       }
 
       // Rating filter
-      if (filters.rating > 0 && product.rating < filters.rating) {
+      if (filters.rating > 0 && (product.rating || 0) < filters.rating) {
         return false
       }
 
       // Stock filter
-      if (filters.inStock === true && !product.inStock) {
+      if (filters.inStock === true && product.stockQuantity <= 0) {
         return false
       }
 
       // Prescription filter
-      if (filters.isPrescription === true && !product.isPrescription) {
+      if (filters.isPrescription === true && !product.requiresPrescription) {
         return false
       }
 
@@ -108,13 +107,13 @@ export function useProductListing({
     return [...filteredProducts].sort((a, b) => {
       switch (sortBy) {
         case 'price-asc':
-          return (a.salePrice || a.originalPrice || 0) - (b.salePrice || b.originalPrice || 0)
+          return (a.price || 0) - (b.price || 0)
         case 'price-desc':
-          return (b.salePrice || b.originalPrice || 0) - (a.salePrice || a.originalPrice || 0)
+          return (b.price || 0) - (a.price || 0)
         case 'rating':
-          return b.rating - a.rating
+          return (b.rating || 0) - (a.rating || 0)
         case 'bestseller':
-          return b.reviewCount - a.reviewCount
+          return (b.reviewCount || 0) - (a.reviewCount || 0)
         case 'newest':
         default:
           return a.name.localeCompare(b.name)
@@ -124,21 +123,17 @@ export function useProductListing({
 
   // Pagination
   const totalPages = Math.ceil(sortedProducts.length / resultsPerPage)
-  const startIndex = (currentPage - 1) * resultsPerPage
-  const paginatedProducts = sortedProducts.slice(startIndex, startIndex + resultsPerPage)
+  const paginatedProducts = sortedProducts.slice(
+    (currentPage - 1) * resultsPerPage,
+    currentPage * resultsPerPage,
+  )
 
-  // Handle search
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (searchQuery) {
-      setSearchParams({ q: searchQuery })
-    } else {
-      setSearchParams({})
-    }
+  // Actions
+  const handleSearch = (query: string) => {
+    setSearchQuery(query)
     setCurrentPage(1)
   }
 
-  // Reset filters
   const resetFilters = () => {
     setFilters({
       categories: [],

@@ -1,17 +1,17 @@
 import { useState } from 'react'
-import { useSearchParams, useNavigate } from 'react-router'
+import { useNavigate } from 'react-router'
 import { CheckCircle, ArrowLeft, Clock, UserCheck, Package, Upload } from 'lucide-react'
 
 import { Button } from '../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Alert, AlertDescription } from '../ui/alert'
 import { Badge } from '../ui/badge'
-import { mockProducts } from '../../utils/mockData'
 import { ImageUploader } from '../forms/ImageUploader'
 import { PrescriptionForm } from '../forms/PrescriptionForm'
 import { ProgressStepper } from '../forms/ProgressStepper'
 import { toast } from 'sonner'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
+import type { Product } from '../../types/product'
 
 interface UploadedImage {
   id: string
@@ -27,20 +27,18 @@ const uploadSteps = [
 ]
 
 export function UploadPrescriptionPage() {
-  const [searchParams] = useSearchParams()
   const navigate = useNavigate()
-  const productSlug = searchParams.get('product')
 
   const [currentStep, setCurrentStep] = useState(1)
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([])
   const [prescriptionId, setPrescriptionId] = useState<string | null>(null)
 
-  // Find product if specified
-  const product = productSlug ? mockProducts.find((p) => p.slug === productSlug) : null
+  // Find product if specified - TODO: Replace with real API call
+  const product: Product | null = null // productSlug ? mockProducts.find((p: Product) => p.slug === productSlug) : null
 
   const breadcrumbItems = [
     { label: 'Trang chủ', href: '/' },
-    ...(product ? [{ label: product.name, href: `/products/${product.slug}` }] : []),
+    ...(product ? [{ label: (product as Product).name, href: `/products/${(product as Product).slug}` }] : []),
     { label: 'Upload đơn thuốc' },
   ]
 
@@ -232,14 +230,14 @@ export function UploadPrescriptionPage() {
                   <CardContent>
                     <div className='flex gap-3'>
                       <img
-                        src={product.image}
-                        alt={product.name}
+                        src={(product as Product).images?.[0] || (product as Product).featuredImage || '/placeholder-product.jpg'}
+                        alt={(product as Product).name}
                         className='w-16 h-16 object-cover rounded border border-gray-200'
                       />
                       <div className='flex-1'>
-                        <h3 className='font-medium line-clamp-2'>{product.name}</h3>
-                        <p className='text-sm text-gray-500'>{product.brand}</p>
-                        {product.isPrescription && (
+                        <h3 className='font-medium line-clamp-2'>{(product as Product).name}</h3>
+                        <p className='text-sm text-gray-500'>{(product as Product).brand?.name || 'Unknown Brand'}</p>
+                        {(product as Product).requiresPrescription && (
                           <Badge variant='destructive' className='mt-1 text-xs'>
                             Kê đơn
                           </Badge>

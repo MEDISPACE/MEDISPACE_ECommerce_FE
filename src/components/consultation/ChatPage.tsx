@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react'
-import { useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import { Settings, X } from 'lucide-react'
 
@@ -7,10 +6,11 @@ import { Button } from '../ui/button'
 import { Card, CardContent, CardHeader } from '../ui/card'
 import { Badge } from '../ui/badge'
 import { Alert, AlertDescription } from '../ui/alert'
-import { mockProducts } from '../../utils/mockData'
 import { ChatBubble } from './ChatBubble'
 import { ChatInput } from './ChatInput'
 import { PharmacistInfo } from './PharmacistInfo'
+import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
+import type { Product } from '../../types/product'
 
 interface ChatMessage {
   id: string
@@ -98,14 +98,12 @@ const mockOrders = [
 ]
 
 export function ChatPage() {
-  const [searchParams] = useSearchParams()
-  const productSlug = searchParams.get('product')
   const [messages, setMessages] = useState<ChatMessage[]>(mockMessages)
   const [isTyping, setIsTyping] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // Find product if specified
-  const product = productSlug ? mockProducts.find((p) => p.slug === productSlug) : null
+  // Find product if specified - TODO: Replace with real API call
+  const product: Product | null = null // productSlug ? mockProducts.find((p: Product) => p.slug === productSlug) : null
 
   // Note: UniversalBreadcrumb automatically adds "Trang chủ" with showHomeLink=true
   // So we only need to specify additional breadcrumb items here
@@ -246,10 +244,10 @@ export function ChatPage() {
                   <Alert className='border-blue-200 bg-blue-50'>
                     <AlertDescription>
                       <div className='flex items-center gap-3'>
-                        <img src={product.image} alt={product.name} className='w-12 h-12 object-cover rounded border' />
+                        <img src={(product as Product).images?.[0] || (product as Product).featuredImage || '/placeholder-product.jpg'} alt={(product as Product).name} className='w-12 h-12 object-cover rounded border' />
                         <div>
-                          <p className='font-medium'>Tư vấn về: {product.name}</p>
-                          <p className='text-sm text-gray-600'>{product.brand}</p>
+                          <p className='font-medium'>Tư vấn về: {(product as Product).name}</p>
+                          <p className='text-sm text-gray-600'>{(product as Product).brand?.name || 'Unknown Brand'}</p>
                         </div>
                       </div>
                     </AlertDescription>

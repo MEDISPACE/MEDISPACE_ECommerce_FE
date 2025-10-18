@@ -6,8 +6,10 @@ import { Card, CardContent } from '../ui/card'
 import { Badge } from '../ui/badge'
 import { Separator } from '../ui/separator'
 import { useNavigate } from 'react-router'
-import { mockProducts, mockCategories } from '../../utils/mockData'
+import { productService } from '../../services/productService'
+import { categoryService } from '../../services/categoryService'
 import { useSearchHistory } from '../../utils/useSearchHistory'
+import type { Product, Category } from '../../types/product'
 
 interface SearchSuggestion {
   id: string
@@ -34,12 +36,31 @@ export function EnhancedSearchBar({
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([])
   const [selectedIndex, setSelectedIndex] = useState(-1)
   const [isUploading, setIsUploading] = useState(false)
+  const [products, setProducts] = useState<Product[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
 
   const searchRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
   const { recentSearches, addToHistory, removeFromHistory } = useSearchHistory()
+
+  // Load data on mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [productsData, categoriesData] = await Promise.all([
+          productService.getProducts(), // Get products for search
+          categoryService.getCategories()
+        ])
+        setProducts(productsData)
+        setCategories(categoriesData)
+      } catch (error) {
+        console.error('Error loading search data:', error)
+      }
+    }
+    loadData()
+  }, [])
 
   // Trending searches
   const trendingSearches = ['Paracetamol', 'Vitamin D3', 'Kem dưỡng da', 'Thuốc ho', 'Canxi']
@@ -59,24 +80,24 @@ export function EnhancedSearchBar({
       const query = searchQuery.toLowerCase().trim()
 
       // Product suggestions
-      const productMatches = mockProducts
+      const productMatches = products
         .filter(
           (product) =>
             product.name.toLowerCase().includes(query) ||
-            product.brand.toLowerCase().includes(query) ||
-            product.category.toLowerCase().includes(query),
+            product.brand?.name?.toLowerCase().includes(query) ||
+            product.category?.name?.toLowerCase().includes(query),
         )
         .slice(0, 4)
         .map((product) => ({
-          id: `product-${product.id}`,
+          id: `product-${product._id}`,
           text: product.name,
           type: 'product' as const,
           slug: product.slug,
-          icon: product.isPrescription ? '🔴' : '💊',
+          icon: product.requiresPrescription ? '🔴' : '💊',
         }))
 
       // Category suggestions
-      const categoryMatches = mockCategories
+      const categoryMatches = categories
         .filter(
           (category) =>
             category.name.toLowerCase().includes(query) ||
@@ -84,15 +105,15 @@ export function EnhancedSearchBar({
         )
         .slice(0, 3)
         .map((category) => ({
-          id: `category-${category.id}`,
+          id: `category-${category._id}`,
           text: category.name,
           type: 'category' as const,
           slug: category.slug,
-          icon: category.icon,
+          icon: '📁',
         }))
 
       // Brand suggestions
-      const brands = Array.from(new Set(mockProducts.map((p) => p.brand)))
+      const brands = Array.from(new Set(products.map((p) => p.brand?.name).filter(Boolean) as string[]))
         .filter((brand) => brand.toLowerCase().includes(query))
         .slice(0, 3)
         .map((brand) => ({
@@ -118,7 +139,7 @@ export function EnhancedSearchBar({
     }, 300)
 
     return () => clearTimeout(timer)
-  }, [searchQuery])
+  }, [searchQuery, products, categories])
 
   // Close dropdown when clicking outside
   useEffect(() => {

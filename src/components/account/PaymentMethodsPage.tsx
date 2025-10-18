@@ -99,8 +99,6 @@ export function PaymentMethodsPage() {
     saveForFuture: false,
   })
 
-  const breadcrumbItems = [{ label: 'Tài khoản', href: '/account' }, { label: 'Phương thức thanh toán' }]
-
   const handleAddPaymentMethod = () => {
     setEditingMethod(null)
     setCardForm({

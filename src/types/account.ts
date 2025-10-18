@@ -1,3 +1,5 @@
+import type { Product } from './product'
+
 export interface User {
   id: string;
   email: string;
@@ -129,7 +131,7 @@ export interface SearchFilters {
 }
 
 export interface SearchResult {
-  products: any[];
+  products: Product[];
   totalCount: number;
   suggestions?: string[];
   relatedSearches?: string[];

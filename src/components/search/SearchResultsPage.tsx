@@ -41,13 +41,11 @@ export function SearchResultsPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [brands, setBrands] = useState<Brand[]>([])
-  const [loading, setLoading] = useState(true)
 
   // Fetch data on component mount
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true)
         const [productsData, categoriesData, brandsData] = await Promise.all([
           productService.searchProducts(searchQuery),
           categoryService.getCategories(),
@@ -58,8 +56,6 @@ export function SearchResultsPage() {
         setBrands(brandsData)
       } catch (error) {
         console.error('Error fetching search data:', error)
-      } finally {
-        setLoading(false)
       }
     }
 

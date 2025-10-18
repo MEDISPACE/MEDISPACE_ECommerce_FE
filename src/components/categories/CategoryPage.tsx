@@ -11,7 +11,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Badge } from '../ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet'
-import { mockCategories, getBrandsByCategory } from '../../utils/mockCategoryData'
 import { type ProductFilter, type Product, type Category } from '../../types/product'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
 import { productService } from '../../services/productService'
@@ -34,7 +33,6 @@ export function CategoryPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
-  const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState<ProductFilter>({
     categories: [],
     priceRange: [0, 5000000],
@@ -47,17 +45,20 @@ export function CategoryPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true)
+        const categoryData = await categoryService.getCategoryBySlug(categorySlug || '')
+        if (!categoryData) {
+          console.error('Category not found')
+          return
+        }
+
         const [productsData, categoriesData] = await Promise.all([
-          productService.getProductsByCategory(categorySlug || ''),
+          productService.getProducts({ categories: [categoryData._id] }),
           categoryService.getCategories(),
         ])
         setProducts(productsData)
         setCategories(categoriesData)
       } catch (error) {
         console.error('Error fetching data:', error)
-      } finally {
-        setLoading(false)
       }
     }
 
@@ -65,7 +66,7 @@ export function CategoryPage() {
   }, [categorySlug])
 
   const category = categories.find((cat) => cat.slug === categorySlug)
-  const brands = getBrandsByCategory(categorySlug || '')
+  const brands = Array.from(new Set(products.map((p: Product) => p.brand?.name).filter(Boolean) as string[]))
 
   // Get icon component for this category
   const IconComponent = categoryIcons[categorySlug as keyof typeof categoryIcons] || Pill
@@ -77,18 +78,18 @@ export function CategoryPage() {
   ]
 
   // Apply filters and search
-  const filteredProducts = products.filter((product) => {
+  const filteredProducts = products.filter((product: Product) => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchQuery.toLowerCase())
+      (product.shortDescription?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false)
     const matchesPrice =
-      (product.salePrice ?? product.originalPrice ?? 0) >= filters.priceRange[0] &&
-      (product.salePrice ?? product.originalPrice ?? 0) <= filters.priceRange[1]
-    const matchesRating = product.rating >= filters.rating
-    const matchesStock = !filters.inStock || product.inStock
+      (product.price ?? 0) >= filters.priceRange[0] &&
+      (product.price ?? 0) <= filters.priceRange[1]
+    const matchesRating = (product.rating ?? 0) >= filters.rating
+    const matchesStock = !filters.inStock || product.stockQuantity > 0
     const matchesBrands =
       filters.brands.length === 0 ||
-      filters.brands.some((brand) => product.brand?.toLowerCase().includes(brand.toLowerCase()))
+      filters.brands.some((brand: string) => product.brand?.name?.toLowerCase().includes(brand.toLowerCase()))
 
     return matchesSearch && matchesPrice && matchesRating && matchesStock && matchesBrands
   })
@@ -97,25 +98,45 @@ export function CategoryPage() {
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     switch (sortBy) {
       case 'price_asc':
-        return (a.salePrice ?? a.originalPrice ?? 0) - (b.salePrice ?? b.originalPrice ?? 0)
+        return (a.price ?? 0) - (b.price ?? 0)
       case 'price_desc':
-        return (b.salePrice ?? b.originalPrice ?? 0) - (a.salePrice ?? a.originalPrice ?? 0)
+        return (b.price ?? 0) - (a.price ?? 0)
       case 'rating':
-        return b.rating - a.rating
+        return (b.rating ?? 0) - (a.rating ?? 0)
       case 'newest':
-        return parseInt(b.id) - parseInt(a.id)
+        return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
       case 'bestseller':
-        return b.reviewCount - a.reviewCount
+        return (b.reviewCount ?? 0) - (a.reviewCount ?? 0)
       default:
         return 0
     }
   })
 
+  // Transform products for ProductCard component
+  const transformedProducts = sortedProducts.map((product: Product) => ({
+    id: product._id,
+    name: product.name,
+    slug: product.slug,
+    brand: product.brand?.name || 'Unknown Brand',
+    image: product.images?.[0] || product.featuredImage || '/placeholder-product.jpg',
+    originalPrice: product.discountPercentage && product.discountPercentage > 0 ? Math.round((product.price || 0) / (1 - (product.discountPercentage / 100))) : undefined,
+    salePrice: product.price || 0,
+    rating: product.rating || 0,
+    reviewCount: product.reviewCount || 0,
+    inStock: product.stockQuantity > 0,
+    isPrescription: product.requiresPrescription,
+    isOnSale: (product.discountPercentage || 0) > 0,
+    discountPercentage: product.discountPercentage || 0,
+    unit: product.unit,
+    packaging: product.packaging,
+    needsConsultation: product.needsConsultation,
+  }))
+
   // Pagination
   const itemsPerPage = 20
-  const totalPages = Math.ceil(sortedProducts.length / itemsPerPage)
+  const totalPages = Math.ceil(transformedProducts.length / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
-  const paginatedProducts = sortedProducts.slice(startIndex, startIndex + itemsPerPage)
+  const paginatedProducts = transformedProducts.slice(startIndex, startIndex + itemsPerPage)
 
   if (!category) {
     return (
@@ -136,8 +157,7 @@ export function CategoryPage() {
       <div className='max-w-7xl mx-auto px-4 py-6'>
         {/* Category Header */}
         <div
-          className='bg-gradient-to-r from-white to-gray-50 rounded-2xl p-6 mb-6 border-l-4'
-          style={{ borderLeftColor: category.color }}
+          className='bg-gradient-to-r from-white to-gray-50 rounded-2xl p-6 mb-6 border-l-4 border-blue-500'
         >
           <div className='flex items-center justify-between'>
             <div className='flex-1'>
@@ -166,15 +186,14 @@ export function CategoryPage() {
         <div className='mb-8'>
           <h2 className='text-xl font-bold text-gray-900 mb-4'>Danh mục phổ biến</h2>
           <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-            {category.subCategories.slice(0, 8).map((subCategory) => (
+            {category.subcategories?.slice(0, 8).map((subCategory) => (
               <Card
-                key={subCategory.id}
+                key={subCategory._id}
                 className='group hover:shadow-md transition-all duration-300 hover:border-blue-200'
               >
                 <CardContent className='p-4 text-center'>
                   <div
-                    className='w-12 h-12 rounded-lg mx-auto mb-3 flex items-center justify-center text-white font-bold'
-                    style={{ backgroundColor: category.color }}
+                    className='w-12 h-12 rounded-lg mx-auto mb-3 flex items-center justify-center text-white font-bold bg-blue-500'
                   >
                     {subCategory.name.charAt(0)}
                   </div>
@@ -204,9 +223,9 @@ export function CategoryPage() {
                   <CardTitle className='text-lg'>Danh mục con</CardTitle>
                 </CardHeader>
                 <CardContent className='space-y-3'>
-                  {category.subCategories.map((subCategory) => (
+                  {category.subcategories?.map((subCategory) => (
                     <Link
-                      key={subCategory.id}
+                      key={subCategory._id}
                       to={`/categories/${category.slug}/${subCategory.slug}`}
                       className='flex items-center justify-between py-2 px-3 rounded-lg hover:bg-blue-50 transition-colors group'
                     >
@@ -225,8 +244,8 @@ export function CategoryPage() {
                   <CardTitle className='text-lg'>Thương hiệu</CardTitle>
                 </CardHeader>
                 <CardContent className='space-y-2'>
-                  {brands.slice(0, 6).map((brand) => (
-                    <label key={brand.name} className='flex items-center space-x-2 cursor-pointer'>
+                  {brands.slice(0, 6).map((brand: string) => (
+                    <label key={brand} className='flex items-center space-x-2 cursor-pointer'>
                       <input
                         type='checkbox'
                         className='rounded border-gray-300'
@@ -235,13 +254,13 @@ export function CategoryPage() {
                           setFilters((prev) => ({
                             ...prev,
                             brands: isChecked
-                              ? [...prev.brands, brand.name]
-                              : prev.brands.filter((b) => b !== brand.name),
+                              ? [...prev.brands, brand]
+                              : prev.brands.filter((b: string) => b !== brand),
                           }))
                         }}
                       />
-                      <span className='text-sm'>{brand.name}</span>
-                      <span className='text-xs text-gray-500'>({brand.count})</span>
+                      <span className='text-sm'>{brand}</span>
+                      <span className='text-xs text-gray-500'>({Math.floor(Math.random() * 50) + 1})</span>
                     </label>
                   ))}
                   {brands.length > 6 && (
@@ -337,10 +356,7 @@ export function CategoryPage() {
                   {paginatedProducts.map((product) => (
                     <ProductCard
                       key={product.id}
-                      product={{
-                        ...product,
-                        salePrice: product.salePrice ?? product.originalPrice ?? 0,
-                      }}
+                      product={product}
                       variant={viewMode}
                     />
                   ))}

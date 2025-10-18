@@ -82,8 +82,6 @@ export function AddressBookPage() {
     isDefault: false,
   })
 
-  const breadcrumbItems = [{ label: 'Tài khoản', href: '/account' }, { label: 'Sổ địa chỉ' }]
-
   const filteredAddresses = addresses.filter(
     (address) =>
       address.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

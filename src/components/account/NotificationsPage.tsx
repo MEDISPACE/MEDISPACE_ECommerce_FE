@@ -103,8 +103,6 @@ export function NotificationsPage() {
     quietHours: true,
   })
 
-  const breadcrumbItems = [{ label: 'Tài khoản', href: '/account' }, { label: 'Thông báo' }]
-
   const filteredNotifications = notifications.filter((notification) => {
     if (activeTab === 'all') return true
     if (activeTab === 'unread') return !notification.isRead

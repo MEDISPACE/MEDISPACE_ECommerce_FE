@@ -81,8 +81,6 @@ export function WishlistPage() {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false)
   const [shareEmail, setShareEmail] = useState('')
 
-  const breadcrumbItems = [{ label: 'Tài khoản', href: '/account' }, { label: 'Sản phẩm yêu thích' }]
-
   const sortedProducts = [...wishlistProducts].sort((a, b) => {
     switch (sortBy) {
       case 'newest':

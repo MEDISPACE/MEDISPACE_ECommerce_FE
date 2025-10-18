@@ -114,11 +114,9 @@ const mockPatients: Patient[] = [
 ]
 
 export function PatientHistoryPage() {
-  const [patients, setPatients] = useState<Patient[]>(mockPatients)
+  const [patients] = useState<Patient[]>(mockPatients)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
-
-  const breadcrumbItems = [{ label: 'Dược sĩ', href: '/pharmacist/dashboard' }, { label: 'Lịch sử bệnh nhân' }]
 
   // Filter patients
   const filteredPatients = patients.filter(

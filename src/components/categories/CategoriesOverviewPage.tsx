@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router'
 import { motion } from 'framer-motion'
 import { addToCart, toggleWishlist } from '../../utils/cartUtils'
@@ -24,10 +24,11 @@ import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Badge } from '../ui/badge'
-import { mockCategories } from '../../utils/mockCategoryData'
-import { mockProducts } from '../../utils/mockData'
+import { categoryService } from '../../services/categoryService'
+import { productService } from '../../services/productService'
 import { ProductCard } from '../products/ProductCard'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
+import type { Category, Product } from '../../types/product'
 
 type CategoryIconType = React.ComponentType<React.SVGProps<SVGSVGElement>>
 
@@ -48,11 +49,40 @@ const stats = [
 ]
 
 export function CategoriesOverviewPage() {
+  const [categories, setCategories] = useState<Category[]>([])
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
   // Featured products carousel state
-  const allFeaturedProducts = mockProducts.slice(0, Math.min(12, mockProducts.length))
   const [featuredCurrentIndex, setFeaturedCurrentIndex] = useState(0)
   const featuredProductsPerPage = 4
-  const featuredTotalPages = Math.ceil(allFeaturedProducts.length / featuredProductsPerPage)
+  const featuredTotalPages = Math.ceil(featuredProducts.length / featuredProductsPerPage)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+
+        // Fetch categories and featured products in parallel
+        const [categoriesData, productsData] = await Promise.all([
+          categoryService.getCategories(),
+          productService.getFeaturedProducts(12)
+        ])
+
+        setCategories(categoriesData)
+        setFeaturedProducts(productsData)
+      } catch (error) {
+        console.error('Error fetching data:', error)
+        setError('Không thể tải dữ liệu. Vui lòng thử lại sau.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
 
   const scrollFeatured = (direction: 'left' | 'right') => {
     if (direction === 'left') {
@@ -64,7 +94,31 @@ export function CategoriesOverviewPage() {
 
   const breadcrumbItems = [{ label: 'Danh mục sản phẩm' }]
 
-  const filteredCategories = mockCategories
+  const filteredCategories = categories
+
+  if (loading) {
+    return (
+      <div className='min-h-screen flex items-center justify-center'>
+        <div className='text-center'>
+          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4'></div>
+          <p className='text-gray-600'>Đang tải danh mục sản phẩm...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className='min-h-screen flex items-center justify-center'>
+        <div className='text-center'>
+          <div className='text-red-500 mb-4'>⚠️ {error}</div>
+          <Button onClick={() => window.location.reload()}>
+            Thử lại
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className='min-h-screen'>
@@ -168,7 +222,7 @@ export function CategoriesOverviewPage() {
                       <div
                         className='absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500'
                         style={{
-                          background: `linear-gradient(135deg, ${category.color}20, ${category.color}10)`,
+                          background: `linear-gradient(135deg, #0066CC20, #0066CC10)`,
                         }}
                       />
 
@@ -177,7 +231,7 @@ export function CategoriesOverviewPage() {
                           <motion.div
                             className='w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300'
                             style={{
-                              background: `linear-gradient(135deg, ${category.color}, ${category.color}dd)`,
+                              background: `linear-gradient(135deg, #0066CC, #0066CCdd)`,
                             }}
                             whileHover={{ rotate: 5 }}
                           >
@@ -197,7 +251,7 @@ export function CategoriesOverviewPage() {
 
                         {/* Top subcategories */}
                         <div className='space-y-1.5 mb-4 flex-1'>
-                          {category.subCategories.slice(0, 3).map((sub) => (
+                          {category.subcategories?.slice(0, 3).map((sub: Category) => (
                             <div
                               key={sub.id}
                               className='flex items-center justify-between text-sm bg-gray-50 rounded-lg px-2.5 py-1.5 hover:bg-blue-50 transition-colors'
@@ -206,9 +260,9 @@ export function CategoriesOverviewPage() {
                               <span className='text-blue-600 font-medium text-xs'>({sub.productCount})</span>
                             </div>
                           ))}
-                          {category.subCategories.length > 3 && (
+                          {category.subcategories && category.subcategories.length > 3 && (
                             <div className='text-xs text-gray-500 text-center py-1'>
-                              +{category.subCategories.length - 3} danh mục khác
+                              +{category.subcategories!.length - 3} danh mục khác
                             </div>
                           )}
                         </div>
@@ -324,7 +378,7 @@ export function CategoriesOverviewPage() {
                       key={pageIndex}
                       className='w-full flex-shrink-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 p-[10px] m-[10px]'
                     >
-                      {allFeaturedProducts.slice(pageIndex * 4, (pageIndex + 1) * 4).map((product, productIndex) => (
+                      {featuredProducts.slice(pageIndex * 4, (pageIndex + 1) * 4).map((product, productIndex) => (
                         <motion.div
                           key={`${product.id}-${pageIndex}`}
                           className='h-full'
@@ -342,17 +396,29 @@ export function CategoriesOverviewPage() {
                         >
                           <ProductCard
                             product={{
-                              ...product,
-                              salePrice: product.salePrice ?? product.originalPrice ?? 0,
+                              id: product._id,
+                              name: product.name,
+                              slug: product.slug,
+                              brand: product.brand?.name || 'Unknown',
+                              image: product.featuredImage || '/images/product-placeholder.jpg',
+                              originalPrice: product.price || 0,
+                              salePrice: product.price || 0,
+                              rating: product.rating || 0,
+                              reviewCount: product.reviewCount || 0,
+                              inStock: product.stockQuantity > 0,
+                              isPrescription: product.requiresPrescription,
+                              isOnSale: false,
+                              discountPercentage: 0,
+                              unit: 'Hộp',
+                              packaging: '',
+                              needsConsultation: false,
                             }}
                             variant='grid'
                             onAddToCart={(productId) => {
-                              const prod = mockProducts.find((p) => p.id === productId)
-                              if (prod) addToCart(productId, prod.name, 1)
+                              addToCart(productId, product.name, 1)
                             }}
                             onToggleWishlist={(productId) => {
-                              const prod = mockProducts.find((p) => p.id === productId)
-                              if (prod) toggleWishlist(productId, prod.name)
+                              toggleWishlist(productId, product.name)
                             }}
                           />
                         </motion.div>

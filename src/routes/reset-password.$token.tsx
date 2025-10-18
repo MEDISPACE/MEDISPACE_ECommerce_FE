@@ -1,7 +1,7 @@
 import { useParams } from 'react-router'
 import { AuthLayout } from '~/components/layout/AuthLayout'
 
-export function meta({ params }: { params: { token: string } }) {
+export function meta() {
   return [
     { title: 'Đặt lại mật khẩu | MEDISPACE' },
     { name: 'description', content: 'Đặt lại mật khẩu mới cho tài khoản' },

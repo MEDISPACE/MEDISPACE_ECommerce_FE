@@ -13,7 +13,6 @@ import {
   Baby,
   Heart,
 } from 'lucide-react'
-import type { Product } from '../../types/product'
 import { useWishlist } from '../../hooks/product/useWishlist'
 
 import { Button } from '../ui/button'
@@ -21,11 +20,42 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Input } from '../ui/input'
 import { Alert, AlertDescription } from '../ui/alert'
 import { ComparisonTable } from './ComparisonTable'
-import { productService } from '../../services/productService'
 import { toast } from 'sonner'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
 
-// Simplified mock comparison products
+// Local interface for comparison products (matches mock data structure)
+interface ComparisonProduct {
+  id: string
+  name: string
+  brand: string
+  image: string
+  price: number
+  onSale?: boolean
+  salePrice?: number
+  unit: string
+  rating: number
+  reviewCount: number
+  activeIngredient: string
+  uses: string[]
+  dosageForm: string
+  targetAudience: {
+    adults: boolean
+    children: boolean
+    childrenAge?: string
+    pregnancy: boolean
+  }
+  dosage: string
+  contraindications: string[]
+  sideEffects: string[]
+  origin: string
+  shelfLife: string
+  storage: string
+  stock: number
+  shipping: {
+    express: boolean
+    standard: boolean
+  }
+}
 const mockComparisonProducts = [
   {
     id: '1',
@@ -64,7 +94,7 @@ export function ProductComparisonPage() {
   const navigate = useNavigate()
   const [products, setProducts] = useState(mockComparisonProducts)
   const [searchTerm, setSearchTerm] = useState('')
-  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [searchResults, setSearchResults] = useState<ComparisonProduct[]>([])
   const { toggleWishlist, isInWishlist } = useWishlist()
 
   const breadcrumbItems = [

@@ -40,12 +40,6 @@ export function OrderDetailPage() {
     )
   }
 
-  const breadcrumbItems = [
-    { label: 'Tài khoản', href: '/account' },
-    { label: 'Đơn hàng', href: '/account/orders' },
-    { label: `#${order.orderNumber}` },
-  ]
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('vi-VN', {
       day: '2-digit',

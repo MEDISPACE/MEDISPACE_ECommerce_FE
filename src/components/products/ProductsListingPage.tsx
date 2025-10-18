@@ -31,18 +31,14 @@ import type { Product } from '../../types/product'
 
 export function ProductsListingPage() {
   const [products, setProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        setLoading(true)
         const productsData = await productService.getProducts()
         setProducts(productsData)
       } catch (error) {
         console.error('Error fetching products:', error)
-      } finally {
-        setLoading(false)
       }
     }
 
@@ -72,6 +68,12 @@ export function ProductsListingPage() {
     handleSearch,
     resetFilters,
   } = useProductListing({ products })
+
+  // Handle form submit for search
+  const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    handleSearch(searchQuery)
+  }
 
   // Breadcrumb generation
   const breadcrumbItems = useBreadcrumbGeneration({ searchQuery })
@@ -174,7 +176,7 @@ export function ProductsListingPage() {
                 <StaggerItem>
                   <Card className='border-blue-100 mb-6'>
                     <CardContent className='p-4'>
-                      <form onSubmit={handleSearch} className='flex gap-3'>
+                      <form onSubmit={handleFormSubmit} className='flex gap-3'>
                         <div className='flex-1 relative'>
                           <SearchIcon className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5' />
                           <Input
