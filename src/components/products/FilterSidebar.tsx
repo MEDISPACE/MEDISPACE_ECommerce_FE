@@ -24,12 +24,10 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
   const [brandSearch, setBrandSearch] = useState('')
   const [categories, setCategories] = useState<Category[]>([])
   const [brands, setBrands] = useState<Brand[]>([])
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true)
         const [categoriesData, brandsData] = await Promise.all([
           categoryService.getCategories(),
           brandService.getBrands(),
@@ -38,8 +36,6 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
         setBrands(brandsData)
       } catch (error) {
         console.error('Error fetching filter data:', error)
-      } finally {
-        setLoading(false)
       }
     }
 

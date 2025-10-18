@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react'
-import { mockProducts } from '~/utils/mockData'
 import type { Product } from '~/types/product'
 
 interface FilterOptions {
@@ -9,6 +8,11 @@ interface FilterOptions {
   inStock?: boolean
   isPrescription?: boolean
   searchQuery?: string
+}
+
+interface UseProductFilterProps {
+  products: Product[]
+  initialFilters?: FilterOptions
 }
 
 interface UseProductFilterReturn {
@@ -23,15 +27,15 @@ interface UseProductFilterReturn {
  * Hook for filtering and searching products
  * Provides comprehensive filtering capabilities
  */
-export const useProductFilter = (initialFilters: FilterOptions = {}): UseProductFilterReturn => {
+export const useProductFilter = ({ products, initialFilters = {} }: UseProductFilterProps): UseProductFilterReturn => {
   const [filters, setFilters] = useState<FilterOptions>(initialFilters)
 
   const filteredProducts = useMemo(() => {
-    let results = [...mockProducts]
+    let results = [...products]
 
     // Category filter
     if (filters.category) {
-      results = results.filter((product) => product.category?.toLowerCase().includes(filters.category!.toLowerCase()))
+      results = results.filter((product) => product.category?.name?.toLowerCase().includes(filters.category!.toLowerCase()))
     }
 
     // Price range filter
@@ -65,12 +69,12 @@ export const useProductFilter = (initialFilters: FilterOptions = {}): UseProduct
         (product) =>
           product.name.toLowerCase().includes(query) ||
           product.description?.toLowerCase().includes(query) ||
-          product.category?.toLowerCase().includes(query),
+          product.category?.name?.toLowerCase().includes(query),
       )
     }
 
     return results
-  }, [filters])
+  }, [filters, products])
 
   const resetFilters = () => {
     setFilters({})

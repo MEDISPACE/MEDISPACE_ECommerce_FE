@@ -12,8 +12,7 @@ import { Textarea } from '../ui/textarea'
 import { Separator } from '../ui/separator'
 import { Badge } from '../ui/badge'
 import { ImageWithFallback } from '../shared/ImageWithFallback'
-import type { Address, ShippingMethod, PaymentMethod } from '../../types/product'
-import { mockCartItems } from '../../utils/mockData'
+import type { Address, ShippingMethod, PaymentMethod, CartItem } from '../../types/product'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
 
 const mockAddresses: Address[] = [
@@ -107,10 +106,10 @@ export function CheckoutPage() {
 
   const breadcrumbItems = [{ label: 'Giỏ hàng', href: '/cart' }, { label: 'Thanh toán' }]
 
-  // Calculate totals
-  const cartItems = mockCartItems.filter((item) => item.selected)
+  // Calculate totals - TODO: Replace with real cart data
+  const cartItems: CartItem[] = [] // mockCartItems.filter((item: CartItem) => item.selected)
   const subtotal = cartItems.reduce(
-    (sum, item) => sum + (item.product.salePrice ?? item.product.originalPrice ?? 0) * item.quantity,
+    (sum: number, item: CartItem) => sum + (item.product.price ?? 0) * item.quantity,
     0,
   )
   const discount = 50000
@@ -460,11 +459,11 @@ export function CheckoutPage() {
                   <CardContent className='space-y-4'>
                     {/* Items */}
                     <div className='space-y-3'>
-                      {cartItems.map((item) => (
+                      {cartItems.map((item: CartItem) => (
                         <div key={item.id} className='flex items-center gap-3'>
                           <div className='w-12 h-12 flex-shrink-0'>
                             <ImageWithFallback
-                              src={item.product.image}
+                              src={item.product.images?.[0] || item.product.featuredImage || '/placeholder-product.jpg'}
                               alt={item.product.name}
                               className='w-full h-full object-cover rounded border border-gray-200'
                             />

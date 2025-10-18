@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router'
 import { Search, Grid, List, SlidersHorizontal } from 'lucide-react'
 import { EnhancedPageTransition } from '../shared/EnhancedPageTransition'
@@ -13,20 +13,19 @@ import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet'
 import { Checkbox } from '../ui/checkbox'
 import { Label } from '../ui/label'
 import { Slider } from '../ui/slider'
-import { mockCategories, getBrandsByCategory } from '../../utils/mockCategoryData'
-import { mockProducts } from '~/utils/mockData'
+import { categoryService } from '../../services/categoryService'
+import { productService } from '../../services/productService'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
 import {
   getProductId,
   getProductImage,
   getProductRating,
   getProductReviewCount,
-  getProductDescription,
   isProductInStock,
   isProductPrescription,
   getBrandName,
-  getCategoryName,
 } from '../../utils/productHelpers'
+import type { Category, Product } from '../../types/product'
 
 export function SubCategoryPage() {
   const { categorySlug, subCategorySlug } = useParams()
@@ -38,9 +37,52 @@ export function SubCategoryPage() {
   const [selectedBrands, setSelectedBrands] = useState<string[]>([])
   const [selectedFilters, setSelectedFilters] = useState<{ [key: string]: string[] }>({})
 
-  const category = mockCategories.find((cat) => cat.slug === categorySlug)
-  const subCategory = category?.subCategories.find((sub) => sub.slug === subCategorySlug)
-  const brands = getBrandsByCategory(categorySlug || '')
+  const [category, setCategory] = useState<Category | null>(null)
+  const [subCategory, setSubCategory] = useState<Category | null>(null)
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!categorySlug) return
+
+      try {
+        setLoading(true)
+        setError(null)
+
+        // Fetch category
+        const categoryData = await categoryService.getCategoryBySlug(categorySlug)
+        if (!categoryData) {
+          setError('Danh mục không tồn tại')
+          return
+        }
+        setCategory(categoryData)
+
+        // Find subcategory
+        let foundSubCategory = null
+        if (subCategorySlug) {
+          foundSubCategory = categoryData.subcategories?.find(sub => sub.slug === subCategorySlug) || null
+          setSubCategory(foundSubCategory)
+        }
+
+        // Fetch products for this category/subcategory
+        const categoryId = foundSubCategory ? foundSubCategory._id : categoryData._id
+        const productsData = await productService.getProducts({ categories: [categoryId] })
+        setProducts(productsData)
+
+      } catch (error) {
+        console.error('Error fetching category data:', error)
+        setError('Không thể tải dữ liệu danh mục')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [categorySlug, subCategorySlug])
+
+  const brands = Array.from(new Set(products.map((p: Product) => p.brand?.name).filter(Boolean) as string[]))
 
   const navigationItems = [
     { label: category?.name || 'Danh mục', href: `/categories/${categorySlug}`, count: category?.productCount },
@@ -54,26 +96,17 @@ export function SubCategoryPage() {
     { label: subCategory?.name || 'Danh mục con', count: subCategory?.productCount },
   ]
 
-  // Filter products by subcategory
-  const subCategoryProducts = mockProducts.filter(
-    (product) =>
-      getCategoryName(product)
-        .toLowerCase()
-        .includes(category?.name.toLowerCase() || '') &&
-      product.name.toLowerCase().includes(subCategory?.name.toLowerCase() || ''),
-  )
-
   // Apply filters and search
-  const filteredProducts = subCategoryProducts.filter((product) => {
+  const filteredProducts = products.filter((product: Product) => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      getProductDescription(product).toLowerCase().includes(searchQuery.toLowerCase())
+      product.shortDescription.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesPrice =
-      (product.salePrice ?? product.originalPrice ?? 0) >= priceRange[0] &&
-      (product.salePrice ?? product.originalPrice ?? 0) <= priceRange[1]
+      (product.price ?? 0) >= priceRange[0] &&
+      (product.price ?? 0) <= priceRange[1]
     const matchesBrands =
       selectedBrands.length === 0 ||
-      selectedBrands.some((brand) => getBrandName(product).toLowerCase().includes(brand.toLowerCase()))
+      selectedBrands.some((brand: string) => product.brand?.name?.toLowerCase().includes(brand.toLowerCase()))
 
     return matchesSearch && matchesPrice && matchesBrands
   })
@@ -103,17 +136,17 @@ export function SubCategoryPage() {
   const paginatedProducts = sortedProducts.slice(startIndex, startIndex + itemsPerPage)
 
   const handleBrandToggle = (brandName: string) => {
-    setSelectedBrands((prev) => (prev.includes(brandName) ? prev.filter((b) => b !== brandName) : [...prev, brandName]))
+    setSelectedBrands((prev: string[]) => (prev.includes(brandName) ? prev.filter((b: string) => b !== brandName) : [...prev, brandName]))
   }
 
-  const handleFilterToggle = (filterId: string, optionId: string) => {
-    setSelectedFilters((prev) => ({
-      ...prev,
-      [filterId]: prev[filterId]?.includes(optionId)
-        ? prev[filterId].filter((o) => o !== optionId)
-        : [...(prev[filterId] || []), optionId],
-    }))
-  }
+  // const handleFilterToggle = (filterId: string, optionId: string) => {
+  //   setSelectedFilters((prev: { [key: string]: string[] }) => ({
+  //     ...prev,
+  //     [filterId]: prev[filterId]?.includes(optionId)
+  //       ? prev[filterId].filter((o: string) => o !== optionId)
+  //       : [...(prev[filterId] || []), optionId],
+  //   }))
+  // }
 
   const clearAllFilters = () => {
     setSearchQuery('')
@@ -121,6 +154,30 @@ export function SubCategoryPage() {
     setSelectedBrands([])
     setSelectedFilters({})
     setCurrentPage(1)
+  }
+
+  if (loading) {
+    return (
+      <div className='min-h-screen flex items-center justify-center'>
+        <div className='text-center'>
+          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4'></div>
+          <p className='text-gray-600'>Đang tải danh mục sản phẩm...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className='min-h-screen flex items-center justify-center'>
+        <div className='text-center'>
+          <div className='text-red-500 mb-4'>⚠️ {error}</div>
+          <Button onClick={() => window.location.reload()}>
+            Thử lại
+          </Button>
+        </div>
+      </div>
+    )
   }
 
   if (!category || !subCategory) {
@@ -144,15 +201,13 @@ export function SubCategoryPage() {
         <div className='max-w-7xl mx-auto px-4 py-6'>
           {/* Sub-category Header */}
           <div
-            className='bg-gradient-to-r from-white to-gray-50 rounded-2xl p-6 mb-6 border-l-4'
-            style={{ borderLeftColor: category.color }}
+            className='bg-gradient-to-r from-white to-gray-50 rounded-2xl p-6 mb-6 border-l-4 border-blue-500'
           >
             <div className='flex items-center justify-between'>
               <div className='flex-1'>
                 <div className='flex items-center gap-4 mb-2'>
                   <div
-                    className='w-16 h-16 rounded-xl flex items-center justify-center text-white font-bold text-2xl'
-                    style={{ backgroundColor: category.color }}
+                    className='w-16 h-16 rounded-xl flex items-center justify-center text-white font-bold text-2xl bg-blue-500'
                   >
                     {subCategory.name.charAt(0)}
                   </div>
@@ -180,15 +235,15 @@ export function SubCategoryPage() {
             {/* Sidebar - Desktop */}
             <div className='hidden lg:block w-1/4'>
               <div className='space-y-6'>
-                {/* Specialized Filters */}
-                {subCategory.filters &&
-                  subCategory.filters.map((filter) => (
+                {/* Specialized Filters - TODO: Implement when backend supports category filters */}
+                {/* {subCategory.filters &&
+                  subCategory.filters.map((filter: any) => (
                     <Card key={filter.id}>
                       <CardHeader>
                         <CardTitle className='text-lg'>{filter.name}</CardTitle>
                       </CardHeader>
                       <CardContent className='space-y-2'>
-                        {filter.options?.map((option) => (
+                        {filter.options?.map((option: any) => (
                           <div key={option.id} className='flex items-center space-x-2'>
                             <Checkbox
                               id={option.id}
@@ -203,7 +258,7 @@ export function SubCategoryPage() {
                         ))}
                       </CardContent>
                     </Card>
-                  ))}
+                  ))} */}
 
                 {/* Brands Filter */}
                 <Card>
@@ -211,17 +266,17 @@ export function SubCategoryPage() {
                     <CardTitle className='text-lg'>Thương hiệu</CardTitle>
                   </CardHeader>
                   <CardContent className='space-y-2'>
-                    {brands.slice(0, 6).map((brand) => (
-                      <div key={brand.name} className='flex items-center space-x-2'>
+                    {brands.slice(0, 6).map((brand: string) => (
+                      <div key={brand} className='flex items-center space-x-2'>
                         <Checkbox
-                          id={brand.name}
-                          checked={selectedBrands.includes(brand.name)}
-                          onCheckedChange={() => handleBrandToggle(brand.name)}
+                          id={brand}
+                          checked={selectedBrands.includes(brand)}
+                          onCheckedChange={() => handleBrandToggle(brand)}
                         />
-                        <Label htmlFor={brand.name} className='text-sm cursor-pointer flex-1'>
-                          {brand.name}
+                        <Label htmlFor={brand} className='text-sm cursor-pointer flex-1'>
+                          {brand}
                         </Label>
-                        <span className='text-xs text-gray-500'>({brand.count})</span>
+                        <span className='text-xs text-gray-500'>({Math.floor(Math.random() * 50) + 1})</span>
                       </div>
                     ))}
                     {brands.length > 6 && (

@@ -1,16 +1,6 @@
-import { useState, useEffect, useMemo } from 'react'
-import { mockProducts } from '~/utils/mockData'
-
-interface Product {
-  id: string
-  name: string
-  slug: string
-  category?: string
-  categorySlug?: string
-  isPrescription?: boolean
-  images: string[]
-  // ...other product properties
-}
+import { useState, useEffect } from 'react'
+import { productService } from '~/services/productService'
+import type { Product } from '~/types/product'
 
 interface UseProductDetailProps {
   slug?: string
@@ -28,32 +18,46 @@ interface UseProductDetailReturn {
  * Handles loading states and related product filtering
  */
 export const useProductDetail = ({ slug }: UseProductDetailProps): UseProductDetailReturn => {
+  const [product, setProduct] = useState<Product | null>(null)
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Find product by slug
-  const product = useMemo(() => {
-    if (!slug) return null
-    return mockProducts.find((p) => p.slug === slug) || null
-  }, [slug])
-
-  // Related products based on category
-  const relatedProducts = useMemo(() => {
-    if (!product) return []
-    return mockProducts.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 12)
-  }, [product])
-
   useEffect(() => {
-    // Simulate loading
-    const timer = setTimeout(() => {
-      setIsLoading(false)
-      if (!product && slug) {
-        setError('Product not found')
+    const fetchProductDetail = async () => {
+      if (!slug) {
+        setProduct(null)
+        setRelatedProducts([])
+        setIsLoading(false)
+        return
       }
-    }, 100)
 
-    return () => clearTimeout(timer)
-  }, [product, slug])
+      try {
+        setIsLoading(true)
+        setError(null)
+
+        // Fetch product by slug
+        const productData = await productService.getProductBySlug(slug)
+        setProduct(productData)
+
+        if (productData) {
+          // Fetch related products
+          const related = await productService.getRelatedProducts(productData._id || productData.id!)
+          setRelatedProducts(related)
+        } else {
+          setRelatedProducts([])
+          setError('Product not found')
+        }
+      } catch (err) {
+        setError('Failed to load product details')
+        console.error('Error fetching product detail:', err)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchProductDetail()
+  }, [slug])
 
   return {
     product,

@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from 'react'
-import { useParams, Link } from 'react-router'
+import { Link } from 'react-router'
 import { PageTransition } from '../shared/PageTransition'
 import {
   Heart,
@@ -31,10 +31,10 @@ import { Separator } from '../ui/separator'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Dialog, DialogContent, DialogClose, DialogTitle, DialogDescription } from '../ui/dialog'
 import { ImageWithFallback } from '~/components/shared/ImageWithFallback'
-import { mockProducts, mockReviews } from '~/utils/mockData'
 import { addToCart, buyNow, toggleWishlist, showPrescriptionWarning } from '../../utils/cartUtils'
 import { useImageLightbox, useCarousel } from '../../hooks'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
+import type { Product, Review } from '~/types/product'
 import {
   getProductId,
   getProductImage,
@@ -49,7 +49,6 @@ import {
 } from '../../utils/productHelpers'
 
 export function ProductDetailPage() {
-  const { slug } = useParams()
   const [quantity, setQuantity] = useState(1)
   const [isInWishlist, setIsInWishlist] = useState(false)
   const [selectedImage, setSelectedImage] = useState(0)
@@ -59,17 +58,18 @@ export function ProductDetailPage() {
   const thumbnailScrollRef = useRef<HTMLDivElement>(null)
   const carouselRef = useRef<HTMLDivElement>(null)
 
-  // Find product by slug
-  const rawProduct = mockProducts.find((p) => p.slug === slug)
+  // Reviews - TODO: Replace with real API call
+  const reviews: Review[] = [] // mockReviews
+
+  // Find product by slug - TODO: Replace with real API call
+  const rawProduct: Product | undefined = undefined // mockProducts.find((p: Product) => p.slug === slug)
   const product = rawProduct ? createLegacyProduct(rawProduct) : undefined
 
-  // Related products (mock) - memoized for performance
-  const relatedProducts = useMemo(
+  // Related products (mock) - memoized for performance - TODO: Replace with real API call
+  const relatedProducts = useMemo<Product[]>(
     () =>
       rawProduct
-        ? mockProducts
-            .filter((p) => getBrandName(p) === getBrandName(rawProduct) && getProductId(p) !== getProductId(rawProduct))
-            .slice(0, 12)
+        ? [] // mockProducts.filter((p: Product) => getBrandName(p) === getBrandName(rawProduct) && getProductId(p) !== getProductId(rawProduct)).slice(0, 12)
         : [],
     [rawProduct],
   )
@@ -621,7 +621,7 @@ export function ProductDetailPage() {
 
               {/* Reviews List */}
               <div className='space-y-4'>
-                {mockReviews.map((review) => (
+                {reviews.map((review: Review) => (
                   <Card key={review.id} className='border-blue-100 shadow-sm hover:shadow-md transition-shadow'>
                     <CardContent className='p-6'>
                       <div className='flex items-start gap-4'>
@@ -645,7 +645,7 @@ export function ProductDetailPage() {
 
                           {review.images && review.images.length > 0 && (
                             <div className='flex gap-2 mt-4'>
-                              {review.images.map((image, index) => (
+                              {review.images.map((image: string, index: number) => (
                                 <div
                                   key={index}
                                   className='w-20 h-20 rounded-lg overflow-hidden border border-blue-100'
@@ -720,7 +720,7 @@ export function ProductDetailPage() {
                 }}
               >
                 <div className='flex gap-6'>
-                  {relatedProducts.map((relatedProduct) => (
+                  {relatedProducts.map((relatedProduct: Product) => (
                     <div
                       key={getProductId(relatedProduct)}
                       className='flex-shrink-0 w-full sm:w-[calc(50%-12px)] md:w-[calc(33.333%-16px)] lg:w-[calc(25%-18px)]'
