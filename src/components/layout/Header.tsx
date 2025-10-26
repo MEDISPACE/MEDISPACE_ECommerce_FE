@@ -32,7 +32,19 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 
 export function Header() {
   const navigate = useNavigate()
-  const { user, isAuthenticated, logout } = useAuth()
+  let user = null
+  let isAuthenticated = false
+  let logout = () => {}
+
+  try {
+    const authContext = useAuth()
+    user = authContext.user
+    isAuthenticated = authContext.isAuthenticated
+    logout = authContext.logout
+  } catch {
+    // AuthProvider not available yet, use defaults
+    console.warn('AuthProvider not available, using defaults')
+  }
   const [activeMegaMenuCategory, setActiveMegaMenuCategory] = useState<Category | null>(null)
   const [isMegaMenuVisible, setIsMegaMenuVisible] = useState(false)
 

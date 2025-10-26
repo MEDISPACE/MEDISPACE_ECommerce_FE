@@ -90,7 +90,7 @@ export function ProtectedRoute({
             </Button>
             <Button
               onClick={() => (window.location.href = '/')}
-              className='w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800'
+              className='w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white'
             >
               Về trang chủ
             </Button>
@@ -130,7 +130,7 @@ export function ProtectedRoute({
               </Button>
               <Button
                 onClick={() => (window.location.href = '/')}
-                className='w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800'
+                className='w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white'
               >
                 Về trang chủ
               </Button>

@@ -181,7 +181,7 @@ export function ForgotPasswordPage() {
                     <span>Đang gửi link khôi phục...</span>
                   </div>
                 ) : (
-                  <div className='flex items-center gap-3'>
+                  <div className='flex items-center gap-3 text-white'>
                     <Mail className='w-5 h-5' />
                     <span>Gửi link khôi phục mật khẩu</span>
                   </div>
@@ -367,7 +367,5 @@ export function ForgotPasswordPage() {
     }
   }
 
-  return (
-    <div className='p-8'>{renderStep()}</div>
-  )
+  return <div className='p-8'>{renderStep()}</div>
 }

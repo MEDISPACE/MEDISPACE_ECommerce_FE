@@ -25,7 +25,7 @@ import { toast } from 'sonner'
 import { useAuth } from '../../contexts/AuthContext'
 import { UserGender } from '../../types/user'
 
-export function RegisterPage() {
+const RegisterPage = () => {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -220,11 +220,11 @@ export function RegisterPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className='text-blue-600 mb-2 relative inline-block'>
+        <h1 className='text-blue-600 mb-2 relative inline-block text-2xl md:text-2xl font-semibold'>
           Trở thành thành viên để mua sắm dễ dàng hơn
           <Sparkles className='inline-block ml-2 w-5 h-5 text-cyan-500 animate-pulse' />
         </h1>
-        <p className='text-gray-500 text-sm mt-2'>Tạo tài khoản chỉ trong vài phút!</p>
+        <p className='text-gray-500 text-base md:text-lg mt-2'>Tạo tài khoản chỉ trong vài phút!</p>
       </motion.div>
 
       {/* Error Alert */}
@@ -247,8 +247,8 @@ export function RegisterPage() {
               <User className='w-4 h-4' />
               HỌ
             </Label>
-            <div className='relative'>
-              <User className='absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5' />
+            <div className='relative group'>
+              <User className='absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 w-5 h-5' />
               <Input
                 id='firstName'
                 type='text'
@@ -257,12 +257,21 @@ export function RegisterPage() {
                 placeholder='Nhập họ'
                 className={`pl-12 h-14 bg-white border-2 rounded-xl transition-all duration-200 ${
                   errors.firstName
-                    ? 'border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-100'
+                    ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-200'
                     : 'border-blue-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 hover:border-blue-300'
                 }`}
               />
             </div>
-            {errors.firstName && <p className='text-red-500 text-sm'>{errors.firstName}</p>}
+            {errors.firstName && (
+              <motion.p
+                className='text-red-500 text-sm flex items-center gap-1'
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <AlertCircle className='w-3 h-3' />
+                {errors.firstName}
+              </motion.p>
+            )}
           </div>
 
           <div className='space-y-2.5'>
@@ -270,8 +279,8 @@ export function RegisterPage() {
               <UserCircle2 className='w-4 h-4' />
               TÊN
             </Label>
-            <div className='relative'>
-              <UserCircle2 className='absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5' />
+            <div className='relative group'>
+              <UserCircle2 className='absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 w-5 h-5' />
               <Input
                 id='lastName'
                 type='text'
@@ -280,12 +289,21 @@ export function RegisterPage() {
                 placeholder='Nhập tên'
                 className={`pl-12 h-14 bg-white border-2 rounded-xl transition-all duration-200 ${
                   errors.lastName
-                    ? 'border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-100'
+                    ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-200'
                     : 'border-blue-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 hover:border-blue-300'
                 }`}
               />
             </div>
-            {errors.lastName && <p className='text-red-500 text-sm'>{errors.lastName}</p>}
+            {errors.lastName && (
+              <motion.p
+                className='text-red-500 text-sm flex items-center gap-1'
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <AlertCircle className='w-3 h-3' />
+                {errors.lastName}
+              </motion.p>
+            )}
           </div>
         </div>
 
@@ -340,8 +358,8 @@ export function RegisterPage() {
             <Phone className='w-4 h-4' />
             SỐ ĐIỆN THOẠI
           </Label>
-          <div className='relative'>
-            <Phone className='absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5' />
+          <div className='relative group'>
+            <Phone className='absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 w-5 h-5' />
             <Input
               type='tel'
               value={formData.phoneNumber}
@@ -349,12 +367,21 @@ export function RegisterPage() {
               placeholder='Nhập số điện thoại'
               className={`pl-12 h-14 bg-white border-2 rounded-xl transition-all duration-200 ${
                 errors.phoneNumber
-                  ? 'border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-100'
+                  ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-200'
                   : 'border-blue-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 hover:border-blue-300'
               }`}
             />
           </div>
-          {errors.phoneNumber && <p className='text-red-500 text-sm'>{errors.phoneNumber}</p>}
+          {errors.phoneNumber && (
+            <motion.p
+              className='text-red-500 text-sm flex items-center gap-1'
+              initial={{ opacity: 0, y: -5 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <AlertCircle className='w-3 h-3' />
+              {errors.phoneNumber}
+            </motion.p>
+          )}
         </div>
 
         {/* Email */}
@@ -363,18 +390,31 @@ export function RegisterPage() {
             <Mail className='w-4 h-4' />
             EMAIL
           </Label>
-          <div className='relative'>
-            <Mail className='absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5' />
+          <div className='relative group'>
+            <Mail className='absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 w-5 h-5' />
             <Input
               id='email'
               type='email'
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               placeholder='Nhập địa chỉ email'
-              className={`pl-12 h-14 bg-white ${errors.email ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-blue-500'} rounded-xl transition-colors`}
+              className={`pl-12 h-14 bg-white border-2 rounded-xl transition-all duration-200 ${
+                errors.email
+                  ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-200'
+                  : 'border-blue-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 hover:border-blue-300'
+              }`}
             />
           </div>
-          {errors.email && <p className='text-red-500 text-sm'>{errors.email}</p>}
+          {errors.email && (
+            <motion.p
+              className='text-red-500 text-sm flex items-center gap-1'
+              initial={{ opacity: 0, y: -5 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <AlertCircle className='w-3 h-3' />
+              {errors.email}
+            </motion.p>
+          )}
         </div>
 
         {/* Password */}
@@ -383,15 +423,19 @@ export function RegisterPage() {
             <Lock className='w-4 h-4' />
             MẬT KHẨU
           </Label>
-          <div className='relative'>
-            <Lock className='absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5' />
+          <div className='relative group'>
+            <Lock className='absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 w-5 h-5' />
             <Input
               id='password'
               type={showPassword ? 'text' : 'password'}
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               placeholder='Nhập mật khẩu'
-              className={`pl-12 pr-12 h-14 bg-white ${errors.password ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-blue-500'} rounded-xl transition-colors`}
+              className={`pl-12 pr-12 h-14 bg-white border-2 rounded-xl transition-all duration-200 ${
+                errors.password
+                  ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-200'
+                  : 'border-blue-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 hover:border-blue-300'
+              }`}
             />
             <button
               type='button'
@@ -401,7 +445,16 @@ export function RegisterPage() {
               {showPassword ? <EyeOff className='w-5 h-5' /> : <Eye className='w-5 h-5' />}
             </button>
           </div>
-          {errors.password && <p className='text-red-500 text-sm'>{errors.password}</p>}
+          {errors.password && (
+            <motion.p
+              className='text-red-500 text-sm flex items-center gap-1'
+              initial={{ opacity: 0, y: -5 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <AlertCircle className='w-3 h-3' />
+              {errors.password}
+            </motion.p>
+          )}
         </div>
 
         {/* Confirm Password */}
@@ -413,15 +466,19 @@ export function RegisterPage() {
             <Lock className='w-4 h-4' />
             XÁC NHẬN MẬT KHẨU
           </Label>
-          <div className='relative'>
-            <Lock className='absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5' />
+          <div className='relative group'>
+            <Lock className='absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 w-5 h-5' />
             <Input
               id='confirmPassword'
               type={showConfirmPassword ? 'text' : 'password'}
               value={formData.confirmPassword}
               onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
               placeholder='Nhập lại mật khẩu'
-              className={`pl-12 pr-12 h-14 bg-white ${errors.confirmPassword ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-blue-500'} rounded-xl transition-colors`}
+              className={`pl-12 pr-12 h-14 bg-white border-2 rounded-xl transition-all duration-200 ${
+                errors.confirmPassword
+                  ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-200'
+                  : 'border-blue-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 hover:border-blue-300'
+              }`}
             />
             <button
               type='button'
@@ -431,7 +488,16 @@ export function RegisterPage() {
               {showConfirmPassword ? <EyeOff className='w-5 h-5' /> : <Eye className='w-5 h-5' />}
             </button>
           </div>
-          {errors.confirmPassword && <p className='text-red-500 text-sm'>{errors.confirmPassword}</p>}
+          {errors.confirmPassword && (
+            <motion.p
+              className='text-red-500 text-sm flex items-center gap-1'
+              initial={{ opacity: 0, y: -5 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <AlertCircle className='w-3 h-3' />
+              {errors.confirmPassword}
+            </motion.p>
+          )}
         </div>
 
         {/* Terms and Conditions */}
@@ -499,9 +565,9 @@ export function RegisterPage() {
         transition={{ duration: 0.4, delay: 0.5 }}
       >
         <div className='absolute inset-0 flex items-center'>
-          <div className='w-full border-t-2 border-gradient-to-r from-transparent via-gray-200 to-transparent' />
+          <div className='w-full border-t border-gray-300' />
         </div>
-        <div className='relative flex justify-center text-sm'>
+        <div className='relative flex justify-center text-sm text-gray-500'>
           <span className='px-4 bg-white text-gray-400 uppercase tracking-wider text-xs'>hoặc</span>
         </div>
       </motion.div>
@@ -515,7 +581,7 @@ export function RegisterPage() {
         <Button
           type='button'
           variant='outline'
-          className='w-full h-14 bg-white border-2 border-gray-200 hover:bg-gray-50 hover:border-blue-300 hover:shadow-md rounded-xl transition-all duration-200 group'
+          className='w-full h-14 bg-white border-2 border-gray-400 hover:bg-gray-50 hover:border-blue-500 hover:shadow-md rounded-xl transition-all duration-200 group'
           onClick={() => {
             toast.info('Tính năng đang phát triển', {
               description: 'Đăng ký với Google sẽ sớm được ra mắt',
@@ -565,3 +631,5 @@ export function RegisterPage() {
     </PageTransition>
   )
 }
+
+export { RegisterPage }

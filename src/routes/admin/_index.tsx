@@ -1,5 +1,6 @@
-import { AdminDashboard } from '~/components/admin'
+import { Navigate } from 'react-router'
 
 export default function AdminRoute() {
-  return <AdminDashboard />
+  // Canonical redirect: keep /admin/dashboard as the primary dashboard route
+  return <Navigate to='/admin/dashboard' replace />
 }

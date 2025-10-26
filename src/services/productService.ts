@@ -8,14 +8,39 @@ import type { Product, ProductFilter } from '../types/product'
 import { apiClient } from './apiClient'
 import { API_ENDPOINTS } from '../constants'
 
+type ProductsResponse =
+  | {
+      message?: string
+      result?: {
+        products?: Product[]
+        pagination?: unknown
+      }
+      products?: Product[]
+    }
+  | Product[]
+
 export const productService = {
   /**
    * Get all products with optional filtering
    */
-  async getProducts(filters?: Partial<ProductFilter>): Promise<Product[]> {
+  async getProducts(filters?: Partial<ProductFilter> & { limit?: number }): Promise<Product[]> {
     // Real API call - use backend API endpoints
     const response = await apiClient.get(API_ENDPOINTS.PRODUCTS.BASE, { params: filters })
-    return response.data as Product[]
+    if (response && response.data) {
+      const data = response.data as ProductsResponse
+      if (
+        typeof data === 'object' &&
+        data !== null &&
+        'result' in data &&
+        data.result &&
+        Array.isArray(data.result.products)
+      )
+        return data.result.products as Product[]
+      if (Array.isArray(data)) return data as Product[]
+      if (typeof data === 'object' && data !== null && 'products' in data && Array.isArray(data.products))
+        return data.products as Product[]
+    }
+    return []
   },
 
   /**
@@ -24,7 +49,21 @@ export const productService = {
   async getFeaturedProducts(limit = 12): Promise<Product[]> {
     // Real API call - get all products and filter featured ones
     const response = await apiClient.get(API_ENDPOINTS.PRODUCTS.BASE, { params: { limit } })
-    return response.data as Product[]
+    if (response && response.data) {
+      const data = response.data as ProductsResponse
+      if (
+        typeof data === 'object' &&
+        data !== null &&
+        'result' in data &&
+        data.result &&
+        Array.isArray(data.result.products)
+      )
+        return data.result.products as Product[]
+      if (Array.isArray(data)) return data as Product[]
+      if (typeof data === 'object' && data !== null && 'products' in data && Array.isArray(data.products))
+        return data.products as Product[]
+    }
+    return []
   },
 
   /**
@@ -33,7 +72,13 @@ export const productService = {
   async getProductById(id: string): Promise<Product | null> {
     try {
       const response = await apiClient.get(API_ENDPOINTS.PRODUCTS.BY_ID(id))
-      return response.data as Product
+      if (response && response.data) {
+        const data = response.data as unknown
+        if (typeof data === 'object' && data !== null && 'result' in data)
+          return (data as { result?: unknown }).result as Product
+        return data as Product
+      }
+      return null
     } catch (error) {
       if (
         error &&
@@ -56,7 +101,13 @@ export const productService = {
   async getProductBySlug(slug: string): Promise<Product | null> {
     try {
       const response = await apiClient.get(API_ENDPOINTS.PRODUCTS.BY_SLUG(slug))
-      return response.data as Product
+      if (response && response.data) {
+        const data = response.data as unknown
+        if (typeof data === 'object' && data !== null && 'result' in data)
+          return (data as { result?: unknown }).result as Product
+        return data as Product
+      }
+      return null
     } catch (error) {
       if (
         error &&
@@ -80,7 +131,21 @@ export const productService = {
     const response = await apiClient.get(API_ENDPOINTS.PRODUCTS.BASE, {
       params: { q: query, ...filters },
     })
-    return response.data as Product[]
+    if (response && response.data) {
+      const data = response.data as ProductsResponse
+      if (
+        typeof data === 'object' &&
+        data !== null &&
+        'result' in data &&
+        data.result &&
+        Array.isArray(data.result.products)
+      )
+        return data.result.products as Product[]
+      if (Array.isArray(data)) return data as Product[]
+      if (typeof data === 'object' && data !== null && 'products' in data && Array.isArray(data.products))
+        return data.products as Product[]
+    }
+    return []
   },
 
   /**
@@ -88,7 +153,21 @@ export const productService = {
    */
   async getProductsByCategory(categorySlug: string): Promise<Product[]> {
     const response = await apiClient.get(API_ENDPOINTS.PRODUCTS.BASE, { params: { category: categorySlug } })
-    return response.data as Product[]
+    if (response && response.data) {
+      const data = response.data as ProductsResponse
+      if (
+        typeof data === 'object' &&
+        data !== null &&
+        'result' in data &&
+        data.result &&
+        Array.isArray(data.result.products)
+      )
+        return data.result.products as Product[]
+      if (Array.isArray(data)) return data as Product[]
+      if (typeof data === 'object' && data !== null && 'products' in data && Array.isArray(data.products))
+        return data.products as Product[]
+    }
+    return []
   },
 
   /**
@@ -96,7 +175,21 @@ export const productService = {
    */
   async getPrescriptionProducts(): Promise<Product[]> {
     const response = await apiClient.get(API_ENDPOINTS.PRODUCTS.BASE, { params: { prescription: true } })
-    return response.data as Product[]
+    if (response && response.data) {
+      const data = response.data as ProductsResponse
+      if (
+        typeof data === 'object' &&
+        data !== null &&
+        'result' in data &&
+        data.result &&
+        Array.isArray(data.result.products)
+      )
+        return data.result.products as Product[]
+      if (Array.isArray(data)) return data as Product[]
+      if (typeof data === 'object' && data !== null && 'products' in data && Array.isArray(data.products))
+        return data.products as Product[]
+    }
+    return []
   },
 
   /**
@@ -104,7 +197,21 @@ export const productService = {
    */
   async getRelatedProducts(productId: string, limit = 6): Promise<Product[]> {
     const response = await apiClient.get(`/products/${productId}/related`, { params: { limit } })
-    return response.data as Product[]
+    if (response && response.data) {
+      const data = response.data as ProductsResponse
+      if (
+        typeof data === 'object' &&
+        data !== null &&
+        'result' in data &&
+        data.result &&
+        Array.isArray(data.result.products)
+      )
+        return data.result.products as Product[]
+      if (Array.isArray(data)) return data as Product[]
+      if (typeof data === 'object' && data !== null && 'products' in data && Array.isArray(data.products))
+        return data.products as Product[]
+    }
+    return []
   },
 }
 
