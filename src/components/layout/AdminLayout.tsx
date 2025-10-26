@@ -125,7 +125,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   const handleLogout = () => {
     logout()
-    navigate('/auth/login')
+    navigate('/login')
   }
 
   const SidebarContent = () => (

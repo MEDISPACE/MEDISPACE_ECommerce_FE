@@ -57,7 +57,7 @@ class ApiClient {
             // Refresh failed, clear tokens and redirect to login
             localStorage.removeItem('medispace_access_token')
             localStorage.removeItem('medispace_user_data')
-            window.location.href = '/auth/login'
+            window.location.href = '/login'
             return Promise.reject(refreshError)
           }
         }

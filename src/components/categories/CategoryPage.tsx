@@ -15,6 +15,7 @@ import { type ProductFilter, type Product, type Category } from '../../types/pro
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
 import { productService } from '../../services/productService'
 import { categoryService } from '../../services/categoryService'
+import { useCart } from '../../contexts/CartContext'
 
 // Category icon mapping cho hệ thống MediSpace
 const categoryIcons = {
@@ -27,6 +28,7 @@ const categoryIcons = {
 
 export function CategoryPage() {
   const { slug } = useParams()
+  const { addToCart } = useCart()
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [sortBy, setSortBy] = useState('newest')
   const [searchQuery, setSearchQuery] = useState('')
@@ -363,13 +365,22 @@ export function CategoryPage() {
                 <div
                   className={viewMode === 'grid' ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4' : 'space-y-4'}
                 >
-                  {paginatedProducts.map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      variant={viewMode}
-                    />
-                  ))}
+                  {paginatedProducts.map((product) => {
+                    // Find original product for addToCart
+                    const originalProduct = products.find((p: Product) => p._id === product.id)
+                    return (
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        variant={viewMode}
+                        onAddToCart={() => {
+                          if (originalProduct) {
+                            addToCart(originalProduct, 1)
+                          }
+                        }}
+                      />
+                    )
+                  })}
                 </div>
 
                 {/* Pagination */}

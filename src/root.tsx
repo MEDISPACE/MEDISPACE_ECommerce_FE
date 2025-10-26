@@ -1,6 +1,7 @@
 import { Links, Meta, Outlet, Scripts, ScrollRestoration } from 'react-router'
 import type { LinksFunction } from 'react-router'
 import { AuthProvider } from './contexts/AuthContext'
+import { CartProvider } from './contexts/CartContext'
 import { WishlistProvider } from './hooks'
 import { Toaster } from 'sonner'
 import './style/globals.css'
@@ -33,10 +34,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body style={{ backgroundColor: '#ffffff', colorScheme: 'light' }}>
         <AuthProvider>
-          <WishlistProvider>
-            {children}
-            <Toaster position='top-right' />
-          </WishlistProvider>
+          <CartProvider>
+            <WishlistProvider>
+              {children}
+              <Toaster position='top-right' />
+            </WishlistProvider>
+          </CartProvider>
         </AuthProvider>
         <ScrollRestoration />
         <Scripts />

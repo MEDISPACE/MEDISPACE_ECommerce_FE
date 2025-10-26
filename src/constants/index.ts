@@ -33,7 +33,7 @@ export const USE_MOCK_PRODUCTS = false
 export const USE_MOCK_CATEGORIES = false
 export const USE_MOCK_BRANDS = false
 export const USE_MOCK_ORDERS = true // TODO: Set to false when orders API is implemented
-export const USE_MOCK_CART = true // TODO: Set to false when cart API is implemented
+export const USE_MOCK_CART = false // TODO: Set to false when cart API is implemented
 export const USE_MOCK_REVIEWS = true // TODO: Set to false when reviews API is implemented
 
 // Product status constants
@@ -96,15 +96,14 @@ export const API_ENDPOINTS = {
     CANCEL: (id: string) => `/orders/${id}/cancel`,
   },
 
-  // Cart endpoints (TODO: Update when backend implements cart API)
+  // Cart endpoints
   CART: {
     GET: '/cart',
-    ADD_ITEM: '/cart/items',
-    UPDATE_ITEM: (id: string) => `/cart/items/${id}`,
-    REMOVE_ITEM: (id: string) => `/cart/items/${id}`,
-    CLEAR: '/cart',
-    APPLY_COUPON: '/cart/coupon',
-    REMOVE_COUPON: '/cart/coupon',
+    ADD_ITEM: '/cart/add',
+    UPDATE_ITEM: (productId: string) => `/cart/update/${productId}`,
+    REMOVE_ITEM: (productId: string) => `/cart/remove/${productId}`,
+    CLEAR: '/cart/clear',
+    CHECKOUT: '/cart/checkout',
   },
 
   // Review endpoints (TODO: Update when backend implements reviews API)

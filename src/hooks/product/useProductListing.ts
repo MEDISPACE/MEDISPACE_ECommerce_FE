@@ -68,23 +68,23 @@ export function useProductListing({
       }
 
       // Category filter
-      if (filters.categories.length > 0 && !filters.categories.includes(product.category?.slug || '')) {
+      if ((filters.categories?.length || 0) > 0 && !(filters.categories || []).includes(product.category?.slug || '')) {
         return false
       }
 
       // Brand filter
-      if (filters.brands.length > 0 && !filters.brands.includes(product.brand?.name || '')) {
+      if ((filters.brands?.length || 0) > 0 && !(filters.brands || []).includes(product.brand?.name || '')) {
         return false
       }
 
       // Price filter
       const productPrice = product.price || 0
-      if (productPrice < filters.priceRange[0] || productPrice > filters.priceRange[1]) {
+      if (productPrice < (filters.priceRange?.[0] || 0) || productPrice > (filters.priceRange?.[1] || 1000000)) {
         return false
       }
 
       // Rating filter
-      if (filters.rating > 0 && (product.rating || 0) < filters.rating) {
+      if ((filters.rating || 0) > 0 && (product.rating || 0) < (filters.rating || 0)) {
         return false
       }
 

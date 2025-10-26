@@ -13,7 +13,7 @@ import {
   Baby,
   Heart,
 } from 'lucide-react'
-import { useWishlist } from '../../hooks/product/useWishlist'
+import { useCart } from '../../contexts/CartContext'
 
 import { Button } from '../ui/button'
 import { productService } from '../../services/productService'
@@ -98,7 +98,7 @@ export function ProductComparisonPage() {
   const [products, setProducts] = useState<ComparisonProduct[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [searchResults, setSearchResults] = useState<ComparisonProduct[]>([])
-  const { toggleWishlist, isInWishlist } = useWishlist()
+  const { addToCart, toggleWishlist, isInWishlist } = useCart()
 
   const breadcrumbItems = [
     { label: 'Trang chủ', href: '/' },
@@ -190,8 +190,21 @@ export function ProductComparisonPage() {
     toast.success('Đã xóa sản phẩm khỏi so sánh')
   }
 
-  const handleAddToCart = () => {
-    toast.success('Đã thêm sản phẩm vào giỏ hàng')
+  const handleAddToCart = async (productId: string) => {
+    try {
+      // Fetch the full Product from API since addToCart expects Product type
+      const product = await productService.getProductById(productId)
+      if (!product) {
+        toast.error('Không tìm thấy sản phẩm')
+        return
+      }
+      
+      await addToCart(product, 1)
+      toast.success('Đã thêm sản phẩm vào giỏ hàng')
+    } catch (error) {
+      console.error('Error adding to cart:', error)
+      toast.error('Không thể thêm sản phẩm vào giỏ hàng')
+    }
   }
 
   const handleClearAll = () => {
@@ -200,8 +213,27 @@ export function ProductComparisonPage() {
     toast.success('Đã xóa tất cả sản phẩm')
   }
 
-  const handleAddAllToCart = () => {
-    toast.success(`Đã thêm ${products.length} sản phẩm vào giỏ hàng`)
+  const handleAddAllToCart = async () => {
+    try {
+      for (const comparisonProduct of products) {
+        // Fetch the full Product from API since addToCart expects Product type
+        const product = await productService.getProductById(comparisonProduct.id)
+        if (product) {
+          await addToCart(product, 1)
+        }
+      }
+      toast.success(`Đã thêm ${products.length} sản phẩm vào giỏ hàng`)
+    } catch (error) {
+      console.error('Error adding products to cart:', error)
+      toast.error('Không thể thêm một số sản phẩm vào giỏ hàng')
+    }
+  }
+
+  const handleToggleWishlist = (productId: string) => {
+    const product = products.find(p => p.id === productId)
+    if (product) {
+      toggleWishlist(productId, product.name)
+    }
   }
 
   const handleConsultPharmacist = () => {
@@ -405,7 +437,7 @@ export function ProductComparisonPage() {
           products={products}
           onRemoveProduct={handleRemoveProduct}
           onAddToCart={handleAddToCart}
-          onToggleWishlist={toggleWishlist}
+          onToggleWishlist={handleToggleWishlist}
           isInWishlist={isInWishlist}
         />
       ) : (

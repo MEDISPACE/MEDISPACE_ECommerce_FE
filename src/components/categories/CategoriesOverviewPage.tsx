@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { motion } from 'framer-motion'
-import { addToCart, toggleWishlist } from '../../utils/cartUtils'
+import { useCart } from '../../contexts/CartContext'
 import {
   ChevronRight,
   ChevronLeft,
@@ -49,6 +49,7 @@ const stats = [
 ]
 
 export function CategoriesOverviewPage() {
+  const { addToCart, toggleWishlist } = useCart()
   const [categories, setCategories] = useState<Category[]>([])
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
@@ -412,11 +413,11 @@ export function CategoriesOverviewPage() {
                               needsConsultation: false,
                             }}
                             variant='grid'
-                            onAddToCart={(productId) => {
-                              addToCart(productId, product.name, 1)
+                            onAddToCart={() => {
+                              addToCart(product, 1)
                             }}
-                            onToggleWishlist={(productId) => {
-                              toggleWishlist(productId, product.name)
+                            onToggleWishlist={() => {
+                              toggleWishlist(product._id, product.name)
                             }}
                           />
                         </motion.div>

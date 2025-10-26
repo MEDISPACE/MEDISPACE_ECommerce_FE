@@ -25,8 +25,10 @@ import {
 } from 'lucide-react'
 import { Link } from 'react-router'
 import { motion } from 'framer-motion'
+import { ProductCard } from '../products/ProductCard'
 import { productService } from '../../services/productService'
 import { useCategories } from '../../hooks/product'
+import { useCart } from '../../contexts/CartContext'
 import type { Product } from '../../types/product'
 
 // Now using proper Product type from service
@@ -41,6 +43,7 @@ const categoryIcons = {
 }
 
 export function HomePage() {
+  const { addToCart } = useCart()
   // Products state
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
@@ -74,11 +77,25 @@ export function HomePage() {
   const featuredProductsPerPage = 4
   const featuredTotalPages = Math.ceil(allFeaturedProducts.length / featuredProductsPerPage)
 
-  // Get current page products (4 products at a time)
-  // const featuredProducts = allFeaturedProducts.slice(
-  //   featuredCurrentIndex * featuredProductsPerPage,
-  //   (featuredCurrentIndex + 1) * featuredProductsPerPage,
-  // );
+  // Transform products for ProductCard component
+  const transformedFeaturedProducts = allFeaturedProducts.map((product) => ({
+    id: product._id || product.id || '',
+    name: product.name,
+    slug: product.slug,
+    brand: product.brand?.name || 'Jpanwell',
+    image: product.featuredImage || product.image || '/placeholder-product.png',
+    originalPrice: product.originalPrice || product.price,
+    salePrice: product.salePrice || product.price || 0,
+    rating: product.rating || 4.5,
+    reviewCount: product.reviewCount || 0,
+    inStock: product.inStock !== false && (product.stockQuantity || 0) > 0,
+    isPrescription: product.requiresPrescription || product.isPrescription || false,
+    isOnSale: product.isOnSale || product.onSale || false,
+    discountPercentage: product.discountPercentage || 0,
+    unit: product.unit || 'Hộp',
+    packaging: product.packaging || '',
+    needsConsultation: product.needsConsultation || product.requiresPrescription || false,
+  }))
 
   const scrollFeatured = (direction: 'left' | 'right') => {
     if (direction === 'left') {
@@ -495,9 +512,11 @@ export function HomePage() {
                           >
                             {allFeaturedProducts
                               .slice(pageIndex * 4, (pageIndex + 1) * 4)
-                              .map((product, productIndex) => (
+                              .map((originalProduct, productIndex) => {
+                                const product = transformedFeaturedProducts[pageIndex * 4 + productIndex]
+                                return (
                                 <motion.div
-                                  key={`${product._id || product.id || `product-${productIndex}-${pageIndex}`}-${pageIndex}`}
+                                  key={`${product.id}-${pageIndex}`}
                                   className='h-full'
                                   initial={{
                                     opacity: 0,
@@ -516,16 +535,15 @@ export function HomePage() {
                                     },
                                   }}
                                 >
-                                  {/* Using proper Product type from service */}
-                                  <div className='p-4 border rounded bg-white'>
-                                    <h3 className='font-semibold'>{product.name}</h3>
-                                    <p className='text-sm text-gray-600'>{product.salePrice} VNĐ</p>
-                                    <Button size='sm' className='mt-2'>
-                                      Thêm vào giỏ
-                                    </Button>
-                                  </div>
+                                  <ProductCard
+                                    product={product}
+                                    variant='grid'
+                                    onAddToCart={() => {
+                                      addToCart(originalProduct, 1)
+                                    }}
+                                  />
                                 </motion.div>
-                              ))}
+                              )})}
                           </div>
                         ))}
                       </motion.div>
