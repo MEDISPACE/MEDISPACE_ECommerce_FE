@@ -4,6 +4,7 @@ import type { User, Address } from './user'
 export interface LoginRequest {
   email: string
   password: string
+  rememberMe?: boolean
 }
 
 export interface RegisterRequest {
@@ -25,7 +26,6 @@ export interface AuthResponse {
   message: string
   result?: {
     accessToken: string
-    refreshToken: string
   }
   user?: User
 }

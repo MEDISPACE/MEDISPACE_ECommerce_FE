@@ -109,10 +109,11 @@ export interface Category {
 }
 
 export interface ProductFilter {
-  categories: string[]
-  brands: string[]
-  priceRange: [number, number]
-  rating: number
+  categories?: string[]
+  categoryId?: string
+  brands?: string[]
+  priceRange?: [number, number]
+  rating?: number
   inStock?: boolean
   isPrescription?: boolean
 }

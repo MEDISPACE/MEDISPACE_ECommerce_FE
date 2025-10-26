@@ -27,10 +27,8 @@ class AuthService {
 
   async logout(): Promise<void> {
     try {
-      const refreshToken = localStorage.getItem('medispace_refresh_token')
-      if (refreshToken) {
-        await apiClient.post(API_ENDPOINTS.AUTH.LOGOUT, { refreshToken })
-      }
+      // No need to send refresh token in body since it's in cookie
+      await apiClient.post(API_ENDPOINTS.AUTH.LOGOUT)
     } catch (error) {
       console.error('Logout API call failed:', error)
     } finally {
@@ -41,14 +39,8 @@ class AuthService {
 
   async refreshToken(): Promise<AuthResponse> {
     try {
-      const refreshToken = localStorage.getItem('medispace_refresh_token')
-      if (!refreshToken) {
-        throw new Error('No refresh token available')
-      }
-
-      const response = await apiClient.post<AuthResponse>(API_ENDPOINTS.AUTH.REFRESH_TOKEN, {
-        refreshToken,
-      })
+      // No need to send refresh token in body since it's in cookie
+      const response = await apiClient.post<AuthResponse>(API_ENDPOINTS.AUTH.REFRESH_TOKEN)
       return response.data
     } catch (error) {
       const axiosError = error as AxiosError<AuthResponse>
@@ -109,14 +101,13 @@ class AuthService {
     }
   }
 
-  saveTokens(accessToken: string, refreshToken: string): void {
+  saveTokens(accessToken: string): void {
     localStorage.setItem('medispace_access_token', accessToken)
-    localStorage.setItem('medispace_refresh_token', refreshToken)
+    // Refresh token is now stored in httpOnly cookie by the server
   }
 
   clearTokens(): void {
     localStorage.removeItem('medispace_access_token')
-    localStorage.removeItem('medispace_refresh_token')
     localStorage.removeItem('medispace_user_data')
   }
 
@@ -125,7 +116,8 @@ class AuthService {
   }
 
   getRefreshToken(): string | null {
-    return localStorage.getItem('medispace_refresh_token')
+    // Refresh token is now in httpOnly cookie, not accessible from JavaScript
+    return null
   }
 
   isAuthenticated(): boolean {

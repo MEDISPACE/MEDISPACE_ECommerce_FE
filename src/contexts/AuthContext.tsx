@@ -9,7 +9,7 @@ interface AuthContextType {
   isAuthenticated: boolean
   user: User | null
   // Returns the user object on success, or null on failure
-  login: (email: string, password: string) => Promise<User | null>
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<User | null>
   register: (userData: RegisterRequest) => Promise<boolean>
   logout: () => void
   loading: boolean
@@ -70,20 +70,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return () => clearTimeout(timeoutId)
   }, [])
 
-  const login = async (email: string, password: string): Promise<User | null> => {
+  const login = async (email: string, password: string, rememberMe: boolean = false): Promise<User | null> => {
     try {
       setLoading(true)
 
-      const response = await authService.login({ email, password })
+      const response = await authService.login({ email, password, rememberMe })
 
       if (response.result) {
-        const { accessToken, refreshToken } = response.result
-        authService.saveTokens(accessToken, refreshToken)
+        const { accessToken } = response.result
+        authService.saveTokens(accessToken)
 
         // Get user profile after login
         try {
           const userProfile = await authService.getMe()
-          console.log('User profile fetched:', userProfile) // Debug log
           setUser(userProfile)
           setIsAuthenticated(true)
           localStorage.setItem('medispace_user_data', JSON.stringify(userProfile))
@@ -133,6 +132,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } finally {
       setUser(null)
       setIsAuthenticated(false)
+      // Navigate to home page after logout
+      window.location.href = '/'
     }
   }
 

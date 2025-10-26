@@ -26,6 +26,7 @@ import {
 import { Link } from 'react-router'
 import { motion } from 'framer-motion'
 import { productService } from '../../services/productService'
+import { useCategories } from '../../hooks/product'
 import type { Product } from '../../types/product'
 
 // Now using proper Product type from service
@@ -39,49 +40,13 @@ const categoryIcons = {
   'duoc-my-pham': Droplets, // 💧 Dược mỹ phẩm - Serum/kem dưỡng
 }
 
-// Categories data với màu xanh nhất quán theo design system
-const mockCategories = [
-  {
-    id: 'duoc-my-pham',
-    name: 'Dược mỹ phẩm',
-    slug: 'duoc-my-pham',
-    color: '#0066CC',
-    productCount: 156,
-  },
-  {
-    id: 'thuc-pham-chuc-nang',
-    name: 'Thực phẩm chức năng',
-    slug: 'thuc-pham-chuc-nang',
-    color: '#4A90E2',
-    productCount: 234,
-  },
-  {
-    id: 'thuoc',
-    name: 'Thuốc',
-    slug: 'thuoc',
-    color: '#0066CC',
-    productCount: 189,
-  },
-  {
-    id: 'cham-soc-ca-nhan',
-    name: 'Chăm sóc cá nhân',
-    slug: 'cham-soc-ca-nhan',
-    color: '#4A90E2',
-    productCount: 145,
-  },
-  {
-    id: 'thiet-bi-y-te',
-    name: 'Thiết bị y tế',
-    slug: 'thiet-bi-y-te',
-    color: '#0066CC',
-    productCount: 67,
-  },
-]
-
 export function HomePage() {
   // Products state
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+
+  // Categories state
+  const { categories: realCategories, loading: categoriesLoading } = useCategories()
 
   // Fetch featured products using service
   useEffect(() => {
@@ -385,31 +350,38 @@ export function HomePage() {
               <StaggerItem>
                 <StaggerContainer direction='up' staggerDelay={0.1}>
                   <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6'>
-                    {mockCategories.map((category) => {
-                      const IconComponent = categoryIcons[category.slug as keyof typeof categoryIcons] || Pill
+                    {categoriesLoading ? (
+                      <div className='col-span-full text-center py-12'>
+                        <div className='inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600'></div>
+                        <p className='mt-4 text-gray-600'>Đang tải danh mục...</p>
+                      </div>
+                    ) : (
+                      realCategories.map((category) => {
+                        const IconComponent = categoryIcons[category.slug as keyof typeof categoryIcons] || Pill
 
-                      return (
-                        <StaggerItem key={category.id}>
-                          <Link to={`/categories/${category.slug}`} className='group'>
-                            <InteractiveCard hoverScale={1.05} glowEffect floatEffect>
-                              <Card className='border-0 shadow-lg bg-gradient-to-br from-white to-gray-50'>
-                                <CardContent className='p-6 text-center'>
-                                  <div className='w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:shadow-xl transition-all duration-300 text-white bg-gradient-to-r from-blue-600 to-cyan-500 group-hover:from-blue-700 group-hover:to-cyan-600'>
-                                    <IconComponent className='w-10 h-10' />
-                                  </div>
-                                  <h3 className='font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors'>
-                                    {category.name}
-                                  </h3>
-                                  <p className='text-sm text-gray-500'>
-                                    {category.productCount.toLocaleString()} sản phẩm
-                                  </p>
-                                </CardContent>
-                              </Card>
-                            </InteractiveCard>
-                          </Link>
-                        </StaggerItem>
-                      )
-                    })}
+                        return (
+                          <StaggerItem key={category._id}>
+                            <Link to={`/categories/${category.slug}`} className='group'>
+                              <InteractiveCard hoverScale={1.05} glowEffect floatEffect>
+                                <Card className='border-0 shadow-lg bg-gradient-to-br from-white to-gray-50'>
+                                  <CardContent className='p-6 text-center'>
+                                    <div className='w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:shadow-xl transition-all duration-300 text-white bg-gradient-to-r from-blue-600 to-cyan-500 group-hover:from-blue-700 group-hover:to-cyan-600'>
+                                      <IconComponent className='w-10 h-10' />
+                                    </div>
+                                    <h3 className='font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors'>
+                                      {category.name}
+                                    </h3>
+                                    <p className='text-sm text-gray-500'>
+                                      {category.productCount?.toLocaleString() || 0} sản phẩm
+                                    </p>
+                                  </CardContent>
+                                </Card>
+                              </InteractiveCard>
+                            </Link>
+                          </StaggerItem>
+                        )
+                      })
+                    )}
                   </div>
                 </StaggerContainer>
               </StaggerItem>
@@ -525,7 +497,7 @@ export function HomePage() {
                               .slice(pageIndex * 4, (pageIndex + 1) * 4)
                               .map((product, productIndex) => (
                                 <motion.div
-                                  key={`${product.id}-${pageIndex}`}
+                                  key={`${product._id || product.id || `product-${productIndex}-${pageIndex}`}-${pageIndex}`}
                                   className='h-full'
                                   initial={{
                                     opacity: 0,

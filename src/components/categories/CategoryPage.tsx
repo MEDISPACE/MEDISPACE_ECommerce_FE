@@ -26,13 +26,13 @@ const categoryIcons = {
 }
 
 export function CategoryPage() {
-  const { categorySlug } = useParams()
+  const { slug } = useParams()
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [sortBy, setSortBy] = useState('newest')
   const [searchQuery, setSearchQuery] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [products, setProducts] = useState<Product[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
+  const [currentCategory, setCurrentCategory] = useState<Category | null>(null)
   const [filters, setFilters] = useState<ProductFilter>({
     categories: [],
     priceRange: [0, 5000000],
@@ -45,31 +45,40 @@ export function CategoryPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const categoryData = await categoryService.getCategoryBySlug(categorySlug || '')
+        const categoryData = await categoryService.getCategoryBySlug(slug || '')
         if (!categoryData) {
           console.error('Category not found')
           return
         }
 
-        const [productsData, categoriesData] = await Promise.all([
-          productService.getProducts({ categories: [categoryData._id] }),
-          categoryService.getCategories(),
-        ])
-        setProducts(productsData)
-        setCategories(categoriesData)
+        // Get subcategories for this category
+        const subcategoriesData = await categoryService.getCategoryChildren(categoryData._id)
+        const allCategoryIds = [categoryData._id, ...subcategoriesData.map((sub: Category) => sub._id)]
+
+        // Fetch products for each category
+        const productPromises = allCategoryIds.map(categoryId =>
+          productService.getProducts({ categoryId })
+        )
+        const productResults = await Promise.all(productPromises)
+
+        // Combine all products
+        const allProducts = productResults.flat()
+
+        setProducts(allProducts)
+        setCurrentCategory(categoryData)
       } catch (error) {
         console.error('Error fetching data:', error)
       }
     }
 
     fetchData()
-  }, [categorySlug])
+  }, [slug])
 
-  const category = categories.find((cat) => cat.slug === categorySlug)
+  const category = currentCategory
   const brands = Array.from(new Set(products.map((p: Product) => p.brand?.name).filter(Boolean) as string[]))
 
   // Get icon component for this category
-  const IconComponent = categoryIcons[categorySlug as keyof typeof categoryIcons] || Pill
+  const IconComponent = categoryIcons[slug as keyof typeof categoryIcons] || Pill
 
   // Create breadcrumb items for MainLayout
   const breadcrumbItems = [
@@ -83,13 +92,14 @@ export function CategoryPage() {
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (product.shortDescription?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false)
     const matchesPrice =
-      (product.price ?? 0) >= filters.priceRange[0] &&
-      (product.price ?? 0) <= filters.priceRange[1]
-    const matchesRating = (product.rating ?? 0) >= filters.rating
+      (product.price ?? 0) >= (filters.priceRange?.[0] ?? 0) &&
+      (product.price ?? 0) <= (filters.priceRange?.[1] ?? 5000000)
+    const matchesRating = (product.rating ?? 0) >= (filters.rating ?? 0)
     const matchesStock = !filters.inStock || product.stockQuantity > 0
     const matchesBrands =
-      filters.brands.length === 0 ||
-      filters.brands.some((brand: string) => product.brand?.name?.toLowerCase().includes(brand.toLowerCase()))
+      (filters.brands?.length ?? 0) === 0 ||
+      filters.brands?.some((brand: string) => product.brand?.name?.toLowerCase().includes(brand.toLowerCase())) ||
+      false
 
     return matchesSearch && matchesPrice && matchesRating && matchesStock && matchesBrands
   })
@@ -254,8 +264,8 @@ export function CategoryPage() {
                           setFilters((prev) => ({
                             ...prev,
                             brands: isChecked
-                              ? [...prev.brands, brand]
-                              : prev.brands.filter((b: string) => b !== brand),
+                              ? [...(prev.brands || []), brand]
+                              : (prev.brands || []).filter((b: string) => b !== brand),
                           }))
                         }}
                       />
