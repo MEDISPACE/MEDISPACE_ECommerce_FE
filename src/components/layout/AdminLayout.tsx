@@ -57,7 +57,7 @@ interface NavItem {
 const navigationItems: NavItem[] = [
   {
     label: 'Tổng quan',
-    href: '/admin',
+    href: '/admin/dashboard',
     icon: LayoutDashboard,
   },
   {

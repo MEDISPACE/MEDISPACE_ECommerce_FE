@@ -70,7 +70,7 @@ export const API_ENDPOINTS = {
   PRODUCTS: {
     BASE: '/products',
     BY_ID: (id: string) => `/products/${id}`,
-    BY_SLUG: (slug: string) => `/products/slug/${slug}`,
+    BY_SLUG: (slug: string) => `/products/${slug}`,
   },
 
   // Category endpoints

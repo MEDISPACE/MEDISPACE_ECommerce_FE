@@ -1,4 +1,4 @@
-import type { User, Order, Address, Prescription, Notification } from '../types/account'
+import type { User, Order, Address, Prescription } from '../types/account'
 
 export const mockUser: User = {
   id: 'user-1',
@@ -326,36 +326,5 @@ export const mockPrescriptions: Prescription[] = [
   },
 ]
 
-export const mockNotifications: Notification[] = [
-  {
-    id: 'notif-1',
-    userId: 'user-1',
-    type: 'order',
-    title: 'Đơn hàng đang được giao',
-    message: 'Đơn hàng #DH001234 đang trên đường giao đến bạn. Dự kiến giao hàng trong hôm nay.',
-    isRead: false,
-    actionUrl: '/account/orders/order-1',
-    createdAt: '2024-01-16T08:15:00Z',
-  },
-  {
-    id: 'notif-2',
-    userId: 'user-1',
-    type: 'prescription',
-    title: 'Đơn thuốc cần xem xét',
-    message: 'Đơn thuốc #DT002 đang chờ dược sĩ xem xét. Chúng tôi sẽ phản hồi trong 24h.',
-    isRead: true,
-    actionUrl: '/account/prescriptions',
-    createdAt: '2024-01-15T10:20:00Z',
-  },
-  {
-    id: 'notif-3',
-    userId: 'user-1',
-    type: 'promotion',
-    title: 'Ưu đãi đặc biệt dành cho bạn',
-    message: 'Giảm 20% cho tất cả sản phẩm chăm sóc sức khỏe. Mã: HEALTH20',
-    isRead: false,
-    actionUrl: '/products/category/cham-soc-suc-khoe',
-    createdAt: '2024-01-14T09:00:00Z',
-    expiresAt: '2024-01-21T23:59:59Z',
-  },
-]
+// mockNotifications removed — notifications should come from backend via notificationService.
+// Keep other mock data (users, orders, prescriptions) for domains the backend does not yet support.

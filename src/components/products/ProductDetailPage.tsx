@@ -1,5 +1,5 @@
-import { useState, useMemo, useRef } from 'react'
-import { Link } from 'react-router'
+import { useState, useRef, useEffect } from 'react'
+import { Link, useParams } from 'react-router'
 import { PageTransition } from '../shared/PageTransition'
 import {
   Heart,
@@ -45,15 +45,20 @@ import {
   isProductInStock,
   isProductPrescription,
   getBrandName,
-  createLegacyProduct,
 } from '../../utils/productHelpers'
+import productService from '../../services/productService'
 
 export function ProductDetailPage() {
+  const { slug } = useParams<{ slug: string }>()
   const [quantity, setQuantity] = useState(1)
   const [isInWishlist, setIsInWishlist] = useState(false)
   const [selectedImage, setSelectedImage] = useState(0)
   const [isLightboxOpen, setIsLightboxOpen] = useState(false)
   const [currentSlide, setCurrentSlide] = useState(0)
+  const [product, setProduct] = useState<Product | null>(null)
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const thumbnailScrollRef = useRef<HTMLDivElement>(null)
   const carouselRef = useRef<HTMLDivElement>(null)
@@ -61,18 +66,36 @@ export function ProductDetailPage() {
   // Reviews - TODO: Replace with real API call
   const reviews: Review[] = [] // mockReviews
 
-  // Find product by slug - TODO: Replace with real API call
-  const rawProduct: Product | undefined = undefined // mockProducts.find((p: Product) => p.slug === slug)
-  const product = rawProduct ? createLegacyProduct(rawProduct) : undefined
+  // Fetch product data
+  useEffect(() => {
+    const fetchProduct = async () => {
+      if (!slug) return
 
-  // Related products (mock) - memoized for performance - TODO: Replace with real API call
-  const relatedProducts = useMemo<Product[]>(
-    () =>
-      rawProduct
-        ? [] // mockProducts.filter((p: Product) => getBrandName(p) === getBrandName(rawProduct) && getProductId(p) !== getProductId(rawProduct)).slice(0, 12)
-        : [],
-    [rawProduct],
-  )
+      try {
+        setLoading(true)
+        setError(null)
+        const productData = await productService.getProductBySlug(slug)
+        setProduct(productData)
+
+        // Fetch related products (same brand)
+        if (productData?.brand) {
+          const allProducts = await productService.getProducts({ limit: 12 })
+          const related = allProducts.filter(
+            (p: Product) =>
+              getBrandName(p) === getBrandName(productData) && getProductId(p) !== getProductId(productData),
+          )
+          setRelatedProducts(related)
+        }
+      } catch (err) {
+        console.error('Error fetching product:', err)
+        setError('Không thể tải thông tin sản phẩm')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProduct()
+  }, [slug])
 
   // Use custom hooks - temporarily disabled due to type conflicts
   // const breadcrumbItems = useBreadcrumb({ product: rawProduct })
@@ -92,16 +115,32 @@ export function ProductDetailPage() {
     autoScroll: false,
   })
 
-  if (!product) {
+  if (loading) {
     return (
-      <div className='max-w-7xl mx-auto px-4 py-6'>
-        <UniversalBreadcrumb items={breadcrumbItems} />
-        <div className='text-center py-12'>
-          <h2 className='text-2xl font-bold text-gray-900 mb-2'>Sản phẩm không tồn tại</h2>
-          <p className='text-gray-600 mb-6'>Sản phẩm bạn đang tìm kiếm không có trong hệ thống.</p>
-          <Button onClick={() => window.history.back()}>Quay lại</Button>
+      <PageTransition>
+        <div className='max-w-7xl mx-auto px-4 py-6'>
+          <UniversalBreadcrumb items={breadcrumbItems} />
+          <div className='text-center py-12'>
+            <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4'></div>
+            <p className='text-gray-600'>Đang tải thông tin sản phẩm...</p>
+          </div>
         </div>
-      </div>
+      </PageTransition>
+    )
+  }
+
+  if (error || !product) {
+    return (
+      <PageTransition>
+        <div className='max-w-7xl mx-auto px-4 py-6'>
+          <UniversalBreadcrumb items={breadcrumbItems} />
+          <div className='text-center py-12'>
+            <h2 className='text-2xl font-bold text-gray-900 mb-2'>Sản phẩm không tồn tại</h2>
+            <p className='text-gray-600 mb-6'>{error || 'Sản phẩm bạn đang tìm kiếm không có trong hệ thống.'}</p>
+            <Button onClick={() => window.history.back()}>Quay lại</Button>
+          </div>
+        </div>
+      </PageTransition>
     )
   }
 
@@ -168,11 +207,11 @@ export function ProductDetailPage() {
   }
 
   const handlePrevImage = () => {
-    setSelectedImage((prev) => (prev === 0 ? product.images.length - 1 : prev - 1))
+    setSelectedImage((prev) => (prev === 0 ? (product?.images?.length || 1) - 1 : prev - 1))
   }
 
   const handleNextImage = () => {
-    setSelectedImage((prev) => (prev === product.images.length - 1 ? 0 : prev + 1))
+    setSelectedImage((prev) => (prev === (product?.images?.length || 1) - 1 ? 0 : prev + 1))
   }
 
   return (
@@ -197,7 +236,7 @@ export function ProductDetailPage() {
                 aria-label='Click to view full size image'
               >
                 <ImageWithFallback
-                  src={product.images[lightbox.currentIndex] || product.image}
+                  src={product.images?.[lightbox.currentIndex] || product.image}
                   alt={product.name}
                   className='w-full h-full object-cover hover:scale-105 transition-transform duration-300'
                 />
@@ -212,7 +251,7 @@ export function ProductDetailPage() {
               </div>
 
               {/* Image counter badge - Bottom Left */}
-              {product.images.length > 1 && (
+              {product.images && product.images.length > 1 && (
                 <div className='absolute bottom-4 left-4 z-20 bg-gradient-to-r from-blue-600 to-cyan-500 text-white px-3 py-1.5 rounded-lg shadow-lg backdrop-blur-sm'>
                   <span className='font-medium text-sm'>
                     {lightbox.currentIndex + 1}/{product.images.length}
@@ -237,7 +276,7 @@ export function ProductDetailPage() {
               {/* Centered gallery wrapper with max-width */}
               <div className='relative group mx-auto' style={{ maxWidth: '440px' }}>
                 {/* Navigation arrows - only show if more than 5 images */}
-                {product.images.length > 5 && (
+                {product.images && product.images.length > 5 && (
                   <>
                     <button
                       onClick={() => scrollThumbnails('left')}
@@ -266,7 +305,7 @@ export function ProductDetailPage() {
                     WebkitOverflowScrolling: 'touch',
                   }}
                 >
-                  {product.images.map((image, index) => (
+                  {product.images?.map((image, index) => (
                     <button
                       key={index}
                       onClick={() => setSelectedImage(index)}
@@ -291,7 +330,7 @@ export function ProductDetailPage() {
               </div>
 
               {/* Scroll indicator dots - show for 2-8 images - Always centered */}
-              {product.images.length > 1 && product.images.length <= 8 && (
+              {product.images && product.images.length > 1 && product.images.length <= 8 && (
                 <div className='flex justify-center gap-1.5 mt-3'>
                   {product.images.map((_, index) => (
                     <button
@@ -585,8 +624,8 @@ export function ProductDetailPage() {
                 <CardContent className='p-6'>
                   <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
                     <div className='text-center'>
-                      <div className='text-4xl font-bold text-blue-600 mb-2'>{product.rating.toFixed(1)}</div>
-                      <RatingStars rating={product.rating} size='lg' showRating={false} />
+                      <div className='text-4xl font-bold text-blue-600 mb-2'>{product.rating?.toFixed(1) || '0.0'}</div>
+                      <RatingStars rating={product.rating || 0} size='lg' showRating={false} />
                       <div className='text-sm text-gray-600 mt-2'>{product.reviewCount} đánh giá</div>
                     </div>
 
@@ -779,8 +818,8 @@ export function ProductDetailPage() {
           {/* Accessibility: Hidden title and description for screen readers */}
           <DialogTitle className='sr-only'>{product.name} - Xem ảnh chi tiết</DialogTitle>
           <DialogDescription className='sr-only'>
-            Lightbox hiển thị ảnh {selectedImage + 1} trong số {product.images.length} ảnh của {product.name}. Sử dụng
-            phím mũi tên trái/phải để chuyển ảnh, ESC để đóng.
+            Lightbox hiển thị ảnh {selectedImage + 1} trong số {product.images?.length || 1} ảnh của {product.name}. Sử
+            dụng phím mũi tên trái/phải để chuyển ảnh, ESC để đóng.
           </DialogDescription>
 
           {/* Close button - Top right */}
@@ -792,7 +831,7 @@ export function ProductDetailPage() {
           <div className='relative w-full h-[90vh] flex items-center justify-center p-8'>
             {/* Main image */}
             <ImageWithFallback
-              src={product.images[selectedImage] || product.image}
+              src={product.images?.[selectedImage] || product.image}
               alt={`${product.name} - Image ${selectedImage + 1}`}
               className='max-w-full max-h-full object-contain rounded-lg shadow-2xl'
             />
@@ -800,12 +839,12 @@ export function ProductDetailPage() {
             {/* Counter badge - Top left */}
             <div className='absolute top-4 left-4 z-40 bg-gradient-to-r from-blue-600 to-cyan-500 text-white px-4 py-2 rounded-lg shadow-lg backdrop-blur-sm'>
               <span className='font-medium'>
-                {selectedImage + 1} / {product.images.length}
+                {selectedImage + 1} / {product.images?.length || 1}
               </span>
             </div>
 
             {/* Navigation arrows */}
-            {product.images.length > 1 && (
+            {product.images && product.images.length > 1 && (
               <>
                 {/* Previous button */}
                 <button
@@ -836,7 +875,7 @@ export function ProductDetailPage() {
             </div>
 
             {/* Thumbnail navigation - Bottom (optional for many images) */}
-            {product.images.length > 1 && product.images.length <= 8 && (
+            {product.images && product.images.length > 1 && product.images.length <= 8 && (
               <div className='absolute bottom-20 left-1/2 -translate-x-1/2 z-40 flex gap-2'>
                 {product.images.map((_, index) => (
                   <button

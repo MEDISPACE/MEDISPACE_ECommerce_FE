@@ -8,7 +8,8 @@ type ReactNode = React.ReactNode
 interface AuthContextType {
   isAuthenticated: boolean
   user: User | null
-  login: (email: string, password: string) => Promise<boolean>
+  // Returns the user object on success, or null on failure
+  login: (email: string, password: string) => Promise<User | null>
   register: (userData: RegisterRequest) => Promise<boolean>
   logout: () => void
   loading: boolean
@@ -69,7 +70,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return () => clearTimeout(timeoutId)
   }, [])
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<User | null> => {
     try {
       setLoading(true)
 
@@ -86,18 +87,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setUser(userProfile)
           setIsAuthenticated(true)
           localStorage.setItem('medispace_user_data', JSON.stringify(userProfile))
-          return true
+          return userProfile
         } catch (profileError) {
           console.error('Failed to fetch user profile:', profileError)
           authService.clearTokens()
-          return false
+          return null
         }
       }
 
-      return false
+      return null
     } catch (error) {
       console.error('Login failed:', error)
-      return false
+      return null
     } finally {
       setLoading(false)
     }
