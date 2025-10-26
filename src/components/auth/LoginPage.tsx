@@ -57,7 +57,7 @@ export function LoginPage() {
     setIsLoading(true)
 
     try {
-      const loggedInUser = await login(formData.email, formData.password)
+      const loggedInUser = await login(formData.email, formData.password, formData.rememberMe)
 
       if (loggedInUser) {
         toast.success('Đăng nhập thành công!', {

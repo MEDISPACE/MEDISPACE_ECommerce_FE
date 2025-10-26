@@ -6,6 +6,7 @@ import { Card } from '../ui/card'
 import { Badge } from '../ui/badge'
 import { ScrollArea } from '../ui/scroll-area'
 import { ImageWithFallback } from '../shared/ImageWithFallback'
+import { productService } from '../../services/productService'
 
 interface Product {
   id: string
@@ -26,21 +27,6 @@ interface ProductSearchWidgetProps {
   className?: string
 }
 
-const mockProducts: Product[] = [
-  {
-    id: '1',
-    name: 'Paracetamol 500mg',
-    image: '/images/paracetamol.jpg',
-    price: 25000,
-    unit: 'Hộp 10 viên',
-    stock: 150,
-    rating: 4.5,
-    type: 'otc',
-    brand: 'DHG Pharma',
-    barcode: '8934563412789',
-  },
-]
-
 const categoryFilters = [
   { id: 'rx', label: 'Thuốc kê đơn', icon: '💊', color: 'text-red-600' },
   { id: 'otc', label: 'OTC', icon: '🏥', color: 'text-blue-600' },
@@ -53,42 +39,86 @@ const orderTemplates = ['Cảm cúm thông thường', 'Đau dạ dày + tiêu h
 export function ProductSearchWidget({ onProductAdd, onProductInfo, className = '' }: ProductSearchWidgetProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const [searchResults, setSearchResults] = useState<Product[]>(mockProducts)
+  const [searchResults, setSearchResults] = useState<Product[]>([])
+  const [loading, setLoading] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
-  const handleSearch = (term: string) => {
+  const handleSearch = async (term: string) => {
     setSearchTerm(term)
 
     try {
+      setLoading(true)
       if (!term.trim()) {
-        setSearchResults(mockProducts)
+        setSearchResults([])
         return
       }
 
-      const filtered = mockProducts.filter((product) => {
-        if (!product) return false
-        const name = (product.name || '').toLowerCase()
-        const brand = (product.brand || '').toLowerCase()
-        const barcode = product.barcode || ''
-        const searchTerm = term.toLowerCase()
+      // Use real API to search products
+      const products = await productService.searchProducts(term)
+      
+      // Transform API products to local Product format
+      const transformedProducts: Product[] = products.map((p) => ({
+        id: p._id,
+        name: p.name,
+        image: p.featuredImage || '/images/product-placeholder.jpg',
+        price: p.price || p.salePrice || 0,
+        unit: p.unit || 'Hộp',
+        stock: p.stockQuantity,
+        rating: p.rating || 4.5,
+        type: p.requiresPrescription ? 'rx' : 'otc',
+        brand: p.brand?.name || 'Unknown',
+        barcode: p.barcode,
+      }))
 
-        return name.includes(searchTerm) || brand.includes(searchTerm) || barcode.includes(term)
-      })
-
-      setSearchResults(filtered)
+      setSearchResults(transformedProducts)
     } catch (error) {
       console.error('Search error:', error)
       setSearchResults([])
+    } finally {
+      setLoading(false)
     }
   }
 
-  const handleCategoryFilter = (categoryId: string) => {
+  const handleCategoryFilter = async (categoryId: string) => {
     if (selectedCategory === categoryId) {
       setSelectedCategory(null)
-      setSearchResults(mockProducts)
+      // Reset to search results without category filter
+      if (searchTerm.trim()) {
+        await handleSearch(searchTerm)
+      } else {
+        setSearchResults([])
+      }
     } else {
       setSelectedCategory(categoryId)
-      setSearchResults(mockProducts.filter((p) => p.type === categoryId))
+      try {
+        setLoading(true)
+        // Filter by prescription requirement based on category
+        const isPrescription = categoryId === 'rx'
+        const products = await productService.getProducts({
+          isPrescription,
+          limit: 50
+        })
+        
+        const transformedProducts: Product[] = products.map((p) => ({
+          id: p._id,
+          name: p.name,
+          image: p.featuredImage || '/images/product-placeholder.jpg',
+          price: p.price || p.salePrice || 0,
+          unit: p.unit || 'Hộp',
+          stock: p.stockQuantity,
+          rating: p.rating || 4.5,
+          type: p.requiresPrescription ? 'rx' : 'otc',
+          brand: p.brand?.name || 'Unknown',
+          barcode: p.barcode,
+        }))
+
+        setSearchResults(transformedProducts)
+      } catch (error) {
+        console.error('Category filter error:', error)
+        setSearchResults([])
+      } finally {
+        setLoading(false)
+      }
     }
   }
 
@@ -107,11 +137,12 @@ export function ProductSearchWidget({ onProductAdd, onProductInfo, className = '
     }
   }
 
-  const handleScanBarcode = () => {
-    // Mock barcode scan
-    const randomProduct = mockProducts[Math.floor(Math.random() * mockProducts.length)]
-    setSearchTerm(randomProduct.barcode || randomProduct.name)
-    handleSearch(randomProduct.barcode || randomProduct.name)
+  const handleScanBarcode = async () => {
+    // Mock barcode scan - in real implementation, this would use camera API
+    // For now, just trigger a search with a sample barcode
+    const sampleBarcode = '8934563412789'
+    setSearchTerm(sampleBarcode)
+    await handleSearch(sampleBarcode)
   }
 
   return (
@@ -177,10 +208,16 @@ export function ProductSearchWidget({ onProductAdd, onProductInfo, className = '
 
         <ScrollArea className='h-80'>
           <div className='p-3 space-y-3'>
-            {searchResults.length === 0 ? (
+            {loading ? (
+              <div className='text-center py-8 text-gray-500'>
+                <div className='inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mb-2'></div>
+                <p>Đang tìm kiếm...</p>
+              </div>
+            ) : searchResults.length === 0 ? (
               <div className='text-center py-8 text-gray-500'>
                 <Package className='w-12 h-12 mx-auto mb-2 text-gray-300' />
                 <p>Không tìm thấy sản phẩm</p>
+                {searchTerm && <p className='text-sm'>Thử tìm với từ khóa khác</p>}
               </div>
             ) : (
               searchResults.map((product) => {

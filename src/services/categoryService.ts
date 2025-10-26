@@ -18,7 +18,7 @@ export const categoryService = {
    * Get all categories
    */
   async getCategories(): Promise<Category[]> {
-    const response = await apiClient.get(API_ENDPOINTS.CATEGORIES.BASE)
+    const response = await apiClient.get(API_ENDPOINTS.CATEGORIES.BASE, { params: { limit: 100 } })
     // Backend returns { message, result } where result contains categories + pagination
     if (response && response.data) {
       const data = response.data as CategoriesResponse
@@ -43,7 +43,7 @@ export const categoryService = {
   async getCategoryBySlug(slug: string): Promise<Category | null> {
     try {
       // The backend exposes category slug on the same /categories/:categoryId route (we support slug there).
-      const response = await apiClient.get(API_ENDPOINTS.CATEGORIES.BY_ID(slug))
+      const response = await apiClient.get(`${API_ENDPOINTS.CATEGORIES.BASE}/${slug}`)
       // Normalize shape
       if (response && response.data) {
         const data = response.data as unknown
@@ -69,25 +69,22 @@ export const categoryService = {
   },
 
   /**
-   * Get top categories (most popular)
+   * Get category children (subcategories)
    */
-  async getTopCategories(limit = 6): Promise<Category[]> {
-    const response = await apiClient.get(API_ENDPOINTS.CATEGORIES.BASE, { params: { limit, sort: '-productCount' } })
-    if (response && response.data) {
-      const data = response.data as CategoriesResponse
-      if (
-        typeof data === 'object' &&
-        data !== null &&
-        'result' in data &&
-        data.result &&
-        Array.isArray(data.result.categories)
-      )
-        return data.result.categories as Category[]
-      if (Array.isArray(data)) return data as Category[]
-      if (typeof data === 'object' && data !== null && 'categories' in data && Array.isArray(data.categories))
-        return data.categories as Category[]
+  async getCategoryChildren(categoryId: string): Promise<Category[]> {
+    try {
+      const response = await apiClient.get(`${API_ENDPOINTS.CATEGORIES.BASE}/${categoryId}/children`)
+      if (response && response.data) {
+        const data = response.data as unknown
+        if (typeof data === 'object' && data !== null && 'result' in data)
+          return (data as { result?: unknown }).result as Category[]
+        return data as Category[]
+      }
+      return []
+    } catch (error: unknown) {
+      console.error('Error fetching category children:', error)
+      return []
     }
-    return []
   },
 }
 
