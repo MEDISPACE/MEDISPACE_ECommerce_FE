@@ -49,15 +49,17 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
   }
 
   const handleCategoryChange = (categorySlug: string, checked: boolean) => {
+    const currentCategories = filters.categories || []
     const newCategories = checked
-      ? [...filters.categories, categorySlug]
-      : filters.categories.filter((c) => c !== categorySlug)
+      ? [...currentCategories, categorySlug]
+      : currentCategories.filter((c) => c !== categorySlug)
 
     onFiltersChange({ ...filters, categories: newCategories })
   }
 
   const handleBrandChange = (brand: string, checked: boolean) => {
-    const newBrands = checked ? [...filters.brands, brand] : filters.brands.filter((b) => b !== brand)
+    const currentBrands = filters.brands || []
+    const newBrands = checked ? [...currentBrands, brand] : currentBrands.filter((b) => b !== brand)
 
     onFiltersChange({ ...filters, brands: newBrands })
   }
@@ -101,11 +103,11 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
   const filteredBrands = brands.filter((brand) => brand.name.toLowerCase().includes(brandSearch.toLowerCase()))
 
   const hasActiveFilters =
-    filters.categories.length > 0 ||
-    filters.brands.length > 0 ||
-    filters.priceRange[0] > 0 ||
-    filters.priceRange[1] < 1000000 ||
-    filters.rating > 0
+    (filters.categories?.length || 0) > 0 ||
+    (filters.brands?.length || 0) > 0 ||
+    (filters.priceRange?.[0] || 0) > 0 ||
+    (filters.priceRange?.[1] || 1000000) < 1000000 ||
+    (filters.rating || 0) > 0
 
   return (
     <div className='space-y-4'>
@@ -145,7 +147,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
                     <div className='flex items-start space-x-2 min-h-[24px]'>
                       <Checkbox
                         id={`category-${category.slug}`}
-                        checked={filters.categories.includes(category.slug)}
+                        checked={(filters.categories || []).includes(category.slug)}
                         onCheckedChange={(checked) => handleCategoryChange(category.slug, checked as boolean)}
                         className='mt-0.5 shrink-0'
                       />
@@ -196,7 +198,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
                     <div key={brand._id} className='flex items-center space-x-2 min-h-[20px]'>
                       <Checkbox
                         id={`brand-${brand._id}`}
-                        checked={filters.brands.includes(brand._id)}
+                        checked={(filters.brands || []).includes(brand._id)}
                         onCheckedChange={(checked) => handleBrandChange(brand._id, checked as boolean)}
                         className='shrink-0'
                       />
@@ -231,22 +233,22 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
               <div className='grid grid-cols-2 gap-1'>
                 <Input
                   type='number'
-                  value={filters.priceRange[0]}
-                  onChange={(e) => handlePriceRangeChange([parseInt(e.target.value) || 0, filters.priceRange[1]])}
+                  value={filters.priceRange?.[0] || 0}
+                  onChange={(e) => handlePriceRangeChange([parseInt(e.target.value) || 0, filters.priceRange?.[1] || 1000000])}
                   placeholder='Từ'
                   className='h-8 text-xs border-blue-200 focus:border-blue-500'
                 />
                 <Input
                   type='number'
-                  value={filters.priceRange[1]}
-                  onChange={(e) => handlePriceRangeChange([filters.priceRange[0], parseInt(e.target.value) || 1000000])}
+                  value={filters.priceRange?.[1] || 1000000}
+                  onChange={(e) => handlePriceRangeChange([filters.priceRange?.[0] || 0, parseInt(e.target.value) || 1000000])}
                   placeholder='Đến'
                   className='h-8 text-xs border-blue-200 focus:border-blue-500'
                 />
               </div>
               <div className='text-xs text-gray-600 leading-tight'>
-                {new Intl.NumberFormat('vi-VN').format(filters.priceRange[0])}đ -{' '}
-                {new Intl.NumberFormat('vi-VN').format(filters.priceRange[1])}đ
+                {new Intl.NumberFormat('vi-VN').format(filters.priceRange?.[0] || 0)}đ -{' '}
+                {new Intl.NumberFormat('vi-VN').format(filters.priceRange?.[1] || 1000000)}đ
               </div>
             </div>
           </div>
@@ -336,7 +338,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
             <div className='pt-2'>
               <Label className='text-sm font-medium text-gray-700 mb-1 block'>Bộ lọc đang áp dụng</Label>
               <div className='flex flex-wrap gap-1'>
-                {filters.categories.map((categorySlug) => (
+                {(filters.categories || []).map((categorySlug) => (
                   <Badge
                     key={categorySlug}
                     variant='secondary'
@@ -355,7 +357,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
                     </Button>
                   </Badge>
                 ))}
-                {filters.brands.map((brandId) => (
+                {(filters.brands || []).map((brandId) => (
                   <Badge
                     key={brandId}
                     variant='secondary'

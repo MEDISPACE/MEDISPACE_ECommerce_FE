@@ -28,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
+import { useCart } from '../../contexts/CartContext'
 import { useCategories } from '../../hooks/product'
 import type { Category } from '../../types/product'
 
@@ -35,6 +36,7 @@ export function Header() {
   const navigate = useNavigate()
   const { categories } = useCategories()
   const { user, isAuthenticated, logout } = useAuth()
+  const { getCartItemsCount } = useCart()
   const [activeMegaMenuCategory, setActiveMegaMenuCategory] = useState<Category | null>(null)
   const [isMegaMenuVisible, setIsMegaMenuVisible] = useState(false)
 
@@ -104,7 +106,7 @@ export function Header() {
                 <ShoppingCart className='w-5 h-5' />
                 <span className='hidden md:inline'>Giỏ hàng</span>
                 <Badge className='absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center'>
-                  3
+                  {getCartItemsCount()}
                 </Badge>
               </Button>
             </Link>
@@ -242,17 +244,18 @@ export function Header() {
             </div>
 
             {/* Desktop Categories with unified mega menu */}
-            <div className='hidden lg:flex items-center gap-8'>
+            <div className='hidden lg:flex items-center gap-4'>
               {categories.map((category) => (
                 <div key={category._id} className='relative' onMouseEnter={() => handleCategoryHover(category)}>
                   <Link
                     to={`/categories/${category.slug}`}
-                    className={`relative flex items-center px-2 py-3 font-medium transition-colors duration-200 group ${
+                    className={`relative flex items-center px-1 py-3 text-sm font-medium transition-colors duration-200 group ${
                       activeMegaMenuCategory?._id === category._id ? 'text-blue-600' : 'text-gray-700 hover:text-blue-600'
                     }`}
+                    title={category.name}
                   >
-                    {category.name}
-                    <ChevronDown className='w-3 h-3 ml-1 opacity-60' />
+                    <span className='text-center leading-tight'>{category.name}</span>
+                    <ChevronDown className='w-3 h-3 ml-1 opacity-60 flex-shrink-0' />
                     <span
                       className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-blue-600 to-cyan-500 transition-all duration-300 ${
                         activeMegaMenuCategory?._id === category._id ? 'w-full' : 'w-0 group-hover:w-full'

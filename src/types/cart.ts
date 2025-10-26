@@ -1,60 +1,59 @@
 // Cart related types for MEDISPACE
-import type { Product } from './product'
 
 export interface CartItem {
-  id: string
   productId: string
-  product: Product
+  name: string
+  sku: string
   quantity: number
-  price: number
-  total: number
+  unitPrice: number
+  totalPrice: number
   prescriptionRequired: boolean
-  prescriptionId?: string
-  notes?: string
-  addedAt: string
+  image?: string
 }
 
 export interface Cart {
-  id: string
+  _id: string
   userId?: string
+  sessionId?: string
   items: CartItem[]
+  itemCount: number
+  uniqueProductCount: number
   subtotal: number
-  discount: number
-  tax: number
-  shipping: number
-  total: number
-  couponCode?: string
-  couponDiscount?: number
+  discountAmount: number
+  taxAmount: number
+  shippingFee: number
+  loyaltyDiscount: number
+  totalAmount: number
+  appliedCoupons?: AppliedCoupon[]
+  loyaltyPointsUsed?: number
+  requiresPrescription: boolean
+  status: string
+  abandonmentReason?: string
   createdAt: string
   updatedAt: string
+  lastActivityAt?: string
+  expiresAt?: string
+}
+
+export interface AppliedCoupon {
+  code: string
+  discountAmount: number
+  type: string
 }
 
 export interface AddToCartRequest {
   productId: string
   quantity: number
-  prescriptionId?: string
-  notes?: string
 }
 
 export interface UpdateCartItemRequest {
   quantity: number
-  notes?: string
 }
 
-export interface ApplyCouponRequest {
-  code: string
-}
-
-export interface Coupon {
-  id: string
-  code: string
-  type: 'percentage' | 'fixed'
-  value: number
-  minOrderAmount?: number
-  maxDiscount?: number
-  validFrom: string
-  validTo: string
-  usageLimit?: number
-  usedCount: number
-  isActive: boolean
+export interface CheckoutData {
+  cart: Cart
+  shippingFee: number
+  taxAmount: number
+  discountAmount: number
+  finalAmount: number
 }

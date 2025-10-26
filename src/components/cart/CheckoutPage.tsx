@@ -12,7 +12,8 @@ import { Textarea } from '../ui/textarea'
 import { Separator } from '../ui/separator'
 import { Badge } from '../ui/badge'
 import { ImageWithFallback } from '../shared/ImageWithFallback'
-import type { Address, ShippingMethod, PaymentMethod, CartItem } from '../../types/product'
+import { useCart } from '../../contexts/CartContext'
+import type { Address, ShippingMethod, PaymentMethod } from '../../types/product'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
 
 const mockAddresses: Address[] = [
@@ -85,6 +86,8 @@ const paymentMethods: PaymentMethod[] = [
 ]
 
 export function CheckoutPage() {
+  const { state, getSelectedItemsTotal, getSelectedItemsCount } = useCart()
+
   const [selectedAddress, setSelectedAddress] = useState(mockAddresses[0].id)
   const [useNewAddress, setUseNewAddress] = useState(false)
   const [shippingMethod, setShippingMethod] = useState('standard')
@@ -106,13 +109,12 @@ export function CheckoutPage() {
 
   const breadcrumbItems = [{ label: 'Giỏ hàng', href: '/cart' }, { label: 'Thanh toán' }]
 
-  // Calculate totals - TODO: Replace with real cart data
-  const cartItems: CartItem[] = [] // mockCartItems.filter((item: CartItem) => item.selected)
-  const subtotal = cartItems.reduce(
-    (sum: number, item: CartItem) => sum + (item.product.price ?? 0) * item.quantity,
-    0,
-  )
-  const discount = 50000
+  // Get selected cart items
+  const cartItems = state.cart?.items.filter(item => state.selectedItems.has(item.productId)) || []
+
+  // Calculate totals
+  const subtotal = getSelectedItemsTotal()
+  const discount = 0
   const selectedShipping = shippingMethods.find((method) => method.id === shippingMethod)
   const shippingFee = selectedShipping?.price || 0
   const total = subtotal - discount + shippingFee
@@ -457,26 +459,22 @@ export function CheckoutPage() {
                     <CardTitle className='text-blue-800'>Đơn hàng của bạn</CardTitle>
                   </CardHeader>
                   <CardContent className='space-y-4'>
-                    {/* Items */}
                     <div className='space-y-3'>
-                      {cartItems.map((item: CartItem) => (
-                        <div key={item.id} className='flex items-center gap-3'>
+                      {cartItems.map((item) => (
+                        <div key={item.productId} className='flex items-center gap-3'>
                           <div className='w-12 h-12 flex-shrink-0'>
                             <ImageWithFallback
-                              src={item.product.images?.[0] || item.product.featuredImage || '/placeholder-product.jpg'}
-                              alt={item.product.name}
+                              src={item.image || '/placeholder-product.jpg'}
+                              alt={item.name}
                               className='w-full h-full object-cover rounded border border-gray-200'
                             />
                           </div>
                           <div className='flex-1 min-w-0'>
-                            <div className='font-medium text-sm line-clamp-1'>{item.product.name}</div>
+                            <div className='font-medium text-sm line-clamp-1'>{item.name}</div>
                             <div className='text-xs text-gray-500'>SL: {item.quantity}</div>
                           </div>
                           <div className='text-sm font-medium text-blue-600'>
-                            {new Intl.NumberFormat('vi-VN').format(
-                              (item.product.salePrice ?? item.product.originalPrice ?? 0) * item.quantity,
-                            )}
-                            đ
+                            {new Intl.NumberFormat('vi-VN').format(item.totalPrice)}đ
                           </div>
                         </div>
                       ))}
@@ -504,12 +502,12 @@ export function CheckoutPage() {
                         </span>
                       </div>
 
-                      {discount > 0 && (
+                      {/* {discount > 0 && (
                         <div className='flex justify-between'>
                           <span className='text-gray-600'>Giảm giá</span>
                           <span className='text-green-600'>-{new Intl.NumberFormat('vi-VN').format(discount)}đ</span>
                         </div>
-                      )}
+                      )} */}
                     </div>
 
                     <Separator />
@@ -555,7 +553,7 @@ export function CheckoutPage() {
                           Đang xử lý...
                         </div>
                       ) : (
-                        <>Đặt hàng ({new Intl.NumberFormat('vi-VN').format(total)}đ)</>
+                        <>Đặt hàng ({getSelectedItemsCount()} sản phẩm - {new Intl.NumberFormat('vi-VN').format(total)}đ)</>
                       )}
                     </Button>
 
