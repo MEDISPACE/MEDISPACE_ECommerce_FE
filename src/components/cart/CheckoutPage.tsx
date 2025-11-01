@@ -15,6 +15,7 @@ import { ImageWithFallback } from '../shared/ImageWithFallback'
 import { useCart } from '../../contexts/CartContext'
 import type { Address, ShippingMethod, PaymentMethod } from '../../types/product'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
+import { orderService } from '../../services/orderService'
 
 const mockAddresses: Address[] = [
   {
@@ -128,13 +129,42 @@ export function CheckoutPage() {
     setIsProcessing(true)
 
     try {
-      // Simulate order processing
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      // Get the selected address object
+      const addressObj = mockAddresses.find(addr => addr.id === selectedAddress) || mockAddresses[0]
 
-      // Redirect to success page
-      window.location.href = '/order-success'
+      // Map frontend payment method to backend format
+      const paymentMethodMap: Record<string, string> = {
+        'cod': 'cod',
+        'banking': 'bank_transfer',
+        'credit': 'credit_card',
+        'vnpay': 'e_wallet',
+        'momo': 'e_wallet'
+      }
+
+      // Create order using real API
+      const orderData = {
+        items: [], // Backend creates from cart, so items not needed
+        shippingAddress: {
+          firstName: addressObj.fullName.split(' ')[0] || '',
+          lastName: addressObj.fullName.split(' ').slice(1).join(' ') || '',
+          address: addressObj.address,
+          ward: addressObj.ward,
+          district: addressObj.district,
+          city: addressObj.province,
+          phone: addressObj.phone,
+          email: addressObj.email || '',
+        },
+        paymentMethod: paymentMethodMap[paymentMethod] || 'cod',
+        notes: orderNotes,
+      }
+
+      const order = await orderService.createOrder(orderData)
+
+      // Redirect to success page with order ID
+      window.location.href = `/order/success?orderId=${order.id}`
     } catch (error) {
       console.error('Order failed:', error)
+      alert('Đặt hàng thất bại. Vui lòng thử lại.')
     } finally {
       setIsProcessing(false)
     }
