@@ -201,9 +201,9 @@ export function SearchResultsPage() {
         <Label className='font-medium mb-3 block'>Danh mục</Label>
         <div className='space-y-2'>
           {categories.map((category) => (
-            <div key={category.id} className='flex items-center space-x-2'>
+            <div key={category._id} className='flex items-center space-x-2'>
               <Checkbox
-                id={`category-${category.id}`}
+                id={`category-${category._id}`}
                 checked={selectedCategories.includes(category.slug)}
                 onCheckedChange={(checked) => {
                   if (checked) {
@@ -214,7 +214,7 @@ export function SearchResultsPage() {
                   setCurrentPage(1)
                 }}
               />
-              <Label htmlFor={`category-${category.id}`} className='text-sm'>
+              <Label htmlFor={`category-${category._id}`} className='text-sm'>
                 {category.name} ({category.productCount})
               </Label>
             </div>
