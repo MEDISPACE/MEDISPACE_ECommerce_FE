@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { PageTransition } from '../shared/PageTransition'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
@@ -6,11 +6,28 @@ import { Label } from '../ui/label'
 import { Checkbox } from '../ui/checkbox'
 import { Alert, AlertDescription } from '../ui/alert'
 import { Mail, AlertCircle, Lock, Eye, EyeOff, LogIn, Sparkles } from 'lucide-react'
-import { Link, useNavigate } from 'react-router'
+import { Link } from 'react-router'
 import { useAuth } from '../../contexts/AuthContext'
-import { UserRole } from '../../types/user'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
+import { useRoleNavigation } from '../../hooks'
+
+const getGoogleAuthUrl = () => {
+  const { VITE_GOOGLE_CLIENT_ID, VITE_GOOGLE_REDIRECT_URI } = import.meta.env
+  const url = 'https://accounts.google.com/o/oauth2/v2/auth'
+  const query = {
+    client_id: VITE_GOOGLE_CLIENT_ID,
+    redirect_uri: VITE_GOOGLE_REDIRECT_URI,
+    response_type: 'code',
+    scope: ['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email'].join(
+      ' ',
+    ),
+    prompt: 'consent',
+    access_type: 'offline', // ✅ Sửa typo: acccess_type -> access_type
+  }
+  const queryString = new URLSearchParams(query).toString()
+  return `${url}?${queryString}`
+}
 
 export function LoginPage() {
   const [formData, setFormData] = useState({
@@ -21,8 +38,11 @@ export function LoginPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const navigate = useNavigate()
   const { login } = useAuth()
+  const navigateByRole = useRoleNavigation()
+
+  // Memoize Google OAuth URL để tránh tính lại mỗi render
+  const googleOAuthUrl = useMemo(() => getGoogleAuthUrl(), [])
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
@@ -67,14 +87,7 @@ export function LoginPage() {
 
         // Navigate based on the returned user's role. Using the returned
         // user avoids any race where context.user hasn't updated yet.
-        const role = loggedInUser.role
-        if (role === UserRole.Admin) {
-          navigate('/admin/dashboard')
-        } else if (role === UserRole.Pharmacist) {
-          navigate('/pharmacist')
-        } else {
-          navigate('/')
-        }
+        navigateByRole(loggedInUser.role)
       } else {
         throw new Error('Email hoặc mật khẩu không đúng')
       }
@@ -303,10 +316,7 @@ export function LoginPage() {
           variant='outline'
           className='w-full h-14 bg-white border-2 border-gray-400 hover:bg-gray-50 hover:border-blue-500 hover:shadow-md rounded-xl transition-all duration-200 group'
           onClick={() => {
-            toast.info('Tính năng đang phát triển', {
-              description: 'Đăng nhập với Google sẽ sớm được ra mắt',
-              duration: 3000,
-            })
+            window.location.href = googleOAuthUrl
           }}
           disabled={isLoading}
         >
