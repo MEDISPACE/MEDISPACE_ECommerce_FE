@@ -93,7 +93,7 @@ class AuthService {
 
   async getMe(): Promise<User> {
     try {
-      const response = await apiClient.get<{ user: User }>(API_ENDPOINTS.USERS.ME)
+      const response = await apiClient.get<{ message: string; user: User }>(API_ENDPOINTS.USERS.ME)
       return response.data.user
     } catch (error) {
       const axiosError = error as AxiosError<{ message: string }>

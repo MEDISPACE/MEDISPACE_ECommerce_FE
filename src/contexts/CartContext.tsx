@@ -69,7 +69,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 
     case 'SELECT_ALL_ITEMS': {
       if (action.payload && state.cart) {
-        const allProductIds = state.cart.items.map(item => item.productId)
+        const allProductIds = state.cart.items.map((item) => item.productId)
         return { ...state, selectedItems: new Set(allProductIds) }
       } else {
         return { ...state, selectedItems: new Set() }
@@ -196,8 +196,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
       })
     } catch (error) {
       console.error('Error adding to cart:', error)
+      const axiosError = error as any
+      const errorMessage = axiosError?.response?.data?.message || 'Vui lòng thử lại sau.'
+      console.error('Backend error details:', axiosError?.response?.data)
+
       toast.error('Không thể thêm vào giỏ hàng', {
-        description: 'Vui lòng thử lại sau.',
+        description: errorMessage,
         duration: 3000,
       })
     } finally {
@@ -306,7 +310,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const getSelectedItemsTotal = (): number => {
     if (!state.cart) return 0
     return state.cart.items
-      .filter(item => state.selectedItems.has(item.productId))
+      .filter((item) => state.selectedItems.has(item.productId))
       .reduce((total, item) => total + item.totalPrice, 0)
   }
 

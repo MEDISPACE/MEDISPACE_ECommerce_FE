@@ -25,6 +25,6 @@ export * from './product'
 // Most commonly used hooks for quick imports
 export { useCart } from './cart'
 export { useImageLightbox, useCarousel, useResponsiveGrid } from './ui'
-export { useBreadcrumb } from './navigation'
+export { useBreadcrumb, useRoleNavigation } from './navigation'
 export { useLocalStorage, useMediaQuery } from './common'
 export { useProductDetail, useProductFilter, useWishlist, useProductListing } from './product'
