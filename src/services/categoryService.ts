@@ -82,7 +82,6 @@ export const categoryService = {
       }
       return []
     } catch (error: unknown) {
-      console.error('Error fetching category children:', error)
       return []
     }
   },

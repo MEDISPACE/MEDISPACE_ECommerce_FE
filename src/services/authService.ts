@@ -30,7 +30,6 @@ class AuthService {
       // No need to send refresh token in body since it's in cookie
       await apiClient.post(API_ENDPOINTS.AUTH.LOGOUT)
     } catch (error) {
-      console.error('Logout API call failed:', error)
     } finally {
       // Always clear local storage
       this.clearTokens()

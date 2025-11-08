@@ -121,8 +121,9 @@ export function CreateOrderPage() {
     toast.success(`Đã thêm ${product.name} vào đơn hàng`)
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleProductInfo = (product: Product) => {
-    console.log('Product info:', product)
+    // Handle product info display - TODO: implement product info modal
   }
 
   const updateItemQuantity = (itemId: string, newQuantity: number) => {
@@ -157,8 +158,7 @@ export function CreateOrderPage() {
         const quantity = item.quantity || 0
         return sum + price * quantity
       }, 0)
-    } catch (error) {
-      console.error('Error calculating subtotal:', error)
+    } catch {
       return 0
     }
   }
@@ -171,8 +171,7 @@ export function CreateOrderPage() {
     try {
       const option = deliveryOptions.find((opt) => opt.id === selectedDelivery)
       return option?.price || 0
-    } catch (error) {
-      console.error('Error calculating delivery fee:', error)
+    } catch {
       return 0
     }
   }
@@ -180,8 +179,7 @@ export function CreateOrderPage() {
   const calculateTotal = () => {
     try {
       return calculateSubtotal() - calculateDiscount() + calculateDeliveryFee()
-    } catch (error) {
-      console.error('Error calculating total:', error)
+    } catch {
       return 0
     }
   }

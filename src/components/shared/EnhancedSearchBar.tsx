@@ -55,8 +55,8 @@ export function EnhancedSearchBar({
         ])
         setProducts(productsData)
         setCategories(categoriesData)
-      } catch (error) {
-        console.error('Error loading search data:', error)
+      } catch {
+        // Error loading search data
       }
     }
     loadData()
@@ -202,10 +202,7 @@ export function EnhancedSearchBar({
   const handleVoiceSearch = () => {
     // Voice search implementation would go here
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      console.log('Voice search activated')
       // Implement speech recognition here
-    } else {
-      console.log('Speech recognition not supported')
     }
   }
 
@@ -219,13 +216,11 @@ export function EnhancedSearchBar({
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      console.log('Please select an image file')
       return
     }
 
     // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
-      console.log('File size too large. Please select an image under 10MB')
       return
     }
 
@@ -246,8 +241,8 @@ export function EnhancedSearchBar({
       })
 
       setIsOpen(false)
-    } catch (error) {
-      console.error('Error uploading prescription:', error)
+    } catch {
+      // Error uploading prescription
     } finally {
       setIsUploading(false)
       // Reset file input

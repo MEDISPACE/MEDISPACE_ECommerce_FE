@@ -35,7 +35,6 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
         setCategories(categoriesData)
         setBrands(brandsData)
       } catch (error) {
-        console.error('Error fetching filter data:', error)
       }
     }
 

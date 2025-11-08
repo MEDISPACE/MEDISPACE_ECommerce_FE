@@ -60,7 +60,6 @@ export function HomePage() {
         // Ensure we always set an array
         setFeaturedProducts(Array.isArray(products) ? products : [])
       } catch (error) {
-        console.error('Error fetching featured products:', error)
         setFeaturedProducts([]) // Set empty array on error
       } finally {
         setLoading(false)

@@ -39,7 +39,6 @@ export function ProductsListingPage() {
         const productsData = await productService.getProducts()
         setProducts(productsData)
       } catch (error) {
-        console.error('Error fetching products:', error)
       }
     }
 

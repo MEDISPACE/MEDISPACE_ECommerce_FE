@@ -151,7 +151,6 @@ export function ChatPage() {
         setMessages((prev) => [...prev, pharmacistReply])
       }, 1000)
     } catch (error) {
-      console.error('Error sending message:', error)
     }
   }
 

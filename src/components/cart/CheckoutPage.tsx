@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router'
 import { Shield, ChevronRight, MapPin, CreditCard, Truck, Clock, Smartphone, Plus, RotateCcw } from 'lucide-react'
 import { Button } from '../ui/button'
@@ -13,23 +13,12 @@ import { Separator } from '../ui/separator'
 import { Badge } from '../ui/badge'
 import { ImageWithFallback } from '../shared/ImageWithFallback'
 import { useCart } from '../../contexts/CartContext'
-import type { Address, ShippingMethod, PaymentMethod } from '../../types/product'
+import type { ShippingMethod, PaymentMethod } from '../../types/product'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
 import { orderService } from '../../services/orderService'
-
-const mockAddresses: Address[] = [
-  {
-    id: '1',
-    fullName: 'Nguyễn Văn A',
-    phone: '0123456789',
-    email: 'nguyenvana@email.com',
-    address: '123 Nguyễn Văn Cừ',
-    province: 'TP.HCM',
-    district: 'Quận 5',
-    ward: 'Phường 4',
-    isDefault: true,
-  },
-]
+import { authService } from '../../services/authService'
+import { logger } from '../../utils/logger'
+import type { User } from '../../types/user'
 
 const shippingMethods: ShippingMethod[] = [
   {
@@ -89,7 +78,9 @@ const paymentMethods: PaymentMethod[] = [
 export function CheckoutPage() {
   const { state, getSelectedItemsTotal, getSelectedItemsCount } = useCart()
 
-  const [selectedAddress, setSelectedAddress] = useState(mockAddresses[0].id)
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [selectedAddress, setSelectedAddress] = useState('user-address')
   const [useNewAddress, setUseNewAddress] = useState(false)
   const [shippingMethod, setShippingMethod] = useState('standard')
   const [paymentMethod, setPaymentMethod] = useState('cod')
@@ -107,6 +98,23 @@ export function CheckoutPage() {
     ward: '',
     saveAsDefault: false,
   })
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const userData = await authService.getMe()
+        setUser(userData)
+        logger.info('Checkout: User data loaded successfully', { userId: userData._id })
+      } catch (error) {
+        logger.warn('Checkout: Failed to fetch user data', error)
+        // Failed to fetch user data, continue with null user
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchUserData()
+  }, [])
 
   const breadcrumbItems = [{ label: 'Giỏ hàng', href: '/cart' }, { label: 'Thanh toán' }]
 
@@ -126,11 +134,68 @@ export function CheckoutPage() {
       return
     }
 
+    if (!user) {
+      alert('Không thể lấy thông tin người dùng. Vui lòng đăng nhập lại.')
+      return
+    }
+
     setIsProcessing(true)
+    logger.info('Checkout: Starting order placement', {
+      userId: user._id,
+      itemCount: getSelectedItemsCount(),
+      total: total
+    })
 
     try {
       // Get the selected address object
-      const addressObj = mockAddresses.find(addr => addr.id === selectedAddress) || mockAddresses[0]
+      let addressObj: {
+        firstName: string
+        lastName: string
+        address: string
+        ward: string
+        district: string
+        city: string
+        phone: string
+        email: string
+      }
+
+      if (selectedAddress === 'user-address' && user.address) {
+        // Use user's saved address
+        addressObj = {
+          firstName: user.firstName,
+          lastName: user.lastName,
+          address: user.address.address,
+          ward: user.address.ward,
+          district: '', // User address doesn't have district
+          city: user.address.city,
+          phone: user.phoneNumber || '',
+          email: user.email,
+        }
+      } else if (useNewAddress) {
+        // Use new address form data
+        addressObj = {
+          firstName: newAddress.fullName.split(' ')[0] || '',
+          lastName: newAddress.fullName.split(' ').slice(1).join(' ') || '',
+          address: newAddress.address,
+          ward: newAddress.ward,
+          district: newAddress.district,
+          city: newAddress.province,
+          phone: newAddress.phone,
+          email: newAddress.email,
+        }
+      } else {
+        // Fallback to mock address if needed
+        addressObj = {
+          firstName: 'Nguyễn',
+          lastName: 'Văn A',
+          address: '123 Nguyễn Văn Cừ',
+          ward: 'Phường 4',
+          district: 'Quận 5',
+          city: 'TP.HCM',
+          phone: '0123456789',
+          email: user.email,
+        }
+      }
 
       // Map frontend payment method to backend format
       const paymentMethodMap: Record<string, string> = {
@@ -144,26 +209,22 @@ export function CheckoutPage() {
       // Create order using real API
       const orderData = {
         items: [], // Backend creates from cart, so items not needed
-        shippingAddress: {
-          firstName: addressObj.fullName.split(' ')[0] || '',
-          lastName: addressObj.fullName.split(' ').slice(1).join(' ') || '',
-          address: addressObj.address,
-          ward: addressObj.ward,
-          district: addressObj.district,
-          city: addressObj.province,
-          phone: addressObj.phone,
-          email: addressObj.email || '',
-        },
+        shippingAddress: addressObj,
         paymentMethod: paymentMethodMap[paymentMethod] || 'cod',
         notes: orderNotes,
       }
 
       const order = await orderService.createOrder(orderData)
+      logger.info('Checkout: Order created successfully', {
+        orderId: order.id,
+        userId: user._id,
+        total: total
+      })
 
       // Redirect to success page with order ID
       window.location.href = `/order/success?orderId=${order.id}`
     } catch (error) {
-      console.error('Order failed:', error)
+      logger.error('Checkout: Order placement failed', error)
       alert('Đặt hàng thất bại. Vui lòng thử lại.')
     } finally {
       setIsProcessing(false)
@@ -224,32 +285,32 @@ export function CheckoutPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className='space-y-4'>
-                  {/* Saved Addresses */}
-                  {mockAddresses.length > 0 && !useNewAddress && (
+                  {loading ? (
+                    <div className='text-center py-4'>
+                      <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto'></div>
+                      <p className='mt-2 text-sm text-gray-600'>Đang tải thông tin...</p>
+                    </div>
+                  ) : user?.address && !useNewAddress ? (
                     <div className='space-y-3'>
                       <RadioGroup value={selectedAddress} onValueChange={setSelectedAddress}>
-                        {mockAddresses.map((address) => (
-                          <div key={address.id} className='flex items-start space-x-2'>
-                            <RadioGroupItem value={address.id} id={address.id} />
-                            <Label htmlFor={address.id} className='flex-1 cursor-pointer'>
-                              <div className='p-3 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors'>
-                                <div className='flex items-center gap-2 mb-1'>
-                                  <span className='font-medium'>{address.fullName}</span>
-                                  <span className='text-gray-400'>|</span>
-                                  <span className='text-gray-600'>{address.phone}</span>
-                                  {address.isDefault && (
-                                    <Badge variant='secondary' className='bg-blue-100 text-blue-700'>
-                                      Mặc định
-                                    </Badge>
-                                  )}
-                                </div>
-                                <div className='text-sm text-gray-600'>
-                                  {address.address}, {address.ward}, {address.district}, {address.province}
-                                </div>
+                        <div className='flex items-start space-x-2'>
+                          <RadioGroupItem value='user-address' id='user-address' />
+                          <Label htmlFor='user-address' className='flex-1 cursor-pointer'>
+                            <div className='p-3 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors'>
+                              <div className='flex items-center gap-2 mb-1'>
+                                <span className='font-medium'>{user.firstName} {user.lastName}</span>
+                                <span className='text-gray-400'>|</span>
+                                <span className='text-gray-600'>{user.phoneNumber}</span>
+                                <Badge variant='secondary' className='bg-blue-100 text-blue-700'>
+                                  Địa chỉ mặc định
+                                </Badge>
                               </div>
-                            </Label>
-                          </div>
-                        ))}
+                              <div className='text-sm text-gray-600'>
+                                {user.address.address}, {user.address.ward}, {user.address.city}
+                              </div>
+                            </div>
+                          </Label>
+                        </div>
                       </RadioGroup>
 
                       <Button
@@ -261,11 +322,9 @@ export function CheckoutPage() {
                         Giao đến địa chỉ khác
                       </Button>
                     </div>
-                  )}
-
-                  {/* New Address Form */}
-                  {(useNewAddress || mockAddresses.length === 0) && (
+                  ) : (
                     <div className='space-y-4'>
+                      {/* New Address Form */}
                       <div className='grid grid-cols-2 gap-4'>
                         <div>
                           <Label htmlFor='fullName'>Họ tên *</Label>
@@ -376,7 +435,7 @@ export function CheckoutPage() {
                         </Label>
                       </div>
 
-                      {mockAddresses.length > 0 && (
+                      {user?.address && (
                         <Button
                           variant='outline'
                           onClick={() => setUseNewAddress(false)}

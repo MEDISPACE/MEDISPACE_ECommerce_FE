@@ -49,7 +49,6 @@ export function CategoryPage() {
       try {
         const categoryData = await categoryService.getCategoryBySlug(slug || '')
         if (!categoryData) {
-          console.error('Category not found')
           return
         }
 
@@ -69,7 +68,6 @@ export function CategoryPage() {
         setProducts(allProducts)
         setCurrentCategory(categoryData)
       } catch (error) {
-        console.error('Error fetching data:', error)
       }
     }
 

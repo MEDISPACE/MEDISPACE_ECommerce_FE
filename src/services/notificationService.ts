@@ -23,7 +23,6 @@ export const notificationService = {
         // If endpoint isn't available, continue to next candidate.
         try {
           // non-blocking debug log for development
-          console.debug('notificationService: endpoint', url, 'failed', err)
         } catch {
           /* ignore */
         }
