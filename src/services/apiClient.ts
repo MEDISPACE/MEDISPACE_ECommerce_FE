@@ -15,6 +15,7 @@ class ApiClient {
       headers: {
         'Content-Type': 'application/json',
       },
+      withCredentials: true, // Enable cookies for cross-origin requests
     })
 
     // Request interceptor to add auth token
@@ -88,7 +89,7 @@ class ApiClient {
   }
 
   private async refreshToken() {
-    return axios.post(`${API_BASE_URL}${API_ENDPOINTS.AUTH.REFRESH_TOKEN}`)
+    return axios.post(`${API_BASE_URL}${API_ENDPOINTS.AUTH.REFRESH_TOKEN}`, {}, { withCredentials: true })
   }
 }
 

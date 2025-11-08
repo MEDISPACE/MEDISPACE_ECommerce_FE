@@ -104,6 +104,16 @@ class AuthService {
     }
   }
 
+  async updateProfile(profileData: Partial<User>): Promise<User> {
+    try {
+      const response = await apiClient.patch<{ message: string; user: User }>(API_ENDPOINTS.USERS.UPDATE_ME, profileData)
+      return response.data.user
+    } catch (error) {
+      const axiosError = error as AxiosError<AuthResponse>
+      throw axiosError.response?.data || { message: 'Profile update failed' }
+    }
+  }
+
   async getMe(): Promise<User> {
     try {
       const response = await apiClient.get<{ message: string; user: User }>(API_ENDPOINTS.USERS.ME)

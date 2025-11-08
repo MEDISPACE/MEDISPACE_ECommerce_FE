@@ -8,5 +8,7 @@ export { NotificationItem } from './NotificationItem';
 export { PaymentMethodsPage } from './PaymentMethodsPage';
 export { PaymentMethodCard } from './PaymentMethodCard';
 export { PrescriptionsPage } from './PrescriptionsPage';
+export { ProfileForm } from './ProfileForm';
 export { RewardsPage } from './RewardsPage';
+export { SettingsForm } from './SettingsForm';
 export { WishlistPage } from './WishlistPage';

@@ -16,6 +16,7 @@ interface AuthContextType {
   loading: boolean
   setUser: (user: User | null) => void
   setIsAuthenticated: (isAuthenticated: boolean) => void
+  updateUser: (user: User) => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -131,6 +132,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }
 
+  const updateUser = (updatedUser: User) => {
+    setUser(updatedUser)
+    localStorage.setItem('medispace_user_data', JSON.stringify(updatedUser))
+  }
+
   const logout = async () => {
     try {
       await authService.logout()
@@ -155,6 +161,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     loading,
     setUser,
     setIsAuthenticated,
+    updateUser,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
