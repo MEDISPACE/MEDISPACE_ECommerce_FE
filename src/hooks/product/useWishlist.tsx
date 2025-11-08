@@ -36,7 +36,6 @@ export const WishlistProvider = ({ children }: WishlistProviderProps) => {
       }
       return []
     } catch (error) {
-      console.error('Failed to parse wishlist from localStorage', error)
       return []
     }
   })
@@ -48,7 +47,6 @@ export const WishlistProvider = ({ children }: WishlistProviderProps) => {
         window.localStorage.setItem('wishlist', JSON.stringify(wishlist))
       }
     } catch (error) {
-      console.error('Failed to save wishlist to localStorage', error)
     }
   }, [wishlist])
 

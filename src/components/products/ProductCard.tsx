@@ -26,8 +26,8 @@ interface ProductCardProps {
     needsConsultation?: boolean // Cần tư vấn dược sĩ
   }
   variant?: 'grid' | 'list'
-  onAddToCart?: (productId: string) => void
-  onToggleWishlist?: (productId: string) => void
+  onAddToCart?: () => void
+  onToggleWishlist?: () => void
   isInWishlist?: boolean
 }
 
@@ -42,7 +42,7 @@ export function ProductCard({
     e.preventDefault()
     e.stopPropagation()
     if (onAddToCart) {
-      onAddToCart(product.id)
+      onAddToCart()
     }
   }
 
@@ -50,7 +50,7 @@ export function ProductCard({
     e.preventDefault()
     e.stopPropagation()
     if (onToggleWishlist) {
-      onToggleWishlist(product.id)
+      onToggleWishlist()
     }
   }
 

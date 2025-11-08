@@ -17,10 +17,12 @@ import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
 import { productService } from '../../services/productService'
 import { categoryService } from '../../services/categoryService'
 import { brandService } from '../../services/brandService'
+import { useCart } from '../../contexts/CartContext'
 import type { Product, Category, Brand } from '../../types/product'
 
 export function SearchResultsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
+  const { addToCart } = useCart()
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [isFilterOpen, setIsFilterOpen] = useState(false)
 
@@ -55,7 +57,6 @@ export function SearchResultsPage() {
         setCategories(categoriesData)
         setBrands(brandsData)
       } catch (error) {
-        console.error('Error fetching search data:', error)
       }
     }
 
@@ -79,7 +80,10 @@ export function SearchResultsPage() {
 
     // Category filter
     if (selectedCategories.length > 0) {
-      filtered = filtered.filter((product) => selectedCategories.includes(product.categoryId))
+      filtered = filtered.filter((product) => {
+        const productCategory = categories.find(cat => cat._id === product.categoryId)
+        return productCategory && selectedCategories.includes(productCategory.slug)
+      })
     }
 
     // Brand filter
@@ -169,19 +173,6 @@ export function SearchResultsPage() {
     return new Intl.NumberFormat('vi-VN').format(price) + 'đ'
   }
 
-  const getSuggestions = () => {
-    if (searchQuery && totalResults === 0) {
-      return ['paracetamol', 'vitamin c', 'thuốc cảm', 'amoxicillin', 'thuốc đau đầu'].filter(
-        (suggestion) =>
-          suggestion.toLowerCase().includes(searchQuery.toLowerCase()) &&
-          suggestion.toLowerCase() !== searchQuery.toLowerCase(),
-      )
-    }
-    return []
-  }
-
-  const suggestions = getSuggestions()
-
   // Create breadcrumb items for MainLayout
   const breadcrumbItems = [
     { label: 'Tìm kiếm', href: '/search' },
@@ -209,9 +200,9 @@ export function SearchResultsPage() {
         <Label className='font-medium mb-3 block'>Danh mục</Label>
         <div className='space-y-2'>
           {categories.map((category) => (
-            <div key={category.id} className='flex items-center space-x-2'>
+            <div key={category._id} className='flex items-center space-x-2'>
               <Checkbox
-                id={`category-${category.id}`}
+                id={`category-${category._id}`}
                 checked={selectedCategories.includes(category.slug)}
                 onCheckedChange={(checked) => {
                   if (checked) {
@@ -222,7 +213,7 @@ export function SearchResultsPage() {
                   setCurrentPage(1)
                 }}
               />
-              <Label htmlFor={`category-${category.id}`} className='text-sm'>
+              <Label htmlFor={`category-${category._id}`} className='text-sm'>
                 {category.name} ({category.productCount})
               </Label>
             </div>
@@ -360,51 +351,14 @@ export function SearchResultsPage() {
   return (
     <div className='max-w-7xl mx-auto px-4 py-6'>
       <UniversalBreadcrumb items={breadcrumbItems} />
-      {/* Search Header */}
-      <div className='mb-6'>
-        <div className='flex items-center gap-2 mb-4'>
-          <div className='relative flex-1'>
-            <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4' />
-            <Input
-              placeholder='Tìm kiếm thuốc, thực phẩm chức năng...'
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className='pl-10 border-blue-200 focus:border-blue-500'
-            />
-          </div>
-          <Button className='bg-gradient-to-r from-blue-600 to-cyan-500'>
-            <Search className='w-4 h-4' />
-          </Button>
-        </div>
 
-        <div className='flex items-center justify-between'>
-          <div>
-            <h1 className='text-xl font-medium text-gray-900'>
-              {searchQuery ? `Kết quả cho "${searchQuery}"` : 'Tất cả sản phẩm'}
-            </h1>
-            <p className='text-gray-600'>Tìm thấy {totalResults} sản phẩm</p>
-          </div>
+      <div className='flex items-center justify-between mb-6'>
+        <div>
+          <h1 className='text-xl font-medium text-gray-900'>
+            {searchQuery ? `Kết quả cho "${searchQuery}"` : 'Tất cả sản phẩm'}
+          </h1>
+          <p className='text-gray-600'>Tìm thấy {totalResults} sản phẩm</p>
         </div>
-
-        {/* Suggestions */}
-        {suggestions.length > 0 && (
-          <div className='mt-4'>
-            <p className='text-sm text-gray-600 mb-2'>Có thể bạn muốn tìm:</p>
-            <div className='flex flex-wrap gap-2'>
-              {suggestions.map((suggestion) => (
-                <Button
-                  key={suggestion}
-                  variant='outline'
-                  size='sm'
-                  onClick={() => setSearchQuery(suggestion)}
-                  className='border-blue-200 text-blue-600'
-                >
-                  {suggestion}
-                </Button>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
       <div className='grid grid-cols-1 lg:grid-cols-4 gap-6'>
@@ -546,7 +500,7 @@ export function SearchResultsPage() {
                       brand: product.brand?.name || '',
                       image: product.featuredImage || '',
                       originalPrice: product.originalPrice,
-                      salePrice: product.salePrice ?? product.originalPrice ?? 0,
+                      salePrice: product.price || product.originalPrice || product.salePrice || 0,
                       rating: product.rating || 0,
                       reviewCount: product.reviewCount || 0,
                       inStock: product.stockQuantity > 0,
@@ -555,6 +509,9 @@ export function SearchResultsPage() {
                       discountPercentage: product.discountPercentage,
                     }}
                     variant={viewMode}
+                    onAddToCart={() => {
+                      addToCart(product, 1)
+                    }}
                   />
                 ))}
               </div>

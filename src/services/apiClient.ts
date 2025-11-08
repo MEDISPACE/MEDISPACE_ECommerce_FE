@@ -3,7 +3,7 @@ import type { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError, Inte
 import { API_ENDPOINTS } from '../constants'
 
 // API base URL - Vite environment variables
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 class ApiClient {
   private client: AxiosInstance
@@ -15,6 +15,7 @@ class ApiClient {
       headers: {
         'Content-Type': 'application/json',
       },
+      withCredentials: true, // Enable cookies for cross-origin requests
     })
 
     // Request interceptor to add auth token
@@ -41,26 +42,23 @@ class ApiClient {
           originalRequest._retry = true
 
           try {
-            const refreshToken = localStorage.getItem('medispace_refresh_token')
-            if (refreshToken) {
-              const response = await this.refreshToken(refreshToken)
-              const { accessToken, refreshToken: newRefreshToken } = response.data.result
+            // Refresh token is stored in httpOnly cookie, so we just make the request
+            // without sending the token in the body - browser will include it automatically
+            const response = await this.refreshToken()
+            const { accessToken } = response.data.result
 
-              localStorage.setItem('medispace_access_token', accessToken)
-              localStorage.setItem('medispace_refresh_token', newRefreshToken)
+            localStorage.setItem('medispace_access_token', accessToken)
 
-              // Retry original request with new token
-              if (originalRequest.headers) {
-                originalRequest.headers.Authorization = `Bearer ${accessToken}`
-              }
-              return this.client(originalRequest)
+            // Retry original request with new token
+            if (originalRequest.headers) {
+              originalRequest.headers.Authorization = `Bearer ${accessToken}`
             }
+            return this.client(originalRequest)
           } catch (refreshError) {
-            // Refresh failed, redirect to login
+            // Refresh failed, clear tokens and redirect to login
             localStorage.removeItem('medispace_access_token')
-            localStorage.removeItem('medispace_refresh_token')
             localStorage.removeItem('medispace_user_data')
-            window.location.href = '/auth/login'
+            window.location.href = '/login'
             return Promise.reject(refreshError)
           }
         }
@@ -90,10 +88,8 @@ class ApiClient {
     return this.client.patch(url, data, config)
   }
 
-  private async refreshToken(refreshToken: string) {
-    return axios.post(`${API_BASE_URL}${API_ENDPOINTS.AUTH.REFRESH_TOKEN}`, {
-      refreshToken,
-    })
+  private async refreshToken() {
+    return axios.post(`${API_BASE_URL}${API_ENDPOINTS.AUTH.REFRESH_TOKEN}`, {}, { withCredentials: true })
   }
 }
 

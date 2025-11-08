@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { PageTransition } from '../shared/PageTransition'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
@@ -6,10 +6,28 @@ import { Label } from '../ui/label'
 import { Checkbox } from '../ui/checkbox'
 import { Alert, AlertDescription } from '../ui/alert'
 import { Mail, AlertCircle, Lock, Eye, EyeOff, LogIn, Sparkles } from 'lucide-react'
-import { Link, useNavigate } from 'react-router'
+import { Link } from 'react-router'
 import { useAuth } from '../../contexts/AuthContext'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
+import { useRoleNavigation } from '../../hooks'
+
+const getGoogleAuthUrl = () => {
+  const { VITE_GOOGLE_CLIENT_ID, VITE_GOOGLE_REDIRECT_URI } = import.meta.env
+  const url = 'https://accounts.google.com/o/oauth2/v2/auth'
+  const query = {
+    client_id: VITE_GOOGLE_CLIENT_ID,
+    redirect_uri: VITE_GOOGLE_REDIRECT_URI,
+    response_type: 'code',
+    scope: ['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email'].join(
+      ' ',
+    ),
+    prompt: 'consent',
+    access_type: 'offline', // ✅ Sửa typo: acccess_type -> access_type
+  }
+  const queryString = new URLSearchParams(query).toString()
+  return `${url}?${queryString}`
+}
 
 export function LoginPage() {
   const [formData, setFormData] = useState({
@@ -20,8 +38,11 @@ export function LoginPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const navigate = useNavigate()
   const { login } = useAuth()
+  const navigateByRole = useRoleNavigation()
+
+  // Memoize Google OAuth URL để tránh tính lại mỗi render
+  const googleOAuthUrl = useMemo(() => getGoogleAuthUrl(), [])
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
@@ -56,14 +77,17 @@ export function LoginPage() {
     setIsLoading(true)
 
     try {
-      const success = await login(formData.email, formData.password)
+      const loggedInUser = await login(formData.email, formData.password, formData.rememberMe)
 
-      if (success) {
+      if (loggedInUser) {
         toast.success('Đăng nhập thành công!', {
           description: 'Chào mừng bạn quay trở lại MEDISPACE',
           duration: 2000,
         })
-        navigate('/')
+
+        // Navigate based on the returned user's role. Using the returned
+        // user avoids any race where context.user hasn't updated yet.
+        navigateByRole(loggedInUser.role)
       } else {
         throw new Error('Email hoặc mật khẩu không đúng')
       }
@@ -90,11 +114,11 @@ export function LoginPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className='text-blue-600 mb-2 text-center relative inline-block'>
+        <h1 className='text-blue-600 mb-2 text-center relative inline-block text-2xl md:text-2xl font-semibold'>
           Đăng nhập để tiếp tục mua sắm
           <Sparkles className='inline-block ml-2 w-5 h-5 text-cyan-500 animate-pulse' />
         </h1>
-        <p className='text-gray-500 text-sm mt-2'>Chào mừng bạn quay trở lại!</p>
+        <p className='text-gray-500 text-base md:text-lg mt-2'>Chào mừng bạn quay trở lại!</p>
       </motion.div>
 
       {/* Error Alert */}
@@ -123,7 +147,7 @@ export function LoginPage() {
         >
           <Label htmlFor='email' className='text-blue-600 uppercase text-xs tracking-wide flex items-center gap-2'>
             <Mail className='w-4 h-4' />
-            EMAIL/TÊN ĐĂNG NHẬP
+            EMAIL
           </Label>
           <div className='relative group'>
             <Mail
@@ -274,10 +298,10 @@ export function LoginPage() {
         transition={{ duration: 0.4, delay: 0.5 }}
       >
         <div className='absolute inset-0 flex items-center'>
-          <div className='w-full border-t-2 border-gradient-to-r from-transparent via-gray-200 to-transparent' />
+          <div className='w-full border-t border-gray-300' />
         </div>
         <div className='relative flex justify-center text-sm'>
-          <span className='px-4 bg-white text-gray-400 uppercase tracking-wider text-xs'>hoặc</span>
+          <span className='px-4 bg-white text-gray-600 uppercase tracking-wider text-xs border-none'>hoặc</span>
         </div>
       </motion.div>
 
@@ -290,12 +314,9 @@ export function LoginPage() {
         <Button
           type='button'
           variant='outline'
-          className='w-full h-14 bg-white border-2 border-gray-200 hover:bg-gray-50 hover:border-blue-300 hover:shadow-md rounded-xl transition-all duration-200 group'
+          className='w-full h-14 bg-white border-2 border-gray-400 hover:bg-gray-50 hover:border-blue-500 hover:shadow-md rounded-xl transition-all duration-200 group'
           onClick={() => {
-            toast.info('Tính năng đang phát triển', {
-              description: 'Đăng nhập với Google sẽ sớm được ra mắt',
-              duration: 3000,
-            })
+            window.location.href = googleOAuthUrl
           }}
           disabled={isLoading}
         >
@@ -336,19 +357,6 @@ export function LoginPage() {
           <span>Đăng ký ngay</span>
           <span className='absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left' />
         </Link>
-      </motion.div>
-
-      {/* Demo Info - Small hint at bottom */}
-      <motion.div
-        className='text-center mt-6 pt-6 border-t border-gray-100'
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, delay: 0.8 }}
-      >
-        <p className='text-xs text-gray-500 bg-blue-50 rounded-lg px-4 py-2 inline-block'>
-          💡 Demo: <span className='text-blue-600'>customer@medispace.com</span> /{' '}
-          <span className='text-blue-600'>123456</span>
-        </p>
       </motion.div>
     </PageTransition>
   )

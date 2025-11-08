@@ -11,9 +11,13 @@ interface AuthLayoutProps {
 export function AuthLayout({ children }: AuthLayoutProps) {
   return (
     <div className='min-h-screen flex'>
-      {/* Home Button - Fixed top left, hidden on small screens */}
+      {/* Home Button - Fixed top left, hidden on small screens (gradient + lift on hover) */}
       <Link to='/' className='fixed top-6 left-6 z-50 hidden sm:block'>
-        <Button variant='outline' size='sm' className='bg-white hover:bg-gray-50 border-gray-200 shadow-sm'>
+        <Button
+          variant='outline'
+          size='sm'
+          className='bg-gradient-to-r from-blue-600 to-cyan-500 text-white border-0 shadow-sm transition-transform transform hover:-translate-y-1 hover:shadow-lg hover:from-blue-700 hover:to-cyan-600 focus:outline-none'
+        >
           <Home className='w-4 h-4 mr-2' />
           Trang chủ
         </Button>
@@ -182,7 +186,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
               {
                 icon: Shield,
                 title: 'An toàn & Bảo mật',
-                description: 'Mã hóa SSL 256-bit bảo vệ thông tin',
+                description: 'Mã hóa tuyệt đối bảo vệ thông tin khách hàng',
                 stat: '100%',
                 statLabel: 'Bảo mật',
                 gradient: 'from-blue-500/30 via-purple-500/20 to-transparent',
@@ -300,7 +304,11 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         {/* Mobile Home Button */}
         <div className='sm:hidden pt-6 px-6'>
           <Link to='/'>
-            <Button variant='outline' size='sm' className='bg-white hover:bg-gray-50 border-gray-200 shadow-sm'>
+            <Button
+              variant='outline'
+              size='sm'
+              className='bg-gradient-to-r from-blue-600 to-cyan-500 text-white border-0 shadow-sm transition-transform transform hover:-translate-y-1 hover:shadow-lg hover:from-blue-700 hover:to-cyan-600 focus:outline-none'
+            >
               <Home className='w-4 h-4 mr-2' />
               Trang chủ
             </Button>
@@ -310,8 +318,8 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         {/* Form Container */}
         <div className='flex flex-col items-center justify-center min-h-screen px-6 sm:px-8 lg:px-16 py-12 lg:py-16'>
           {/* Logo - Desktop & Mobile */}
-          <div className='mb-8 lg:mb-10 animate-fade-in'>
-            <img src={logoImage} alt='MediSpace' className='h-10 sm:h-12' />
+          <div className='mb-6 lg:mb-8 animate-fade-in'>
+            <img src={logoImage} alt='MediSpace' className='h-16 sm:h-18' />
           </div>
 
           {/* Form Content with animation */}

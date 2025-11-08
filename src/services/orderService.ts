@@ -1,127 +1,154 @@
-// import { apiClient } from './apiClient'
-// import { API_ENDPOINTS } from '../constants'
+import { apiClient } from './apiClient'
+import { API_ENDPOINTS } from '../constants'
 import type { Order, CreateOrderRequest } from '../types/order'
-import { OrderStatus, PaymentStatus, PaymentMethod } from '../types/order'
+import type { OrderStatus, PaymentStatus, PaymentMethod } from '../types/order'
+
+// Backend response types
+interface BackendOrderItem {
+  productId: string
+  name: string
+  sku: string
+  quantity: number
+  unitPrice: number
+  totalPrice: number
+  prescriptionRequired: boolean
+  image?: string
+}
+
+interface BackendShippingAddress {
+  firstName: string
+  lastName: string
+  phone: string
+  email: string
+  address: string
+  ward: string
+  district: string
+  province: string
+  postalCode?: string
+}
+
+interface BackendOrder {
+  _id: string
+  userId: string
+  orderNumber: string
+  items: BackendOrderItem[]
+  subtotal: number
+  shippingFee: number
+  discountAmount: number
+  taxAmount: number
+  totalAmount: number
+  shippingAddress: BackendShippingAddress
+  paymentMethod: string
+  paymentStatus: string
+  orderStatus: string
+  createdAt: string
+  updatedAt: string
+  shippingMethod?: string
+  notes?: string
+}
+
+interface PaginationInfo {
+  page: number
+  limit: number
+  total: number
+  totalPages: number
+}
 
 // TODO: Replace with real API calls when backend implements orders API
 class OrderService {
-  // Mock data for development - replace with real API calls
-  private mockOrders: Order[] = [
-    {
-      id: '1',
-      orderNumber: 'ORD-001',
-      userId: 'user1',
-      items: [
-        {
-          id: 'item1',
-          productId: 'prod1',
-          product: {
-            _id: 'prod1',
-            name: 'Paracetamol 500mg',
-            slug: 'paracetamol-500mg',
-            sku: 'PARA500',
-            shortDescription: 'Pain relief medication',
-            categoryId: 'cat1',
-            brandId: 'brand1',
-            stockQuantity: 100,
-            maxOrderQuantity: 10,
-            status: 'active',
-            isActive: true,
-            requiresPrescription: false,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            createdBy: 'admin',
-          },
-          quantity: 2,
-          price: 15000,
-          total: 30000,
-        },
-      ],
-      subtotal: 30000,
-      discount: 0,
-      tax: 0,
-      shipping: 30000,
-      total: 60000,
-      shippingAddress: {
-        firstName: 'John',
-        lastName: 'Doe',
-        address: '123 Main St',
-        ward: 'Hang Bai',
-        district: 'Hoan Kiem',
-        city: 'Hanoi',
-        phone: '0123456789',
-      },
-      shippingMethod: 'standard',
-      shippingCost: 30000,
-      paymentMethod: PaymentMethod.COD,
-      paymentStatus: PaymentStatus.Pending,
-      status: OrderStatus.Pending,
-      requiresPrescription: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  ]
 
   async getOrders(): Promise<Order[]> {
-    // TODO: Replace with real API call
-    // const response = await apiClient.get<Order[]>(API_ENDPOINTS.ORDERS.GET_ALL)
-    // return response.data
-    return this.mockOrders
+    const response = await apiClient.get<{ message: string, result: { orders: BackendOrder[], pagination: PaginationInfo } }>(API_ENDPOINTS.ORDERS.BASE)
+    return response.data.result.orders.map(this.transformOrderFromBackend)
   }
 
   async getOrderById(orderId: string): Promise<Order | null> {
-    // TODO: Replace with real API call
-    // const response = await apiClient.get<Order>(`${API_ENDPOINTS.ORDERS.GET_BY_ID}/${orderId}`)
-    // return response.data
-    return this.mockOrders.find((order) => order.id === orderId) || null
+    const response = await apiClient.get<{ message: string, result: BackendOrder }>(API_ENDPOINTS.ORDERS.BY_ID(orderId))
+    return this.transformOrderFromBackend(response.data.result)
   }
 
   async createOrder(orderData: CreateOrderRequest): Promise<Order> {
-    // TODO: Replace with real API call
-    // const response = await apiClient.post<Order>(API_ENDPOINTS.ORDERS.CREATE, orderData)
-    // return response.data
-    const newOrder: Order = {
-      id: Date.now().toString(),
-      orderNumber: `ORD-${Date.now()}`,
-      userId: 'current_user', // TODO: Get from auth context
-      items: [], // TODO: Map from orderData.items with full product data
-      subtotal: 0, // TODO: Calculate from items
-      discount: 0,
-      tax: 0,
-      shipping: 30000,
-      total: 0, // TODO: Calculate total
+    const requestBody = {
       shippingAddress: orderData.shippingAddress,
-      shippingMethod: 'standard',
-      shippingCost: 30000,
       paymentMethod: orderData.paymentMethod,
-      paymentStatus: PaymentStatus.Pending,
-      status: OrderStatus.Pending,
-      requiresPrescription: false, // TODO: Check if any item requires prescription
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      notes: orderData.notes
     }
-    this.mockOrders.push(newOrder)
-    return newOrder
+    const response = await apiClient.post<{ message: string, result: { order: BackendOrder, orderId: string } }>(API_ENDPOINTS.ORDERS.CREATE, requestBody)
+    return this.transformOrderFromBackend(response.data.result.order)
   }
 
   async updateOrderStatus(orderId: string, status: OrderStatus): Promise<Order> {
-    // TODO: Replace with real API call
-    // const response = await apiClient.patch<Order>(`${API_ENDPOINTS.ORDERS.UPDATE_STATUS}/${orderId}`, { status })
-    // return response.data
-    const order = this.mockOrders.find((o) => o.id === orderId)
-    if (order) {
-      order.status = status
-      order.updatedAt = new Date().toISOString()
-      return order
-    }
-    throw new Error('Order not found')
+    const response = await apiClient.patch<{ message: string, result: BackendOrder }>(API_ENDPOINTS.ORDERS.UPDATE_STATUS(orderId), { status })
+    return this.transformOrderFromBackend(response.data.result)
   }
 
   async cancelOrder(orderId: string): Promise<Order> {
-    // TODO: Replace with real API call
-    // const response = await apiClient.patch<Order>(`${API_ENDPOINTS.ORDERS.CANCEL}/${orderId}`)
-    // return response.data
-    return this.updateOrderStatus(orderId, OrderStatus.Cancelled)
+    const response = await apiClient.patch<{ message: string, result: BackendOrder }>(API_ENDPOINTS.ORDERS.CANCEL(orderId))
+    return this.transformOrderFromBackend(response.data.result)
+  }
+
+  // Transform backend order format to frontend format
+  private transformOrderFromBackend(backendOrder: BackendOrder): Order {
+    return {
+      id: backendOrder._id,
+      orderNumber: backendOrder.orderNumber,
+      userId: backendOrder.userId,
+      items: backendOrder.items?.map((item: BackendOrderItem) => ({
+        id: item.productId,
+        productId: item.productId,
+        product: {
+          _id: item.productId,
+          id: item.productId,
+          name: item.name,
+          slug: '',
+          sku: item.sku,
+          shortDescription: '',
+          categoryId: '',
+          stockQuantity: item.quantity,
+          maxOrderQuantity: 100,
+          status: 'active' as const,
+          isActive: true,
+          requiresPrescription: item.prescriptionRequired,
+          featuredImage: item.image,
+          createdAt: '',
+          updatedAt: '',
+          createdBy: '',
+          description: '',
+          image: item.image,
+          images: item.image ? [item.image] : [],
+          price: item.unitPrice,
+          originalPrice: item.unitPrice
+        },
+        quantity: item.quantity,
+        price: item.unitPrice,
+        total: item.totalPrice,
+      })) || [],
+      subtotal: backendOrder.subtotal,
+      discount: backendOrder.discountAmount,
+      tax: backendOrder.taxAmount,
+      shipping: backendOrder.shippingFee,
+      total: backendOrder.totalAmount,
+      shippingAddress: {
+        firstName: backendOrder.shippingAddress.firstName,
+        lastName: backendOrder.shippingAddress.lastName,
+        address: backendOrder.shippingAddress.address,
+        ward: backendOrder.shippingAddress.ward,
+        district: backendOrder.shippingAddress.district,
+        province: backendOrder.shippingAddress.province,
+        postalCode: backendOrder.shippingAddress.postalCode,
+        phone: backendOrder.shippingAddress.phone,
+        email: backendOrder.shippingAddress.email
+      },
+      shippingMethod: backendOrder.shippingMethod || 'standard',
+      shippingCost: backendOrder.shippingFee,
+      paymentMethod: backendOrder.paymentMethod as PaymentMethod,
+      paymentStatus: backendOrder.paymentStatus as PaymentStatus,
+      status: backendOrder.orderStatus as OrderStatus,
+      requiresPrescription: backendOrder.items?.some((item: BackendOrderItem) => item.prescriptionRequired) || false,
+      notes: backendOrder.notes,
+      createdAt: backendOrder.createdAt,
+      updatedAt: backendOrder.updatedAt,
+    }
   }
 }
 

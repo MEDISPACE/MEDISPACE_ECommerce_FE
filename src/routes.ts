@@ -2,8 +2,9 @@ import { index, layout, route } from '@react-router/dev/routes'
 import type { RouteConfig } from '@react-router/dev/routes'
 
 export default [
-  // Auth routes (NO layout wrapper)
+  // Auth routes (standalone - no main layout wrapper)
   route('login', 'routes/login.tsx'),
+  route('login/oauth', 'routes/login.oauth.tsx'),
   route('register', 'routes/register.tsx'),
   route('forgot-password', 'routes/forgot-password.tsx'),
   route('reset-password/:token', 'routes/reset-password.$token.tsx'),

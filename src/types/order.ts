@@ -47,7 +47,7 @@ export interface ShippingAddress {
   address: string
   ward: string
   district: string
-  city: string
+  province: string
   postalCode?: string
   phone: string
   email?: string
@@ -103,14 +103,14 @@ export interface Order {
 }
 
 export interface CreateOrderRequest {
-  items: {
+  items?: {
     productId: string
     quantity: number
     prescriptionId?: string
     notes?: string
   }[]
   shippingAddress: ShippingAddress
-  paymentMethod: PaymentMethod
+  paymentMethod: string
   couponCode?: string
   notes?: string
 }

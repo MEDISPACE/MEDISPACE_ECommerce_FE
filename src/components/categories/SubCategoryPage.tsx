@@ -16,6 +16,7 @@ import { Slider } from '../ui/slider'
 import { categoryService } from '../../services/categoryService'
 import { productService } from '../../services/productService'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
+import { useCart } from '../../contexts/CartContext'
 import {
   getProductId,
   getProductImage,
@@ -29,6 +30,7 @@ import type { Category, Product } from '../../types/product'
 
 export function SubCategoryPage() {
   const { categorySlug, subCategorySlug } = useParams()
+  const { addToCart } = useCart()
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [sortBy, setSortBy] = useState('newest')
   const [searchQuery, setSearchQuery] = useState('')
@@ -72,7 +74,6 @@ export function SubCategoryPage() {
         setProducts(productsData)
 
       } catch (error) {
-        console.error('Error fetching category data:', error)
         setError('Không thể tải dữ liệu danh mục')
       } finally {
         setLoading(false)
@@ -427,6 +428,9 @@ export function SubCategoryPage() {
                           needsConsultation: product.needsConsultation,
                         }}
                         variant={viewMode}
+                        onAddToCart={() => {
+                          addToCart(product, 1)
+                        }}
                       />
                     ))}
                   </div>

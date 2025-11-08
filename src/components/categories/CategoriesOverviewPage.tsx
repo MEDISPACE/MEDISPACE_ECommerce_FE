@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { motion } from 'framer-motion'
-import { addToCart, toggleWishlist } from '../../utils/cartUtils'
+import { useCart } from '../../contexts/CartContext'
 import {
   ChevronRight,
   ChevronLeft,
@@ -49,10 +49,13 @@ const stats = [
 ]
 
 export function CategoriesOverviewPage() {
+  const { addToCart, toggleWishlist } = useCart()
   const [categories, setCategories] = useState<Category[]>([])
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  const navigate = useNavigate()
 
   // Featured products carousel state
   const [featuredCurrentIndex, setFeaturedCurrentIndex] = useState(0)
@@ -74,7 +77,6 @@ export function CategoriesOverviewPage() {
         setCategories(categoriesData)
         setFeaturedProducts(productsData)
       } catch (error) {
-        console.error('Error fetching data:', error)
         setError('Không thể tải dữ liệu. Vui lòng thử lại sau.')
       } finally {
         setLoading(false)
@@ -179,7 +181,7 @@ export function CategoriesOverviewPage() {
                   transition={{ delay: index * 0.1 }}
                   className='text-center group'
                 >
-                  <div className='bg-gradient-to-br from-blue-500 to-cyan-500 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300'>
+                  <div className='bg-gradient-to-br from-blue-500 to-cyan-500 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 hover:scale-110 transition-transform duration-300'>
                     <stat.icon className='w-8 h-8 text-white' />
                   </div>
                   <h3 className='text-3xl font-bold text-blue-800 mb-2'>{stat.value}</h3>
@@ -211,16 +213,18 @@ export function CategoriesOverviewPage() {
 
                 return (
                   <motion.div
-                    key={category.id}
+                    key={category._id}
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: index * 0.1 }}
                   >
-                    <Card className='group hover:shadow-2xl transition-all duration-500 bg-white/80 backdrop-blur-lg border border-blue-100 hover:border-blue-300 overflow-hidden relative h-full flex flex-col'>
+                    <Card className='hover:shadow-2xl transition-all duration-500 bg-white/80 backdrop-blur-lg border border-blue-100 hover:border-blue-300 overflow-hidden relative h-full flex flex-col cursor-pointer' onClick={() => {
+                      navigate(`/categories/${category.slug}`)
+                    }}>
                       {/* Gradient Background */}
                       <div
-                        className='absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500'
+                        className='absolute inset-0 opacity-0 hover:opacity-10 transition-opacity duration-500'
                         style={{
                           background: `linear-gradient(135deg, #0066CC20, #0066CC10)`,
                         }}
@@ -229,7 +233,7 @@ export function CategoriesOverviewPage() {
                       <CardHeader className='pb-2'>
                         <div className='flex items-center justify-between mb-3'>
                           <motion.div
-                            className='w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300'
+                            className='w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform duration-300'
                             style={{
                               background: `linear-gradient(135deg, #0066CC, #0066CCdd)`,
                             }}
@@ -241,7 +245,7 @@ export function CategoriesOverviewPage() {
                             {category.productCount.toLocaleString()} SP
                           </Badge>
                         </div>
-                        <CardTitle className='text-xl group-hover:text-blue-600 transition-colors duration-300'>
+                        <CardTitle className='text-xl hover:text-blue-600 transition-colors duration-300'>
                           {category.name}
                         </CardTitle>
                       </CardHeader>
@@ -253,7 +257,7 @@ export function CategoriesOverviewPage() {
                         <div className='space-y-1.5 mb-4 flex-1'>
                           {category.subcategories?.slice(0, 3).map((sub: Category) => (
                             <div
-                              key={sub.id}
+                              key={sub._id}
                               className='flex items-center justify-between text-sm bg-gray-50 rounded-lg px-2.5 py-1.5 hover:bg-blue-50 transition-colors'
                             >
                               <span className='text-gray-700 text-xs'>{sub.name}</span>
@@ -269,15 +273,9 @@ export function CategoriesOverviewPage() {
 
                         {/* Button always at bottom */}
                         <div className='mt-auto'>
-                          <Link to={`/categories/${category.slug}`}>
-                            <Button
-                              size='sm'
-                              className='w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white border-0 group-hover:shadow-lg transition-all duration-300 text-xs'
-                            >
-                              Khám phá ngay
-                              <ArrowRight className='ml-1.5 w-3 h-3 group-hover:translate-x-1 transition-transform duration-300' />
-                            </Button>
-                          </Link>
+                          <div className='text-center text-blue-600 font-medium text-sm'>
+                            Khám phá ngay →
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -380,7 +378,7 @@ export function CategoriesOverviewPage() {
                     >
                       {featuredProducts.slice(pageIndex * 4, (pageIndex + 1) * 4).map((product, productIndex) => (
                         <motion.div
-                          key={`${product.id}-${pageIndex}`}
+                          key={`${product._id || product.id || `product-${productIndex}-${pageIndex}`}-${pageIndex}`}
                           className='h-full'
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
@@ -414,11 +412,11 @@ export function CategoriesOverviewPage() {
                               needsConsultation: false,
                             }}
                             variant='grid'
-                            onAddToCart={(productId) => {
-                              addToCart(productId, product.name, 1)
+                            onAddToCart={() => {
+                              addToCart(product, 1)
                             }}
-                            onToggleWishlist={(productId) => {
-                              toggleWishlist(productId, product.name)
+                            onToggleWishlist={() => {
+                              toggleWishlist(product._id, product.name)
                             }}
                           />
                         </motion.div>
@@ -559,11 +557,11 @@ export function CategoriesOverviewPage() {
                   <Card className='group hover:shadow-xl transition-all duration-500 bg-white/80 backdrop-blur-sm border border-gray-100 hover:border-blue-200 h-full'>
                     <CardContent className='p-6'>
                       <div
-                        className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${tip.color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}
+                        className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${tip.color} flex items-center justify-center mb-6 hover:scale-110 transition-transform duration-300`}
                       >
                         <tip.icon className='w-8 h-8 text-white' />
                       </div>
-                      <h3 className='text-xl font-bold text-gray-800 mb-3 group-hover:text-blue-600 transition-colors'>
+                      <h3 className='text-xl font-bold text-gray-800 mb-3 hover:text-blue-600 transition-colors'>
                         {tip.title}
                       </h3>
                       <p className='text-gray-600 mb-4'>{tip.description}</p>

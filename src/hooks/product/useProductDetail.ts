@@ -50,7 +50,6 @@ export const useProductDetail = ({ slug }: UseProductDetailProps): UseProductDet
         }
       } catch (err) {
         setError('Failed to load product details')
-        console.error('Error fetching product detail:', err)
       } finally {
         setIsLoading(false)
       }

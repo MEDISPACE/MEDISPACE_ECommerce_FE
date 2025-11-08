@@ -159,7 +159,6 @@ export function ComparisonTable({
           return <div className='text-sm text-center'>{String(product[row.key as keyof Product] || '')}</div>
       }
     } catch (error) {
-      console.error('Error rendering cell:', error)
       return <div className='text-sm text-center'>-</div>
     }
   }

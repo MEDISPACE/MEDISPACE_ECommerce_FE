@@ -13,9 +13,11 @@ import {
   Baby,
   Heart,
 } from 'lucide-react'
-import { useWishlist } from '../../hooks/product/useWishlist'
+import { useCart } from '../../contexts/CartContext'
 
 import { Button } from '../ui/button'
+import { productService } from '../../services/productService'
+import type { Product } from '../../types/product'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Input } from '../ui/input'
 import { Alert, AlertDescription } from '../ui/alert'
@@ -56,33 +58,34 @@ interface ComparisonProduct {
     standard: boolean
   }
 }
-const mockComparisonProducts = [
-  {
-    id: '1',
-    name: 'Paracetamol 500mg',
-    brand: 'DHG Pharma',
-    image: '/images/paracetamol.jpg',
-    price: 25000,
-    onSale: true,
-    salePrice: 22000,
-    unit: 'Hộp 10 viên',
-    rating: 4.8,
-    reviewCount: 234,
-    activeIngredient: 'Paracetamol 500mg',
-    uses: ['Hạ sốt', 'Giảm đau nhẹ'],
-    dosageForm: 'Viên nén',
-    targetAudience: { adults: true, children: true, childrenAge: '> 12 tuổi', pregnancy: true },
-    dosage: '1-2 viên/lần, 3-4 lần/ngày',
-    contraindications: ['Suy gan nặng', 'Dị ứng Paracetamol'],
-    sideEffects: ['Hiếm gặp', 'Phát ban da'],
-    origin: 'Việt Nam',
-    shelfLife: '3 năm',
-    storage: 'Nơi khô ráo, < 30°C',
-    stock: 150,
+// Helper to map backend Product -> ComparisonProduct (fill missing fields conservatively)
+function mapProductToComparison(p: Product): ComparisonProduct {
+  return {
+    id: p._id || p.id || '',
+    name: p.name,
+    brand: p.brand?.name || p.brandId || 'Không rõ',
+    image: p.featuredImage || p.image || (p.images && p.images[0]) || '/images/placeholder.png',
+    price: p.price ?? p.salePrice ?? p.originalPrice ?? 0,
+    onSale: !!p.onSale || !!p.salePrice,
+    salePrice: p.salePrice ?? p.price,
+    unit: p.unit || p.packaging || '',
+    rating: p.rating ?? 0,
+    reviewCount: p.reviewCount ?? 0,
+    activeIngredient: p.ingredients?.[0] || '',
+    uses: p.uses ?? [],
+    dosageForm: p.packaging || '',
+    targetAudience: { adults: true, children: false, pregnancy: false },
+    dosage: p.instructions || '',
+    contraindications: p.warnings ?? [],
+    sideEffects: [],
+    origin: p.origin ?? '',
+    shelfLife: p.expiryInfo ?? '',
+    storage: '',
+    stock: p.stockQuantity ?? 0,
     shipping: { express: true, standard: true },
-  },
-]
-
+  }
+}
+// Fallback suggestions used in the UI when API-driven suggestions are not available
 const suggestedProducts = [
   { id: '4', name: 'Diclofenac 50mg', category: 'Thuốc giảm đau khác' },
   { id: '5', name: 'Acetylsalicylic 325mg', category: 'Tương tự Aspirin' },
@@ -92,10 +95,10 @@ const suggestedProducts = [
 export function ProductComparisonPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
-  const [products, setProducts] = useState(mockComparisonProducts)
+  const [products, setProducts] = useState<ComparisonProduct[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [searchResults, setSearchResults] = useState<ComparisonProduct[]>([])
-  const { toggleWishlist, isInWishlist } = useWishlist()
+  const { addToCart, toggleWishlist, isInWishlist } = useCart()
 
   const breadcrumbItems = [
     { label: 'Trang chủ', href: '/' },
@@ -103,42 +106,68 @@ export function ProductComparisonPage() {
     { label: 'So sánh sản phẩm' },
   ]
 
-  // Get product IDs from URL
+  // Get product IDs from URL and fetch real product data
   useEffect(() => {
     const productIds = searchParams.get('products')?.split(',') || []
     if (productIds.length > 0) {
-      // Filter products based on IDs
-      const filteredProducts = mockComparisonProducts.filter((p) => productIds.includes(p.id))
-      setProducts(filteredProducts)
+      ;(async () => {
+        try {
+          const fetched: ComparisonProduct[] = []
+          for (const id of productIds) {
+            const p = await productService.getProductById(id)
+            if (p) fetched.push(mapProductToComparison(p))
+          }
+          setProducts(fetched)
+        } catch (err) {
+        }
+      })()
+    } else {
+      setProducts([])
     }
   }, [searchParams])
 
-  const handleSearch = (term: string) => {
+  const handleSearch = async (term: string) => {
     setSearchTerm(term)
     if (term.trim()) {
-      // TODO: Implement search with real API
-      setSearchResults([])
+      try {
+        const results = await productService.searchProducts(term)
+        const mapped = results.map((r) => mapProductToComparison(r))
+        setSearchResults(mapped)
+      } catch (err) {
+        setSearchResults([])
+      }
     } else {
       setSearchResults([])
     }
   }
 
-  const handleAddProduct = (productId: string) => {
+  const handleAddProduct = async (productId: string) => {
     if (products.length >= 4) {
       toast.error('Chỉ có thể so sánh tối đa 4 sản phẩm')
       return
     }
 
-    // Mock add product (in real app, fetch from API)
-    const newProduct = mockComparisonProducts.find((p) => p.id === productId)
-    if (newProduct && !products.find((p) => p.id === productId)) {
-      setProducts((prev) => [...prev, newProduct])
+    // Fetch product from API and add
+    try {
+      const p = await productService.getProductById(productId)
+      if (!p) {
+        toast.error('Không tìm thấy sản phẩm')
+        return
+      }
+      const newProduct = mapProductToComparison(p)
+      if (!products.find((p) => p.id === productId)) {
+        setProducts((prev) => {
+          const next = [...prev, newProduct]
+          // Update URL
+          const productIds = next.map((x) => x.id)
+          setSearchParams({ products: productIds.join(',') })
+          return next
+        })
 
-      // Update URL
-      const productIds = [...products.map((p) => p.id), productId]
-      setSearchParams({ products: productIds.join(',') })
-
-      toast.success('Đã thêm sản phẩm vào so sánh')
+        toast.success('Đã thêm sản phẩm vào so sánh')
+      }
+    } catch (err) {
+      toast.error('Không thể thêm sản phẩm')
     }
     setSearchTerm('')
     setSearchResults([])
@@ -158,8 +187,20 @@ export function ProductComparisonPage() {
     toast.success('Đã xóa sản phẩm khỏi so sánh')
   }
 
-  const handleAddToCart = () => {
-    toast.success('Đã thêm sản phẩm vào giỏ hàng')
+  const handleAddToCart = async (productId: string) => {
+    try {
+      // Fetch the full Product from API since addToCart expects Product type
+      const product = await productService.getProductById(productId)
+      if (!product) {
+        toast.error('Không tìm thấy sản phẩm')
+        return
+      }
+      
+      await addToCart(product, 1)
+      toast.success('Đã thêm sản phẩm vào giỏ hàng')
+    } catch (error) {
+      toast.error('Không thể thêm sản phẩm vào giỏ hàng')
+    }
   }
 
   const handleClearAll = () => {
@@ -168,8 +209,26 @@ export function ProductComparisonPage() {
     toast.success('Đã xóa tất cả sản phẩm')
   }
 
-  const handleAddAllToCart = () => {
-    toast.success(`Đã thêm ${products.length} sản phẩm vào giỏ hàng`)
+  const handleAddAllToCart = async () => {
+    try {
+      for (const comparisonProduct of products) {
+        // Fetch the full Product from API since addToCart expects Product type
+        const product = await productService.getProductById(comparisonProduct.id)
+        if (product) {
+          await addToCart(product, 1)
+        }
+      }
+      toast.success(`Đã thêm ${products.length} sản phẩm vào giỏ hàng`)
+    } catch (error) {
+      toast.error('Không thể thêm một số sản phẩm vào giỏ hàng')
+    }
+  }
+
+  const handleToggleWishlist = (productId: string) => {
+    const product = products.find(p => p.id === productId)
+    if (product) {
+      toggleWishlist(productId, product.name)
+    }
   }
 
   const handleConsultPharmacist = () => {
@@ -373,7 +432,7 @@ export function ProductComparisonPage() {
           products={products}
           onRemoveProduct={handleRemoveProduct}
           onAddToCart={handleAddToCart}
-          onToggleWishlist={toggleWishlist}
+          onToggleWishlist={handleToggleWishlist}
           isInWishlist={isInWishlist}
         />
       ) : (

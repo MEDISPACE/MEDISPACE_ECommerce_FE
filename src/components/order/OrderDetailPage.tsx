@@ -19,11 +19,84 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Badge } from '../ui/badge'
 import { Separator } from '../ui/separator'
 import { getOrderStatusBadge, getPaymentStatusBadge } from '../../utils/badgeUtils'
-import { mockOrders } from '../../utils/mockAccountData'
+import { orderService } from '../../services/orderService'
+import type { Order } from '../../types/account'
+import { useState, useEffect, useCallback } from 'react'
 
 export function OrderDetailPage() {
   const { orderId } = useParams()
-  const order = mockOrders.find((o) => o.id === orderId)
+  const [order, setOrder] = useState<Order | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  const fetchOrder = useCallback(async () => {
+    if (!orderId) return
+
+    try {
+      setLoading(true)
+      const fetchedOrder = await orderService.getOrderById(orderId)
+      if (fetchedOrder) {
+        // Transform to account Order type
+        const transformedOrder: Order = {
+          id: fetchedOrder.id,
+          customerId: fetchedOrder.userId,
+          orderNumber: fetchedOrder.orderNumber,
+          status: (fetchedOrder.status === 'pending' ? 'pending_payment' : fetchedOrder.status === 'shipped' ? 'shipping' : fetchedOrder.status === 'confirmed' ? 'confirmed' : fetchedOrder.status === 'processing' ? 'processing' : fetchedOrder.status === 'delivered' ? 'delivered' : fetchedOrder.status === 'cancelled' ? 'cancelled' : 'pending_payment') as 'pending_payment' | 'confirmed' | 'processing' | 'preparing' | 'shipping' | 'delivered' | 'cancelled',
+          items: fetchedOrder.items.map(item => ({
+            id: item.id,
+            productId: item.productId,
+            productName: item.product.name,
+            productImage: item.product.images?.[0] || '',
+            brand: item.product.brand?.name || '',
+            unit: item.product.unit || 'viên',
+            quantity: item.quantity,
+            unitPrice: item.price,
+            subtotal: item.total,
+            isPrescription: item.product.requiresPrescription || false,
+          })),
+          subtotal: fetchedOrder.subtotal,
+          shippingFee: fetchedOrder.shipping,
+          discount: fetchedOrder.discount,
+          total: fetchedOrder.total,
+          shippingAddress: {
+            id: '',
+            userId: fetchedOrder.userId,
+            type: 'home',
+            recipientName: `${fetchedOrder.shippingAddress.firstName} ${fetchedOrder.shippingAddress.lastName}`,
+            phone: fetchedOrder.shippingAddress.phone,
+            addressLine1: fetchedOrder.shippingAddress.address,
+            ward: fetchedOrder.shippingAddress.ward,
+            district: fetchedOrder.shippingAddress.district,
+            city: fetchedOrder.shippingAddress.city,
+            isDefault: false,
+          },
+          paymentMethod: fetchedOrder.paymentMethod,
+          paymentStatus: (fetchedOrder.paymentStatus === 'pending' ? 'pending' : fetchedOrder.paymentStatus === 'paid' ? 'paid' : fetchedOrder.paymentStatus === 'failed' ? 'failed' : fetchedOrder.paymentStatus === 'refunded' ? 'refunded' : 'pending') as 'pending' | 'paid' | 'failed' | 'refunded',
+          createdAt: fetchedOrder.createdAt,
+          updatedAt: fetchedOrder.updatedAt,
+          deliveryMethod: fetchedOrder.shippingMethod,
+          notes: fetchedOrder.notes,
+          timeline: [], // TODO: Add timeline if available
+        }
+        setOrder(transformedOrder)
+      }
+    } catch (error) {
+    } finally {
+      setLoading(false)
+    }
+  }, [orderId])
+
+  useEffect(() => {
+    fetchOrder()
+  }, [fetchOrder])
+
+  if (loading) {
+    return (
+      <div className='text-center py-12'>
+        <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto'></div>
+        <p className='mt-4 text-gray-600'>Đang tải chi tiết đơn hàng...</p>
+      </div>
+    )
+  }
 
   if (!order) {
     return (
@@ -63,8 +136,7 @@ export function OrderDetailPage() {
   }
 
   return (
-    
-      <div className='space-y-6'>
+    <div className='space-y-6'>
         {/* Header */}
         <div className='flex flex-col md:flex-row md:items-center justify-between gap-4'>
           <div>

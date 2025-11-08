@@ -27,7 +27,6 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
-import { useEntityManagement } from '../../utils/useEntityManagement'
 import { EntityFormDialog, EntityDeleteDialog } from '../shared/EntityFormDialog'
 import { TextField, SelectField, FormGrid, FormSection, TextAreaField } from '../shared/EntityFormFields'
 import { getStatusBadge } from '../../utils/badgeUtils'
@@ -112,32 +111,66 @@ export function CategoryManagementPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
 
-  // Use entity management hook
-  const {
-    entities: categories,
-    formState,
-    dialogState,
-    openAddDialog,
-    openEditDialog,
-    openDeleteDialog,
-    closeDialog,
-    handleAdd,
-    handleEdit,
-    handleDelete,
-    updateFormData,
-  } = useEntityManagement<Category>({
-    initialEntities: mockCategories,
-    entityName: 'category',
-    entityNameVi: 'danh mục',
-    fields: [], // We'll handle form fields manually
-    generateId: (): string => `CAT${String(mockCategories.length + 1).padStart(3, '0')}`,
-    validator: (data: Partial<Category>) => {
-      const errors: Record<string, string> = {}
-      if (!data.name) errors.name = 'Tên danh mục là bắt buộc'
-      if (!data.slug) errors.slug = 'Slug là bắt buộc'
-      return errors
-    },
-  })
+  const [categories, setEntities] = useState<Category[]>(mockCategories)
+  const [dialogState, setDialogState] = useState<{ isOpen: boolean, mode: 'add' | 'edit' | 'delete', entity: Category | null }>({ isOpen: false, mode: 'add', entity: null })
+  const [formState, setFormState] = useState<{ data: Partial<Category>, errors: Record<string, string>, isSubmitting: boolean }>({ data: {}, errors: {}, isSubmitting: false })
+
+  const updateFormData = (field: string, value: unknown) => {
+    setFormState(prev => ({ ...prev, data: { ...prev.data, [field]: value }, errors: { ...prev.errors, [field]: '' } }))
+  }
+
+  const openAddDialog = () => {
+    setDialogState({ isOpen: true, mode: 'add', entity: null })
+    setFormState({ data: {}, errors: {}, isSubmitting: false })
+  }
+
+  const openEditDialog = (entity: Category) => {
+    setDialogState({ isOpen: true, mode: 'edit', entity })
+    setFormState({ data: entity, errors: {}, isSubmitting: false })
+  }
+
+  const openDeleteDialog = (entity: Category) => {
+    setDialogState({ isOpen: true, mode: 'delete', entity })
+  }
+
+  const closeDialog = () => {
+    setDialogState({ isOpen: false, mode: 'add', entity: null })
+    setFormState({ data: {}, errors: {}, isSubmitting: false })
+  }
+
+  const handleAdd = async (data: Partial<Category>): Promise<boolean> => {
+    const errors: Record<string, string> = {}
+    if (!data.name) errors.name = 'Tên danh mục là bắt buộc'
+    if (!data.slug) errors.slug = 'Slug là bắt buộc'
+    if (Object.keys(errors).length > 0) {
+      setFormState(prev => ({ ...prev, errors }))
+      return false
+    }
+    const newEntity = { ...data, id: `CAT${String(categories.length + 1).padStart(3, '0')}` } as Category
+    setEntities(prev => [...prev, newEntity])
+    closeDialog()
+    return true
+  }
+
+  const handleEdit = async (data: Partial<Category>): Promise<boolean> => {
+    const errors: Record<string, string> = {}
+    if (!data.name) errors.name = 'Tên danh mục là bắt buộc'
+    if (!data.slug) errors.slug = 'Slug là bắt buộc'
+    if (Object.keys(errors).length > 0) {
+      setFormState(prev => ({ ...prev, errors }))
+      return false
+    }
+    if (!data.id) return false
+    setEntities(prev => prev.map(e => e.id === data.id ? { ...e, ...data } : e))
+    closeDialog()
+    return true
+  }
+
+  const handleDelete = async (id: string): Promise<boolean> => {
+    setEntities(prev => prev.filter(e => e.id !== id))
+    closeDialog()
+    return true
+  }
 
   // Auto-generate slug when name changes (only for new categories)
   const handleNameChange = (value: string) => {
@@ -514,7 +547,7 @@ export function CategoryManagementPage() {
       {/* Delete Confirmation Dialog - Using reusable component */}
       <EntityDeleteDialog
         open={dialogState.isOpen && dialogState.mode === 'delete'}
-        onOpenChange={(open) => (open ? {} : closeDialog())}
+        onOpenChange={() => closeDialog()}
         entityName='danh mục'
         entityDisplayName={dialogState.entity?.name}
         onConfirm={confirmDelete}

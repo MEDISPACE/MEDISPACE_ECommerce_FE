@@ -1,5 +1,5 @@
-import { useState, useMemo, useRef } from 'react'
-import { Link } from 'react-router'
+import { useState, useRef, useEffect } from 'react'
+import { Link, useParams } from 'react-router'
 import { PageTransition } from '../shared/PageTransition'
 import {
   Heart,
@@ -31,9 +31,9 @@ import { Separator } from '../ui/separator'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Dialog, DialogContent, DialogClose, DialogTitle, DialogDescription } from '../ui/dialog'
 import { ImageWithFallback } from '~/components/shared/ImageWithFallback'
-import { addToCart, buyNow, toggleWishlist, showPrescriptionWarning } from '../../utils/cartUtils'
-import { useImageLightbox, useCarousel } from '../../hooks'
+import { useCart } from '../../contexts/CartContext'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
+import { useImageLightbox, useCarousel } from '~/hooks/ui'
 import type { Product, Review } from '~/types/product'
 import {
   getProductId,
@@ -45,34 +45,58 @@ import {
   isProductInStock,
   isProductPrescription,
   getBrandName,
-  createLegacyProduct,
+  getProductDescription,
 } from '../../utils/productHelpers'
+import productService from '../../services/productService'
 
 export function ProductDetailPage() {
+  const { addToCart, buyNow, toggleWishlist, showPrescriptionWarning, isInWishlist } = useCart()
+  const { slug } = useParams<{ slug: string }>()
   const [quantity, setQuantity] = useState(1)
-  const [isInWishlist, setIsInWishlist] = useState(false)
   const [selectedImage, setSelectedImage] = useState(0)
-  const [isLightboxOpen, setIsLightboxOpen] = useState(false)
-  const [currentSlide, setCurrentSlide] = useState(0)
+  const [product, setProduct] = useState<Product | null>(null)
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const thumbnailScrollRef = useRef<HTMLDivElement>(null)
-  const carouselRef = useRef<HTMLDivElement>(null)
 
   // Reviews - TODO: Replace with real API call
   const reviews: Review[] = [] // mockReviews
 
-  // Find product by slug - TODO: Replace with real API call
-  const rawProduct: Product | undefined = undefined // mockProducts.find((p: Product) => p.slug === slug)
-  const product = rawProduct ? createLegacyProduct(rawProduct) : undefined
+  // Fetch product data
+  useEffect(() => {
+    const fetchProduct = async () => {
+      if (!slug) return
 
-  // Related products (mock) - memoized for performance - TODO: Replace with real API call
-  const relatedProducts = useMemo<Product[]>(
-    () =>
-      rawProduct
-        ? [] // mockProducts.filter((p: Product) => getBrandName(p) === getBrandName(rawProduct) && getProductId(p) !== getProductId(rawProduct)).slice(0, 12)
-        : [],
-    [rawProduct],
-  )
+      try {
+        setLoading(true)
+        setError(null)
+        const productData = await productService.getProductBySlug(slug)
+        if (productData) {
+          setProduct(productData)
+        } else {
+          setError('Sản phẩm không tồn tại')
+        }
+
+        // Fetch related products (same brand)
+        if (productData?.brand) {
+          const allProducts = await productService.getProducts({ limit: 12 })
+          const related = allProducts.filter(
+            (p: Product) =>
+              getBrandName(p) === getBrandName(productData) && getProductId(p) !== getProductId(productData),
+          )
+          setRelatedProducts(related)
+        }
+      } catch (err) {
+        setError('Không thể tải thông tin sản phẩm')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProduct()
+  }, [slug])
 
   // Use custom hooks - temporarily disabled due to type conflicts
   // const breadcrumbItems = useBreadcrumb({ product: rawProduct })
@@ -92,16 +116,32 @@ export function ProductDetailPage() {
     autoScroll: false,
   })
 
-  if (!product) {
+  if (loading) {
     return (
-      <div className='max-w-7xl mx-auto px-4 py-6'>
-        <UniversalBreadcrumb items={breadcrumbItems} />
-        <div className='text-center py-12'>
-          <h2 className='text-2xl font-bold text-gray-900 mb-2'>Sản phẩm không tồn tại</h2>
-          <p className='text-gray-600 mb-6'>Sản phẩm bạn đang tìm kiếm không có trong hệ thống.</p>
-          <Button onClick={() => window.history.back()}>Quay lại</Button>
+      <PageTransition>
+        <div className='max-w-7xl mx-auto px-4 py-6'>
+          <UniversalBreadcrumb items={breadcrumbItems} />
+          <div className='text-center py-12'>
+            <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4'></div>
+            <p className='text-gray-600'>Đang tải thông tin sản phẩm...</p>
+          </div>
         </div>
-      </div>
+      </PageTransition>
+    )
+  }
+
+  if (error || !product) {
+    return (
+      <PageTransition>
+        <div className='max-w-7xl mx-auto px-4 py-6'>
+          <UniversalBreadcrumb items={breadcrumbItems} />
+          <div className='text-center py-12'>
+            <h2 className='text-2xl font-bold text-gray-900 mb-2'>Sản phẩm không tồn tại</h2>
+            <p className='text-gray-600 mb-6'>{error || 'Sản phẩm bạn đang tìm kiếm không có trong hệ thống.'}</p>
+            <Button onClick={() => window.history.back()}>Quay lại</Button>
+          </div>
+        </div>
+      </PageTransition>
     )
   }
 
@@ -111,7 +151,7 @@ export function ProductDetailPage() {
       showPrescriptionWarning(product.name)
       return
     }
-    addToCart(getProductId(product), product.name, quantity)
+    addToCart(product, quantity)
   }
 
   const handleBuyNow = () => {
@@ -120,13 +160,12 @@ export function ProductDetailPage() {
       showPrescriptionWarning(product.name)
       return
     }
-    buyNow(getProductId(product), product.name, quantity)
+    buyNow(product, quantity)
   }
 
   const handleWishlistToggle = () => {
     if (!product) return
-    const newWishlistState = toggleWishlist(getProductId(product), product.name)
-    setIsInWishlist(newWishlistState)
+    toggleWishlist(getProductId(product), product.name)
   }
 
   // Thumbnail gallery scroll handlers
@@ -160,19 +199,19 @@ export function ProductDetailPage() {
   const maxSlides = Math.ceil(relatedProducts.length / getItemsPerSlide())
 
   const handlePrevSlide = () => {
-    setCurrentSlide((prev) => Math.max(0, prev - 1))
+    carousel.prevSlide()
   }
 
   const handleNextSlide = () => {
-    setCurrentSlide((prev) => Math.min(maxSlides - 1, prev + 1))
+    carousel.nextSlide()
   }
 
   const handlePrevImage = () => {
-    setSelectedImage((prev) => (prev === 0 ? product.images.length - 1 : prev - 1))
+    setSelectedImage((prev) => (prev === 0 ? (getProductImages(product).length || 1) - 1 : prev - 1))
   }
 
   const handleNextImage = () => {
-    setSelectedImage((prev) => (prev === product.images.length - 1 ? 0 : prev + 1))
+    setSelectedImage((prev) => (prev === (getProductImages(product).length || 1) - 1 ? 0 : prev + 1))
   }
 
   return (
@@ -197,7 +236,7 @@ export function ProductDetailPage() {
                 aria-label='Click to view full size image'
               >
                 <ImageWithFallback
-                  src={product.images[lightbox.currentIndex] || product.image}
+                  src={getProductImages(product)[lightbox.currentIndex] || getProductImage(product)}
                   alt={product.name}
                   className='w-full h-full object-cover hover:scale-105 transition-transform duration-300'
                 />
@@ -212,10 +251,10 @@ export function ProductDetailPage() {
               </div>
 
               {/* Image counter badge - Bottom Left */}
-              {product.images.length > 1 && (
+              {getProductImages(product).length > 1 && (
                 <div className='absolute bottom-4 left-4 z-20 bg-gradient-to-r from-blue-600 to-cyan-500 text-white px-3 py-1.5 rounded-lg shadow-lg backdrop-blur-sm'>
                   <span className='font-medium text-sm'>
-                    {lightbox.currentIndex + 1}/{product.images.length}
+                    {lightbox.currentIndex + 1}/{getProductImages(product).length}
                   </span>
                 </div>
               )}
@@ -237,7 +276,7 @@ export function ProductDetailPage() {
               {/* Centered gallery wrapper with max-width */}
               <div className='relative group mx-auto' style={{ maxWidth: '440px' }}>
                 {/* Navigation arrows - only show if more than 5 images */}
-                {product.images.length > 5 && (
+                {getProductImages(product).length > 5 && (
                   <>
                     <button
                       onClick={() => scrollThumbnails('left')}
@@ -266,7 +305,7 @@ export function ProductDetailPage() {
                     WebkitOverflowScrolling: 'touch',
                   }}
                 >
-                  {product.images.map((image, index) => (
+                  {getProductImages(product).map((image, index) => (
                     <button
                       key={index}
                       onClick={() => setSelectedImage(index)}
@@ -291,9 +330,9 @@ export function ProductDetailPage() {
               </div>
 
               {/* Scroll indicator dots - show for 2-8 images - Always centered */}
-              {product.images.length > 1 && product.images.length <= 8 && (
+              {getProductImages(product).length > 1 && getProductImages(product).length <= 8 && (
                 <div className='flex justify-center gap-1.5 mt-3'>
-                  {product.images.map((_, index) => (
+                  {getProductImages(product).map((_, index) => (
                     <button
                       key={index}
                       onClick={() => setSelectedImage(index)}
@@ -335,28 +374,28 @@ export function ProductDetailPage() {
 
             {/* Stock Status */}
             <div className='flex items-center gap-2'>
-              <div className={`w-3 h-3 rounded-full ${product.inStock ? 'bg-green-500' : 'bg-red-500'}`} />
-              <span className={`font-medium ${product.inStock ? 'text-green-600' : 'text-red-600'}`}>
-                {product.inStock ? `Còn hàng (${product.stockQuantity} sản phẩm)` : 'Hết hàng'}
+              <div className={`w-3 h-3 rounded-full ${isProductInStock(product) ? 'bg-green-500' : 'bg-red-500'}`} />
+              <span className={`font-medium ${isProductInStock(product) ? 'text-green-600' : 'text-red-600'}`}>
+                {isProductInStock(product) ? `Còn hàng (${product.stockQuantity} sản phẩm)` : 'Hết hàng'}
               </span>
             </div>
 
             {/* Quantity - Only show for non-prescription drugs */}
-            {!product.isPrescription && (
+            {!isProductPrescription(product) && (
               <div className='flex items-center gap-4'>
                 <span className='font-medium text-gray-700'>Số lượng:</span>
                 <QuantityInput
                   value={quantity}
                   onChange={setQuantity}
                   max={product.stockQuantity}
-                  disabled={!product.inStock}
+                  disabled={!isProductInStock(product)}
                 />
               </div>
             )}
 
             {/* Actions */}
             <div className='space-y-4'>
-              {product.isPrescription ? (
+              {isProductPrescription(product) ? (
                 /* Prescription Required Actions */
                 <div className='space-y-4'>
                   <div className='bg-red-50 border border-red-200 rounded-xl p-4 shadow-sm'>
@@ -405,7 +444,7 @@ export function ProductDetailPage() {
                 <div className='flex gap-3'>
                   <Button
                     onClick={handleAddToCart}
-                    disabled={!product.inStock}
+                    disabled={!isProductInStock(product)}
                     variant='outline'
                     className='flex-1 border-2 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 h-12 shadow-md hover:shadow-lg transition-all'
                   >
@@ -414,7 +453,7 @@ export function ProductDetailPage() {
                   </Button>
                   <Button
                     onClick={handleBuyNow}
-                    disabled={!product.inStock}
+                    disabled={!isProductInStock(product)}
                     className='flex-1 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 h-12 shadow-lg hover:shadow-xl transition-all'
                   >
                     Mua ngay
@@ -428,13 +467,13 @@ export function ProductDetailPage() {
                   size='sm'
                   onClick={handleWishlistToggle}
                   className={`flex-1 border-2 transition-all ${
-                    isInWishlist
+                    isInWishlist(getProductId(product))
                       ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100'
                       : 'border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300'
                   }`}
                 >
-                  <Heart className={`w-4 h-4 mr-2 ${isInWishlist ? 'fill-red-600' : ''}`} />
-                  {isInWishlist ? 'Đã yêu thích' : 'Yêu thích'}
+                  <Heart className={`w-4 h-4 mr-2 ${isInWishlist(getProductId(product)) ? 'fill-red-600' : ''}`} />
+                  {isInWishlist(getProductId(product)) ? 'Đã yêu thích' : 'Yêu thích'}
                 </Button>
                 <Button
                   variant='outline'
@@ -458,17 +497,17 @@ export function ProductDetailPage() {
               <div className='grid grid-cols-2 gap-4 text-sm'>
                 <div>
                   <span className='text-gray-600'>Xuất xứ:</span>
-                  <span className='ml-2 font-medium'>{product.origin}</span>
+                  <span className='ml-2 font-medium'>{product.origin || 'Việt Nam'}</span>
                 </div>
                 <div>
                   <span className='text-gray-600'>Đơn vị:</span>
-                  <span className='ml-2 font-medium'>{product.unit}</span>
+                  <span className='ml-2 font-medium'>{product.unit || 'Hộp'}</span>
                 </div>
               </div>
 
               <div className='text-sm'>
                 <span className='text-gray-600'>Hạn sử dụng:</span>
-                <span className='ml-2 font-medium'>{product.expiryInfo}</span>
+                <span className='ml-2 font-medium'>{product.expiryInfo || '24 tháng kể từ ngày sản xuất'}</span>
               </div>
 
               <div className='flex items-center gap-1 text-blue-600 text-sm'>
@@ -510,7 +549,7 @@ export function ProductDetailPage() {
             <Card className='border-blue-100 shadow-sm'>
               <CardContent className='p-6'>
                 <div className='prose max-w-none'>
-                  <p className='text-gray-700 leading-relaxed'>{product.description}</p>
+                  <p className='text-gray-700 leading-relaxed'>{getProductDescription(product)}</p>
                   <p className='text-gray-700 leading-relaxed mt-4'>
                     Sản phẩm chất lượng cao, được sản xuất theo tiêu chuẩn GMP, đảm bảo an toàn và hiệu quả cho người sử
                     dụng.
@@ -524,12 +563,16 @@ export function ProductDetailPage() {
             <Card className='border-blue-100 shadow-sm'>
               <CardContent className='p-6'>
                 <div className='space-y-4'>
-                  {product.ingredients?.map((ingredient, index) => (
-                    <div key={index} className='flex justify-between py-2 border-b border-blue-50 last:border-0'>
-                      <span className='font-medium'>{ingredient}</span>
-                      <span className='text-gray-600'>Chính</span>
-                    </div>
-                  ))}
+                  {(product.ingredients && product.ingredients.length > 0) ? (
+                    product.ingredients.map((ingredient, index) => (
+                      <div key={index} className='flex justify-between py-2 border-b border-blue-50 last:border-0'>
+                        <span className='font-medium'>{ingredient}</span>
+                        <span className='text-gray-600'>Chính</span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className='text-gray-600'>Thông tin thành phần đang được cập nhật...</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -539,12 +582,16 @@ export function ProductDetailPage() {
             <Card className='border-blue-100 shadow-sm'>
               <CardContent className='p-6'>
                 <ul className='space-y-2'>
-                  {product.uses?.map((use, index) => (
-                    <li key={index} className='flex items-start gap-2'>
-                      <div className='w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0' />
-                      <span>{use}</span>
-                    </li>
-                  ))}
+                  {(product.uses && product.uses.length > 0) ? (
+                    product.uses.map((use, index) => (
+                      <li key={index} className='flex items-start gap-2'>
+                        <div className='w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0' />
+                        <span>{use}</span>
+                      </li>
+                    ))
+                  ) : (
+                    <li className='text-gray-600'>Thông tin công dụng đang được cập nhật...</li>
+                  )}
                 </ul>
               </CardContent>
             </Card>
@@ -554,7 +601,7 @@ export function ProductDetailPage() {
             <Card className='border-blue-100 shadow-sm'>
               <CardContent className='p-6'>
                 <div className='prose max-w-none'>
-                  <p className='text-gray-700 leading-relaxed'>{product.instructions}</p>
+                  <p className='text-gray-700 leading-relaxed'>{product.instructions || 'Thông tin hướng dẫn sử dụng đang được cập nhật...'}</p>
                 </div>
               </CardContent>
             </Card>
@@ -564,15 +611,22 @@ export function ProductDetailPage() {
             <Card className='border-blue-100 shadow-sm'>
               <CardContent className='p-6'>
                 <div className='space-y-3'>
-                  {product.warnings?.map((warning, index) => (
-                    <div
-                      key={index}
-                      className='flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg'
-                    >
-                      <div className='w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0' />
-                      <span className='text-yellow-800'>{warning}</span>
+                  {(product.warnings && product.warnings.length > 0) ? (
+                    product.warnings.map((warning, index) => (
+                      <div
+                        key={index}
+                        className='flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg'
+                      >
+                        <div className='w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0' />
+                        <span className='text-yellow-800'>{warning}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className='flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg'>
+                      <div className='w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0' />
+                      <span className='text-blue-800'>Sản phẩm an toàn khi sử dụng theo hướng dẫn. Vui lòng đọc kỹ hướng dẫn sử dụng trước khi dùng.</span>
                     </div>
-                  ))}
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -585,8 +639,8 @@ export function ProductDetailPage() {
                 <CardContent className='p-6'>
                   <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
                     <div className='text-center'>
-                      <div className='text-4xl font-bold text-blue-600 mb-2'>{product.rating.toFixed(1)}</div>
-                      <RatingStars rating={product.rating} size='lg' showRating={false} />
+                      <div className='text-4xl font-bold text-blue-600 mb-2'>{product.rating?.toFixed(1) || '0.0'}</div>
+                      <RatingStars rating={product.rating || 0} size='lg' showRating={false} />
                       <div className='text-sm text-gray-600 mt-2'>{product.reviewCount} đánh giá</div>
                     </div>
 
@@ -712,7 +766,7 @@ export function ProductDetailPage() {
 
               {/* Carousel - Smooth horizontal scroll */}
               <div
-                ref={carouselRef}
+                ref={carousel.carouselRef}
                 className='overflow-hidden scroll-smooth'
                 style={{
                   scrollbarWidth: 'none',
@@ -759,7 +813,7 @@ export function ProductDetailPage() {
                       key={index}
                       onClick={() => scrollToSlide(index)}
                       className={`h-2 rounded-full transition-all ${
-                        currentSlide === index
+                        carousel.currentSlide === index
                           ? 'w-8 bg-gradient-to-r from-blue-600 to-cyan-500'
                           : 'w-2 bg-blue-200 hover:bg-blue-300'
                       }`}
@@ -774,13 +828,13 @@ export function ProductDetailPage() {
       </div>
 
       {/* Image Lightbox - Full screen modal */}
-      <Dialog open={isLightboxOpen} onOpenChange={setIsLightboxOpen}>
+      <Dialog open={lightbox.isOpen} onOpenChange={lightbox.close}>
         <DialogContent className='max-w-[95vw] max-h-[95vh] p-0 bg-black/95 backdrop-blur-xl border-blue-500/20 overflow-hidden'>
           {/* Accessibility: Hidden title and description for screen readers */}
           <DialogTitle className='sr-only'>{product.name} - Xem ảnh chi tiết</DialogTitle>
           <DialogDescription className='sr-only'>
-            Lightbox hiển thị ảnh {selectedImage + 1} trong số {product.images.length} ảnh của {product.name}. Sử dụng
-            phím mũi tên trái/phải để chuyển ảnh, ESC để đóng.
+            Lightbox hiển thị ảnh {selectedImage + 1} trong số {product.images?.length || 1} ảnh của {product.name}. Sử
+            dụng phím mũi tên trái/phải để chuyển ảnh, ESC để đóng.
           </DialogDescription>
 
           {/* Close button - Top right */}
@@ -792,7 +846,7 @@ export function ProductDetailPage() {
           <div className='relative w-full h-[90vh] flex items-center justify-center p-8'>
             {/* Main image */}
             <ImageWithFallback
-              src={product.images[selectedImage] || product.image}
+              src={getProductImages(product)[selectedImage] || getProductImage(product)}
               alt={`${product.name} - Image ${selectedImage + 1}`}
               className='max-w-full max-h-full object-contain rounded-lg shadow-2xl'
             />
@@ -800,12 +854,12 @@ export function ProductDetailPage() {
             {/* Counter badge - Top left */}
             <div className='absolute top-4 left-4 z-40 bg-gradient-to-r from-blue-600 to-cyan-500 text-white px-4 py-2 rounded-lg shadow-lg backdrop-blur-sm'>
               <span className='font-medium'>
-                {selectedImage + 1} / {product.images.length}
+                {selectedImage + 1} / {getProductImages(product).length}
               </span>
             </div>
 
             {/* Navigation arrows */}
-            {product.images.length > 1 && (
+            {getProductImages(product).length > 1 && (
               <>
                 {/* Previous button */}
                 <button
@@ -836,9 +890,9 @@ export function ProductDetailPage() {
             </div>
 
             {/* Thumbnail navigation - Bottom (optional for many images) */}
-            {product.images.length > 1 && product.images.length <= 8 && (
+            {getProductImages(product).length > 1 && getProductImages(product).length <= 8 && (
               <div className='absolute bottom-20 left-1/2 -translate-x-1/2 z-40 flex gap-2'>
-                {product.images.map((_, index) => (
+                {getProductImages(product).map((_, index) => (
                   <button
                     key={index}
                     onClick={() => setSelectedImage(index)}

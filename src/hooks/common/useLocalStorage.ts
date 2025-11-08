@@ -28,7 +28,6 @@ export const useLocalStorage = <T>(key: string, initialValue?: T): UseLocalStora
         setStoredValue(parsedValue)
       }
     } catch (err) {
-      console.error(`Error reading localStorage key "${key}":`, err)
       setError(err instanceof Error ? err.message : 'Failed to read from localStorage')
       setStoredValue(initialValue || null)
     } finally {
@@ -53,7 +52,6 @@ export const useLocalStorage = <T>(key: string, initialValue?: T): UseLocalStora
           localStorage.setItem(key, JSON.stringify(valueToStore))
         }
       } catch (err) {
-        console.error(`Error setting localStorage key "${key}":`, err)
         setError(err instanceof Error ? err.message : 'Failed to write to localStorage')
       }
     },
@@ -66,7 +64,6 @@ export const useLocalStorage = <T>(key: string, initialValue?: T): UseLocalStora
       localStorage.removeItem(key)
       setStoredValue(null)
     } catch (err) {
-      console.error(`Error removing localStorage key "${key}":`, err)
       setError(err instanceof Error ? err.message : 'Failed to remove from localStorage')
     }
   }, [key])
