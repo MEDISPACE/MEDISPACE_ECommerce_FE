@@ -21,7 +21,6 @@ import { Button } from '../ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Badge } from '../ui/badge'
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet'
-import { mockUser } from '../../utils/mockAccountData'
 import { useAuth } from '../../contexts/AuthContext'
 import type { User as AccountUser } from '../../types/account'
 
@@ -110,9 +109,9 @@ export function AccountLayout({ children, breadcrumbItems = [] }: AccountLayoutP
 
   const { user } = useAuth()
   // Auth user shape (backend) differs from the account mock shape used in the account UI.
-  // We'll treat the auth user as an AccountUser when available, and fall back to mockAccount values.
+  // We'll treat the auth user as an AccountUser when available
   const accountUser = user as unknown as AccountUser | undefined
-  const membershipLevel = accountUser?.membershipLevel ?? mockUser.membershipLevel
+  const membershipLevel = accountUser?.membershipLevel ?? 'bronze'
   const membershipConfig = getMembershipLevelConfig(membershipLevel)
 
   const isActiveRoute = (href: string, exact = false) => {
@@ -127,17 +126,17 @@ export function AccountLayout({ children, breadcrumbItems = [] }: AccountLayoutP
       {/* User Info */}
       <div className='text-center pb-6 border-b border-blue-100'>
         <Avatar className='w-20 h-20 mx-auto mb-3'>
-          <AvatarImage src={accountUser?.avatar ?? mockUser.avatar} />
+          <AvatarImage src={accountUser?.avatar} />
           <AvatarFallback className='text-xl bg-blue-100 text-blue-600'>
-            {(accountUser?.firstName ?? mockUser.firstName).charAt(0)}
-            {(accountUser?.lastName ?? mockUser.lastName).charAt(0)}
+            {(accountUser?.firstName || 'U').charAt(0)}
+            {(accountUser?.lastName || 'N').charAt(0)}
           </AvatarFallback>
         </Avatar>
 
         <h3 className='font-medium text-gray-900'>
-          {accountUser?.firstName ?? mockUser.firstName} {accountUser?.lastName ?? mockUser.lastName}
+          {accountUser?.firstName || 'Người'} {accountUser?.lastName || 'dùng'}
         </h3>
-        <p className='text-sm text-gray-500 mb-2'>{accountUser?.email ?? mockUser.email}</p>
+        <p className='text-sm text-gray-500 mb-2'>{accountUser?.email || 'Chưa có email'}</p>
 
         <Badge className={`${membershipConfig.className} text-xs`}>⭐ {membershipConfig.label}</Badge>
       </div>

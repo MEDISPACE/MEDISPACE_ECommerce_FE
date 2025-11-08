@@ -77,7 +77,6 @@ export function CategoriesOverviewPage() {
         setCategories(categoriesData)
         setFeaturedProducts(productsData)
       } catch (error) {
-        console.error('Error fetching data:', error)
         setError('Không thể tải dữ liệu. Vui lòng thử lại sau.')
       } finally {
         setLoading(false)

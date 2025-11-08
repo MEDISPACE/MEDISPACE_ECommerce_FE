@@ -21,30 +21,30 @@ export const links: LinksFunction = () => [
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang='vi'>
-      <head>
-        <meta charSet='utf-8' />
-        <meta name='viewport' content='width=device-width, initial-scale=1' />
-        <meta name='color-scheme' content='light only' />
-        <meta name='theme-color' content='#ffffff' />
-        <meta name='title' content='MEDISPACE - Nền tảng mua thuốc trực tuyến' />
-        <meta name='description' content='Nền tảng mua thuốc trực tuyến uy tín, an toàn và tiện lợi' />
-        <Meta />
-        <Links />
-      </head>
-      <body style={{ backgroundColor: '#ffffff', colorScheme: 'light' }}>
-        <AuthProvider>
-          <CartProvider>
-            <WishlistProvider>
+    <AuthProvider>
+      <CartProvider>
+        <WishlistProvider>
+          <html lang='vi'>
+            <head>
+              <meta charSet='utf-8' />
+              <meta name='viewport' content='width=device-width, initial-scale=1' />
+              <meta name='color-scheme' content='light only' />
+              <meta name='theme-color' content='#ffffff' />
+              <meta name='title' content='MEDISPACE - Nền tảng mua thuốc trực tuyến' />
+              <meta name='description' content='Nền tảng mua thuốc trực tuyến uy tín, an toàn và tiện lợi' />
+              <Meta />
+              <Links />
+            </head>
+            <body style={{ backgroundColor: '#ffffff', colorScheme: 'light' }}>
               {children}
               <Toaster position='top-right' />
-            </WishlistProvider>
-          </CartProvider>
-        </AuthProvider>
-        <ScrollRestoration />
-        <Scripts />
-      </body>
-    </html>
+              <ScrollRestoration />
+              <Scripts />
+            </body>
+          </html>
+        </WishlistProvider>
+      </CartProvider>
+    </AuthProvider>
   )
 }
 

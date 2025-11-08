@@ -132,7 +132,6 @@ export function ChangePasswordPage() {
       setNewPassword('')
       setConfirmPassword('')
     } catch (err) {
-      console.error('Password change error:', err)
       toast.error('Đổi mật khẩu thất bại', {
         description: 'Mật khẩu hiện tại không đúng. Vui lòng thử lại.',
         duration: 4000,

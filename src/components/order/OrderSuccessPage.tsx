@@ -1,27 +1,124 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
-import { CheckCircle, Package, MapPin, CreditCard, ArrowRight, Home, FileText } from 'lucide-react'
+import { CheckCircle, Package, MapPin, CreditCard, ArrowRight, Home, FileText, Loader2 } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Separator } from '../ui/separator'
 import { Badge } from '../ui/badge'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
+import { orderService } from '../../services/orderService'
+import type { Order } from '../../types/order'
+import { logger } from '../../utils/logger'
 
 export function OrderSuccessPage() {
   const [searchParams] = useSearchParams()
-  const orderId = searchParams.get('orderId') || 'DH2025001'
-  const orderTotal = searchParams.get('total') || '1,250,000'
+  const orderId = searchParams.get('orderId')
+  const [order, setOrder] = useState<Order | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     // Scroll to top on mount
     window.scrollTo(0, 0)
-  }, [])
+
+    // Fetch order data if orderId is provided
+    if (orderId) {
+      fetchOrderData(orderId)
+    } else {
+      setLoading(false)
+      setError('Không tìm thấy mã đơn hàng')
+    }
+  }, [orderId])
+
+  const fetchOrderData = async (id: string) => {
+    try {
+      setLoading(true)
+      setError(null)
+      logger.info('OrderSuccess: Fetching order data', { orderId: id })
+
+      const orderData = await orderService.getOrderById(id)
+      if (orderData) {
+        setOrder(orderData)
+        logger.info('OrderSuccess: Order data loaded successfully', { orderId: id })
+      } else {
+        setError('Không tìm thấy thông tin đơn hàng')
+        logger.warn('OrderSuccess: Order not found', { orderId: id })
+      }
+    } catch (err) {
+      const errorMessage = 'Không thể tải thông tin đơn hàng'
+      setError(errorMessage)
+      logger.error('OrderSuccess: Failed to fetch order data', err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const breadcrumbItems = [
     { label: 'Trang chủ', href: '/' },
     { label: 'Thanh toán', href: '/cart/checkout' },
     { label: 'Đặt hàng thành công' },
   ]
+
+  if (loading) {
+    return (
+      <div className='max-w-4xl mx-auto px-4 py-12'>
+        <UniversalBreadcrumb items={breadcrumbItems} />
+        <div className='text-center'>
+          <div className='inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 shadow-lg mb-6'>
+            <Loader2 className='w-14 h-14 text-white animate-spin' />
+          </div>
+          <h1 className='text-xl text-gray-600 mb-4'>Đang tải thông tin đơn hàng...</h1>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !order) {
+    return (
+      <div className='max-w-4xl mx-auto px-4 py-12'>
+        <UniversalBreadcrumb items={breadcrumbItems} />
+        <div className='text-center'>
+          <div className='inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-red-400 to-red-600 shadow-lg mb-6'>
+            <CheckCircle className='w-14 h-14 text-white' />
+          </div>
+          <h1 className='text-xl text-gray-600 mb-4'>Đặt hàng thành công!</h1>
+          <p className='text-gray-500 mb-6'>
+            {error || 'Không thể tải chi tiết đơn hàng, nhưng đơn hàng của bạn đã được tạo thành công.'}
+          </p>
+          <div className='flex flex-col sm:flex-row gap-4 justify-center'>
+            <Button asChild>
+              <Link to='/account/orders'>Xem đơn hàng của tôi</Link>
+            </Button>
+            <Button asChild variant='outline'>
+              <Link to='/'>Về trang chủ</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
+    }).format(amount)
+  }
+
+  const getPaymentMethodText = (method: string) => {
+    switch (method) {
+      case 'cod':
+        return 'Thanh toán khi nhận hàng (COD)'
+      case 'bank_transfer':
+        return 'Chuyển khoản ngân hàng'
+      case 'credit_card':
+        return 'Thẻ tín dụng'
+      case 'e_wallet':
+        return 'Ví điện tử'
+      default:
+        return 'Thanh toán khi nhận hàng (COD)'
+    }
+  }
 
   return (
     <div className='max-w-4xl mx-auto px-4 py-12'>
@@ -54,17 +151,17 @@ export function OrderSuccessPage() {
           <div className='grid md:grid-cols-2 gap-6'>
             <div>
               <p className='text-sm text-gray-500 mb-1'>Mã đơn hàng</p>
-              <p className='text-lg font-mono text-blue-600'>#{orderId}</p>
+              <p className='text-lg font-mono text-blue-600'>#{order.orderNumber}</p>
             </div>
             <div>
               <p className='text-sm text-gray-500 mb-1'>Tổng tiền</p>
-              <p className='text-lg text-gray-900'>{orderTotal}₫</p>
+              <p className='text-lg text-gray-900'>{formatCurrency(order.total)}</p>
             </div>
             <div>
               <p className='text-sm text-gray-500 mb-1'>Phương thức thanh toán</p>
               <div className='flex items-center gap-2'>
                 <CreditCard className='w-4 h-4 text-gray-600' />
-                <span className='text-gray-900'>Thanh toán khi nhận hàng (COD)</span>
+                <span className='text-gray-900'>{getPaymentMethodText(order.paymentMethod)}</span>
               </div>
             </div>
             <div>
@@ -80,8 +177,13 @@ export function OrderSuccessPage() {
               <MapPin className='w-5 h-5 text-blue-600 mt-1' />
               <div className='flex-1'>
                 <p className='text-sm text-blue-800 mb-1'>Địa chỉ giao hàng</p>
-                <p className='text-gray-900'>123 Nguyễn Văn Linh, Phường Tân Phú, Quận 7, TP. HCM</p>
-                <p className='text-sm text-gray-600 mt-1'>SĐT: 0901234567</p>
+                <p className='text-gray-900'>
+                  {order.shippingAddress.address}, {order.shippingAddress.ward}, {order.shippingAddress.district}, {order.shippingAddress.city}
+                </p>
+                <p className='text-sm text-gray-600 mt-1'>SĐT: {order.shippingAddress.phone}</p>
+                {order.shippingAddress.email && (
+                  <p className='text-sm text-gray-600'>Email: {order.shippingAddress.email}</p>
+                )}
               </div>
             </div>
           </div>

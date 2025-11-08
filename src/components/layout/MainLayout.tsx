@@ -33,7 +33,6 @@ export function MainLayout({ children, breadcrumbItems = [], showBreadcrumb = fa
 
         // Sanity check - header should be between 100-300px
         if (height < 100 || height > 300) {
-          console.warn(`Unusual header height detected: ${height}px`)
         }
 
         setHeaderHeight((prev) => {
@@ -44,7 +43,6 @@ export function MainLayout({ children, breadcrumbItems = [], showBreadcrumb = fa
           return prev
         })
       } catch (err) {
-        console.error('Header measurement error:', err)
       }
     }
 

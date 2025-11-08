@@ -57,7 +57,6 @@ export function SearchResultsPage() {
         setCategories(categoriesData)
         setBrands(brandsData)
       } catch (error) {
-        console.error('Error fetching search data:', error)
       }
     }
 

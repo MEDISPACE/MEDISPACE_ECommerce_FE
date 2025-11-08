@@ -74,7 +74,6 @@ export function SubCategoryPage() {
         setProducts(productsData)
 
       } catch (error) {
-        console.error('Error fetching category data:', error)
         setError('Không thể tải dữ liệu danh mục')
       } finally {
         setLoading(false)

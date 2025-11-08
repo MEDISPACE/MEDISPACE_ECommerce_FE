@@ -89,7 +89,6 @@ export function ProductDetailPage() {
           setRelatedProducts(related)
         }
       } catch (err) {
-        console.error('Error fetching product:', err)
         setError('Không thể tải thông tin sản phẩm')
       } finally {
         setLoading(false)

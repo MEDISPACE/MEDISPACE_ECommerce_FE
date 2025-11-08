@@ -28,14 +28,6 @@ export enum UserGender {
   Female = 1,
 }
 
-// Mock data flags - set to false when backend APIs are ready
-export const USE_MOCK_PRODUCTS = false
-export const USE_MOCK_CATEGORIES = false
-export const USE_MOCK_BRANDS = false
-export const USE_MOCK_ORDERS = true // TODO: Set to false when orders API is implemented
-export const USE_MOCK_CART = false // TODO: Set to false when cart API is implemented
-export const USE_MOCK_REVIEWS = true // TODO: Set to false when reviews API is implemented
-
 // Product status constants
 export const ProductStatus = {
   ACTIVE: 'active',

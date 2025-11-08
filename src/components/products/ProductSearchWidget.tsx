@@ -72,7 +72,6 @@ export function ProductSearchWidget({ onProductAdd, onProductInfo, className = '
 
       setSearchResults(transformedProducts)
     } catch (error) {
-      console.error('Search error:', error)
       setSearchResults([])
     } finally {
       setLoading(false)
@@ -114,7 +113,6 @@ export function ProductSearchWidget({ onProductAdd, onProductInfo, className = '
 
         setSearchResults(transformedProducts)
       } catch (error) {
-        console.error('Category filter error:', error)
         setSearchResults([])
       } finally {
         setLoading(false)

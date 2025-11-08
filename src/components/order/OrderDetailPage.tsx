@@ -80,7 +80,6 @@ export function OrderDetailPage() {
         setOrder(transformedOrder)
       }
     } catch (error) {
-      console.error('Failed to fetch order:', error)
     } finally {
       setLoading(false)
     }

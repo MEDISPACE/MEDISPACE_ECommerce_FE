@@ -128,8 +128,6 @@ export function NotificationsPage() {
         if (mounted) setNotifications(data.map(mapApiToUi))
       } catch (err) {
         try {
-          if (console && typeof console.debug === 'function')
-            console.debug('Failed to load notifications, using mock', err)
         } catch {
           /* ignore */
         }

@@ -21,26 +21,28 @@ import { Tabs, TabsList, TabsTrigger } from '../ui/tabs'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '../ui/dialog'
 import { StatusBadge } from '../shared/StatusBadge'
 import { EmptyState } from '../shared/EmptyState'
-import { mockPrescriptions } from '~/utils/mockAccountData'
 import type { Prescription } from '~/types/account'
 
 export function PrescriptionsPage() {
   const [selectedTab, setSelectedTab] = useState('all')
 
+  // TODO: Replace with real prescription data when backend implements prescriptions API
+  const prescriptions: Prescription[] = []
+
   const filterPrescriptions = (status?: string) => {
     if (!status || status === 'all') {
-      return mockPrescriptions
+      return prescriptions
     }
-    return mockPrescriptions.filter((prescription) => prescription.status === status)
+    return prescriptions.filter((prescription) => prescription.status === status)
   }
 
   const getTabCounts = () => {
     return {
-      all: mockPrescriptions.length,
-      pending: mockPrescriptions.filter((p) => p.status === 'pending').length,
-      approved: mockPrescriptions.filter((p) => p.status === 'approved').length,
-      rejected: mockPrescriptions.filter((p) => p.status === 'rejected').length,
-      completed: mockPrescriptions.filter((p) => p.status === 'completed').length,
+      all: prescriptions.length,
+      pending: prescriptions.filter((p) => p.status === 'pending').length,
+      approved: prescriptions.filter((p) => p.status === 'approved').length,
+      rejected: prescriptions.filter((p) => p.status === 'rejected').length,
+      completed: prescriptions.filter((p) => p.status === 'completed').length,
     }
   }
 
@@ -337,7 +339,7 @@ export function PrescriptionsPage() {
         </Tabs>
 
         {/* Quick Stats */}
-        {mockPrescriptions.length > 0 && (
+        {prescriptions.length > 0 && (
           <div className='grid grid-cols-1 md:grid-cols-4 gap-4 pt-6 border-t border-gray-100'>
             <Card className='border-blue-100'>
               <CardContent className='p-4 text-center'>
