@@ -28,14 +28,6 @@ export enum UserGender {
   Female = 1,
 }
 
-// Mock data flags - set to false when backend APIs are ready
-export const USE_MOCK_PRODUCTS = false
-export const USE_MOCK_CATEGORIES = false
-export const USE_MOCK_BRANDS = false
-export const USE_MOCK_ORDERS = true // TODO: Set to false when orders API is implemented
-export const USE_MOCK_CART = true // TODO: Set to false when cart API is implemented
-export const USE_MOCK_REVIEWS = true // TODO: Set to false when reviews API is implemented
-
 // Product status constants
 export const ProductStatus = {
   ACTIVE: 'active',
@@ -70,7 +62,7 @@ export const API_ENDPOINTS = {
   PRODUCTS: {
     BASE: '/products',
     BY_ID: (id: string) => `/products/${id}`,
-    BY_SLUG: (slug: string) => `/products/slug/${slug}`,
+    BY_SLUG: (slug: string) => `/products/${slug}`,
   },
 
   // Category endpoints
@@ -96,15 +88,14 @@ export const API_ENDPOINTS = {
     CANCEL: (id: string) => `/orders/${id}/cancel`,
   },
 
-  // Cart endpoints (TODO: Update when backend implements cart API)
+  // Cart endpoints
   CART: {
     GET: '/cart',
-    ADD_ITEM: '/cart/items',
-    UPDATE_ITEM: (id: string) => `/cart/items/${id}`,
-    REMOVE_ITEM: (id: string) => `/cart/items/${id}`,
-    CLEAR: '/cart',
-    APPLY_COUPON: '/cart/coupon',
-    REMOVE_COUPON: '/cart/coupon',
+    ADD_ITEM: '/cart/add',
+    UPDATE_ITEM: (productId: string) => `/cart/update/${productId}`,
+    REMOVE_ITEM: (productId: string) => `/cart/remove/${productId}`,
+    CLEAR: '/cart/clear',
+    CHECKOUT: '/cart/checkout',
   },
 
   // Review endpoints (TODO: Update when backend implements reviews API)

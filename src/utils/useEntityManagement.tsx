@@ -279,7 +279,6 @@ export function useEntityManagement<T extends { id: string | number }>(
         closeDialog()
         return true
       } catch (error) {
-        console.error(`Error adding ${entityName}:`, error)
         toast.error(`Không thể thêm ${entityNameVi.toLowerCase()}`, {
           description: error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định.',
         })
@@ -330,7 +329,6 @@ export function useEntityManagement<T extends { id: string | number }>(
         closeDialog()
         return true
       } catch (error) {
-        console.error(`Error editing ${entityName}:`, error)
         toast.error(`Không thể cập nhật ${entityNameVi.toLowerCase()}`, {
           description: error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định.',
         })
@@ -362,7 +360,6 @@ export function useEntityManagement<T extends { id: string | number }>(
         closeDialog()
         return true
       } catch (error) {
-        console.error(`Error deleting ${entityName}:`, error)
         toast.error(`Không thể xóa ${entityNameVi.toLowerCase()}`, {
           description: error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định.',
         })
@@ -390,7 +387,6 @@ export function useEntityManagement<T extends { id: string | number }>(
 
         return true
       } catch (error) {
-        console.error(`Error bulk deleting ${entityName}:`, error)
         toast.error(`Không thể xóa ${entityNameVi.toLowerCase()}`, {
           description: error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định.',
         })

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Grid, List, Search as SearchIcon } from 'lucide-react'
-import { addToCart, toggleWishlist } from '../../utils/cartUtils'
+import { useCart } from '../../contexts/CartContext'
 import { useProductListing, useBreadcrumbGeneration } from '../../hooks'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
 import {
@@ -30,6 +30,7 @@ import { productService } from '../../services/productService'
 import type { Product } from '../../types/product'
 
 export function ProductsListingPage() {
+  const { addToCart, toggleWishlist } = useCart()
   const [products, setProducts] = useState<Product[]>([])
 
   useEffect(() => {
@@ -38,7 +39,6 @@ export function ProductsListingPage() {
         const productsData = await productService.getProducts()
         setProducts(productsData)
       } catch (error) {
-        console.error('Error fetching products:', error)
       }
     }
 
@@ -292,13 +292,11 @@ export function ProductsListingPage() {
                               isOnSale: product.isOnSale,
                             }}
                             variant={viewMode}
-                            onAddToCart={(productId) => {
-                              const prod = products.find((p) => getProductId(p) === productId)
-                              if (prod) addToCart(productId, prod.name, 1)
+                            onAddToCart={() => {
+                              addToCart(product, 1)
                             }}
-                            onToggleWishlist={(productId) => {
-                              const prod = products.find((p) => getProductId(p) === productId)
-                              if (prod) toggleWishlist(productId, prod.name)
+                            onToggleWishlist={() => {
+                              toggleWishlist(getProductId(product), product.name)
                             }}
                           />
                         </StaggerItem>

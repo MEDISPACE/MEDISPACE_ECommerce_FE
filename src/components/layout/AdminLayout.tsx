@@ -57,7 +57,7 @@ interface NavItem {
 const navigationItems: NavItem[] = [
   {
     label: 'Tổng quan',
-    href: '/admin',
+    href: '/admin/dashboard',
     icon: LayoutDashboard,
   },
   {
@@ -125,7 +125,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   const handleLogout = () => {
     logout()
-    navigate('/auth/login')
+    navigate('/login')
   }
 
   const SidebarContent = () => (

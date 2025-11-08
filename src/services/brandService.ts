@@ -2,13 +2,38 @@ import type { Brand } from '../types/product'
 import { apiClient } from './apiClient'
 import { API_ENDPOINTS } from '../constants'
 
+type BrandsResponse =
+  | {
+      message?: string
+      result?: {
+        brands?: Brand[]
+        pagination?: unknown
+      }
+      brands?: Brand[]
+    }
+  | Brand[]
+
 export const brandService = {
   /**
    * Get all brands
    */
   async getBrands(): Promise<Brand[]> {
     const response = await apiClient.get(API_ENDPOINTS.BRANDS.BASE)
-    return response.data as Brand[]
+    if (response && response.data) {
+      const data = response.data as BrandsResponse
+      if (
+        typeof data === 'object' &&
+        data !== null &&
+        'result' in data &&
+        data.result &&
+        Array.isArray(data.result.brands)
+      )
+        return data.result.brands as Brand[]
+      if (Array.isArray(data)) return data as Brand[]
+      if (typeof data === 'object' && data !== null && 'brands' in data && Array.isArray(data.brands))
+        return data.brands as Brand[]
+    }
+    return []
   },
 
   /**
@@ -16,8 +41,14 @@ export const brandService = {
    */
   async getBrandBySlug(slug: string): Promise<Brand | null> {
     try {
-      const response = await apiClient.get(API_ENDPOINTS.BRANDS.BY_SLUG(slug))
-      return response.data as Brand
+      const response = await apiClient.get(API_ENDPOINTS.BRANDS.BY_ID(slug))
+      if (response && response.data) {
+        const data = response.data as unknown
+        if (typeof data === 'object' && data !== null && 'result' in data)
+          return (data as { result?: unknown }).result as Brand
+        return data as Brand
+      }
+      return null
     } catch (error: unknown) {
       if (
         error &&
@@ -40,7 +71,13 @@ export const brandService = {
   async getBrandById(id: string): Promise<Brand | null> {
     try {
       const response = await apiClient.get(API_ENDPOINTS.BRANDS.BY_ID(id))
-      return response.data as Brand
+      if (response && response.data) {
+        const data = response.data as unknown
+        if (typeof data === 'object' && data !== null && 'result' in data)
+          return (data as { result?: unknown }).result as Brand
+        return data as Brand
+      }
+      return null
     } catch (error: unknown) {
       if (
         error &&

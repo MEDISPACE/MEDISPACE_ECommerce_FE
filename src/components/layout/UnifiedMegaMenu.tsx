@@ -3,7 +3,8 @@ import { Link } from 'react-router'
 import { ChevronRight } from 'lucide-react'
 import { Badge } from '../ui/badge'
 import { ImageWithFallback } from '../shared/ImageWithFallback'
-import { type Category, type SubCategory } from '../../utils/mockCategoryData'
+import { type Category } from '../../types/product'
+import { useProductsByCategory } from '../../hooks/product/useProductsByCategory'
 
 interface UnifiedMegaMenuProps {
   activeCategory: Category | null
@@ -12,15 +13,21 @@ interface UnifiedMegaMenuProps {
 }
 
 export function UnifiedMegaMenu({ activeCategory, isVisible, onClose }: UnifiedMegaMenuProps) {
-  const [activeSubCategory, setActiveSubCategory] = useState<SubCategory | null>(null)
+  const [activeSubCategory, setActiveSubCategory] = useState<Category | null>(null)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Fetch products for the active subcategory
+  const { products: featuredProducts, loading: productsLoading } = useProductsByCategory(
+    activeSubCategory?._id,
+    4
+  )
 
   // Simple effect to set first subcategory when category changes
   useEffect(() => {
-    if (activeCategory?.subCategories?.[0]) {
-      setActiveSubCategory(activeCategory.subCategories[0])
+    if (activeCategory?.subcategories?.[0]) {
+      setActiveSubCategory(activeCategory.subcategories[0])
     }
-  }, [activeCategory?.id, activeCategory?.subCategories])
+  }, [activeCategory?.id, activeCategory?.subcategories])
 
   // Clean up timeout on unmount
   useEffect(() => {
@@ -46,21 +53,6 @@ export function UnifiedMegaMenu({ activeCategory, isVisible, onClose }: UnifiedM
     return null
   }
 
-  // Simple mock data to avoid complex calculations
-  const mockProducts = [
-    { id: 1, name: 'Sản phẩm 1', price: 25000, image: '/placeholder-drug.jpg', badge: 'HOT' },
-    { id: 2, name: 'Sản phẩm 2', price: 45000, image: '/placeholder-drug.jpg', badge: 'NEW' },
-    { id: 3, name: 'Sản phẩm 3', price: 35000, image: '/placeholder-drug.jpg', badge: '' },
-    { id: 4, name: 'Sản phẩm 4', price: 55000, image: '/placeholder-drug.jpg', badge: '' },
-  ]
-
-  const mockSubCategories = [
-    { name: 'Danh mục con 1', count: 45 },
-    { name: 'Danh mục con 2', count: 67 },
-    { name: 'Danh mục con 3', count: 89 },
-    { name: 'Danh mục con 4', count: 23 },
-  ]
-
   return (
     <div
       className='absolute top-full bg-white border border-gray-200 shadow-xl z-50 rounded-lg overflow-hidden hidden lg:block'
@@ -78,12 +70,12 @@ export function UnifiedMegaMenu({ activeCategory, isVisible, onClose }: UnifiedM
         <div className='w-[30%] bg-gray-50 border-r border-gray-200 p-6'>
           <h3 className='font-medium text-gray-900 mb-4'>{activeCategory.name}</h3>
           <div className='space-y-1'>
-            {activeCategory.subCategories?.slice(0, 8).map((subCategory, index) => (
+            {activeCategory.subcategories?.slice(0, 8).map((subCategory) => (
               <button
-                key={index}
+                key={subCategory._id}
                 onClick={() => setActiveSubCategory(subCategory)}
                 className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                  activeSubCategory?.slug === subCategory.slug
+                  activeSubCategory?._id === subCategory._id
                     ? 'bg-blue-50 text-blue-600'
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
@@ -102,18 +94,32 @@ export function UnifiedMegaMenu({ activeCategory, isVisible, onClose }: UnifiedM
           <div className='grid grid-cols-2 gap-6 h-full'>
             {/* Subcategories Level 2 */}
             <div>
-              <h4 className='font-medium text-gray-900 mb-4'>{activeSubCategory?.name || 'Danh mục'}</h4>
+              <h4 className='font-medium text-gray-900 mb-4'>{activeCategory.name}</h4>
               <div className='space-y-2'>
-                {mockSubCategories.map((item, index) => (
-                  <Link
-                    key={index}
-                    to='#'
-                    className='flex items-center justify-between text-sm text-gray-600 hover:text-blue-600 transition-colors'
-                  >
-                    <span>{item.name}</span>
-                    <span className='text-xs text-gray-400'>({item.count})</span>
-                  </Link>
-                ))}
+                {activeSubCategory?.subcategories && activeSubCategory.subcategories.length > 0 ? (
+                  activeSubCategory.subcategories.slice(0, 6).map((subSubCategory) => (
+                    <Link
+                      key={subSubCategory._id}
+                      to={`/categories/${subSubCategory.slug}`}
+                      className='flex items-center justify-between text-sm text-gray-600 hover:text-blue-600 transition-colors'
+                    >
+                      <span>{subSubCategory.name}</span>
+                      <span className='text-xs text-gray-400'>({subSubCategory.productCount || 0})</span>
+                    </Link>
+                  ))
+                ) : (
+                  // Show category information when no sub-subcategories
+                  <div className='text-sm text-gray-600 space-y-2'>
+                    <p className='font-medium'>Khám phá {activeSubCategory?.name || activeCategory.name}</p>
+                    <p className='text-xs'>Sản phẩm chất lượng từ các thương hiệu uy tín</p>
+                    <Link
+                      to={`/categories/${activeSubCategory?.slug || activeCategory.slug}`}
+                      className='inline-block text-blue-600 hover:text-blue-800 text-sm font-medium'
+                    >
+                      Xem tất cả →
+                    </Link>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -121,30 +127,38 @@ export function UnifiedMegaMenu({ activeCategory, isVisible, onClose }: UnifiedM
             <div>
               <h4 className='font-medium text-gray-900 mb-4'>Sản phẩm nổi bật</h4>
               <div className='space-y-3'>
-                {mockProducts.map((product) => (
-                  <Link
-                    key={product.id}
-                    to='#'
-                    className='flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors'
-                  >
-                    <ImageWithFallback
-                      src={product.image}
-                      alt={product.name}
-                      className='w-12 h-12 object-cover rounded-lg'
-                    />
-                    <div className='flex-1'>
-                      <div className='flex items-center space-x-2'>
-                        <h5 className='text-sm font-medium text-gray-900'>{product.name}</h5>
-                        {product.badge && (
-                          <Badge variant='secondary' className='text-xs'>
-                            {product.badge}
-                          </Badge>
-                        )}
+                {productsLoading ? (
+                  <div className='text-sm text-gray-500'>Đang tải sản phẩm...</div>
+                ) : featuredProducts && featuredProducts.length > 0 ? (
+                  featuredProducts.map((product) => (
+                    <Link
+                      key={product._id}
+                      to={`/products/${product.slug}`}
+                      className='flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors'
+                    >
+                      <ImageWithFallback
+                        src={product.featuredImage || '/images/product-placeholder.jpg'}
+                        alt={product.name}
+                        className='w-12 h-12 object-cover rounded-lg'
+                      />
+                      <div className='flex-1'>
+                        <div className='flex items-center space-x-2'>
+                          <h5 className='text-sm font-medium text-gray-900 line-clamp-2'>{product.name}</h5>
+                          {product.requiresPrescription && (
+                            <Badge variant='destructive' className='text-xs'>
+                              Kê đơn
+                            </Badge>
+                          )}
+                        </div>
+                        <p className='text-sm text-blue-600 font-medium'>
+                          {product.price ? product.price.toLocaleString('vi-VN') : 'Liên hệ'}đ
+                        </p>
                       </div>
-                      <p className='text-sm text-blue-600 font-medium'>{product.price.toLocaleString('vi-VN')}đ</p>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  ))
+                ) : (
+                  <div className='text-sm text-gray-500'>Không có sản phẩm nổi bật</div>
+                )}
               </div>
             </div>
           </div>

@@ -1,11 +1,17 @@
 import { toast } from 'sonner'
 import { ShoppingCart, Heart, Package, AlertCircle, CheckCircle } from 'lucide-react'
 
+// Re-export from CartContext for backward compatibility
+// These functions will be replaced by CartContext hooks
+export { useCart } from '../contexts/CartContext'
+
+// Legacy functions - these will be deprecated
 let cart: Array<{ id: string; quantity: number }> = []
 const wishlist: Set<string> = new Set()
 
 /**
- * Add product to cart
+ * LEGACY: Add product to cart (will be removed)
+ * Use useCart().addToCart() instead
  */
 export function addToCart(productId: string, productName: string, quantity: number = 1) {
   const existingItem = cart.find((item) => item.id === productId)
@@ -34,7 +40,8 @@ export function addToCart(productId: string, productName: string, quantity: numb
 }
 
 /**
- * Toggle wishlist
+ * LEGACY: Toggle wishlist (will be removed)
+ * Use useCart().toggleWishlist() instead
  */
 export function toggleWishlist(productId: string, productName: string): boolean {
   const isInWishlist = wishlist.has(productId)
@@ -63,7 +70,8 @@ export function toggleWishlist(productId: string, productName: string): boolean 
 }
 
 /**
- * Buy now - quick checkout
+ * LEGACY: Buy now - quick checkout (will be removed)
+ * Use useCart().buyNow() instead
  */
 export function buyNow(productId: string, productName: string, quantity: number = 1) {
   // Add to cart first
@@ -76,21 +84,24 @@ export function buyNow(productId: string, productName: string, quantity: number 
 }
 
 /**
- * Check if product is in wishlist
+ * LEGACY: Check if product is in wishlist (will be removed)
+ * Use useCart().isInWishlist() instead
  */
 export function isInWishlist(productId: string): boolean {
   return wishlist.has(productId)
 }
 
 /**
- * Get cart items count
+ * LEGACY: Get cart items count (will be removed)
+ * Use useCart().getCartItemsCount() instead
  */
 export function getCartItemsCount(): number {
   return cart.reduce((total, item) => total + item.quantity, 0)
 }
 
 /**
- * Move item from cart to wishlist
+ * LEGACY: Move item from cart to wishlist (will be removed)
+ * Use useCart().moveToWishlist() instead
  */
 export function moveToWishlist(productId: string, productName: string) {
   // Remove from cart

@@ -118,7 +118,6 @@ export function HealthCornerPage() {
     e.preventDefault()
     if (searchQuery.trim()) {
       // Handle search logic here
-      console.log('Searching for:', searchQuery)
     }
   }
 

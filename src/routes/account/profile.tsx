@@ -1,3 +1,5 @@
+import { ProfileForm } from '~/components/account'
+
 export function meta() {
   return [{ title: 'Hồ sơ cá nhân | MEDISPACE' }, { name: 'description', content: 'Quản lý thông tin cá nhân' }]
 }
@@ -10,33 +12,7 @@ export default function AccountProfile() {
         <p className='text-gray-600'>Quản lý thông tin và cài đặt tài khoản</p>
       </div>
 
-      <div className='grid gap-6'>
-        <div className='bg-white p-6 rounded-lg border'>
-          <h2 className='text-lg font-semibold mb-4'>Thông tin cá nhân</h2>
-          <div className='grid md:grid-cols-2 gap-4'>
-            <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>Họ</label>
-              <div className='text-gray-900'>Chưa cập nhật</div>
-            </div>
-            <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>Tên</label>
-              <div className='text-gray-900'>Chưa cập nhật</div>
-            </div>
-            <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>Email</label>
-              <div className='text-gray-900'>Chưa cập nhật</div>
-            </div>
-            <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>Số điện thoại</label>
-              <div className='text-gray-900'>Chưa cập nhật</div>
-            </div>
-          </div>
-        </div>
-
-        <div className='bg-yellow-50 border border-yellow-200 rounded-lg p-4'>
-          <p className='text-yellow-800'>Tính năng chỉnh sửa hồ sơ đang được phát triển...</p>
-        </div>
-      </div>
+      <ProfileForm />
     </div>
   )
 }

@@ -73,7 +73,6 @@ export function UploadPrescriptionPage() {
         toast.success('Đơn thuốc đã được gửi thành công!')
       }, 500)
     } catch (error) {
-      console.error('Upload failed:', error)
       toast.error('Có lỗi xảy ra')
     }
   }

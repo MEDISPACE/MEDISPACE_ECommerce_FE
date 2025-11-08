@@ -20,7 +20,6 @@ export function useSearchHistory() {
         setRecentSearches(history.slice(0, 5).map(item => item.query));
       }
     } catch (error) {
-      console.warn('Failed to load search history:', error);
     }
   }, []);
 
@@ -43,7 +42,6 @@ export function useSearchHistory() {
       try {
         localStorage.setItem('medispace-search-history', JSON.stringify(updated));
       } catch (error) {
-        console.warn('Failed to save search history:', error);
       }
       
       return updated;
@@ -61,7 +59,6 @@ export function useSearchHistory() {
     try {
       localStorage.removeItem('medispace-search-history');
     } catch (error) {
-      console.warn('Failed to clear search history:', error);
     }
   };
 
@@ -71,7 +68,6 @@ export function useSearchHistory() {
       try {
         localStorage.setItem('medispace-search-history', JSON.stringify(updated));
       } catch (error) {
-        console.warn('Failed to update search history:', error);
       }
       return updated;
     });

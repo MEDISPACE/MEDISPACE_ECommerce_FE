@@ -27,12 +27,10 @@ class AuthService {
 
   async logout(): Promise<void> {
     try {
-      const refreshToken = localStorage.getItem('medispace_refresh_token')
-      if (refreshToken) {
-        await apiClient.post(API_ENDPOINTS.AUTH.LOGOUT, { refreshToken })
-      }
-    } catch (error) {
-      console.error('Logout API call failed:', error)
+      // No need to send refresh token in body since it's in cookie
+      await apiClient.post(API_ENDPOINTS.AUTH.LOGOUT)
+    } catch {
+      // Ignore logout errors
     } finally {
       // Always clear local storage
       this.clearTokens()
@@ -41,14 +39,8 @@ class AuthService {
 
   async refreshToken(): Promise<AuthResponse> {
     try {
-      const refreshToken = localStorage.getItem('medispace_refresh_token')
-      if (!refreshToken) {
-        throw new Error('No refresh token available')
-      }
-
-      const response = await apiClient.post<AuthResponse>(API_ENDPOINTS.AUTH.REFRESH_TOKEN, {
-        refreshToken,
-      })
+      // No need to send refresh token in body since it's in cookie
+      const response = await apiClient.post<AuthResponse>(API_ENDPOINTS.AUTH.REFRESH_TOKEN)
       return response.data
     } catch (error) {
       const axiosError = error as AxiosError<AuthResponse>
@@ -99,9 +91,32 @@ class AuthService {
     }
   }
 
+  async changePassword(currentPassword: string, newPassword: string, confirmPassword: string): Promise<void> {
+    try {
+      await apiClient.put(API_ENDPOINTS.USERS.CHANGE_PASSWORD, {
+        currentPassword,
+        password: newPassword,
+        confirmPassword,
+      })
+    } catch (error) {
+      const axiosError = error as AxiosError<AuthResponse>
+      throw axiosError.response?.data || { message: 'Password change failed' }
+    }
+  }
+
+  async updateProfile(profileData: Partial<User>): Promise<User> {
+    try {
+      const response = await apiClient.patch<{ message: string; user: User }>(API_ENDPOINTS.USERS.UPDATE_ME, profileData)
+      return response.data.user
+    } catch (error) {
+      const axiosError = error as AxiosError<AuthResponse>
+      throw axiosError.response?.data || { message: 'Profile update failed' }
+    }
+  }
+
   async getMe(): Promise<User> {
     try {
-      const response = await apiClient.get<{ user: User }>(API_ENDPOINTS.USERS.ME)
+      const response = await apiClient.get<{ message: string; user: User }>(API_ENDPOINTS.USERS.ME)
       return response.data.user
     } catch (error) {
       const axiosError = error as AxiosError<{ message: string }>
@@ -109,14 +124,13 @@ class AuthService {
     }
   }
 
-  saveTokens(accessToken: string, refreshToken: string): void {
+  saveTokens(accessToken: string): void {
     localStorage.setItem('medispace_access_token', accessToken)
-    localStorage.setItem('medispace_refresh_token', refreshToken)
+    // Refresh token is now stored in httpOnly cookie by the server
   }
 
   clearTokens(): void {
     localStorage.removeItem('medispace_access_token')
-    localStorage.removeItem('medispace_refresh_token')
     localStorage.removeItem('medispace_user_data')
   }
 
@@ -125,7 +139,8 @@ class AuthService {
   }
 
   getRefreshToken(): string | null {
-    return localStorage.getItem('medispace_refresh_token')
+    // Refresh token is now in httpOnly cookie, not accessible from JavaScript
+    return null
   }
 
   isAuthenticated(): boolean {
