@@ -9,6 +9,7 @@ import { PasswordInput } from '../forms/PasswordInput'
 import { Shield, Lock, CheckCircle, AlertTriangle, Info, Key } from 'lucide-react'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
+import { authService } from '../../services/authService'
 
 interface PasswordStrength {
   score: number
@@ -32,11 +33,11 @@ export function ChangePasswordPage() {
   // Password strength checker
   const checkPasswordStrength = (password: string): PasswordStrength => {
     const requirements = {
-      minLength: password.length >= 8,
+      minLength: password.length >= 6, // Match backend: min 6 chars
       hasUpperCase: /[A-Z]/.test(password),
       hasLowerCase: /[a-z]/.test(password),
       hasNumber: /[0-9]/.test(password),
-      hasSpecial: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+      hasSpecial: /[!@#$%^&*(),.?":{}|<>]/.test(password), // Match backend: requires symbols
     }
 
     const score = Object.values(requirements).filter(Boolean).length
@@ -75,8 +76,8 @@ export function ChangePasswordPage() {
       return false
     }
 
-    if (newPassword.length < 8) {
-      toast.error('Mật khẩu mới phải có ít nhất 8 ký tự')
+    if (newPassword.length < 6) {
+      toast.error('Mật khẩu mới phải có ít nhất 6 ký tự')
       return false
     }
 
@@ -95,8 +96,9 @@ export function ChangePasswordPage() {
       return false
     }
 
-    if (passwordStrength.score < 3) {
-      toast.warning('Mật khẩu quá yếu. Vui lòng chọn mật khẩu mạnh hơn')
+    // Backend requires ALL criteria to be met, not just score >= 3
+    if (passwordStrength.score < 5) {
+      toast.error('Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt')
       return false
     }
 
@@ -113,8 +115,7 @@ export function ChangePasswordPage() {
     setIsSubmitting(true)
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      await authService.changePassword(currentPassword, newPassword, confirmPassword)
 
       // Success
       toast.success('Đổi mật khẩu thành công', {
@@ -131,9 +132,10 @@ export function ChangePasswordPage() {
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
-    } catch (err) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Mật khẩu hiện tại không đúng. Vui lòng thử lại.'
       toast.error('Đổi mật khẩu thất bại', {
-        description: 'Mật khẩu hiện tại không đúng. Vui lòng thử lại.',
+        description: errorMessage,
         duration: 4000,
         icon: <AlertTriangle className='w-5 h-5 text-red-600' />,
       })
@@ -143,7 +145,7 @@ export function ChangePasswordPage() {
   }
 
   const securityTips = [
-    'Sử dụng ít nhất 8 ký tự',
+    'Sử dụng ít nhất 6 ký tự',
     'Kết hợp chữ hoa, chữ thường',
     'Có ít nhất 1 chữ số',
     'Có ít nhất 1 ký tự đặc biệt (!@#$%)',
@@ -258,7 +260,7 @@ export function ChangePasswordPage() {
                               ) : (
                                 <div className='w-3 h-3 border border-current rounded-full' />
                               )}
-                              <span>Tối thiểu 8 ký tự</span>
+                              <span>Tối thiểu 6 ký tự</span>
                             </div>
                             <div
                               className={`flex items-center gap-1 ${

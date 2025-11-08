@@ -47,7 +47,7 @@ export interface ShippingAddress {
   address: string
   ward: string
   district: string
-  city: string
+  province: string
   postalCode?: string
   phone: string
   email?: string

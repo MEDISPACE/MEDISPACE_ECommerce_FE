@@ -16,9 +16,14 @@ export enum UserGender {
 }
 
 export interface Address {
-  address: string
+  id?: string
+  name: string
+  phone: string
+  province: string
+  district: string
   ward: string
-  city: string
+  address: string
+  type: 'home' | 'office' | 'other'
   isDefault: boolean
 }
 
@@ -41,7 +46,7 @@ export interface User {
   dateOfBirth?: string
   gender?: UserGender
   avatar?: string
-  address?: Address
+  addresses?: Address[]
   medicalProfile?: MedicalProfile
   lisenseNumber?: string
   isOnline?: boolean
