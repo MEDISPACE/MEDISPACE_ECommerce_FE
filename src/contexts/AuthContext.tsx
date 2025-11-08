@@ -74,7 +74,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string, rememberMe: boolean = false): Promise<User | null> => {
     try {
       setLoading(true)
-      logger.info('User attempting login', { email })
 
       const response = await authService.login({ email, password, rememberMe })
 
@@ -88,7 +87,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setUser(userProfile)
           setIsAuthenticated(true)
           localStorage.setItem('medispace_user_data', JSON.stringify(userProfile))
-          logger.info('User login successful', { email, userId: userProfile._id })
+          // Dispatch custom event for cart reload
+          window.dispatchEvent(new CustomEvent('auth-changed'))
           return userProfile
         } catch (profileError) {
           logger.error('Failed to fetch user profile after login', profileError)
@@ -141,6 +141,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsAuthenticated(false)
       // Navigate to home page after logout
       window.location.href = '/'
+      // Dispatch custom event for cart reload
+      window.dispatchEvent(new CustomEvent('auth-changed'))
     }
   }
 

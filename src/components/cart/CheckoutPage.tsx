@@ -3,10 +3,8 @@ import { Link } from 'react-router'
 import { Shield, ChevronRight, MapPin, CreditCard, Truck, Clock, Smartphone, Plus, RotateCcw } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
-import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { Checkbox } from '../ui/checkbox'
 import { Textarea } from '../ui/textarea'
 import { Separator } from '../ui/separator'
@@ -14,11 +12,12 @@ import { Badge } from '../ui/badge'
 import { ImageWithFallback } from '../shared/ImageWithFallback'
 import { useCart } from '../../contexts/CartContext'
 import type { ShippingMethod, PaymentMethod } from '../../types/product'
-import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
+import { AddressFormDialog } from '../shared/AddressFormDialog'
+import { addressService } from '../../services/addressService'
+import { logger } from '../../utils/logger'
 import { orderService } from '../../services/orderService'
 import { authService } from '../../services/authService'
-import { logger } from '../../utils/logger'
-import type { User } from '../../types/user'
+import type { User, Address } from '../../types/user'
 
 const shippingMethods: ShippingMethod[] = [
   {
@@ -79,8 +78,9 @@ export function CheckoutPage() {
   const { state, getSelectedItemsTotal, getSelectedItemsCount } = useCart()
 
   const [user, setUser] = useState<User | null>(null)
+  const [addresses, setAddresses] = useState<Address[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedAddress, setSelectedAddress] = useState('user-address')
+  const [selectedAddress, setSelectedAddress] = useState<string>('')
   const [useNewAddress, setUseNewAddress] = useState(false)
   const [shippingMethod, setShippingMethod] = useState('standard')
   const [paymentMethod, setPaymentMethod] = useState('cod')
@@ -88,37 +88,32 @@ export function CheckoutPage() {
   const [orderNotes, setOrderNotes] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
 
-  const [newAddress, setNewAddress] = useState({
-    fullName: '',
-    phone: '',
-    email: '',
-    address: '',
-    province: '',
-    district: '',
-    ward: '',
-    saveAsDefault: false,
-  })
-
   useEffect(() => {
-    const fetchUserData = async () => {
+    const fetchData = async () => {
       try {
-        const userData = await authService.getMe()
+        const [userData, userAddresses] = await Promise.all([
+          authService.getMe(),
+          addressService.getAddresses()
+        ])
         setUser(userData)
-        logger.info('Checkout: User data loaded successfully', { userId: userData._id })
+        setAddresses(userAddresses)
+        // Set default address selection
+        if (userAddresses && userAddresses.length > 0) {
+          const defaultAddr = userAddresses.find(addr => addr.isDefault) || userAddresses[0]
+          setSelectedAddress(defaultAddr.id || '')
+        }
+        logger.info('Checkout: User data and addresses loaded successfully', { userId: userData._id, addressCount: userAddresses.length })
       } catch (error) {
-        logger.warn('Checkout: Failed to fetch user data', error)
+        logger.warn('Checkout: Failed to fetch user data or addresses', error)
         // Failed to fetch user data, continue with null user
       } finally {
         setLoading(false)
       }
     }
 
-    fetchUserData()
+    fetchData()
   }, [])
 
-  const breadcrumbItems = [{ label: 'Giỏ hàng', href: '/cart' }, { label: 'Thanh toán' }]
-
-  // Get selected cart items
   const cartItems = state.cart?.items.filter(item => state.selectedItems.has(item.productId)) || []
 
   // Calculate totals
@@ -129,14 +124,23 @@ export function CheckoutPage() {
   const total = subtotal - discount + shippingFee
 
   const handlePlaceOrder = async () => {
-    if (!agreeToTerms) {
-      alert('Vui lòng đồng ý với điều khoản sử dụng')
-      return
-    }
 
     if (!user) {
       alert('Không thể lấy thông tin người dùng. Vui lòng đăng nhập lại.')
       return
+    }
+
+    // Validate that we have addresses and a valid selected address
+    if (!addresses || addresses.length === 0) {
+      alert('Vui lòng thêm địa chỉ giao hàng trước khi thanh toán')
+      return
+    }
+
+    // Ensure selectedAddress is valid, fallback to first address if not
+    let validSelectedAddress = selectedAddress
+    if (!selectedAddress || !addresses.find(addr => addr.id === selectedAddress)) {
+      validSelectedAddress = addresses[0].id || ''
+      setSelectedAddress(validSelectedAddress)
     }
 
     setIsProcessing(true)
@@ -154,47 +158,26 @@ export function CheckoutPage() {
         address: string
         ward: string
         district: string
-        city: string
+        province: string
         phone: string
         email: string
       }
 
-      if (selectedAddress === 'user-address' && user.address) {
-        // Use user's saved address
+      const selectedAddr = addresses.find(addr => addr.id === validSelectedAddress)
+      if (selectedAddr) {
         addressObj = {
           firstName: user.firstName,
           lastName: user.lastName,
-          address: user.address.address,
-          ward: user.address.ward,
-          district: '', // User address doesn't have district
-          city: user.address.city,
+          address: selectedAddr.address,
+          ward: selectedAddr.ward,
+          district: selectedAddr.district || '',
+          province: selectedAddr.province,
           phone: user.phoneNumber || '',
           email: user.email,
         }
-      } else if (useNewAddress) {
-        // Use new address form data
-        addressObj = {
-          firstName: newAddress.fullName.split(' ')[0] || '',
-          lastName: newAddress.fullName.split(' ').slice(1).join(' ') || '',
-          address: newAddress.address,
-          ward: newAddress.ward,
-          district: newAddress.district,
-          city: newAddress.province,
-          phone: newAddress.phone,
-          email: newAddress.email,
-        }
       } else {
-        // Fallback to mock address if needed
-        addressObj = {
-          firstName: 'Nguyễn',
-          lastName: 'Văn A',
-          address: '123 Nguyễn Văn Cừ',
-          ward: 'Phường 4',
-          district: 'Quận 5',
-          city: 'TP.HCM',
-          phone: '0123456789',
-          email: user.email,
-        }
+        // This should not happen after validation above
+        throw new Error('Không tìm thấy địa chỉ giao hàng đã chọn')
       }
 
       // Map frontend payment method to backend format
@@ -233,7 +216,16 @@ export function CheckoutPage() {
 
   return (
     <div className='bg-blue-50 min-h-screen'>
-        <UniversalBreadcrumb items={breadcrumbItems} />
+        {/* Breadcrumb */}
+        <div className='bg-white border-b border-blue-200'>
+          <div className='max-w-7xl mx-auto px-4 py-4'>
+            <nav className='flex items-center space-x-2 text-sm text-gray-600'>
+              <Link to='/cart' className='hover:text-blue-600'>Giỏ hàng</Link>
+              <ChevronRight className='w-4 h-4' />
+              <span className='text-blue-600 font-medium'>Thanh toán</span>
+            </nav>
+          </div>
+        </div>
         {/* Security Header */}
         <div className='bg-white border-b border-blue-200'>
           <div className='max-w-7xl mx-auto px-4 py-3'>
@@ -290,27 +282,31 @@ export function CheckoutPage() {
                       <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto'></div>
                       <p className='mt-2 text-sm text-gray-600'>Đang tải thông tin...</p>
                     </div>
-                  ) : user?.address && !useNewAddress ? (
+                  ) : addresses && addresses.length > 0 ? (
                     <div className='space-y-3'>
                       <RadioGroup value={selectedAddress} onValueChange={setSelectedAddress}>
-                        <div className='flex items-start space-x-2'>
-                          <RadioGroupItem value='user-address' id='user-address' />
-                          <Label htmlFor='user-address' className='flex-1 cursor-pointer'>
-                            <div className='p-3 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors'>
-                              <div className='flex items-center gap-2 mb-1'>
-                                <span className='font-medium'>{user.firstName} {user.lastName}</span>
-                                <span className='text-gray-400'>|</span>
-                                <span className='text-gray-600'>{user.phoneNumber}</span>
-                                <Badge variant='secondary' className='bg-blue-100 text-blue-700'>
-                                  Địa chỉ mặc định
-                                </Badge>
+                        {addresses.map((address, index) => (
+                          <div key={address.id || index} className='flex items-start space-x-2'>
+                            <RadioGroupItem value={address.id || `address-${index}`} id={address.id || `address-${index}`} />
+                            <Label htmlFor={address.id || `address-${index}`} className='flex-1 cursor-pointer'>
+                              <div className='p-3 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors'>
+                                <div className='flex items-center gap-2 mb-1'>
+                                  <span className='font-medium'>{address.name}</span>
+                                  <span className='text-gray-400'>|</span>
+                                  <span className='text-gray-600'>{address.phone}</span>
+                                  {address.isDefault && (
+                                    <Badge variant='secondary' className='bg-blue-100 text-blue-700'>
+                                      Địa chỉ mặc định
+                                    </Badge>
+                                  )}
+                                </div>
+                                <div className='text-sm text-gray-600'>
+                                  {address.address}, {address.ward}, {address.district}, {address.province}
+                                </div>
                               </div>
-                              <div className='text-sm text-gray-600'>
-                                {user.address.address}, {user.address.ward}, {user.address.city}
-                              </div>
-                            </div>
-                          </Label>
-                        </div>
+                            </Label>
+                          </div>
+                        ))}
                       </RadioGroup>
 
                       <Button
@@ -323,131 +319,43 @@ export function CheckoutPage() {
                       </Button>
                     </div>
                   ) : (
-                    <div className='space-y-4'>
-                      {/* New Address Form */}
-                      <div className='grid grid-cols-2 gap-4'>
-                        <div>
-                          <Label htmlFor='fullName'>Họ tên *</Label>
-                          <Input
-                            id='fullName'
-                            value={newAddress.fullName}
-                            onChange={(e) => setNewAddress({ ...newAddress, fullName: e.target.value })}
-                            placeholder='Nhập họ tên'
-                            className='border-blue-200 focus:border-blue-500'
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor='phone'>Số điện thoại *</Label>
-                          <Input
-                            id='phone'
-                            value={newAddress.phone}
-                            onChange={(e) => setNewAddress({ ...newAddress, phone: e.target.value })}
-                            placeholder='Nhập số điện thoại'
-                            className='border-blue-200 focus:border-blue-500'
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label htmlFor='email'>Email</Label>
-                        <Input
-                          id='email'
-                          type='email'
-                          value={newAddress.email}
-                          onChange={(e) => setNewAddress({ ...newAddress, email: e.target.value })}
-                          placeholder='Nhập email'
-                          className='border-blue-200 focus:border-blue-500'
-                        />
-                      </div>
-
-                      <div>
-                        <Label htmlFor='address'>Địa chỉ cụ thể *</Label>
-                        <Input
-                          id='address'
-                          value={newAddress.address}
-                          onChange={(e) => setNewAddress({ ...newAddress, address: e.target.value })}
-                          placeholder='Số nhà, tên đường'
-                          className='border-blue-200 focus:border-blue-500'
-                        />
-                      </div>
-
-                      <div className='grid grid-cols-3 gap-4'>
-                        <div>
-                          <Label>Tỉnh/Thành phố *</Label>
-                          <Select
-                            value={newAddress.province}
-                            onValueChange={(value) => setNewAddress({ ...newAddress, province: value })}
-                          >
-                            <SelectTrigger className='border-blue-200'>
-                              <SelectValue placeholder='Chọn tỉnh/thành' />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value='hcm'>TP.HCM</SelectItem>
-                              <SelectItem value='hanoi'>Hà Nội</SelectItem>
-                              <SelectItem value='danang'>Đà Nẵng</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label>Quận/Huyện *</Label>
-                          <Select
-                            value={newAddress.district}
-                            onValueChange={(value) => setNewAddress({ ...newAddress, district: value })}
-                          >
-                            <SelectTrigger className='border-blue-200'>
-                              <SelectValue placeholder='Chọn quận/huyện' />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value='q1'>Quận 1</SelectItem>
-                              <SelectItem value='q3'>Quận 3</SelectItem>
-                              <SelectItem value='q5'>Quận 5</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label>Phường/Xã *</Label>
-                          <Select
-                            value={newAddress.ward}
-                            onValueChange={(value) => setNewAddress({ ...newAddress, ward: value })}
-                          >
-                            <SelectTrigger className='border-blue-200'>
-                              <SelectValue placeholder='Chọn phường/xã' />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value='p1'>Phường 1</SelectItem>
-                              <SelectItem value='p2'>Phường 2</SelectItem>
-                              <SelectItem value='p3'>Phường 3</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-
-                      <div className='flex items-center space-x-2'>
-                        <Checkbox
-                          id='saveAsDefault'
-                          checked={newAddress.saveAsDefault}
-                          onCheckedChange={(checked) =>
-                            setNewAddress({ ...newAddress, saveAsDefault: checked as boolean })
-                          }
-                        />
-                        <Label htmlFor='saveAsDefault' className='text-sm'>
-                          Lưu làm địa chỉ mặc định
-                        </Label>
-                      </div>
-
-                      {user?.address && (
-                        <Button
-                          variant='outline'
-                          onClick={() => setUseNewAddress(false)}
-                          className='w-full border-blue-200 text-blue-600'
-                        >
-                          Quay lại địa chỉ đã lưu
-                        </Button>
-                      )}
+                    <div className='text-center py-8'>
+                      <h3 className='text-lg font-medium text-gray-900 mb-2'>Chưa có địa chỉ giao hàng</h3>
+                      <p className='text-gray-500 mb-4'>Thêm địa chỉ để tiếp tục thanh toán</p>
+                      <Button
+                        onClick={() => setUseNewAddress(true)}
+                        className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'
+                      >
+                        <Plus className='w-4 h-4 mr-2' />
+                        Thêm địa chỉ
+                      </Button>
                     </div>
                   )}
                 </CardContent>
               </Card>
+
+              {/* Address Form Dialog */}
+              <AddressFormDialog
+                open={useNewAddress}
+                onOpenChange={setUseNewAddress}
+                onSuccess={async () => {
+                  // Reload addresses
+                  const updatedAddresses = await addressService.getAddresses()
+                  setAddresses(updatedAddresses)
+
+                  // Set the new address as selected
+                  if (updatedAddresses.length > 0) {
+                    const newAddress = updatedAddresses[updatedAddresses.length - 1]
+                    setSelectedAddress(newAddress.id || '')
+                  }
+                }}
+                title="Thêm địa chỉ giao hàng"
+                description="Thêm địa chỉ mới để giao hàng thuận tiện hơn"
+                showEmail={false}
+                showType={true}
+                showNameFields={true}
+                submitButtonText="Lưu địa chỉ"
+              />
 
               {/* Shipping Method */}
               <Card className='border-blue-100'>

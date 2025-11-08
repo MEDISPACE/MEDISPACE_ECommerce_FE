@@ -134,7 +134,7 @@ class OrderService {
         address: backendOrder.shippingAddress.address,
         ward: backendOrder.shippingAddress.ward,
         district: backendOrder.shippingAddress.district,
-        city: backendOrder.shippingAddress.province, // Map province to city
+        province: backendOrder.shippingAddress.province,
         postalCode: backendOrder.shippingAddress.postalCode,
         phone: backendOrder.shippingAddress.phone,
         email: backendOrder.shippingAddress.email

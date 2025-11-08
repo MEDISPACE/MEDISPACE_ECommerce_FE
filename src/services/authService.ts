@@ -29,7 +29,8 @@ class AuthService {
     try {
       // No need to send refresh token in body since it's in cookie
       await apiClient.post(API_ENDPOINTS.AUTH.LOGOUT)
-    } catch (error) {
+    } catch {
+      // Ignore logout errors
     } finally {
       // Always clear local storage
       this.clearTokens()
@@ -87,6 +88,19 @@ class AuthService {
     } catch (error) {
       const axiosError = error as AxiosError<AuthResponse>
       throw axiosError.response?.data || { message: 'Password reset failed' }
+    }
+  }
+
+  async changePassword(currentPassword: string, newPassword: string, confirmPassword: string): Promise<void> {
+    try {
+      await apiClient.put(API_ENDPOINTS.USERS.CHANGE_PASSWORD, {
+        currentPassword,
+        password: newPassword,
+        confirmPassword,
+      })
+    } catch (error) {
+      const axiosError = error as AxiosError<AuthResponse>
+      throw axiosError.response?.data || { message: 'Password change failed' }
     }
   }
 
