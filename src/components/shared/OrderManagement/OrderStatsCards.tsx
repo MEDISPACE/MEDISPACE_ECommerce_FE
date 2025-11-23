@@ -1,0 +1,87 @@
+import { ShoppingCart, Clock, Package, CheckCircle, XCircle, DollarSign } from 'lucide-react'
+import { Card, CardContent } from '../../ui/card'
+import type { OrderStats, RoleConfig } from './types'
+
+interface OrderStatsCardsProps {
+  stats: OrderStats
+  config: RoleConfig
+}
+
+export function OrderStatsCards({ stats, config }: OrderStatsCardsProps) {
+  return (
+    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4'>
+      <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
+        <CardContent className='p-4'>
+          <div className='flex items-center justify-between'>
+            <div>
+              <p className='text-xs text-gray-600'>Tổng đơn</p>
+              <p className={`text-2xl font-semibold text-${config.themeColor}-600`}>{stats.total}</p>
+            </div>
+            <ShoppingCart className={`w-8 h-8 text-${config.themeColor}-400`} />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
+        <CardContent className='p-4'>
+          <div className='flex items-center justify-between'>
+            <div>
+              <p className='text-xs text-gray-600'>Chờ xử lý</p>
+              <p className='text-2xl font-semibold text-yellow-600'>{stats.pending}</p>
+            </div>
+            <Clock className='w-8 h-8 text-yellow-400' />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
+        <CardContent className='p-4'>
+          <div className='flex items-center justify-between'>
+            <div>
+              <p className='text-xs text-gray-600'>Đang xử lý</p>
+              <p className='text-2xl font-semibold text-[#4A90E2]'>{stats.processing}</p>
+            </div>
+            <Package className='w-8 h-8 text-[#4A90E2]' />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
+        <CardContent className='p-4'>
+          <div className='flex items-center justify-between'>
+            <div>
+              <p className='text-xs text-gray-600'>Đã giao</p>
+              <p className='text-2xl font-semibold text-green-600'>{stats.delivered}</p>
+            </div>
+            <CheckCircle className='w-8 h-8 text-green-400' />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
+        <CardContent className='p-4'>
+          <div className='flex items-center justify-between'>
+            <div>
+              <p className='text-xs text-gray-600'>Đã hủy</p>
+              <p className='text-2xl font-semibold text-red-600'>{stats.cancelled}</p>
+            </div>
+            <XCircle className='w-8 h-8 text-red-400' />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className='bg-white/80 backdrop-blur-lg border-blue-100 lg:col-span-2'>
+        <CardContent className='p-4'>
+          <div className='flex items-center justify-between'>
+            <div>
+              <p className='text-xs text-gray-600'>Tổng doanh thu</p>
+              <p className='text-xl font-semibold text-green-600'>₫{(stats.revenue / 1000000).toFixed(1)}M</p>
+              <p className='text-xs text-gray-500 mt-1'>TB: ₫{Math.round(stats.avgOrder / 1000)}K/đơn</p>
+            </div>
+            <DollarSign className='w-8 h-8 text-green-400' />
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}

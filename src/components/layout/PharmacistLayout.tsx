@@ -17,10 +17,10 @@ import {
   LogOut,
   User,
   Activity,
-  Pill,
   Clock,
   CheckCircle,
   Database,
+  ShoppingCart,
 } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
@@ -73,6 +73,11 @@ const navigationItems: NavItem[] = [
     label: 'Tạo đơn hàng',
     href: '/pharmacist/create-order',
     icon: Plus,
+  },
+  {
+    label: 'Quản lý đơn hàng',
+    href: '/pharmacist/orders',
+    icon: ShoppingCart,
   },
   {
     label: 'Tư vấn trực tuyến',
@@ -132,8 +137,8 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
       {/* Logo Section */}
       <div className='p-6 border-b border-blue-100'>
         <Link to='/pharmacist/dashboard' className='flex items-center gap-3'>
-          <div className='w-10 h-10 bg-gradient-to-br from-blue-600 to-cyan-500 rounded-lg flex items-center justify-center shadow-lg'>
-            <Pill className='w-6 h-6 text-white' />
+          <div className='w-10 h-10 rounded-lg flex items-center justify-center shadow-lg'>
+            <img src='/src/assets/MEDISPACE_Logo_favicon.png' alt='MEDISPACE' className='w-8 h-8' />
           </div>
           <div className='flex-1'>
             <h2 className='font-semibold text-blue-900'>MEDISPACE</h2>
@@ -237,7 +242,7 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
                 <ChevronDown className='w-4 h-4' />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align='end' className='w-48'>
+            <DropdownMenuContent align='end' className='w-48 z-50 bg-white shadow-lg border border-blue-100'>
               <DropdownMenuLabel>Tài khoản</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => navigate('/pharmacist/settings')}>
@@ -310,7 +315,7 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
             </Button>
 
             {/* Search Bar */}
-            <div className='hidden md:flex items-center gap-2 bg-blue-50 rounded-lg px-4 py-2 w-80 border border-blue-200'>
+            <div className='hidden md:flex items-center gap-2 bg-blue-50 rounded-lg px-4 py-2 flex-1 max-w-md border border-blue-200'>
               <Search className='w-4 h-4 text-blue-400' />
               <Input
                 type='search'
@@ -355,7 +360,7 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
                   </span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align='end' className='w-80'>
+              <DropdownMenuContent align='end' className='w-80 z-50 bg-white shadow-lg border border-blue-100'>
                 <DropdownMenuLabel>Thông báo</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <div className='max-h-96 overflow-y-auto'>
@@ -377,8 +382,8 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* User Menu (Mobile) */}
-            <div className='lg:hidden'>
+            {/* User Menu - Always visible for quick access to logout */}
+            <div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant='ghost' size='sm'>
@@ -390,7 +395,7 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align='end' className='w-48'>
+                <DropdownMenuContent align='end' className='w-48 z-50 bg-white shadow-lg border border-blue-100'>
                   <DropdownMenuLabel>
                     <div className='flex flex-col'>
                       <span className='text-sm font-medium'>{getFullName(user) || 'Dược sĩ'}</span>
