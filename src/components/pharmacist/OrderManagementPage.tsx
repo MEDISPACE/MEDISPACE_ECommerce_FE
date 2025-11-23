@@ -1,5 +1,5 @@
 import { OrderManagementPage as SharedOrderManagementPage } from '../shared/OrderManagement'
 
 export function OrderManagementPage() {
-  return <SharedOrderManagementPage role='admin' />
+  return <SharedOrderManagementPage role='pharmacist' />
 }
