@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Save, User, Shield, Phone, Mail, Loader2, Lock } from 'lucide-react'
+import { Save, User, Shield, Phone, Mail, Loader2, Lock, KeyIcon, Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Button } from '../ui/button'
@@ -18,6 +18,18 @@ export function PharmacistSettingsPage() {
 
   // Password change state
   const [passwordData, setPasswordData] = useState({
+    oldPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  })
+
+  // Password visibility state
+  const [showOldPassword, setShowOldPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
+  // Password validation errors
+  const [passwordErrors, setPasswordErrors] = useState({
     oldPassword: '',
     newPassword: '',
     confirmPassword: '',
@@ -68,13 +80,48 @@ export function PharmacistSettingsPage() {
   }
 
   const handleChangePassword = async () => {
-    if (!passwordData.oldPassword || !passwordData.newPassword) {
-      toast.error('Vui lòng nhập đầy đủ thông tin')
-      return
+    // Reset errors
+    setPasswordErrors({
+      oldPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    })
+
+    // Validate fields
+    const errors = {
+      oldPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    }
+    let hasError = false
+
+    if (!passwordData.oldPassword) {
+      errors.oldPassword = 'Vui lòng nhập mật khẩu hiện tại'
+      hasError = true
     }
 
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error('Mật khẩu xác nhận không khớp')
+    if (!passwordData.newPassword) {
+      errors.newPassword = 'Vui lòng nhập mật khẩu mới'
+      hasError = true
+    } else if (passwordData.newPassword.length < 6) {
+      errors.newPassword = 'Mật khẩu phải có ít nhất 6 ký tự'
+      hasError = true
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/.test(passwordData.newPassword)) {
+      errors.newPassword = 'Mật khẩu phải có chữ hoa, chữ thường, số và ký tự đặc biệt (@$!%*?&)'
+      hasError = true
+    }
+
+    if (!passwordData.confirmPassword) {
+      errors.confirmPassword = 'Vui lòng xác nhận mật khẩu mới'
+      hasError = true
+    } else if (passwordData.newPassword !== passwordData.confirmPassword) {
+      errors.confirmPassword = 'Mật khẩu xác nhận không khớp'
+      hasError = true
+    }
+
+    if (hasError) {
+      setPasswordErrors(errors)
+      toast.error('Vui lòng kiểm tra lại thông tin')
       return
     }
 
@@ -87,9 +134,24 @@ export function PharmacistSettingsPage() {
 
       toast.success('Đã đổi mật khẩu thành công')
       setPasswordData({ oldPassword: '', newPassword: '', confirmPassword: '' })
-    } catch (error) {
+      setPasswordErrors({ oldPassword: '', newPassword: '', confirmPassword: '' })
+    } catch (error: unknown) {
       console.error('Change password error:', error)
-      toast.error('Lỗi đổi mật khẩu')
+
+      // Handle specific error from API
+      const apiError = error as { response?: { data?: { message?: string } } }
+      if (apiError?.response?.data?.message) {
+        const errorMessage = apiError.response.data.message
+
+        if (errorMessage.includes('Old password') || errorMessage.includes('incorrect')) {
+          setPasswordErrors((prev) => ({ ...prev, oldPassword: 'Mật khẩu hiện tại không đúng' }))
+          toast.error('Mật khẩu hiện tại không đúng')
+        } else {
+          toast.error(errorMessage)
+        }
+      } else {
+        toast.error('Lỗi đổi mật khẩu. Vui lòng thử lại')
+      }
     } finally {
       setSaving(false)
     }
@@ -306,46 +368,115 @@ export function PharmacistSettingsPage() {
               <div className='space-y-2'>
                 <Label htmlFor='oldPassword'>Mật khẩu hiện tại *</Label>
                 <div className='relative'>
-                  <Lock className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400' />
+                  <Lock
+                    className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${
+                      passwordErrors.oldPassword ? 'text-red-400' : 'text-gray-400'
+                    }`}
+                  />
                   <Input
                     id='oldPassword'
-                    type='password'
+                    type={showOldPassword ? 'text' : 'password'}
                     value={passwordData.oldPassword}
-                    onChange={(e) => setPasswordData({ ...passwordData, oldPassword: e.target.value })}
-                    className='pl-10 border-2 border-blue-200 focus:border-blue-500'
+                    onChange={(e) => {
+                      setPasswordData({ ...passwordData, oldPassword: e.target.value })
+                      if (passwordErrors.oldPassword) {
+                        setPasswordErrors({ ...passwordErrors, oldPassword: '' })
+                      }
+                    }}
+                    className={`pl-10 pr-10 border-2 ${
+                      passwordErrors.oldPassword
+                        ? 'border-red-500 focus:border-red-600'
+                        : 'border-blue-200 focus:border-blue-500'
+                    }`}
                     placeholder='Nhập mật khẩu hiện tại'
                   />
+                  <button
+                    type='button'
+                    onClick={() => setShowOldPassword(!showOldPassword)}
+                    className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600'
+                  >
+                    {showOldPassword ? <EyeOff className='w-4 h-4' /> : <Eye className='w-4 h-4' />}
+                  </button>
                 </div>
+                {passwordErrors.oldPassword && (
+                  <p className='text-sm text-red-600 mt-1'>{passwordErrors.oldPassword}</p>
+                )}
               </div>
 
               <div className='space-y-2'>
                 <Label htmlFor='newPassword'>Mật khẩu mới *</Label>
                 <div className='relative'>
-                  <Lock className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400' />
+                  <Lock
+                    className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${
+                      passwordErrors.newPassword ? 'text-red-400' : 'text-gray-400'
+                    }`}
+                  />
                   <Input
                     id='newPassword'
-                    type='password'
+                    type={showNewPassword ? 'text' : 'password'}
                     value={passwordData.newPassword}
-                    onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                    className='pl-10 border-2 border-blue-200 focus:border-blue-500'
+                    onChange={(e) => {
+                      setPasswordData({ ...passwordData, newPassword: e.target.value })
+                      if (passwordErrors.newPassword) {
+                        setPasswordErrors({ ...passwordErrors, newPassword: '' })
+                      }
+                    }}
+                    className={`pl-10 pr-10 border-2 ${
+                      passwordErrors.newPassword
+                        ? 'border-red-500 focus:border-red-600'
+                        : 'border-blue-200 focus:border-blue-500'
+                    }`}
                     placeholder='Nhập mật khẩu mới'
                   />
+                  <button
+                    type='button'
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600'
+                  >
+                    {showNewPassword ? <EyeOff className='w-4 h-4' /> : <Eye className='w-4 h-4' />}
+                  </button>
                 </div>
+                {passwordErrors.newPassword && (
+                  <p className='text-sm text-red-600 mt-1'>{passwordErrors.newPassword}</p>
+                )}
               </div>
 
               <div className='space-y-2'>
                 <Label htmlFor='confirmPassword'>Xác nhận mật khẩu mới *</Label>
                 <div className='relative'>
-                  <Lock className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400' />
+                  <Lock
+                    className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${
+                      passwordErrors.confirmPassword ? 'text-red-400' : 'text-gray-400'
+                    }`}
+                  />
                   <Input
                     id='confirmPassword'
-                    type='password'
+                    type={showConfirmPassword ? 'text' : 'password'}
                     value={passwordData.confirmPassword}
-                    onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                    className='pl-10 border-2 border-blue-200 focus:border-blue-500'
+                    onChange={(e) => {
+                      setPasswordData({ ...passwordData, confirmPassword: e.target.value })
+                      if (passwordErrors.confirmPassword) {
+                        setPasswordErrors({ ...passwordErrors, confirmPassword: '' })
+                      }
+                    }}
+                    className={`pl-10 pr-10 border-2 ${
+                      passwordErrors.confirmPassword
+                        ? 'border-red-500 focus:border-red-600'
+                        : 'border-blue-200 focus:border-blue-500'
+                    }`}
                     placeholder='Nhập lại mật khẩu mới'
                   />
+                  <button
+                    type='button'
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600'
+                  >
+                    {showConfirmPassword ? <EyeOff className='w-4 h-4' /> : <Eye className='w-4 h-4' />}
+                  </button>
                 </div>
+                {passwordErrors.confirmPassword && (
+                  <p className='text-sm text-red-600 mt-1'>{passwordErrors.confirmPassword}</p>
+                )}
               </div>
             </div>
 
@@ -369,7 +500,7 @@ export function PharmacistSettingsPage() {
                   </>
                 ) : (
                   <>
-                    <Shield className='w-4 h-4 mr-2' />
+                    <KeyIcon className='w-4 h-4 mr-2' />
                     Đổi mật khẩu
                   </>
                 )}
