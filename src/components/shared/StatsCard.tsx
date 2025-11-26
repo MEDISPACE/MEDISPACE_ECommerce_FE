@@ -170,7 +170,7 @@ export function StatsCard({ config, onClick }: StatsCardProps) {
           </div>
         )}
 
-        {/* Bottom glow effect */}
+        {/* Bottom colored line */}
         <div
           className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r ${colors.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
         />

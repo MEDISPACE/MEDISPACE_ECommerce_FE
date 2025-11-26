@@ -133,8 +133,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       {/* Logo Section */}
       <div className='p-6 border-b border-blue-100'>
         <Link to='/admin/dashboard' className='flex items-center gap-3'>
-          <div className='w-10 h-10 bg-gradient-to-br from-[#0066CC] to-[#4A90E2] rounded-lg flex items-center justify-center shadow-lg'>
-            <Shield className='w-6 h-6 text-white' />
+          <div className='w-10 h-10 rounded-lg flex items-center justify-center shadow-lg'>
+            <img src='/src/assets/MEDISPACE_Logo_favicon.png' alt='MEDISPACE' className='w-8 h-8' />
           </div>
           <div className='flex-1'>
             <h2 className='font-semibold text-gray-900'>MEDISPACE</h2>
@@ -357,8 +357,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* User Menu (Mobile) */}
-            <div className='lg:hidden'>
+            {/* User Menu - Always visible for quick access to logout */}
+            <div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant='ghost' size='sm'>
