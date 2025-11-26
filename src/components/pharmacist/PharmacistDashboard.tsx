@@ -1,6 +1,17 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router'
-import { Plus, FileText, MessageCircle, BarChart3, CheckCircle, AlertCircle, DollarSign } from 'lucide-react'
+import {
+  Plus,
+  FileText,
+  MessageCircle,
+  BarChart3,
+  CheckCircle,
+  AlertCircle,
+  DollarSign,
+  Package,
+  Pill,
+  Eye,
+} from 'lucide-react'
 
 import { Button } from '../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
@@ -10,6 +21,10 @@ import { Avatar, AvatarFallback } from '../ui/avatar'
 import { useStatsCards } from '~/components/shared/useStatsCards'
 import { StatsCardGrid, type StatCardConfig } from '~/components/shared/StatsCard'
 import { dashboardService, type DashboardStats, type Prescription, type Order } from '~/services/pharmacist'
+import { prescriptionService } from '~/services/pharmacist/prescription.service'
+import { orderService } from '~/services/pharmacist/order.service'
+import { OrderDetailsDrawer } from '~/components/shared/OrderManagement/OrderDetailsDrawer'
+import { PrescriptionDetailsDialog } from './PrescriptionDetailsDialog'
 import { toast } from 'sonner'
 
 export function PharmacistDashboard() {
@@ -22,21 +37,31 @@ export function PharmacistDashboard() {
   const [recentPrescriptions, setRecentPrescriptions] = useState<Prescription[]>([])
   const [recentOrders, setRecentOrders] = useState<Order[]>([])
 
+  // State for order details drawer
+  const [showOrderDetails, setShowOrderDetails] = useState(false)
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+
+  // State for prescription details
+  const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null)
+
   // Load dashboard data from API
   useEffect(() => {
     const loadDashboardData = async () => {
       try {
         setLoading(true)
 
-        // Load stats and recent activities in parallel
-        const [statsData, activities] = await Promise.all([
+        // Load stats and recent data in parallel
+        const [statsData, prescriptions, ordersResponse] = await Promise.all([
           dashboardService.getStats(),
-          dashboardService.getRecentActivities(5),
+          prescriptionService.getAll({ limit: 5 }),
+          orderService.getOrders({ limit: 5 }),
         ])
 
+        const orders = ordersResponse.orders
+
         setStats(statsData)
-        setRecentPrescriptions(activities.prescriptions)
-        setRecentOrders(activities.orders)
+        setRecentPrescriptions(prescriptions)
+        setRecentOrders(orders)
       } catch (error) {
         console.error('Failed to load dashboard data:', error)
         toast.error('Không thể tải dữ liệu dashboard', {
@@ -61,22 +86,43 @@ export function PharmacistDashboard() {
     return new Date(timestamp).toLocaleDateString('vi-VN')
   }
 
+  const handleViewPrescription = (prescription: Prescription) => {
+    setSelectedPrescription(prescription)
+  }
+
+  const handlePrescriptionUpdate = async () => {
+    // Reload dashboard data after prescription update
+    const [prescriptions] = await Promise.all([prescriptionService.getAll({ limit: 5 })])
+    setRecentPrescriptions(prescriptions)
+  }
+
+  const handleCreateOrder = (prescriptionId: string) => {
+    window.location.href = `/pharmacist/create-order?prescriptionId=${prescriptionId}`
+  }
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
         return 'bg-yellow-100 text-yellow-700'
       case 'approved':
+      case 'verified':
         return 'bg-green-100 text-green-700'
       case 'rejected':
+      case 'cancelled':
         return 'bg-red-100 text-red-700'
       case 'active':
         return 'bg-blue-100 text-blue-700'
       case 'completed':
-        return 'bg-gray-100 text-gray-700'
+      case 'delivered':
+        return 'bg-green-100 text-green-700'
       case 'confirmed':
         return 'bg-green-100 text-green-700'
       case 'preparing':
+      case 'processing':
+      case 'shipped':
         return 'bg-orange-100 text-orange-700'
+      case 'expired':
+        return 'bg-gray-100 text-gray-700'
       default:
         return 'bg-gray-100 text-gray-700'
     }
@@ -87,17 +133,28 @@ export function PharmacistDashboard() {
       case 'pending':
         return 'Chờ xử lý'
       case 'approved':
+      case 'verified':
         return 'Đã duyệt'
       case 'rejected':
         return 'Từ chối'
+      case 'cancelled':
+        return 'Đã hủy'
       case 'active':
         return 'Đang chat'
       case 'completed':
         return 'Hoàn thành'
+      case 'delivered':
+        return 'Đã giao'
       case 'confirmed':
         return 'Đã xác nhận'
       case 'preparing':
         return 'Đang chuẩn bị'
+      case 'processing':
+        return 'Đang xử lý'
+      case 'shipped':
+        return 'Đang giao'
+      case 'expired':
+        return 'Hết hạn'
       default:
         return status
     }
@@ -145,7 +202,7 @@ export function PharmacistDashboard() {
     },
     {
       title: 'Doanh thu hôm nay',
-      value: `₫${((stats?.totalRevenue || 0) / 1000).toFixed(0)}K`,
+      value: `${(stats?.totalRevenue || 0).toLocaleString('vi-VN')}₫`,
       icon: DollarSign,
       color: 'emerald',
       trend: stats?.prescriptionsToday
@@ -162,41 +219,46 @@ export function PharmacistDashboard() {
     <div>
       {/* Header */}
       <div className='mb-6'>
-        <h1 className='text-3xl bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent'>
+        <h1
+          className='text-3xl font-bold bg-clip-text text-transparent'
+          style={{
+            backgroundImage: `linear-gradient(to right, #0066CC, #4A90E2)`,
+          }}
+        >
           Dashboard Tổng quan
         </h1>
         <p className='text-gray-600 mt-2'>Quản lý công việc hàng ngày của bạn</p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className='space-y-6'>
-        <TabsList className='grid w-full grid-cols-5 bg-white shadow-lg border border-blue-100 rounded-lg p-1 gap-1'>
+        <TabsList className='grid w-full grid-cols-5 bg-white shadow-lg border-2 border-blue-100 rounded-lg p-1.5 gap-1 h-auto'>
           <TabsTrigger
             value='overview'
-            className='border-0 outline-none focus-visible:ring-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-500 data-[state=active]:text-white data-[state=active]:shadow-md text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all rounded-md font-medium'
+            className='border-0 outline-none focus-visible:ring-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-500 data-[state=active]:!text-white data-[state=active]:shadow-md text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all rounded-md font-medium py-2'
           >
             Tổng quan
           </TabsTrigger>
           <TabsTrigger
             value='prescriptions'
-            className='border-0 outline-none focus-visible:ring-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-500 data-[state=active]:text-white data-[state=active]:shadow-md text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all rounded-md font-medium'
+            className='border-0 outline-none focus-visible:ring-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-500 data-[state=active]:!text-white data-[state=active]:shadow-md text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all rounded-md font-medium py-2'
           >
             Đơn thuốc
           </TabsTrigger>
           <TabsTrigger
             value='create-order'
-            className='border-0 outline-none focus-visible:ring-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-500 data-[state=active]:text-white data-[state=active]:shadow-md text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all rounded-md font-medium'
+            className='border-0 outline-none focus-visible:ring-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-500 data-[state=active]:!text-white data-[state=active]:shadow-md text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all rounded-md font-medium py-2'
           >
             Tạo đơn hàng
           </TabsTrigger>
           <TabsTrigger
             value='chats'
-            className='border-0 outline-none focus-visible:ring-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-500 data-[state=active]:text-white data-[state=active]:shadow-md text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all rounded-md font-medium'
+            className='border-0 outline-none focus-visible:ring-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-500 data-[state=active]:!text-white data-[state=active]:shadow-md text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all rounded-md font-medium py-2'
           >
             Tư vấn
           </TabsTrigger>
           <TabsTrigger
             value='reports'
-            className='border-0 outline-none focus-visible:ring-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-500 data-[state=active]:text-white data-[state=active]:shadow-md text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all rounded-md font-medium'
+            className='border-0 outline-none focus-visible:ring-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-500 data-[state=active]:!text-white data-[state=active]:shadow-md text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all rounded-md font-medium py-2'
           >
             Báo cáo
           </TabsTrigger>
@@ -233,8 +295,10 @@ export function PharmacistDashboard() {
                     <div key={prescription._id} className='border border-gray-200 rounded-lg p-4'>
                       <div className='flex items-center justify-between mb-2'>
                         <div className='flex items-center gap-2'>
-                          <Avatar className='w-8 h-8'>
-                            <AvatarFallback>P</AvatarFallback>
+                          <Avatar className='w-8 h-8 bg-blue-100'>
+                            <AvatarFallback>
+                              <Pill className='w-4 h-4 text-blue-600' />
+                            </AvatarFallback>
                           </Avatar>
                           <div>
                             <p className='font-medium text-sm'>{prescription.prescriptionNumber}</p>
@@ -248,11 +312,10 @@ export function PharmacistDashboard() {
                       <p className='text-sm text-gray-600 mb-2'>{prescription.medications.length} loại thuốc</p>
                       <div className='flex items-center justify-between'>
                         <span className='text-xs text-gray-500'>{formatTime(prescription.createdAt)}</span>
-                        <Link to={`/pharmacist/prescriptions`}>
-                          <Button size='sm' variant='outline'>
-                            Xem chi tiết
-                          </Button>
-                        </Link>
+                        <Button size='sm' variant='outline' onClick={() => handleViewPrescription(prescription)}>
+                          <Eye className='w-4 h-4 mr-1' />
+                          Xem chi tiết
+                        </Button>
                       </div>
                     </div>
                   ))
@@ -265,7 +328,7 @@ export function PharmacistDashboard() {
               <CardHeader>
                 <CardTitle className='text-blue-800 flex items-center justify-between'>
                   Đơn hàng mới nhất
-                  <Link to='/pharmacist/create-order'>
+                  <Link to='/pharmacist/orders'>
                     <Button variant='outline' size='sm'>
                       Xem tất cả
                     </Button>
@@ -280,8 +343,10 @@ export function PharmacistDashboard() {
                     <div key={order._id} className='border border-gray-200 rounded-lg p-4'>
                       <div className='flex items-center justify-between mb-2'>
                         <div className='flex items-center gap-2'>
-                          <Avatar className='w-8 h-8'>
-                            <AvatarFallback>O</AvatarFallback>
+                          <Avatar className='w-8 h-8 bg-green-100'>
+                            <AvatarFallback>
+                              <Package className='w-4 h-4 text-green-600' />
+                            </AvatarFallback>
                           </Avatar>
                           <div>
                             <p className='font-medium text-sm'>{order.orderNumber}</p>
@@ -299,11 +364,22 @@ export function PharmacistDashboard() {
                       </p>
                       <div className='flex items-center justify-between'>
                         <span className='text-xs text-gray-500'>{formatTime(order.createdAt)}</span>
-                        <Link to={`/pharmacist/create-order`}>
-                          <Button size='sm' variant='outline'>
-                            Xem chi tiết
-                          </Button>
-                        </Link>
+                        <Button
+                          size='sm'
+                          variant='outline'
+                          onClick={async () => {
+                            try {
+                              const orderDetails = await orderService.getOrderDetails(order._id)
+                              setSelectedOrder(orderDetails)
+                              setShowOrderDetails(true)
+                            } catch (error) {
+                              console.error('Failed to load order details:', error)
+                              toast.error('Không thể tải chi tiết đơn hàng')
+                            }
+                          }}
+                        >
+                          Xem chi tiết
+                        </Button>
                       </div>
                     </div>
                   ))
@@ -336,8 +412,10 @@ export function PharmacistDashboard() {
                     <div key={prescription._id} className='border border-gray-200 rounded-lg p-6'>
                       <div className='flex items-start justify-between mb-4'>
                         <div className='flex items-center gap-4'>
-                          <Avatar>
-                            <AvatarFallback>P</AvatarFallback>
+                          <Avatar className='bg-blue-100'>
+                            <AvatarFallback>
+                              <Pill className='w-5 h-5 text-blue-600' />
+                            </AvatarFallback>
                           </Avatar>
                           <div>
                             <h3 className='font-medium'>{prescription.prescriptionNumber}</h3>
@@ -364,18 +442,20 @@ export function PharmacistDashboard() {
                       </div>
 
                       <div className='flex items-center gap-3'>
-                        <Link to='/pharmacist/prescriptions'>
-                          <Button variant='outline' size='sm'>
-                            <FileText className='w-4 h-4 mr-1' />
-                            Xem đơn thuốc
-                          </Button>
-                        </Link>
-                        <Link to={`/pharmacist/create-order?prescription=${prescription._id}`}>
-                          <Button size='sm' className='bg-blue-600 hover:bg-blue-700'>
+                        <Button variant='outline' size='sm' onClick={() => handleViewPrescription(prescription)}>
+                          <Eye className='w-4 h-4 mr-1' />
+                          Xem chi tiết
+                        </Button>
+                        {prescription.status === 'verified' && (
+                          <Button
+                            size='sm'
+                            onClick={() => handleCreateOrder(prescription._id)}
+                            className='bg-blue-600 hover:bg-blue-700 text-white'
+                          >
                             <Plus className='w-4 h-4 mr-1' />
                             Tạo đơn hàng
                           </Button>
-                        </Link>
+                        )}
                       </div>
                     </div>
                   ))
@@ -400,7 +480,7 @@ export function PharmacistDashboard() {
                 <h3 className='text-xl font-medium text-gray-900 mb-2'>Module tạo đơn hàng</h3>
                 <p className='text-gray-600 mb-6'>Tính năng này sẽ được triển khai trong phiên bản tiếp theo</p>
                 <Link to='/pharmacist/create-order'>
-                  <Button className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600'>
+                  <Button className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'>
                     Đi đến trang tạo đơn hàng
                   </Button>
                 </Link>
@@ -421,7 +501,7 @@ export function PharmacistDashboard() {
                 <h3 className='text-xl font-medium text-gray-900 mb-2'>Module Chat</h3>
                 <p className='text-gray-600 mb-6'>Tính năng chat tư vấn sẽ được triển khai khi API Chat hoàn thành</p>
                 <Link to='/pharmacist/chat'>
-                  <Button className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600'>
+                  <Button className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'>
                     <MessageCircle className='w-4 h-4 mr-2' />
                     Đi đến trang Chat
                   </Button>
@@ -442,7 +522,7 @@ export function PharmacistDashboard() {
                 <BarChart3 className='w-16 h-16 text-blue-300 mx-auto mb-4' />
                 <h3 className='text-xl font-medium text-gray-900 mb-2'>Báo cáo chi tiết</h3>
                 <p className='text-gray-600 mb-6'>Thống kê doanh thu, đơn hàng và hiệu suất làm việc</p>
-                <Button className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600'>
+                <Button className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'>
                   Xem báo cáo
                 </Button>
               </div>
@@ -450,6 +530,17 @@ export function PharmacistDashboard() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Prescription Details Dialog */}
+      <PrescriptionDetailsDialog
+        isOpen={!!selectedPrescription}
+        onClose={() => setSelectedPrescription(null)}
+        prescription={selectedPrescription}
+        onUpdate={handlePrescriptionUpdate}
+      />
+
+      {/* Order Details Drawer */}
+      <OrderDetailsDrawer isOpen={showOrderDetails} onClose={() => setShowOrderDetails(false)} order={selectedOrder} />
     </div>
   )
 }

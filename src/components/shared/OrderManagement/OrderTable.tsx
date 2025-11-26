@@ -20,6 +20,7 @@ interface OrderTableProps {
   onSelectAll: (checked: boolean) => void
   onSelectOrder: (orderId: string, checked: boolean) => void
   onUpdateStatus: (order: Order) => void
+  onViewDetails: (orderId: string) => void
   config: RoleConfig
 }
 
@@ -29,6 +30,7 @@ export function OrderTable({
   onSelectAll,
   onSelectOrder,
   onUpdateStatus,
+  onViewDetails,
   config,
 }: OrderTableProps) {
   return (
@@ -63,7 +65,12 @@ export function OrderTable({
               </TableCell>
               <TableCell>
                 <div>
-                  <p className={`font-medium text-${config.themeColor}-600`}>{order.id}</p>
+                  <button
+                    onClick={() => onViewDetails(order.id)}
+                    className={`font-medium text-${config.themeColor}-600 hover:text-${config.themeColor}-800 hover:underline cursor-pointer transition-colors`}
+                  >
+                    {order.id}
+                  </button>
                   {order.requiresPrescription && <Badge className='bg-red-100 text-red-700 mt-1 text-xs'>Rx</Badge>}
                 </div>
               </TableCell>
@@ -92,14 +99,8 @@ export function OrderTable({
               <TableCell>
                 <div className='flex items-center gap-2 text-sm text-gray-600'>
                   <Calendar className='w-3 h-3' />
-                  {new Date(order.orderDate).toLocaleDateString('vi-VN')}
+                  {order.date}
                 </div>
-                <p className='text-xs text-gray-500'>
-                  {new Date(order.orderDate).toLocaleTimeString('vi-VN', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </p>
               </TableCell>
               <TableCell className='text-right'>
                 <DropdownMenu>
@@ -108,10 +109,10 @@ export function OrderTable({
                       <MoreVertical className='w-4 h-4' />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align='end'>
+                  <DropdownMenuContent align='end' className='bg-white border border-gray-200 shadow-lg'>
                     <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onViewDetails(order.id)}>
                       <Eye className='w-4 h-4 mr-2' />
                       Xem chi tiết
                     </DropdownMenuItem>

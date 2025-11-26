@@ -11,6 +11,10 @@ export interface Order {
   status: OrderStatus
   paymentStatus: PaymentStatus
   date: string
+  requiresPrescription?: boolean
+  shippingAddress?: string
+  items?: number
+  paymentMethod?: string
 }
 
 export interface OrderStats {

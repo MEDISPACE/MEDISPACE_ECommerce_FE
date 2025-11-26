@@ -34,13 +34,14 @@ export interface Prescription {
     quantity: number
     instructions: string
   }>
-  status: 'Pending' | 'Verified' | 'Rejected' | 'Expired'
+  status: 'pending' | 'verified' | 'rejected' | 'expired' // lowercase for consistency
   verifiedBy?: string
   verifiedAt?: string
   notes?: string
   validUntil?: string
   createdAt: string
   updatedAt: string
+  pharmacistNotes?: string // Notes added by the pharmacist
 }
 
 export interface Order {
@@ -70,8 +71,8 @@ export interface Order {
     postalCode?: string
   }
   paymentMethod: string
-  paymentStatus: string
-  orderStatus: string
+  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded'
+  orderStatus: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
   subtotal: number
   taxAmount: number
   shippingFee: number

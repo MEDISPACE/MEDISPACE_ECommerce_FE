@@ -1,4 +1,4 @@
-import { ShoppingCart, Clock, Package, CheckCircle, XCircle, DollarSign } from 'lucide-react'
+import { ShoppingCart, Clock, Package, CheckCircle, XCircle, Coins, CreditCard } from 'lucide-react'
 import { Card, CardContent } from '../../ui/card'
 import type { OrderStats, RoleConfig } from './types'
 
@@ -75,10 +75,10 @@ export function OrderStatsCards({ stats, config }: OrderStatsCardsProps) {
           <div className='flex items-center justify-between'>
             <div>
               <p className='text-xs text-gray-600'>Tổng doanh thu</p>
-              <p className='text-xl font-semibold text-green-600'>₫{(stats.revenue / 1000000).toFixed(1)}M</p>
-              <p className='text-xs text-gray-500 mt-1'>TB: ₫{Math.round(stats.avgOrder / 1000)}K/đơn</p>
+              <p className='text-xl font-semibold text-green-600'>{stats.revenue.toLocaleString('vi-VN')}đ</p>
+              <p className='text-xs text-gray-500 mt-1'>TB: {stats.avgOrder.toLocaleString('vi-VN')}đ/đơn</p>
             </div>
-            <DollarSign className='w-8 h-8 text-green-400' />
+            <CreditCard className='w-8 h-8 text-green-400' />
           </div>
         </CardContent>
       </Card>
