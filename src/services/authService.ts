@@ -69,6 +69,15 @@ class AuthService {
     }
   }
 
+  async verifyForgotPasswordToken(forgotPasswordToken: string): Promise<void> {
+    try {
+      await apiClient.post(API_ENDPOINTS.AUTH.VERIFY_FORGOT_PASSWORD, { forgotPasswordToken })
+    } catch (error) {
+      const axiosError = error as AxiosError<AuthResponse>
+      throw axiosError.response?.data || { message: 'Invalid token' }
+    }
+  }
+
   async forgotPassword(email: string): Promise<void> {
     try {
       await apiClient.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, { email })
@@ -83,7 +92,7 @@ class AuthService {
       await apiClient.post(API_ENDPOINTS.AUTH.RESET_PASSWORD, {
         forgotPasswordToken,
         password,
-        confirm_password: confirmPassword,
+        confirmPassword: confirmPassword,
       })
     } catch (error) {
       const axiosError = error as AxiosError<AuthResponse>
