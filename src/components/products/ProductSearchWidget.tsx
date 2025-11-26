@@ -8,6 +8,7 @@ import { ScrollArea } from '../ui/scroll-area'
 import { ImageWithFallback } from '../shared/ImageWithFallback'
 import { productService } from '../../services/productService'
 import { ProductDetailModal } from './ProductDetailModal'
+import { useWishlist } from '../../hooks/product/useWishlist'
 
 interface Product {
   id: string
@@ -56,6 +57,7 @@ const categoryFilters = [
 ]
 
 export function ProductSearchWidget({ onProductAdd, onProductInfo, className = '' }: ProductSearchWidgetProps) {
+  const { toggleWishlist, isInWishlist } = useWishlist()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [searchResults, setSearchResults] = useState<Product[]>([])
@@ -240,11 +242,10 @@ export function ProductSearchWidget({ onProductAdd, onProductInfo, className = '
                 variant={selectedCategory === category.id ? 'default' : 'outline'}
                 size='sm'
                 onClick={() => handleCategoryFilter(category.id)}
-                className={`justify-start text-xs ${
-                  selectedCategory === category.id
+                className={`justify-start text-xs ${selectedCategory === category.id
                     ? `bg-blue-600 text-white`
                     : `border-blue-200 ${category.color} hover:bg-blue-50`
-                }`}
+                  }`}
               >
                 <span className='mr-1'>{category.icon}</span>
                 {category.label}
@@ -308,8 +309,13 @@ export function ProductSearchWidget({ onProductAdd, onProductInfo, className = '
                         <div className='flex-1 min-w-0'>
                           <div className='flex items-start justify-between mb-1'>
                             <h5 className='font-medium text-sm line-clamp-1'>{product.name}</h5>
-                            <Button variant='ghost' size='sm' className='p-1 h-auto text-gray-400 hover:text-red-500'>
-                              <Heart className='w-3 h-3' />
+                            <Button
+                              variant='ghost'
+                              size='sm'
+                              className='p-1 h-auto text-gray-400 hover:text-red-500'
+                              onClick={() => toggleWishlist(product.id)}
+                            >
+                              <Heart className={`w-3 h-3 ${isInWishlist(product.id) ? 'fill-red-500 text-red-500' : ''}`} />
                             </Button>
                           </div>
 
