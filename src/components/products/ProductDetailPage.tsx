@@ -32,6 +32,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Dialog, DialogContent, DialogClose, DialogTitle, DialogDescription } from '../ui/dialog'
 import { ImageWithFallback } from '~/components/shared/ImageWithFallback'
 import { useCart } from '../../contexts/CartContext'
+import { useWishlist } from '../../hooks/product/useWishlist'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
 import { useImageLightbox, useCarousel } from '~/hooks/ui'
 import type { Product, Review } from '~/types/product'
@@ -50,7 +51,8 @@ import {
 import productService from '../../services/productService'
 
 export function ProductDetailPage() {
-  const { addToCart, buyNow, toggleWishlist, showPrescriptionWarning, isInWishlist } = useCart()
+  const { addToCart, buyNow, showPrescriptionWarning } = useCart()
+  const { toggleWishlist, isInWishlist } = useWishlist()
   const { slug } = useParams<{ slug: string }>()
   const [quantity, setQuantity] = useState(1)
   const [selectedImage, setSelectedImage] = useState(0)
@@ -165,7 +167,7 @@ export function ProductDetailPage() {
 
   const handleWishlistToggle = () => {
     if (!product) return
-    toggleWishlist(getProductId(product), product.name)
+    toggleWishlist(getProductId(product))
   }
 
   // Thumbnail gallery scroll handlers
@@ -217,8 +219,11 @@ export function ProductDetailPage() {
   return (
     <PageTransition>
       <div className='max-w-7xl mx-auto px-4 py-6'>
+        {/* Breadcrumb */}
+        <UniversalBreadcrumb items={breadcrumbItems} />
+
         {/* Product Info Section */}
-        <div className='grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12'>
+        <div className='grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12 mt-4'>
           {/* Product Images */}
           <div>
             <div className='relative mb-4'>
@@ -309,11 +314,10 @@ export function ProductDetailPage() {
                     <button
                       key={index}
                       onClick={() => setSelectedImage(index)}
-                      className={`relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
-                        selectedImage === index
-                          ? 'border-blue-500 shadow-lg scale-105 ring-2 ring-blue-200'
-                          : 'border-blue-100 hover:border-blue-300 hover:shadow-md'
-                      }`}
+                      className={`relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${selectedImage === index
+                        ? 'border-blue-500 shadow-lg scale-105 ring-2 ring-blue-200'
+                        : 'border-blue-100 hover:border-blue-300 hover:shadow-md'
+                        }`}
                     >
                       <ImageWithFallback
                         src={image}
@@ -336,9 +340,8 @@ export function ProductDetailPage() {
                     <button
                       key={index}
                       onClick={() => setSelectedImage(index)}
-                      className={`h-1.5 rounded-full transition-all ${
-                        selectedImage === index ? 'w-6 bg-blue-600' : 'w-1.5 bg-blue-200 hover:bg-blue-300'
-                      }`}
+                      className={`h-1.5 rounded-full transition-all ${selectedImage === index ? 'w-6 bg-blue-600' : 'w-1.5 bg-blue-200 hover:bg-blue-300'
+                        }`}
                       aria-label={`View image ${index + 1}`}
                     />
                   ))}
@@ -369,7 +372,11 @@ export function ProductDetailPage() {
 
             {/* Price */}
             <div>
-              <PriceDisplay originalPrice={product.originalPrice} salePrice={product.salePrice || 0} size='lg' />
+              <PriceDisplay
+                originalPrice={product.originalPrice}
+                salePrice={product.salePrice ?? product.price ?? 0}
+                size='lg'
+              />
             </div>
 
             {/* Stock Status */}
@@ -454,7 +461,7 @@ export function ProductDetailPage() {
                   <Button
                     onClick={handleBuyNow}
                     disabled={!isProductInStock(product)}
-                    className='flex-1 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 h-12 shadow-lg hover:shadow-xl transition-all'
+                    className='flex-1 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 dark:from-blue-600 dark:to-cyan-500 dark:hover:from-blue-700 dark:hover:to-cyan-600 text-white dark:text-white h-12 shadow-lg hover:shadow-xl transition-all'
                   >
                     Mua ngay
                   </Button>
@@ -466,11 +473,10 @@ export function ProductDetailPage() {
                   variant='outline'
                   size='sm'
                   onClick={handleWishlistToggle}
-                  className={`flex-1 border-2 transition-all ${
-                    isInWishlist(getProductId(product))
-                      ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100'
-                      : 'border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300'
-                  }`}
+                  className={`flex-1 border-2 transition-all ${isInWishlist(getProductId(product))
+                    ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100'
+                    : 'border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300'
+                    }`}
                 >
                   <Heart className={`w-4 h-4 mr-2 ${isInWishlist(getProductId(product)) ? 'fill-red-600' : ''}`} />
                   {isInWishlist(getProductId(product)) ? 'Đã yêu thích' : 'Yêu thích'}
@@ -799,6 +805,10 @@ export function ProductDetailPage() {
                           needsConsultation: relatedProduct.needsConsultation,
                         }}
                         variant='grid'
+                        onToggleWishlist={() => {
+                          toggleWishlist(getProductId(relatedProduct))
+                        }}
+                        isInWishlist={isInWishlist(getProductId(relatedProduct))}
                       />
                     </div>
                   ))}
@@ -812,11 +822,10 @@ export function ProductDetailPage() {
                     <button
                       key={index}
                       onClick={() => scrollToSlide(index)}
-                      className={`h-2 rounded-full transition-all ${
-                        carousel.currentSlide === index
-                          ? 'w-8 bg-gradient-to-r from-blue-600 to-cyan-500'
-                          : 'w-2 bg-blue-200 hover:bg-blue-300'
-                      }`}
+                      className={`h-2 rounded-full transition-all ${carousel.currentSlide === index
+                        ? 'w-8 bg-gradient-to-r from-blue-600 to-cyan-500'
+                        : 'w-2 bg-blue-200 hover:bg-blue-300'
+                        }`}
                       aria-label={`Go to slide ${index + 1}`}
                     />
                   ))}
@@ -896,9 +905,8 @@ export function ProductDetailPage() {
                   <button
                     key={index}
                     onClick={() => setSelectedImage(index)}
-                    className={`h-2 rounded-full transition-all ${
-                      selectedImage === index ? 'w-8 bg-white' : 'w-2 bg-white/40 hover:bg-white/60'
-                    }`}
+                    className={`h-2 rounded-full transition-all ${selectedImage === index ? 'w-8 bg-white' : 'w-2 bg-white/40 hover:bg-white/60'
+                      }`}
                     aria-label={`View image ${index + 1}`}
                   />
                 ))}

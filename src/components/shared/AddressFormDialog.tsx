@@ -53,8 +53,8 @@ export function AddressFormDialog({
     isDefault: false,
   })
 
-  const [availableDistricts, setAvailableDistricts] = useState<{name: string, code: string}[]>([])
-  const [availableWards, setAvailableWards] = useState<{name: string, code: string}[]>([])
+  const [availableDistricts, setAvailableDistricts] = useState<{ name: string, code: string }[]>([])
+  const [availableWards, setAvailableWards] = useState<{ name: string, code: string }[]>([])
 
   // Reset form when dialog opens/closes or editing address changes
   useEffect(() => {
@@ -158,7 +158,6 @@ export function AddressFormDialog({
       onSuccess(savedAddress)
       onOpenChange(false)
     } catch (error) {
-      console.error('Failed to save address:', error)
       toast.error('Không thể lưu địa chỉ')
     }
   }
@@ -250,8 +249,8 @@ export function AddressFormDialog({
             </div>
             <div className="space-y-2">
               <Label htmlFor="district">Quận/Huyện</Label>
-              <Select 
-                value={formData.district} 
+              <Select
+                value={formData.district}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, district: value }))}
                 disabled={!formData.province}
               >
@@ -269,8 +268,8 @@ export function AddressFormDialog({
             </div>
             <div className="space-y-2">
               <Label htmlFor="ward">Phường/Xã</Label>
-              <Select 
-                value={formData.ward} 
+              <Select
+                value={formData.ward}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, ward: value }))}
                 disabled={!formData.district}
               >
