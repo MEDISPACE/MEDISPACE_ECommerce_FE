@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import {
   LayoutDashboard,
@@ -16,11 +16,11 @@ import {
   ChevronDown,
   LogOut,
   User,
-  Activity,
-  Clock,
   CheckCircle,
   Database,
   ShoppingCart,
+  UserRoundCheck,
+  UserRoundX,
 } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
@@ -41,6 +41,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { getFullName, getUserInitials } from '~/utils/lib'
 import type { BreadcrumbItem } from '../shared/UniversalBreadcrumb'
+import { dashboardService, type DashboardStats } from '~/services/pharmacist'
+import { settingsService } from '~/services/pharmacist/settings.service'
 
 interface PharmacistLayoutProps {
   children: ReactNode
@@ -65,8 +67,6 @@ const navigationItems: NavItem[] = [
     label: 'Quản lý đơn thuốc',
     href: '/pharmacist/prescriptions',
     icon: FileText,
-    badge: 12,
-    badgeVariant: 'warning',
   },
   {
     label: 'Tạo đơn hàng',
@@ -82,8 +82,6 @@ const navigationItems: NavItem[] = [
     label: 'Tư vấn trực tuyến',
     href: '/pharmacist/chats',
     icon: MessageSquare,
-    badge: 5,
-    badgeVariant: 'destructive',
   },
   {
     label: 'Lịch sử bệnh nhân',
@@ -113,7 +111,28 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
   const { user, logout } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [isOnline, setIsOnline] = useState(true)
+  const [isOnline, setIsOnline] = useState(user?.isOnline ?? true)
+  const [stats, setStats] = useState<DashboardStats | null>(null)
+
+  // Load dashboard stats
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        const data = await dashboardService.getStats()
+        setStats(data)
+      } catch (error) {
+        console.error('Failed to load dashboard stats:', error)
+      }
+    }
+    loadStats()
+  }, [])
+
+  // Sync isOnline with user profile
+  useEffect(() => {
+    if (user?.isOnline !== undefined) {
+      setIsOnline(user.isOnline)
+    }
+  }, [user?.isOnline])
 
   const isActiveRoute = (href: string) => {
     return location.pathname === href || location.pathname.startsWith(href + '/')
@@ -124,11 +143,28 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
     navigate('/login')
   }
 
-  const handleStatusToggle = (checked: boolean) => {
-    setIsOnline(checked)
-    toast.success(checked ? 'Bạn đã online - Sẵn sàng tư vấn' : 'Bạn đã offline - Không nhận tư vấn mới', {
-      icon: checked ? <Activity className='w-5 h-5 text-green-600' /> : <Clock className='w-5 h-5 text-gray-600' />,
-    })
+  const handleStatusToggle = async (checked: boolean) => {
+    const previousStatus = isOnline
+    try {
+      // Optimistic update
+      setIsOnline(checked)
+
+      // Call API to update status in database
+      await settingsService.updateOnlineStatus({ isOnline: checked })
+
+      toast.success(checked ? 'Bạn đã online - Sẵn sàng tư vấn' : 'Bạn đã offline - Không nhận tư vấn mới', {
+        icon: checked ? (
+          <UserRoundCheck className='w-5 h-5 text-green-600' />
+        ) : (
+          <UserRoundX className='w-5 h-5 text-gray-600' />
+        ),
+      })
+    } catch (error) {
+      // Rollback on error
+      setIsOnline(previousStatus)
+      toast.error('Không thể cập nhật trạng thái. Vui lòng thử lại.')
+      console.error('Failed to update online status:', error)
+    }
   }
 
   const SidebarContent = () => (
@@ -150,13 +186,24 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
       <div className='px-6 py-4 border-b border-blue-100 flex-shrink-0'>
         <div className='flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg'>
           <div className='flex items-center gap-2'>
-            <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
-            <span className='text-sm font-medium text-gray-700'>{isOnline ? 'Online' : 'Offline'}</span>
+            {isOnline ? (
+              <UserRoundCheck className='w-4 h-4 text-green-600' />
+            ) : (
+              <UserRoundX className='w-4 h-4 text-gray-500' />
+            )}
+            <div>
+              <p className='text-sm font-semibold text-gray-900'>{isOnline ? 'Online' : 'Offline'}</p>
+              <p className='text-xs text-gray-500'>{isOnline ? 'Sẵn sàng tư vấn' : 'Không nhận tư vấn mới'}</p>
+            </div>
           </div>
           <Switch
             checked={isOnline}
             onCheckedChange={handleStatusToggle}
-            className='data-[state=checked]:bg-green-600'
+            className={`${
+              isOnline
+                ? 'data-[state=checked]:bg-green-600'
+                : 'data-[state=unchecked]:bg-gray-300 data-[state=unchecked]:border-gray-300'
+            }`}
           />
         </div>
       </div>
@@ -217,11 +264,11 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
         <div className='grid grid-cols-2 gap-3'>
           <div className='text-center p-2 bg-white rounded-lg shadow-sm'>
             <p className='text-xs text-gray-600'>Đơn thuốc</p>
-            <p className='text-lg font-semibold text-blue-600'>12</p>
+            <p className='text-lg font-semibold text-blue-600'>{stats?.prescriptionsToday.total ?? 0}</p>
           </div>
           <div className='text-center p-2 bg-white rounded-lg shadow-sm'>
             <p className='text-xs text-gray-600'>Tư vấn</p>
-            <p className='text-lg font-semibold text-green-600'>5</p>
+            <p className='text-lg font-semibold text-green-600'>{stats?.activeChats ?? 0}</p>
           </div>
         </div>
       </div>
@@ -333,21 +380,21 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
                 <FileText className='w-4 h-4 text-yellow-600' />
                 <div>
                   <p className='text-xs text-gray-600'>Đơn chờ</p>
-                  <p className='text-sm font-semibold text-yellow-600'>12</p>
+                  <p className='text-sm font-semibold text-yellow-600'>{stats?.pendingPrescriptions ?? 0}</p>
                 </div>
               </div>
               <div className='flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-lg border border-green-200'>
                 <CheckCircle className='w-4 h-4 text-green-600' />
                 <div>
                   <p className='text-xs text-gray-600'>Hoàn thành</p>
-                  <p className='text-sm font-semibold text-green-600'>28</p>
+                  <p className='text-sm font-semibold text-green-600'>{stats?.prescriptionsToday.verified ?? 0}</p>
                 </div>
               </div>
             </div>
 
             {/* Status Badge */}
             <Badge className={`${isOnline ? 'bg-green-500' : 'bg-gray-400'} text-white`}>
-              <Activity className='w-3 h-3 mr-1' />
+              {isOnline ? <UserRoundCheck className='w-3 h-3 mr-1' /> : <UserRoundX className='w-3 h-3 mr-1' />}
               {isOnline ? 'Online' : 'Offline'}
             </Badge>
 

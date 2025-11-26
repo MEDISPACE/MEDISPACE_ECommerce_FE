@@ -90,10 +90,10 @@ export function ForgotPasswordPage() {
 
     if (!passwords.password) {
       newErrors.password = 'Vui lòng nhập mật khẩu mới'
-    } else if (passwords.password.length < 8) {
-      newErrors.password = 'Mật khẩu phải có ít nhất 8 ký tự'
-    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(passwords.password)) {
-      newErrors.password = 'Mật khẩu phải có ít nhất 1 chữ hoa, 1 chữ thường và 1 số'
+    } else if (passwords.password.length < 6) {
+      newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự'
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/.test(passwords.password)) {
+      newErrors.password = 'Mật khẩu phải có chữ hoa, chữ thường, số và ký tự đặc biệt (@$!%*?&)'
     }
 
     if (!passwords.confirmPassword) {

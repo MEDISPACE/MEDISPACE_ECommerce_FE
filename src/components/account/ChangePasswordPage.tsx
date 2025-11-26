@@ -37,7 +37,7 @@ export function ChangePasswordPage() {
       hasUpperCase: /[A-Z]/.test(password),
       hasLowerCase: /[a-z]/.test(password),
       hasNumber: /[0-9]/.test(password),
-      hasSpecial: /[!@#$%^&*(),.?":{}|<>]/.test(password), // Match backend: requires symbols
+      hasSpecial: /[@$!%*?&]/.test(password), // Match backend: requires symbols
     }
 
     const score = Object.values(requirements).filter(Boolean).length
