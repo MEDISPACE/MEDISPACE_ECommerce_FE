@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import { Search, User, FileText, Pill, ShoppingCart, AlertTriangle, TrendingUp, Eye } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Search, User, FileText, Pill, ShoppingCart, AlertTriangle, TrendingUp, Eye, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
@@ -9,42 +10,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import { Separator } from '../ui/separator'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog'
+import { dashboardService, patientService } from '~/services/pharmacist'
+import type { PatientSearchResult, MedicalInfo, PatientNote } from '~/services/pharmacist/types'
 
-interface Patient {
-  id: string
-  name: string
-  phone: string
-  email: string
-  avatar?: string
-  dateOfBirth: string
-  gender: string
-  address: string
-  allergies: string[]
-  chronicDiseases: string[]
-  prescriptions: PatientPrescription[]
-  orders: PatientOrder[]
-  consultations: number
-  lastVisit: string
-}
-
-interface PatientPrescription {
-  id: string
-  date: string
-  doctorName: string
-  diagnosis: string
-  medications: { name: string; dosage: string; duration: string }[]
-  status: string
-}
-
-interface PatientOrder {
-  id: string
-  date: string
-  total: number
-  status: string
-  items: number
-}
-
-const mockPatients: Patient[] = [
+// Removed mockPatients - using real API data
+const removedMockPatients = [
   {
     id: 'P001',
     name: 'Nguyễn Văn A',
@@ -114,17 +84,58 @@ const mockPatients: Patient[] = [
 ]
 
 export function PatientHistoryPage() {
-  const [patients] = useState<Patient[]>(mockPatients)
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
+  const [selectedPatient, setSelectedPatient] = useState<PatientSearchResult | null>(null)
+  const [searchResults, setSearchResults] = useState<PatientSearchResult[]>([])
+  const [medicalInfo, setMedicalInfo] = useState<MedicalInfo | null>(null)
+  const [patientNotes, setPatientNotes] = useState<PatientNote[]>([])
+  const [loading, setLoading] = useState(false)
+  const [searching, setSearching] = useState(false)
 
-  // Filter patients
-  const filteredPatients = patients.filter(
-    (patient) =>
-      patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      patient.phone.includes(searchQuery) ||
-      patient.email.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+  // Search patients by phone
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) {
+      toast.error('Vui lòng nhập số điện thoại')
+      return
+    }
+
+    try {
+      setSearching(true)
+      const results = await dashboardService.searchPatient(searchQuery)
+      setSearchResults(results)
+
+      if (results.length === 0) {
+        toast.info('Không tìm thấy bệnh nhân')
+      }
+    } catch (error) {
+      console.error('Search error:', error)
+      toast.error('Lỗi tìm kiếm bệnh nhân')
+    } finally {
+      setSearching(false)
+    }
+  }
+
+  // Load patient details when selected
+  const handleSelectPatient = async (patient: PatientSearchResult) => {
+    try {
+      setLoading(true)
+      setSelectedPatient(patient)
+
+      // Load medical info and notes in parallel
+      const [medicalData, notesData] = await Promise.all([
+        patientService.getMedicalInfo(patient.customerId),
+        patientService.getNotes(patient.customerId),
+      ])
+
+      setMedicalInfo(medicalData)
+      setPatientNotes(notesData)
+    } catch (error) {
+      console.error('Load patient details error:', error)
+      toast.error('Lỗi tải thông tin bệnh nhân')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // Calculate age
   const calculateAge = (dob: string) => {
@@ -139,297 +150,206 @@ export function PatientHistoryPage() {
   }
 
   return (
-    
-      <div className='space-y-6'>
-        {/* Header */}
-        <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
-          <h1 className='bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 bg-clip-text text-transparent'>
-            Lịch sử bệnh nhân
-          </h1>
-          <p className='text-gray-600 mt-1'>Xem lịch sử điều trị và đơn thuốc của bệnh nhân</p>
-        </div>
+    <div className='space-y-6'>
+      {/* Header */}
+      <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
+        <h1 className='bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 bg-clip-text text-transparent'>
+          Lịch sử bệnh nhân
+        </h1>
+        <p className='text-gray-600 mt-1'>Xem lịch sử điều trị và đơn thuốc của bệnh nhân</p>
+      </div>
 
-        {/* Search */}
-        <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-4'>
-          <div className='relative'>
+      {/* Search */}
+      <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-4'>
+        <div className='flex gap-3'>
+          <div className='relative flex-1'>
             <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4' />
             <Input
               type='text'
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder='Tìm bệnh nhân theo tên, SĐT, email...'
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              placeholder='Nhập số điện thoại bệnh nhân...'
               className='pl-10 border-2 border-blue-200 focus:border-blue-500'
             />
           </div>
+          <Button onClick={handleSearch} disabled={searching} className='bg-blue-600 hover:bg-blue-700'>
+            {searching ? (
+              <>
+                <Loader2 className='w-4 h-4 mr-2 animate-spin' />
+                Đang tìm...
+              </>
+            ) : (
+              <>
+                <Search className='w-4 h-4 mr-2' />
+                Tìm kiếm
+              </>
+            )}
+          </Button>
         </div>
+      </div>
 
-        {/* Patient List */}
-        <div className='grid md:grid-cols-2 gap-6'>
-          {filteredPatients.map((patient) => (
-            <Card
-              key={patient.id}
-              className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 hover:shadow-xl transition-all'
-            >
-              <CardContent className='p-6'>
-                <div className='flex items-start gap-4 mb-4'>
-                  <Avatar className='w-16 h-16'>
-                    <AvatarImage src={patient.avatar} />
-                    <AvatarFallback>{patient.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div className='flex-1'>
-                    <h3 className='text-blue-900 mb-1'>{patient.name}</h3>
-                    <div className='space-y-1 text-sm text-gray-600'>
-                      <div className='flex items-center gap-2'>
-                        <User className='w-4 h-4' />
-                        {calculateAge(patient.dateOfBirth)} tuổi • {patient.gender}
+      {/* Search Results */}
+      {searchResults.length > 0 && (
+        <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-4'>
+          <h3 className='font-semibold mb-3'>Kết quả tìm kiếm ({searchResults.length})</h3>
+          <div className='space-y-2'>
+            {searchResults.map((patient) => (
+              <Card
+                key={patient.customerId}
+                className='cursor-pointer hover:shadow-md transition-shadow'
+                onClick={() => handleSelectPatient(patient)}
+              >
+                <CardContent className='p-4'>
+                  <div className='flex items-center justify-between'>
+                    <div className='flex items-center gap-3'>
+                      <Avatar>
+                        <AvatarImage src={patient.avatar} />
+                        <AvatarFallback>{patient.fullName.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className='font-medium'>{patient.fullName}</p>
+                        <p className='text-sm text-gray-600'>{patient.phoneNumber}</p>
                       </div>
-                      <div className='flex items-center gap-2'>
-                        <FileText className='w-4 h-4' />
-                        {patient.phone}
-                      </div>
                     </div>
+                    <Button variant='ghost' size='sm'>
+                      <Eye className='w-4 h-4' />
+                    </Button>
                   </div>
-                </div>
-
-                <Separator className='my-4' />
-
-                <div className='grid grid-cols-3 gap-4 mb-4'>
-                  <div className='text-center p-3 bg-blue-50 rounded-lg'>
-                    <FileText className='w-5 h-5 mx-auto text-blue-600 mb-1' />
-                    <p className='text-xs text-gray-600'>Đơn thuốc</p>
-                    <p className='text-blue-900'>{patient.prescriptions.length}</p>
-                  </div>
-                  <div className='text-center p-3 bg-green-50 rounded-lg'>
-                    <ShoppingCart className='w-5 h-5 mx-auto text-green-600 mb-1' />
-                    <p className='text-xs text-gray-600'>Đơn hàng</p>
-                    <p className='text-green-900'>{patient.orders.length}</p>
-                  </div>
-                  <div className='text-center p-3 bg-purple-50 rounded-lg'>
-                    <TrendingUp className='w-5 h-5 mx-auto text-purple-600 mb-1' />
-                    <p className='text-xs text-gray-600'>Tư vấn</p>
-                    <p className='text-purple-900'>{patient.consultations}</p>
-                  </div>
-                </div>
-
-                {patient.allergies.length > 0 && (
-                  <div className='mb-4 p-3 bg-red-50 border border-red-200 rounded-lg'>
-                    <div className='flex items-center gap-2 mb-2'>
-                      <AlertTriangle className='w-4 h-4 text-red-600' />
-                      <span className='text-sm text-red-800'>Dị ứng:</span>
-                    </div>
-                    <div className='flex flex-wrap gap-2'>
-                      {patient.allergies.map((allergy, idx) => (
-                        <Badge key={idx} className='bg-red-100 text-red-800 border-red-200'>
-                          {allergy}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {patient.chronicDiseases.length > 0 && (
-                  <div className='mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg'>
-                    <div className='flex items-center gap-2 mb-2'>
-                      <AlertTriangle className='w-4 h-4 text-yellow-600' />
-                      <span className='text-sm text-yellow-800'>Bệnh mạn tính:</span>
-                    </div>
-                    <div className='flex flex-wrap gap-2'>
-                      {patient.chronicDiseases.map((disease, idx) => (
-                        <Badge key={idx} className='bg-yellow-100 text-yellow-800 border-yellow-200'>
-                          {disease}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <Button
-                  onClick={() => setSelectedPatient(patient)}
-                  className='w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'
-                >
-                  <Eye className='w-4 h-4 mr-2' />
-                  Xem chi tiết
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
+      )}
 
-        {/* Patient Detail Modal */}
-        {selectedPatient && (
-          <Dialog open={!!selectedPatient} onOpenChange={() => setSelectedPatient(null)}>
-            <DialogContent className='max-w-4xl max-h-[90vh] overflow-y-auto'>
-              <DialogHeader>
-                <DialogTitle>Hồ sơ bệnh nhân: {selectedPatient.name}</DialogTitle>
-                <DialogDescription>Xem đầy đủ lịch sử điều trị, đơn thuốc và đơn hàng</DialogDescription>
-              </DialogHeader>
+      {/* Old mock patient list removed - search results now show above */}
 
+      {/* Patient Detail Modal */}
+      {selectedPatient && (
+        <Dialog open={!!selectedPatient} onOpenChange={() => setSelectedPatient(null)}>
+          <DialogContent className='max-w-4xl max-h-[90vh] overflow-y-auto'>
+            <DialogHeader>
+              <DialogTitle>Hồ sơ bệnh nhân: {selectedPatient.fullName}</DialogTitle>
+              <DialogDescription>Xem đầy đủ lịch sử điều trị và thông tin y tế</DialogDescription>
+            </DialogHeader>
+
+            {loading ? (
+              <div className='flex justify-center items-center py-12'>
+                <Loader2 className='w-8 h-8 animate-spin text-blue-600' />
+              </div>
+            ) : (
               <Tabs defaultValue='info' className='space-y-4'>
-                <TabsList className='grid w-full grid-cols-4'>
+                <TabsList className='grid w-full grid-cols-3'>
                   <TabsTrigger value='info'>Thông tin</TabsTrigger>
-                  <TabsTrigger value='prescriptions'>Đơn thuốc</TabsTrigger>
-                  <TabsTrigger value='orders'>Đơn hàng</TabsTrigger>
                   <TabsTrigger value='medical'>Y tế</TabsTrigger>
+                  <TabsTrigger value='notes'>Ghi chú</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value='info' className='space-y-4'>
                   <div className='grid md:grid-cols-2 gap-4'>
                     <div>
-                      <label className='text-sm text-gray-600'>Ngày sinh</label>
-                      <p className='text-gray-900'>
-                        {new Date(selectedPatient.dateOfBirth).toLocaleDateString('vi-VN')} (
-                        {calculateAge(selectedPatient.dateOfBirth)} tuổi)
-                      </p>
-                    </div>
-                    <div>
-                      <label className='text-sm text-gray-600'>Giới tính</label>
-                      <p className='text-gray-900'>{selectedPatient.gender}</p>
+                      <label className='text-sm text-gray-600'>Họ và tên</label>
+                      <p className='text-gray-900'>{selectedPatient.fullName}</p>
                     </div>
                     <div>
                       <label className='text-sm text-gray-600'>Số điện thoại</label>
-                      <p className='text-gray-900'>{selectedPatient.phone}</p>
+                      <p className='text-gray-900'>{selectedPatient.phoneNumber}</p>
                     </div>
                     <div>
                       <label className='text-sm text-gray-600'>Email</label>
-                      <p className='text-gray-900'>{selectedPatient.email}</p>
+                      <p className='text-gray-900'>{selectedPatient.email || 'Chưa có'}</p>
                     </div>
-                    <div className='md:col-span-2'>
-                      <label className='text-sm text-gray-600'>Địa chỉ</label>
-                      <p className='text-gray-900'>{selectedPatient.address}</p>
+                    <div>
+                      <label className='text-sm text-gray-600'>Mã khách hàng</label>
+                      <p className='text-gray-900'>{selectedPatient.customerId}</p>
                     </div>
                   </div>
-                </TabsContent>
-
-                <TabsContent value='prescriptions' className='space-y-4'>
-                  {selectedPatient.prescriptions.map((rx) => (
-                    <Card key={rx.id} className='border border-blue-200'>
-                      <CardContent className='p-4'>
-                        <div className='flex items-start justify-between mb-3'>
-                          <div>
-                            <h4 className='text-blue-900'>#{rx.id}</h4>
-                            <p className='text-sm text-gray-600'>{new Date(rx.date).toLocaleDateString('vi-VN')}</p>
-                          </div>
-                          <Badge
-                            className={
-                              rx.status === 'Hoàn thành' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
-                            }
-                          >
-                            {rx.status}
-                          </Badge>
-                        </div>
-                        <div className='space-y-2 text-sm'>
-                          <p>
-                            <strong>Bác sĩ:</strong> {rx.doctorName}
-                          </p>
-                          <p>
-                            <strong>Chẩn đoán:</strong> {rx.diagnosis}
-                          </p>
-                          <div>
-                            <strong>Thuốc kê đơn:</strong>
-                            <ul className='mt-2 space-y-1'>
-                              {rx.medications.map((med, idx) => (
-                                <li key={idx} className='flex items-start gap-2 p-2 bg-blue-50 rounded'>
-                                  <Pill className='w-4 h-4 text-blue-600 mt-0.5' />
-                                  <div>
-                                    <p className='font-medium'>{med.name}</p>
-                                    <p className='text-xs text-gray-600'>
-                                      {med.dosage} - {med.duration}
-                                    </p>
-                                  </div>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </TabsContent>
-
-                <TabsContent value='orders' className='space-y-4'>
-                  {selectedPatient.orders.map((order) => (
-                    <Card key={order.id} className='border border-green-200'>
-                      <CardContent className='p-4'>
-                        <div className='flex items-center justify-between'>
-                          <div>
-                            <h4 className='text-green-900'>#{order.id}</h4>
-                            <p className='text-sm text-gray-600'>{new Date(order.date).toLocaleDateString('vi-VN')}</p>
-                          </div>
-                          <div className='text-right'>
-                            <p className='text-green-900'>{order.total.toLocaleString()}₫</p>
-                            <Badge
-                              className={
-                                order.status === 'Hoàn thành'
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-blue-100 text-blue-800'
-                              }
-                            >
-                              {order.status}
-                            </Badge>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
                 </TabsContent>
 
                 <TabsContent value='medical' className='space-y-4'>
-                  {selectedPatient.allergies.length > 0 && (
-                    <div className='p-4 bg-red-50 border border-red-200 rounded-lg'>
-                      <h4 className='text-red-900 mb-3 flex items-center gap-2'>
-                        <AlertTriangle className='w-5 h-5' />
-                        Dị ứng thuốc
-                      </h4>
-                      <div className='flex flex-wrap gap-2'>
-                        {selectedPatient.allergies.map((allergy, idx) => (
-                          <Badge key={idx} className='bg-red-500 text-white'>
-                            {allergy}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  {medicalInfo ? (
+                    <>
+                      {/* Allergies */}
+                      {medicalInfo.allergies && medicalInfo.allergies.length > 0 && (
+                        <div className='p-4 bg-red-50 border border-red-200 rounded-lg'>
+                          <div className='flex items-center gap-2 mb-3'>
+                            <AlertTriangle className='w-5 h-5 text-red-600' />
+                            <h4 className='font-semibold text-red-800'>Dị ứng</h4>
+                          </div>
+                          <div className='flex flex-wrap gap-2'>
+                            {medicalInfo.allergies.map((allergy, idx) => (
+                              <Badge key={idx} className='bg-red-100 text-red-800 border-red-200'>
+                                {allergy}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
 
-                  {selectedPatient.chronicDiseases.length > 0 && (
-                    <div className='p-4 bg-yellow-50 border border-yellow-200 rounded-lg'>
-                      <h4 className='text-yellow-900 mb-3 flex items-center gap-2'>
-                        <AlertTriangle className='w-5 h-5' />
-                        Bệnh mạn tính
-                      </h4>
-                      <div className='flex flex-wrap gap-2'>
-                        {selectedPatient.chronicDiseases.map((disease, idx) => (
-                          <Badge key={idx} className='bg-yellow-500 text-white'>
-                            {disease}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                      {/* Current Medications */}
+                      {medicalInfo.currentMedications && medicalInfo.currentMedications.length > 0 && (
+                        <div className='p-4 bg-blue-50 border border-blue-200 rounded-lg'>
+                          <div className='flex items-center gap-2 mb-3'>
+                            <Pill className='w-5 h-5 text-blue-600' />
+                            <h4 className='font-semibold text-blue-800'>Thuốc đang dùng</h4>
+                          </div>
+                          <ul className='space-y-2'>
+                            {medicalInfo.currentMedications.map((med, idx) => (
+                              <li key={idx} className='text-sm text-gray-700'>
+                                • {med}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
 
-                  <div className='p-4 bg-blue-50 border border-blue-200 rounded-lg'>
-                    <h4 className='text-blue-900 mb-3'>Thống kê</h4>
-                    <div className='space-y-2 text-sm'>
-                      <p>
-                        <strong>Tổng số đơn thuốc:</strong> {selectedPatient.prescriptions.length}
-                      </p>
-                      <p>
-                        <strong>Tổng số đơn hàng:</strong> {selectedPatient.orders.length}
-                      </p>
-                      <p>
-                        <strong>Số lần tư vấn:</strong> {selectedPatient.consultations}
-                      </p>
-                      <p>
-                        <strong>Lần khám gần nhất:</strong>{' '}
-                        {new Date(selectedPatient.lastVisit).toLocaleDateString('vi-VN')}
-                      </p>
-                    </div>
-                  </div>
+                      {/* Medical Conditions */}
+                      {medicalInfo.medicalConditions && medicalInfo.medicalConditions.length > 0 && (
+                        <div className='p-4 bg-yellow-50 border border-yellow-200 rounded-lg'>
+                          <div className='flex items-center gap-2 mb-3'>
+                            <AlertTriangle className='w-5 h-5 text-yellow-600' />
+                            <h4 className='font-semibold text-yellow-800'>Tình trạng y tế</h4>
+                          </div>
+                          <div className='flex flex-wrap gap-2'>
+                            {medicalInfo.medicalConditions.map((condition, idx) => (
+                              <Badge key={idx} className='bg-yellow-100 text-yellow-800 border-yellow-200'>
+                                {condition}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <p className='text-gray-500 text-center py-8'>Chưa có thông tin y tế</p>
+                  )}
+                </TabsContent>
+
+                <TabsContent value='notes' className='space-y-4'>
+                  {patientNotes.length > 0 ? (
+                    patientNotes.map((note) => (
+                      <Card key={note._id} className='border border-blue-200'>
+                        <CardContent className='p-4'>
+                          <div className='flex justify-between items-start mb-2'>
+                            <p className='font-medium text-sm text-gray-600'>
+                              {new Date(note.createdAt).toLocaleString('vi-VN')}
+                            </p>
+                            <Badge variant='outline'>{note.pharmacistId}</Badge>
+                          </div>
+                          <p className='text-gray-900'>{note.note}</p>
+                        </CardContent>
+                      </Card>
+                    ))
+                  ) : (
+                    <p className='text-gray-500 text-center py-8'>Chưa có ghi chú</p>
+                  )}
                 </TabsContent>
               </Tabs>
-            </DialogContent>
-          </Dialog>
-        )}
-      </div>
-    
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
   )
 }

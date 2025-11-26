@@ -48,13 +48,13 @@
 
   /* Header dimensions - Precise measurements for sticky positioning */
   /* Calculated from actual Header.tsx structure:
-     - Top bar: py-2 (0.5rem * 2) + content (~24px) = ~40px
-     - Main header: py-4 (1rem * 2) + content (~52px) = ~68px  
-     - Navigation: py-3 (0.75rem * 2) + content (~36px) = ~48px
-     - Border-bottom: included in header element height
-     - Total: Approximately 156px
-     - NOTE: If breadcrumb still overlaps with header when scrolling, 
-             increase this value slightly (try 157px, 158px, 160px)
+    - Top bar: py-2 (0.5rem * 2) + content (~24px) = ~40px
+    - Main header: py-4 (1rem * 2) + content (~52px) = ~68px  
+    - Navigation: py-3 (0.75rem * 2) + content (~36px) = ~48px
+    - Border-bottom: included in header element height
+    - Total: Approximately 156px
+    - NOTE: If breadcrumb still overlaps with header when scrolling, 
+        increase this value slightly (try 157px, 158px, 160px)
   */
   --header-height: 156px;
   --header-top-bar-height: 40px;
