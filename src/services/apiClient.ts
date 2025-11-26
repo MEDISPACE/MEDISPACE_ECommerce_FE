@@ -24,6 +24,8 @@ class ApiClient {
         const token = localStorage.getItem('medispace_access_token')
         if (token && config.headers) {
           config.headers.Authorization = `Bearer ${token}`
+        } else {
+          console.warn('API Request without token:', config.method?.toUpperCase(), config.url)
         }
         return config
       },
