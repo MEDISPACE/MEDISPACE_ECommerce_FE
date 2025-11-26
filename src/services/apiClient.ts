@@ -25,7 +25,7 @@ class ApiClient {
         if (token && config.headers) {
           config.headers.Authorization = `Bearer ${token}`
         } else {
-          console.warn('API Request without token:', config.method?.toUpperCase(), config.url)
+          // console.warn('API Request without token:', config.method?.toUpperCase(), config.url)
         }
         return config
       },
