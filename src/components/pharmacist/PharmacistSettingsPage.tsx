@@ -1,17 +1,15 @@
 import { useState, useEffect } from 'react'
-import { Save, User, Shield, Phone, Mail, MapPin, Loader2, Lock } from 'lucide-react'
+import { Save, User, Shield, Phone, Mail, Loader2, Lock } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
+import { Card } from '../ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import { Label } from '../ui/label'
-import { Textarea } from '../ui/textarea'
 import { Separator } from '../ui/separator'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
-import { settingsService } from '~/services/pharmacist'
-import type { PharmacistProfile, UpdateProfileData } from '~/services/pharmacist/types'
+import { settingsService, type PharmacistProfile, type UpdateProfileData } from '~/services/pharmacist'
 
 export function PharmacistSettingsPage() {
   const [profile, setProfile] = useState<PharmacistProfile | null>(null)
@@ -49,11 +47,13 @@ export function PharmacistSettingsPage() {
     try {
       setSaving(true)
       const updateData: UpdateProfileData = {
-        fullName: profile.fullName,
+        firstName: profile.firstName,
+        lastName: profile.lastName,
         phoneNumber: profile.phoneNumber,
-        email: profile.email,
-        address: profile.address,
-        bio: profile.bio,
+        dateOfBirth: profile.dateOfBirth,
+        gender: profile.gender,
+        avatar: profile.avatar,
+        lisenseNumber: profile.lisenseNumber,
       }
 
       await settingsService.updateProfile(updateData)
@@ -149,11 +149,13 @@ export function PharmacistSettingsPage() {
               <Avatar className='w-24 h-24 border-4 border-white shadow-lg'>
                 <AvatarImage src={profile.avatar} />
                 <AvatarFallback className='bg-gradient-to-br from-blue-600 to-cyan-500 text-white text-2xl'>
-                  {profile.fullName.charAt(0)}
+                  {profile.firstName?.charAt(0) || 'P'}
                 </AvatarFallback>
               </Avatar>
               <div className='flex-1'>
-                <h3 className='text-xl font-semibold text-gray-900'>{profile.fullName}</h3>
+                <h3 className='text-xl font-semibold text-gray-900'>
+                  {profile.firstName} {profile.lastName}
+                </h3>
                 <p className='text-sm text-gray-600 mt-1'>{profile.role}</p>
                 <p className='text-sm text-gray-500 mt-2'>JPG, PNG. Tối đa 2MB</p>
               </div>
@@ -165,30 +167,43 @@ export function PharmacistSettingsPage() {
             <div className='space-y-4'>
               <div className='grid grid-cols-2 gap-4'>
                 <div className='space-y-2'>
-                  <Label htmlFor='fullName'>Họ và tên *</Label>
+                  <Label htmlFor='firstName'>Tên *</Label>
                   <Input
-                    id='fullName'
-                    value={profile.fullName}
-                    onChange={(e) => setProfile({ ...profile, fullName: e.target.value })}
+                    id='firstName'
+                    value={profile.firstName || ''}
+                    onChange={(e) => setProfile({ ...profile, firstName: e.target.value })}
                     className='border-2 border-blue-200 focus:border-blue-500'
+                    placeholder='Nhập tên'
                   />
                 </div>
 
                 <div className='space-y-2'>
-                  <Label htmlFor='phone'>Số điện thoại *</Label>
-                  <div className='relative'>
-                    <Phone className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400' />
-                    <Input
-                      id='phone'
-                      value={profile.phoneNumber}
-                      onChange={(e) => setProfile({ ...profile, phoneNumber: e.target.value })}
-                      className='pl-10 border-2 border-blue-200 focus:border-blue-500'
-                    />
-                  </div>
+                  <Label htmlFor='lastName'>Họ *</Label>
+                  <Input
+                    id='lastName'
+                    value={profile.lastName || ''}
+                    onChange={(e) => setProfile({ ...profile, lastName: e.target.value })}
+                    className='border-2 border-blue-200 focus:border-blue-500'
+                    placeholder='Nhập họ'
+                  />
                 </div>
               </div>
 
               <div className='grid grid-cols-2 gap-4'>
+                <div className='space-y-2'>
+                  <Label htmlFor='phone'>Số điện thoại</Label>
+                  <div className='relative'>
+                    <Phone className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400' />
+                    <Input
+                      id='phone'
+                      value={profile.phoneNumber || ''}
+                      onChange={(e) => setProfile({ ...profile, phoneNumber: e.target.value })}
+                      className='pl-10 border-2 border-blue-200 focus:border-blue-500'
+                      placeholder='Nhập số điện thoại'
+                    />
+                  </div>
+                </div>
+
                 <div className='space-y-2'>
                   <Label htmlFor='email'>Email *</Label>
                   <div className='relative'>
@@ -197,10 +212,23 @@ export function PharmacistSettingsPage() {
                       id='email'
                       type='email'
                       value={profile.email}
-                      onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                      className='pl-10 border-2 border-blue-200 focus:border-blue-500'
+                      disabled
+                      className='pl-10 border-2 border-gray-200 bg-gray-50'
                     />
                   </div>
+                </div>
+              </div>
+
+              <div className='grid grid-cols-2 gap-4'>
+                <div className='space-y-2'>
+                  <Label htmlFor='lisenseNumber'>Số chứng chỉ hành nghề</Label>
+                  <Input
+                    id='lisenseNumber'
+                    value={profile.lisenseNumber || ''}
+                    onChange={(e) => setProfile({ ...profile, lisenseNumber: e.target.value })}
+                    className='border-2 border-blue-200 focus:border-blue-500'
+                    placeholder='Nhập số chứng chỉ'
+                  />
                 </div>
 
                 <div className='space-y-2'>
@@ -209,30 +237,34 @@ export function PharmacistSettingsPage() {
                 </div>
               </div>
 
-              <div className='space-y-2'>
-                <Label htmlFor='address'>Địa chỉ</Label>
-                <div className='relative'>
-                  <MapPin className='absolute left-3 top-3 w-4 h-4 text-gray-400' />
-                  <Textarea
-                    id='address'
-                    value={profile.address || ''}
-                    onChange={(e) => setProfile({ ...profile, address: e.target.value })}
-                    className='pl-10 border-2 border-blue-200 focus:border-blue-500 min-h-[80px]'
-                    placeholder='Nhập địa chỉ đầy đủ'
+              <div className='grid grid-cols-2 gap-4'>
+                <div className='space-y-2'>
+                  <Label htmlFor='dateOfBirth'>Ngày sinh</Label>
+                  <Input
+                    id='dateOfBirth'
+                    type='date'
+                    value={profile.dateOfBirth || ''}
+                    onChange={(e) => setProfile({ ...profile, dateOfBirth: e.target.value })}
+                    className='border-2 border-blue-200 focus:border-blue-500'
                   />
                 </div>
-              </div>
 
-              <div className='space-y-2'>
-                <Label htmlFor='bio'>Giới thiệu bản thân</Label>
-                <Textarea
-                  id='bio'
-                  value={profile.bio || ''}
-                  onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                  className='border-2 border-blue-200 focus:border-blue-500 min-h-[100px]'
-                  placeholder='Chia sẻ về kinh nghiệm và chuyên môn của bạn...'
-                />
-                <p className='text-sm text-gray-500'>{(profile.bio || '').length}/500 ký tự</p>
+                <div className='space-y-2'>
+                  <Label htmlFor='gender'>Giới tính</Label>
+                  <select
+                    id='gender'
+                    value={profile.gender ?? ''}
+                    onChange={(e) =>
+                      setProfile({ ...profile, gender: e.target.value ? Number(e.target.value) : undefined })
+                    }
+                    className='w-full px-3 py-2 border-2 border-blue-200 rounded-md focus:border-blue-500'
+                  >
+                    <option value=''>Chọn giới tính</option>
+                    <option value='0'>Nam</option>
+                    <option value='1'>Nữ</option>
+                    <option value='2'>Khác</option>
+                  </select>
+                </div>
               </div>
             </div>
 

@@ -73,17 +73,34 @@ export const STATUS_BADGES: Record<string, BadgeConfig> = {
  * PRESCRIPTION STATUS BADGES
  */
 export const PRESCRIPTION_STATUS_BADGES: Record<string, BadgeConfig> = {
+  // Backend returns PascalCase: Pending, Verified, Rejected, Expired
+  Pending: {
+    label: 'Chờ xử lý',
+    className: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    icon: Clock,
+  },
+  Verified: {
+    label: 'Đã duyệt',
+    className: 'bg-green-100 text-green-800 border-green-200',
+    icon: CheckCircle,
+  },
+  Rejected: {
+    label: 'Từ chối',
+    className: 'bg-red-100 text-red-800 border-red-200',
+    icon: XCircle,
+  },
+  Expired: {
+    label: 'Hết hạn',
+    className: 'bg-orange-100 text-orange-800 border-orange-200',
+    icon: AlertTriangle,
+  },
+  // Backward compatibility (lowercase)
   pending: {
     label: 'Chờ xử lý',
     className: 'bg-yellow-100 text-yellow-800 border-yellow-200',
     icon: Clock,
   },
-  processing: {
-    label: 'Đang xử lý',
-    className: 'bg-blue-100 text-blue-800 border-blue-200',
-    icon: Activity,
-  },
-  approved: {
+  verified: {
     label: 'Đã duyệt',
     className: 'bg-green-100 text-green-800 border-green-200',
     icon: CheckCircle,
@@ -93,10 +110,10 @@ export const PRESCRIPTION_STATUS_BADGES: Record<string, BadgeConfig> = {
     className: 'bg-red-100 text-red-800 border-red-200',
     icon: XCircle,
   },
-  fulfilled: {
-    label: 'Hoàn thành',
-    className: 'bg-gray-100 text-gray-800 border-gray-200',
-    icon: Package,
+  expired: {
+    label: 'Hết hạn',
+    className: 'bg-orange-100 text-orange-800 border-orange-200',
+    icon: AlertTriangle,
   },
 } as const
 

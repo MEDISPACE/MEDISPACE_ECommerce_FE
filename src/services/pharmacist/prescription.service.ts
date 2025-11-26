@@ -21,7 +21,7 @@ export interface UploadPrescriptionData {
 }
 
 export interface VerifyPrescriptionData {
-  status: 'Verified' | 'Rejected'
+  status: 'verified' | 'rejected' // lowercase for consistency
   notes?: string
 }
 
@@ -29,6 +29,14 @@ export interface PrescriptionListParams {
   page?: number
   limit?: number
   status?: string
+}
+
+export interface PrescriptionStats {
+  pending: number
+  verified: number
+  rejected: number
+  expired: number
+  total: number
 }
 
 // ==================== PRESCRIPTION SERVICE ====================
@@ -114,5 +122,27 @@ export const prescriptionService = {
       data,
     )
     return response.data.result
+  },
+
+  /**
+   * Get prescription statistics
+   */
+  getStats: async (): Promise<PrescriptionStats> => {
+    try {
+      console.log('Calling /prescriptions/stats')
+      const response: AxiosResponse<{ message: string; result: PrescriptionStats }> =
+        await apiClient.get('/prescriptions/stats')
+
+      console.log('Response from /prescriptions/stats:', response.data)
+      return response.data.result
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: unknown; status?: number }; message?: string }
+      console.error('prescriptionService.getStats error:', {
+        status: err?.response?.status,
+        data: err?.response?.data,
+        message: err?.message,
+      })
+      throw error
+    }
   },
 }

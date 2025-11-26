@@ -35,7 +35,6 @@ import {
 } from '../ui/dropdown-menu'
 import { Input } from '../ui/input'
 import { Sheet, SheetContent } from '~/components/ui/sheet'
-import { ScrollArea } from '../ui/scroll-area'
 import { Switch } from '../ui/switch'
 import { useAuth } from '../../contexts/AuthContext'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -135,7 +134,7 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
   const SidebarContent = () => (
     <div className='flex flex-col h-full'>
       {/* Logo Section */}
-      <div className='p-6 border-b border-blue-100'>
+      <div className='p-6 border-b border-blue-100 flex-shrink-0'>
         <Link to='/pharmacist/dashboard' className='flex items-center gap-3'>
           <div className='w-10 h-10 rounded-lg flex items-center justify-center shadow-lg'>
             <img src='/src/assets/MEDISPACE_Logo_favicon.png' alt='MEDISPACE' className='w-8 h-8' />
@@ -148,7 +147,7 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
       </div>
 
       {/* Status Toggle */}
-      <div className='px-6 py-4 border-b border-blue-100'>
+      <div className='px-6 py-4 border-b border-blue-100 flex-shrink-0'>
         <div className='flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg'>
           <div className='flex items-center gap-2'>
             <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
@@ -162,56 +161,58 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
         </div>
       </div>
 
-      {/* Navigation */}
-      <ScrollArea className='flex-1 px-3 py-4'>
-        <nav className='space-y-1'>
-          {navigationItems.map((item) => {
-            const Icon = item.icon
-            const isActive = isActiveRoute(item.href)
+      {/* Navigation - Scrollable */}
+      <div className='flex-1 overflow-y-auto min-h-0'>
+        <div className='px-3 py-4'>
+          <nav className='space-y-1'>
+            {navigationItems.map((item) => {
+              const Icon = item.icon
+              const isActive = isActiveRoute(item.href)
 
-            return (
-              <Link
-                key={item.href}
-                to={item.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative ${
-                  isActive
-                    ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/30'
-                    : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700'
-                }`}
-              >
-                <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'}`} />
-                <span className='flex-1 text-sm font-medium'>{item.label}</span>
-                {item.badge && (
-                  <Badge
-                    className={`text-xs ${
-                      item.badgeVariant === 'destructive'
-                        ? 'bg-red-500'
-                        : item.badgeVariant === 'warning'
-                          ? 'bg-yellow-500'
-                          : item.badgeVariant === 'success'
-                            ? 'bg-green-500'
-                            : 'bg-blue-500'
-                    } text-white`}
-                  >
-                    {item.badge}
-                  </Badge>
-                )}
-                {isActive && (
-                  <motion.div
-                    layoutId='activeIndicatorPharmacist'
-                    className='absolute left-0 top-0 bottom-0 w-1 bg-white rounded-r-full'
-                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                  />
-                )}
-              </Link>
-            )
-          })}
-        </nav>
-      </ScrollArea>
+              return (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative ${
+                    isActive
+                      ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/30'
+                      : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700'
+                  }`}
+                >
+                  <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'}`} />
+                  <span className='flex-1 text-sm font-medium'>{item.label}</span>
+                  {item.badge && (
+                    <Badge
+                      className={`text-xs ${
+                        item.badgeVariant === 'destructive'
+                          ? 'bg-red-500'
+                          : item.badgeVariant === 'warning'
+                            ? 'bg-yellow-500'
+                            : item.badgeVariant === 'success'
+                              ? 'bg-green-500'
+                              : 'bg-blue-500'
+                      } text-white`}
+                    >
+                      {item.badge}
+                    </Badge>
+                  )}
+                  {isActive && (
+                    <motion.div
+                      layoutId='activeIndicatorPharmacist'
+                      className='absolute left-0 top-0 bottom-0 w-1 bg-white rounded-r-full'
+                      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                    />
+                  )}
+                </Link>
+              )
+            })}
+          </nav>
+        </div>
+      </div>
 
-      {/* Quick Stats */}
-      <div className='px-6 py-4 border-t border-blue-100 bg-gradient-to-br from-blue-50 to-cyan-50'>
+      {/* Quick Stats - Fixed at bottom */}
+      <div className='px-6 py-4 border-t border-blue-100 bg-gradient-to-br from-blue-50 to-cyan-50 flex-shrink-0'>
         <p className='text-xs text-gray-600 mb-3'>Hôm nay</p>
         <div className='grid grid-cols-2 gap-3'>
           <div className='text-center p-2 bg-white rounded-lg shadow-sm'>
@@ -225,8 +226,8 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
         </div>
       </div>
 
-      {/* User Profile Section */}
-      <div className='p-4 border-t border-blue-100'>
+      {/* User Profile Section - Fixed at bottom */}
+      <div className='p-4 border-t border-blue-100 flex-shrink-0'>
         <div className='flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg'>
           <Avatar className='w-10 h-10 border-2 border-blue-500'>
             <AvatarImage src={user?.avatar} />

@@ -12,7 +12,7 @@ export const toast = {
 
   error: (message: string, options?: { id?: string; duration?: number }) => {
     return sonnerToast.error(message, {
-      duration: options?.duration || 5000,
+      duration: options?.duration || 3000,
       id: options?.id,
       className: 'medispace-toast-error',
     })

@@ -23,7 +23,9 @@ export const productService = {
   /**
    * Get all products with optional filtering
    */
-  async getProducts(filters?: Partial<ProductFilter> & { limit?: number; sortBy?: string; sortOrder?: string }): Promise<Product[]> {
+  async getProducts(
+    filters?: Partial<ProductFilter> & { limit?: number; sortBy?: string; sortOrder?: string },
+  ): Promise<Product[]> {
     // Real API call - use backend API endpoints
     const response = await apiClient.get(API_ENDPOINTS.PRODUCTS.BASE, { params: filters })
     if (response && response.data) {
@@ -129,7 +131,7 @@ export const productService = {
    */
   async searchProducts(query: string, filters?: Partial<ProductFilter>): Promise<Product[]> {
     const response = await apiClient.get(API_ENDPOINTS.PRODUCTS.BASE, {
-      params: { q: query, ...filters },
+      params: { search: query, ...filters },
     })
     if (response && response.data) {
       const data = response.data as ProductsResponse
