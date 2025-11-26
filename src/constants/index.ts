@@ -49,6 +49,7 @@ export const API_ENDPOINTS = {
     RESET_PASSWORD: '/users/reset-password',
     VERIFY_EMAIL: '/users/verify-email',
     RESEND_VERIFY_EMAIL: '/users/resend-verify-email',
+    VERIFY_FORGOT_PASSWORD: '/users/verify-forgot-password',
   },
 
   // User endpoints
