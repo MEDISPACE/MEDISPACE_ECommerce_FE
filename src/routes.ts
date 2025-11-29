@@ -8,6 +8,7 @@ export default [
   route('register', 'routes/register.tsx'),
   route('forgot-password', 'routes/forgot-password.tsx'),
   route('reset-password/:token', 'routes/reset-password.$token.tsx'),
+  route('verify-email/:token', 'routes/verify-email.$token.tsx'),
 
   // Main layout for all other routes
   layout('routes/_layout.tsx', [

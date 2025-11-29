@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode, useCallback } from 'react'
 import { toast } from 'sonner'
-import { useAuth } from '../../contexts/AuthContext'
+import { AuthContext } from '../../contexts/AuthContext'
 import { wishlistService } from '../../services/wishlistService'
 
 // Define the shape of the context state
@@ -30,7 +30,10 @@ interface WishlistProviderProps {
 }
 
 export const WishlistProvider = ({ children }: WishlistProviderProps) => {
-  const { isAuthenticated } = useAuth()
+  // Use AuthContext directly - if not available, default to unauthenticated
+  const authContext = useContext(AuthContext)
+  const isAuthenticated = authContext?.isAuthenticated ?? false
+
   const [wishlist, setWishlist] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
 

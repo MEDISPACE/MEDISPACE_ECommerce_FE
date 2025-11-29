@@ -13,6 +13,7 @@ import { logger } from '../../utils/logger'
 export function OrderSuccessPage() {
   const [searchParams] = useSearchParams()
   const orderId = searchParams.get('orderId')
+  const paymentStatus = searchParams.get('paymentStatus')
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -73,6 +74,31 @@ export function OrderSuccessPage() {
     )
   }
 
+  if (paymentStatus === 'failed') {
+    return (
+      <div className='max-w-4xl mx-auto px-4 py-12'>
+        <UniversalBreadcrumb items={breadcrumbItems} />
+        <div className='text-center'>
+          <div className='inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-red-400 to-red-600 shadow-lg mb-6'>
+            <CreditCard className='w-14 h-14 text-white' />
+          </div>
+          <h1 className='text-xl text-red-600 mb-4'>Thanh toán thất bại!</h1>
+          <p className='text-gray-500 mb-6'>
+            Giao dịch thanh toán của bạn không thành công. Vui lòng thử lại hoặc chọn phương thức thanh toán khác.
+          </p>
+          <div className='flex flex-col sm:flex-row gap-4 justify-center'>
+            <Button asChild>
+              <Link to='/cart/checkout'>Thử lại</Link>
+            </Button>
+            <Button asChild variant='outline'>
+              <Link to='/'>Về trang chủ</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (error || !order) {
     return (
       <div className='max-w-4xl mx-auto px-4 py-12'>
@@ -115,6 +141,10 @@ export function OrderSuccessPage() {
         return 'Thẻ tín dụng'
       case 'e_wallet':
         return 'Ví điện tử'
+      case 'vnpay':
+        return 'VNPay'
+      case 'payos':
+        return 'Thanh toán qua PayOS'
       default:
         return 'Thanh toán khi nhận hàng (COD)'
     }
@@ -129,12 +159,14 @@ export function OrderSuccessPage() {
           <CheckCircle className='w-14 h-14 text-white' />
         </div>
         <h1 className='bg-gradient-to-r from-green-600 via-green-500 to-emerald-500 bg-clip-text text-transparent mb-3'>
-          Đặt hàng thành công!
+          {paymentStatus === 'success' || paymentStatus === 'vnpay_success' ? 'Thanh toán thành công!' : 'Đặt hàng thành công!'}
         </h1>
         <p className='text-xl text-gray-600'>
           Cảm ơn bạn đã tin tưởng và mua sắm tại <span className='text-blue-600'>MEDISPACE</span>
         </p>
       </div>
+
+      {/* Removed QR Code Section */}
 
       {/* Order Information Card */}
       <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 mb-6 animate-slide-in-up'>
@@ -178,7 +210,7 @@ export function OrderSuccessPage() {
               <div className='flex-1'>
                 <p className='text-sm text-blue-800 mb-1'>Địa chỉ giao hàng</p>
                 <p className='text-gray-900'>
-                  {order.shippingAddress.address}, {order.shippingAddress.ward}, {order.shippingAddress.district}, {order.shippingAddress.city}
+                  {order.shippingAddress.address}, {order.shippingAddress.ward}, {order.shippingAddress.district}, {order.shippingAddress.province}
                 </p>
                 <p className='text-sm text-gray-600 mt-1'>SĐT: {order.shippingAddress.phone}</p>
                 {order.shippingAddress.email && (

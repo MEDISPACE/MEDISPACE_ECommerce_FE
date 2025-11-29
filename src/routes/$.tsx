@@ -22,7 +22,7 @@ export default function NotFound() {
         <div className='space-y-4'>
           <Button asChild className='bg-blue-600 hover:bg-blue-700'>
             <Link to='/'>
-              <Home className='w-4 h-4 mr-2' />
+              <Home className='bg-whiw-4 h-4 mr-2' />
               Về trang chủ
             </Link>
           </Button>

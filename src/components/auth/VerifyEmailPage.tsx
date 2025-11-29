@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router'
+import { useNavigate, useParams } from 'react-router'
 import { CheckCircle, XCircle, Loader2, ArrowLeft } from 'lucide-react'
 import { Button } from '../ui/button'
 import { authService } from '../../services/authService'
 import { toast } from 'sonner'
 
 export function VerifyEmailPage() {
-    const [searchParams] = useSearchParams()
-    const token = searchParams.get('token')
+    const { token } = useParams()
     const navigate = useNavigate()
 
     const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
