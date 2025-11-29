@@ -89,7 +89,7 @@ export function EntityFormDialog({
   if (mode === 'dialog') {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className={`${maxWidth} max-h-[90vh] overflow-y-auto`}>
+        <DialogContent className={`${maxWidth} max-h-[90vh] overflow-y-auto bg-white`}>
           <DialogHeader>
             <DialogTitle className='text-2xl bg-gradient-to-r from-[#0066CC] to-[#4A90E2] bg-clip-text text-transparent'>
               {title}
@@ -130,7 +130,7 @@ export function EntityFormDialog({
   // Sheet (Drawer) variant
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side='right' className='w-full sm:max-w-2xl overflow-y-auto p-0'>
+      <SheetContent side='right' className='w-full sm:max-w-2xl overflow-y-auto p-0 bg-white'>
         <div className='sticky top-0 z-10 bg-white border-b border-blue-100'>
           <SheetHeader className='p-6 pb-4'>
             <SheetTitle className='text-2xl bg-gradient-to-r from-[#0066CC] to-[#4A90E2] bg-clip-text text-transparent'>
@@ -195,7 +195,7 @@ export function EntityDeleteDialog({
 }: EntityDeleteDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="bg-white">
         <DialogHeader>
           <DialogTitle>Xác nhận xóa {entityName}</DialogTitle>
           <DialogDescription>
