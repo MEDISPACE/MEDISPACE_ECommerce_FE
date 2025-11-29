@@ -72,7 +72,7 @@ export function OrderDetailsDrawer({ isOpen, onClose, order }: OrderDetailsDrawe
 
         <div className='mt-6 space-y-5'>
           {/* Order Info Card */}
-          <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+          <Card className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
             <CardHeader className='pb-3'>
               <CardTitle className='text-lg font-semibold text-blue-900 flex items-center gap-2'>
                 <Package className='w-5 h-5 text-blue-600' />
@@ -100,7 +100,7 @@ export function OrderDetailsDrawer({ isOpen, onClose, order }: OrderDetailsDrawe
           </Card>
 
           {/* Customer Info Card */}
-          <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+          <Card className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
             <CardHeader className='pb-3'>
               <CardTitle className='text-lg font-semibold text-blue-900 flex items-center gap-2'>
                 <MapPin className='w-5 h-5 text-blue-600' />
@@ -134,7 +134,7 @@ export function OrderDetailsDrawer({ isOpen, onClose, order }: OrderDetailsDrawe
           </Card>
 
           {/* Products Card */}
-          <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+          <Card className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
             <CardHeader className='pb-3'>
               <CardTitle className='text-lg font-semibold text-blue-900 flex items-center gap-2'>
                 <ShoppingCart className='w-5 h-5 text-blue-600' />
@@ -164,7 +164,7 @@ export function OrderDetailsDrawer({ isOpen, onClose, order }: OrderDetailsDrawe
           </Card>
 
           {/* Payment Summary Card */}
-          <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+          <Card className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
             <CardHeader className='pb-3'>
               <CardTitle className='text-lg font-semibold text-blue-900 flex items-center gap-2'>
                 <CreditCard className='w-5 h-5 text-blue-600' />
@@ -206,30 +206,30 @@ export function OrderDetailsDrawer({ isOpen, onClose, order }: OrderDetailsDrawe
           {/* Notes Card */}
           {(order.notes ||
             ('pharmacistNotes' in order && (order as Order & { pharmacistNotes?: string }).pharmacistNotes)) && (
-            <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
-              <CardHeader className='pb-3'>
-                <CardTitle className='text-lg font-semibold text-blue-900'>Ghi chú</CardTitle>
-              </CardHeader>
-              <CardContent className='space-y-3'>
-                {order.notes && (
-                  <div className='bg-gradient-to-r from-yellow-50 to-amber-50 p-4 rounded-xl border border-yellow-200'>
-                    <p className='text-sm font-semibold text-amber-800 mb-1 flex items-center gap-2'>
-                      <span>💬</span> Ghi chú khách hàng:
-                    </p>
-                    <p className='text-gray-700'>{order.notes}</p>
-                  </div>
-                )}
-                {'pharmacistNotes' in order && (order as Order & { pharmacistNotes?: string }).pharmacistNotes && (
-                  <div className='bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-200'>
-                    <p className='text-sm font-semibold text-blue-800 mb-1 flex items-center gap-2'>
-                      <span>💊</span> Ghi chú dược sĩ:
-                    </p>
-                    <p className='text-gray-700'>{(order as Order & { pharmacistNotes?: string }).pharmacistNotes}</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
+              <Card className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+                <CardHeader className='pb-3'>
+                  <CardTitle className='text-lg font-semibold text-blue-900'>Ghi chú</CardTitle>
+                </CardHeader>
+                <CardContent className='space-y-3'>
+                  {order.notes && (
+                    <div className='bg-gradient-to-r from-yellow-50 to-amber-50 p-4 rounded-xl border border-yellow-200'>
+                      <p className='text-sm font-semibold text-amber-800 mb-1 flex items-center gap-2'>
+                        <span>💬</span> Ghi chú khách hàng:
+                      </p>
+                      <p className='text-gray-700'>{order.notes}</p>
+                    </div>
+                  )}
+                  {'pharmacistNotes' in order && (order as Order & { pharmacistNotes?: string }).pharmacistNotes && (
+                    <div className='bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-200'>
+                      <p className='text-sm font-semibold text-blue-800 mb-1 flex items-center gap-2'>
+                        <span>💊</span> Ghi chú dược sĩ:
+                      </p>
+                      <p className='text-gray-700'>{(order as Order & { pharmacistNotes?: string }).pharmacistNotes}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
         </div>
       </SheetContent>
     </Sheet>

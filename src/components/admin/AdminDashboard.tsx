@@ -142,7 +142,7 @@ export function AdminDashboard() {
   if (statsError) {
     return (
       <div className='flex items-center justify-center h-96'>
-        <Card className='bg-white/80 backdrop-blur-lg border-red-200 p-6'>
+        <Card className='bg-white backdrop-blur-lg border-red-200 p-6'>
           <div className='flex flex-col items-center gap-4'>
             <AlertCircle className='w-12 h-12 text-red-500' />
             <h3 className='text-lg font-semibold text-red-800'>Lỗi tải dữ liệu</h3>
@@ -159,7 +159,7 @@ export function AdminDashboard() {
   return (
     <div className='space-y-6'>
       {/* Header */}
-      <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
+      <div className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
         <div className='flex items-center justify-between'>
           <div>
             <h1
@@ -190,7 +190,7 @@ export function AdminDashboard() {
       {statsLoading ? (
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
           {[1, 2, 3, 4].map((i) => (
-            <Card key={i} className='bg-white/80 backdrop-blur-lg border-blue-100 animate-pulse'>
+            <Card key={i} className='bg-white backdrop-blur-lg border-blue-100 animate-pulse'>
               <CardContent className='p-6'>
                 <div className='h-20 bg-gray-200 rounded'></div>
               </CardContent>
@@ -207,7 +207,7 @@ export function AdminDashboard() {
 
       <div className='grid grid-cols-1 gap-8'>
         {/* Recent Activities */}
-        <Card className='bg-white/80 backdrop-blur-lg shadow-lg border border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg shadow-lg border border-blue-100'>
           <CardHeader>
             <CardTitle className='flex items-center gap-2'>
               <Clock className='w-5 h-5 text-blue-600' />
@@ -255,7 +255,7 @@ export function AdminDashboard() {
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
           {quickActions.map((action, index) => (
             <Link key={index} to={action.href}>
-              <Card className='bg-white/80 backdrop-blur-lg shadow-lg border border-blue-100 hover:shadow-xl transition-all duration-300 cursor-pointer group h-full'>
+              <Card className='bg-white backdrop-blur-lg shadow-lg border border-blue-100 hover:shadow-xl transition-all duration-300 cursor-pointer group h-full'>
                 <CardContent className='p-6 text-center'>
                   <div
                     className={`w-16 h-16 mx-auto mb-4 rounded-lg bg-${action.color}-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}
@@ -273,7 +273,7 @@ export function AdminDashboard() {
 
       {/* User Statistics */}
       <div className='mt-8'>
-        <Card className='bg-white/80 backdrop-blur-lg shadow-lg border border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg shadow-lg border border-blue-100'>
           <CardHeader>
             <CardTitle className='flex items-center gap-2'>
               <Users className='w-5 h-5 text-blue-600' />
