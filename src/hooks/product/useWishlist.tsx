@@ -30,7 +30,7 @@ interface WishlistProviderProps {
 }
 
 export const WishlistProvider = ({ children }: WishlistProviderProps) => {
-  // Safely access auth context - handle cases where it might not be available during HMR
+  // Use AuthContext directly - if not available, default to unauthenticated
   const authContext = useContext(AuthContext)
   const isAuthenticated = authContext?.isAuthenticated ?? false
 
