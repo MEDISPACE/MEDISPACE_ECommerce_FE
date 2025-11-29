@@ -10,7 +10,7 @@ interface OrderStatsCardsProps {
 export function OrderStatsCards({ stats, config }: OrderStatsCardsProps) {
   return (
     <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4'>
-      <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-blue-100'>
         <CardContent className='p-4'>
           <div className='flex items-center justify-between'>
             <div>
@@ -22,7 +22,7 @@ export function OrderStatsCards({ stats, config }: OrderStatsCardsProps) {
         </CardContent>
       </Card>
 
-      <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-blue-100'>
         <CardContent className='p-4'>
           <div className='flex items-center justify-between'>
             <div>
@@ -34,7 +34,7 @@ export function OrderStatsCards({ stats, config }: OrderStatsCardsProps) {
         </CardContent>
       </Card>
 
-      <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-blue-100'>
         <CardContent className='p-4'>
           <div className='flex items-center justify-between'>
             <div>
@@ -46,7 +46,7 @@ export function OrderStatsCards({ stats, config }: OrderStatsCardsProps) {
         </CardContent>
       </Card>
 
-      <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-blue-100'>
         <CardContent className='p-4'>
           <div className='flex items-center justify-between'>
             <div>
@@ -58,7 +58,7 @@ export function OrderStatsCards({ stats, config }: OrderStatsCardsProps) {
         </CardContent>
       </Card>
 
-      <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-blue-100'>
         <CardContent className='p-4'>
           <div className='flex items-center justify-between'>
             <div>
@@ -70,7 +70,7 @@ export function OrderStatsCards({ stats, config }: OrderStatsCardsProps) {
         </CardContent>
       </Card>
 
-      <Card className='bg-white/80 backdrop-blur-lg border-blue-100 lg:col-span-2'>
+      <Card className='bg-white backdrop-blur-lg border-blue-100 lg:col-span-2'>
         <CardContent className='p-4'>
           <div className='flex items-center justify-between'>
             <div>

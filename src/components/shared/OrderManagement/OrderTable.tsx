@@ -109,7 +109,7 @@ export function OrderTable({
                       <MoreVertical className='w-4 h-4' />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align='end' className='bg-white border border-gray-200 shadow-lg'>
+                  <DropdownMenuContent align='end' className='bg-white border border-blue-200 shadow-lg'>
                     <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => onViewDetails(order.id)}>
