@@ -73,17 +73,34 @@ export const STATUS_BADGES: Record<string, BadgeConfig> = {
  * PRESCRIPTION STATUS BADGES
  */
 export const PRESCRIPTION_STATUS_BADGES: Record<string, BadgeConfig> = {
+  // Backend returns PascalCase: Pending, Verified, Rejected, Expired
+  Pending: {
+    label: 'Chờ xử lý',
+    className: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    icon: Clock,
+  },
+  Verified: {
+    label: 'Đã duyệt',
+    className: 'bg-green-100 text-green-800 border-green-200',
+    icon: CheckCircle,
+  },
+  Rejected: {
+    label: 'Từ chối',
+    className: 'bg-red-100 text-red-800 border-red-200',
+    icon: XCircle,
+  },
+  Expired: {
+    label: 'Hết hạn',
+    className: 'bg-orange-100 text-orange-800 border-orange-200',
+    icon: AlertTriangle,
+  },
+  // Backward compatibility (lowercase)
   pending: {
     label: 'Chờ xử lý',
     className: 'bg-yellow-100 text-yellow-800 border-yellow-200',
     icon: Clock,
   },
-  processing: {
-    label: 'Đang xử lý',
-    className: 'bg-blue-100 text-blue-800 border-blue-200',
-    icon: Activity,
-  },
-  approved: {
+  verified: {
     label: 'Đã duyệt',
     className: 'bg-green-100 text-green-800 border-green-200',
     icon: CheckCircle,
@@ -93,10 +110,10 @@ export const PRESCRIPTION_STATUS_BADGES: Record<string, BadgeConfig> = {
     className: 'bg-red-100 text-red-800 border-red-200',
     icon: XCircle,
   },
-  fulfilled: {
-    label: 'Hoàn thành',
-    className: 'bg-gray-100 text-gray-800 border-gray-200',
-    icon: Package,
+  expired: {
+    label: 'Hết hạn',
+    className: 'bg-orange-100 text-orange-800 border-orange-200',
+    icon: AlertTriangle,
   },
 } as const
 
@@ -164,29 +181,6 @@ export const PAYMENT_STATUS_BADGES: Record<string, BadgeConfig> = {
     label: 'Đã hoàn tiền',
     className: 'bg-gray-100 text-gray-800 border-gray-200',
     icon: XCircle,
-  },
-} as const
-
-/**
- * PRIORITY BADGES
- */
-export const PRIORITY_BADGES: Record<string, BadgeConfig> = {
-  urgent: {
-    label: 'Khẩn cấp',
-    className: 'bg-red-500 text-white border-red-600',
-    icon: AlertTriangle,
-  },
-  high: {
-    label: 'Cao',
-    className: 'bg-orange-500 text-white border-orange-600',
-  },
-  normal: {
-    label: 'Bình thường',
-    className: 'bg-blue-100 text-blue-800 border-blue-200',
-  },
-  low: {
-    label: 'Thấp',
-    className: 'bg-gray-100 text-gray-800 border-gray-200',
   },
 } as const
 
@@ -330,15 +324,7 @@ export function getPaymentStatusBadge(status: string, options?: { showIcon?: boo
   return renderBadge(config, options) || <Badge variant='outline'>{status}</Badge>
 }
 
-/**
- * PRIORITY BADGE HELPER
- */
-export function getPriorityBadge(priority: string, options?: { showIcon?: boolean }): ReactElement | null {
-  if (priority === 'normal') return null // Don't show badge for normal priority
 
-  const config = PRIORITY_BADGES[priority]
-  return renderBadge(config, options)
-}
 
 /**
  * PRODUCT TYPE BADGE HELPER (Rx/OTC)

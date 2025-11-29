@@ -408,7 +408,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const showPrescriptionWarning = (productName: string) => {
     toast.warning('Cần kê đơn thuốc', {
       description: `"${productName}" yêu cầu đơn thuốc từ bác sĩ. Vui lòng tải lên đơn thuốc hoặc tư vấn dược sĩ.`,
-      duration: 5000,
+      duration: 3000,
       icon: <AlertCircle className='w-5 h-5 text-orange-600' />,
       action: {
         label: 'Tư vấn ngay',
@@ -438,7 +438,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const showOrderCreatedSuccess = (orderId: string) => {
     toast.success('Đơn hàng đã được tạo', {
       description: `Mã đơn hàng: ${orderId}`,
-      duration: 5000,
+      duration: 3000,
       icon: <CheckCircle className='w-5 h-5 text-green-600' />,
       action: {
         label: 'Xem đơn hàng',
