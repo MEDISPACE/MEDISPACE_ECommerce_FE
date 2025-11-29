@@ -185,29 +185,6 @@ export const PAYMENT_STATUS_BADGES: Record<string, BadgeConfig> = {
 } as const
 
 /**
- * PRIORITY BADGES
- */
-export const PRIORITY_BADGES: Record<string, BadgeConfig> = {
-  urgent: {
-    label: 'Khẩn cấp',
-    className: 'bg-red-500 text-white border-red-600',
-    icon: AlertTriangle,
-  },
-  high: {
-    label: 'Cao',
-    className: 'bg-orange-500 text-white border-orange-600',
-  },
-  normal: {
-    label: 'Bình thường',
-    className: 'bg-blue-100 text-blue-800 border-blue-200',
-  },
-  low: {
-    label: 'Thấp',
-    className: 'bg-gray-100 text-gray-800 border-gray-200',
-  },
-} as const
-
-/**
  * PRODUCT TYPE BADGES (Rx vs OTC)
  */
 export const PRODUCT_TYPE_BADGES: Record<string, BadgeConfig> = {
@@ -347,15 +324,7 @@ export function getPaymentStatusBadge(status: string, options?: { showIcon?: boo
   return renderBadge(config, options) || <Badge variant='outline'>{status}</Badge>
 }
 
-/**
- * PRIORITY BADGE HELPER
- */
-export function getPriorityBadge(priority: string, options?: { showIcon?: boolean }): ReactElement | null {
-  if (priority === 'normal') return null // Don't show badge for normal priority
 
-  const config = PRIORITY_BADGES[priority]
-  return renderBadge(config, options)
-}
 
 /**
  * PRODUCT TYPE BADGE HELPER (Rx/OTC)

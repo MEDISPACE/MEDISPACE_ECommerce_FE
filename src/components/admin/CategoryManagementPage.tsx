@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   Tag,
   Search,
@@ -12,7 +12,12 @@ import {
   CheckCircle,
   XCircle,
   ChevronUp,
+  ChevronDown,
+  ArrowUp,
+  ArrowDown,
+  Image as ImageIcon
 } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
@@ -30,98 +35,149 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { EntityFormDialog, EntityDeleteDialog } from '../shared/EntityFormDialog'
 import { TextField, SelectField, FormGrid, FormSection, TextAreaField } from '../shared/EntityFormFields'
 import { getStatusBadge } from '../../utils/badgeUtils'
+import adminService from '../../services/adminService'
+import { toast } from 'sonner'
+import { ImageUploader } from '../forms/ImageUploader'
 
 interface Category {
-  id: string
+  _id: string
   name: string
   slug: string
   parentId?: string
   productCount: number
-  status: 'active' | 'inactive'
-  order: number
+  isActive: boolean
+  sortOrder: number
   icon?: string
   description: string
-  imageUrl?: string
+  thumbnailImage?: string
+  level: number
+  children?: Category[]
 }
 
-const mockCategories: Category[] = [
-  {
-    id: 'CAT001',
-    name: 'Thuốc',
-    slug: 'thuoc',
-    productCount: 450,
-    status: 'active',
-    order: 1,
-    icon: '💊',
-    description: 'Các loại thuốc kê đơn và không kê đơn',
-  },
-  {
-    id: 'CAT002',
-    name: 'Thuốc kê đơn',
-    slug: 'thuoc-ke-don',
-    parentId: 'CAT001',
-    productCount: 180,
-    status: 'active',
-    order: 1,
-    description: 'Thuốc cần có đơn từ bác sĩ',
-  },
-  {
-    id: 'CAT003',
-    name: 'Thuốc không kê đơn',
-    slug: 'thuoc-khong-ke-don',
-    parentId: 'CAT001',
-    productCount: 270,
-    status: 'active',
-    order: 2,
-    description: 'Thuốc OTC mua tự do',
-  },
-  {
-    id: 'CAT004',
-    name: 'Thực phẩm chức năng',
-    slug: 'thuc-pham-chuc-nang',
-    productCount: 320,
-    status: 'active',
-    order: 2,
-    icon: '🌿',
-    description: 'Vitamin, khoáng chất và thực phẩm bổ sung',
-  },
-  {
-    id: 'CAT005',
-    name: 'Chăm sóc cá nhân',
-    slug: 'cham-soc-ca-nhan',
-    productCount: 245,
-    status: 'active',
-    order: 3,
-    icon: '✨',
-    description: 'Sản phẩm chăm sóc sức khỏe và sắc đẹp',
-  },
-  {
-    id: 'CAT006',
-    name: 'Thiết bị y tế',
-    slug: 'thiet-bi-y-te',
-    productCount: 158,
-    status: 'inactive',
-    order: 4,
-    icon: '🩺',
-    description: 'Dụng cụ y tế và thiết bị chăm sóc sức khỏe',
-  },
-]
-
 export function CategoryManagementPage() {
+  const queryClient = useQueryClient()
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
 
-  const [categories, setEntities] = useState<Category[]>(mockCategories)
-  const [dialogState, setDialogState] = useState<{ isOpen: boolean, mode: 'add' | 'edit' | 'delete', entity: Category | null }>({ isOpen: false, mode: 'add', entity: null })
-  const [formState, setFormState] = useState<{ data: Partial<Category>, errors: Record<string, string>, isSubmitting: boolean }>({ data: {}, errors: {}, isSubmitting: false })
+  // Dialog states
+  const [dialogState, setDialogState] = useState<{
+    isOpen: boolean
+    mode: 'add' | 'edit' | 'delete'
+    entity: Category | null
+    parentId?: string // For adding subcategory
+  }>({ isOpen: false, mode: 'add', entity: null })
 
+  const [formState, setFormState] = useState<{
+    data: Partial<Category>
+    errors: Record<string, string>
+    isSubmitting: boolean
+  }>({ data: {}, errors: {}, isSubmitting: false })
+
+  // Fetch categories tree
+  const { data: categoriesTree = [], isLoading } = useQuery({
+    queryKey: ['admin', 'categories', 'tree'],
+    queryFn: adminService.getCategoryTree,
+    staleTime: 30000
+  })
+
+  // Flatten tree for table view (with indentation)
+  const flattenCategories = useMemo(() => {
+    const flatten = (cats: Category[], result: Category[] = []) => {
+      cats.forEach(cat => {
+        result.push(cat)
+        if (cat.children && cat.children.length > 0) {
+          flatten(cat.children, result)
+        }
+      })
+      return result
+    }
+    return flatten(categoriesTree)
+  }, [categoriesTree])
+
+  // Filter categories
+  const filteredCategories = useMemo(() => {
+    return flattenCategories.filter((category: Category) => {
+      const matchesSearch =
+        category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        category.slug.toLowerCase().includes(searchQuery.toLowerCase())
+
+      const matchesStatus =
+        statusFilter === 'all' ||
+        (statusFilter === 'active' ? category.isActive : !category.isActive)
+
+      return matchesSearch && matchesStatus
+    })
+  }, [flattenCategories, searchQuery, statusFilter])
+
+  // Mutations
+  const createMutation = useMutation({
+    mutationFn: adminService.createCategory,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'categories'] })
+      toast.success('Tạo danh mục thành công')
+      closeDialog()
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Tạo danh mục thất bại')
+    }
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => adminService.updateCategory(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'categories'] })
+      toast.success('Cập nhật danh mục thành công')
+      closeDialog()
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Cập nhật danh mục thất bại')
+    }
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: adminService.deleteCategory,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'categories'] })
+      toast.success('Xóa danh mục thành công')
+      closeDialog()
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Xóa danh mục thất bại')
+    }
+  })
+
+  const toggleStatusMutation = useMutation({
+    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
+      adminService.toggleCategoryStatus(id, isActive),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'categories'] })
+      toast.success('Cập nhật trạng thái thành công')
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Cập nhật trạng thái thất bại')
+    }
+  })
+
+  // Form handlers
   const updateFormData = (field: string, value: unknown) => {
-    setFormState(prev => ({ ...prev, data: { ...prev.data, [field]: value }, errors: { ...prev.errors, [field]: '' } }))
+    setFormState((prev) => ({
+      ...prev,
+      data: { ...prev.data, [field]: value },
+      errors: { ...prev.errors, [field]: '' },
+    }))
   }
 
-  const openAddDialog = () => {
-    setDialogState({ isOpen: true, mode: 'add', entity: null })
-    setFormState({ data: {}, errors: {}, isSubmitting: false })
+  const openAddDialog = (parentId?: string) => {
+    setDialogState({ isOpen: true, mode: 'add', entity: null, parentId })
+    setFormState({
+      data: {
+        parentId: parentId || undefined,
+        isActive: true,
+        sortOrder: 1
+      },
+      errors: {},
+      isSubmitting: false
+    })
   }
 
   const openEditDialog = (entity: Category) => {
@@ -138,41 +194,34 @@ export function CategoryManagementPage() {
     setFormState({ data: {}, errors: {}, isSubmitting: false })
   }
 
-  const handleAdd = async (data: Partial<Category>): Promise<boolean> => {
+  const handleSave = () => {
+    const { data } = formState
     const errors: Record<string, string> = {}
+
     if (!data.name) errors.name = 'Tên danh mục là bắt buộc'
-    if (!data.slug) errors.slug = 'Slug là bắt buộc'
+
     if (Object.keys(errors).length > 0) {
-      setFormState(prev => ({ ...prev, errors }))
-      return false
+      setFormState((prev) => ({ ...prev, errors }))
+      return Promise.resolve(false)
     }
-    const newEntity = { ...data, id: `CAT${String(categories.length + 1).padStart(3, '0')}` } as Category
-    setEntities(prev => [...prev, newEntity])
-    closeDialog()
-    return true
-  }
 
-  const handleEdit = async (data: Partial<Category>): Promise<boolean> => {
-    const errors: Record<string, string> = {}
-    if (!data.name) errors.name = 'Tên danh mục là bắt buộc'
-    if (!data.slug) errors.slug = 'Slug là bắt buộc'
-    if (Object.keys(errors).length > 0) {
-      setFormState(prev => ({ ...prev, errors }))
-      return false
+    if (dialogState.mode === 'edit' && dialogState.entity) {
+      updateMutation.mutate({ id: dialogState.entity._id, data })
+    } else {
+      createMutation.mutate(data)
     }
-    if (!data.id) return false
-    setEntities(prev => prev.map(e => e.id === data.id ? { ...e, ...data } : e))
-    closeDialog()
-    return true
+    return Promise.resolve(true)
   }
 
-  const handleDelete = async (id: string): Promise<boolean> => {
-    setEntities(prev => prev.filter(e => e.id !== id))
-    closeDialog()
-    return true
+  const confirmDelete = () => {
+    if (dialogState.entity) {
+      deleteMutation.mutate(dialogState.entity._id)
+      return Promise.resolve(true)
+    }
+    return Promise.resolve(false)
   }
 
-  // Auto-generate slug when name changes (only for new categories)
+  // Auto-generate slug
   const handleNameChange = (value: string) => {
     updateFormData('name', value)
     if (dialogState.mode !== 'edit') {
@@ -189,81 +238,55 @@ export function CategoryManagementPage() {
     }
   }
 
-  // Form save handlers
-  const handleSaveAdd = () => {
-    return handleAdd(formState.data)
-  }
-
-  const handleSaveEdit = () => {
-    return handleEdit(formState.data)
-  }
-
-  // Delete handler with proper signature
-  const handleCategoryDelete = (category: Category) => {
-    openDeleteDialog(category)
-  }
-
-  const confirmDelete = () => {
-    if (dialogState.entity) {
-      return handleDelete(dialogState.entity.id)
+  // Stats calculation
+  const stats = useMemo(() => {
+    return {
+      total: flattenCategories.length,
+      active: flattenCategories.filter(c => c.isActive).length,
+      inactive: flattenCategories.filter(c => !c.isActive).length,
+      root: flattenCategories.filter(c => !c.parentId).length,
+      subCategories: flattenCategories.filter(c => c.parentId).length,
+      totalProducts: flattenCategories.reduce((sum, c) => sum + (c.productCount || 0), 0),
     }
-    return Promise.resolve(false)
-  }
+  }, [flattenCategories])
 
-  const stats = {
-    total: categories.length,
-    active: categories.filter((c: Category) => c.status === 'active').length,
-    inactive: categories.filter((c: Category) => c.status === 'inactive').length,
-    root: categories.filter((c: Category) => !c.parentId).length,
-    subCategories: categories.filter((c: Category) => c.parentId).length,
-    totalProducts: categories.reduce((sum: number, c: Category) => sum + c.productCount, 0),
-  }
-
-  const filteredCategories = categories.filter((category: Category) => {
-    const matchesSearch =
-      category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      category.slug.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesStatus = statusFilter === 'all' || category.status === statusFilter
-    return matchesSearch && matchesStatus
-  })
-
-  // Get parent categories for dropdown
-  const parentCategories = categories.filter((c: Category) => !c.parentId)
-
-  const getCategoryLevel = (categoryId: string): number => {
-    const category = categories.find((c: Category) => c.id === categoryId)
-    if (!category || !category.parentId) return 0
-    return 1 + getCategoryLevel(category.parentId)
-  }
-
-  const getParentName = (parentId?: string): string => {
-    if (!parentId) return '—'
-    const parent = categories.find((c: Category) => c.id === parentId)
-    return parent ? parent.name : '—'
-  }
+  // Get parent options for select
+  const parentOptions = useMemo(() => {
+    return flattenCategories
+      .filter(c => !dialogState.entity || c._id !== dialogState.entity._id) // Prevent selecting self as parent
+      .map(c => ({
+        value: c._id,
+        label: '—'.repeat(c.level) + ' ' + c.name
+      }))
+  }, [flattenCategories, dialogState.entity])
 
   return (
     <div className='space-y-6'>
       {/* Header */}
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='text-3xl bg-gradient-to-r from-[#0066CC] to-[#4A90E2] bg-clip-text text-transparent'>
+          <h1
+            className='text-3xl font-bold bg-clip-text text-transparent'
+            style={{
+              backgroundImage: `linear-gradient(to right, #0066CC, #4A90E2)`,
+            }}
+          >
             Quản lý danh mục
           </h1>
           <p className='text-gray-600 mt-2'>Quản lý cấu trúc danh mục sản phẩm</p>
         </div>
         <Button
-          onClick={openAddDialog}
+          onClick={() => openAddDialog()}
           className='bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8] gap-2'
         >
           <Plus className='w-4 h-4' />
-          Thêm danh mục
+          Thêm danh mục gốc
         </Button>
       </div>
 
       {/* Stats Cards */}
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4'>
-        <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-blue-100'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
@@ -275,7 +298,7 @@ export function CategoryManagementPage() {
           </CardContent>
         </Card>
 
-        <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-blue-100'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
@@ -287,7 +310,7 @@ export function CategoryManagementPage() {
           </CardContent>
         </Card>
 
-        <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-blue-100'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
@@ -299,7 +322,7 @@ export function CategoryManagementPage() {
           </CardContent>
         </Card>
 
-        <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-blue-100'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
@@ -311,7 +334,7 @@ export function CategoryManagementPage() {
           </CardContent>
         </Card>
 
-        <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-blue-100'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
@@ -323,7 +346,7 @@ export function CategoryManagementPage() {
           </CardContent>
         </Card>
 
-        <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-blue-100'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
@@ -337,7 +360,7 @@ export function CategoryManagementPage() {
       </div>
 
       {/* Filters & Search */}
-      <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-blue-100'>
         <CardContent className='p-6'>
           <div className='flex flex-col md:flex-row gap-4'>
             <div className='flex-1 relative'>
@@ -364,7 +387,7 @@ export function CategoryManagementPage() {
       </Card>
 
       {/* Categories Table */}
-      <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-blue-100'>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
             <Tag className='w-5 h-5 text-blue-600' />
@@ -378,7 +401,6 @@ export function CategoryManagementPage() {
                 <TableRow>
                   <TableHead>Danh mục</TableHead>
                   <TableHead>Slug</TableHead>
-                  <TableHead>Danh mục cha</TableHead>
                   <TableHead>Sản phẩm</TableHead>
                   <TableHead>Thứ tự</TableHead>
                   <TableHead>Trạng thái</TableHead>
@@ -386,86 +408,95 @@ export function CategoryManagementPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredCategories
-                  .sort((a: Category, b: Category) => {
-                    // Sort by parent first, then by order
-                    if (!a.parentId && b.parentId) return -1
-                    if (a.parentId && !b.parentId) return 1
-                    if (a.parentId === b.parentId) return a.order - b.order
-                    return 0
-                  })
-                  .map((category: Category) => {
-                    const level = getCategoryLevel(category.id)
-                    return (
-                      <TableRow key={category.id}>
-                        <TableCell>
-                          <div className='flex items-center gap-2' style={{ paddingLeft: `${level * 24}px` }}>
-                            {level > 0 && <ChevronUp className='w-4 h-4 text-gray-400 rotate-90' />}
-                            {category.icon && <span className='text-xl'>{category.icon}</span>}
-                            {!category.icon &&
-                              (category.parentId ? (
-                                <FolderOpen className='w-5 h-5 text-blue-400' />
-                              ) : (
-                                <Folder className='w-5 h-5 text-[#4A90E2]' />
-                              ))}
-                            <div>
-                              <p className='font-medium text-gray-900'>{category.name}</p>
-                              <p className='text-xs text-gray-500'>{category.description}</p>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className='text-center py-8'>
+                      <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto'></div>
+                    </TableCell>
+                  </TableRow>
+                ) : filteredCategories.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className='text-center py-8 text-gray-500'>
+                      Không tìm thấy danh mục nào
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredCategories.map((category: Category) => (
+                    <TableRow key={category._id} className='hover:bg-blue-50/50'>
+                      <TableCell>
+                        <div className='flex items-center gap-2' style={{ paddingLeft: `${category.level * 24}px` }}>
+                          {category.level > 0 && <ChevronUp className='w-4 h-4 text-gray-400 rotate-90' />}
+
+                          {category.thumbnailImage ? (
+                            <img src={category.thumbnailImage} alt={category.name} className='w-8 h-8 rounded object-cover border border-gray-200' />
+                          ) : (
+                            <div className='w-8 h-8 rounded bg-blue-100 flex items-center justify-center text-lg'>
+                              {category.icon || (category.parentId ? <FolderOpen className='w-4 h-4 text-blue-500' /> : <Folder className='w-4 h-4 text-blue-600' />)}
                             </div>
+                          )}
+
+                          <div>
+                            <p className='font-medium text-gray-900'>{category.name}</p>
+                            {category.description && <p className='text-xs text-gray-500 truncate max-w-[200px]'>{category.description}</p>}
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <code className='text-sm bg-gray-100 px-2 py-1 rounded'>{category.slug}</code>
-                        </TableCell>
-                        <TableCell>
-                          <span className='text-gray-600'>{getParentName(category.parentId)}</span>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant='outline'>{category.productCount} SP</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <span className='text-gray-600'>{category.order}</span>
-                        </TableCell>
-                        <TableCell>{getStatusBadge(category.status)}</TableCell>
-                        <TableCell className='text-right'>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant='ghost' size='sm'>
-                                <MoreVertical className='w-4 h-4' />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align='end'>
-                              <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem>
-                                <Eye className='w-4 h-4 mr-2' />
-                                Xem sản phẩm
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => openEditDialog(category)}>
-                                <Edit className='w-4 h-4 mr-2' />
-                                Chỉnh sửa
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => handleCategoryDelete(category)} className='text-red-600'>
-                                <Trash2 className='w-4 h-4 mr-2' />
-                                Xóa
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <code className='text-sm bg-gray-100 px-2 py-1 rounded'>{category.slug}</code>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant='outline'>{category.productCount || 0} SP</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <span className='text-gray-600'>{category.sortOrder}</span>
+                      </TableCell>
+                      <TableCell>
+                        <div
+                          className='cursor-pointer'
+                          onClick={() => toggleStatusMutation.mutate({ id: category._id, isActive: !category.isActive })}
+                        >
+                          {getStatusBadge(category.isActive ? 'active' : 'inactive')}
+                        </div>
+                      </TableCell>
+                      <TableCell className='text-right'>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant='ghost' size='sm'>
+                              <MoreVertical className='w-4 h-4' />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align='end' className='bg-white shadow-lg border-2 border-blue-200'>
+                            <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => openAddDialog(category._id)}>
+                              <Plus className='w-4 h-4 mr-2' />
+                              Thêm danh mục con
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => openEditDialog(category)}>
+                              <Edit className='w-4 h-4 mr-2' />
+                              Chỉnh sửa
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => openDeleteDialog(category)} className='text-red-600'>
+                              <Trash2 className='w-4 h-4 mr-2' />
+                              Xóa
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
         </CardContent>
       </Card>
 
-      {/* Category Form Sheet - Using reusable component */}
+      {/* Category Form Sheet */}
       <EntityFormDialog
         open={dialogState.isOpen}
-        onOpenChange={(open) => (open ? openAddDialog() : closeDialog())}
+        onOpenChange={(open) => (open ? null : closeDialog())}
         mode='sheet'
         title={dialogState.mode === 'edit' ? 'Chỉnh sửa danh mục' : 'Thêm danh mục mới'}
         description={
@@ -473,7 +504,7 @@ export function CategoryManagementPage() {
             ? `Cập nhật thông tin danh mục ${dialogState.entity?.name || ''}`
             : 'Nhập thông tin danh mục mới'
         }
-        onSave={dialogState.mode === 'edit' ? handleSaveEdit : handleSaveAdd}
+        onSave={handleSave}
         isEdit={dialogState.mode === 'edit'}
       >
         <FormSection title='Thông tin cơ bản'>
@@ -496,15 +527,32 @@ export function CategoryManagementPage() {
           <SelectField
             label='Danh mục cha'
             value={formState.data.parentId || 'none'}
-            onChange={(v) => updateFormData('parentId', v)}
+            onChange={(v) => updateFormData('parentId', v === 'none' ? undefined : v)}
             options={[
               { value: 'none', label: 'Không có (danh mục gốc)' },
-              ...parentCategories.map((cat: Category) => ({ value: cat.id, label: cat.name })),
+              ...parentOptions
             ]}
           />
         </FormSection>
 
-        <FormSection title='Hiển thị'>
+        <FormSection title='Hình ảnh & Icon'>
+          <div className='space-y-4'>
+            <label className='text-sm font-medium text-gray-700'>Ảnh đại diện</label>
+            <ImageUploader
+              maxFiles={1}
+              onImagesChange={(images) => {
+                if (images.length > 0) {
+                  // In a real app, you would upload the file here and get the URL
+                  // For now, we'll use the object URL preview
+                  // TODO: Implement actual file upload
+                  updateFormData('thumbnailImage', images[0].url)
+                } else {
+                  updateFormData('thumbnailImage', undefined)
+                }
+              }}
+            />
+          </div>
+
           <FormGrid cols={2}>
             <TextField
               label='Icon (Emoji)'
@@ -516,16 +564,16 @@ export function CategoryManagementPage() {
             <TextField
               label='Thứ tự hiển thị'
               type='number'
-              value={formState.data.order?.toString() || '1'}
-              onChange={(v) => updateFormData('order', Number(v) || 1)}
+              value={formState.data.sortOrder?.toString() || '1'}
+              onChange={(v) => updateFormData('sortOrder', Number(v) || 1)}
               placeholder='1'
             />
           </FormGrid>
 
           <SelectField
             label='Trạng thái'
-            value={formState.data.status || 'active'}
-            onChange={(v) => updateFormData('status', v as 'active' | 'inactive')}
+            value={formState.data.isActive ? 'active' : 'inactive'}
+            onChange={(v) => updateFormData('isActive', v === 'active')}
             options={[
               { value: 'active', label: 'Hoạt động' },
               { value: 'inactive', label: 'Không hoạt động' },
@@ -544,14 +592,14 @@ export function CategoryManagementPage() {
         </FormSection>
       </EntityFormDialog>
 
-      {/* Delete Confirmation Dialog - Using reusable component */}
+      {/* Delete Confirmation Dialog */}
       <EntityDeleteDialog
         open={dialogState.isOpen && dialogState.mode === 'delete'}
         onOpenChange={() => closeDialog()}
         entityName='danh mục'
         entityDisplayName={dialogState.entity?.name}
         onConfirm={confirmDelete}
-        warningMessage='Tất cả sản phẩm trong danh mục này sẽ bị ảnh hưởng.'
+        warningMessage='Tất cả danh mục con và sản phẩm trong danh mục này sẽ bị ảnh hưởng.'
       />
     </div>
   )

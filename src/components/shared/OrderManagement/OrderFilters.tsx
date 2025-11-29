@@ -30,7 +30,7 @@ export function OrderFilters({
   const hasActiveFilters = searchQuery || filterStatus !== 'all' || filterPayment !== 'all' || filterDate !== 'all'
 
   return (
-    <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+    <Card className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
       <CardContent className='p-6'>
         <div className='space-y-4'>
           {/* Search Bar */}

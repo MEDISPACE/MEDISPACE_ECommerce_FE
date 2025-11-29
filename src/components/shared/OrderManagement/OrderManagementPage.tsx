@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { Download, ShoppingCart } from 'lucide-react'
 import { Button } from '../../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card'
@@ -15,6 +15,7 @@ import { OrderDetailsDrawer } from './OrderDetailsDrawer'
 import type { Order, OrderStatus, PaymentStatus, UserRole } from './types'
 import { orderService as pharmacistOrderService } from '../../../services/pharmacist/order.service'
 import { orderService as generalOrderService } from '../../../services/orderService'
+import adminService from '../../../services/adminService'
 import type { Order as ApiOrder } from '../../../services/pharmacist/dashboard.service'
 
 import { OrderStatus as OrderStatusEnum } from '../../../types/order'
@@ -130,8 +131,15 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
           setAllOrders(response.orders) // Store all orders
           const mappedOrders = response.orders.map(mapApiOrderToOrder)
           setOrders(mappedOrders)
+        } else if (role === 'admin') {
+          // Use admin-specific API
+          const response = await adminService.getAllOrders({
+            limit: 100, // Get all orders for now
+          })
+          const mappedOrders = response.orders.map(mapApiOrderToOrder)
+          setOrders(mappedOrders)
         } else {
-          // Use general order API for admin
+          // Use general order API for other roles
           const apiOrders = await generalOrderService.getOrders()
           const mappedOrders: Order[] = apiOrders.map((order) => ({
             id: order.id,
@@ -176,7 +184,7 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
     revenue: orders.filter((o) => o.status !== 'cancelled').reduce((sum, o) => sum + o.total, 0),
     avgOrder:
       orders.filter((o) => o.status !== 'cancelled').reduce((sum, o) => sum + o.total, 0) /
-        orders.filter((o) => o.status !== 'cancelled').length || 0,
+      orders.filter((o) => o.status !== 'cancelled').length || 0,
   }
 
   const filteredOrders = orders.filter((order) => {
@@ -342,7 +350,7 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
       />
 
       {/* Orders Table */}
-      <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-blue-100'>
         <CardHeader>
           <CardTitle className='flex items-center justify-between'>
             <div className='flex items-center gap-2'>

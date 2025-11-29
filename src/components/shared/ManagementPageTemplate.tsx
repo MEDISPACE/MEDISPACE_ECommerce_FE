@@ -189,7 +189,7 @@ export function ManagementPageTemplate<T extends { id: string }>({
       )}
 
       {/* Filters & Search */}
-      <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
         <CardContent className='p-6'>
           <div className='flex flex-col md:flex-row gap-4'>
             {/* Search */}
@@ -254,7 +254,7 @@ export function ManagementPageTemplate<T extends { id: string }>({
       {beforeTable}
 
       {/* Data Table */}
-      <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
         <CardContent className='p-0'>
           <div className='overflow-x-auto'>
             <Table>

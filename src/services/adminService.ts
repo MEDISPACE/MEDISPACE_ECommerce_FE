@@ -1,4 +1,4 @@
-import apiClient from './apiClient'
+﻿import apiClient from './apiClient'
 
 // ==================== TYPES ====================
 
@@ -69,6 +69,16 @@ export interface UserStats {
     verified: number
 }
 
+export interface PharmacistStats {
+    total: number
+    active: number
+    verified: number
+    onLeave: number
+    totalPrescriptions: number
+    totalConsultations: number
+    avgRating: number
+}
+
 export interface ProductStats {
     total: number
     active: number
@@ -123,6 +133,14 @@ export const getAllUsers = async (params: UserListParams) => {
  */
 export const getUserStats = async (): Promise<UserStats> => {
     const response = await apiClient.get<{ result: UserStats }>('/admin/users/stats')
+    return response.data.result
+}
+
+/**
+ * Get pharmacist statistics
+ */
+export const getPharmacistStats = async (): Promise<PharmacistStats> => {
+    const response = await apiClient.get<{ result: PharmacistStats }>('/admin/users/pharmacists/stats')
     return response.data.result
 }
 
@@ -182,19 +200,168 @@ export const getLowStockProducts = async (): Promise<LowStockProduct[]> => {
     return response.data.result
 }
 
+
+// ==================== ORDER MANAGEMENT ====================
+
+/**
+ * Get all orders
+ */
+export const getAllOrders = async (params: {
+    page?: number
+    limit?: number
+    status?: string
+    paymentStatus?: string
+    search?: string
+    dateFrom?: string
+    dateTo?: string
+}) => {
+    const response = await apiClient.get<{ result: any }>('/admin/orders', { params })
+    return response.data.result
+}
+
+/**
+ * Get order statistics
+ */
+export const getOrderStats = async () => {
+    const response = await apiClient.get<{ result: any }>('/admin/orders/stats')
+    return response.data.result
+}
+
+/**
+ * Get order details
+ */
+export const getOrderDetails = async (orderId: string) => {
+    const response = await apiClient.get<{ result: any }>(`/admin/orders/${orderId}`)
+    return response.data.result
+}
+
+/**
+ * Update order status
+ */
+export const updateOrderStatus = async (orderId: string, data: {
+    status: string
+    notes?: string
+    trackingNumber?: string
+}) => {
+    const response = await apiClient.patch<{ result: any }>(`/admin/orders/${orderId}/status`, data)
+    return response.data.result
+}
+
+
+// ==================== PRESCRIPTION MANAGEMENT ====================
+
+/**
+ * Get all prescriptions
+ */
+export const getAllPrescriptions = async (params: {
+    page?: number
+    limit?: number
+    status?: string
+    search?: string
+}) => {
+    const response = await apiClient.get<{ result: any }>('/admin/prescriptions', { params })
+    return response.data.result
+}
+
+/**
+ * Get prescription statistics
+ */
+export const getPrescriptionStats = async () => {
+    const response = await apiClient.get<{ result: any }>('/admin/prescriptions/stats')
+    return response.data.result
+}
+
+/**
+ * Update prescription status
+ */
+export const updatePrescriptionStatus = async (prescriptionId: string, data: {
+    status: string
+    notes?: string
+}) => {
+    const response = await apiClient.patch<{ result: any }>(`/admin/prescriptions/${prescriptionId}/status`, data)
+    return response.data.result
+}
+
+/**
+ * Bulk update prescriptions
+ */
+export const bulkUpdatePrescriptions = async (prescriptionIds: string[], status: string) => {
+    const response = await apiClient.patch<{ result: any }>('/admin/prescriptions/bulk-update', {
+        prescriptionIds,
+        status
+    })
+    return response.data.result
+}
+
+// ==================== CATEGORY MANAGEMENT ====================
+
+/**
+ * Get category tree (Admin)
+ */
+export const getCategoryTree = async () => {
+    const response = await apiClient.get<{ result: any }>('/categories/admin-tree')
+    return response.data.result
+}
+
+/**
+ * Create category
+ */
+export const createCategory = async (data: any) => {
+    const response = await apiClient.post<{ result: any }>('/categories', data)
+    return response.data.result
+}
+
+/**
+ * Update category
+ */
+export const updateCategory = async (id: string, data: any) => {
+    const response = await apiClient.patch<{ result: any }>(`/categories/${id}`, data)
+    return response.data.result
+}
+
+/**
+ * Delete category
+ */
+export const deleteCategory = async (id: string) => {
+    const response = await apiClient.delete(`/categories/${id}`)
+    return response.data
+}
+
+/**
+ * Toggle category status
+ */
+export const toggleCategoryStatus = async (id: string, isActive: boolean) => {
+    const response = await apiClient.patch<{ result: any }>(`/categories/${id}/toggle-status`, { isActive })
+    return response.data.result
+}
+
 // Export all as default object
 const adminService = {
     getDashboardStats,
     getRecentActivities,
     getAllUsers,
     getUserStats,
+    getPharmacistStats,
     createUser,
     updateUser,
     deleteUser,
     resetUserPassword,
     verifyUserEmail,
     getProductStats,
-    getLowStockProducts
+    getLowStockProducts,
+    getAllOrders,
+    getOrderStats,
+    getOrderDetails,
+    updateOrderStatus,
+    getAllPrescriptions,
+    getPrescriptionStats,
+    updatePrescriptionStatus,
+    bulkUpdatePrescriptions,
+    getCategoryTree,
+    createCategory,
+    updateCategory,
+    deleteCategory,
+    toggleCategoryStatus
 }
 
 export default adminService
