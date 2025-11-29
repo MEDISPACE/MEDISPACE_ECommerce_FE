@@ -24,7 +24,7 @@ const shippingMethods: ShippingMethod[] = [
     id: 'standard',
     name: 'Giao hàng tiêu chuẩn',
     description: 'Giao hàng trong 2-3 ngày',
-    price: 0,
+    price: 25000,
     estimatedDays: '2-3 ngày',
   },
   {
@@ -52,13 +52,6 @@ const paymentMethods: PaymentMethod[] = [
     type: 'cod',
   },
   {
-    id: 'banking',
-    name: 'Chuyển khoản ngân hàng',
-    description: 'Chuyển khoản qua ngân hàng',
-    icon: '🏦',
-    type: 'banking',
-  },
-  {
     id: 'momo',
     name: 'Ví MoMo',
     description: 'Thanh toán qua ví điện tử MoMo',
@@ -66,16 +59,23 @@ const paymentMethods: PaymentMethod[] = [
     type: 'ewallet',
   },
   {
-    id: 'credit',
-    name: 'Thẻ tín dụng/ghi nợ',
-    description: 'Visa, Mastercard, JCB',
+    id: 'vnpay',
+    name: 'VNPay',
+    description: 'Thanh toán qua ví VNPay (ATM/Visa/Master/JCB/QR Pay)',
     icon: '💳',
-    type: 'credit',
+    type: 'ewallet',
+  },
+  {
+    id: 'payos',
+    name: 'Thanh toán qua PayOS',
+    description: 'Thanh toán bằng mã QR VietQR (Mọi ngân hàng)',
+    icon: '🏦',
+    type: 'ewallet',
   },
 ]
 
 export function CheckoutPage() {
-  const { state, getSelectedItemsTotal, getSelectedItemsCount } = useCart()
+  const { state, getSelectedItemsTotal, getSelectedItemsCount, clearCart } = useCart()
 
   const [user, setUser] = useState<User | null>(null)
   const [addresses, setAddresses] = useState<Address[]>([])
@@ -172,7 +172,7 @@ export function CheckoutPage() {
           ward: selectedAddr.ward,
           district: selectedAddr.district || '',
           province: selectedAddr.province,
-          phone: user.phoneNumber || '',
+          phone: selectedAddr.phone || user.phoneNumber || '',
           email: user.email,
         }
       } else {
@@ -184,9 +184,9 @@ export function CheckoutPage() {
       const paymentMethodMap: Record<string, string> = {
         'cod': 'cod',
         'banking': 'bank_transfer',
-        'credit': 'credit_card',
-        'vnpay': 'e_wallet',
-        'momo': 'e_wallet'
+        'vnpay': 'vnpay',
+        'momo': 'momo',
+        'payos': 'payos'
       }
 
       // Create order using real API
@@ -197,15 +197,27 @@ export function CheckoutPage() {
         notes: orderNotes,
       }
 
-      const order = await orderService.createOrder(orderData)
+      logger.info('Checkout: Sending order', { paymentMethod, mapped: paymentMethodMap[paymentMethod] })
+
+      const { order, paymentUrl } = await orderService.createOrder(orderData)
+
+      // Clear cart after successful order creation
+      await clearCart()
+
       logger.info('Checkout: Order created successfully', {
         orderId: order.id,
         userId: user._id,
         total: total
       })
 
-      // Redirect to success page with order ID
-      window.location.href = `/order/success?orderId=${order.id}`
+      // Redirect logic
+      if (paymentUrl) {
+        // Redirect to VNPay
+        window.location.href = paymentUrl
+      } else {
+        // Redirect to success page
+        window.location.href = `/order/success?orderId=${order.id}`
+      }
     } catch (error) {
       logger.error('Checkout: Order placement failed', error)
       alert('Đặt hàng thất bại. Vui lòng thử lại.')
