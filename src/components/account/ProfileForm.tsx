@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { useForm, type SubmitHandler } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Camera, User, Phone, Calendar, Save, X } from 'lucide-react'
+import { Camera, User, Phone, Calendar, Save, X, Mail, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Button } from '../ui/button'
@@ -40,6 +40,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const [isResendingEmail, setIsResendingEmail] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Helper function to format date for input[type="date"]
@@ -107,6 +108,23 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
     }
   }
 
+  const handleResendEmail = async () => {
+    setIsResendingEmail(true)
+    try {
+      await authService.resendVerifyEmail()
+      toast.success('Email xác thực đã được gửi lại', {
+        description: 'Vui lòng kiểm tra hộp thư của bạn.',
+      })
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Có lỗi xảy ra khi gửi email'
+      toast.error('Gửi email thất bại', {
+        description: errorMessage,
+      })
+    } finally {
+      setIsResendingEmail(false)
+    }
+  }
+
   const onSubmit: SubmitHandler<ProfileFormData> = async (data) => {
     setIsSubmitting(true)
 
@@ -120,6 +138,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
       }
 
       // TODO: Handle avatar upload when backend supports it
+      // User mentioned they have an upload API, but I need to find it first.
       if (avatarFile) {
         toast.info('Tính năng upload avatar đang được phát triển')
       }
@@ -265,6 +284,29 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
                   <Label className='text-sm font-medium text-gray-700'>Trạng thái tài khoản</Label>
                   <div className='mt-1'>
                     {getStatusBadge(user?.status)}
+                    {user?.status === 0 && (
+                      <div className='mt-3'>
+                        <Button
+                          onClick={handleResendEmail}
+                          disabled={isResendingEmail}
+                          variant='outline'
+                          size='sm'
+                          className='border-amber-300 text-amber-700 hover:bg-amber-100'
+                        >
+                          {isResendingEmail ? (
+                            <>
+                              <RefreshCw className='w-4 h-4 mr-2 animate-spin' />
+                              Đang gửi...
+                            </>
+                          ) : (
+                            <>
+                              <Mail className='w-4 h-4 mr-2' />
+                              Gửi lại email xác thực
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
 

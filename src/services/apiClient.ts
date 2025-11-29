@@ -24,6 +24,14 @@ class ApiClient {
         const token = localStorage.getItem('medispace_access_token')
         if (token && config.headers) {
           config.headers.Authorization = `Bearer ${token}`
+        } else {
+          // Only warn for protected endpoints that require authentication
+          const protectedEndpoints = ['/cart', '/orders', '/profile', '/admin', '/wishlist', '/users/me']
+          const isProtectedEndpoint = protectedEndpoints.some(endpoint => config.url?.includes(endpoint))
+
+          if (isProtectedEndpoint) {
+            console.warn('API Request without token:', config.method?.toUpperCase(), config.url)
+          }
         }
         return config
       },
@@ -36,6 +44,13 @@ class ApiClient {
     this.client.interceptors.response.use(
       (response: AxiosResponse) => response,
       async (error: AxiosError) => {
+        console.error('API Error:', {
+          url: error.config?.url,
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.message,
+        })
+
         const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
 
         if (error.response?.status === 401 && !originalRequest._retry) {

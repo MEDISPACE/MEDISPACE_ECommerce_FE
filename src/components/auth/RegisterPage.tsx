@@ -137,12 +137,12 @@ const RegisterPage = () => {
         })
 
         setTimeout(() => {
-          navigate('/', {
+          navigate('/login', {
             state: {
-              message: 'Đăng ký thành công! Chào mừng bạn đến với MEDISPACE.',
+              message: 'Đăng ký thành công! Vui lòng kiểm tra email để xác thực.',
             },
           })
-        }, 3000)
+        }, 5000)
       } else {
         throw new Error('Đăng ký thất bại. Vui lòng thử lại.')
       }
@@ -202,10 +202,19 @@ const RegisterPage = () => {
             Chào mừng bạn đến với <span className='text-blue-600'>MEDISPACE</span>!<br />
             Tài khoản của bạn đã được tạo thành công.
             <br />
-            Bạn sẽ được chuyển đến trang đăng nhập trong giây lát.
+            Vui lòng <span className="font-bold text-blue-700">kiểm tra email</span> để xác thực tài khoản trước khi đăng nhập.
           </motion.p>
 
-          <div className='w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto' />
+          <Button
+            onClick={() => navigate('/login')}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2 rounded-xl mb-4"
+          >
+            Đăng nhập ngay
+          </Button>
+
+          <p className="text-sm text-gray-500">
+            Tự động chuyển đến trang đăng nhập sau vài giây...
+          </p>
         </motion.div>
       </PageTransition>
     )
@@ -255,11 +264,10 @@ const RegisterPage = () => {
                 value={formData.firstName}
                 onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                 placeholder='Nhập họ'
-                className={`pl-12 h-14 bg-white border-2 rounded-xl transition-all duration-200 ${
-                  errors.firstName
-                    ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-200'
-                    : 'border-blue-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 hover:border-blue-300'
-                }`}
+                className={`pl-12 h-14 bg-white border-2 rounded-xl transition-all duration-200 ${errors.firstName
+                  ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-200'
+                  : 'border-blue-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 hover:border-blue-300'
+                  }`}
               />
             </div>
             {errors.firstName && (
@@ -287,11 +295,10 @@ const RegisterPage = () => {
                 value={formData.lastName}
                 onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                 placeholder='Nhập tên'
-                className={`pl-12 h-14 bg-white border-2 rounded-xl transition-all duration-200 ${
-                  errors.lastName
-                    ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-200'
-                    : 'border-blue-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 hover:border-blue-300'
-                }`}
+                className={`pl-12 h-14 bg-white border-2 rounded-xl transition-all duration-200 ${errors.lastName
+                  ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-200'
+                  : 'border-blue-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 hover:border-blue-300'
+                  }`}
               />
             </div>
             {errors.lastName && (
@@ -319,11 +326,10 @@ const RegisterPage = () => {
             className='grid grid-cols-2 gap-4'
           >
             <div
-              className={`flex items-center justify-center h-14 border-2 rounded-xl transition-all duration-200 cursor-pointer ${
-                formData.gender === 'Nam'
-                  ? 'border-blue-500 bg-blue-50 shadow-md shadow-blue-100'
-                  : 'border-blue-200 bg-white hover:border-blue-300 hover:bg-blue-50/50'
-              }`}
+              className={`flex items-center justify-center h-14 border-2 rounded-xl transition-all duration-200 cursor-pointer ${formData.gender === 'Nam'
+                ? 'border-blue-500 bg-blue-50 shadow-md shadow-blue-100'
+                : 'border-blue-200 bg-white hover:border-blue-300 hover:bg-blue-50/50'
+                }`}
             >
               <RadioGroupItem value='Nam' id='male' className='sr-only' />
               <Label
@@ -334,11 +340,10 @@ const RegisterPage = () => {
               </Label>
             </div>
             <div
-              className={`flex items-center justify-center h-14 border-2 rounded-xl transition-all duration-200 cursor-pointer ${
-                formData.gender === 'Nữ'
-                  ? 'border-blue-500 bg-blue-50 shadow-md shadow-blue-100'
-                  : 'border-blue-200 bg-white hover:border-blue-300 hover:bg-blue-50/50'
-              }`}
+              className={`flex items-center justify-center h-14 border-2 rounded-xl transition-all duration-200 cursor-pointer ${formData.gender === 'Nữ'
+                ? 'border-blue-500 bg-blue-50 shadow-md shadow-blue-100'
+                : 'border-blue-200 bg-white hover:border-blue-300 hover:bg-blue-50/50'
+                }`}
             >
               <RadioGroupItem value='Nữ' id='female' className='sr-only' />
               <Label
@@ -365,11 +370,10 @@ const RegisterPage = () => {
               value={formData.phoneNumber}
               onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
               placeholder='Nhập số điện thoại'
-              className={`pl-12 h-14 bg-white border-2 rounded-xl transition-all duration-200 ${
-                errors.phoneNumber
-                  ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-200'
-                  : 'border-blue-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 hover:border-blue-300'
-              }`}
+              className={`pl-12 h-14 bg-white border-2 rounded-xl transition-all duration-200 ${errors.phoneNumber
+                ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-200'
+                : 'border-blue-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 hover:border-blue-300'
+                }`}
             />
           </div>
           {errors.phoneNumber && (
@@ -398,11 +402,10 @@ const RegisterPage = () => {
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               placeholder='Nhập địa chỉ email'
-              className={`pl-12 h-14 bg-white border-2 rounded-xl transition-all duration-200 ${
-                errors.email
-                  ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-200'
-                  : 'border-blue-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 hover:border-blue-300'
-              }`}
+              className={`pl-12 h-14 bg-white border-2 rounded-xl transition-all duration-200 ${errors.email
+                ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-200'
+                : 'border-blue-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 hover:border-blue-300'
+                }`}
             />
           </div>
           {errors.email && (
@@ -431,11 +434,10 @@ const RegisterPage = () => {
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               placeholder='Nhập mật khẩu'
-              className={`pl-12 pr-12 h-14 bg-white border-2 rounded-xl transition-all duration-200 ${
-                errors.password
-                  ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-200'
-                  : 'border-blue-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 hover:border-blue-300'
-              }`}
+              className={`pl-12 pr-12 h-14 bg-white border-2 rounded-xl transition-all duration-200 ${errors.password
+                ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-200'
+                : 'border-blue-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 hover:border-blue-300'
+                }`}
             />
             <button
               type='button'
@@ -474,11 +476,10 @@ const RegisterPage = () => {
               value={formData.confirmPassword}
               onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
               placeholder='Nhập lại mật khẩu'
-              className={`pl-12 pr-12 h-14 bg-white border-2 rounded-xl transition-all duration-200 ${
-                errors.confirmPassword
-                  ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-200'
-                  : 'border-blue-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 hover:border-blue-300'
-              }`}
+              className={`pl-12 pr-12 h-14 bg-white border-2 rounded-xl transition-all duration-200 ${errors.confirmPassword
+                ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-200'
+                : 'border-blue-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 hover:border-blue-300'
+                }`}
             />
             <button
               type='button'

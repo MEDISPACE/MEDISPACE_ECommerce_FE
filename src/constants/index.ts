@@ -49,6 +49,7 @@ export const API_ENDPOINTS = {
     RESET_PASSWORD: '/users/reset-password',
     VERIFY_EMAIL: '/users/verify-email',
     RESEND_VERIFY_EMAIL: '/users/resend-verify-email',
+    VERIFY_FORGOT_PASSWORD: '/users/verify-forgot-password',
   },
 
   // User endpoints
@@ -86,6 +87,7 @@ export const API_ENDPOINTS = {
     CREATE: '/orders',
     UPDATE_STATUS: (id: string) => `/orders/${id}/status`,
     CANCEL: (id: string) => `/orders/${id}/cancel`,
+    PAYMENT_URL: (id: string) => `/orders/${id}/payment-url`,
   },
 
   // Cart endpoints
@@ -134,6 +136,7 @@ export const SUCCESS_MESSAGES = {
   FORGOT_PASSWORD_SUCCESS: 'Password reset email sent',
   RESET_PASSWORD_SUCCESS: 'Password reset successful',
   VERIFY_EMAIL_SUCCESS: 'Email verified successfully',
+  RESEND_EMAIL_SUCCESS: 'Verification email sent successfully',
   UPDATE_PROFILE_SUCCESS: 'Profile updated successfully',
   CHANGE_PASSWORD_SUCCESS: 'Password changed successfully',
 } as const

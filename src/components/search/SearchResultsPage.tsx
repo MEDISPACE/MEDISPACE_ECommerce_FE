@@ -18,11 +18,13 @@ import { productService } from '../../services/productService'
 import { categoryService } from '../../services/categoryService'
 import { brandService } from '../../services/brandService'
 import { useCart } from '../../contexts/CartContext'
+import { useWishlist } from '../../hooks/product/useWishlist'
 import type { Product, Category, Brand } from '../../types/product'
 
 export function SearchResultsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const { addToCart } = useCart()
+  const { toggleWishlist, isInWishlist } = useWishlist()
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [isFilterOpen, setIsFilterOpen] = useState(false)
 
@@ -57,6 +59,7 @@ export function SearchResultsPage() {
         setCategories(categoriesData)
         setBrands(brandsData)
       } catch (error) {
+        // Handle error
       }
     }
 
@@ -486,9 +489,8 @@ export function SearchResultsPage() {
           {currentProducts.length > 0 ? (
             <>
               <div
-                className={`grid gap-6 ${
-                  viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'
-                }`}
+                className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'
+                  }`}
               >
                 {currentProducts.map((product) => (
                   <ProductCard
@@ -512,6 +514,10 @@ export function SearchResultsPage() {
                     onAddToCart={() => {
                       addToCart(product, 1)
                     }}
+                    onToggleWishlist={() => {
+                      toggleWishlist(product._id)
+                    }}
+                    isInWishlist={isInWishlist(product._id)}
                   />
                 ))}
               </div>

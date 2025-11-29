@@ -67,14 +67,17 @@ class OrderService {
     return this.transformOrderFromBackend(response.data.result)
   }
 
-  async createOrder(orderData: CreateOrderRequest): Promise<Order> {
+  async createOrder(orderData: CreateOrderRequest): Promise<{ order: Order, paymentUrl?: string }> {
     const requestBody = {
       shippingAddress: orderData.shippingAddress,
       paymentMethod: orderData.paymentMethod,
       notes: orderData.notes
     }
-    const response = await apiClient.post<{ message: string, result: { order: BackendOrder, orderId: string } }>(API_ENDPOINTS.ORDERS.CREATE, requestBody)
-    return this.transformOrderFromBackend(response.data.result.order)
+    const response = await apiClient.post<{ message: string, result: { order: BackendOrder, orderId: string, paymentUrl?: string } }>(API_ENDPOINTS.ORDERS.CREATE, requestBody)
+    return {
+      order: this.transformOrderFromBackend(response.data.result.order),
+      paymentUrl: response.data.result.paymentUrl
+    }
   }
 
   async updateOrderStatus(orderId: string, status: OrderStatus): Promise<Order> {
@@ -83,8 +86,13 @@ class OrderService {
   }
 
   async cancelOrder(orderId: string): Promise<Order> {
-    const response = await apiClient.patch<{ message: string, result: BackendOrder }>(API_ENDPOINTS.ORDERS.CANCEL(orderId))
+    const response = await apiClient.put<{ message: string, result: BackendOrder }>(API_ENDPOINTS.ORDERS.UPDATE_STATUS(orderId), { status: 'cancelled' })
     return this.transformOrderFromBackend(response.data.result)
+  }
+
+  async getPaymentUrl(orderId: string): Promise<string> {
+    const response = await apiClient.post<{ message: string, result: { paymentUrl: string } }>(API_ENDPOINTS.ORDERS.PAYMENT_URL(orderId))
+    return response.data.result.paymentUrl
   }
 
   // Transform backend order format to frontend format

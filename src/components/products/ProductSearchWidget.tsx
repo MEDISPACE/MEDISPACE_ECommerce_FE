@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { Search, Camera, Star, Package, Heart, Plus, Info } from 'lucide-react'
+import { Search, Star, Package, Heart, Plus, Info, ClipboardList, Folders, X } from 'lucide-react'
 import { Input } from '../ui/input'
 import { Button } from '../ui/button'
 import { Card } from '../ui/card'
@@ -7,18 +7,40 @@ import { Badge } from '../ui/badge'
 import { ScrollArea } from '../ui/scroll-area'
 import { ImageWithFallback } from '../shared/ImageWithFallback'
 import { productService } from '../../services/productService'
+import { ProductDetailModal } from './ProductDetailModal'
+import { useWishlist } from '../../hooks/product/useWishlist'
 
 interface Product {
   id: string
   name: string
   image: string
   price: number
+  originalPrice?: number
+  salePrice?: number
+  discountPercentage?: number
+  onSale?: boolean
   unit: string
   stock: number
+  maxOrderQuantity?: number
   rating: number
+  reviewCount?: number
   type: 'rx' | 'otc' | 'supplement' | 'cosmetic'
   brand: string
   barcode?: string
+  sku?: string
+  category?: { name: string }
+  shortDescription?: string
+  description?: string
+  origin?: string
+  packaging?: string
+  expiryInfo?: string
+  ingredients?: string | string[]
+  uses?: string[]
+  instructions?: string
+  warnings?: string[]
+  status?: 'active' | 'discontinued' | 'out_of_stock'
+  requiresPrescription?: boolean
+  tags?: string[]
 }
 
 interface ProductSearchWidgetProps {
@@ -34,13 +56,14 @@ const categoryFilters = [
   { id: 'cosmetic', label: 'Mỹ phẩm', icon: '💄', color: 'text-pink-600' },
 ]
 
-const orderTemplates = ['Cảm cúm thông thường', 'Đau dạ dày + tiêu hóa', 'Chăm sóc da mặt cơ bản', 'Vitamin tổng hợp']
-
 export function ProductSearchWidget({ onProductAdd, onProductInfo, className = '' }: ProductSearchWidgetProps) {
+  const { toggleWishlist, isInWishlist } = useWishlist()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [searchResults, setSearchResults] = useState<Product[]>([])
   const [loading, setLoading] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   const handleSearch = async (term: string) => {
@@ -55,23 +78,43 @@ export function ProductSearchWidget({ onProductAdd, onProductInfo, className = '
 
       // Use real API to search products
       const products = await productService.searchProducts(term)
-      
+
       // Transform API products to local Product format
       const transformedProducts: Product[] = products.map((p) => ({
         id: p._id,
         name: p.name,
         image: p.featuredImage || '/images/product-placeholder.jpg',
         price: p.price || p.salePrice || 0,
+        originalPrice: p.originalPrice,
+        salePrice: p.salePrice,
+        discountPercentage: p.discountPercentage,
+        onSale: p.onSale || p.isOnSale,
         unit: p.unit || 'Hộp',
         stock: p.stockQuantity,
+        maxOrderQuantity: p.maxOrderQuantity,
         rating: p.rating || 4.5,
+        reviewCount: p.reviewCount,
         type: p.requiresPrescription ? 'rx' : 'otc',
         brand: p.brand?.name || 'Unknown',
         barcode: p.barcode,
+        sku: p.sku,
+        category: p.category,
+        shortDescription: p.shortDescription,
+        description: p.description,
+        origin: p.origin,
+        packaging: p.packaging,
+        expiryInfo: p.expiryInfo,
+        ingredients: p.ingredients,
+        uses: p.uses,
+        instructions: p.instructions,
+        warnings: p.warnings,
+        status: p.status,
+        requiresPrescription: p.requiresPrescription,
+        tags: p.tags,
       }))
 
       setSearchResults(transformedProducts)
-    } catch (error) {
+    } catch {
       setSearchResults([])
     } finally {
       setLoading(false)
@@ -95,24 +138,44 @@ export function ProductSearchWidget({ onProductAdd, onProductInfo, className = '
         const isPrescription = categoryId === 'rx'
         const products = await productService.getProducts({
           isPrescription,
-          limit: 50
+          limit: 50,
         })
-        
+
         const transformedProducts: Product[] = products.map((p) => ({
           id: p._id,
           name: p.name,
           image: p.featuredImage || '/images/product-placeholder.jpg',
           price: p.price || p.salePrice || 0,
+          originalPrice: p.originalPrice,
+          salePrice: p.salePrice,
+          discountPercentage: p.discountPercentage,
+          onSale: p.onSale || p.isOnSale,
           unit: p.unit || 'Hộp',
           stock: p.stockQuantity,
+          maxOrderQuantity: p.maxOrderQuantity,
           rating: p.rating || 4.5,
+          reviewCount: p.reviewCount,
           type: p.requiresPrescription ? 'rx' : 'otc',
           brand: p.brand?.name || 'Unknown',
           barcode: p.barcode,
+          sku: p.sku,
+          category: p.category,
+          shortDescription: p.shortDescription,
+          description: p.description,
+          origin: p.origin,
+          packaging: p.packaging,
+          expiryInfo: p.expiryInfo,
+          ingredients: p.ingredients,
+          uses: p.uses,
+          instructions: p.instructions,
+          warnings: p.warnings,
+          status: p.status,
+          requiresPrescription: p.requiresPrescription,
+          tags: p.tags,
         }))
 
         setSearchResults(transformedProducts)
-      } catch (error) {
+      } catch {
         setSearchResults([])
       } finally {
         setLoading(false)
@@ -135,189 +198,178 @@ export function ProductSearchWidget({ onProductAdd, onProductInfo, className = '
     }
   }
 
-  const handleScanBarcode = async () => {
-    // Mock barcode scan - in real implementation, this would use camera API
-    // For now, just trigger a search with a sample barcode
-    const sampleBarcode = '8934563412789'
-    setSearchTerm(sampleBarcode)
-    await handleSearch(sampleBarcode)
+  const handleProductInfoClick = (product: Product) => {
+    setSelectedProduct(product)
+    setIsModalOpen(true)
+    onProductInfo(product) // Keep the parent callback
   }
 
   return (
-    <div className={`space-y-4 ${className}`}>
-      {/* Search Input */}
-      <div className='relative'>
-        <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4' />
-        <Input
-          ref={searchInputRef}
-          type='text'
-          placeholder='Tìm thuốc, barcode, tên...'
-          value={searchTerm}
-          onChange={(e) => handleSearch(e.target.value)}
-          className='pl-10 border-2 border-blue-200 focus:border-blue-500'
-        />
-      </div>
-
-      {/* Quick Actions */}
-      <div className='flex space-x-2'>
-        <Button
-          variant='outline'
-          size='sm'
-          onClick={handleScanBarcode}
-          className='border-blue-200 text-blue-700 hover:bg-blue-50'
-        >
-          <Camera className='w-4 h-4 mr-1' />
-          Scan
-        </Button>
-
-        <Button variant='outline' size='sm' className='border-blue-200 text-blue-700 hover:bg-blue-50'>
-          🎯 Yêu thích
-        </Button>
-      </div>
-
-      {/* Category Filters */}
-      <Card className='p-3'>
-        <h4 className='text-sm font-medium mb-2 text-gray-700'>📂 DANH MỤC NHANH:</h4>
-        <div className='grid grid-cols-2 gap-2'>
-          {categoryFilters.map((category) => (
-            <Button
-              key={category.id}
-              variant={selectedCategory === category.id ? 'default' : 'outline'}
-              size='sm'
-              onClick={() => handleCategoryFilter(category.id)}
-              className={`justify-start text-xs ${
-                selectedCategory === category.id
-                  ? `bg-blue-600 text-white`
-                  : `border-blue-200 ${category.color} hover:bg-blue-50`
-              }`}
-            >
-              <span className='mr-1'>{category.icon}</span>
-              {category.label}
-            </Button>
-          ))}
-        </div>
-      </Card>
-
-      {/* Search Results */}
-      <Card className='border-blue-100'>
-        <div className='p-3 border-b border-blue-100'>
-          <h4 className='font-medium text-blue-900'>📋 KẾT QUẢ TÌM KIẾM</h4>
+    <>
+      <ProductDetailModal
+        product={selectedProduct}
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false)
+          setSelectedProduct(null)
+        }}
+        onAddToCart={onProductAdd}
+      />
+      <div className={`space-y-4 ${className}`}>
+        {/* Search Input */}
+        <div className='relative'>
+          <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4' />
+          <Input
+            ref={searchInputRef}
+            type='text'
+            placeholder='Tìm thuốc, barcode, tên...'
+            value={searchTerm}
+            onChange={(e) => handleSearch(e.target.value)}
+            className='pl-10 border-2 border-blue-200 focus:border-blue-500'
+          />
         </div>
 
-        <ScrollArea className='h-80'>
-          <div className='p-3 space-y-3'>
-            {loading ? (
-              <div className='text-center py-8 text-gray-500'>
-                <div className='inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mb-2'></div>
-                <p>Đang tìm kiếm...</p>
-              </div>
-            ) : searchResults.length === 0 ? (
-              <div className='text-center py-8 text-gray-500'>
-                <Package className='w-12 h-12 mx-auto mb-2 text-gray-300' />
-                <p>Không tìm thấy sản phẩm</p>
-                {searchTerm && <p className='text-sm'>Thử tìm với từ khóa khác</p>}
-              </div>
-            ) : (
-              searchResults.map((product) => {
-                const typeInfo = getProductTypeInfo(product.type)
-                return (
-                  <Card key={product.id} className='p-3 hover:shadow-md transition-shadow'>
-                    <div className='flex space-x-3'>
-                      <div className='flex-shrink-0'>
-                        <ImageWithFallback
-                          src={product.image}
-                          alt={product.name}
-                          className='w-12 h-12 object-cover rounded border'
-                        />
-                      </div>
+        {/* Category Filters */}
+        <Card className='p-3 border-b border-blue-100'>
+          <h4 className='font-medium text-blue-900 flex items-center gap-2'>
+            <Folders className='w-4 h-4' />
+            DANH MỤC NHANH:
+          </h4>
+          <div className='grid grid-cols-2 gap-2'>
+            {categoryFilters.map((category) => (
+              <Button
+                key={category.id}
+                variant={selectedCategory === category.id ? 'default' : 'outline'}
+                size='sm'
+                onClick={() => handleCategoryFilter(category.id)}
+                className={`justify-start text-xs ${selectedCategory === category.id
+                    ? `bg-blue-600 text-white`
+                    : `border-blue-200 ${category.color} hover:bg-blue-50`
+                  }`}
+              >
+                <span className='mr-1'>{category.icon}</span>
+                {category.label}
+              </Button>
+            ))}
+          </div>
+        </Card>
 
-                      <div className='flex-1 min-w-0'>
-                        <div className='flex items-start justify-between mb-1'>
-                          <h5 className='font-medium text-sm line-clamp-1'>{product.name}</h5>
-                          <Button variant='ghost' size='sm' className='p-1 h-auto text-gray-400 hover:text-red-500'>
-                            <Heart className='w-3 h-3' />
-                          </Button>
-                        </div>
-
-                        <div className='text-xs text-gray-600 mb-2'>
-                          {product.unit} | {product.price.toLocaleString('vi-VN')}đ
-                        </div>
-
-                        <div className='flex items-center justify-between mb-2'>
-                          <div className='flex items-center space-x-2'>
-                            <div className='flex items-center space-x-1'>
-                              <span className='text-xs'>📦 Tồn: {product.stock}</span>
-                            </div>
-
-                            <Badge variant='secondary' className={`text-xs ${typeInfo.color}`}>
-                              {typeInfo.badge}
-                            </Badge>
-
-                            <div className='flex items-center space-x-1'>
-                              <Star className='w-3 h-3 fill-yellow-400 text-yellow-400' />
-                              <span className='text-xs text-gray-600'>{product.rating}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className='flex space-x-2'>
-                          <Button
-                            size='sm'
-                            onClick={() => onProductAdd(product, 1)}
-                            className='bg-blue-600 hover:bg-blue-700 text-white h-7 px-3 text-xs'
-                          >
-                            <Plus className='w-3 h-3 mr-1' />
-                            Thêm
-                          </Button>
-
-                          <Button
-                            variant='outline'
-                            size='sm'
-                            onClick={() => onProductInfo(product)}
-                            className='border-blue-200 text-blue-700 hover:bg-blue-50 h-7 px-3 text-xs'
-                          >
-                            <Info className='w-3 h-3 mr-1' />
-                            Chi tiết
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                )
-              })
+        {/* Search Results */}
+        <Card className='border-blue-100'>
+          <div className='p-3 border-b border-blue-100 flex items-center justify-between'>
+            <h4 className='font-medium text-blue-900 flex items-center gap-2'>
+              <ClipboardList className='w-4 h-4' />
+              KẾT QUẢ TÌM KIẾM
+            </h4>
+            {(searchResults.length > 0 || searchTerm || selectedCategory) && (
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={() => {
+                  setSearchTerm('')
+                  setSelectedCategory(null)
+                  setSearchResults([])
+                  searchInputRef.current?.focus()
+                }}
+                className='h-7 px-2 text-gray-500 hover:text-red-600 hover:bg-red-50'
+              >
+                <X className='w-4 h-4 mr-1' />
+                Xoá
+              </Button>
             )}
           </div>
-        </ScrollArea>
-      </Card>
 
-      {/* Order Templates */}
-      <Card className='border-blue-100'>
-        <div className='p-3 border-b border-blue-100'>
-          <h4 className='font-medium text-blue-900'>🏷️ TEMPLATE ĐƠN HÀNG</h4>
-        </div>
+          <ScrollArea className='h-80'>
+            <div className='p-3 space-y-3'>
+              {loading ? (
+                <div className='text-center py-8 text-gray-500'>
+                  <div className='inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mb-2'></div>
+                  <p>Đang tìm kiếm...</p>
+                </div>
+              ) : searchResults.length === 0 ? (
+                <div className='text-center py-8 text-gray-500'>
+                  <Package className='w-12 h-12 mx-auto mb-2 text-gray-300' />
+                  <p>Không tìm thấy sản phẩm</p>
+                  {searchTerm && <p className='text-sm'>Thử tìm với từ khóa khác</p>}
+                </div>
+              ) : (
+                searchResults.map((product) => {
+                  const typeInfo = getProductTypeInfo(product.type)
+                  return (
+                    <Card key={product.id} className='p-3 hover:shadow-md transition-shadow border-b border-blue-200'>
+                      <div className='flex space-x-3'>
+                        <div className='flex-shrink-0'>
+                          <ImageWithFallback
+                            src={product.image}
+                            alt={product.name}
+                            className='w-12 h-12 object-cover rounded border border-b border-blue-100'
+                          />
+                        </div>
 
-        <div className='p-3 space-y-2'>
-          {orderTemplates.map((template, index) => (
-            <Button
-              key={index}
-              variant='outline'
-              size='sm'
-              className='w-full justify-start text-xs border-blue-200 text-blue-700 hover:bg-blue-50'
-            >
-              • {template}
-            </Button>
-          ))}
+                        <div className='flex-1 min-w-0'>
+                          <div className='flex items-start justify-between mb-1'>
+                            <h5 className='font-medium text-sm line-clamp-1'>{product.name}</h5>
+                            <Button
+                              variant='ghost'
+                              size='sm'
+                              className='p-1 h-auto text-gray-400 hover:text-red-500'
+                              onClick={() => toggleWishlist(product.id)}
+                            >
+                              <Heart className={`w-3 h-3 ${isInWishlist(product.id) ? 'fill-red-500 text-red-500' : ''}`} />
+                            </Button>
+                          </div>
 
-          <Button
-            variant='outline'
-            size='sm'
-            className='w-full justify-start text-xs border-dashed border-blue-300 text-blue-600 hover:bg-blue-50'
-          >
-            <Plus className='w-3 h-3 mr-1' />
-            Tạo template mới
-          </Button>
-        </div>
-      </Card>
-    </div>
+                          <div className='text-xs text-gray-600 mb-2'>
+                            {product.unit} | {product.price.toLocaleString('vi-VN')}đ
+                          </div>
+
+                          <div className='flex items-center justify-between mb-2'>
+                            <div className='flex items-center space-x-2'>
+                              <div className='flex items-center space-x-1'>
+                                <span className='text-xs'>📦 Tồn: {product.stock}</span>
+                              </div>
+
+                              <Badge variant='secondary' className={`text-xs ${typeInfo.color}`}>
+                                {typeInfo.badge}
+                              </Badge>
+
+                              <div className='flex items-center space-x-1'>
+                                <Star className='w-3 h-3 fill-yellow-400 text-yellow-400' />
+                                <span className='text-xs text-gray-600'>{product.rating}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className='flex space-x-2'>
+                            <Button
+                              size='sm'
+                              onClick={() => onProductAdd(product, 1)}
+                              className='bg-blue-600 hover:bg-blue-700 text-white h-7 px-3 text-xs'
+                            >
+                              <Plus className='w-3 h-3 mr-1' />
+                              Thêm
+                            </Button>
+
+                            <Button
+                              variant='outline'
+                              size='sm'
+                              onClick={() => handleProductInfoClick(product)}
+                              className='border-blue-200 text-blue-700 hover:bg-blue-50 h-7 px-3 text-xs'
+                            >
+                              <Info className='w-3 h-3 mr-1' />
+                              Chi tiết
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  )
+                })
+              )}
+            </div>
+          </ScrollArea>
+        </Card>
+      </div>
+    </>
   )
 }

@@ -1,19 +1,20 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Stethoscope,
   Search,
-  Plus,
-  Edit,
-  Trash2,
-  Eye,
-  MoreVertical,
   CheckCircle,
   Award,
   Calendar,
-  Mail,
-  Phone,
-  MapPin,
   FileText,
+  RefreshCw,
+  ChevronLeft,
+  ChevronRight,
+  MoreVertical,
+  Trash2,
+  Edit,
+  Eye,
+  Ban,
 } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
@@ -29,312 +30,380 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
-import { Checkbox } from '../ui/checkbox'
-import { useEntityManagement } from '../../utils/useEntityManagement'
-import { EntityFormDialog, EntityDeleteDialog } from '../shared/EntityFormDialog'
-import { TextField, SelectField, FormGrid, FormSection } from '../shared/EntityFormFields'
-import { getStatusBadge } from '../../utils/badgeUtils'
+import { Avatar, AvatarFallback } from '../ui/avatar'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '../ui/dialog'
+import adminService, { type PharmacistStats } from '~/services/adminService'
+import { toast } from 'sonner'
+import { format } from 'date-fns'
+import { vi } from 'date-fns/locale'
+import { ConfirmDialog } from '../shared/ConfirmDialog'
 
-interface Pharmacist {
-  id: string
-  name: string
+// Type definitions
+interface UserData {
+  _id: string
+  firstName: string
+  lastName: string
   email: string
-  phone: string
-  licenseNumber: string
-  specialty: string
-  status: 'active' | 'inactive' | 'on_leave'
-  verified: boolean
-  joinDate: string
-  location: string
-  prescriptionsProcessed: number
-  consultationsCompleted: number
-  rating: number
-  avatar?: string
+  phoneNumber: string
+  role: number
+  status: number
+  createdAt?: string
 }
 
-const mockPharmacists: Pharmacist[] = [
-  {
-    id: 'PH001',
-    name: 'DS. Lê Văn Cường',
-    email: 'levancuong@medispace.vn',
-    phone: '0923456789',
-    licenseNumber: 'DS-HCM-12345',
-    specialty: 'Dược lâm sàng',
-    status: 'active',
-    verified: true,
-    joinDate: '2023-11-10',
-    location: 'TP. Hồ Chí Minh',
-    prescriptionsProcessed: 1245,
-    consultationsCompleted: 567,
-    rating: 4.8,
-  },
-  {
-    id: 'PH002',
-    name: 'DS. Đặng Văn Giang',
-    email: 'dangvangiang@medispace.vn',
-    phone: '0967890123',
-    licenseNumber: 'DS-HCM-12346',
-    specialty: 'Dược cộng đồng',
-    status: 'active',
-    verified: true,
-    joinDate: '2024-01-05',
-    location: 'TP. Hồ Chí Minh',
-    prescriptionsProcessed: 892,
-    consultationsCompleted: 423,
-    rating: 4.7,
-  },
-  {
-    id: 'PH003',
-    name: 'DS. Nguyễn Thị Mai',
-    email: 'nguyenthimai@medispace.vn',
-    phone: '0912345678',
-    licenseNumber: 'DS-HN-78901',
-    specialty: 'Dược lâm sàng',
-    status: 'active',
-    verified: true,
-    joinDate: '2023-08-15',
-    location: 'Hà Nội',
-    prescriptionsProcessed: 1567,
-    consultationsCompleted: 789,
-    rating: 4.9,
-  },
-  {
-    id: 'PH004',
-    name: 'DS. Trần Hoàng Phúc',
-    email: 'tranhoangphuc@medispace.vn',
-    phone: '0934567890',
-    licenseNumber: 'DS-HCM-12347',
-    specialty: 'Dược cổ truyền',
-    status: 'on_leave',
-    verified: true,
-    joinDate: '2023-12-20',
-    location: 'TP. Hồ Chí Minh',
-    prescriptionsProcessed: 456,
-    consultationsCompleted: 234,
-    rating: 4.6,
-  },
-  {
-    id: 'PH005',
-    name: 'DS. Phạm Thu Hà',
-    email: 'phamthuha@medispace.vn',
-    phone: '0945678901',
-    licenseNumber: 'DS-DN-45678',
-    specialty: 'Dược lâm sàng',
-    status: 'active',
-    verified: false,
-    joinDate: '2024-12-01',
-    location: 'Đà Nẵng',
-    prescriptionsProcessed: 123,
-    consultationsCompleted: 67,
-    rating: 4.5,
-  },
-]
+interface PaginationData {
+  page: number
+  limit: number
+  total: number
+  totalPages: number
+}
+
+interface UsersResponse {
+  result: {
+    users: UserData[]
+    pagination: PaginationData
+  }
+}
+
+interface ResetPasswordResponse {
+  newPassword: string
+  message: string
+}
+
+// Status mapping
+const STATUS_MAP: Record<number, string> = {
+  0: 'unverified',
+  1: 'verified',
+  2: 'banned',
+}
 
 export function PharmacistManagementPage() {
+  const queryClient = useQueryClient()
+
+  // State
+  const [page, setPage] = useState(1)
+  const [limit] = useState(10)
   const [searchQuery, setSearchQuery] = useState('')
   const [filterStatus, setFilterStatus] = useState<string>('all')
-  const [filterVerified, setFilterVerified] = useState<string>('all')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [selectedPharmacist, setSelectedPharmacist] = useState<UserData | null>(null)
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [editFormData, setEditFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phoneNumber: '',
+  })
 
-  // Use entity management hook
-  const {
-    entities: pharmacists,
-    formState,
-    dialogState,
-    openAddDialog,
-    openDeleteDialog,
-    closeDialog,
-    handleAdd,
-    handleEdit,
-    handleDelete,
-    updateFormData,
-  } = useEntityManagement<Pharmacist>({
-    initialEntities: mockPharmacists,
-    entityName: 'pharmacist',
-    entityNameVi: 'dược sĩ',
-    fields: [], // We'll handle form fields manually
-    generateId: (): string => `PH${String(mockPharmacists.length + 1).padStart(3, '0')}`,
-    validator: (data: Partial<Pharmacist>) => {
-      const errors: Record<string, string> = {}
-      if (!data.name) errors.name = 'Tên dược sĩ là bắt buộc'
-      if (!data.email) errors.email = 'Email là bắt buộc'
-      if (!data.phone) errors.phone = 'Số điện thoại là bắt buộc'
-      if (!data.licenseNumber) errors.licenseNumber = 'Số giấy phép là bắt buộc'
-      return errors
+  // Confirm dialog state
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean
+    title: string
+    description: string
+    onConfirm: () => void
+    variant?: 'default' | 'destructive'
+  }>({ open: false, title: '', description: '', onConfirm: () => { }, variant: 'default' })
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery)
+      setPage(1)
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  // Fetch pharmacists (users with role=1)
+  const { data: pharmacistsData, isLoading, error, refetch } = useQuery<UsersResponse>({
+    queryKey: ['admin', 'pharmacists', page, limit, filterStatus, debouncedSearch],
+    queryFn: async () => {
+      const response = await adminService.getAllUsers({
+        page,
+        limit,
+        role: '1', // Pharmacist role
+        status: filterStatus === 'all' ? undefined : filterStatus,
+        search: debouncedSearch || undefined,
+      })
+      return response as UsersResponse
+    },
+  })
+  const { data: stats } = useQuery<PharmacistStats>({
+    queryKey: ['admin', 'pharmacists', 'stats'],
+    queryFn: adminService.getPharmacistStats,
+  })
+
+  // Delete user mutation
+  const deleteMutation = useMutation({
+    mutationFn: (userId: string) => adminService.deleteUser(userId),
+    onSuccess: () => {
+      toast.success('Đã xóa dược sĩ thành công')
+      queryClient.invalidateQueries({ queryKey: ['admin', 'pharmacists'] })
+    },
+    onError: () => {
+      toast.error('Không thể xóa dược sĩ')
     },
   })
 
-  // Selection state for bulk operations
-  const [selectedPharmacists, setSelectedPharmacists] = useState<string[]>([])
-
-  const stats = {
-    total: pharmacists.length,
-    active: pharmacists.filter((p) => p.status === 'active').length,
-    verified: pharmacists.filter((p) => p.verified).length,
-    onLeave: pharmacists.filter((p) => p.status === 'on_leave').length,
-    totalPrescriptions: pharmacists.reduce((sum, p) => sum + p.prescriptionsProcessed, 0),
-    totalConsultations: pharmacists.reduce((sum, p) => sum + p.consultationsCompleted, 0),
-    avgRating: (pharmacists.reduce((sum, p) => sum + p.rating, 0) / pharmacists.length).toFixed(1),
-  }
-
-  const filteredPharmacists = pharmacists.filter((pharmacist) => {
-    const matchesSearch =
-      pharmacist.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      pharmacist.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      pharmacist.licenseNumber.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesStatus = filterStatus === 'all' || pharmacist.status === filterStatus
-    const matchesVerified =
-      filterVerified === 'all' ||
-      (filterVerified === 'verified' && pharmacist.verified) ||
-      (filterVerified === 'unverified' && !pharmacist.verified)
-    return matchesSearch && matchesStatus && matchesVerified
+  // Reset password mutation
+  const resetPasswordMutation = useMutation<ResetPasswordResponse, Error, string>({
+    mutationFn: async (userId: string) => {
+      const response = await adminService.resetUserPassword(userId)
+      return response as ResetPasswordResponse
+    },
+    onSuccess: (data: ResetPasswordResponse) => {
+      toast.success(`Đã reset mật khẩu. Mật khẩu mới: ${data.newPassword}`)
+    },
+    onError: () => {
+      toast.error('Không thể reset mật khẩu')
+    },
   })
 
-  // Form save handlers
-  const handleSaveAdd = () => {
-    return handleAdd(formState.data)
+  // Verify email mutation
+  const verifyEmailMutation = useMutation({
+    mutationFn: (userId: string) => adminService.verifyUserEmail(userId),
+    onSuccess: () => {
+      toast.success('Đã xác thực email dược sĩ')
+      queryClient.invalidateQueries({ queryKey: ['admin', 'pharmacists'] })
+    },
+    onError: () => {
+      toast.error('Không thể xác thực email')
+    },
+  })
+
+  // Update user mutation (for ban/unban)
+  const updateMutation = useMutation({
+    mutationFn: ({ userId, data }: { userId: string; data: any }) =>
+      adminService.updateUser(userId, data),
+    onSuccess: () => {
+      toast.success('Đã cập nhật thông tin dược sĩ')
+      queryClient.invalidateQueries({ queryKey: ['admin', 'pharmacists'] })
+    },
+    onError: () => {
+      toast.error('Không thể cập nhật thông tin')
+    },
+  })
+
+  // Handlers
+  const handleDelete = (userId: string) => {
+    setConfirmDialog({
+      open: true,
+      title: 'Xóa dược sĩ',
+      description: 'Bạn có chắc chắn muốn xóa dược sĩ này? Hành động này không thể hoàn tác.',
+      onConfirm: () => deleteMutation.mutate(userId),
+      variant: 'destructive',
+    })
+  }
+
+  const handleResetPassword = (userId: string) => {
+    setConfirmDialog({
+      open: true,
+      title: 'Reset mật khẩu',
+      description: 'Bạn có chắc chắn muốn reset mật khẩu dược sĩ này? Mật khẩu mới sẽ được tạo tự động.',
+      onConfirm: () => resetPasswordMutation.mutate(userId),
+    })
+  }
+
+  const handleVerifyEmail = (userId: string) => {
+    setConfirmDialog({
+      open: true,
+      title: 'Xác thực email',
+      description: 'Bạn có chắc chắn muốn xác thực email dược sĩ này?',
+      onConfirm: () => verifyEmailMutation.mutate(userId),
+    })
+  }
+
+  const handleViewDetails = (pharmacist: UserData) => {
+    setSelectedPharmacist(pharmacist)
+    setIsViewDialogOpen(true)
+  }
+
+  const handleEdit = (pharmacist: UserData) => {
+    setSelectedPharmacist(pharmacist)
+    setEditFormData({
+      firstName: pharmacist.firstName,
+      lastName: pharmacist.lastName,
+      email: pharmacist.email,
+      phoneNumber: pharmacist.phoneNumber,
+    })
+    setIsEditDialogOpen(true)
   }
 
   const handleSaveEdit = () => {
-    return handleEdit(formState.data)
+    if (!selectedPharmacist) return
+
+    updateMutation.mutate(
+      {
+        userId: selectedPharmacist._id,
+        data: editFormData,
+      },
+      {
+        onSuccess: () => {
+          setIsEditDialogOpen(false)
+          setSelectedPharmacist(null)
+        },
+      }
+    )
   }
 
-  // Delete handler
-  const handlePharmacistDelete = (pharmacist: Pharmacist) => {
-    openDeleteDialog(pharmacist)
+  const handleToggleBan = (pharmacist: UserData) => {
+    const newStatus = pharmacist.status === 2 ? 1 : 2 // Toggle between banned (2) and verified (1)
+    const action = newStatus === 2 ? 'khóa' : 'mở khóa'
+
+    setConfirmDialog({
+      open: true,
+      title: newStatus === 2 ? 'Khóa tài khoản' : 'Mở khóa tài khoản',
+      description: `Bạn có chắc chắn muốn ${action} tài khoản dược sĩ này?`,
+      onConfirm: () => updateMutation.mutate({
+        userId: pharmacist._id,
+        data: { status: newStatus },
+      }),
+      variant: newStatus === 2 ? 'destructive' : 'default',
+    })
   }
 
-  const confirmDelete = () => {
-    if (dialogState.entity) {
-      return handleDelete(dialogState.entity.id)
+  const handleRefresh = () => {
+    refetch()
+    queryClient.invalidateQueries({ queryKey: ['admin', 'pharmacists', 'stats'] })
+  }
+
+  // Helper functions
+  const getStatusBadge = (status: number) => {
+    const statusStr = STATUS_MAP[status] || 'unknown'
+    const colors: Record<string, string> = {
+      verified: 'bg-green-100 text-green-700',
+      unverified: 'bg-yellow-100 text-yellow-700',
+      banned: 'bg-red-100 text-red-700',
     }
-    return Promise.resolve(false)
+    const labels: Record<string, string> = {
+      verified: 'Hoạt động',
+      unverified: 'Chưa xác thực',
+      banned: 'Đã khóa',
+    }
+    return (
+      <Badge className={colors[statusStr] || 'bg-gray-100 text-gray-700'}>
+        {labels[statusStr] || statusStr}
+      </Badge>
+    )
   }
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedPharmacists(filteredPharmacists.map((p) => p.id))
-    } else {
-      setSelectedPharmacists([])
-    }
-  }
-
-  const handleSelectOne = (id: string, checked: boolean) => {
-    if (checked) {
-      setSelectedPharmacists([...selectedPharmacists, id])
-    } else {
-      setSelectedPharmacists(selectedPharmacists.filter((selectedId) => selectedId !== id))
-    }
-  }
+  const pharmacists = pharmacistsData?.result?.users || []
+  const pagination = pharmacistsData?.result?.pagination || { page: 1, totalPages: 1, total: 0 }
 
   return (
     <div className='space-y-6'>
       {/* Header */}
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='text-3xl bg-gradient-to-r from-[#0066CC] to-[#4A90E2] bg-clip-text text-transparent'>
+          <h1 className='text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#0066CC] to-[#4A90E2]'>
             Quản lý dược sĩ
           </h1>
           <p className='text-gray-600 mt-2'>Quản lý đội ngũ dược sĩ tư vấn</p>
         </div>
-        <Button
-          onClick={openAddDialog}
-          className='bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8] gap-2'
-        >
-          <Plus className='w-4 h-4' />
-          Thêm dược sĩ
-        </Button>
+        <div className='flex items-center gap-3'>
+          <Button variant='outline' className='gap-2' onClick={handleRefresh}>
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            Làm mới
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4'>
-        <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
-          <CardContent className='p-4'>
-            <div className='flex items-center justify-between'>
-              <div>
-                <p className='text-xs text-gray-600'>Tổng số</p>
-                <p className='text-2xl font-semibold text-blue-600'>{stats.total}</p>
+      {stats && (
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4'>
+          <Card className='bg-white backdrop-blur-lg border-blue-100'>
+            <CardContent className='p-4'>
+              <div className='flex items-center justify-between'>
+                <div>
+                  <p className='text-xs text-gray-600'>Tổng số</p>
+                  <p className='text-2xl font-semibold text-blue-600'>{stats.total}</p>
+                </div>
+                <Stethoscope className='w-8 h-8 text-blue-400' />
               </div>
-              <Stethoscope className='w-8 h-8 text-blue-400' />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
-          <CardContent className='p-4'>
-            <div className='flex items-center justify-between'>
-              <div>
-                <p className='text-xs text-gray-600'>Hoạt động</p>
-                <p className='text-2xl font-semibold text-green-600'>{stats.active}</p>
+          <Card className='bg-white backdrop-blur-lg border-blue-100'>
+            <CardContent className='p-4'>
+              <div className='flex items-center justify-between'>
+                <div>
+                  <p className='text-xs text-gray-600'>Hoạt động</p>
+                  <p className='text-2xl font-semibold text-green-600'>{stats.active}</p>
+                </div>
+                <CheckCircle className='w-8 h-8 text-green-400' />
               </div>
-              <CheckCircle className='w-8 h-8 text-green-400' />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
-          <CardContent className='p-4'>
-            <div className='flex items-center justify-between'>
-              <div>
-                <p className='text-xs text-gray-600'>Đã xác thực</p>
-                <p className='text-2xl font-semibold text-blue-600'>{stats.verified}</p>
+          <Card className='bg-white backdrop-blur-lg border-blue-100'>
+            <CardContent className='p-4'>
+              <div className='flex items-center justify-between'>
+                <div>
+                  <p className='text-xs text-gray-600'>Đã xác thực</p>
+                  <p className='text-2xl font-semibold text-blue-600'>{stats.verified}</p>
+                </div>
+                <Award className='w-8 h-8 text-blue-400' />
               </div>
-              <Award className='w-8 h-8 text-blue-400' />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
-          <CardContent className='p-4'>
-            <div className='flex items-center justify-between'>
-              <div>
-                <p className='text-xs text-gray-600'>Nghỉ phép</p>
-                <p className='text-2xl font-semibold text-yellow-600'>{stats.onLeave}</p>
+          <Card className='bg-white backdrop-blur-lg border-blue-100'>
+            <CardContent className='p-4'>
+              <div className='flex items-center justify-between'>
+                <div>
+                  <p className='text-xs text-gray-600'>Nghỉ phép</p>
+                  <p className='text-2xl font-semibold text-yellow-600'>{stats.onLeave}</p>
+                </div>
+                <Calendar className='w-8 h-8 text-yellow-400' />
               </div>
-              <Calendar className='w-8 h-8 text-yellow-400' />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
-          <CardContent className='p-4'>
-            <div className='flex items-center justify-between'>
-              <div>
-                <p className='text-xs text-gray-600'>Đơn xử lý</p>
-                <p className='text-xl font-semibold text-[#4A90E2]'>{stats.totalPrescriptions}</p>
+          <Card className='bg-white backdrop-blur-lg border-blue-100'>
+            <CardContent className='p-4'>
+              <div className='flex items-center justify-between'>
+                <div>
+                  <p className='text-xs text-gray-600'>Đơn xử lý</p>
+                  <p className='text-xl font-semibold text-[#4A90E2]'>{stats.totalPrescriptions}</p>
+                </div>
+                <FileText className='w-8 h-8 text-[#4A90E2]' />
               </div>
-              <FileText className='w-8 h-8 text-[#4A90E2]' />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
-          <CardContent className='p-4'>
-            <div className='flex items-center justify-between'>
-              <div>
-                <p className='text-xs text-gray-600'>Tư vấn</p>
-                <p className='text-xl font-semibold text-blue-600'>{stats.totalConsultations}</p>
+          <Card className='bg-white backdrop-blur-lg border-blue-100'>
+            <CardContent className='p-4'>
+              <div className='flex items-center justify-between'>
+                <div>
+                  <p className='text-xs text-gray-600'>Tư vấn</p>
+                  <p className='text-xl font-semibold text-blue-600'>{stats.totalConsultations}</p>
+                </div>
+                <Stethoscope className='w-8 h-8 text-blue-400' />
               </div>
-              <Stethoscope className='w-8 h-8 text-blue-400' />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
-          <CardContent className='p-4'>
-            <div className='flex items-center justify-between'>
-              <div>
-                <p className='text-xs text-gray-600'>Đánh giá TB</p>
-                <p className='text-2xl font-semibold text-yellow-600'>{stats.avgRating}⭐</p>
+          <Card className='bg-white backdrop-blur-lg border-blue-100'>
+            <CardContent className='p-4'>
+              <div className='flex items-center justify-between'>
+                <div>
+                  <p className='text-xs text-gray-600'>Đánh giá TB</p>
+                  <p className='text-2xl font-semibold text-yellow-600'>{stats.avgRating}⭐</p>
+                </div>
+                <Award className='w-8 h-8 text-yellow-400' />
               </div>
-              <Award className='w-8 h-8 text-yellow-400' />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Filters & Search */}
-      <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-blue-100'>
         <CardContent className='p-6'>
           <div className='flex flex-col md:flex-row gap-4'>
             <div className='flex-1 relative'>
@@ -352,19 +421,9 @@ export function PharmacistManagementPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value='all'>Tất cả</SelectItem>
-                <SelectItem value='active'>Hoạt động</SelectItem>
-                <SelectItem value='inactive'>Không hoạt động</SelectItem>
-                <SelectItem value='on_leave'>Nghỉ phép</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={filterVerified} onValueChange={setFilterVerified}>
-              <SelectTrigger className='w-48 border-2 border-blue-200'>
-                <SelectValue placeholder='Xác thực' />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='all'>Tất cả</SelectItem>
-                <SelectItem value='verified'>Đã xác thực</SelectItem>
-                <SelectItem value='unverified'>Chưa xác thực</SelectItem>
+                <SelectItem value='1'>Hoạt động</SelectItem>
+                <SelectItem value='0'>Chưa xác thực</SelectItem>
+                <SelectItem value='2'>Đã khóa</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -372,319 +431,268 @@ export function PharmacistManagementPage() {
       </Card>
 
       {/* Pharmacists Table */}
-      <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-blue-100'>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
             <Stethoscope className='w-5 h-5 text-blue-600' />
-            Danh sách dược sĩ ({filteredPharmacists.length})
+            Danh sách dược sĩ ({pagination.total})
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className='overflow-x-auto'>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className='w-12'>
-                    <Checkbox
-                      checked={
-                        selectedPharmacists.length === filteredPharmacists.length && filteredPharmacists.length > 0
-                      }
-                      onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
-                    />
-                  </TableHead>
-                  <TableHead>Dược sĩ</TableHead>
-                  <TableHead>Liên hệ</TableHead>
-                  <TableHead>Chứng chỉ</TableHead>
-                  <TableHead>Hiệu suất</TableHead>
-                  <TableHead>Đánh giá</TableHead>
-                  <TableHead>Trạng thái</TableHead>
-                  <TableHead className='text-right'>Thao tác</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredPharmacists.map((pharmacist) => (
-                  <TableRow key={pharmacist.id}>
-                    <TableCell>
-                      <Checkbox
-                        checked={selectedPharmacists.includes(pharmacist.id)}
-                        onCheckedChange={(checked) => handleSelectOne(pharmacist.id, checked as boolean)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <div className='flex items-center gap-3'>
-                        <Avatar>
-                          <AvatarImage src={pharmacist.avatar} />
-                          <AvatarFallback className='bg-blue-100 text-blue-700'>
-                            {pharmacist.name.split('.')[1]?.charAt(0) || 'D'}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className='font-medium text-gray-900'>{pharmacist.name}</p>
-                          <p className='text-sm text-gray-500'>{pharmacist.specialty}</p>
-                          {pharmacist.verified && (
-                            <Badge className='bg-blue-100 text-blue-700 text-xs mt-1'>
-                              <Award className='w-3 h-3 mr-1' />
-                              Xác thực
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className='space-y-1'>
-                        <div className='flex items-center gap-2 text-sm text-gray-600'>
-                          <Mail className='w-3 h-3' />
-                          {pharmacist.email}
-                        </div>
-                        <div className='flex items-center gap-2 text-sm text-gray-600'>
-                          <Phone className='w-3 h-3' />
-                          {pharmacist.phone}
-                        </div>
-                        <div className='flex items-center gap-2 text-sm text-gray-500'>
-                          <MapPin className='w-3 h-3' />
-                          {pharmacist.location}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <p className='font-medium text-blue-600'>{pharmacist.licenseNumber}</p>
-                        <p className='text-xs text-gray-500'>
-                          Tham gia: {new Date(pharmacist.joinDate).toLocaleDateString('vi-VN')}
-                        </p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className='space-y-1'>
-                        <p className='text-sm'>
-                          <span className='text-gray-600'>Đơn thuốc:</span>{' '}
-                          <span className='font-semibold text-[#4A90E2]'>{pharmacist.prescriptionsProcessed}</span>
-                        </p>
-                        <p className='text-sm'>
-                          <span className='text-gray-600'>Tư vấn:</span>{' '}
-                          <span className='font-semibold text-blue-600'>{pharmacist.consultationsCompleted}</span>
-                        </p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className='flex items-center gap-1'>
-                        <span className='text-xl'>{pharmacist.rating}</span>
-                        <span className='text-yellow-500'>⭐</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>{getStatusBadge(pharmacist.status)}</TableCell>
-                    <TableCell className='text-right'>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant='ghost' size='sm'>
-                            <MoreVertical className='w-4 h-4' />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align='end'>
-                          <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem>
-                            <Eye className='w-4 h-4 mr-2' />
-                            Xem hồ sơ
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleEdit(pharmacist)}>
-                            <Edit className='w-4 h-4 mr-2' />
-                            Chỉnh sửa
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <FileText className='w-4 h-4 mr-2' />
-                            Xem báo cáo
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => handlePharmacistDelete(pharmacist)} className='text-red-600'>
-                            <Trash2 className='w-4 h-4 mr-2' />
-                            Xóa
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          {isLoading ? (
+            <div className='flex justify-center items-center h-64'>
+              <RefreshCw className='w-8 h-8 animate-spin text-blue-600' />
+            </div>
+          ) : error ? (
+            <div className='text-center text-red-600 py-8'>
+              Không thể tải danh sách dược sĩ. Vui lòng thử lại.
+            </div>
+          ) : (
+            <>
+              <div className='overflow-x-auto'>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Dược sĩ</TableHead>
+                      <TableHead>Liên hệ</TableHead>
+                      <TableHead>Trạng thái</TableHead>
+                      <TableHead>Ngày tham gia</TableHead>
+                      <TableHead className='text-right'>Thao tác</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pharmacists.map((pharmacist: UserData) => (
+                      <TableRow key={pharmacist._id}>
+                        <TableCell>
+                          <div className='flex items-center gap-3'>
+                            <Avatar>
+                              <AvatarFallback className='bg-blue-100 text-blue-700'>
+                                {pharmacist.firstName?.charAt(0) || 'D'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className='font-medium text-gray-900'>
+                                DS. {pharmacist.firstName} {pharmacist.lastName}
+                              </p>
+                              <p className='text-sm text-gray-500'>{pharmacist._id}</p>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <p className='text-sm text-gray-900'>{pharmacist.email}</p>
+                            <p className='text-sm text-gray-500'>{pharmacist.phoneNumber}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>{getStatusBadge(pharmacist.status)}</TableCell>
+                        <TableCell>
+                          <p className='text-sm text-gray-900'>
+                            {pharmacist.createdAt
+                              ? format(new Date(pharmacist.createdAt), 'dd/MM/yyyy', { locale: vi })
+                              : 'N/A'}
+                          </p>
+                        </TableCell>
+                        <TableCell className='text-right'>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant='ghost' size='sm'>
+                                <MoreVertical className='w-4 h-4' />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align='end' className='bg-white shadow-lg border-2 border-blue-200'>
+                              <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleViewDetails(pharmacist)}>
+                                <Eye className='w-4 h-4 mr-2' />
+                                Xem chi tiết
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleEdit(pharmacist)}>
+                                <Edit className='w-4 h-4 mr-2' />
+                                Chỉnh sửa
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleVerifyEmail(pharmacist._id)}>
+                                <CheckCircle className='w-4 h-4 mr-2' />
+                                Xác thực email
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleResetPassword(pharmacist._id)}>
+                                <RefreshCw className='w-4 h-4 mr-2' />
+                                Reset mật khẩu
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleToggleBan(pharmacist)}>
+                                <Ban className='w-4 h-4 mr-2' />
+                                {pharmacist.status === 2 ? 'Mở khóa' : 'Khóa tài khoản'}
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => handleDelete(pharmacist._id)}
+                                className='text-red-600'
+                              >
+                                <Trash2 className='w-4 h-4 mr-2' />
+                                Xóa dược sĩ
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Pagination */}
+              <div className='flex items-center justify-between mt-4'>
+                <p className='text-sm text-gray-600'>
+                  Hiển thị {(page - 1) * limit + 1} - {Math.min(page * limit, pagination.total)} của{' '}
+                  {pagination.total} dược sĩ
+                </p>
+                <div className='flex items-center gap-2'>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                  >
+                    <ChevronLeft className='w-4 h-4' />
+                  </Button>
+                  <span className='text-sm text-gray-600'>
+                    Trang {page} / {pagination.totalPages}
+                  </span>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
+                    disabled={page === pagination.totalPages}
+                  >
+                    <ChevronRight className='w-4 h-4' />
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 
-      {/* Add Pharmacist Sheet - Using reusable component */}
-      <EntityFormDialog
-        open={dialogState.isOpen && dialogState.mode === 'add'}
-        onOpenChange={(open) => (open ? openAddDialog() : closeDialog())}
-        mode='sheet'
-        title='Thêm dược sĩ mới'
-        description='Nhập thông tin để tạo tài khoản dược sĩ mới'
-        onSave={handleSaveAdd}
-        isEdit={false}
-      >
-        <FormSection title='Thông tin cơ bản'>
-          <FormGrid cols={2}>
-            <TextField
-              label='Họ và tên'
-              required
-              value={formState.data.name || ''}
-              onChange={(v) => updateFormData('name', v)}
-              placeholder='DS. Nguyễn Văn A'
-            />
-            <TextField
-              label='Số điện thoại'
-              type='tel'
-              required
-              value={formState.data.phone || ''}
-              onChange={(v) => updateFormData('phone', v)}
-              placeholder='+84 123 456 789'
-            />
-          </FormGrid>
+      {/* View Details Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className='max-w-2xl'>
+          <DialogHeader>
+            <DialogTitle>Thông tin dược sĩ</DialogTitle>
+            <DialogDescription>Chi tiết thông tin dược sĩ trong hệ thống</DialogDescription>
+          </DialogHeader>
+          {selectedPharmacist && (
+            <div className='space-y-4'>
+              <div className='grid grid-cols-2 gap-4'>
+                <div>
+                  <p className='text-sm font-medium text-gray-500'>Họ và tên</p>
+                  <p className='text-base font-semibold'>
+                    DS. {selectedPharmacist.firstName} {selectedPharmacist.lastName}
+                  </p>
+                </div>
+                <div>
+                  <p className='text-sm font-medium text-gray-500'>Trạng thái</p>
+                  {getStatusBadge(selectedPharmacist.status)}
+                </div>
+                <div>
+                  <p className='text-sm font-medium text-gray-500'>Email</p>
+                  <p className='text-base'>{selectedPharmacist.email}</p>
+                </div>
+                <div>
+                  <p className='text-sm font-medium text-gray-500'>Số điện thoại</p>
+                  <p className='text-base'>{selectedPharmacist.phoneNumber}</p>
+                </div>
+                <div>
+                  <p className='text-sm font-medium text-gray-500'>Ngày tham gia</p>
+                  <p className='text-base'>
+                    {selectedPharmacist.createdAt
+                      ? format(new Date(selectedPharmacist.createdAt), 'dd/MM/yyyy HH:mm', {
+                        locale: vi,
+                      })
+                      : 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <p className='text-sm font-medium text-gray-500'>ID</p>
+                  <p className='text-base font-mono text-sm'>{selectedPharmacist._id}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
-          <TextField
-            label='Email'
-            type='email'
-            required
-            value={formState.data.email || ''}
-            onChange={(v) => updateFormData('email', v)}
-            placeholder='duocsi@medispace.vn'
-          />
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className='max-w-2xl'>
+          <DialogHeader>
+            <DialogTitle>Chỉnh sửa thông tin dược sĩ</DialogTitle>
+            <DialogDescription>Cập nhật thông tin dược sĩ trong hệ thống</DialogDescription>
+          </DialogHeader>
+          <div className='space-y-4'>
+            <div className='grid grid-cols-2 gap-4'>
+              <div className='space-y-2'>
+                <label className='text-sm font-medium'>Họ</label>
+                <Input
+                  value={editFormData.firstName}
+                  onChange={(e) => setEditFormData({ ...editFormData, firstName: e.target.value })}
+                  placeholder='Nhập họ'
+                  className='border-2 border-blue-200'
+                />
+              </div>
+              <div className='space-y-2'>
+                <label className='text-sm font-medium'>Tên</label>
+                <Input
+                  value={editFormData.lastName}
+                  onChange={(e) => setEditFormData({ ...editFormData, lastName: e.target.value })}
+                  placeholder='Nhập tên'
+                  className='border-2 border-blue-200'
+                />
+              </div>
+            </div>
+            <div className='space-y-2'>
+              <label className='text-sm font-medium'>Email</label>
+              <Input
+                type='email'
+                value={editFormData.email}
+                onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                placeholder='email@example.com'
+                className='border-2 border-blue-200'
+              />
+            </div>
+            <div className='space-y-2'>
+              <label className='text-sm font-medium'>Số điện thoại</label>
+              <Input
+                type='tel'
+                value={editFormData.phoneNumber}
+                onChange={(e) => setEditFormData({ ...editFormData, phoneNumber: e.target.value })}
+                placeholder='0123456789'
+                className='border-2 border-blue-200'
+              />
+            </div>
+            <div className='flex justify-end gap-3 mt-6'>
+              <Button variant='outline' onClick={() => setIsEditDialogOpen(false)}>
+                Hủy
+              </Button>
+              <Button
+                onClick={handleSaveEdit}
+                className='bg-gradient-to-r from-[#0066CC] to-[#4A90E2]'
+                disabled={updateMutation.isPending}
+              >
+                {updateMutation.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
-          <TextField
-            label='Mật khẩu (tự động tạo)'
-            type='text'
-            value='Sẽ được tự động tạo và gửi qua email'
-            onChange={() => {}}
-            disabled
-            placeholder='••••••••'
-          />
-        </FormSection>
-
-        <FormSection title='Thông tin chuyên môn'>
-          <FormGrid cols={2}>
-            <TextField
-              label='Số chứng chỉ hành nghề'
-              required
-              value={formState.data.licenseNumber || ''}
-              onChange={(v) => updateFormData('licenseNumber', v)}
-              placeholder='DS-HCM-12345'
-            />
-            <TextField
-              label='Chuyên môn'
-              value={formState.data.specialty || ''}
-              onChange={(v) => updateFormData('specialty', v)}
-              placeholder='Dược lâm sàng'
-            />
-          </FormGrid>
-
-          <FormGrid cols={2}>
-            <TextField
-              label='Khu vực làm việc'
-              value={formState.data.location || ''}
-              onChange={(v) => updateFormData('location', v)}
-              placeholder='TP. Hồ Chí Minh'
-            />
-            <SelectField
-              label='Trạng thái'
-              value={formState.data.status || ''}
-              onChange={(v) => updateFormData('status', v)}
-              options={[
-                { value: 'active', label: 'Hoạt động' },
-                { value: 'inactive', label: 'Không hoạt động' },
-                { value: 'on_leave', label: 'Nghỉ phép' },
-              ]}
-            />
-          </FormGrid>
-        </FormSection>
-      </EntityFormDialog>
-
-      {/* Edit Pharmacist Sheet - Using reusable component */}
-      <EntityFormDialog
-        open={dialogState.isOpen && dialogState.mode === 'edit'}
-        onOpenChange={(open) => (open ? {} : closeDialog())}
-        mode='sheet'
-        title='Chỉnh sửa thông tin dược sĩ'
-        description={`Cập nhật thông tin dược sĩ ${dialogState.entity?.name || ''}`}
-        onSave={handleSaveEdit}
-        isEdit={true}
-        infoBox={{
-          text: '💡 Để đổi mật khẩu, vui lòng sử dụng chức năng "Đặt lại mật khẩu" riêng',
-        }}
-      >
-        <FormSection title='Thông tin cơ bản'>
-          <FormGrid cols={2}>
-            <TextField
-              label='Họ và tên'
-              required
-              value={formState.data.name || ''}
-              onChange={(v) => updateFormData('name', v)}
-              placeholder='DS. Nguyễn Văn A'
-            />
-            <TextField
-              label='Số điện thoại'
-              type='tel'
-              required
-              value={formState.data.phone || ''}
-              onChange={(v) => updateFormData('phone', v)}
-              placeholder='0901234567'
-            />
-          </FormGrid>
-
-          <TextField
-            label='Email'
-            type='email'
-            required
-            value={formState.data.email || ''}
-            onChange={(v) => updateFormData('email', v)}
-            placeholder='duocsi@medispace.vn'
-          />
-        </FormSection>
-
-        <FormSection title='Thông tin chuyên môn'>
-          <FormGrid cols={2}>
-            <TextField
-              label='Số chứng chỉ hành nghề'
-              required
-              value={formState.data.licenseNumber || ''}
-              onChange={(v) => updateFormData('licenseNumber', v)}
-              placeholder='DS-HCM-12345'
-            />
-            <TextField
-              label='Chuyên môn'
-              value={formState.data.specialty || ''}
-              onChange={(v) => updateFormData('specialty', v)}
-              placeholder='Dược lâm sàng'
-            />
-          </FormGrid>
-
-          <FormGrid cols={2}>
-            <TextField
-              label='Khu vực làm việc'
-              value={formState.data.location || ''}
-              onChange={(v) => updateFormData('location', v)}
-              placeholder='TP. Hồ Chí Minh'
-            />
-            <SelectField
-              label='Trạng thái'
-              value={formState.data.status || ''}
-              onChange={(v) => updateFormData('status', v)}
-              options={[
-                { value: 'active', label: 'Hoạt động' },
-                { value: 'inactive', label: 'Không hoạt động' },
-                { value: 'on_leave', label: 'Nghỉ phép' },
-              ]}
-            />
-          </FormGrid>
-        </FormSection>
-      </EntityFormDialog>
-
-      {/* Delete Confirmation Dialog - Using reusable component */}
-      <EntityDeleteDialog
-        open={dialogState.isOpen && dialogState.mode === 'delete'}
-        onOpenChange={(open) => (open ? {} : closeDialog())}
-        entityName='dược sĩ'
-        entityDisplayName={dialogState.entity?.name}
-        onConfirm={confirmDelete}
-        warningMessage='Tất cả dữ liệu liên quan sẽ bị xóa.'
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => setConfirmDialog({ ...confirmDialog, open })}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        onConfirm={confirmDialog.onConfirm}
+        variant={confirmDialog.variant}
       />
     </div>
   )

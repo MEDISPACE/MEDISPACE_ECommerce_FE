@@ -8,6 +8,7 @@ export default [
   route('register', 'routes/register.tsx'),
   route('forgot-password', 'routes/forgot-password.tsx'),
   route('reset-password/:token', 'routes/reset-password.$token.tsx'),
+  route('verify-email/:token', 'routes/verify-email.$token.tsx'),
 
   // Main layout for all other routes
   layout('routes/_layout.tsx', [
@@ -85,6 +86,7 @@ export default [
     route('dashboard', 'routes/pharmacist/dashboard.tsx'),
     route('prescriptions', 'routes/pharmacist/prescriptions.tsx'),
     route('create-order', 'routes/pharmacist/create-order.tsx'),
+    route('orders', 'routes/pharmacist/orders.tsx'),
     route('chat', 'routes/pharmacist/chat.tsx'),
     route('drug-database', 'routes/pharmacist/drug-database.tsx'),
     route('patient-history', 'routes/pharmacist/patient-history.tsx'),
