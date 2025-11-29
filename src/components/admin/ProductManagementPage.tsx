@@ -331,7 +331,12 @@ export function ProductManagementPage() {
       {/* Header */}
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='text-3xl bg-gradient-to-r from-[#0066CC] to-[#4A90E2] bg-clip-text text-transparent'>
+          <h1
+            className='text-3xl font-bold bg-clip-text text-transparent'
+            style={{
+              backgroundImage: `linear-gradient(to right, #0066CC, #4A90E2)`,
+            }}
+          >
             Quản lý sản phẩm
           </h1>
           <p className='text-gray-600 mt-2'>Quản lý danh mục sản phẩm và tồn kho</p>
@@ -357,7 +362,7 @@ export function ProductManagementPage() {
 
       {/* Stats Cards */}
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-4'>
-        <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-blue-100'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
@@ -369,7 +374,7 @@ export function ProductManagementPage() {
           </CardContent>
         </Card>
 
-        <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-blue-100'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
@@ -381,7 +386,7 @@ export function ProductManagementPage() {
           </CardContent>
         </Card>
 
-        <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-blue-100'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
@@ -393,7 +398,7 @@ export function ProductManagementPage() {
           </CardContent>
         </Card>
 
-        <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-blue-100'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
@@ -405,7 +410,7 @@ export function ProductManagementPage() {
           </CardContent>
         </Card>
 
-        <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-blue-100'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
@@ -417,7 +422,7 @@ export function ProductManagementPage() {
           </CardContent>
         </Card>
 
-        <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-blue-100'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
@@ -429,7 +434,7 @@ export function ProductManagementPage() {
           </CardContent>
         </Card>
 
-        <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-blue-100'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
@@ -441,7 +446,7 @@ export function ProductManagementPage() {
           </CardContent>
         </Card>
 
-        <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-blue-100'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
@@ -455,7 +460,7 @@ export function ProductManagementPage() {
       </div>
 
       {/* Filters & Search */}
-      <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-blue-100'>
         <CardContent className='p-6'>
           <div className='flex flex-col lg:flex-row gap-4'>
             <div className='flex-1 relative'>
@@ -506,7 +511,7 @@ export function ProductManagementPage() {
       </Card>
 
       {/* Products Table */}
-      <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-blue-100'>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
             <Package className='w-5 h-5 text-blue-600' />
