@@ -116,7 +116,7 @@ export function EntityFormDialog({
             </Button>
             <Button
               onClick={onSave}
-              className='bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8]'
+              className='bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8] text-white'
             >
               <SaveIcon className='w-4 h-4 mr-2' />
               {defaultSaveLabel}
@@ -163,7 +163,7 @@ export function EntityFormDialog({
             </Button>
             <Button
               onClick={onSave}
-              className='flex-1 bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8]'
+              className='flex-1 bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8] text-white'
             >
               <SaveIcon className='w-4 h-4 mr-2' />
               {defaultSaveLabel}

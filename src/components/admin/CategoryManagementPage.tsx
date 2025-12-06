@@ -5,17 +5,12 @@ import {
   Plus,
   Edit,
   Trash2,
-  Eye,
   MoreVertical,
   Folder,
   FolderOpen,
   CheckCircle,
   XCircle,
   ChevronUp,
-  ChevronDown,
-  ArrowUp,
-  ArrowDown,
-  Image as ImageIcon
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Button } from '../ui/button'
@@ -38,6 +33,7 @@ import { getStatusBadge } from '../../utils/badgeUtils'
 import adminService from '../../services/adminService'
 import { toast } from 'sonner'
 import { ImageUploader } from '../forms/ImageUploader'
+import { PaginationComponent } from '../shared/PaginationComponent'
 
 interface Category {
   _id: string
@@ -58,6 +54,8 @@ export function CategoryManagementPage() {
   const queryClient = useQueryClient()
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
 
   // Dialog states
   const [dialogState, setDialogState] = useState<{
@@ -77,13 +75,13 @@ export function CategoryManagementPage() {
   const { data: categoriesTree = [], isLoading } = useQuery({
     queryKey: ['admin', 'categories', 'tree'],
     queryFn: adminService.getCategoryTree,
-    staleTime: 30000
+    staleTime: 30000,
   })
 
   // Flatten tree for table view (with indentation)
   const flattenCategories = useMemo(() => {
     const flatten = (cats: Category[], result: Category[] = []) => {
-      cats.forEach(cat => {
+      cats.forEach((cat) => {
         result.push(cat)
         if (cat.children && cat.children.length > 0) {
           flatten(cat.children, result)
@@ -102,12 +100,24 @@ export function CategoryManagementPage() {
         category.slug.toLowerCase().includes(searchQuery.toLowerCase())
 
       const matchesStatus =
-        statusFilter === 'all' ||
-        (statusFilter === 'active' ? category.isActive : !category.isActive)
+        statusFilter === 'all' || (statusFilter === 'active' ? category.isActive : !category.isActive)
 
       return matchesSearch && matchesStatus
     })
   }, [flattenCategories, searchQuery, statusFilter])
+
+  // Reset to page 1 when filters change
+  useMemo(() => {
+    setCurrentPage(1)
+  }, [searchQuery, statusFilter])
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredCategories.length / itemsPerPage)
+  const paginatedCategories = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage
+    const endIndex = startIndex + itemsPerPage
+    return filteredCategories.slice(startIndex, endIndex)
+  }, [filteredCategories, currentPage, itemsPerPage])
 
   // Mutations
   const createMutation = useMutation({
@@ -117,21 +127,23 @@ export function CategoryManagementPage() {
       toast.success('Tạo danh mục thành công')
       closeDialog()
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Tạo danh mục thất bại')
-    }
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { message?: string } } }
+      toast.error(err.response?.data?.message || 'Tạo danh mục thất bại')
+    },
   })
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => adminService.updateCategory(id, data),
+    mutationFn: ({ id, data }: { id: string; data: Partial<Category> }) => adminService.updateCategory(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'categories'] })
       toast.success('Cập nhật danh mục thành công')
       closeDialog()
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Cập nhật danh mục thất bại')
-    }
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { message?: string } } }
+      toast.error(err.response?.data?.message || 'Cập nhật danh mục thất bại')
+    },
   })
 
   const deleteMutation = useMutation({
@@ -141,9 +153,10 @@ export function CategoryManagementPage() {
       toast.success('Xóa danh mục thành công')
       closeDialog()
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Xóa danh mục thất bại')
-    }
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { message?: string } } }
+      toast.error(err.response?.data?.message || 'Xóa danh mục thất bại')
+    },
   })
 
   const toggleStatusMutation = useMutation({
@@ -153,9 +166,10 @@ export function CategoryManagementPage() {
       queryClient.invalidateQueries({ queryKey: ['admin', 'categories'] })
       toast.success('Cập nhật trạng thái thành công')
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Cập nhật trạng thái thất bại')
-    }
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { message?: string } } }
+      toast.error(err.response?.data?.message || 'Cập nhật trạng thái thất bại')
+    },
   })
 
   // Form handlers
@@ -173,10 +187,10 @@ export function CategoryManagementPage() {
       data: {
         parentId: parentId || undefined,
         isActive: true,
-        sortOrder: 1
+        sortOrder: 1,
       },
       errors: {},
-      isSubmitting: false
+      isSubmitting: false,
     })
   }
 
@@ -242,10 +256,10 @@ export function CategoryManagementPage() {
   const stats = useMemo(() => {
     return {
       total: flattenCategories.length,
-      active: flattenCategories.filter(c => c.isActive).length,
-      inactive: flattenCategories.filter(c => !c.isActive).length,
-      root: flattenCategories.filter(c => !c.parentId).length,
-      subCategories: flattenCategories.filter(c => c.parentId).length,
+      active: flattenCategories.filter((c) => c.isActive).length,
+      inactive: flattenCategories.filter((c) => !c.isActive).length,
+      root: flattenCategories.filter((c) => !c.parentId).length,
+      subCategories: flattenCategories.filter((c) => c.parentId).length,
       totalProducts: flattenCategories.reduce((sum, c) => sum + (c.productCount || 0), 0),
     }
   }, [flattenCategories])
@@ -253,10 +267,10 @@ export function CategoryManagementPage() {
   // Get parent options for select
   const parentOptions = useMemo(() => {
     return flattenCategories
-      .filter(c => !dialogState.entity || c._id !== dialogState.entity._id) // Prevent selecting self as parent
-      .map(c => ({
+      .filter((c) => !dialogState.entity || c._id !== dialogState.entity._id) // Prevent selecting self as parent
+      .map((c) => ({
         value: c._id,
-        label: '—'.repeat(c.level) + ' ' + c.name
+        label: '—'.repeat(c.level) + ' ' + c.name,
       }))
   }, [flattenCategories, dialogState.entity])
 
@@ -277,7 +291,7 @@ export function CategoryManagementPage() {
         </div>
         <Button
           onClick={() => openAddDialog()}
-          className='bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8] gap-2'
+          className='bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8] gap-2 text-white'
         >
           <Plus className='w-4 h-4' />
           Thêm danh mục gốc
@@ -382,6 +396,20 @@ export function CategoryManagementPage() {
                 <SelectItem value='inactive'>Không hoạt động</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={itemsPerPage.toString()} onValueChange={(v) => {
+              setItemsPerPage(Number(v))
+              setCurrentPage(1)
+            }}>
+              <SelectTrigger className='w-40 border-2 border-blue-200'>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='5'>5 / trang</SelectItem>
+                <SelectItem value='10'>10 / trang</SelectItem>
+                <SelectItem value='20'>20 / trang</SelectItem>
+                <SelectItem value='50'>50 / trang</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
@@ -421,23 +449,34 @@ export function CategoryManagementPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredCategories.map((category: Category) => (
+                  paginatedCategories.map((category: Category) => (
                     <TableRow key={category._id} className='hover:bg-blue-50/50'>
                       <TableCell>
                         <div className='flex items-center gap-2' style={{ paddingLeft: `${category.level * 24}px` }}>
                           {category.level > 0 && <ChevronUp className='w-4 h-4 text-gray-400 rotate-90' />}
 
                           {category.thumbnailImage ? (
-                            <img src={category.thumbnailImage} alt={category.name} className='w-8 h-8 rounded object-cover border border-gray-200' />
+                            <img
+                              src={category.thumbnailImage}
+                              alt={category.name}
+                              className='w-8 h-8 rounded object-cover border border-gray-200'
+                            />
                           ) : (
                             <div className='w-8 h-8 rounded bg-blue-100 flex items-center justify-center text-lg'>
-                              {category.icon || (category.parentId ? <FolderOpen className='w-4 h-4 text-blue-500' /> : <Folder className='w-4 h-4 text-blue-600' />)}
+                              {category.icon ||
+                                (category.parentId ? (
+                                  <FolderOpen className='w-4 h-4 text-blue-500' />
+                                ) : (
+                                  <Folder className='w-4 h-4 text-blue-600' />
+                                ))}
                             </div>
                           )}
 
                           <div>
                             <p className='font-medium text-gray-900'>{category.name}</p>
-                            {category.description && <p className='text-xs text-gray-500 truncate max-w-[200px]'>{category.description}</p>}
+                            {category.description && (
+                              <p className='text-xs text-gray-500 truncate max-w-[200px]'>{category.description}</p>
+                            )}
                           </div>
                         </div>
                       </TableCell>
@@ -453,7 +492,9 @@ export function CategoryManagementPage() {
                       <TableCell>
                         <div
                           className='cursor-pointer'
-                          onClick={() => toggleStatusMutation.mutate({ id: category._id, isActive: !category.isActive })}
+                          onClick={() =>
+                            toggleStatusMutation.mutate({ id: category._id, isActive: !category.isActive })
+                          }
                         >
                           {getStatusBadge(category.isActive ? 'active' : 'inactive')}
                         </div>
@@ -490,6 +531,20 @@ export function CategoryManagementPage() {
               </TableBody>
             </Table>
           </div>
+
+          {/* Pagination */}
+          {filteredCategories.length > 0 && totalPages > 1 && (
+            <div className='mt-6 flex items-center justify-between border-t pt-4'>
+              <div className='text-sm text-gray-600'>
+                Hiển thị {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, filteredCategories.length)} trong tổng số {filteredCategories.length} danh mục
+              </div>
+              <PaginationComponent
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -528,10 +583,7 @@ export function CategoryManagementPage() {
             label='Danh mục cha'
             value={formState.data.parentId || 'none'}
             onChange={(v) => updateFormData('parentId', v === 'none' ? undefined : v)}
-            options={[
-              { value: 'none', label: 'Không có (danh mục gốc)' },
-              ...parentOptions
-            ]}
+            options={[{ value: 'none', label: 'Không có (danh mục gốc)' }, ...parentOptions]}
           />
         </FormSection>
 

@@ -13,6 +13,7 @@ import {
 } from '../../ui/dropdown-menu'
 import { getOrderStatusBadge, getPaymentStatusBadge } from '../../../utils/badgeUtils'
 import type { Order, RoleConfig } from './types'
+import { formatCurrency } from '~/utils/formatCurrency'
 
 interface OrderTableProps {
   orders: Order[]
@@ -91,7 +92,7 @@ export function OrderTable({
                 <span className='text-gray-700'>{order.items} sản phẩm</span>
               </TableCell>
               <TableCell>
-                <p className={`font-semibold text-${config.themeColor}-600`}>₫{order.total.toLocaleString('vi-VN')}</p>
+                <p className={`font-semibold text-${config.themeColor}-600`}>{formatCurrency(order.total)}</p>
                 <p className='text-xs text-gray-500'>{order.paymentMethod}</p>
               </TableCell>
               <TableCell>{getPaymentStatusBadge(order.paymentStatus)}</TableCell>
