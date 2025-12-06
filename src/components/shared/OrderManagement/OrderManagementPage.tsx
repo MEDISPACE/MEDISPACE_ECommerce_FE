@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect } from 'react'
-import { Download, ShoppingCart } from 'lucide-react'
+import { Link } from 'react-router'
+import { Download, ShoppingCart, Plus } from 'lucide-react'
 import { Button } from '../../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../../ui/dialog'
@@ -136,6 +137,7 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
           const response = await adminService.getAllOrders({
             limit: 100, // Get all orders for now
           })
+          setAllOrders(response.orders) // Store all orders for date filtering
           const mappedOrders = response.orders.map(mapApiOrderToOrder)
           setOrders(mappedOrders)
         } else {
@@ -168,7 +170,7 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
 
   // Apply date filter when filterDate changes
   useEffect(() => {
-    if (role === 'pharmacist' && allOrders.length > 0) {
+    if ((role === 'pharmacist' || role === 'admin') && allOrders.length > 0) {
       const filtered = allOrders.filter((order) => isOrderInDateRange(order.createdAt, filterDate))
       const mappedOrders = filtered.map(mapApiOrderToOrder)
       setOrders(mappedOrders)
@@ -214,8 +216,12 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
         const orderDetails = await pharmacistOrderService.getOrderDetails(orderId)
         setDetailsOrder(orderDetails)
         setShowDetailsDrawer(true)
+      } else if (role === 'admin') {
+        // Use admin-specific API
+        const orderDetails = await adminService.getOrderDetails(orderId)
+        setDetailsOrder(orderDetails)
+        setShowDetailsDrawer(true)
       } else {
-        // For admin role, you might need a different API call
         toast.info('Chi tiết đơn hàng đang được phát triển')
       }
     } catch (error) {
@@ -248,8 +254,14 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
           status: newStatus,
           notes: notes || undefined,
         })
+      } else if (role === 'admin') {
+        // Use admin-specific API
+        await adminService.updateOrderStatus(currentOrder.id, {
+          status: newStatus,
+          notes: notes || undefined,
+        })
       } else {
-        // Use general order API for admin
+        // Use general order API for other roles
         // Convert component OrderStatus to API OrderStatus enum
         const statusMap: Record<OrderStatus, OrderStatusEnum> = {
           pending: OrderStatusEnum.Pending,
@@ -325,12 +337,28 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
           </h1>
           <p className='text-gray-600 mt-2'>{config.description}</p>
         </div>
-        {config.showExportButton && (
-          <Button variant='outline' className='gap-2'>
-            <Download className='w-4 h-4' />
-            Xuất báo cáo
-          </Button>
-        )}
+        <div className='flex items-center gap-3'>
+          {/* Create Order Button */}
+          <Link to={role === 'admin' ? '/admin/create-order' : '/pharmacist/create-order'}>
+            <Button
+              className='gap-2 text-white'
+              style={{
+                backgroundImage: `linear-gradient(to right, ${config.gradientFrom}, ${config.gradientTo})`,
+              }}
+            >
+              <Plus className='w-4 h-4' />
+              Tạo đơn hàng
+            </Button>
+          </Link>
+
+          {/* Export Button */}
+          {config.showExportButton && (
+            <Button variant='outline' className='gap-2'>
+              <Download className='w-4 h-4' />
+              Xuất báo cáo
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Stats Cards */}

@@ -108,11 +108,25 @@ const navigationItems: NavItem[] = [
 export function PharmacistLayout({ children }: PharmacistLayoutProps) {
   const location = useLocation()
   const navigate = useNavigate()
-  const { user, logout } = useAuth()
+  const { user, logout, isAuthenticated } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isOnline, setIsOnline] = useState(user?.isOnline ?? true)
   const [stats, setStats] = useState<DashboardStats | null>(null)
+
+  // Redirect if not authenticated or not pharmacist
+  useEffect(() => {
+    if (!isAuthenticated) {
+      toast.error('Vui lòng đăng nhập để tiếp tục')
+      navigate('/login', { replace: true })
+      return
+    }
+    if (user && user.role !== 1) {
+      // 1 = Pharmacist role
+      toast.error('Bạn không có quyền truy cập trang này')
+      navigate('/', { replace: true })
+    }
+  }, [isAuthenticated, user, navigate])
 
   // Load dashboard stats
   useEffect(() => {

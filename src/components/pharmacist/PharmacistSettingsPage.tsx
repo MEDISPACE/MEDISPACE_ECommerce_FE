@@ -193,12 +193,12 @@ export function PharmacistSettingsPage() {
       {/* Tabs */}
       <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
         <Tabs defaultValue='personal' className='p-6'>
-          <TabsList className='grid w-full grid-cols-2 bg-blue-50'>
-            <TabsTrigger value='personal' className='data-[state=active]:bg-blue-600 data-[state=active]:text-white'>
+          <TabsList className='grid w-full grid-cols-2 !bg-blue-50 p-1.5 rounded-lg h-auto'>
+            <TabsTrigger value='personal' className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'>
               <User className='w-4 h-4 mr-2' />
               Thông tin cá nhân
             </TabsTrigger>
-            <TabsTrigger value='security' className='data-[state=active]:bg-blue-600 data-[state=active]:text-white'>
+            <TabsTrigger value='security' className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'>
               <Shield className='w-4 h-4 mr-2' />
               Bảo mật
             </TabsTrigger>
@@ -369,9 +369,8 @@ export function PharmacistSettingsPage() {
                 <Label htmlFor='oldPassword'>Mật khẩu hiện tại *</Label>
                 <div className='relative'>
                   <Lock
-                    className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${
-                      passwordErrors.oldPassword ? 'text-red-400' : 'text-gray-400'
-                    }`}
+                    className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${passwordErrors.oldPassword ? 'text-red-400' : 'text-gray-400'
+                      }`}
                   />
                   <Input
                     id='oldPassword'
@@ -383,11 +382,10 @@ export function PharmacistSettingsPage() {
                         setPasswordErrors({ ...passwordErrors, oldPassword: '' })
                       }
                     }}
-                    className={`pl-10 pr-10 border-2 ${
-                      passwordErrors.oldPassword
+                    className={`pl-10 pr-10 border-2 ${passwordErrors.oldPassword
                         ? 'border-red-500 focus:border-red-600'
                         : 'border-blue-200 focus:border-blue-500'
-                    }`}
+                      }`}
                     placeholder='Nhập mật khẩu hiện tại'
                   />
                   <button
@@ -407,9 +405,8 @@ export function PharmacistSettingsPage() {
                 <Label htmlFor='newPassword'>Mật khẩu mới *</Label>
                 <div className='relative'>
                   <Lock
-                    className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${
-                      passwordErrors.newPassword ? 'text-red-400' : 'text-gray-400'
-                    }`}
+                    className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${passwordErrors.newPassword ? 'text-red-400' : 'text-gray-400'
+                      }`}
                   />
                   <Input
                     id='newPassword'
@@ -421,11 +418,10 @@ export function PharmacistSettingsPage() {
                         setPasswordErrors({ ...passwordErrors, newPassword: '' })
                       }
                     }}
-                    className={`pl-10 pr-10 border-2 ${
-                      passwordErrors.newPassword
+                    className={`pl-10 pr-10 border-2 ${passwordErrors.newPassword
                         ? 'border-red-500 focus:border-red-600'
                         : 'border-blue-200 focus:border-blue-500'
-                    }`}
+                      }`}
                     placeholder='Nhập mật khẩu mới'
                   />
                   <button
@@ -445,9 +441,8 @@ export function PharmacistSettingsPage() {
                 <Label htmlFor='confirmPassword'>Xác nhận mật khẩu mới *</Label>
                 <div className='relative'>
                   <Lock
-                    className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${
-                      passwordErrors.confirmPassword ? 'text-red-400' : 'text-gray-400'
-                    }`}
+                    className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${passwordErrors.confirmPassword ? 'text-red-400' : 'text-gray-400'
+                      }`}
                   />
                   <Input
                     id='confirmPassword'
@@ -459,11 +454,10 @@ export function PharmacistSettingsPage() {
                         setPasswordErrors({ ...passwordErrors, confirmPassword: '' })
                       }
                     }}
-                    className={`pl-10 pr-10 border-2 ${
-                      passwordErrors.confirmPassword
+                    className={`pl-10 pr-10 border-2 ${passwordErrors.confirmPassword
                         ? 'border-red-500 focus:border-red-600'
                         : 'border-blue-200 focus:border-blue-500'
-                    }`}
+                      }`}
                     placeholder='Nhập lại mật khẩu mới'
                   />
                   <button

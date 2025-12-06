@@ -1,12 +1,5 @@
-import { PharmacistDashboard } from '~/components/pharmacist'
-
-export function meta() {
-  return [
-    { title: 'Dashboard Dược sĩ | MEDISPACE' },
-    { name: 'description', content: 'Bảng điều khiển dành cho dược sĩ' },
-  ]
-}
+import { Navigate } from 'react-router'
 
 export default function PharmacistIndexRoute() {
-  return <PharmacistDashboard />
+  return <Navigate to='/pharmacist/dashboard' replace />
 }

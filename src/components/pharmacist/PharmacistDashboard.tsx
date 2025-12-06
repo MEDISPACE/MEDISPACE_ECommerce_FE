@@ -26,6 +26,7 @@ import { orderService } from '~/services/pharmacist/order.service'
 import { OrderDetailsDrawer } from '~/components/shared/OrderManagement/OrderDetailsDrawer'
 import { PrescriptionDetailsDialog } from './PrescriptionDetailsDialog'
 import { toast } from 'sonner'
+import { formatCurrency } from '~/utils/formatCurrency'
 
 export function PharmacistDashboard() {
   const [activeTab, setActiveTab] = useState('overview')
@@ -64,9 +65,22 @@ export function PharmacistDashboard() {
         setRecentOrders(orders)
       } catch (error) {
         console.error('Failed to load dashboard data:', error)
-        toast.error('Không thể tải dữ liệu dashboard', {
-          description: 'Vui lòng thử lại sau',
-        })
+        const err = error as { response?: { status?: number; data?: { message?: string } } }
+
+        // Check if it's an authentication error
+        if (err.response?.status === 401) {
+          toast.error('Phiên đăng nhập đã hết hạn', {
+            description: 'Vui lòng đăng nhập lại',
+          })
+          // Redirect to login after a short delay
+          setTimeout(() => {
+            window.location.href = '/login'
+          }, 1500)
+        } else {
+          toast.error('Không thể tải dữ liệu dashboard', {
+            description: err.response?.data?.message || 'Vui lòng thử lại sau',
+          })
+        }
       } finally {
         setLoading(false)
       }
@@ -202,7 +216,7 @@ export function PharmacistDashboard() {
     },
     {
       title: 'Doanh thu hôm nay',
-      value: `${(stats?.totalRevenue || 0).toLocaleString('vi-VN')}₫`,
+      value: formatCurrency(stats?.totalRevenue || 0),
       icon: DollarSign,
       color: 'emerald',
       trend: stats?.prescriptionsToday
@@ -360,7 +374,7 @@ export function PharmacistDashboard() {
                         </Badge>
                       </div>
                       <p className='text-sm text-gray-600 mb-2'>
-                        {order.itemCount} sản phẩm - {order.totalAmount.toLocaleString('vi-VN')}₫
+                        {order.itemCount} sản phẩm - {formatCurrency(order.totalAmount)}
                       </p>
                       <div className='flex items-center justify-between'>
                         <span className='text-xs text-gray-500'>{formatTime(order.createdAt)}</span>
