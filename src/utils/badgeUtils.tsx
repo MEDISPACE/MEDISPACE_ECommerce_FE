@@ -5,6 +5,7 @@ import {
   XCircle,
   Clock,
   AlertTriangle,
+  AlertCircle,
   Package,
   Activity,
   Pause,
@@ -56,6 +57,16 @@ export const STATUS_BADGES: Record<string, BadgeConfig> = {
     label: 'Không hoạt động',
     className: 'bg-gray-100 text-gray-700 border-gray-200',
     icon: XCircle,
+  },
+  discontinued: {
+    label: 'Ngừng kinh doanh',
+    className: 'bg-orange-100 text-orange-700 border-orange-200',
+    icon: XCircle,
+  },
+  out_of_stock: {
+    label: 'Hết hàng',
+    className: 'bg-red-100 text-red-700 border-red-200',
+    icon: AlertTriangle,
   },
   suspended: {
     label: 'Đã khóa',
@@ -241,6 +252,30 @@ export const CHAT_STATUS_BADGES: Record<string, BadgeConfig> = {
 } as const
 
 /**
+ * PRIORITY BADGES
+ */
+export const PRIORITY_BADGES: Record<string, BadgeConfig> = {
+  low: {
+    label: 'Thấp',
+    className: 'bg-gray-100 text-gray-700 border-gray-200',
+  },
+  normal: {
+    label: 'Bình thường',
+    className: 'bg-blue-100 text-blue-700 border-blue-200',
+  },
+  high: {
+    label: 'Cao',
+    className: 'bg-orange-100 text-orange-700 border-orange-200',
+    icon: AlertCircle,
+  },
+  urgent: {
+    label: 'Khẩn cấp',
+    className: 'bg-red-100 text-red-700 border-red-200',
+    icon: AlertTriangle,
+  },
+} as const
+
+/**
  * CONTENT STATUS BADGES
  */
 export const CONTENT_STATUS_BADGES: Record<string, BadgeConfig> = {
@@ -324,8 +359,6 @@ export function getPaymentStatusBadge(status: string, options?: { showIcon?: boo
   return renderBadge(config, options) || <Badge variant='outline'>{status}</Badge>
 }
 
-
-
 /**
  * PRODUCT TYPE BADGE HELPER (Rx/OTC)
  */
@@ -365,6 +398,14 @@ export function getChatStatusBadge(status: string, options?: { showIcon?: boolea
 export function getContentStatusBadge(status: string, options?: { showIcon?: boolean }): ReactElement {
   const config = CONTENT_STATUS_BADGES[status]
   return renderBadge(config, options) || <Badge variant='outline'>{status}</Badge>
+}
+
+/**
+ * PRIORITY BADGE HELPER
+ */
+export function getPriorityBadge(priority: string, options?: { showIcon?: boolean }): ReactElement {
+  const config = PRIORITY_BADGES[priority]
+  return renderBadge(config, options) || <Badge variant='outline'>{priority}</Badge>
 }
 
 /**

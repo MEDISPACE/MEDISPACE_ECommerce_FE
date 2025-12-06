@@ -98,6 +98,7 @@ export default [
   route('admin', 'routes/admin/_layout.tsx', [
     index('routes/admin/_index.tsx'),
     route('dashboard', 'routes/admin/dashboard.tsx'),
+    route('create-order', 'routes/admin/create-order.tsx'),
     route('categories', 'routes/admin/categories.tsx'),
     route('content', 'routes/admin/content.tsx'),
     route('customers', 'routes/admin/customers/index.tsx'),

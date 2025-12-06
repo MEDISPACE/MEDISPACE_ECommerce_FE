@@ -84,13 +84,25 @@ export function SystemSettingsPage() {
       {/* Tabs */}
       <Tabs defaultValue='general' className='space-y-4'>
         <div className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-4'>
-          <TabsList className='grid w-full grid-cols-6 bg-blue-50'>
-            <TabsTrigger value='general'>Chung</TabsTrigger>
-            <TabsTrigger value='email'>Email</TabsTrigger>
-            <TabsTrigger value='sms'>SMS</TabsTrigger>
-            <TabsTrigger value='payment'>Thanh toán</TabsTrigger>
-            <TabsTrigger value='shipping'>Vận chuyển</TabsTrigger>
-            <TabsTrigger value='security'>Bảo mật</TabsTrigger>
+          <TabsList className='grid w-full grid-cols-6 !bg-blue-50 p-1.5 rounded-lg h-auto'>
+            <TabsTrigger value='general' className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'>
+              Chung
+            </TabsTrigger>
+            <TabsTrigger value='email' className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'>
+              Email
+            </TabsTrigger>
+            <TabsTrigger value='sms' className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'>
+              SMS
+            </TabsTrigger>
+            <TabsTrigger value='payment' className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'>
+              Thanh toán
+            </TabsTrigger>
+            <TabsTrigger value='shipping' className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'>
+              Vận chuyển
+            </TabsTrigger>
+            <TabsTrigger value='security' className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'>
+              Bảo mật
+            </TabsTrigger>
           </TabsList>
 
           {/* General Settings */}
