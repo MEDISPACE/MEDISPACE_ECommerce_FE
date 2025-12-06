@@ -318,7 +318,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
 
           {/* Filter Actions */}
           <div className='pt-2 space-y-2'>
-            <Button className='w-full h-8 text-xs bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600'>
+            <Button className='w-full h-8 text-xs bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'>
               Áp dụng bộ lọc
             </Button>
             {hasActiveFilters && (

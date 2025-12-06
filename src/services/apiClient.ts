@@ -25,7 +25,13 @@ class ApiClient {
         if (token && config.headers) {
           config.headers.Authorization = `Bearer ${token}`
         } else {
-          console.warn('API Request without token:', config.method?.toUpperCase(), config.url)
+          // Only warn for protected endpoints that require authentication
+          const protectedEndpoints = ['/cart', '/orders', '/profile', '/admin', '/wishlist', '/users/me']
+          const isProtectedEndpoint = protectedEndpoints.some(endpoint => config.url?.includes(endpoint))
+
+          if (isProtectedEndpoint) {
+            console.warn('API Request without token:', config.method?.toUpperCase(), config.url)
+          }
         }
         return config
       },

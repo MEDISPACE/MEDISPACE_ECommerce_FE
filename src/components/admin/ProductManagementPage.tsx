@@ -32,7 +32,7 @@ import {
 } from '../ui/dropdown-menu'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { EntityFormDialog, EntityDeleteDialog } from '../shared/EntityFormDialog'
-import { TextField, SelectField, FormGrid, FormSection, SwitchField, TextAreaField } from '../shared/EntityFormFields'
+import { TextField, SelectField, FormGrid, FormSection, SwitchField, TextAreaField, ImageUploadField, MultipleImageUploadField } from '../shared/EntityFormFields'
 import { getStatusBadge, getPrescriptionBadge } from '../../utils/badgeUtils'
 import productService from '../../services/productService'
 import adminService from '../../services/adminService'
@@ -42,6 +42,25 @@ import { toast } from 'sonner'
 
 // Use Product type from types/product.ts
 import type { Product as ProductType } from '../../types/product'
+interface Product {
+  id: string
+  name: string
+  slug: string
+  sku: string
+  category: string
+  manufacturer: string
+  price: number
+  originalPrice?: number
+  stock: number
+  status: 'active' | 'inactive' | 'out_of_stock'
+  requiresPrescription: boolean
+  salesCount: number
+  createdAt: string
+  image?: string
+  images?: string[]
+  description?: string
+  featured?: boolean
+}
 
 // Extend with local fields if needed
 type Product = ProductType
@@ -780,6 +799,26 @@ export function ProductManagementPage() {
             placeholder='https://example.com/image.jpg'
           />
 
+        <FormSection title='Hình ảnh sản phẩm'>
+          <ImageUploadField
+            label='Ảnh đại diện'
+            value={formState.data.image || ''}
+            onChange={(url) => updateFormData('image', url)}
+            description='Ảnh chính hiển thị trên danh sách sản phẩm'
+            maxSizeMB={2}
+          />
+
+          <MultipleImageUploadField
+            label='Thư viện ảnh'
+            value={formState.data.images || []}
+            onChange={(urls) => updateFormData('images', urls)}
+            maxFiles={4}
+            maxSizeMB={2}
+            description='Tối đa 4 ảnh bổ sung cho sản phẩm'
+          />
+        </FormSection>
+
+        <FormSection title='Mô tả'>
           <TextAreaField
             label='Mô tả sản phẩm'
             required

@@ -214,3 +214,7 @@ export function FormSection({ title, description, children, className = '' }: Fo
     </div>
   )
 }
+
+// Export upload components
+export { ImageUploadField } from './ImageUploadField'
+export { MultipleImageUploadField } from './MultipleImageUploadField'

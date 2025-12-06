@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router'
 import { ShoppingCart, Trash2, Heart, Plus, Minus, Gift, Truck, Shield, RotateCcw } from 'lucide-react'
 import { Button } from '../ui/button'
@@ -10,6 +10,8 @@ import { Badge } from '../ui/badge'
 import { ImageWithFallback } from '~/components/shared/ImageWithFallback'
 import { useCart } from '../../contexts/CartContext'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
+import { addressService } from '../../services/addressService'
+import type { Address } from '../../types/user'
 
 export function ShoppingCartPage() {
   const {
@@ -25,8 +27,32 @@ export function ShoppingCartPage() {
 
   const [couponCode, setCouponCode] = useState('')
   const [appliedCoupons, setAppliedCoupons] = useState<string[]>([])
+  const [addresses, setAddresses] = useState<Address[]>([])
+  const [defaultAddress, setDefaultAddress] = useState<Address | null>(null)
+  const [loadingAddress, setLoadingAddress] = useState(true)
 
   const breadcrumbItems = [{ label: 'Giỏ hàng' }]
+
+  // Fetch addresses on mount
+  useEffect(() => {
+    const fetchAddresses = async () => {
+      try {
+        setLoadingAddress(true)
+        const fetchedAddresses = await addressService.getAddresses()
+        setAddresses(fetchedAddresses)
+
+        // Find default address or use first one
+        const defaultAddr = fetchedAddresses.find(addr => addr.isDefault) || fetchedAddresses[0] || null
+        setDefaultAddress(defaultAddr)
+      } catch (error) {
+        console.error('Failed to fetch addresses:', error)
+      } finally {
+        setLoadingAddress(false)
+      }
+    }
+
+    fetchAddresses()
+  }, [])
 
   // Calculate if all items are selected
   const allSelected = cart?.items && cart.items.length > 0 && cart.items.every(item => selectedItems.has(item.productId))
@@ -91,7 +117,7 @@ export function ShoppingCartPage() {
               Bạn chưa có sản phẩm nào trong giỏ hàng. Hãy khám phá các sản phẩm tuyệt vời của chúng tôi!
             </p>
             <Link to='/products'>
-              <Button className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600'>
+              <Button className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'>
                 Tiếp tục mua sắm
               </Button>
             </Link>
@@ -104,7 +130,7 @@ export function ShoppingCartPage() {
   return (
     <div className='max-w-7xl mx-auto px-4 py-6'>
       <UniversalBreadcrumb items={breadcrumbItems} />
-      <div className='flex items-center gap-4 mb-6'>
+      <div className='flex items-center gap-4 mb-6 mt-4'>
         <h1 className='text-2xl font-bold text-blue-800'>Giỏ hàng của bạn</h1>
         <Badge variant='secondary' className='bg-blue-100 text-blue-700'>
           {cart?.itemCount || 0} sản phẩm
@@ -262,7 +288,7 @@ export function ShoppingCartPage() {
                 <Button
                   onClick={handleApplyCoupon}
                   disabled={!couponCode}
-                  className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600'
+                  className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'
                 >
                   Áp dụng
                 </Button>
@@ -350,7 +376,7 @@ export function ShoppingCartPage() {
 
                 <Link to='/cart/checkout'>
                   <Button
-                    className='w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 h-12 mt-[0px] mr-[0px] mb-[8px] ml-[0px]'
+                    className='w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white h-12 mt-4 mb-2'
                     disabled={getSelectedItemsCount() === 0}
                   >
                     Thanh toán ({getSelectedItemsCount()})
@@ -372,10 +398,24 @@ export function ShoppingCartPage() {
               <CardContent className='p-4 space-y-3'>
                 <div className='text-sm'>
                   <span className='font-medium'>Giao đến:</span>
-                  <div className='text-gray-600 mt-1'>123 Nguyễn Văn Cừ, Quận 5, TP.HCM</div>
-                  <Button variant='link' className='p-0 h-auto text-blue-600 text-sm'>
-                    Thay đổi
-                  </Button>
+                  <div className='text-gray-600 mt-1'>
+                    {loadingAddress ? (
+                      <span className='text-gray-400'>Đang tải...</span>
+                    ) : defaultAddress ? (
+                      <>
+                        <div>{defaultAddress.name} - {defaultAddress.phone}</div>
+                        <div>{defaultAddress.address}</div>
+                        <div>{defaultAddress.ward}, {defaultAddress.district}, {defaultAddress.province}</div>
+                      </>
+                    ) : (
+                      <span className='text-orange-600'>Chưa có địa chỉ giao hàng</span>
+                    )}
+                  </div>
+                  <Link to='/account/addresses'>
+                    <Button variant='link' className='p-0 h-auto text-blue-600 text-sm'>
+                      {defaultAddress ? 'Thay đổi' : 'Thêm địa chỉ'}
+                    </Button>
+                  </Link>
                 </div>
 
                 <div className='text-sm text-gray-600'>

@@ -27,6 +27,7 @@ import { Link } from 'react-router'
 import { motion } from 'framer-motion'
 import { ProductCard } from '../products/ProductCard'
 import { productService } from '../../services/productService'
+import { useWishlist } from '../../hooks/product/useWishlist'
 import { useCategories } from '../../hooks/product'
 import { useCart } from '../../contexts/CartContext'
 import type { Product } from '../../types/product'
@@ -44,6 +45,7 @@ const categoryIcons = {
 
 export function HomePage() {
   const { addToCart } = useCart()
+  const { toggleWishlist, isInWishlist } = useWishlist()
   // Products state
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
@@ -69,7 +71,7 @@ export function HomePage() {
     fetchFeaturedProducts()
   }, [])
 
-    const allFeaturedProducts = Array.isArray(featuredProducts) ? featuredProducts : []
+  const allFeaturedProducts = Array.isArray(featuredProducts) ? featuredProducts : []
 
   // Featured products carousel state
   const [featuredCurrentIndex, setFeaturedCurrentIndex] = useState(0)
@@ -153,7 +155,7 @@ export function HomePage() {
                   <Button
                     size='lg'
                     onClick={() => (window.location.href = '/products')}
-                    className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 shadow-lg shadow-blue-500/25 px-8 h-14'
+                    className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 shadow-lg shadow-blue-500/25 px-8 h-14 text-white'
                   >
                     <Search className='w-5 h-5 mr-2' />
                     Tìm thuốc ngay
@@ -514,35 +516,40 @@ export function HomePage() {
                               .map((originalProduct, productIndex) => {
                                 const product = transformedFeaturedProducts[pageIndex * 4 + productIndex]
                                 return (
-                                <motion.div
-                                  key={`${product.id}-${pageIndex}`}
-                                  className='h-full'
-                                  initial={{
-                                    opacity: 0,
-                                    y: 20,
-                                  }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  transition={{
-                                    delay: productIndex * 0.1,
-                                    duration: 0.5,
-                                    ease: 'easeOut',
-                                  }}
-                                  whileHover={{
-                                    y: -5,
-                                    transition: {
-                                      duration: 0.2,
-                                    },
-                                  }}
-                                >
-                                  <ProductCard
-                                    product={product}
-                                    variant='grid'
-                                    onAddToCart={() => {
-                                      addToCart(originalProduct, 1)
+                                  <motion.div
+                                    key={`${product.id}-${pageIndex}`}
+                                    className='h-full'
+                                    initial={{
+                                      opacity: 0,
+                                      y: 20,
                                     }}
-                                  />
-                                </motion.div>
-                              )})}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{
+                                      delay: productIndex * 0.1,
+                                      duration: 0.5,
+                                      ease: 'easeOut',
+                                    }}
+                                    whileHover={{
+                                      y: -5,
+                                      transition: {
+                                        duration: 0.2,
+                                      },
+                                    }}
+                                  >
+                                    <ProductCard
+                                      product={product}
+                                      variant='grid'
+                                      onAddToCart={() => {
+                                        addToCart(originalProduct, 1)
+                                      }}
+                                      onToggleWishlist={() => {
+                                        toggleWishlist(product.id)
+                                      }}
+                                      isInWishlist={isInWishlist(product.id)}
+                                    />
+                                  </motion.div>
+                                )
+                              })}
                           </div>
                         ))}
                       </motion.div>
@@ -562,11 +569,10 @@ export function HomePage() {
                           <motion.button
                             key={index}
                             onClick={() => setFeaturedCurrentIndex(index)}
-                            className={`h-3 rounded-full transition-all duration-300 ${
-                              index === featuredCurrentIndex
-                                ? 'bg-blue-600 w-8 shadow-lg'
-                                : 'bg-blue-200 hover:bg-blue-300 w-3'
-                            }`}
+                            className={`h-3 rounded-full transition-all duration-300 ${index === featuredCurrentIndex
+                              ? 'bg-blue-600 w-8 shadow-lg'
+                              : 'bg-blue-200 hover:bg-blue-300 w-3'
+                              }`}
                             whileHover={{
                               scale: 1.2,
                               backgroundColor: index === featuredCurrentIndex ? '#0066CC' : '#4A90E2',
