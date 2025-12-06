@@ -71,7 +71,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
       lastName: user?.lastName || '',
       phoneNumber: user?.phoneNumber || '',
       dateOfBirth: formatDateForInput(user?.dateOfBirth),
-      gender: user?.gender !== undefined ? user.gender.toString() : undefined,
+      gender: user?.gender !== undefined ? (user.gender.toString() as '0' | '1') : undefined,
     },
   })
 
