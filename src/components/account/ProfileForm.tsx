@@ -138,7 +138,6 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
       }
 
       // TODO: Handle avatar upload when backend supports it
-      // User mentioned they have an upload API, but I need to find it first.
       if (avatarFile) {
         toast.info('Tính năng upload avatar đang được phát triển')
       }
@@ -285,26 +284,37 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
                   <div className='mt-1'>
                     {getStatusBadge(user?.status)}
                     {user?.status === 0 && (
-                      <div className='mt-3'>
-                        <Button
-                          onClick={handleResendEmail}
-                          disabled={isResendingEmail}
-                          variant='outline'
-                          size='sm'
-                          className='border-amber-300 text-amber-700 hover:bg-amber-100'
-                        >
-                          {isResendingEmail ? (
-                            <>
-                              <RefreshCw className='w-4 h-4 mr-2 animate-spin' />
-                              Đang gửi...
-                            </>
-                          ) : (
-                            <>
-                              <Mail className='w-4 h-4 mr-2' />
-                              Gửi lại email xác thực
-                            </>
-                          )}
-                        </Button>
+                      <div className='mt-3 p-4 bg-amber-50 border border-amber-200 rounded-lg'>
+                        <div className='flex items-start gap-3'>
+                          <Mail className='w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0' />
+                          <div className='flex-1'>
+                            <h4 className='text-sm font-medium text-amber-800 mb-1'>
+                              Tài khoản chưa được xác thực
+                            </h4>
+                            <p className='text-sm text-amber-700 mb-3'>
+                              Bạn cần xác thực email để sử dụng đầy đủ tính năng của MediSpace.
+                            </p>
+                            <Button
+                              onClick={handleResendEmail}
+                              disabled={isResendingEmail}
+                              variant='outline'
+                              size='sm'
+                              className='border-amber-300 text-amber-700 hover:bg-amber-100'
+                            >
+                              {isResendingEmail ? (
+                                <>
+                                  <RefreshCw className='w-4 h-4 mr-2 animate-spin' />
+                                  Đang gửi...
+                                </>
+                              ) : (
+                                <>
+                                  <Mail className='w-4 h-4 mr-2' />
+                                  Gửi lại email xác thực
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
