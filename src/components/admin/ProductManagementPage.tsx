@@ -34,7 +34,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { useEntityManagement } from '../../utils/useEntityManagement'
 import { EntityFormDialog, EntityDeleteDialog } from '../shared/EntityFormDialog'
-import { TextField, SelectField, FormGrid, FormSection, SwitchField, TextAreaField } from '../shared/EntityFormFields'
+import { TextField, SelectField, FormGrid, FormSection, SwitchField, TextAreaField, ImageUploadField, MultipleImageUploadField } from '../shared/EntityFormFields'
 import { getStatusBadge, getPrescriptionBadge } from '../../utils/badgeUtils'
 
 interface Product {
@@ -52,6 +52,7 @@ interface Product {
   salesCount: number
   createdAt: string
   image?: string
+  images?: string[]
   description?: string
   featured?: boolean
 }
@@ -722,6 +723,25 @@ export function ProductManagementPage() {
             description='Hiển thị ở trang chủ và danh sách nổi bật'
             checked={formState.data.featured || false}
             onCheckedChange={(v) => updateFormData('featured', v)}
+          />
+        </FormSection>
+
+        <FormSection title='Hình ảnh sản phẩm'>
+          <ImageUploadField
+            label='Ảnh đại diện'
+            value={formState.data.image || ''}
+            onChange={(url) => updateFormData('image', url)}
+            description='Ảnh chính hiển thị trên danh sách sản phẩm'
+            maxSizeMB={2}
+          />
+
+          <MultipleImageUploadField
+            label='Thư viện ảnh'
+            value={formState.data.images || []}
+            onChange={(urls) => updateFormData('images', urls)}
+            maxFiles={4}
+            maxSizeMB={2}
+            description='Tối đa 4 ảnh bổ sung cho sản phẩm'
           />
         </FormSection>
 
