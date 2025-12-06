@@ -61,10 +61,10 @@ export const prescriptionService = {
       // Convert params to ensure integers
       const queryParams = params
         ? {
-            page: params.page ? Number(params.page) : undefined,
-            limit: params.limit ? Number(params.limit) : undefined,
-            status: params.status,
-          }
+          page: params.page ? Number(params.page) : undefined,
+          limit: params.limit ? Number(params.limit) : undefined,
+          status: params.status,
+        }
         : undefined
 
       console.log('Calling /prescriptions/pending with params:', queryParams)

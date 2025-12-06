@@ -240,10 +240,16 @@ export function ContentManagementPage() {
       {/* Tabs */}
       <Tabs defaultValue='banners' className='space-y-4'>
         <div className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-4'>
-          <TabsList className='grid w-full grid-cols-3 bg-blue-50'>
-            <TabsTrigger value='banners'>Banners</TabsTrigger>
-            <TabsTrigger value='news'>Tin tức</TabsTrigger>
-            <TabsTrigger value='promotions'>Khuyến mãi</TabsTrigger>
+          <TabsList className='grid w-full grid-cols-3 !bg-blue-50 p-1.5 rounded-lg h-auto'>
+            <TabsTrigger value='banners' className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'>
+              Banners
+            </TabsTrigger>
+            <TabsTrigger value='news' className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'>
+              Tin tức
+            </TabsTrigger>
+            <TabsTrigger value='promotions' className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'>
+              Khuyến mãi
+            </TabsTrigger>
           </TabsList>
 
           {/* Banners Tab */}

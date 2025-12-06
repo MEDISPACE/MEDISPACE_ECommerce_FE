@@ -4,6 +4,7 @@ import { Badge } from '../../ui/badge'
 import { Separator } from '../../ui/separator'
 import { Package, MapPin, Phone, ShoppingCart, CreditCard, Truck } from 'lucide-react'
 import type { Order } from '~/services/pharmacist'
+import { formatCurrency } from '~/utils/formatCurrency'
 
 interface OrderDetailsDrawerProps {
   isOpen: boolean
@@ -151,12 +152,12 @@ export function OrderDetailsDrawer({ isOpen, onClose, order }: OrderDetailsDrawe
                     <p className='font-semibold text-gray-900'>{item.name}</p>
                     <p className='text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded inline-block'>SKU: {item.sku}</p>
                     <p className='text-sm text-gray-600'>
-                      <span className='text-blue-600 font-medium'>{item.unitPrice.toLocaleString('vi-VN')}đ</span> x{' '}
+                      <span className='text-blue-600 font-medium'>{formatCurrency(item.unitPrice)}</span> x{' '}
                       {item.quantity}
                     </p>
                   </div>
                   <div className='text-right flex flex-col justify-center'>
-                    <p className='text-lg font-bold text-blue-600'>{item.totalPrice.toLocaleString('vi-VN')}đ</p>
+                    <p className='text-lg font-bold text-blue-600'>{formatCurrency(item.totalPrice)}</p>
                   </div>
                 </div>
               ))}
@@ -175,29 +176,29 @@ export function OrderDetailsDrawer({ isOpen, onClose, order }: OrderDetailsDrawe
               <div className='bg-gradient-to-br from-blue-50 to-white p-4 rounded-xl border border-blue-100 space-y-3'>
                 <div className='flex justify-between items-center'>
                   <span className='text-gray-600'>Tạm tính:</span>
-                  <span className='font-medium text-gray-900'>{order.subtotal.toLocaleString('vi-VN')}đ</span>
+                  <span className='font-medium text-gray-900'>{formatCurrency(order.subtotal)}</span>
                 </div>
                 <div className='flex justify-between items-center'>
                   <span className='text-gray-600 flex items-center gap-1'>
                     <Truck className='w-4 h-4' />
                     Phí vận chuyển:
                   </span>
-                  <span className='font-medium text-gray-900'>{order.shippingFee.toLocaleString('vi-VN')}đ</span>
+                  <span className='font-medium text-gray-900'>{formatCurrency(order.shippingFee)}</span>
                 </div>
                 <div className='flex justify-between items-center'>
                   <span className='text-gray-600'>VAT (10%):</span>
-                  <span className='font-medium text-gray-900'>{order.taxAmount.toLocaleString('vi-VN')}đ</span>
+                  <span className='font-medium text-gray-900'>{formatCurrency(order.taxAmount)}</span>
                 </div>
                 {order.discountAmount > 0 && (
                   <div className='flex justify-between items-center text-green-600'>
                     <span className='font-medium'>Giảm giá:</span>
-                    <span className='font-semibold'>-{order.discountAmount.toLocaleString('vi-VN')}đ</span>
+                    <span className='font-semibold'>-{formatCurrency(order.discountAmount)}</span>
                   </div>
                 )}
                 <Separator className='my-2' />
                 <div className='flex justify-between items-center p-3 bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg text-white'>
                   <span className='text-lg font-bold'>Tổng cộng:</span>
-                  <span className='text-2xl font-bold'>{order.totalAmount.toLocaleString('vi-VN')}đ</span>
+                  <span className='text-2xl font-bold'>{formatCurrency(order.totalAmount)}</span>
                 </div>
               </div>
             </CardContent>

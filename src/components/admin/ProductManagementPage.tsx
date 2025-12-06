@@ -1,28 +1,27 @@
-import { useState } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   Package,
   Search,
   Plus,
   Edit,
   Trash2,
-  Eye,
   Download,
   Upload,
   MoreVertical,
   CheckCircle,
   AlertTriangle,
-  TrendingUp,
   DollarSign,
   Tag,
   Box,
   Barcode,
-  ShoppingCart,
 } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Badge } from '../ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table'
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,244 +31,252 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
-import { useEntityManagement } from '../../utils/useEntityManagement'
 import { EntityFormDialog, EntityDeleteDialog } from '../shared/EntityFormDialog'
 import { TextField, SelectField, FormGrid, FormSection, SwitchField, TextAreaField } from '../shared/EntityFormFields'
 import { getStatusBadge, getPrescriptionBadge } from '../../utils/badgeUtils'
+import productService from '../../services/productService'
+import adminService from '../../services/adminService'
+import brandService from '../../services/brandService'
+import { PaginationComponent } from '../shared/PaginationComponent'
+import { toast } from 'sonner'
 
-interface Product {
-  id: string
-  name: string
-  slug: string
-  sku: string
-  category: string
-  manufacturer: string
-  price: number
-  originalPrice?: number
-  stock: number
-  status: 'active' | 'inactive' | 'out_of_stock'
-  requiresPrescription: boolean
-  salesCount: number
-  createdAt: string
-  image?: string
-  description?: string
-  featured?: boolean
-}
+// Use Product type from types/product.ts
+import type { Product as ProductType } from '../../types/product'
 
-const mockProducts: Product[] = [
-  {
-    id: 'PRD001',
-    name: 'Amoxicillin 500mg',
-    slug: 'amoxicillin-500mg',
-    sku: 'AMX-500-30',
-    category: 'Thuốc kê đơn',
-    manufacturer: 'Abbott',
-    price: 45000,
-    originalPrice: 50000,
-    stock: 150,
-    status: 'active',
-    requiresPrescription: true,
-    salesCount: 234,
-    createdAt: '2024-01-15',
-    description: 'Kháng sinh điều trị nhiễm khuẩn',
-  },
-  {
-    id: 'PRD002',
-    name: 'Paracetamol 500mg',
-    slug: 'paracetamol-500mg',
-    sku: 'PAR-500-100',
-    category: 'Thuốc không kê đơn',
-    manufacturer: 'Domesco',
-    price: 15000,
-    stock: 500,
-    status: 'active',
-    requiresPrescription: false,
-    salesCount: 1245,
-    createdAt: '2024-01-10',
-    description: 'Giảm đau, hạ sốt',
-  },
-  {
-    id: 'PRD003',
-    name: 'Vitamin C 1000mg',
-    slug: 'vitamin-c-1000mg',
-    sku: 'VTC-1000-60',
-    category: 'Thực phẩm chức năng',
-    manufacturer: 'Blackmores',
-    price: 250000,
-    originalPrice: 280000,
-    stock: 75,
-    status: 'active',
-    requiresPrescription: false,
-    salesCount: 456,
-    createdAt: '2024-02-01',
-    description: 'Tăng cường sức đề kháng',
-  },
-  {
-    id: 'PRD004',
-    name: 'Metformin 850mg',
-    slug: 'metformin-850mg',
-    sku: 'MET-850-60',
-    category: 'Thuốc kê đơn',
-    manufacturer: 'Sanofi',
-    price: 85000,
-    stock: 0,
-    status: 'out_of_stock',
-    requiresPrescription: true,
-    salesCount: 189,
-    createdAt: '2024-01-20',
-    description: 'Điều trị tiểu đường type 2',
-  },
-  {
-    id: 'PRD005',
-    name: 'Kem chống nắng Neutrogena SPF50',
-    slug: 'kem-chong-nang-neutrogena',
-    sku: 'NEU-SPF50',
-    category: 'Chăm sóc cá nhân',
-    manufacturer: 'Neutrogena',
-    price: 180000,
-    originalPrice: 220000,
-    stock: 120,
-    status: 'active',
-    requiresPrescription: false,
-    salesCount: 678,
-    createdAt: '2024-02-10',
-    description: 'Bảo vệ da khỏi tia UV',
-  },
-  {
-    id: 'PRD006',
-    name: 'Máy đo huyết áp Omron HEM-7156',
-    slug: 'may-do-huyet-ap-omron',
-    sku: 'OMR-7156',
-    category: 'Thiết bị y tế',
-    manufacturer: 'Omron',
-    price: 950000,
-    originalPrice: 1100000,
-    stock: 35,
-    status: 'active',
-    requiresPrescription: false,
-    salesCount: 123,
-    createdAt: '2024-01-25',
-    description: 'Máy đo huyết áp tự động',
-  },
-  {
-    id: 'PRD007',
-    name: 'Viên uống Omega-3 Fish Oil',
-    slug: 'omega-3-fish-oil',
-    sku: 'OMG-1000-100',
-    category: 'Thực phẩm chức năng',
-    manufacturer: 'Nature Made',
-    price: 320000,
-    stock: 90,
-    status: 'active',
-    requiresPrescription: false,
-    salesCount: 345,
-    createdAt: '2024-02-05',
-    description: 'Hỗ trợ tim mạch',
-  },
-  {
-    id: 'PRD008',
-    name: 'Losartan 50mg',
-    slug: 'losartan-50mg',
-    sku: 'LOS-50-30',
-    category: 'Thuốc kê đơn',
-    manufacturer: 'Teva',
-    price: 120000,
-    stock: 200,
-    status: 'active',
-    requiresPrescription: true,
-    salesCount: 267,
-    createdAt: '2024-01-18',
-    description: 'Điều trị tăng huyết áp',
-  },
-  {
-    id: 'PRD009',
-    name: 'Gel rửa tay khô Purell',
-    slug: 'gel-rua-tay-purell',
-    sku: 'PUR-500ML',
-    category: 'Chăm sóc cá nhân',
-    manufacturer: 'Purell',
-    price: 45000,
-    stock: 15,
-    status: 'active',
-    requiresPrescription: false,
-    salesCount: 890,
-    createdAt: '2024-02-15',
-    description: 'Diệt khuẩn nhanh',
-  },
-  {
-    id: 'PRD010',
-    name: 'Thuốc nhỏ mắt Systane',
-    slug: 'thuoc-nho-mat-systane',
-    sku: 'SYS-10ML',
-    category: 'Thuốc không kê đơn',
-    manufacturer: 'Alcon',
-    price: 85000,
-    stock: 180,
-    status: 'inactive',
-    requiresPrescription: false,
-    salesCount: 234,
-    createdAt: '2024-01-30',
-    description: 'Giảm khô mắt',
-  },
-]
-
-const categories = [
-  { id: 'thuoc-ke-don', name: 'Thuốc kê đơn' },
-  { id: 'thuoc-khong-ke-don', name: 'Thuốc không kê đơn' },
-  { id: 'thuc-pham-chuc-nang', name: 'Thực phẩm chức năng' },
-  { id: 'cham-soc-ca-nhan', name: 'Chăm sóc cá nhân' },
-  { id: 'thiet-bi-y-te', name: 'Thiết bị y tế' },
-]
-
-const manufacturers = [
-  'Abbott',
-  'Domesco',
-  'Blackmores',
-  'Sanofi',
-  'Neutrogena',
-  'Omron',
-  'Nature Made',
-  'Teva',
-  'Purell',
-  'Alcon',
-]
+// Extend with local fields if needed
+type Product = ProductType
 
 export function ProductManagementPage() {
+  const queryClient = useQueryClient()
   const [searchQuery, setSearchQuery] = useState('')
   const [filterCategory, setFilterCategory] = useState<string>('all')
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [filterPrescription, setFilterPrescription] = useState<string>('all')
 
-  // Use entity management hook
-  const {
-    entities: products,
-    formState,
-    dialogState,
-    openAddDialog,
-    openDeleteDialog,
-    closeDialog,
-    handleAdd,
-    handleEdit,
-    handleDelete,
-    updateFormData,
-  } = useEntityManagement<Product>({
-    initialEntities: mockProducts,
-    entityName: 'product',
-    entityNameVi: 'sản phẩm',
-    fields: [], // We'll handle form fields manually
-    generateId: (): string => `PRD${String(mockProducts.length + 1).padStart(3, '0')}`,
-    validator: (data: Partial<Product>) => {
-      const errors: Record<string, string> = {}
-      if (!data.name) errors.name = 'Tên sản phẩm là bắt buộc'
-      if (!data.sku) errors.sku = 'SKU là bắt buộc'
-      if (!data.category) errors.category = 'Danh mục là bắt buộc'
-      if (data.price !== undefined && data.price <= 0) errors.price = 'Giá phải lớn hơn 0'
-      if (data.stock !== undefined && data.stock < 0) errors.stock = 'Tồn kho không thể âm'
-      return errors
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+
+  // Dialog states
+  const [dialogState, setDialogState] = useState<{
+    isOpen: boolean
+    mode: 'add' | 'edit' | 'delete'
+    entity: Product | null
+  }>({ isOpen: false, mode: 'add', entity: null })
+
+  const [formState, setFormState] = useState<{
+    data: Partial<Product>
+    errors: Record<string, string>
+  }>({ data: {}, errors: {} })
+
+  // Fetch products
+  const { data: productsData = [], isLoading } = useQuery({
+    queryKey: ['admin', 'products', searchQuery, filterCategory, filterStatus, filterPrescription],
+    queryFn: () =>
+      productService.getProducts({
+        limit: 100, // Backend max limit is 100
+        sortBy: 'createdAt',
+        sortOrder: 'desc',
+      }),
+    select: (data) => {
+      // Client-side filtering
+      return data.filter((product) => {
+        const matchesSearch =
+          !searchQuery ||
+          product.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          product.sku?.toLowerCase().includes(searchQuery.toLowerCase())
+        const matchesCategory = filterCategory === 'all' || product.categoryId === filterCategory
+        const matchesStatus = filterStatus === 'all' || product.status === filterStatus
+        const matchesPrescription =
+          filterPrescription === 'all' ||
+          (filterPrescription === 'rx' && product.requiresPrescription) ||
+          (filterPrescription === 'otc' && !product.requiresPrescription)
+        return matchesSearch && matchesCategory && matchesStatus && matchesPrescription
+      })
+    },
+    staleTime: 30000,
+  })
+
+  // Fetch categories for dropdown
+  const { data: categoriesData = [] } = useQuery({
+    queryKey: ['admin', 'categories', 'tree'],
+    queryFn: adminService.getCategoryTree,
+    staleTime: 60000,
+  })
+
+  // Fetch brands for dropdown
+  const { data: brandsData = [] } = useQuery({
+    queryKey: ['brands'],
+    queryFn: brandService.getBrands,
+    staleTime: 60000,
+  })
+
+  // Flatten categories for dropdown
+  const categories = useMemo(() => {
+    interface CategoryNode {
+      _id: string
+      name: string
+      children?: CategoryNode[]
+    }
+    const flatten = (cats: CategoryNode[], result: CategoryNode[] = []): CategoryNode[] => {
+      cats.forEach((cat) => {
+        result.push(cat)
+        if (cat.children && cat.children.length > 0) {
+          flatten(cat.children, result)
+        }
+      })
+      return result
+    }
+    return flatten(categoriesData as CategoryNode[])
+  }, [categoriesData])
+
+  // Mutations
+  const createMutation = useMutation({
+    mutationFn: productService.createProduct,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'products'] })
+      toast.success('Tạo sản phẩm thành công')
+      closeDialog()
+    },
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { message?: string } } }
+      toast.error(err.response?.data?.message || 'Tạo sản phẩm thất bại')
     },
   })
 
-  // Auto-generate slug when name changes (only for new products)
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<Product> }) => productService.updateProduct(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'products'] })
+      toast.success('Cập nhật sản phẩm thành công')
+      closeDialog()
+    },
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { message?: string } } }
+      toast.error(err.response?.data?.message || 'Cập nhật sản phẩm thất bại')
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: productService.deleteProduct,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'products'] })
+      toast.success('Xóa sản phẩm thành công')
+      closeDialog()
+    },
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { message?: string } } }
+      toast.error(err.response?.data?.message || 'Xóa sản phẩm thất bại')
+    },
+  })
+
+  const toggleStatusMutation = useMutation({
+    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
+      productService.toggleProductStatus(id, isActive),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'products'] })
+      toast.success('Cập nhật trạng thái thành công')
+    },
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { message?: string } } }
+      toast.error(err.response?.data?.message || 'Cập nhật trạng thái thất bại')
+    },
+  })
+
+  // Form handlers
+  const updateFormData = (field: string, value: unknown) => {
+    setFormState((prev) => ({
+      ...prev,
+      data: { ...prev.data, [field]: value },
+      errors: { ...prev.errors, [field]: '' },
+    }))
+  }
+
+  const openAddDialog = () => {
+    setDialogState({ isOpen: true, mode: 'add', entity: null })
+    setFormState({
+      data: {
+        isActive: true,
+        status: 'active',
+        requiresPrescription: false,
+        stockQuantity: 0,
+        price: 0,
+        maxOrderQuantity: 10,
+      },
+      errors: {},
+    })
+  }
+
+  const openEditDialog = (entity: Product) => {
+    setDialogState({ isOpen: true, mode: 'edit', entity })
+    setFormState({ data: entity, errors: {} })
+  }
+
+  const openDeleteDialog = (entity: Product) => {
+    setDialogState({ isOpen: true, mode: 'delete', entity })
+  }
+
+  const closeDialog = () => {
+    setDialogState({ isOpen: false, mode: 'add', entity: null })
+    setFormState({ data: {}, errors: {} })
+  }
+
+  const handleSave = () => {
+    const { data } = formState
+    const errors: Record<string, string> = {}
+
+    // Validation
+    if (!data.name) errors.name = 'Tên sản phẩm là bắt buộc'
+    if (!data.shortDescription) errors.shortDescription = 'Mô tả là bắt buộc'
+    else if (data.shortDescription.length < 10) errors.shortDescription = 'Mô tả phải có ít nhất 10 ký tự'
+    else if (data.shortDescription.length > 500) errors.shortDescription = 'Mô tả không được quá 500 ký tự'
+    if (!data.sku) errors.sku = 'SKU là bắt buộc'
+    else if (!/^[A-Z0-9-]+$/.test(data.sku)) errors.sku = 'SKU chỉ được chứa chữ HOA, số và dấu gạch ngang'
+    if (!data.categoryId) errors.categoryId = 'Danh mục là bắt buộc'
+    if (data.price !== undefined && data.price < 0) errors.price = 'Giá phải lớn hơn hoặc bằng 0'
+    if (data.stockQuantity !== undefined && data.stockQuantity < 0) errors.stockQuantity = 'Tồn kho không thể âm'
+    if (data.barcode && (data.barcode.length < 8 || data.barcode.length > 50))
+      errors.barcode = 'Mã vạch phải từ 8-50 ký tự'
+    if (data.maxOrderQuantity !== undefined && data.maxOrderQuantity < 1)
+      errors.maxOrderQuantity = 'Số lượng tối đa phải lớn hơn 0'
+
+    if (Object.keys(errors).length > 0) {
+      setFormState((prev) => ({ ...prev, errors }))
+      return Promise.resolve(false)
+    }
+
+    // Clean data: remove immutable fields and empty values
+    const cleanData = { ...data }
+    delete cleanData._id
+    delete cleanData.createdAt
+    delete cleanData.updatedAt
+    delete cleanData.createdBy
+    delete cleanData.lastModifiedBy
+    delete cleanData.category
+    delete cleanData.brand
+
+    // Remove empty brandId
+    if (cleanData.brandId === '') {
+      delete cleanData.brandId
+    }
+
+    if (dialogState.mode === 'edit' && dialogState.entity) {
+      updateMutation.mutate({ id: dialogState.entity._id, data: cleanData })
+    } else {
+      createMutation.mutate(cleanData)
+    }
+    return Promise.resolve(true)
+  }
+
+  const confirmDelete = () => {
+    if (dialogState.entity) {
+      deleteMutation.mutate(dialogState.entity._id)
+      return Promise.resolve(true)
+    }
+    return Promise.resolve(false)
+  }
+
+  // Auto-generate slug
   const handleNameChange = (value: string) => {
     updateFormData('name', value)
     if (dialogState.mode !== 'edit') {
@@ -286,45 +293,32 @@ export function ProductManagementPage() {
     }
   }
 
-  // Form save handlers
-  const handleSaveAdd = () => {
-    return handleAdd(formState.data)
-  }
-
-  const handleSaveEdit = () => {
-    return handleEdit(formState.data)
-  }
-
-  const confirmDelete = () => {
-    if (dialogState.entity) {
-      return handleDelete(dialogState.entity.id)
+  // Stats calculation
+  const stats = useMemo(() => {
+    return {
+      total: productsData.length,
+      active: productsData.filter((p) => p.status === 'active').length,
+      outOfStock: productsData.filter((p) => p.status === 'out_of_stock').length,
+      lowStock: productsData.filter((p) => (p.stockQuantity || 0) > 0 && (p.stockQuantity || 0) < 20).length,
+      totalValue: productsData.reduce((sum, p) => sum + (p.price || 0) * (p.stockQuantity || 0), 0),
+      rxProducts: productsData.filter((p) => p.requiresPrescription).length,
+      otcProducts: productsData.filter((p) => !p.requiresPrescription).length,
     }
-  }
+  }, [productsData])
 
-  const stats = {
-    total: products.length,
-    active: products.filter((p) => p.status === 'active').length,
-    outOfStock: products.filter((p) => p.status === 'out_of_stock').length,
-    lowStock: products.filter((p) => p.stock > 0 && p.stock < 20).length,
-    totalValue: products.reduce((sum, p) => sum + p.price * p.stock, 0),
-    totalSales: products.reduce((sum, p) => sum + p.salesCount, 0),
-    rxProducts: products.filter((p) => p.requiresPrescription).length,
-    otcProducts: products.filter((p) => !p.requiresPrescription).length,
-  }
+  // Pagination logic
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage
+    const endIndex = startIndex + itemsPerPage
+    return productsData.slice(startIndex, endIndex)
+  }, [productsData, currentPage, itemsPerPage])
 
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch =
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.manufacturer.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesCategory = filterCategory === 'all' || product.category === filterCategory
-    const matchesStatus = filterStatus === 'all' || product.status === filterStatus
-    const matchesPrescription =
-      filterPrescription === 'all' ||
-      (filterPrescription === 'rx' && product.requiresPrescription) ||
-      (filterPrescription === 'otc' && !product.requiresPrescription)
-    return matchesSearch && matchesCategory && matchesStatus && matchesPrescription
-  })
+  const totalPages = Math.ceil(productsData.length / itemsPerPage)
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery, filterCategory, filterStatus, filterPrescription])
 
   return (
     <div className='space-y-6'>
@@ -352,7 +346,7 @@ export function ProductManagementPage() {
           </Button>
           <Button
             onClick={openAddDialog}
-            className='bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8] gap-2'
+            className='bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8] gap-2 text-white'
           >
             <Plus className='w-4 h-4' />
             Thêm sản phẩm
@@ -361,7 +355,7 @@ export function ProductManagementPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-4'>
+      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4'>
         <Card className='bg-white backdrop-blur-lg border-blue-100'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
@@ -426,18 +420,6 @@ export function ProductManagementPage() {
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
-                <p className='text-xs text-gray-600'>Đã bán</p>
-                <p className='text-xl font-semibold text-blue-600'>{stats.totalSales}</p>
-              </div>
-              <ShoppingCart className='w-8 h-8 text-blue-400' />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className='bg-white backdrop-blur-lg border-blue-100'>
-          <CardContent className='p-4'>
-            <div className='flex items-center justify-between'>
-              <div>
                 <p className='text-xs text-gray-600'>Thuốc Rx</p>
                 <p className='text-2xl font-semibold text-red-600'>{stats.rxProducts}</p>
               </div>
@@ -466,7 +448,7 @@ export function ProductManagementPage() {
             <div className='flex-1 relative'>
               <Search className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400' />
               <Input
-                placeholder='Tìm kiếm sản phẩm, SKU, nhà sản xuất...'
+                placeholder='Tìm kiếm sản phẩm, SKU...'
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className='pl-10 border-2 border-blue-200 focus:border-blue-500'
@@ -479,8 +461,8 @@ export function ProductManagementPage() {
               <SelectContent>
                 <SelectItem value='all'>Tất cả danh mục</SelectItem>
                 {categories.map((cat) => (
-                  <SelectItem key={cat.id} value={cat.name}>
-                    {cat.name}
+                  <SelectItem key={cat._id} value={cat._id}>
+                    {'—'.repeat((cat as { level?: number }).level || 0)} {cat.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -492,7 +474,7 @@ export function ProductManagementPage() {
               <SelectContent>
                 <SelectItem value='all'>Tất cả</SelectItem>
                 <SelectItem value='active'>Đang bán</SelectItem>
-                <SelectItem value='inactive'>Ngừng bán</SelectItem>
+                <SelectItem value='discontinued'>Ngừng kinh doanh</SelectItem>
                 <SelectItem value='out_of_stock'>Hết hàng</SelectItem>
               </SelectContent>
             </Select>
@@ -506,6 +488,20 @@ export function ProductManagementPage() {
                 <SelectItem value='otc'>OTC</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={itemsPerPage.toString()} onValueChange={(v) => {
+              setItemsPerPage(Number(v))
+              setCurrentPage(1)
+            }}>
+              <SelectTrigger className='w-40 border-2 border-blue-200'>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='5'>5 / trang</SelectItem>
+                <SelectItem value='10'>10 / trang</SelectItem>
+                <SelectItem value='20'>20 / trang</SelectItem>
+                <SelectItem value='50'>50 / trang</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
@@ -515,7 +511,7 @@ export function ProductManagementPage() {
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
             <Package className='w-5 h-5 text-blue-600' />
-            Danh sách sản phẩm ({filteredProducts.length})
+            Danh sách sản phẩm ({productsData.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -523,99 +519,136 @@ export function ProductManagementPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Sản phẩm</TableHead>
-                  <TableHead>SKU</TableHead>
-                  <TableHead>Danh mục</TableHead>
+                  <TableHead className='w-48 sm:w-56 md:w-64 lg:w-72 xl:w-80'>Sản phẩm</TableHead>
+                  <TableHead className='hidden sm:table-cell w-24 sm:w-28 lg:w-32'>SKU</TableHead>
+                  <TableHead className='hidden md:table-cell'>Danh mục</TableHead>
                   <TableHead>Giá</TableHead>
-                  <TableHead>Tồn kho</TableHead>
-                  <TableHead>Đã bán</TableHead>
-                  <TableHead>Loại</TableHead>
-                  <TableHead>Trạng thái</TableHead>
+                  <TableHead className='hidden lg:table-cell'>Tồn kho</TableHead>
+                  <TableHead className='hidden xl:table-cell'>Loại</TableHead>
+                  <TableHead className='hidden xl:table-cell'>Kích hoạt</TableHead>
+                  <TableHead className='hidden lg:table-cell'>Trạng thái</TableHead>
                   <TableHead className='text-right'>Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredProducts.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell>
-                      <div>
-                        <p className='font-medium text-gray-900'>{product.name}</p>
-                        <p className='text-sm text-gray-500'>{product.manufacturer}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className='flex items-center gap-2'>
-                        <Barcode className='w-4 h-4 text-gray-400' />
-                        <span className='font-mono text-sm'>{product.sku}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant='outline'>{product.category}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <p className='font-semibold text-blue-600'>{product.price.toLocaleString('vi-VN')}đ</p>
-                        {product.originalPrice && product.originalPrice > product.price && (
-                          <p className='text-xs text-gray-400 line-through'>
-                            {product.originalPrice.toLocaleString('vi-VN')}đ
-                          </p>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className='flex items-center gap-1'>
-                        <Box className='w-4 h-4 text-gray-400' />
-                        <span className={product.stock < 20 ? 'text-yellow-600 font-semibold' : ''}>
-                          {product.stock}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className='flex items-center gap-1'>
-                        <TrendingUp className='w-4 h-4 text-green-500' />
-                        {product.salesCount}
-                      </div>
-                    </TableCell>
-                    <TableCell>{getPrescriptionBadge(product.requiresPrescription)}</TableCell>
-                    <TableCell>{getStatusBadge(product.status)}</TableCell>
-                    <TableCell className='text-right'>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant='ghost' size='sm'>
-                            <MoreVertical className='w-4 h-4' />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align='end'>
-                          <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem>
-                            <Eye className='w-4 h-4 mr-2' />
-                            Xem chi tiết
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleEdit(product)}>
-                            <Edit className='w-4 h-4 mr-2' />
-                            Chỉnh sửa
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => openDeleteDialog(product)} className='text-red-600'>
-                            <Trash2 className='w-4 h-4 mr-2' />
-                            Xóa
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className='text-center py-8'>
+                      <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto'></div>
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : paginatedProducts.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className='text-center py-8 text-gray-500'>
+                      Không tìm thấy sản phẩm nào
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  paginatedProducts.map((product) => (
+                    <TableRow key={product._id} className='hover:bg-blue-50/50'>
+                      <TableCell>
+                        <div className='w-48 sm:w-56 md:w-64 lg:w-72 xl:w-80'>
+                          <p className='font-medium text-gray-900 truncate' title={product.name}>{product.name}</p>
+                          <p className='text-sm text-gray-500 truncate'>{product.brand?.name || 'N/A'}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell className='hidden sm:table-cell'>
+                        <div className='flex items-center gap-1 w-24 sm:w-28 lg:w-32 overflow-hidden'>
+                          <Barcode className='w-4 h-4 text-gray-400 flex-shrink-0' />
+                          <span className='font-mono text-sm truncate block' title={product.sku}>{product.sku}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className='hidden md:table-cell'>
+                        <Badge variant='outline'>{product.category?.name || 'N/A'}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <p className='font-semibold text-blue-600'>{(product.price || 0).toLocaleString('vi-VN')}đ</p>
+                      </TableCell>
+                      <TableCell className='hidden lg:table-cell'>
+                        <div className='flex items-center gap-1'>
+                          <Box className='w-4 h-4 text-gray-400' />
+                          <span className={(product.stockQuantity || 0) < 20 ? 'text-yellow-600 font-semibold' : ''}>
+                            {product.stockQuantity || 0}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className='hidden xl:table-cell'>
+                        {getPrescriptionBadge(product.requiresPrescription)}
+                      </TableCell>
+                      <TableCell className='hidden xl:table-cell'>
+                        <div
+                          className='cursor-pointer inline-block'
+                          onClick={() => toggleStatusMutation.mutate({ id: product._id, isActive: !product.isActive })}
+                        >
+                          {product.isActive ? (
+                            <Badge className='bg-green-100 text-green-700 hover:bg-green-200'>
+                              <CheckCircle className='w-3 h-3 mr-1' />
+                              Hoạt động
+                            </Badge>
+                          ) : (
+                            <Badge className='bg-gray-100 text-gray-700 hover:bg-gray-200'>
+                              Không hoạt động
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className='hidden lg:table-cell'>
+                        <div
+                          className='cursor-pointer'
+                          onClick={() => toggleStatusMutation.mutate({ id: product._id, isActive: !product.isActive })}
+                        >
+                          {getStatusBadge(product.status)}
+                        </div>
+                      </TableCell>
+                      <TableCell className='text-right'>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant='ghost' size='sm'>
+                              <MoreVertical className='w-4 h-4' />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align='end' className='bg-white shadow-lg border-2 border-blue-200'>
+                            <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => openEditDialog(product)}>
+                              <Edit className='w-4 h-4 mr-2' />
+                              Chỉnh sửa
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => openDeleteDialog(product)} className='text-red-600'>
+                              <Trash2 className='w-4 h-4 mr-2' />
+                              Xóa
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
+
+          {/* Pagination */}
+          {productsData.length > 0 && totalPages > 1 && (
+            <div className='mt-6 flex items-center justify-between border-t pt-4'>
+              <div className='text-sm text-gray-600'>
+                Hiển thị {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, productsData.length)} trong tổng số {productsData.length} sản phẩm
+              </div>
+              <PaginationComponent
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Product Form Sheet - Using reusable component */}
+      {/* Product Form Sheet */}
       <EntityFormDialog
-        open={dialogState.isOpen}
-        onOpenChange={(open) => (open ? {} : closeDialog())}
+        open={dialogState.isOpen && dialogState.mode !== 'delete'}
+        onOpenChange={(open) => (open ? null : closeDialog())}
         mode='sheet'
         title={dialogState.mode === 'edit' ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm mới'}
         description={
@@ -623,7 +656,7 @@ export function ProductManagementPage() {
             ? `Cập nhật thông tin sản phẩm ${dialogState.entity?.name || ''}`
             : 'Nhập thông tin để tạo sản phẩm mới'
         }
-        onSave={dialogState.mode === 'edit' ? handleSaveEdit : handleSaveAdd}
+        onSave={handleSave}
         isEdit={dialogState.mode === 'edit'}
       >
         <FormSection title='Thông tin cơ bản'>
@@ -633,21 +666,24 @@ export function ProductManagementPage() {
             value={formState.data.name || ''}
             onChange={handleNameChange}
             placeholder='VD: Paracetamol 500mg'
+            error={formState.errors.name}
           />
 
-          <FormGrid cols={2}>
+          <FormGrid cols={3}>
             <TextField
               label='SKU'
               required
               value={formState.data.sku || ''}
-              onChange={(v) => updateFormData('sku', v)}
+              onChange={(v) => updateFormData('sku', v.toUpperCase())}
               placeholder='VD: PAR-500-100'
+              error={formState.errors.sku}
             />
             <TextField
-              label='Slug'
-              value={formState.data.slug || ''}
-              onChange={(v) => updateFormData('slug', v)}
-              placeholder='VD: paracetamol-500mg'
+              label='Mã vạch (Barcode)'
+              value={formState.data.barcode || ''}
+              onChange={(v) => updateFormData('barcode', v)}
+              placeholder='VD: 8934567890123'
+              error={formState.errors.barcode}
             />
           </FormGrid>
         </FormSection>
@@ -657,15 +693,22 @@ export function ProductManagementPage() {
             <SelectField
               label='Danh mục'
               required
-              value={formState.data.category || ''}
-              onChange={(v) => updateFormData('category', v)}
-              options={categories.map((cat) => ({ value: cat.name, label: cat.name }))}
+              value={formState.data.categoryId || ''}
+              onChange={(v) => updateFormData('categoryId', v)}
+              options={categories.map((cat) => ({
+                value: cat._id,
+                label: '—'.repeat((cat as { level?: number }).level || 0) + ' ' + cat.name,
+              }))}
+              error={formState.errors.categoryId}
             />
             <SelectField
-              label='Nhà sản xuất'
-              value={formState.data.manufacturer || ''}
-              onChange={(v) => updateFormData('manufacturer', v)}
-              options={manufacturers.map((m) => ({ value: m, label: m }))}
+              label='Thương hiệu'
+              value={formState.data.brandId || ''}
+              onChange={(v) => updateFormData('brandId', v || undefined)}
+              options={brandsData.map((brand: { _id: string; name: string }) => ({
+                value: brand._id,
+                label: brand.name,
+              }))}
             />
           </FormGrid>
         </FormSection>
@@ -675,71 +718,84 @@ export function ProductManagementPage() {
             <TextField
               label='Giá bán (VNĐ)'
               type='number'
-              required
               value={formState.data.price?.toString() || ''}
               onChange={(v) => updateFormData('price', Number(v) || 0)}
               placeholder='0'
-            />
-            <TextField
-              label='Giá gốc (VNĐ)'
-              type='number'
-              value={formState.data.originalPrice?.toString() || ''}
-              onChange={(v) => updateFormData('originalPrice', Number(v) || 0)}
-              placeholder='0'
+              error={formState.errors.price}
             />
             <TextField
               label='Tồn kho'
               type='number'
               required
-              value={formState.data.stock?.toString() || ''}
-              onChange={(v) => updateFormData('stock', Number(v) || 0)}
+              value={formState.data.stockQuantity?.toString() || ''}
+              onChange={(v) => updateFormData('stockQuantity', Number(v) || 0)}
               placeholder='0'
+              error={formState.errors.stockQuantity}
+            />
+            <TextField
+              label='Số lượng tối đa/đơn'
+              type='number'
+              value={formState.data.maxOrderQuantity?.toString() || ''}
+              onChange={(v) => updateFormData('maxOrderQuantity', Number(v) || 10)}
+              placeholder='10'
+              error={formState.errors.maxOrderQuantity}
             />
           </FormGrid>
         </FormSection>
 
         <FormSection title='Trạng thái'>
-          <SelectField
-            label='Trạng thái sản phẩm'
-            value={formState.data.status || ''}
-            onChange={(v) => updateFormData('status', v)}
-            options={[
-              { value: 'active', label: 'Đang bán' },
-              { value: 'inactive', label: 'Ngừng bán' },
-              { value: 'out_of_stock', label: 'Hết hàng' },
-            ]}
-          />
-
-          <SwitchField
-            label='Thuốc kê đơn'
-            description='Sản phẩm này yêu cầu đơn thuốc từ bác sĩ'
-            checked={formState.data.requiresPrescription || false}
-            onCheckedChange={(v) => updateFormData('requiresPrescription', v)}
-          />
-
-          <SwitchField
-            label='Sản phẩm nổi bật'
-            description='Hiển thị ở trang chủ và danh sách nổi bật'
-            checked={formState.data.featured || false}
-            onCheckedChange={(v) => updateFormData('featured', v)}
-          />
+          <FormGrid cols={2}>
+            <SelectField
+              label='Trạng thái sản phẩm'
+              value={formState.data.status || 'active'}
+              onChange={(v) => updateFormData('status', v)}
+              options={[
+                { value: 'active', label: 'Đang bán' },
+                { value: 'discontinued', label: 'Ngừng kinh doanh' },
+                { value: 'out_of_stock', label: 'Hết hàng' },
+              ]}
+            />
+            <div className='space-y-4'>
+              <SwitchField
+                label='Kích hoạt'
+                description='Hiển thị sản phẩm trên website'
+                checked={formState.data.isActive !== false}
+                onCheckedChange={(v) => updateFormData('isActive', v)}
+              />
+              <SwitchField
+                label='Thuốc kê đơn'
+                description='Yêu cầu đơn thuốc từ bác sĩ'
+                checked={formState.data.requiresPrescription || false}
+                onCheckedChange={(v) => updateFormData('requiresPrescription', v)}
+              />
+            </div>
+          </FormGrid>
         </FormSection>
 
-        <FormSection title='Mô tả'>
+        <FormSection title='Hình ảnh & Mô tả'>
+          <TextField
+            label='URL hình ảnh đại diện'
+            value={formState.data.featuredImage || ''}
+            onChange={(v) => updateFormData('featuredImage', v)}
+            placeholder='https://example.com/image.jpg'
+          />
+
           <TextAreaField
             label='Mô tả sản phẩm'
-            value={formState.data.description || ''}
-            onChange={(v) => updateFormData('description', v)}
-            placeholder='Nhập mô tả chi tiết về sản phẩm...'
-            rows={6}
+            required
+            value={formState.data.shortDescription || ''}
+            onChange={(v) => updateFormData('shortDescription', v)}
+            placeholder='Nhập mô tả chi tiết về sản phẩm (tối thiểu 10 ký tự, tối đa 500 ký tự)...'
+            rows={5}
+            error={formState.errors.shortDescription}
           />
         </FormSection>
       </EntityFormDialog>
 
-      {/* Delete Confirmation Dialog - Using reusable component */}
+      {/* Delete Confirmation Dialog */}
       <EntityDeleteDialog
         open={dialogState.isOpen && dialogState.mode === 'delete'}
-        onOpenChange={(open) => (open ? {} : closeDialog())}
+        onOpenChange={() => closeDialog()}
         entityName='sản phẩm'
         entityDisplayName={dialogState.entity?.name}
         onConfirm={confirmDelete}
