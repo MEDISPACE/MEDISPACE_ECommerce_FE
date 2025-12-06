@@ -17,8 +17,8 @@ import { Badge } from '../ui/badge'
 import { Link, useNavigate } from 'react-router'
 import { UnifiedMegaMenu } from './UnifiedMegaMenu'
 import { EnhancedSearchBar } from '../shared/EnhancedSearchBar'
-import { useAuth } from '../../contexts/AuthContext'
-import { UserRole } from '../../types/user'
+import { useAuth } from '~/contexts/AuthContext'
+import { UserRole } from '~/types/user'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,8 +28,8 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
-import { useCart } from '../../contexts/CartContext'
-import { useCategories } from '../../hooks/product'
+import { useCart } from '~/contexts/CartContext'
+import { useCategories } from '~/hooks/product'
 import type { Category } from '../../types/product'
 
 export function Header() {
@@ -249,17 +249,15 @@ export function Header() {
                 <div key={category._id} className='relative' onMouseEnter={() => handleCategoryHover(category)}>
                   <Link
                     to={`/categories/${category.slug}`}
-                    className={`relative flex items-center px-1 py-3 text-sm font-medium transition-colors duration-200 group ${
-                      activeMegaMenuCategory?._id === category._id ? 'text-blue-600' : 'text-gray-700 hover:text-blue-600'
-                    }`}
+                    className={`relative flex items-center px-1 py-3 text-sm font-medium transition-colors duration-200 group ${activeMegaMenuCategory?._id === category._id ? 'text-blue-600' : 'text-gray-700 hover:text-blue-600'
+                      }`}
                     title={category.name}
                   >
                     <span className='text-center leading-tight'>{category.name}</span>
                     <ChevronDown className='w-3 h-3 ml-1 opacity-60 flex-shrink-0' />
                     <span
-                      className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-blue-600 to-cyan-500 transition-all duration-300 ${
-                        activeMegaMenuCategory?._id === category._id ? 'w-full' : 'w-0 group-hover:w-full'
-                      }`}
+                      className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-blue-600 to-cyan-500 transition-all duration-300 ${activeMegaMenuCategory?._id === category._id ? 'w-full' : 'w-0 group-hover:w-full'
+                        }`}
                     ></span>
                   </Link>
                 </div>

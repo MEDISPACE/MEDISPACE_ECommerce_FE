@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { useForm, type SubmitHandler } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Camera, User, Phone, Calendar, Save, X } from 'lucide-react'
+import { Camera, User as UserIcon, Phone, Calendar, Save, X, Mail, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Button } from '../ui/button'
@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Badge } from '../ui/badge'
 import { useAuth } from '../../contexts/AuthContext'
 import { authService } from '../../services/authService'
+import { mediaService } from '../../services/mediaService'
 import type { User, UserGender } from '../../types/user'
 
 const profileSchema = z.object({
@@ -40,6 +41,9 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const [isResendingEmail, setIsResendingEmail] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Helper function to format date for input[type="date"]
@@ -67,7 +71,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
       lastName: user?.lastName || '',
       phoneNumber: user?.phoneNumber || '',
       dateOfBirth: formatDateForInput(user?.dateOfBirth),
-      gender: user?.gender !== undefined ? user.gender.toString() : undefined,
+      gender: user?.gender !== undefined ? (user.gender.toString() as '0' | '1') : undefined,
     },
   })
 
@@ -102,8 +106,26 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
   const handleAvatarRemove = () => {
     setAvatarFile(null)
     setAvatarPreview(null)
+    setUploadProgress(0)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
+    }
+  }
+
+  const handleResendEmail = async () => {
+    setIsResendingEmail(true)
+    try {
+      await authService.resendVerifyEmail()
+      toast.success('Email xác thực đã được gửi lại', {
+        description: 'Vui lòng kiểm tra hộp thư của bạn.',
+      })
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Có lỗi xảy ra khi gửi email'
+      toast.error('Gửi email thất bại', {
+        description: errorMessage,
+      })
+    } finally {
+      setIsResendingEmail(false)
     }
   }
 
@@ -111,6 +133,32 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
     setIsSubmitting(true)
 
     try {
+      let avatarUrl: string | undefined = undefined
+
+      // Upload avatar nếu có
+      if (avatarFile) {
+        setIsUploadingAvatar(true)
+        toast.info('Đang upload avatar...')
+
+        try {
+          avatarUrl = await mediaService.uploadImageWithProgress(avatarFile, (progress) => {
+            setUploadProgress(progress)
+          })
+
+          toast.success('Upload avatar thành công!')
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Có lỗi xảy ra khi upload avatar'
+          toast.error('Upload avatar thất bại', {
+            description: errorMessage,
+          })
+          setIsUploadingAvatar(false)
+          setIsSubmitting(false)
+          return
+        } finally {
+          setIsUploadingAvatar(false)
+        }
+      }
+
       const updateData: Partial<User> = {
         firstName: data.firstName,
         lastName: data.lastName,
@@ -119,9 +167,9 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
         gender: data.gender ? (parseInt(data.gender) as UserGender) : undefined,
       }
 
-      // TODO: Handle avatar upload when backend supports it
-      if (avatarFile) {
-        toast.info('Tính năng upload avatar đang được phát triển')
+      // Thêm avatar URL nếu có
+      if (avatarUrl) {
+        updateData.avatar = avatarUrl
       }
 
       const updatedUser = await authService.updateProfile(updateData)
@@ -130,6 +178,11 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
       toast.success('Cập nhật hồ sơ thành công', {
         description: 'Thông tin cá nhân của bạn đã được cập nhật.',
       })
+
+      // Reset avatar state
+      setAvatarFile(null)
+      setAvatarPreview(null)
+      setUploadProgress(0)
 
       onSuccess?.()
     } catch (error) {
@@ -174,7 +227,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
       <Card>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
-            <User className='w-5 h-5 text-blue-600' />
+            <UserIcon className='w-5 h-5 text-blue-600' />
             Thông tin cá nhân
           </CardTitle>
         </CardHeader>
@@ -206,6 +259,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
                 ref={fileInputRef}
                 type='file'
                 accept='image/*'
+                capture='environment'
                 onChange={handleAvatarChange}
                 className='hidden'
               />
@@ -219,16 +273,6 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
                 >
                   Đổi ảnh
                 </Button>
-                {(avatarPreview || user?.avatar) && (
-                  <Button
-                    type='button'
-                    variant='outline'
-                    size='sm'
-                    onClick={handleAvatarRemove}
-                  >
-                    Xóa
-                  </Button>
-                )}
               </div>
 
               <div className='text-center'>
@@ -265,6 +309,40 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
                   <Label className='text-sm font-medium text-gray-700'>Trạng thái tài khoản</Label>
                   <div className='mt-1'>
                     {getStatusBadge(user?.status)}
+                    {user?.status === 0 && (
+                      <div className='mt-3 p-4 bg-amber-50 border border-amber-200 rounded-lg'>
+                        <div className='flex items-start gap-3'>
+                          <Mail className='w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0' />
+                          <div className='flex-1'>
+                            <h4 className='text-sm font-medium text-amber-800 mb-1'>
+                              Tài khoản chưa được xác thực
+                            </h4>
+                            <p className='text-sm text-amber-700 mb-3'>
+                              Bạn cần xác thực email để sử dụng đầy đủ tính năng của MediSpace.
+                            </p>
+                            <Button
+                              onClick={handleResendEmail}
+                              disabled={isResendingEmail}
+                              variant='outline'
+                              size='sm'
+                              className='border-amber-300 text-amber-700 hover:bg-amber-100'
+                            >
+                              {isResendingEmail ? (
+                                <>
+                                  <RefreshCw className='w-4 h-4 mr-2 animate-spin' />
+                                  Đang gửi...
+                                </>
+                              ) : (
+                                <>
+                                  <Mail className='w-4 h-4 mr-2' />
+                                  Gửi lại email xác thực
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -293,7 +371,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
               {/* First Name */}
               <div className='space-y-2'>
                 <Label htmlFor='firstName' className='flex items-center gap-2'>
-                  <User className='w-4 h-4 text-gray-600' />
+                  <UserIcon className='w-4 h-4 text-gray-600' />
                   Họ *
                 </Label>
                 <Input
@@ -313,7 +391,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
               {/* Last Name */}
               <div className='space-y-2'>
                 <Label htmlFor='lastName' className='flex items-center gap-2'>
-                  <User className='w-4 h-4 text-gray-600' />
+                  <UserIcon className='w-4 h-4 text-gray-600' />
                   Tên *
                 </Label>
                 <Input
@@ -373,7 +451,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
               {/* Gender */}
               <div className='space-y-2'>
                 <Label className='flex items-center gap-2'>
-                  <User className='w-4 h-4 text-gray-600' />
+                  <UserIcon className='w-4 h-4 text-gray-600' />
                   Giới tính
                 </Label>
                 <Select

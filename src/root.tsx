@@ -1,8 +1,8 @@
 import { Links, Meta, Outlet, Scripts, ScrollRestoration } from 'react-router'
 import type { LinksFunction } from 'react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { AuthProvider } from './contexts/AuthContext'
-import { CartProvider } from './contexts/CartContext'
+import { AuthProvider } from '~/contexts/AuthContext'
+import { CartProvider } from '~/contexts/CartContext'
 import { WishlistProvider } from './hooks'
 import { Toaster } from './components/ui/sonner'
 import './style/globals.css'
@@ -51,7 +51,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </head>
               <body style={{ backgroundColor: '#ffffff', colorScheme: 'light' }}>
                 {children}
-                <Toaster />
+                <Toaster position='top-right' />
                 <ScrollRestoration />
                 <Scripts />
               </body>
