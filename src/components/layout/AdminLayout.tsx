@@ -22,6 +22,7 @@ import {
   Tag,
   MessageSquare,
 } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { Button } from '../ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Badge } from '../ui/badge'
@@ -39,6 +40,10 @@ import { useAuth } from '../../contexts/AuthContext'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getFullName, getUserInitials } from '~/utils/lib'
 import type { BreadcrumbItem } from '../shared/UniversalBreadcrumb'
+import { getDashboardStats } from '../../services/adminService'
+import { notificationService } from '../../services/notificationService'
+import { formatDistanceToNow } from 'date-fns'
+import { vi } from 'date-fns/locale'
 
 interface AdminLayoutProps {
   children: ReactNode
@@ -63,7 +68,6 @@ const navigationItems: NavItem[] = [
     label: 'Quản lý người dùng',
     href: '/admin/users',
     icon: Users,
-    badge: 'New',
   },
   {
     label: 'Quản lý sản phẩm',
@@ -79,15 +83,11 @@ const navigationItems: NavItem[] = [
     label: 'Quản lý đơn hàng',
     href: '/admin/orders',
     icon: ShoppingCart,
-    badge: 12,
-    badgeVariant: 'destructive',
   },
   {
     label: 'Quản lý đơn thuốc',
     href: '/admin/prescriptions',
     icon: FileText,
-    badge: 8,
-    badgeVariant: 'warning',
   },
   {
     label: 'Quản lý dược sĩ',
@@ -118,6 +118,22 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
+  // Fetch dashboard stats
+  const { data: dashboardStats } = useQuery({
+    queryKey: ['admin-dashboard-stats'],
+    queryFn: getDashboardStats,
+    refetchInterval: 30000, // Refetch every 30 seconds
+    staleTime: 20000,
+  })
+
+  // Fetch notifications
+  const { data: notifications = [] } = useQuery({
+    queryKey: ['admin-notifications'],
+    queryFn: () => notificationService.getNotifications(),
+    refetchInterval: 60000, // Refetch every minute
+    staleTime: 30000,
+  })
+
   const isActiveRoute = (href: string) => {
     return location.pathname === href || location.pathname.startsWith(href + '/')
   }
@@ -126,6 +142,18 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     logout()
     navigate('/login')
   }
+
+  // Format notification time
+  const formatNotificationTime = (timestamp: string) => {
+    try {
+      return formatDistanceToNow(new Date(timestamp), { addSuffix: true, locale: vi })
+    } catch {
+      return timestamp
+    }
+  }
+
+  // Get unread notification count
+  const unreadCount = notifications.filter((n: any) => !n.isRead).length
 
   const SidebarContent = () => (
     <div className='flex flex-col h-full'>
@@ -150,32 +178,42 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               const Icon = item.icon
               const isActive = isActiveRoute(item.href)
 
+              // Get dynamic badge from API data
+              let badge: string | number | undefined
+              let badgeVariant: 'default' | 'destructive' | 'success' | 'warning' = 'default'
+
+              if (dashboardStats) {
+                if (item.href === '/admin/orders' && dashboardStats.orders.pending > 0) {
+                  badge = dashboardStats.orders.pending
+                  badgeVariant = 'destructive'
+                } else if (item.href === '/admin/prescriptions' && dashboardStats.prescriptions.pending > 0) {
+                  badge = dashboardStats.prescriptions.pending
+                  badgeVariant = 'warning'
+                }
+              }
+
               return (
                 <Link
                   key={item.href}
                   to={item.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative ${
-                    isActive
-                      ? 'bg-gradient-to-r from-[#0066CC] to-[#4A90E2] text-white shadow-lg shadow-blue-500/30'
-                      : 'text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 hover:text-[#0066CC]'
-                  }`}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative ${isActive
+                    ? 'bg-gradient-to-r from-[#0066CC] to-[#4A90E2] text-white shadow-lg shadow-blue-500/30'
+                    : 'text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 hover:text-[#0066CC]'
+                    }`}
                 >
                   <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-500 group-hover:text-[#0066CC]'}`} />
                   <span className='flex-1 text-sm font-medium'>{item.label}</span>
-                  {item.badge && (
+                  {badge && (
                     <Badge
-                      className={`text-xs ${
-                        item.badgeVariant === 'destructive'
+                      className={`text-xs ${badgeVariant === 'destructive'
                           ? 'bg-red-500'
-                          : item.badgeVariant === 'warning'
+                          : badgeVariant === 'warning'
                             ? 'bg-yellow-500'
-                            : item.badgeVariant === 'success'
-                              ? 'bg-green-500'
-                              : 'bg-blue-500'
-                      } text-white`}
+                            : 'bg-blue-500'
+                        } text-white`}
                     >
-                      {item.badge}
+                      {badge}
                     </Badge>
                   )}
                   {isActive && (
@@ -198,11 +236,15 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         <div className='grid grid-cols-2 gap-3'>
           <div className='text-center p-2 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm'>
             <p className='text-xs text-gray-600'>Users</p>
-            <p className='text-lg font-semibold text-[#0066CC]'>1,234</p>
+            <p className='text-lg font-semibold text-[#0066CC]'>
+              {dashboardStats?.users.total.toLocaleString() || '...'}
+            </p>
           </div>
           <div className='text-center p-2 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm'>
             <p className='text-xs text-gray-600'>Orders</p>
-            <p className='text-lg font-semibold text-[#4A90E2]'>47</p>
+            <p className='text-lg font-semibold text-[#4A90E2]'>
+              {dashboardStats?.orders.todayCount.toLocaleString() || '...'}
+            </p>
           </div>
         </div>
       </div>
@@ -314,14 +356,20 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 <TrendingUp className='w-4 h-4 text-[#0066CC]' />
                 <div>
                   <p className='text-xs text-gray-600'>Doanh thu</p>
-                  <p className='text-sm font-semibold text-[#0066CC]'>₫125.4M</p>
+                  <p className='text-sm font-semibold text-[#0066CC]'>
+                    {dashboardStats?.revenue.month
+                      ? `₫${(dashboardStats.revenue.month / 1000000).toFixed(1)}M`
+                      : '...'}
+                  </p>
                 </div>
               </div>
               <div className='flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg'>
                 <ShoppingCart className='w-4 h-4 text-[#4A90E2]' />
                 <div>
                   <p className='text-xs text-gray-600'>Đơn hàng</p>
-                  <p className='text-sm font-semibold text-[#4A90E2]'>47</p>
+                  <p className='text-sm font-semibold text-[#4A90E2]'>
+                    {dashboardStats?.orders.todayCount.toLocaleString() || '...'}
+                  </p>
                 </div>
               </div>
             </div>
@@ -331,27 +379,31 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               <DropdownMenuTrigger asChild>
                 <Button variant='ghost' size='sm' className='relative'>
                   <Bell className='w-5 h-5 text-gray-600' />
-                  <span className='absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center'>
-                    3
-                  </span>
+                  {unreadCount > 0 && (
+                    <span className='absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center'>
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align='end' className='w-80 z-50 bg-white shadow-lg border border-blue-100'>
                 <DropdownMenuLabel>Thông báo</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <div className='max-h-96 overflow-y-auto'>
-                  <DropdownMenuItem className='flex-col items-start py-3'>
-                    <p className='font-medium text-sm'>Đơn hàng mới #MD-2024-156</p>
-                    <p className='text-xs text-gray-500'>5 phút trước</p>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className='flex-col items-start py-3'>
-                    <p className='font-medium text-sm'>Đơn thuốc chờ duyệt</p>
-                    <p className='text-xs text-gray-500'>15 phút trước</p>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className='flex-col items-start py-3'>
-                    <p className='font-medium text-sm'>Người dùng mới đăng ký</p>
-                    <p className='text-xs text-gray-500'>1 giờ trước</p>
-                  </DropdownMenuItem>
+                  {notifications.length > 0 ? (
+                    notifications.slice(0, 5).map((notification: any) => (
+                      <DropdownMenuItem key={notification._id || notification.id} className='flex-col items-start py-3'>
+                        <p className='font-medium text-sm'>{notification.title || notification.message}</p>
+                        <p className='text-xs text-gray-500'>
+                          {formatNotificationTime(notification.createdAt || notification.timestamp)}
+                        </p>
+                      </DropdownMenuItem>
+                    ))
+                  ) : (
+                    <div className='py-8 text-center text-gray-500 text-sm'>
+                      Không có thông báo mới
+                    </div>
+                  )}
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className='justify-center text-[#0066CC]'>Xem tất cả thông báo</DropdownMenuItem>

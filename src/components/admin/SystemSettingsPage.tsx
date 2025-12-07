@@ -117,7 +117,7 @@ export function SystemSettingsPage() {
               <CardContent className='space-y-4'>
                 <div className='grid md:grid-cols-2 gap-4'>
                   <div>
-                    <Label htmlFor='siteName'>Tên website</Label>
+                    <Label htmlFor='siteName' className='mb-2 block'>Tên website</Label>
                     <Input
                       id='siteName'
                       value={settings.siteName}
@@ -126,7 +126,7 @@ export function SystemSettingsPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor='siteUrl'>URL website</Label>
+                    <Label htmlFor='siteUrl' className='mb-2 block'>URL website</Label>
                     <Input
                       id='siteUrl'
                       value={settings.siteUrl}
@@ -135,7 +135,7 @@ export function SystemSettingsPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor='supportEmail'>Email hỗ trợ</Label>
+                    <Label htmlFor='supportEmail' className='mb-2 block'>Email hỗ trợ</Label>
                     <Input
                       id='supportEmail'
                       value={settings.supportEmail}
@@ -144,7 +144,7 @@ export function SystemSettingsPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor='supportPhone'>Hotline</Label>
+                    <Label htmlFor='supportPhone' className='mb-2 block'>Hotline</Label>
                     <Input
                       id='supportPhone'
                       value={settings.supportPhone}
@@ -153,7 +153,7 @@ export function SystemSettingsPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor='timezone'>Múi giờ</Label>
+                    <Label htmlFor='timezone' className='mb-2 block'>Múi giờ</Label>
                     <Select value={settings.timezone} onValueChange={(val) => handleChange('timezone', val)}>
                       <SelectTrigger className='border-2 border-blue-200 focus:border-blue-500'>
                         <SelectValue />
@@ -166,7 +166,7 @@ export function SystemSettingsPage() {
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor='currency'>Đơn vị tiền tệ</Label>
+                    <Label htmlFor='currency' className='mb-2 block'>Đơn vị tiền tệ</Label>
                     <Select value={settings.currency} onValueChange={(val) => handleChange('currency', val)}>
                       <SelectTrigger className='border-2 border-blue-200 focus:border-blue-500'>
                         <SelectValue />
@@ -216,7 +216,7 @@ export function SystemSettingsPage() {
                     <Separator />
                     <div className='grid md:grid-cols-2 gap-4'>
                       <div>
-                        <Label htmlFor='smtpHost'>SMTP Host</Label>
+                        <Label htmlFor='smtpHost' className='mb-2 block'>SMTP Host</Label>
                         <Input
                           id='smtpHost'
                           value={settings.smtpHost}
@@ -226,7 +226,7 @@ export function SystemSettingsPage() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor='smtpPort'>SMTP Port</Label>
+                        <Label htmlFor='smtpPort' className='mb-2 block'>SMTP Port</Label>
                         <Input
                           id='smtpPort'
                           value={settings.smtpPort}
@@ -236,7 +236,7 @@ export function SystemSettingsPage() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor='smtpUser'>SMTP Username</Label>
+                        <Label htmlFor='smtpUser' className='mb-2 block'>SMTP Username</Label>
                         <Input
                           id='smtpUser'
                           value={settings.smtpUser}
@@ -245,7 +245,7 @@ export function SystemSettingsPage() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor='smtpPassword'>SMTP Password</Label>
+                        <Label htmlFor='smtpPassword' className='mb-2 block'>SMTP Password</Label>
                         <Input
                           id='smtpPassword'
                           type='password'
@@ -292,7 +292,7 @@ export function SystemSettingsPage() {
                     <Separator />
                     <div className='space-y-4'>
                       <div>
-                        <Label htmlFor='smsProvider'>Nhà cung cấp SMS</Label>
+                        <Label htmlFor='smsProvider' className='mb-2 block'>Nhà cung cấp SMS</Label>
                         <Select value={settings.smsProvider} onValueChange={(val) => handleChange('smsProvider', val)}>
                           <SelectTrigger className='border-2 border-blue-200 focus:border-blue-500'>
                             <SelectValue />
@@ -305,7 +305,7 @@ export function SystemSettingsPage() {
                         </Select>
                       </div>
                       <div>
-                        <Label htmlFor='smsApiKey'>API Key</Label>
+                        <Label htmlFor='smsApiKey' className='mb-2 block'>API Key</Label>
                         <Input
                           id='smsApiKey'
                           value={settings.smsApiKey}
@@ -351,7 +351,7 @@ export function SystemSettingsPage() {
                   {settings.momoEnabled && (
                     <div className='space-y-3'>
                       <div>
-                        <Label>Partner Code</Label>
+                        <Label className='mb-2 block'>Partner Code</Label>
                         <Input
                           value={settings.momoPartnerCode}
                           onChange={(e) => handleChange('momoPartnerCode', e.target.value)}
@@ -359,7 +359,7 @@ export function SystemSettingsPage() {
                         />
                       </div>
                       <div>
-                        <Label>Access Key</Label>
+                        <Label className='mb-2 block'>Access Key</Label>
                         <Input
                           type='password'
                           value={settings.momoAccessKey}
@@ -383,7 +383,7 @@ export function SystemSettingsPage() {
                   {settings.vnpayEnabled && (
                     <div className='space-y-3'>
                       <div>
-                        <Label>TMN Code</Label>
+                        <Label className='mb-2 block'>TMN Code</Label>
                         <Input
                           value={settings.vnpayTmnCode}
                           onChange={(e) => handleChange('vnpayTmnCode', e.target.value)}
@@ -391,7 +391,7 @@ export function SystemSettingsPage() {
                         />
                       </div>
                       <div>
-                        <Label>Hash Secret</Label>
+                        <Label className='mb-2 block'>Hash Secret</Label>
                         <Input
                           type='password'
                           value={settings.vnpayHashSecret}
@@ -441,7 +441,7 @@ export function SystemSettingsPage() {
                   {settings.ghnEnabled && (
                     <div className='space-y-3'>
                       <div>
-                        <Label>Shop ID</Label>
+                        <Label className='mb-2 block'>Shop ID</Label>
                         <Input
                           value={settings.ghnShopId}
                           onChange={(e) => handleChange('ghnShopId', e.target.value)}
@@ -449,7 +449,7 @@ export function SystemSettingsPage() {
                         />
                       </div>
                       <div>
-                        <Label>Token</Label>
+                        <Label className='mb-2 block'>Token</Label>
                         <Input
                           type='password'
                           value={settings.ghnToken}
@@ -508,7 +508,7 @@ export function SystemSettingsPage() {
 
                 <div className='grid md:grid-cols-2 gap-4'>
                   <div>
-                    <Label htmlFor='sessionTimeout'>Thời gian session (phút)</Label>
+                    <Label htmlFor='sessionTimeout' className='mb-2 block'>Thời gian session (phút)</Label>
                     <Input
                       id='sessionTimeout'
                       type='number'
@@ -518,7 +518,7 @@ export function SystemSettingsPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor='maxLoginAttempts'>Số lần đăng nhập tối đa</Label>
+                    <Label htmlFor='maxLoginAttempts' className='mb-2 block'>Số lần đăng nhập tối đa</Label>
                     <Input
                       id='maxLoginAttempts'
                       type='number'
