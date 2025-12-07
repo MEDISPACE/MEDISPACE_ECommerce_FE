@@ -10,20 +10,22 @@ import { API_ENDPOINTS } from '../constants'
 
 type ProductsResponse =
   | {
-      message?: string
-      result?: {
-        products?: Product[]
-        pagination?: unknown
-      }
+    message?: string
+    result?: {
       products?: Product[]
+      pagination?: unknown
     }
+    products?: Product[]
+  }
   | Product[]
 
 export const productService = {
   /**
    * Get all products with optional filtering
    */
-  async getProducts(filters?: Partial<ProductFilter> & { limit?: number; sortBy?: string; sortOrder?: string }): Promise<Product[]> {
+  async getProducts(
+    filters?: Partial<ProductFilter> & { limit?: number; sortBy?: string; sortOrder?: string },
+  ): Promise<Product[]> {
     // Real API call - use backend API endpoints
     const response = await apiClient.get(API_ENDPOINTS.PRODUCTS.BASE, { params: filters })
     if (response && response.data) {
@@ -129,7 +131,7 @@ export const productService = {
    */
   async searchProducts(query: string, filters?: Partial<ProductFilter>): Promise<Product[]> {
     const response = await apiClient.get(API_ENDPOINTS.PRODUCTS.BASE, {
-      params: { q: query, ...filters },
+      params: { search: query, ...filters },
     })
     if (response && response.data) {
       const data = response.data as ProductsResponse
@@ -212,6 +214,73 @@ export const productService = {
         return data.products as Product[]
     }
     return []
+  },
+
+  /**
+   * Create a new product (Admin/Pharmacist only)
+   */
+  async createProduct(data: Partial<Product>): Promise<Product> {
+    const response = await apiClient.post(API_ENDPOINTS.PRODUCTS.BASE, data)
+    if (response && response.data) {
+      const responseData = response.data as unknown
+      if (typeof responseData === 'object' && responseData !== null && 'result' in responseData)
+        return (responseData as { result?: unknown }).result as Product
+      return responseData as Product
+    }
+    throw new Error('Failed to create product')
+  },
+
+  /**
+   * Update an existing product (Admin/Pharmacist only)
+   */
+  async updateProduct(productId: string, data: Partial<Product>): Promise<Product> {
+    const response = await apiClient.patch(API_ENDPOINTS.PRODUCTS.BY_ID(productId), data)
+    if (response && response.data) {
+      const responseData = response.data as unknown
+      if (typeof responseData === 'object' && responseData !== null && 'result' in responseData)
+        return (responseData as { result?: unknown }).result as Product
+      return responseData as Product
+    }
+    throw new Error('Failed to update product')
+  },
+
+  /**
+   * Toggle product status (active/inactive)
+   */
+  async toggleProductStatus(productId: string, isActive: boolean): Promise<Product> {
+    const response = await apiClient.patch(`/products/${productId}/toggle-status`, { isActive })
+    if (response && response.data) {
+      const responseData = response.data as unknown
+      if (typeof responseData === 'object' && responseData !== null && 'result' in responseData)
+        return (responseData as { result?: unknown }).result as Product
+      return responseData as Product
+    }
+    throw new Error('Failed to toggle product status')
+  },
+
+  /**
+   * Update product stock quantity
+   */
+  async updateStock(productId: string, stockQuantity: number): Promise<Product> {
+    const response = await apiClient.patch(`/products/${productId}/stock`, { stockQuantity })
+    if (response && response.data) {
+      const responseData = response.data as unknown
+      if (typeof responseData === 'object' && responseData !== null && 'result' in responseData)
+        return (responseData as { result?: unknown }).result as Product
+      return responseData as Product
+    }
+    throw new Error('Failed to update stock')
+  },
+
+  /**
+   * Delete a product (Admin only)
+   */
+  async deleteProduct(productId: string): Promise<{ message: string }> {
+    const response = await apiClient.delete(API_ENDPOINTS.PRODUCTS.BY_ID(productId))
+    if (response && response.data) {
+      return response.data as { message: string }
+    }
+    return { message: 'Product deleted successfully' }
   },
 }
 

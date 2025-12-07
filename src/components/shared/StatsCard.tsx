@@ -112,7 +112,7 @@ export function StatsCard({ config, onClick }: StatsCardProps) {
 
   return (
     <Card
-      className={`group relative overflow-hidden bg-white/80 backdrop-blur-lg shadow-lg border border-blue-100 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 ${onClick ? 'cursor-pointer' : ''}`}
+      className={`group relative overflow-hidden bg-white backdrop-blur-lg shadow-lg border border-blue-100 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 ${onClick ? 'cursor-pointer' : ''}`}
       onClick={onClick}
     >
       {/* Gradient overlay on hover */}
@@ -170,7 +170,7 @@ export function StatsCard({ config, onClick }: StatsCardProps) {
           </div>
         )}
 
-        {/* Bottom glow effect */}
+        {/* Bottom colored line */}
         <div
           className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r ${colors.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
         />

@@ -29,7 +29,6 @@ export function useProductsByCategory(categoryId: string | undefined, limit: num
         setProducts(products || [])
         setError(null)
       } catch (err) {
-        console.error('Error fetching products by category:', err)
         setError('Không thể tải sản phẩm')
         setProducts([])
       } finally {

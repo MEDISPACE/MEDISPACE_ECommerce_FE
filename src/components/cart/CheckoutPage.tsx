@@ -1,42 +1,30 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router'
 import { Shield, ChevronRight, MapPin, CreditCard, Truck, Clock, Smartphone, Plus, RotateCcw } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
-import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { Checkbox } from '../ui/checkbox'
 import { Textarea } from '../ui/textarea'
 import { Separator } from '../ui/separator'
 import { Badge } from '../ui/badge'
 import { ImageWithFallback } from '../shared/ImageWithFallback'
 import { useCart } from '../../contexts/CartContext'
-import type { Address, ShippingMethod, PaymentMethod } from '../../types/product'
-import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
+import type { ShippingMethod, PaymentMethod } from '../../types/product'
+import { AddressFormDialog } from '../shared/AddressFormDialog'
+import { addressService } from '../../services/addressService'
+import { logger } from '../../utils/logger'
 import { orderService } from '../../services/orderService'
-
-const mockAddresses: Address[] = [
-  {
-    id: '1',
-    fullName: 'Nguyễn Văn A',
-    phone: '0123456789',
-    email: 'nguyenvana@email.com',
-    address: '123 Nguyễn Văn Cừ',
-    province: 'TP.HCM',
-    district: 'Quận 5',
-    ward: 'Phường 4',
-    isDefault: true,
-  },
-]
+import { authService } from '../../services/authService'
+import type { User, Address } from '../../types/user'
 
 const shippingMethods: ShippingMethod[] = [
   {
     id: 'standard',
     name: 'Giao hàng tiêu chuẩn',
     description: 'Giao hàng trong 2-3 ngày',
-    price: 0,
+    price: 25000,
     estimatedDays: '2-3 ngày',
   },
   {
@@ -64,13 +52,6 @@ const paymentMethods: PaymentMethod[] = [
     type: 'cod',
   },
   {
-    id: 'banking',
-    name: 'Chuyển khoản ngân hàng',
-    description: 'Chuyển khoản qua ngân hàng',
-    icon: '🏦',
-    type: 'banking',
-  },
-  {
     id: 'momo',
     name: 'Ví MoMo',
     description: 'Thanh toán qua ví điện tử MoMo',
@@ -78,18 +59,28 @@ const paymentMethods: PaymentMethod[] = [
     type: 'ewallet',
   },
   {
-    id: 'credit',
-    name: 'Thẻ tín dụng/ghi nợ',
-    description: 'Visa, Mastercard, JCB',
+    id: 'vnpay',
+    name: 'VNPay',
+    description: 'Thanh toán qua ví VNPay (ATM/Visa/Master/JCB/QR Pay)',
     icon: '💳',
-    type: 'credit',
+    type: 'ewallet',
+  },
+  {
+    id: 'payos',
+    name: 'Thanh toán qua PayOS',
+    description: 'Thanh toán bằng mã QR VietQR (Mọi ngân hàng)',
+    icon: '🏦',
+    type: 'ewallet',
   },
 ]
 
 export function CheckoutPage() {
-  const { state, getSelectedItemsTotal, getSelectedItemsCount } = useCart()
+  const { state, getSelectedItemsTotal, getSelectedItemsCount, clearCart } = useCart()
 
-  const [selectedAddress, setSelectedAddress] = useState(mockAddresses[0].id)
+  const [user, setUser] = useState<User | null>(null)
+  const [addresses, setAddresses] = useState<Address[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedAddress, setSelectedAddress] = useState<string>('')
   const [useNewAddress, setUseNewAddress] = useState(false)
   const [shippingMethod, setShippingMethod] = useState('standard')
   const [paymentMethod, setPaymentMethod] = useState('cod')
@@ -97,20 +88,32 @@ export function CheckoutPage() {
   const [orderNotes, setOrderNotes] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
 
-  const [newAddress, setNewAddress] = useState({
-    fullName: '',
-    phone: '',
-    email: '',
-    address: '',
-    province: '',
-    district: '',
-    ward: '',
-    saveAsDefault: false,
-  })
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [userData, userAddresses] = await Promise.all([
+          authService.getMe(),
+          addressService.getAddresses()
+        ])
+        setUser(userData)
+        setAddresses(userAddresses)
+        // Set default address selection
+        if (userAddresses && userAddresses.length > 0) {
+          const defaultAddr = userAddresses.find(addr => addr.isDefault) || userAddresses[0]
+          setSelectedAddress(defaultAddr.id || '')
+        }
+        logger.info('Checkout: User data and addresses loaded successfully', { userId: userData._id, addressCount: userAddresses.length })
+      } catch (error) {
+        logger.warn('Checkout: Failed to fetch user data or addresses', error)
+        // Failed to fetch user data, continue with null user
+      } finally {
+        setLoading(false)
+      }
+    }
 
-  const breadcrumbItems = [{ label: 'Giỏ hàng', href: '/cart' }, { label: 'Thanh toán' }]
+    fetchData()
+  }, [])
 
-  // Get selected cart items
   const cartItems = state.cart?.items.filter(item => state.selectedItems.has(item.productId)) || []
 
   // Calculate totals
@@ -121,49 +124,102 @@ export function CheckoutPage() {
   const total = subtotal - discount + shippingFee
 
   const handlePlaceOrder = async () => {
-    if (!agreeToTerms) {
-      alert('Vui lòng đồng ý với điều khoản sử dụng')
+
+    if (!user) {
+      alert('Không thể lấy thông tin người dùng. Vui lòng đăng nhập lại.')
       return
     }
 
+    // Validate that we have addresses and a valid selected address
+    if (!addresses || addresses.length === 0) {
+      alert('Vui lòng thêm địa chỉ giao hàng trước khi thanh toán')
+      return
+    }
+
+    // Ensure selectedAddress is valid, fallback to first address if not
+    let validSelectedAddress = selectedAddress
+    if (!selectedAddress || !addresses.find(addr => addr.id === selectedAddress)) {
+      validSelectedAddress = addresses[0].id || ''
+      setSelectedAddress(validSelectedAddress)
+    }
+
     setIsProcessing(true)
+    logger.info('Checkout: Starting order placement', {
+      userId: user._id,
+      itemCount: getSelectedItemsCount(),
+      total: total
+    })
 
     try {
       // Get the selected address object
-      const addressObj = mockAddresses.find(addr => addr.id === selectedAddress) || mockAddresses[0]
+      let addressObj: {
+        firstName: string
+        lastName: string
+        address: string
+        ward: string
+        district: string
+        province: string
+        phone: string
+        email: string
+      }
+
+      const selectedAddr = addresses.find(addr => addr.id === validSelectedAddress)
+      if (selectedAddr) {
+        addressObj = {
+          firstName: user.firstName,
+          lastName: user.lastName,
+          address: selectedAddr.address,
+          ward: selectedAddr.ward,
+          district: selectedAddr.district || '',
+          province: selectedAddr.province,
+          phone: selectedAddr.phone || user.phoneNumber || '',
+          email: user.email,
+        }
+      } else {
+        // This should not happen after validation above
+        throw new Error('Không tìm thấy địa chỉ giao hàng đã chọn')
+      }
 
       // Map frontend payment method to backend format
       const paymentMethodMap: Record<string, string> = {
         'cod': 'cod',
         'banking': 'bank_transfer',
-        'credit': 'credit_card',
-        'vnpay': 'e_wallet',
-        'momo': 'e_wallet'
+        'vnpay': 'vnpay',
+        'momo': 'momo',
+        'payos': 'payos'
       }
 
       // Create order using real API
       const orderData = {
         items: [], // Backend creates from cart, so items not needed
-        shippingAddress: {
-          firstName: addressObj.fullName.split(' ')[0] || '',
-          lastName: addressObj.fullName.split(' ').slice(1).join(' ') || '',
-          address: addressObj.address,
-          ward: addressObj.ward,
-          district: addressObj.district,
-          city: addressObj.province,
-          phone: addressObj.phone,
-          email: addressObj.email || '',
-        },
+        shippingAddress: addressObj,
         paymentMethod: paymentMethodMap[paymentMethod] || 'cod',
         notes: orderNotes,
       }
 
-      const order = await orderService.createOrder(orderData)
+      logger.info('Checkout: Sending order', { paymentMethod, mapped: paymentMethodMap[paymentMethod] })
 
-      // Redirect to success page with order ID
-      window.location.href = `/order/success?orderId=${order.id}`
+      const { order, paymentUrl } = await orderService.createOrder(orderData)
+
+      // Clear cart after successful order creation
+      await clearCart()
+
+      logger.info('Checkout: Order created successfully', {
+        orderId: order.id,
+        userId: user._id,
+        total: total
+      })
+
+      // Redirect logic
+      if (paymentUrl) {
+        // Redirect to VNPay
+        window.location.href = paymentUrl
+      } else {
+        // Redirect to success page
+        window.location.href = `/order/success?orderId=${order.id}`
+      }
     } catch (error) {
-      console.error('Order failed:', error)
+      logger.error('Checkout: Order placement failed', error)
       alert('Đặt hàng thất bại. Vui lòng thử lại.')
     } finally {
       setIsProcessing(false)
@@ -171,395 +227,311 @@ export function CheckoutPage() {
   }
 
   return (
-    <div className='bg-blue-50 min-h-screen'>
-        <UniversalBreadcrumb items={breadcrumbItems} />
-        {/* Security Header */}
-        <div className='bg-white border-b border-blue-200'>
-          <div className='max-w-7xl mx-auto px-4 py-3'>
-            <div className='flex items-center justify-center gap-2 text-green-600'>
-              <Shield className='w-5 h-5' />
-              <span className='font-medium'>Thanh toán an toàn SSL</span>
+    <div className='bg-white min-h-screen'>
+      {/* Breadcrumb */}
+      <div className='bg-white border-b border-gray-200'>
+        <div className='max-w-7xl mx-auto px-4 py-4'>
+          <nav className='flex items-center space-x-2 text-sm text-gray-600'>
+            <Link to='/cart' className='hover:text-blue-600'>Giỏ hàng</Link>
+            <ChevronRight className='w-4 h-4' />
+            <span className='text-blue-600 font-medium'>Thanh toán</span>
+          </nav>
+        </div>
+      </div>
+
+
+      {/* Progress Steps */}
+      <div className='bg-white border-b border-gray-200'>
+        <div className='max-w-7xl mx-auto px-4 py-4'>
+          <div className='flex items-center justify-center gap-2'>
+            <Link to='/cart' className='flex items-center gap-2 text-blue-600'>
+              <div className='w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-medium'>
+                ✓
+              </div>
+              <span>Giỏ hàng</span>
+            </Link>
+            <ChevronRight className='w-4 h-4 text-gray-400' />
+            <div className='flex items-center gap-2 text-blue-600'>
+              <div className='w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-medium'>
+                2
+              </div>
+              <span className='font-medium'>Thanh toán</span>
+            </div>
+            <ChevronRight className='w-4 h-4 text-gray-400' />
+            <div className='flex items-center gap-2 text-gray-400'>
+              <div className='w-8 h-8 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center text-sm font-medium'>
+                3
+              </div>
+              <span>Hoàn thành</span>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Progress Steps */}
-        <div className='bg-white border-b border-blue-200'>
-          <div className='max-w-7xl mx-auto px-4 py-4'>
-            <div className='flex items-center justify-center gap-2'>
-              <Link to='/cart' className='flex items-center gap-2 text-blue-600'>
-                <div className='w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-medium'>
-                  ✓
-                </div>
-                <span>Giỏ hàng</span>
-              </Link>
-              <ChevronRight className='w-4 h-4 text-gray-400' />
-              <div className='flex items-center gap-2 text-blue-600'>
-                <div className='w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-medium'>
-                  2
-                </div>
-                <span className='font-medium'>Thanh toán</span>
-              </div>
-              <ChevronRight className='w-4 h-4 text-gray-400' />
-              <div className='flex items-center gap-2 text-gray-400'>
-                <div className='w-8 h-8 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center text-sm font-medium'>
-                  3
-                </div>
-                <span>Hoàn thành</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className='max-w-7xl mx-auto px-4 py-6'>
-          <div className='grid grid-cols-1 lg:grid-cols-5 gap-6'>
-            {/* Checkout Form - 60% width */}
-            <div className='lg:col-span-3 space-y-6'>
-              {/* Shipping Address */}
-              <Card className='border-blue-100'>
-                <CardHeader>
-                  <CardTitle className='text-blue-800 flex items-center gap-2'>
-                    <MapPin className='w-5 h-5' />
-                    Thông tin giao hàng
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className='space-y-4'>
-                  {/* Saved Addresses */}
-                  {mockAddresses.length > 0 && !useNewAddress && (
-                    <div className='space-y-3'>
-                      <RadioGroup value={selectedAddress} onValueChange={setSelectedAddress}>
-                        {mockAddresses.map((address) => (
-                          <div key={address.id} className='flex items-start space-x-2'>
-                            <RadioGroupItem value={address.id} id={address.id} />
-                            <Label htmlFor={address.id} className='flex-1 cursor-pointer'>
-                              <div className='p-3 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors'>
-                                <div className='flex items-center gap-2 mb-1'>
-                                  <span className='font-medium'>{address.fullName}</span>
-                                  <span className='text-gray-400'>|</span>
-                                  <span className='text-gray-600'>{address.phone}</span>
-                                  {address.isDefault && (
-                                    <Badge variant='secondary' className='bg-blue-100 text-blue-700'>
-                                      Mặc định
-                                    </Badge>
-                                  )}
-                                </div>
-                                <div className='text-sm text-gray-600'>
-                                  {address.address}, {address.ward}, {address.district}, {address.province}
-                                </div>
+      <div className='max-w-7xl mx-auto px-4 py-6'>
+        <div className='grid grid-cols-1 lg:grid-cols-5 gap-6'>
+          {/* Checkout Form - 60% width */}
+          <div className='lg:col-span-3 space-y-6'>
+            {/* Shipping Address */}
+            <Card className='border-gray-200'>
+              <CardHeader>
+                <CardTitle className='text-blue-800 flex items-center gap-2'>
+                  <MapPin className='w-5 h-5' />
+                  Thông tin giao hàng
+                </CardTitle>
+              </CardHeader>
+              <CardContent className='space-y-4'>
+                {loading ? (
+                  <div className='text-center py-4'>
+                    <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto'></div>
+                    <p className='mt-2 text-sm text-gray-600'>Đang tải thông tin...</p>
+                  </div>
+                ) : addresses && addresses.length > 0 ? (
+                  <div className='space-y-3'>
+                    <RadioGroup value={selectedAddress} onValueChange={setSelectedAddress}>
+                      {addresses.map((address, index) => (
+                        <div key={address.id || index} className='flex items-start space-x-2'>
+                          <RadioGroupItem value={address.id || `address-${index}`} id={address.id || `address-${index}`} />
+                          <Label htmlFor={address.id || `address-${index}`} className='flex-1 cursor-pointer'>
+                            <div className='p-3 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors'>
+                              <div className='flex items-center gap-2 mb-1'>
+                                <span className='font-medium'>{address.name}</span>
+                                <span className='text-gray-400'>|</span>
+                                <span className='text-gray-600'>{address.phone}</span>
+                                {address.isDefault && (
+                                  <Badge variant='secondary' className='bg-blue-100 text-blue-700'>
+                                    Địa chỉ mặc định
+                                  </Badge>
+                                )}
                               </div>
-                            </Label>
+                              <div className='text-sm text-gray-600'>
+                                {address.address}, {address.ward}, {address.district}, {address.province}
+                              </div>
+                            </div>
+                          </Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+
+                    <Button
+                      variant='outline'
+                      onClick={() => setUseNewAddress(true)}
+                      className='w-full border-gray-200 text-blue-600'
+                    >
+                      <Plus className='w-4 h-4 mr-2' />
+                      Giao đến địa chỉ khác
+                    </Button>
+                  </div>
+                ) : (
+                  <div className='text-center py-8'>
+                    <h3 className='text-lg font-medium text-gray-900 mb-2'>Chưa có địa chỉ giao hàng</h3>
+                    <p className='text-gray-500 mb-4'>Thêm địa chỉ để tiếp tục thanh toán</p>
+                    <Button
+                      onClick={() => setUseNewAddress(true)}
+                      className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'
+                    >
+                      <Plus className='w-4 h-4 mr-2' />
+                      Thêm địa chỉ
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Address Form Dialog */}
+            <AddressFormDialog
+              open={useNewAddress}
+              onOpenChange={setUseNewAddress}
+              onSuccess={async () => {
+                // Reload addresses
+                const updatedAddresses = await addressService.getAddresses()
+                setAddresses(updatedAddresses)
+
+                // Set the new address as selected
+                if (updatedAddresses.length > 0) {
+                  const newAddress = updatedAddresses[updatedAddresses.length - 1]
+                  setSelectedAddress(newAddress.id || '')
+                }
+              }}
+              title="Thêm địa chỉ giao hàng"
+              description="Thêm địa chỉ mới để giao hàng thuận tiện hơn"
+              showEmail={false}
+              showType={true}
+              showNameFields={true}
+              submitButtonText="Lưu địa chỉ"
+            />
+
+            {/* Shipping Method */}
+            <Card className='border-gray-200'>
+              <CardHeader>
+                <CardTitle className='text-blue-800 flex items-center gap-2'>
+                  <Truck className='w-5 h-5' />
+                  Phương thức giao hàng
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <RadioGroup value={shippingMethod} onValueChange={setShippingMethod}>
+                  <div className='space-y-3'>
+                    {shippingMethods.map((method) => (
+                      <div key={method.id} className='flex items-center space-x-2'>
+                        <RadioGroupItem value={method.id} id={method.id} />
+                        <Label htmlFor={method.id} className='flex-1 cursor-pointer'>
+                          <div className='p-3 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors'>
+                            <div className='flex items-center justify-between mb-1'>
+                              <div className='flex items-center gap-2'>
+                                <Clock className='w-4 h-4 text-blue-500' />
+                                <span className='font-medium'>{method.name}</span>
+                                {method.price === 0 && (
+                                  <Badge className='bg-green-100 text-green-700'>Miễn phí</Badge>
+                                )}
+                              </div>
+                              <span className='font-medium text-blue-600'>
+                                {method.price === 0
+                                  ? 'Miễn phí'
+                                  : `${new Intl.NumberFormat('vi-VN').format(method.price)}đ`}
+                              </span>
+                            </div>
+                            <div className='text-sm text-gray-600'>{method.description}</div>
+                            <div className='text-sm text-blue-600 mt-1'>Dự kiến: {method.estimatedDays}</div>
                           </div>
-                        ))}
-                      </RadioGroup>
-
-                      <Button
-                        variant='outline'
-                        onClick={() => setUseNewAddress(true)}
-                        className='w-full border-blue-200 text-blue-600'
-                      >
-                        <Plus className='w-4 h-4 mr-2' />
-                        Giao đến địa chỉ khác
-                      </Button>
-                    </div>
-                  )}
-
-                  {/* New Address Form */}
-                  {(useNewAddress || mockAddresses.length === 0) && (
-                    <div className='space-y-4'>
-                      <div className='grid grid-cols-2 gap-4'>
-                        <div>
-                          <Label htmlFor='fullName'>Họ tên *</Label>
-                          <Input
-                            id='fullName'
-                            value={newAddress.fullName}
-                            onChange={(e) => setNewAddress({ ...newAddress, fullName: e.target.value })}
-                            placeholder='Nhập họ tên'
-                            className='border-blue-200 focus:border-blue-500'
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor='phone'>Số điện thoại *</Label>
-                          <Input
-                            id='phone'
-                            value={newAddress.phone}
-                            onChange={(e) => setNewAddress({ ...newAddress, phone: e.target.value })}
-                            placeholder='Nhập số điện thoại'
-                            className='border-blue-200 focus:border-blue-500'
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label htmlFor='email'>Email</Label>
-                        <Input
-                          id='email'
-                          type='email'
-                          value={newAddress.email}
-                          onChange={(e) => setNewAddress({ ...newAddress, email: e.target.value })}
-                          placeholder='Nhập email'
-                          className='border-blue-200 focus:border-blue-500'
-                        />
-                      </div>
-
-                      <div>
-                        <Label htmlFor='address'>Địa chỉ cụ thể *</Label>
-                        <Input
-                          id='address'
-                          value={newAddress.address}
-                          onChange={(e) => setNewAddress({ ...newAddress, address: e.target.value })}
-                          placeholder='Số nhà, tên đường'
-                          className='border-blue-200 focus:border-blue-500'
-                        />
-                      </div>
-
-                      <div className='grid grid-cols-3 gap-4'>
-                        <div>
-                          <Label>Tỉnh/Thành phố *</Label>
-                          <Select
-                            value={newAddress.province}
-                            onValueChange={(value) => setNewAddress({ ...newAddress, province: value })}
-                          >
-                            <SelectTrigger className='border-blue-200'>
-                              <SelectValue placeholder='Chọn tỉnh/thành' />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value='hcm'>TP.HCM</SelectItem>
-                              <SelectItem value='hanoi'>Hà Nội</SelectItem>
-                              <SelectItem value='danang'>Đà Nẵng</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label>Quận/Huyện *</Label>
-                          <Select
-                            value={newAddress.district}
-                            onValueChange={(value) => setNewAddress({ ...newAddress, district: value })}
-                          >
-                            <SelectTrigger className='border-blue-200'>
-                              <SelectValue placeholder='Chọn quận/huyện' />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value='q1'>Quận 1</SelectItem>
-                              <SelectItem value='q3'>Quận 3</SelectItem>
-                              <SelectItem value='q5'>Quận 5</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label>Phường/Xã *</Label>
-                          <Select
-                            value={newAddress.ward}
-                            onValueChange={(value) => setNewAddress({ ...newAddress, ward: value })}
-                          >
-                            <SelectTrigger className='border-blue-200'>
-                              <SelectValue placeholder='Chọn phường/xã' />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value='p1'>Phường 1</SelectItem>
-                              <SelectItem value='p2'>Phường 2</SelectItem>
-                              <SelectItem value='p3'>Phường 3</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-
-                      <div className='flex items-center space-x-2'>
-                        <Checkbox
-                          id='saveAsDefault'
-                          checked={newAddress.saveAsDefault}
-                          onCheckedChange={(checked) =>
-                            setNewAddress({ ...newAddress, saveAsDefault: checked as boolean })
-                          }
-                        />
-                        <Label htmlFor='saveAsDefault' className='text-sm'>
-                          Lưu làm địa chỉ mặc định
                         </Label>
                       </div>
+                    ))}
+                  </div>
+                </RadioGroup>
+              </CardContent>
+            </Card>
 
-                      {mockAddresses.length > 0 && (
-                        <Button
-                          variant='outline'
-                          onClick={() => setUseNewAddress(false)}
-                          className='w-full border-blue-200 text-blue-600'
-                        >
-                          Quay lại địa chỉ đã lưu
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Shipping Method */}
-              <Card className='border-blue-100'>
-                <CardHeader>
-                  <CardTitle className='text-blue-800 flex items-center gap-2'>
-                    <Truck className='w-5 h-5' />
-                    Phương thức giao hàng
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <RadioGroup value={shippingMethod} onValueChange={setShippingMethod}>
-                    <div className='space-y-3'>
-                      {shippingMethods.map((method) => (
-                        <div key={method.id} className='flex items-center space-x-2'>
-                          <RadioGroupItem value={method.id} id={method.id} />
-                          <Label htmlFor={method.id} className='flex-1 cursor-pointer'>
-                            <div className='p-3 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors'>
-                              <div className='flex items-center justify-between mb-1'>
-                                <div className='flex items-center gap-2'>
-                                  <Clock className='w-4 h-4 text-blue-500' />
-                                  <span className='font-medium'>{method.name}</span>
-                                  {method.price === 0 && (
-                                    <Badge className='bg-green-100 text-green-700'>Miễn phí</Badge>
-                                  )}
-                                </div>
-                                <span className='font-medium text-blue-600'>
-                                  {method.price === 0
-                                    ? 'Miễn phí'
-                                    : `${new Intl.NumberFormat('vi-VN').format(method.price)}đ`}
-                                </span>
-                              </div>
-                              <div className='text-sm text-gray-600'>{method.description}</div>
-                              <div className='text-sm text-blue-600 mt-1'>Dự kiến: {method.estimatedDays}</div>
-                            </div>
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                  </RadioGroup>
-                </CardContent>
-              </Card>
-
-              {/* Payment Method */}
-              <Card className='border-blue-100'>
-                <CardHeader>
-                  <CardTitle className='text-blue-800 flex items-center gap-2'>
-                    <CreditCard className='w-5 h-5' />
-                    Phương thức thanh toán
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
-                    <div className='space-y-3'>
-                      {paymentMethods.map((method) => (
-                        <div key={method.id} className='flex items-center space-x-2'>
-                          <RadioGroupItem value={method.id} id={method.id} />
-                          <Label htmlFor={method.id} className='flex-1 cursor-pointer'>
-                            <div className='p-3 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors'>
-                              <div className='flex items-center gap-3'>
-                                <span className='text-2xl'>{method.icon}</span>
-                                <div>
-                                  <div className='font-medium'>{method.name}</div>
-                                  <div className='text-sm text-gray-600'>{method.description}</div>
-                                </div>
+            {/* Payment Method */}
+            <Card className='border-gray-200'>
+              <CardHeader>
+                <CardTitle className='text-blue-800 flex items-center gap-2'>
+                  <CreditCard className='w-5 h-5' />
+                  Phương thức thanh toán
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
+                  <div className='space-y-3'>
+                    {paymentMethods.map((method) => (
+                      <div key={method.id} className='flex items-center space-x-2'>
+                        <RadioGroupItem value={method.id} id={method.id} />
+                        <Label htmlFor={method.id} className='flex-1 cursor-pointer'>
+                          <div className='p-3 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors'>
+                            <div className='flex items-center gap-3'>
+                              <span className='text-2xl'>{method.icon}</span>
+                              <div>
+                                <div className='font-medium'>{method.name}</div>
+                                <div className='text-sm text-gray-600'>{method.description}</div>
                               </div>
                             </div>
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                  </RadioGroup>
-                </CardContent>
-              </Card>
+                          </div>
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </RadioGroup>
+              </CardContent>
+            </Card>
 
-              {/* Order Notes */}
-              <Card className='border-blue-100'>
+            {/* Order Notes */}
+            <Card className='border-gray-200'>
+              <CardHeader>
+                <CardTitle className='text-blue-800'>Ghi chú đơn hàng</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Textarea
+                  placeholder='Ghi chú cho đơn hàng (tùy chọn)'
+                  value={orderNotes}
+                  onChange={(e) => setOrderNotes(e.target.value)}
+                  className='border-gray-200 focus:border-blue-500'
+                  rows={3}
+                />
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Order Summary - 40% width */}
+          <div className='lg:col-span-2'>
+            <div className='sticky top-6 space-y-6'>
+              {/* Order Review */}
+              <Card className='border-gray-200'>
                 <CardHeader>
-                  <CardTitle className='text-blue-800'>Ghi chú đơn hàng</CardTitle>
+                  <CardTitle className='text-blue-800'>Đơn hàng của bạn</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <Textarea
-                    placeholder='Ghi chú cho đơn hàng (tùy chọn)'
-                    value={orderNotes}
-                    onChange={(e) => setOrderNotes(e.target.value)}
-                    className='border-blue-200 focus:border-blue-500'
-                    rows={3}
-                  />
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Order Summary - 40% width */}
-            <div className='lg:col-span-2'>
-              <div className='sticky top-6 space-y-6'>
-                {/* Order Review */}
-                <Card className='border-blue-100'>
-                  <CardHeader>
-                    <CardTitle className='text-blue-800'>Đơn hàng của bạn</CardTitle>
-                  </CardHeader>
-                  <CardContent className='space-y-4'>
-                    <div className='space-y-3'>
-                      {cartItems.map((item) => (
-                        <div key={item.productId} className='flex items-center gap-3'>
-                          <div className='w-12 h-12 flex-shrink-0'>
-                            <ImageWithFallback
-                              src={item.image || '/placeholder-product.jpg'}
-                              alt={item.name}
-                              className='w-full h-full object-cover rounded border border-gray-200'
-                            />
-                          </div>
-                          <div className='flex-1 min-w-0'>
-                            <div className='font-medium text-sm line-clamp-1'>{item.name}</div>
-                            <div className='text-xs text-gray-500'>SL: {item.quantity}</div>
-                          </div>
-                          <div className='text-sm font-medium text-blue-600'>
-                            {new Intl.NumberFormat('vi-VN').format(item.totalPrice)}đ
-                          </div>
+                <CardContent className='space-y-4'>
+                  <div className='space-y-3'>
+                    {cartItems.map((item) => (
+                      <div key={item.productId} className='flex items-center gap-3'>
+                        <div className='w-12 h-12 flex-shrink-0'>
+                          <ImageWithFallback
+                            src={item.image || '/placeholder-product.jpg'}
+                            alt={item.name}
+                            className='w-full h-full object-cover rounded border border-gray-200'
+                          />
                         </div>
-                      ))}
+                        <div className='flex-1 min-w-0'>
+                          <div className='font-medium text-sm line-clamp-1'>{item.name}</div>
+                          <div className='text-xs text-gray-500'>SL: {item.quantity}</div>
+                        </div>
+                        <div className='text-sm font-medium text-blue-600'>
+                          {new Intl.NumberFormat('vi-VN').format(item.totalPrice)}đ
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className='text-center'>
+                    <Link to='/cart' className='text-blue-600 hover:underline text-sm'>
+                      Sửa giỏ hàng
+                    </Link>
+                  </div>
+
+                  <Separator />
+
+                  {/* Pricing */}
+                  <div className='space-y-2'>
+                    <div className='flex justify-between'>
+                      <span className='text-gray-600'>Tạm tính</span>
+                      <span>{new Intl.NumberFormat('vi-VN').format(subtotal)}đ</span>
                     </div>
 
-                    <div className='text-center'>
-                      <Link to='/cart' className='text-blue-600 hover:underline text-sm'>
-                        Sửa giỏ hàng
-                      </Link>
+                    <div className='flex justify-between'>
+                      <span className='text-gray-600'>Phí vận chuyển</span>
+                      <span>
+                        {shippingFee === 0 ? 'Miễn phí' : `${new Intl.NumberFormat('vi-VN').format(shippingFee)}đ`}
+                      </span>
                     </div>
 
-                    <Separator />
-
-                    {/* Pricing */}
-                    <div className='space-y-2'>
-                      <div className='flex justify-between'>
-                        <span className='text-gray-600'>Tạm tính</span>
-                        <span>{new Intl.NumberFormat('vi-VN').format(subtotal)}đ</span>
-                      </div>
-
-                      <div className='flex justify-between'>
-                        <span className='text-gray-600'>Phí vận chuyển</span>
-                        <span>
-                          {shippingFee === 0 ? 'Miễn phí' : `${new Intl.NumberFormat('vi-VN').format(shippingFee)}đ`}
-                        </span>
-                      </div>
-
-                      {/* {discount > 0 && (
+                    {/* {discount > 0 && (
                         <div className='flex justify-between'>
                           <span className='text-gray-600'>Giảm giá</span>
                           <span className='text-green-600'>-{new Intl.NumberFormat('vi-VN').format(discount)}đ</span>
                         </div>
                       )} */}
-                    </div>
+                  </div>
 
-                    <Separator />
+                  <Separator />
 
-                    <div className='flex justify-between text-lg font-bold'>
-                      <span>Tổng cộng</span>
-                      <span className='text-blue-600'>{new Intl.NumberFormat('vi-VN').format(total)}đ</span>
-                    </div>
-                  </CardContent>
-                </Card>
+                  <div className='flex justify-between text-lg font-bold'>
+                    <span>Tổng cộng</span>
+                    <span className='text-blue-600'>{new Intl.NumberFormat('vi-VN').format(total)}đ</span>
+                  </div>
+                </CardContent>
+              </Card>
 
-                {/* Terms & Checkout */}
-                <Card className='border-blue-100'>
-                  <CardContent className='p-6 space-y-4'>
-                    <div className='flex items-start space-x-2'>
-                      <Checkbox
-                        id='agree-terms'
-                        checked={agreeToTerms}
-                        onCheckedChange={(checked) => setAgreeToTerms(checked as boolean)}
-                        className='flex-shrink-0 mt-0.5'
-                      />
-                      <Label htmlFor='agree-terms' className='text-sm leading-relaxed flex-1'>
+              {/* Terms & Checkout */}
+              <Card className='border-gray-200'>
+                <CardContent className='p-6 space-y-4'>
+                  <div className='flex items-start space-x-2'>
+                    <Checkbox
+                      id='agree-terms'
+                      checked={agreeToTerms}
+                      onCheckedChange={(checked) => setAgreeToTerms(checked as boolean)}
+                      className='flex-shrink-0 mt-0.5'
+                    />
+                    <Label htmlFor='agree-terms' className='text-sm leading-relaxed flex-1 cursor-pointer'>
+                      <span>
                         Tôi đồng ý với{' '}
                         <Link to='/terms' className='text-blue-600 hover:underline'>
                           điều khoản sử dụng
@@ -569,51 +541,52 @@ export function CheckoutPage() {
                           chính sách bảo mật
                         </Link>{' '}
                         của MediSpace
-                      </Label>
-                    </div>
+                      </span>
+                    </Label>
+                  </div>
 
-                    <Button
-                      onClick={handlePlaceOrder}
-                      disabled={!agreeToTerms || isProcessing}
-                      className='w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 h-12 text-lg font-semibold'
-                    >
-                      {isProcessing ? (
-                        <div className='flex items-center gap-2'>
-                          <div className='w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin' />
-                          Đang xử lý...
-                        </div>
-                      ) : (
-                        <>Đặt hàng ({getSelectedItemsCount()} sản phẩm - {new Intl.NumberFormat('vi-VN').format(total)}đ)</>
-                      )}
-                    </Button>
+                  <Button
+                    onClick={handlePlaceOrder}
+                    disabled={!agreeToTerms || isProcessing}
+                    className='w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 h-12 text-lg font-semibold'
+                  >
+                    {isProcessing ? (
+                      <div className='flex items-center gap-2'>
+                        <div className='w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin' />
+                        Đang xử lý...
+                      </div>
+                    ) : (
+                      <>Đặt hàng ({getSelectedItemsCount()} sản phẩm - {new Intl.NumberFormat('vi-VN').format(total)}đ)</>
+                    )}
+                  </Button>
 
-                    <div className='text-xs text-gray-500 text-center leading-relaxed'>
-                      Bằng cách đặt hàng, bạn đồng ý với các điều khoản và chính sách của MediSpace
-                    </div>
-                  </CardContent>
-                </Card>
+                  <div className='text-xs text-gray-500 text-center leading-relaxed'>
+                    Bằng cách đặt hàng, bạn đồng ý với các điều khoản và chính sách của MediSpace
+                  </div>
+                </CardContent>
+              </Card>
 
-                {/* Trust Elements */}
-                <Card className='border-blue-100'>
-                  <CardContent className='p-4 space-y-3'>
-                    <div className='flex items-center gap-2 text-sm text-gray-600'>
-                      <Shield className='w-4 h-4 text-green-500' />
-                      <span>Thanh toán được bảo mật SSL</span>
-                    </div>
-                    <div className='flex items-center gap-2 text-sm text-gray-600'>
-                      <RotateCcw className='w-4 h-4 text-orange-500' />
-                      <span>Đổi trả miễn phí trong 7 ngày</span>
-                    </div>
-                    <div className='flex items-center gap-2 text-sm text-gray-600'>
-                      <Smartphone className='w-4 h-4 text-blue-500' />
-                      <span>Hỗ trợ 24/7: 1800 6928</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+              {/* Trust Elements */}
+              <Card className='border-gray-200'>
+                <CardContent className='p-4 space-y-3'>
+                  <div className='flex items-center gap-2 text-sm text-gray-600'>
+                    <Shield className='w-4 h-4 text-green-500' />
+                    <span>Thanh toán được bảo mật SSL</span>
+                  </div>
+                  <div className='flex items-center gap-2 text-sm text-gray-600'>
+                    <RotateCcw className='w-4 h-4 text-orange-500' />
+                    <span>Đổi trả miễn phí trong 7 ngày</span>
+                  </div>
+                  <div className='flex items-center gap-2 text-sm text-gray-600'>
+                    <Smartphone className='w-4 h-4 text-blue-500' />
+                    <span>Hỗ trợ 24/7: 1800 6928</span>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>
       </div>
+    </div>
   )
 }

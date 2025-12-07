@@ -1,43 +1,3 @@
-/**
- * ============================================================================
- * useEntityManagement Hook - Universal CRUD Management for Admin Pages
- * ============================================================================
- *
- * Reusable hook for managing entities (Users, Products, Categories, Pharmacists, etc.)
- * Handles all CRUD operations, dialog/sheet states, form data, and validation
- *
- * Features:
- * - Generic type support for any entity
- * - Add/Edit/Delete operations
- * - Form state management
- * - Dialog and Sheet (Drawer) support
- * - Validation with custom validators
- * - Toast notifications
- * - Auto ID generation
- * - Bulk operations support
- *
- * Usage Example:
- * ```tsx
- * const {
- *   entities,
- *   formState,
- *   dialogState,
- *   handleAdd,
- *   handleEdit,
- *   handleDelete,
- *   EntityFormDialog
- * } = useEntityManagement({
- *   initialEntities: mockUsers,
- *   entityName: 'User',
- *   entityNameVi: 'Người dùng',
- *   fields: USER_FORM_FIELDS,
- *   validator: validateUser
- * });
- * ```
- *
- * @module useEntityManagement
- */
-
 import { useState, useCallback } from 'react'
 import { toast } from 'sonner'
 
@@ -279,7 +239,6 @@ export function useEntityManagement<T extends { id: string | number }>(
         closeDialog()
         return true
       } catch (error) {
-        console.error(`Error adding ${entityName}:`, error)
         toast.error(`Không thể thêm ${entityNameVi.toLowerCase()}`, {
           description: error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định.',
         })
@@ -330,7 +289,6 @@ export function useEntityManagement<T extends { id: string | number }>(
         closeDialog()
         return true
       } catch (error) {
-        console.error(`Error editing ${entityName}:`, error)
         toast.error(`Không thể cập nhật ${entityNameVi.toLowerCase()}`, {
           description: error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định.',
         })
@@ -362,7 +320,6 @@ export function useEntityManagement<T extends { id: string | number }>(
         closeDialog()
         return true
       } catch (error) {
-        console.error(`Error deleting ${entityName}:`, error)
         toast.error(`Không thể xóa ${entityNameVi.toLowerCase()}`, {
           description: error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định.',
         })
@@ -390,7 +347,6 @@ export function useEntityManagement<T extends { id: string | number }>(
 
         return true
       } catch (error) {
-        console.error(`Error bulk deleting ${entityName}:`, error)
         toast.error(`Không thể xóa ${entityNameVi.toLowerCase()}`, {
           description: error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định.',
         })

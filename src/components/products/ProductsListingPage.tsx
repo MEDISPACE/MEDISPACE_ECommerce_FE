@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Grid, List, Search as SearchIcon } from 'lucide-react'
 import { useCart } from '../../contexts/CartContext'
+import { useWishlist } from '../../hooks/product/useWishlist'
 import { useProductListing, useBreadcrumbGeneration } from '../../hooks'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
 import {
@@ -30,7 +31,8 @@ import { productService } from '../../services/productService'
 import type { Product } from '../../types/product'
 
 export function ProductsListingPage() {
-  const { addToCart, toggleWishlist } = useCart()
+  const { addToCart } = useCart()
+  const { toggleWishlist, isInWishlist } = useWishlist()
   const [products, setProducts] = useState<Product[]>([])
 
   useEffect(() => {
@@ -39,7 +41,6 @@ export function ProductsListingPage() {
         const productsData = await productService.getProducts()
         setProducts(productsData)
       } catch (error) {
-        console.error('Error fetching products:', error)
       }
     }
 
@@ -190,7 +191,7 @@ export function ProductsListingPage() {
                         </div>
                         <Button
                           type='submit'
-                          className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600'
+                          className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'
                         >
                           Tìm kiếm
                         </Button>
@@ -266,10 +267,9 @@ export function ProductsListingPage() {
                   <StaggerContainer direction='up' staggerDelay={0.05}>
                     <div
                       className={`
-                        ${
-                          viewMode === 'grid'
-                            ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'
-                            : 'space-y-4 w-full max-w-5xl'
+                        ${viewMode === 'grid'
+                          ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'
+                          : 'space-y-4 w-full max-w-5xl'
                         }
                         mb-8
                       `}
@@ -297,8 +297,9 @@ export function ProductsListingPage() {
                               addToCart(product, 1)
                             }}
                             onToggleWishlist={() => {
-                              toggleWishlist(getProductId(product), product.name)
+                              toggleWishlist(getProductId(product))
                             }}
+                            isInWishlist={isInWishlist(getProductId(product))}
                           />
                         </StaggerItem>
                       ))}

@@ -26,7 +26,6 @@ export function useCategories() {
         setCategories(hierarchicalCategories)
         setError(null)
       } catch (err) {
-        console.error('Error fetching categories:', err)
         setError('Không thể tải danh mục sản phẩm')
         setCategories([])
       } finally {

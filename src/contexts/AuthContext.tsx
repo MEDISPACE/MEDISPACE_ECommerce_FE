@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { authService } from '../services/authService'
+import { logger } from '../utils/logger'
 import type { User } from '../types/user'
 import type { RegisterRequest, RegisterResponse } from '../types/api'
 
@@ -15,9 +16,10 @@ interface AuthContextType {
   loading: boolean
   setUser: (user: User | null) => void
   setIsAuthenticated: (isAuthenticated: boolean) => void
+  updateUser: (user: User) => void
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export const useAuth = () => {
   const context = useContext(AuthContext)
@@ -45,22 +47,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         if (token && userData) {
           const parsedUser = JSON.parse(userData) as User
-          // console.log('Parsed user from localStorage:', parsedUser) // Debug log
           setUser(parsedUser)
           setIsAuthenticated(true)
 
           // Optionally verify token by fetching user profile
           try {
             const currentUser = await authService.getMe()
-            // console.log('Current user from API:', currentUser) // Debug log
             setUser(currentUser)
             localStorage.setItem('medispace_user_data', JSON.stringify(currentUser))
           } catch {
-            console.log('Failed to fetch current user, using cached data')
+            // Failed to fetch current user, using cached data
+            logger.warn('Failed to fetch current user from API, using cached data')
           }
         }
-      } catch (error) {
-        console.error('Auth check failed:', error)
+      } catch {
         authService.clearTokens()
       } finally {
         setLoading(false)
@@ -88,17 +88,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setUser(userProfile)
           setIsAuthenticated(true)
           localStorage.setItem('medispace_user_data', JSON.stringify(userProfile))
+          // Dispatch custom event for cart reload
+          window.dispatchEvent(new CustomEvent('auth-changed'))
           return userProfile
         } catch (profileError) {
-          console.error('Failed to fetch user profile:', profileError)
+          logger.error('Failed to fetch user profile after login', profileError)
           authService.clearTokens()
           return null
         }
       }
 
+      logger.warn('Login failed - invalid credentials', { email })
       return null
     } catch (error) {
-      console.error('Login failed:', error)
+      // console.error('❌ Login failed with error', error)
+      // Log detailed error information
+      // if (error && typeof error === 'object') {
+      //   console.error('Error details:', JSON.stringify(error, null, 2))
+      // }
+      logger.error('Login failed with error', error)
       return null
     } finally {
       setLoading(false)
@@ -108,34 +116,44 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const register = async (userData: RegisterRequest): Promise<boolean> => {
     try {
       setLoading(true)
+      logger.info('User attempting registration', { email: userData.email })
 
       const response: RegisterResponse = await authService.register(userData)
 
       if (response.userId) {
         // Registration successful, but user needs to login to get tokens
         // The userId is just a confirmation, not tokens
+        logger.info('User registration successful', { email: userData.email, userId: response.userId })
         return true
       }
 
+      logger.warn('Registration failed - no userId returned', { email: userData.email })
       return false
     } catch (error) {
-      console.error('Registration failed:', error)
+      logger.error('Registration failed with error', error)
       return false
     } finally {
       setLoading(false)
     }
   }
 
+  const updateUser = (updatedUser: User) => {
+    setUser(updatedUser)
+    localStorage.setItem('medispace_user_data', JSON.stringify(updatedUser))
+  }
+
   const logout = async () => {
     try {
       await authService.logout()
-    } catch (_error) {
-      console.error('Logout failed:', _error)
+    } catch {
+      // Logout failed
     } finally {
       setUser(null)
       setIsAuthenticated(false)
       // Navigate to home page after logout
       window.location.href = '/'
+      // Dispatch custom event for cart reload
+      window.dispatchEvent(new CustomEvent('auth-changed'))
     }
   }
 
@@ -148,6 +166,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     loading,
     setUser,
     setIsAuthenticated,
+    updateUser,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import {
   LayoutDashboard,
@@ -16,11 +16,11 @@ import {
   ChevronDown,
   LogOut,
   User,
-  Activity,
-  Pill,
-  Clock,
   CheckCircle,
   Database,
+  ShoppingCart,
+  UserRoundCheck,
+  UserRoundX,
 } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
@@ -35,13 +35,14 @@ import {
 } from '../ui/dropdown-menu'
 import { Input } from '../ui/input'
 import { Sheet, SheetContent } from '~/components/ui/sheet'
-import { ScrollArea } from '../ui/scroll-area'
 import { Switch } from '../ui/switch'
 import { useAuth } from '../../contexts/AuthContext'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { getFullName, getUserInitials } from '~/utils/lib'
 import type { BreadcrumbItem } from '../shared/UniversalBreadcrumb'
+import { dashboardService, type DashboardStats } from '~/services/pharmacist'
+import { settingsService } from '~/services/pharmacist/settings.service'
 
 interface PharmacistLayoutProps {
   children: ReactNode
@@ -66,8 +67,6 @@ const navigationItems: NavItem[] = [
     label: 'Quản lý đơn thuốc',
     href: '/pharmacist/prescriptions',
     icon: FileText,
-    badge: 12,
-    badgeVariant: 'warning',
   },
   {
     label: 'Tạo đơn hàng',
@@ -75,11 +74,14 @@ const navigationItems: NavItem[] = [
     icon: Plus,
   },
   {
+    label: 'Quản lý đơn hàng',
+    href: '/pharmacist/orders',
+    icon: ShoppingCart,
+  },
+  {
     label: 'Tư vấn trực tuyến',
     href: '/pharmacist/chats',
     icon: MessageSquare,
-    badge: 5,
-    badgeVariant: 'destructive',
   },
   {
     label: 'Lịch sử bệnh nhân',
@@ -106,10 +108,45 @@ const navigationItems: NavItem[] = [
 export function PharmacistLayout({ children }: PharmacistLayoutProps) {
   const location = useLocation()
   const navigate = useNavigate()
-  const { user, logout } = useAuth()
+  const { user, logout, isAuthenticated } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [isOnline, setIsOnline] = useState(true)
+  const [isOnline, setIsOnline] = useState(user?.isOnline ?? true)
+  const [stats, setStats] = useState<DashboardStats | null>(null)
+
+  // Redirect if not authenticated or not pharmacist
+  useEffect(() => {
+    if (!isAuthenticated) {
+      toast.error('Vui lòng đăng nhập để tiếp tục')
+      navigate('/login', { replace: true })
+      return
+    }
+    if (user && user.role !== 1) {
+      // 1 = Pharmacist role
+      toast.error('Bạn không có quyền truy cập trang này')
+      navigate('/', { replace: true })
+    }
+  }, [isAuthenticated, user, navigate])
+
+  // Load dashboard stats
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        const data = await dashboardService.getStats()
+        setStats(data)
+      } catch (error) {
+        console.error('Failed to load dashboard stats:', error)
+      }
+    }
+    loadStats()
+  }, [])
+
+  // Sync isOnline with user profile
+  useEffect(() => {
+    if (user?.isOnline !== undefined) {
+      setIsOnline(user.isOnline)
+    }
+  }, [user?.isOnline])
 
   const isActiveRoute = (href: string) => {
     return location.pathname === href || location.pathname.startsWith(href + '/')
@@ -120,20 +157,37 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
     navigate('/login')
   }
 
-  const handleStatusToggle = (checked: boolean) => {
-    setIsOnline(checked)
-    toast.success(checked ? 'Bạn đã online - Sẵn sàng tư vấn' : 'Bạn đã offline - Không nhận tư vấn mới', {
-      icon: checked ? <Activity className='w-5 h-5 text-green-600' /> : <Clock className='w-5 h-5 text-gray-600' />,
-    })
+  const handleStatusToggle = async (checked: boolean) => {
+    const previousStatus = isOnline
+    try {
+      // Optimistic update
+      setIsOnline(checked)
+
+      // Call API to update status in database
+      await settingsService.updateOnlineStatus({ isOnline: checked })
+
+      toast.success(checked ? 'Bạn đã online - Sẵn sàng tư vấn' : 'Bạn đã offline - Không nhận tư vấn mới', {
+        icon: checked ? (
+          <UserRoundCheck className='w-5 h-5 text-green-600' />
+        ) : (
+          <UserRoundX className='w-5 h-5 text-gray-600' />
+        ),
+      })
+    } catch (error) {
+      // Rollback on error
+      setIsOnline(previousStatus)
+      toast.error('Không thể cập nhật trạng thái. Vui lòng thử lại.')
+      console.error('Failed to update online status:', error)
+    }
   }
 
   const SidebarContent = () => (
     <div className='flex flex-col h-full'>
       {/* Logo Section */}
-      <div className='p-6 border-b border-blue-100'>
+      <div className='p-6 border-b border-blue-100 flex-shrink-0'>
         <Link to='/pharmacist/dashboard' className='flex items-center gap-3'>
-          <div className='w-10 h-10 bg-gradient-to-br from-blue-600 to-cyan-500 rounded-lg flex items-center justify-center shadow-lg'>
-            <Pill className='w-6 h-6 text-white' />
+          <div className='w-10 h-10 rounded-lg flex items-center justify-center shadow-lg'>
+            <img src='/src/assets/MEDISPACE_Logo_favicon.png' alt='MEDISPACE' className='w-8 h-8' />
           </div>
           <div className='flex-1'>
             <h2 className='font-semibold text-blue-900'>MEDISPACE</h2>
@@ -143,85 +197,98 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
       </div>
 
       {/* Status Toggle */}
-      <div className='px-6 py-4 border-b border-blue-100'>
+      <div className='px-6 py-4 border-b border-blue-100 flex-shrink-0'>
         <div className='flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg'>
           <div className='flex items-center gap-2'>
-            <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
-            <span className='text-sm font-medium text-gray-700'>{isOnline ? 'Online' : 'Offline'}</span>
+            {isOnline ? (
+              <UserRoundCheck className='w-4 h-4 text-green-600' />
+            ) : (
+              <UserRoundX className='w-4 h-4 text-gray-500' />
+            )}
+            <div>
+              <p className='text-sm font-semibold text-gray-900'>{isOnline ? 'Online' : 'Offline'}</p>
+              <p className='text-xs text-gray-500'>{isOnline ? 'Sẵn sàng tư vấn' : 'Không nhận tư vấn mới'}</p>
+            </div>
           </div>
           <Switch
             checked={isOnline}
             onCheckedChange={handleStatusToggle}
-            className='data-[state=checked]:bg-green-600'
+            className={`${
+              isOnline
+                ? 'data-[state=checked]:bg-green-600'
+                : 'data-[state=unchecked]:bg-gray-300 data-[state=unchecked]:border-gray-300'
+            }`}
           />
         </div>
       </div>
 
-      {/* Navigation */}
-      <ScrollArea className='flex-1 px-3 py-4'>
-        <nav className='space-y-1'>
-          {navigationItems.map((item) => {
-            const Icon = item.icon
-            const isActive = isActiveRoute(item.href)
+      {/* Navigation - Scrollable */}
+      <div className='flex-1 overflow-y-auto min-h-0'>
+        <div className='px-3 py-4'>
+          <nav className='space-y-1'>
+            {navigationItems.map((item) => {
+              const Icon = item.icon
+              const isActive = isActiveRoute(item.href)
 
-            return (
-              <Link
-                key={item.href}
-                to={item.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative ${
-                  isActive
-                    ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/30'
-                    : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700'
-                }`}
-              >
-                <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'}`} />
-                <span className='flex-1 text-sm font-medium'>{item.label}</span>
-                {item.badge && (
-                  <Badge
-                    className={`text-xs ${
-                      item.badgeVariant === 'destructive'
-                        ? 'bg-red-500'
-                        : item.badgeVariant === 'warning'
-                          ? 'bg-yellow-500'
-                          : item.badgeVariant === 'success'
-                            ? 'bg-green-500'
-                            : 'bg-blue-500'
-                    } text-white`}
-                  >
-                    {item.badge}
-                  </Badge>
-                )}
-                {isActive && (
-                  <motion.div
-                    layoutId='activeIndicatorPharmacist'
-                    className='absolute left-0 top-0 bottom-0 w-1 bg-white rounded-r-full'
-                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                  />
-                )}
-              </Link>
-            )
-          })}
-        </nav>
-      </ScrollArea>
+              return (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative ${
+                    isActive
+                      ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/30'
+                      : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700'
+                  }`}
+                >
+                  <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'}`} />
+                  <span className='flex-1 text-sm font-medium'>{item.label}</span>
+                  {item.badge && (
+                    <Badge
+                      className={`text-xs ${
+                        item.badgeVariant === 'destructive'
+                          ? 'bg-red-500'
+                          : item.badgeVariant === 'warning'
+                            ? 'bg-yellow-500'
+                            : item.badgeVariant === 'success'
+                              ? 'bg-green-500'
+                              : 'bg-blue-500'
+                      } text-white`}
+                    >
+                      {item.badge}
+                    </Badge>
+                  )}
+                  {isActive && (
+                    <motion.div
+                      layoutId='activeIndicatorPharmacist'
+                      className='absolute left-0 top-0 bottom-0 w-1 bg-white rounded-r-full'
+                      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                    />
+                  )}
+                </Link>
+              )
+            })}
+          </nav>
+        </div>
+      </div>
 
-      {/* Quick Stats */}
-      <div className='px-6 py-4 border-t border-blue-100 bg-gradient-to-br from-blue-50 to-cyan-50'>
+      {/* Quick Stats - Fixed at bottom */}
+      <div className='px-6 py-4 border-t border-blue-100 bg-gradient-to-br from-blue-50 to-cyan-50 flex-shrink-0'>
         <p className='text-xs text-gray-600 mb-3'>Hôm nay</p>
         <div className='grid grid-cols-2 gap-3'>
           <div className='text-center p-2 bg-white rounded-lg shadow-sm'>
             <p className='text-xs text-gray-600'>Đơn thuốc</p>
-            <p className='text-lg font-semibold text-blue-600'>12</p>
+            <p className='text-lg font-semibold text-blue-600'>{stats?.prescriptionsToday.total ?? 0}</p>
           </div>
           <div className='text-center p-2 bg-white rounded-lg shadow-sm'>
             <p className='text-xs text-gray-600'>Tư vấn</p>
-            <p className='text-lg font-semibold text-green-600'>5</p>
+            <p className='text-lg font-semibold text-green-600'>{stats?.activeChats ?? 0}</p>
           </div>
         </div>
       </div>
 
-      {/* User Profile Section */}
-      <div className='p-4 border-t border-blue-100'>
+      {/* User Profile Section - Fixed at bottom */}
+      <div className='p-4 border-t border-blue-100 flex-shrink-0'>
         <div className='flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg'>
           <Avatar className='w-10 h-10 border-2 border-blue-500'>
             <AvatarImage src={user?.avatar} />
@@ -237,7 +304,7 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
                 <ChevronDown className='w-4 h-4' />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align='end' className='w-48'>
+            <DropdownMenuContent align='end' className='w-48 z-50 bg-white shadow-lg border border-blue-100'>
               <DropdownMenuLabel>Tài khoản</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => navigate('/pharmacist/settings')}>
@@ -310,7 +377,7 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
             </Button>
 
             {/* Search Bar */}
-            <div className='hidden md:flex items-center gap-2 bg-blue-50 rounded-lg px-4 py-2 w-80 border border-blue-200'>
+            <div className='hidden md:flex items-center gap-2 bg-blue-50 rounded-lg px-4 py-2 flex-1 max-w-md border border-blue-200'>
               <Search className='w-4 h-4 text-blue-400' />
               <Input
                 type='search'
@@ -327,21 +394,21 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
                 <FileText className='w-4 h-4 text-yellow-600' />
                 <div>
                   <p className='text-xs text-gray-600'>Đơn chờ</p>
-                  <p className='text-sm font-semibold text-yellow-600'>12</p>
+                  <p className='text-sm font-semibold text-yellow-600'>{stats?.pendingPrescriptions ?? 0}</p>
                 </div>
               </div>
               <div className='flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-lg border border-green-200'>
                 <CheckCircle className='w-4 h-4 text-green-600' />
                 <div>
                   <p className='text-xs text-gray-600'>Hoàn thành</p>
-                  <p className='text-sm font-semibold text-green-600'>28</p>
+                  <p className='text-sm font-semibold text-green-600'>{stats?.prescriptionsToday.verified ?? 0}</p>
                 </div>
               </div>
             </div>
 
             {/* Status Badge */}
             <Badge className={`${isOnline ? 'bg-green-500' : 'bg-gray-400'} text-white`}>
-              <Activity className='w-3 h-3 mr-1' />
+              {isOnline ? <UserRoundCheck className='w-3 h-3 mr-1' /> : <UserRoundX className='w-3 h-3 mr-1' />}
               {isOnline ? 'Online' : 'Offline'}
             </Badge>
 
@@ -355,7 +422,7 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
                   </span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align='end' className='w-80'>
+              <DropdownMenuContent align='end' className='w-80 z-50 bg-white shadow-lg border border-blue-100'>
                 <DropdownMenuLabel>Thông báo</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <div className='max-h-96 overflow-y-auto'>
@@ -377,8 +444,8 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* User Menu (Mobile) */}
-            <div className='lg:hidden'>
+            {/* User Menu - Always visible for quick access to logout */}
+            <div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant='ghost' size='sm'>
@@ -390,7 +457,7 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align='end' className='w-48'>
+                <DropdownMenuContent align='end' className='w-48 z-50 bg-white shadow-lg border border-blue-100'>
                   <DropdownMenuLabel>
                     <div className='flex flex-col'>
                       <span className='text-sm font-medium'>{getFullName(user) || 'Dược sĩ'}</span>

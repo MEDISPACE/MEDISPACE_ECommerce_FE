@@ -6,10 +6,10 @@ import { Button } from '../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Badge } from '../ui/badge'
 import { OrderCard } from '../order'
-import { mockUser, mockOrders } from '../../utils/mockAccountData'
 import { useAuth } from '../../contexts/AuthContext'
 import { notificationService } from '../../services/notificationService'
-import type { User as AccountUser, Notification } from '../../types/account'
+import { orderService } from '../../services/orderService'
+import type { User as AccountUser, Notification, Order } from '../../types/account'
 
 export function AccountDashboard() {
   const formatPrice = (price: number) => {
@@ -19,11 +19,71 @@ export function AccountDashboard() {
   const { user } = useAuth()
   const accountUser = user as unknown as AccountUser | undefined
 
+  const [orders, setOrders] = useState<Order[]>([])
+  // const [loading, setLoading] = useState(true) // TODO: Add loading state if needed
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const fetchedOrders = await orderService.getOrders()
+        // Transform to account Order type
+        const transformedOrders: Order[] = fetchedOrders.map(order => ({
+          id: order.id,
+          customerId: order.userId,
+          orderNumber: order.orderNumber,
+          status: (order.status === 'pending' ? 'pending_payment' : order.status === 'shipped' ? 'shipping' : order.status === 'confirmed' ? 'confirmed' : order.status === 'processing' ? 'processing' : order.status === 'delivered' ? 'delivered' : order.status === 'cancelled' ? 'cancelled' : 'pending_payment') as 'pending_payment' | 'confirmed' | 'processing' | 'preparing' | 'shipping' | 'delivered' | 'cancelled',
+          items: order.items.map(item => ({
+            id: item.id,
+            productId: item.productId,
+            productName: item.product.name,
+            productImage: item.product.images?.[0] || '',
+            brand: item.product.brand?.name || '',
+            unit: item.product.unit || 'viên',
+            quantity: item.quantity,
+            unitPrice: item.price,
+            subtotal: item.total,
+            isPrescription: item.product.requiresPrescription || false,
+          })),
+          subtotal: order.subtotal,
+          shippingFee: order.shipping,
+          discount: order.discount,
+          total: order.total,
+          shippingAddress: {
+            id: '',
+            userId: order.userId,
+            type: 'home',
+            recipientName: `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`,
+            phone: order.shippingAddress.phone,
+            addressLine1: order.shippingAddress.address,
+            ward: order.shippingAddress.ward,
+            district: order.shippingAddress.district,
+            city: order.shippingAddress.city,
+            isDefault: false,
+          },
+          paymentMethod: order.paymentMethod,
+          paymentStatus: (order.paymentStatus === 'pending' ? 'pending' : order.paymentStatus === 'paid' ? 'paid' : order.paymentStatus === 'failed' ? 'failed' : order.paymentStatus === 'refunded' ? 'refunded' : 'pending') as 'pending' | 'paid' | 'failed' | 'refunded',
+          createdAt: order.createdAt,
+          updatedAt: order.updatedAt,
+          deliveryMethod: order.shippingMethod,
+          notes: order.notes,
+          timeline: [], // TODO: Add timeline if available
+        }))
+        setOrders(transformedOrders)
+      } catch {
+        // Failed to fetch orders
+      } finally {
+        // setLoading(false) // TODO: Add loading state if needed
+      }
+    }
+
+    fetchOrders()
+  }, [])
+
   const getOrderCount = () => {
-    return mockOrders.length
+    return orders.length
   }
 
-  const recentOrders = mockOrders.slice(0, 3)
+  const recentOrders = orders.slice(0, 3)
 
   const [notifications, setNotifications] = useState<Notification[]>([])
 
@@ -33,12 +93,8 @@ export function AccountDashboard() {
       try {
         const data = await notificationService.getNotifications()
         if (mounted) setNotifications(data)
-      } catch (err) {
-        try {
-          if (console && typeof console.debug === 'function') console.debug('Failed to load notifications', err)
-        } catch {
-          /* ignore */
-        }
+      } catch {
+        // Failed to load notifications
       }
     }
 
@@ -55,8 +111,7 @@ export function AccountDashboard() {
       {/* Welcome Header */}
       <div className='text-center md:text-left'>
         <h1 className='text-2xl font-bold text-blue-800 mb-2'>
-          Chào mừng trở lại, {accountUser?.firstName ?? mockUser.firstName} {accountUser?.lastName ?? mockUser.lastName}
-          ! 👋
+          Chào mừng trở lại, {accountUser?.firstName || 'Người'} {accountUser?.lastName || 'dùng'}! 👋
         </h1>
         <p className='text-gray-600'>Quản lý đơn hàng, đơn thuốc và thông tin cá nhân của bạn</p>
       </div>
@@ -83,7 +138,7 @@ export function AccountDashboard() {
               <div>
                 <p className='text-sm text-gray-600'>Điểm thưởng</p>
                 <p className='text-2xl font-bold text-orange-600'>
-                  {(accountUser?.loyaltyPoints ?? mockUser.loyaltyPoints).toLocaleString()}
+                  {(accountUser?.loyaltyPoints || 0).toLocaleString()}
                 </p>
               </div>
               <div className='w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center'>
@@ -99,7 +154,7 @@ export function AccountDashboard() {
               <div>
                 <p className='text-sm text-gray-600'>Đã tiết kiệm</p>
                 <p className='text-2xl font-bold text-green-600'>
-                  {formatPrice(accountUser?.totalSaved ?? mockUser.totalSaved)}
+                  {formatPrice(accountUser?.totalSaved || 0)}
                 </p>
               </div>
               <div className='w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center'>

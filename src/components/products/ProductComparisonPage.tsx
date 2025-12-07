@@ -119,7 +119,6 @@ export function ProductComparisonPage() {
           }
           setProducts(fetched)
         } catch (err) {
-          console.error('Failed to fetch comparison products', err)
         }
       })()
     } else {
@@ -135,7 +134,6 @@ export function ProductComparisonPage() {
         const mapped = results.map((r) => mapProductToComparison(r))
         setSearchResults(mapped)
       } catch (err) {
-        console.error('Product search failed', err)
         setSearchResults([])
       }
     } else {
@@ -169,7 +167,6 @@ export function ProductComparisonPage() {
         toast.success('Đã thêm sản phẩm vào so sánh')
       }
     } catch (err) {
-      console.error('Failed to add product to comparison', err)
       toast.error('Không thể thêm sản phẩm')
     }
     setSearchTerm('')
@@ -202,7 +199,6 @@ export function ProductComparisonPage() {
       await addToCart(product, 1)
       toast.success('Đã thêm sản phẩm vào giỏ hàng')
     } catch (error) {
-      console.error('Error adding to cart:', error)
       toast.error('Không thể thêm sản phẩm vào giỏ hàng')
     }
   }
@@ -224,7 +220,6 @@ export function ProductComparisonPage() {
       }
       toast.success(`Đã thêm ${products.length} sản phẩm vào giỏ hàng`)
     } catch (error) {
-      console.error('Error adding products to cart:', error)
       toast.error('Không thể thêm một số sản phẩm vào giỏ hàng')
     }
   }

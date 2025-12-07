@@ -29,8 +29,8 @@ class AuthService {
     try {
       // No need to send refresh token in body since it's in cookie
       await apiClient.post(API_ENDPOINTS.AUTH.LOGOUT)
-    } catch (error) {
-      console.error('Logout API call failed:', error)
+    } catch {
+      // Ignore logout errors
     } finally {
       // Always clear local storage
       this.clearTokens()
@@ -69,6 +69,15 @@ class AuthService {
     }
   }
 
+  async verifyForgotPasswordToken(forgotPasswordToken: string): Promise<void> {
+    try {
+      await apiClient.post(API_ENDPOINTS.AUTH.VERIFY_FORGOT_PASSWORD, { forgotPasswordToken })
+    } catch (error) {
+      const axiosError = error as AxiosError<AuthResponse>
+      throw axiosError.response?.data || { message: 'Invalid token' }
+    }
+  }
+
   async forgotPassword(email: string): Promise<void> {
     try {
       await apiClient.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, { email })
@@ -83,11 +92,34 @@ class AuthService {
       await apiClient.post(API_ENDPOINTS.AUTH.RESET_PASSWORD, {
         forgotPasswordToken,
         password,
-        confirm_password: confirmPassword,
+        confirmPassword: confirmPassword,
       })
     } catch (error) {
       const axiosError = error as AxiosError<AuthResponse>
       throw axiosError.response?.data || { message: 'Password reset failed' }
+    }
+  }
+
+  async changePassword(currentPassword: string, newPassword: string, confirmPassword: string): Promise<void> {
+    try {
+      await apiClient.put(API_ENDPOINTS.USERS.CHANGE_PASSWORD, {
+        currentPassword,
+        password: newPassword,
+        confirmPassword,
+      })
+    } catch (error) {
+      const axiosError = error as AxiosError<AuthResponse>
+      throw axiosError.response?.data || { message: 'Password change failed' }
+    }
+  }
+
+  async updateProfile(profileData: Partial<User>): Promise<User> {
+    try {
+      const response = await apiClient.patch<{ message: string; user: User }>(API_ENDPOINTS.USERS.UPDATE_ME, profileData)
+      return response.data.user
+    } catch (error) {
+      const axiosError = error as AxiosError<AuthResponse>
+      throw axiosError.response?.data || { message: 'Profile update failed' }
     }
   }
 
