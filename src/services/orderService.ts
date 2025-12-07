@@ -33,16 +33,17 @@ interface BackendOrder {
   orderNumber: string
   items: BackendOrderItem[]
   subtotal: number
-  shipping: number
-  discount: number
-  total: number
+  shippingFee: number
+  discountAmount: number
+  taxAmount: number
+  totalAmount: number
   shippingAddress: BackendShippingAddress
   paymentMethod: string
   paymentStatus: string
-  status: string
+  orderStatus: string
   createdAt: string
   updatedAt: string
-  shippingMethod: string
+  shippingMethod?: string
   notes?: string
 }
 
@@ -57,33 +58,41 @@ interface PaginationInfo {
 class OrderService {
 
   async getOrders(): Promise<Order[]> {
-    const response = await apiClient.get<{ result: { orders: BackendOrder[], pagination: PaginationInfo } }>(API_ENDPOINTS.ORDERS.BASE)
+    const response = await apiClient.get<{ message: string, result: { orders: BackendOrder[], pagination: PaginationInfo } }>(API_ENDPOINTS.ORDERS.BASE)
     return response.data.result.orders.map(this.transformOrderFromBackend)
   }
 
   async getOrderById(orderId: string): Promise<Order | null> {
-    const response = await apiClient.get<{ result: BackendOrder }>(API_ENDPOINTS.ORDERS.BY_ID(orderId))
+    const response = await apiClient.get<{ message: string, result: BackendOrder }>(API_ENDPOINTS.ORDERS.BY_ID(orderId))
     return this.transformOrderFromBackend(response.data.result)
   }
 
-  async createOrder(orderData: CreateOrderRequest): Promise<Order> {
+  async createOrder(orderData: CreateOrderRequest): Promise<{ order: Order, paymentUrl?: string }> {
     const requestBody = {
       shippingAddress: orderData.shippingAddress,
       paymentMethod: orderData.paymentMethod,
       notes: orderData.notes
     }
-    const response = await apiClient.post<{ result: { order: BackendOrder } }>(API_ENDPOINTS.ORDERS.CREATE, requestBody)
-    return this.transformOrderFromBackend(response.data.result.order)
+    const response = await apiClient.post<{ message: string, result: { order: BackendOrder, orderId: string, paymentUrl?: string } }>(API_ENDPOINTS.ORDERS.CREATE, requestBody)
+    return {
+      order: this.transformOrderFromBackend(response.data.result.order),
+      paymentUrl: response.data.result.paymentUrl
+    }
   }
 
   async updateOrderStatus(orderId: string, status: OrderStatus): Promise<Order> {
-    const response = await apiClient.patch<{ result: BackendOrder }>(API_ENDPOINTS.ORDERS.UPDATE_STATUS(orderId), { status })
+    const response = await apiClient.patch<{ message: string, result: BackendOrder }>(API_ENDPOINTS.ORDERS.UPDATE_STATUS(orderId), { status })
     return this.transformOrderFromBackend(response.data.result)
   }
 
   async cancelOrder(orderId: string): Promise<Order> {
-    const response = await apiClient.patch<{ result: BackendOrder }>(API_ENDPOINTS.ORDERS.CANCEL(orderId))
+    const response = await apiClient.put<{ message: string, result: BackendOrder }>(API_ENDPOINTS.ORDERS.UPDATE_STATUS(orderId), { status: 'cancelled' })
     return this.transformOrderFromBackend(response.data.result)
+  }
+
+  async getPaymentUrl(orderId: string): Promise<string> {
+    const response = await apiClient.post<{ message: string, result: { paymentUrl: string } }>(API_ENDPOINTS.ORDERS.PAYMENT_URL(orderId))
+    return response.data.result.paymentUrl
   }
 
   // Transform backend order format to frontend format
@@ -123,26 +132,26 @@ class OrderService {
         total: item.totalPrice,
       })) || [],
       subtotal: backendOrder.subtotal,
-      discount: backendOrder.discount,
-      tax: 0,
-      shipping: backendOrder.shipping,
-      total: backendOrder.total,
+      discount: backendOrder.discountAmount,
+      tax: backendOrder.taxAmount,
+      shipping: backendOrder.shippingFee,
+      total: backendOrder.totalAmount,
       shippingAddress: {
         firstName: backendOrder.shippingAddress.firstName,
         lastName: backendOrder.shippingAddress.lastName,
         address: backendOrder.shippingAddress.address,
         ward: backendOrder.shippingAddress.ward,
         district: backendOrder.shippingAddress.district,
-        city: backendOrder.shippingAddress.province, // Map province to city
+        province: backendOrder.shippingAddress.province,
         postalCode: backendOrder.shippingAddress.postalCode,
         phone: backendOrder.shippingAddress.phone,
         email: backendOrder.shippingAddress.email
       },
-      shippingMethod: backendOrder.shippingMethod,
-      shippingCost: backendOrder.shipping,
+      shippingMethod: backendOrder.shippingMethod || 'standard',
+      shippingCost: backendOrder.shippingFee,
       paymentMethod: backendOrder.paymentMethod as PaymentMethod,
       paymentStatus: backendOrder.paymentStatus as PaymentStatus,
-      status: backendOrder.status as OrderStatus,
+      status: backendOrder.orderStatus as OrderStatus,
       requiresPrescription: backendOrder.items?.some((item: BackendOrderItem) => item.prescriptionRequired) || false,
       notes: backendOrder.notes,
       createdAt: backendOrder.createdAt,

@@ -150,9 +150,7 @@ export function ChatPage() {
         }
         setMessages((prev) => [...prev, pharmacistReply])
       }, 1000)
-    } catch (error) {
-      console.error('Error sending message:', error)
-    }
+    } catch (error) {}
   }
 
   const handleSendQuickResponse = (response: QuickResponse) => {
@@ -172,7 +170,7 @@ export function ChatPage() {
   const handlePharmacistCall = () => {
     toast.info('Đang kết nối cuộc gọi', {
       description: 'Dược sĩ sẽ gọi lại cho bạn trong vài phút. Vui lòng giữ máy.',
-      duration: 5000,
+      duration: 3000,
     })
   }
 
@@ -193,127 +191,135 @@ export function ChatPage() {
   const handleReportPharmacist = () => {
     toast.warning('Báo cáo đã được gửi', {
       description: 'Chúng tôi sẽ xem xét và phản hồi trong vòng 48 giờ.',
-      duration: 5000,
+      duration: 3000,
     })
   }
 
   return (
     <div className='max-w-7xl mx-auto px-4 py-6'>
-        <UniversalBreadcrumb items={breadcrumbItems} />
-        {/* Chat Header */}
-        <Card className='mb-6 bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
-          <CardHeader className='p-4'>
-            <div className='flex items-center justify-between'>
-              <div className='flex items-center gap-3'>
-                <div className='w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center'>👨‍⚕️</div>
-                <div>
-                  <h3 className='font-medium text-blue-900'>Dược sĩ {mockPharmacist.name}</h3>
-                  <div className='flex items-center gap-2 text-sm'>
-                    <div className='w-2 h-2 bg-emerald-500 rounded-full' />
-                    <span className='text-emerald-600'>Đang hoạt động</span>
-                    <span className='text-gray-400'>•</span>
-                    <span className='text-gray-600'>Chứng chỉ: #{mockPharmacist.license}</span>
-                    <span className='text-gray-400'>•</span>
-                    <Badge variant='secondary' className='text-xs'>
-                      ⭐ {mockPharmacist.rating}/5 ({mockPharmacist.totalReviews} đánh giá)
-                    </Badge>
-                  </div>
+      <UniversalBreadcrumb items={breadcrumbItems} />
+      {/* Chat Header */}
+      <Card className='mb-6 bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+        <CardHeader className='p-4'>
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center gap-3'>
+              <div className='w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center'>👨‍⚕️</div>
+              <div>
+                <h3 className='font-medium text-blue-900'>Dược sĩ {mockPharmacist.name}</h3>
+                <div className='flex items-center gap-2 text-sm'>
+                  <div className='w-2 h-2 bg-emerald-500 rounded-full' />
+                  <span className='text-emerald-600'>Đang hoạt động</span>
+                  <span className='text-gray-400'>•</span>
+                  <span className='text-gray-600'>Chứng chỉ: #{mockPharmacist.license}</span>
+                  <span className='text-gray-400'>•</span>
+                  <Badge variant='secondary' className='text-xs'>
+                    ⭐ {mockPharmacist.rating}/5 ({mockPharmacist.totalReviews} đánh giá)
+                  </Badge>
                 </div>
               </div>
-
-              <div className='flex items-center gap-2'>
-                <Button variant='ghost' size='sm'>
-                  <Settings className='w-4 h-4' />
-                </Button>
-                <Button variant='ghost' size='sm'>
-                  <X className='w-4 h-4' />
-                </Button>
-              </div>
             </div>
-          </CardHeader>
-        </Card>
 
-        <div className='grid grid-cols-1 lg:grid-cols-4 gap-6'>
-          {/* Chat Interface */}
-          <div className='lg:col-span-3'>
-            <Card className='h-[600px] flex flex-col bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
-              {/* Messages Area */}
-              <CardContent className='flex-1 overflow-y-auto p-6 space-y-4'>
-                {/* Product context if specified */}
-                {product && (
-                  <Alert className='border-blue-200 bg-blue-50'>
-                    <AlertDescription>
-                      <div className='flex items-center gap-3'>
-                        <img src={(product as Product).images?.[0] || (product as Product).featuredImage || '/placeholder-product.jpg'} alt={(product as Product).name} className='w-12 h-12 object-cover rounded border' />
-                        <div>
-                          <p className='font-medium'>Tư vấn về: {(product as Product).name}</p>
-                          <p className='text-sm text-gray-600'>{(product as Product).brand?.name || 'Unknown Brand'}</p>
-                        </div>
+            <div className='flex items-center gap-2'>
+              <Button variant='ghost' size='sm'>
+                <Settings className='w-4 h-4' />
+              </Button>
+              <Button variant='ghost' size='sm'>
+                <X className='w-4 h-4' />
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+      </Card>
+
+      <div className='grid grid-cols-1 lg:grid-cols-4 gap-6'>
+        {/* Chat Interface */}
+        <div className='lg:col-span-3'>
+          <Card className='h-[600px] flex flex-col bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+            {/* Messages Area */}
+            <CardContent className='flex-1 overflow-y-auto p-6 space-y-4'>
+              {/* Product context if specified */}
+              {product && (
+                <Alert className='border-blue-200 bg-blue-50'>
+                  <AlertDescription>
+                    <div className='flex items-center gap-3'>
+                      <img
+                        src={
+                          (product as Product).images?.[0] ||
+                          (product as Product).featuredImage ||
+                          '/placeholder-product.jpg'
+                        }
+                        alt={(product as Product).name}
+                        className='w-12 h-12 object-cover rounded border'
+                      />
+                      <div>
+                        <p className='font-medium'>Tư vấn về: {(product as Product).name}</p>
+                        <p className='text-sm text-gray-600'>{(product as Product).brand?.name || 'Unknown Brand'}</p>
                       </div>
-                    </AlertDescription>
-                  </Alert>
-                )}
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
 
-                {/* Messages */}
-                {messages.map((message) => (
-                  <ChatBubble
-                    key={message.id}
-                    message={message}
-                    pharmacistInfo={mockPharmacist}
-                    onAttachmentClick={handleAttachmentClick}
-                    onOrderClick={handleOrderClick}
-                  />
-                ))}
+              {/* Messages */}
+              {messages.map((message) => (
+                <ChatBubble
+                  key={message.id}
+                  message={message}
+                  pharmacistInfo={mockPharmacist}
+                  onAttachmentClick={handleAttachmentClick}
+                  onOrderClick={handleOrderClick}
+                />
+              ))}
 
-                {/* Typing indicator */}
-                {isTyping && (
-                  <div className='flex justify-start'>
-                    <div className='flex items-center gap-2'>
-                      <div className='w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center'>👨‍⚕️</div>
-                      <div className='bg-gray-100 rounded-lg px-4 py-2'>
-                        <div className='flex space-x-1'>
-                          <div className='w-2 h-2 bg-gray-400 rounded-full animate-bounce' />
-                          <div
-                            className='w-2 h-2 bg-gray-400 rounded-full animate-bounce'
-                            style={{ animationDelay: '0.1s' }}
-                          />
-                          <div
-                            className='w-2 h-2 bg-gray-400 rounded-full animate-bounce'
-                            style={{ animationDelay: '0.2s' }}
-                          />
-                        </div>
+              {/* Typing indicator */}
+              {isTyping && (
+                <div className='flex justify-start'>
+                  <div className='flex items-center gap-2'>
+                    <div className='w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center'>👨‍⚕️</div>
+                    <div className='bg-gray-100 rounded-lg px-4 py-2'>
+                      <div className='flex space-x-1'>
+                        <div className='w-2 h-2 bg-gray-400 rounded-full animate-bounce' />
+                        <div
+                          className='w-2 h-2 bg-gray-400 rounded-full animate-bounce'
+                          style={{ animationDelay: '0.1s' }}
+                        />
+                        <div
+                          className='w-2 h-2 bg-gray-400 rounded-full animate-bounce'
+                          style={{ animationDelay: '0.2s' }}
+                        />
                       </div>
                     </div>
                   </div>
-                )}
+                </div>
+              )}
 
-                <div ref={messagesEndRef} />
-              </CardContent>
+              <div ref={messagesEndRef} />
+            </CardContent>
 
-              {/* Message Input */}
-              <div className='border-t border-blue-100'>
-                <ChatInput
-                  onSendMessage={handleSendMessage}
-                  onSendQuickResponse={handleSendQuickResponse}
-                  placeholder='Nhập tin nhắn...'
-                />
-              </div>
-            </Card>
-          </div>
+            {/* Message Input */}
+            <div className='border-t border-blue-100'>
+              <ChatInput
+                onSendMessage={handleSendMessage}
+                onSendQuickResponse={handleSendQuickResponse}
+                placeholder='Nhập tin nhắn...'
+              />
+            </div>
+          </Card>
+        </div>
 
-          {/* Sidebar */}
-          <div className='lg:col-span-1'>
-            <PharmacistInfo
-              pharmacist={mockPharmacist}
-              prescriptions={mockPrescriptions}
-              orders={mockOrders}
-              onCall={handlePharmacistCall}
-              onEmail={handlePharmacistEmail}
-              onRate={handleRatePharmacist}
-              onReport={handleReportPharmacist}
-            />
-          </div>
+        {/* Sidebar */}
+        <div className='lg:col-span-1'>
+          <PharmacistInfo
+            pharmacist={mockPharmacist}
+            prescriptions={mockPrescriptions}
+            orders={mockOrders}
+            onCall={handlePharmacistCall}
+            onEmail={handlePharmacistEmail}
+            onRate={handleRatePharmacist}
+            onReport={handleReportPharmacist}
+          />
         </div>
       </div>
+    </div>
   )
 }

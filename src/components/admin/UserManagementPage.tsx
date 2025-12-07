@@ -1,21 +1,23 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Users,
   Search,
   Plus,
-  Edit,
   Trash2,
-  Eye,
   Download,
   Upload,
   MoreVertical,
   CheckCircle,
-  Mail,
-  Phone,
-  Calendar,
   Shield,
   Stethoscope,
   User,
+  RefreshCw,
+  ChevronLeft,
+  ChevronRight,
+  Edit,
+  Eye,
+  Ban,
 } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
@@ -29,206 +31,324 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '../ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
-import { useEntityManagement } from '../../utils/useEntityManagement'
-import { EntityFormDialog, EntityDeleteDialog } from '../shared/EntityFormDialog'
-import { TextField, SelectField, FormGrid, FormSection } from '../shared/EntityFormFields'
-import { getRoleBadge, getStatusBadge, getVerificationBadge } from '../../utils/badgeUtils'
+import { Avatar, AvatarFallback } from '../ui/avatar'
+import { Badge } from '../ui/badge'
+import adminService from '~/services/adminService'
+import { toast } from 'sonner'
+import { format } from 'date-fns'
+import { vi } from 'date-fns/locale'
+import { ConfirmDialog } from '../shared/ConfirmDialog'
 
-interface User {
-  id: string
-  name: string
+// Type definitions
+interface UserData {
+  _id: string
+  firstName: string
+  lastName: string
   email: string
-  phone: string
-  role: 'customer' | 'pharmacist' | 'admin'
-  status: 'active' | 'inactive' | 'suspended'
-  verified: boolean
-  joinDate: string
-  lastActive: string
-  avatar?: string
-  totalOrders?: number
-  totalSpent?: number
+  phoneNumber: string
+  role: number
+  status: number
+  createdAt?: string
 }
 
-const mockUsers: User[] = [
-  {
-    id: 'U001',
-    name: 'Nguyễn Văn An',
-    email: 'nguyenvanan@example.com',
-    phone: '0901234567',
-    role: 'customer',
-    status: 'active',
-    verified: true,
-    joinDate: '2024-01-15',
-    lastActive: '2025-01-09',
-    totalOrders: 12,
-    totalSpent: 2450000,
-  },
-  {
-    id: 'U002',
-    name: 'Trần Thị Bình',
-    email: 'tranthibinh@example.com',
-    phone: '0912345678',
-    role: 'customer',
-    status: 'active',
-    verified: true,
-    joinDate: '2024-02-20',
-    lastActive: '2025-01-08',
-    totalOrders: 8,
-    totalSpent: 1850000,
-  },
-  {
-    id: 'U003',
-    name: 'Lê Văn Cường',
-    email: 'levancuong@example.com',
-    phone: '0923456789',
-    role: 'pharmacist',
-    status: 'active',
-    verified: true,
-    joinDate: '2023-11-10',
-    lastActive: '2025-01-09',
-  },
-  {
-    id: 'U004',
-    name: 'Phạm Thị Dung',
-    email: 'phamthidung@example.com',
-    phone: '0934567890',
-    role: 'customer',
-    status: 'inactive',
-    verified: false,
-    joinDate: '2024-12-01',
-    lastActive: '2024-12-15',
-    totalOrders: 1,
-    totalSpent: 150000,
-  },
-  {
-    id: 'U005',
-    name: 'Hoàng Minh Tú',
-    email: 'hoangminhtu@example.com',
-    phone: '0945678901',
-    role: 'admin',
-    status: 'active',
-    verified: true,
-    joinDate: '2023-06-01',
-    lastActive: '2025-01-09',
-  },
-  {
-    id: 'U006',
-    name: 'Võ Thị Hoa',
-    email: 'vothihoa@example.com',
-    phone: '0956789012',
-    role: 'customer',
-    status: 'suspended',
-    verified: true,
-    joinDate: '2024-03-15',
-    lastActive: '2024-11-20',
-    totalOrders: 15,
-    totalSpent: 3200000,
-  },
-  {
-    id: 'U007',
-    name: 'Đặng Văn Giang',
-    email: 'dangvangiang@example.com',
-    phone: '0967890123',
-    role: 'pharmacist',
-    status: 'active',
-    verified: true,
-    joinDate: '2024-01-05',
-    lastActive: '2025-01-09',
-  },
-  {
-    id: 'U008',
-    name: 'Bùi Thị Kim',
-    email: 'buithikim@example.com',
-    phone: '0978901234',
-    role: 'customer',
-    status: 'active',
-    verified: true,
-    joinDate: '2024-05-10',
-    lastActive: '2025-01-07',
-    totalOrders: 6,
-    totalSpent: 980000,
-  },
-]
+interface PaginationData {
+  page: number
+  limit: number
+  total: number
+  totalPages: number
+}
+
+interface UsersResponse {
+  result: {
+    users: UserData[]
+    pagination: PaginationData
+  }
+}
+
+interface ResetPasswordResponse {
+  newPassword: string
+  message: string
+}
+
+// Role mapping
+const ROLE_MAP: Record<number, string> = {
+  0: 'customer',
+  1: 'pharmacist',
+  2: 'admin',
+}
+
+const ROLE_REVERSE_MAP: Record<string, number> = {
+  customer: 0,
+  pharmacist: 1,
+  admin: 2,
+}
+
+// Status mapping
+const STATUS_MAP: Record<number, string> = {
+  0: 'unverified',
+  1: 'verified',
+  2: 'banned',
+}
 
 export function UserManagementPage() {
+  const queryClient = useQueryClient()
+
+  // State
+  const [page, setPage] = useState(1)
+  const [limit] = useState(10)
   const [searchQuery, setSearchQuery] = useState('')
   const [filterRole, setFilterRole] = useState<string>('all')
   const [filterStatus, setFilterStatus] = useState<string>('all')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [selectedUser, setSelectedUser] = useState<UserData | null>(null)
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [editFormData, setEditFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phoneNumber: '',
+  })
 
-  // Use entity management hook
-  const {
-    entities: users,
-    formState,
-    dialogState,
-    openAddDialog,
-    openDeleteDialog,
-    closeDialog,
-    handleAdd,
-    handleEdit,
-    handleDelete,
-    updateFormData,
-  } = useEntityManagement<User>({
-    initialEntities: mockUsers,
-    entityName: 'user',
-    entityNameVi: 'người dùng',
-    fields: [], // We'll handle form fields manually
-    generateId: (): string => `U${String(mockUsers.length + 1).padStart(3, '0')}`,
-    validator: (data: Partial<User>) => {
-      const errors: Record<string, string> = {}
-      if (!data.name) errors.name = 'Tên người dùng là bắt buộc'
-      if (!data.email) errors.email = 'Email là bắt buộc'
-      if (!data.phone) errors.phone = 'Số điện thoại là bắt buộc'
-      return errors
+  // Confirm dialog state
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean
+    title: string
+    description: string
+    onConfirm: () => void
+    variant?: 'default' | 'destructive'
+  }>({ open: false, title: '', description: '', onConfirm: () => { }, variant: 'default' })
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery)
+      setPage(1) // Reset to page 1 when searching
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  // Fetch users with React Query
+  const { data: usersData, isLoading, error, refetch } = useQuery<UsersResponse>({
+    queryKey: ['admin', 'users', page, limit, filterRole, filterStatus, debouncedSearch],
+    queryFn: async () => {
+      const response = await adminService.getAllUsers({
+        page,
+        limit,
+        role: filterRole === 'all' ? undefined : String(ROLE_REVERSE_MAP[filterRole]),
+        status: filterStatus === 'all' ? undefined : filterStatus,
+        search: debouncedSearch || undefined,
+      })
+      return response as UsersResponse
     },
   })
 
-  // Form save handlers
-  const handleSaveAdd = () => {
-    return handleAdd(formState.data)
+  // Fetch user stats
+  const { data: stats } = useQuery({
+    queryKey: ['admin', 'users', 'stats'],
+    queryFn: adminService.getUserStats,
+  })
+
+  // Delete user mutation
+  const deleteMutation = useMutation({
+    mutationFn: (userId: string) => adminService.deleteUser(userId),
+    onSuccess: () => {
+      toast.success('Đã xóa người dùng thành công')
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
+    },
+    onError: () => {
+      toast.error('Không thể xóa người dùng')
+    },
+  })
+
+  // Reset password mutation
+  const resetPasswordMutation = useMutation<ResetPasswordResponse, Error, string>({
+    mutationFn: async (userId: string) => {
+      const response = await adminService.resetUserPassword(userId)
+      return response as ResetPasswordResponse
+    },
+    onSuccess: (data: ResetPasswordResponse) => {
+      toast.success(`Đã reset mật khẩu. Mật khẩu mới: ${data.newPassword}`)
+    },
+    onError: () => {
+      toast.error('Không thể reset mật khẩu')
+    },
+  })
+
+  // Verify email mutation
+  const verifyEmailMutation = useMutation({
+    mutationFn: (userId: string) => adminService.verifyUserEmail(userId),
+    onSuccess: () => {
+      toast.success('Đã xác thực email người dùng')
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
+    },
+    onError: () => {
+      toast.error('Không thể xác thực email')
+    },
+  })
+
+  // Update user mutation (for ban/unban and edit)
+  const updateMutation = useMutation({
+    mutationFn: ({ userId, data }: { userId: string; data: any }) =>
+      adminService.updateUser(userId, data),
+    onSuccess: () => {
+      toast.success('Đã cập nhật thông tin người dùng')
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
+    },
+    onError: () => {
+      toast.error('Không thể cập nhật thông tin')
+    },
+  })
+
+  // Handlers
+  const handleDelete = (userId: string) => {
+    setConfirmDialog({
+      open: true,
+      title: 'Xóa người dùng',
+      description: 'Bạn có chắc chắn muốn xóa người dùng này? Hành động này không thể hoàn tác.',
+      onConfirm: () => deleteMutation.mutate(userId),
+      variant: 'destructive',
+    })
+  }
+
+  const handleResetPassword = (userId: string) => {
+    setConfirmDialog({
+      open: true,
+      title: 'Reset mật khẩu',
+      description: 'Bạn có chắc chắn muốn reset mật khẩu người dùng này? Mật khẩu mới sẽ được tạo tự động.',
+      onConfirm: () => resetPasswordMutation.mutate(userId),
+    })
+  }
+
+  const handleVerifyEmail = (userId: string) => {
+    setConfirmDialog({
+      open: true,
+      title: 'Xác thực email',
+      description: 'Bạn có chắc chắn muốn xác thực email người dùng này?',
+      onConfirm: () => verifyEmailMutation.mutate(userId),
+    })
+  }
+
+  const handleViewDetails = (user: UserData) => {
+    setSelectedUser(user)
+    setIsViewDialogOpen(true)
+  }
+
+  const handleEdit = (user: UserData) => {
+    setSelectedUser(user)
+    setEditFormData({
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phoneNumber: user.phoneNumber,
+    })
+    setIsEditDialogOpen(true)
   }
 
   const handleSaveEdit = () => {
-    return handleEdit(formState.data)
+    if (!selectedUser) return
+
+    updateMutation.mutate(
+      {
+        userId: selectedUser._id,
+        data: editFormData,
+      },
+      {
+        onSuccess: () => {
+          setIsEditDialogOpen(false)
+          setSelectedUser(null)
+        },
+      }
+    )
   }
 
-  const confirmDelete = () => {
-    if (dialogState.entity) {
-      return handleDelete(dialogState.entity.id)
+  const handleToggleBan = (user: UserData) => {
+    const newStatus = user.status === 2 ? 1 : 2
+    const action = newStatus === 2 ? 'khóa' : 'mở khóa'
+
+    setConfirmDialog({
+      open: true,
+      title: newStatus === 2 ? 'Khóa tài khoản' : 'Mở khóa tài khoản',
+      description: `Bạn có chắc chắn muốn ${action} tài khoản người dùng này?`,
+      onConfirm: () => updateMutation.mutate({
+        userId: user._id,
+        data: { status: newStatus },
+      }),
+      variant: newStatus === 2 ? 'destructive' : 'default',
+    })
+  }
+
+  const handleRefresh = () => {
+    refetch()
+    queryClient.invalidateQueries({ queryKey: ['admin', 'users', 'stats'] })
+  }
+
+  // Helper functions
+
+  const getRoleBadge = (role: number) => {
+    const roleStr = ROLE_MAP[role] || 'unknown'
+    const colors: Record<string, string> = {
+      customer: 'bg-gray-100 text-gray-700',
+      pharmacist: 'bg-blue-100 text-blue-700',
+      admin: 'bg-purple-100 text-purple-700',
     }
+    const labels: Record<string, string> = {
+      customer: 'Khách hàng',
+      pharmacist: 'Dược sĩ',
+      admin: 'Admin',
+    }
+    return (
+      <Badge className={colors[roleStr] || 'bg-gray-100 text-gray-700'}>
+        {labels[roleStr] || roleStr}
+      </Badge>
+    )
   }
 
-  const stats = {
-    total: users.length,
-    customers: users.filter((u) => u.role === 'customer').length,
-    pharmacists: users.filter((u) => u.role === 'pharmacist').length,
-    admins: users.filter((u) => u.role === 'admin').length,
-    active: users.filter((u) => u.status === 'active').length,
-    verified: users.filter((u) => u.verified).length,
+  const getStatusBadge = (status: number) => {
+    const statusStr = STATUS_MAP[status] || 'unknown'
+    const colors: Record<string, string> = {
+      verified: 'bg-green-100 text-green-700',
+      unverified: 'bg-yellow-100 text-yellow-700',
+      banned: 'bg-red-100 text-red-700',
+    }
+    const labels: Record<string, string> = {
+      verified: 'Đã xác thực',
+      unverified: 'Chưa xác thực',
+      banned: 'Đã khóa',
+    }
+    return (
+      <Badge className={colors[statusStr] || 'bg-gray-100 text-gray-700'}>
+        {labels[statusStr] || statusStr}
+      </Badge>
+    )
   }
 
-  const filteredUsers = users.filter((user) => {
-    const matchesSearch =
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.phone.includes(searchQuery)
-    const matchesRole = filterRole === 'all' || user.role === filterRole
-    const matchesStatus = filterStatus === 'all' || user.status === filterStatus
-    return matchesSearch && matchesRole && matchesStatus
-  })
+  const users = usersData?.result?.users || []
+  const pagination = usersData?.result?.pagination || { page: 1, totalPages: 1, total: 0 }
 
   return (
     <div className='space-y-6'>
       {/* Header */}
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='text-3xl bg-gradient-to-r from-[#0066CC] to-[#4A90E2] bg-clip-text text-transparent'>
+          <h1 className='text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#0066CC] to-[#4A90E2]'>
             Quản lý người dùng
           </h1>
           <p className='text-gray-600 mt-2'>Quản lý tất cả người dùng trong hệ thống</p>
         </div>
         <div className='flex items-center gap-3'>
+          <Button variant='outline' className='gap-2' onClick={handleRefresh}>
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            Làm mới
+          </Button>
           <Button variant='outline' className='gap-2'>
             <Upload className='w-4 h-4' />
             Import
@@ -237,93 +357,88 @@ export function UserManagementPage() {
             <Download className='w-4 h-4' />
             Export
           </Button>
-          <Button
-            onClick={openAddDialog}
-            className='bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8] gap-2'
-          >
-            <Plus className='w-4 h-4' />
-            Thêm người dùng
-          </Button>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4'>
-        <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
-          <CardContent className='p-4'>
-            <div className='flex items-center justify-between'>
-              <div>
-                <p className='text-xs text-gray-600'>Tổng số</p>
-                <p className='text-2xl font-semibold text-blue-600'>{stats.total}</p>
+      {stats && (
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4'>
+          <Card className='bg-white backdrop-blur-lg border-blue-100'>
+            <CardContent className='p-4'>
+              <div className='flex items-center justify-between'>
+                <div>
+                  <p className='text-xs text-gray-600'>Tổng số</p>
+                  <p className='text-2xl font-semibold text-blue-600'>{stats.total}</p>
+                </div>
+                <Users className='w-8 h-8 text-blue-400' />
               </div>
-              <Users className='w-8 h-8 text-blue-400' />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
-          <CardContent className='p-4'>
-            <div className='flex items-center justify-between'>
-              <div>
-                <p className='text-xs text-gray-600'>Khách hàng</p>
-                <p className='text-2xl font-semibold text-gray-700'>{stats.customers}</p>
+          <Card className='bg-white backdrop-blur-lg border-blue-100'>
+            <CardContent className='p-4'>
+              <div className='flex items-center justify-between'>
+                <div>
+                  <p className='text-xs text-gray-600'>Khách hàng</p>
+                  <p className='text-2xl font-semibold text-gray-700'>{stats.customers}</p>
+                </div>
+                <User className='w-8 h-8 text-gray-400' />
               </div>
-              <User className='w-8 h-8 text-gray-400' />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
-          <CardContent className='p-4'>
-            <div className='flex items-center justify-between'>
-              <div>
-                <p className='text-xs text-gray-600'>Dược sĩ</p>
-                <p className='text-2xl font-semibold text-blue-600'>{stats.pharmacists}</p>
+          <Card className='bg-white backdrop-blur-lg border-blue-100'>
+            <CardContent className='p-4'>
+              <div className='flex items-center justify-between'>
+                <div>
+                  <p className='text-xs text-gray-600'>Dược sĩ</p>
+                  <p className='text-2xl font-semibold text-blue-600'>{stats.pharmacists}</p>
+                </div>
+                <Stethoscope className='w-8 h-8 text-blue-400' />
               </div>
-              <Stethoscope className='w-8 h-8 text-blue-400' />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
-          <CardContent className='p-4'>
-            <div className='flex items-center justify-between'>
-              <div>
-                <p className='text-xs text-gray-600'>Admin</p>
-                <p className='text-2xl font-semibold text-[#0066CC]'>{stats.admins}</p>
+          <Card className='bg-white backdrop-blur-lg border-blue-100'>
+            <CardContent className='p-4'>
+              <div className='flex items-center justify-between'>
+                <div>
+                  <p className='text-xs text-gray-600'>Admin</p>
+                  <p className='text-2xl font-semibold text-[#0066CC]'>{stats.admins}</p>
+                </div>
+                <Shield className='w-8 h-8 text-[#4A90E2]' />
               </div>
-              <Shield className='w-8 h-8 text-[#4A90E2]' />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
-          <CardContent className='p-4'>
-            <div className='flex items-center justify-between'>
-              <div>
-                <p className='text-xs text-gray-600'>Hoạt động</p>
-                <p className='text-2xl font-semibold text-green-600'>{stats.active}</p>
+          <Card className='bg-white backdrop-blur-lg border-blue-100'>
+            <CardContent className='p-4'>
+              <div className='flex items-center justify-between'>
+                <div>
+                  <p className='text-xs text-gray-600'>Hoạt động</p>
+                  <p className='text-2xl font-semibold text-green-600'>{stats.active}</p>
+                </div>
+                <CheckCircle className='w-8 h-8 text-green-400' />
               </div>
-              <CheckCircle className='w-8 h-8 text-green-400' />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
-          <CardContent className='p-4'>
-            <div className='flex items-center justify-between'>
-              <div>
-                <p className='text-xs text-gray-600'>Đã xác thực</p>
-                <p className='text-2xl font-semibold text-blue-600'>{stats.verified}</p>
+          <Card className='bg-white backdrop-blur-lg border-blue-100'>
+            <CardContent className='p-4'>
+              <div className='flex items-center justify-between'>
+                <div>
+                  <p className='text-xs text-gray-600'>Đã xác thực</p>
+                  <p className='text-2xl font-semibold text-blue-600'>{stats.verified}</p>
+                </div>
+                <CheckCircle className='w-8 h-8 text-blue-400' />
               </div>
-              <CheckCircle className='w-8 h-8 text-blue-400' />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Filters & Search */}
-      <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-blue-100'>
         <CardContent className='p-6'>
           <div className='flex flex-col md:flex-row gap-4'>
             <div className='flex-1 relative'>
@@ -352,9 +467,9 @@ export function UserManagementPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value='all'>Tất cả trạng thái</SelectItem>
-                <SelectItem value='active'>Hoạt động</SelectItem>
-                <SelectItem value='inactive'>Không hoạt động</SelectItem>
-                <SelectItem value='suspended'>Đã khóa</SelectItem>
+                <SelectItem value='1'>Đã xác thực</SelectItem>
+                <SelectItem value='0'>Chưa xác thực</SelectItem>
+                <SelectItem value='2'>Đã khóa</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -362,246 +477,275 @@ export function UserManagementPage() {
       </Card>
 
       {/* Users Table */}
-      <Card className='bg-white/80 backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-blue-100'>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
             <Users className='w-5 h-5 text-blue-600' />
-            Danh sách người dùng ({filteredUsers.length})
+            Danh sách người dùng ({pagination.total})
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className='overflow-x-auto'>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Người dùng</TableHead>
-                  <TableHead>Liên hệ</TableHead>
-                  <TableHead>Vai trò</TableHead>
-                  <TableHead>Trạng thái</TableHead>
-                  <TableHead>Xác thực</TableHead>
-                  <TableHead>Ngày tham gia</TableHead>
-                  <TableHead>Hoạt động cuối</TableHead>
-                  <TableHead className='text-right'>Thao tác</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <div className='flex items-center gap-3'>
-                        <Avatar>
-                          <AvatarImage src={user.avatar} />
-                          <AvatarFallback className='bg-blue-100 text-blue-700'>{user.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className='font-medium text-gray-900'>{user.name}</p>
-                          <p className='text-sm text-gray-500'>{user.id}</p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className='space-y-1'>
-                        <div className='flex items-center gap-2 text-sm text-gray-600'>
-                          <Mail className='w-3 h-3' />
-                          {user.email}
-                        </div>
-                        <div className='flex items-center gap-2 text-sm text-gray-600'>
-                          <Phone className='w-3 h-3' />
-                          {user.phone}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{getRoleBadge(user.role, { showIcon: false })}</TableCell>
-                    <TableCell>{getStatusBadge(user.status)}</TableCell>
-                    <TableCell>{getVerificationBadge(user.verified)}</TableCell>
-                    <TableCell>
-                      <div className='flex items-center gap-2 text-sm text-gray-600'>
-                        <Calendar className='w-3 h-3' />
-                        {new Date(user.joinDate).toLocaleDateString('vi-VN')}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className='text-sm text-gray-600'>
-                        {new Date(user.lastActive).toLocaleDateString('vi-VN')}
-                      </div>
-                    </TableCell>
-                    <TableCell className='text-right'>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant='ghost' size='sm'>
-                            <MoreVertical className='w-4 h-4' />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align='end'>
-                          <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem>
-                            <Eye className='w-4 h-4 mr-2' />
-                            Xem chi tiết
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleEdit(user)}>
-                            <Edit className='w-4 h-4 mr-2' />
-                            Chỉnh sửa
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => openDeleteDialog(user)} className='text-red-600'>
-                            <Trash2 className='w-4 h-4 mr-2' />
-                            Xóa
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          {isLoading ? (
+            <div className='flex justify-center items-center h-64'>
+              <RefreshCw className='w-8 h-8 animate-spin text-blue-600' />
+            </div>
+          ) : error ? (
+            <div className='text-center text-red-600 py-8'>
+              Không thể tải danh sách người dùng. Vui lòng thử lại.
+            </div>
+          ) : (
+            <>
+              <div className='overflow-x-auto'>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Người dùng</TableHead>
+                      <TableHead>Liên hệ</TableHead>
+                      <TableHead>Vai trò</TableHead>
+                      <TableHead>Trạng thái</TableHead>
+                      <TableHead>Ngày tham gia</TableHead>
+                      <TableHead className='text-right'>Thao tác</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {users.map((user: UserData) => (
+                      <TableRow key={user._id}>
+                        <TableCell>
+                          <div className='flex items-center gap-3'>
+                            <Avatar>
+                              <AvatarFallback className='bg-blue-100 text-blue-700'>
+                                {user.firstName?.charAt(0) || 'U'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className='font-medium text-gray-900'>
+                                {user.firstName} {user.lastName}
+                              </p>
+                              <p className='text-sm text-gray-500'>{user._id}</p>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <p className='text-sm text-gray-900'>{user.email}</p>
+                            <p className='text-sm text-gray-500'>{user.phoneNumber}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>{getRoleBadge(user.role)}</TableCell>
+                        <TableCell>{getStatusBadge(user.status)}</TableCell>
+                        <TableCell>
+                          <p className='text-sm text-gray-900'>
+                            {user.createdAt
+                              ? format(new Date(user.createdAt), 'dd/MM/yyyy', { locale: vi })
+                              : 'N/A'}
+                          </p>
+                        </TableCell>
+                        <TableCell className='text-right'>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant='ghost' size='sm'>
+                                <MoreVertical className='w-4 h-4' />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align='end' className='bg-white shadow-lg border-2 border-blue-200'>
+                              <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleViewDetails(user)}>
+                                <Eye className='w-4 h-4 mr-2' />
+                                Xem chi tiết
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleEdit(user)}>
+                                <Edit className='w-4 h-4 mr-2' />
+                                Chỉnh sửa
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleVerifyEmail(user._id)}>
+                                <CheckCircle className='w-4 h-4 mr-2' />
+                                Xác thực email
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleResetPassword(user._id)}>
+                                <RefreshCw className='w-4 h-4 mr-2' />
+                                Reset mật khẩu
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleToggleBan(user)}>
+                                <Ban className='w-4 h-4 mr-2' />
+                                {user.status === 2 ? 'Mở khóa' : 'Khóa tài khoản'}
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => handleDelete(user._id)}
+                                className='text-red-600'
+                              >
+                                <Trash2 className='w-4 h-4 mr-2' />
+                                Xóa người dùng
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Pagination */}
+              <div className='flex items-center justify-between mt-4'>
+                <p className='text-sm text-gray-600'>
+                  Hiển thị {(page - 1) * limit + 1} - {Math.min(page * limit, pagination.total)} của{' '}
+                  {pagination.total} người dùng
+                </p>
+                <div className='flex items-center gap-2'>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                  >
+                    <ChevronLeft className='w-4 h-4' />
+                  </Button>
+                  <span className='text-sm text-gray-600'>
+                    Trang {page} / {pagination.totalPages}
+                  </span>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
+                    disabled={page === pagination.totalPages}
+                  >
+                    <ChevronRight className='w-4 h-4' />
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 
-      {/* Add User Sheet - Using reusable component */}
-      <EntityFormDialog
-        open={dialogState.isOpen && dialogState.mode === 'add'}
-        onOpenChange={(open) => (open ? openAddDialog() : closeDialog())}
-        mode='sheet'
-        title='Thêm người dùng mới'
-        description='Nhập thông tin để tạo tài khoản người dùng mới'
-        onSave={handleSaveAdd}
-        isEdit={false}
-      >
-        <FormSection title='Thông tin cơ bản'>
-          <FormGrid cols={2}>
-            <TextField
-              label='Họ và tên'
-              required
-              value={formState.data.name || ''}
-              onChange={(v) => updateFormData('name', v)}
-              placeholder='Nguyễn Văn A'
-            />
-            <TextField
-              label='Số điện thoại'
-              type='tel'
-              required
-              value={formState.data.phone || ''}
-              onChange={(v) => updateFormData('phone', v)}
-              placeholder='0901234567'
-            />
-          </FormGrid>
-
-          <TextField
-            label='Email'
-            type='email'
-            required
-            value={formState.data.email || ''}
-            onChange={(v) => updateFormData('email', v)}
-            placeholder='example@email.com'
-          />
-
-          <TextField label='Mật khẩu' type='password' required value='' onChange={() => {}} placeholder='••••••••' />
-        </FormSection>
-
-        <FormSection title='Phân quyền'>
-          <FormGrid cols={2}>
-            <SelectField
-              label='Vai trò'
-              value={formState.data.role || ''}
-              onChange={(v) => updateFormData('role', v)}
-              options={[
-                { value: 'customer', label: 'Khách hàng' },
-                { value: 'pharmacist', label: 'Dược sĩ' },
-                { value: 'admin', label: 'Admin' },
-              ]}
-            />
-            <SelectField
-              label='Trạng thái'
-              value={formState.data.status || ''}
-              onChange={(v) => updateFormData('status', v)}
-              options={[
-                { value: 'active', label: 'Hoạt động' },
-                { value: 'inactive', label: 'Không hoạt động' },
-                { value: 'suspended', label: 'Đã khóa' },
-              ]}
-            />
-          </FormGrid>
-        </FormSection>
-      </EntityFormDialog>
-
-      {/* Edit User Sheet - Using reusable component */}
-      <EntityFormDialog
-        open={dialogState.isOpen && dialogState.mode === 'edit'}
-        onOpenChange={(open) => (open ? {} : closeDialog())}
-        mode='sheet'
-        title='Chỉnh sửa người dùng'
-        description={`Cập nhật thông tin người dùng ${dialogState.entity?.name || ''}`}
-        onSave={handleSaveEdit}
-        isEdit={true}
-        infoBox={{
-          text: '💡 Để đổi mật khẩu, vui lòng sử dụng chức năng "Đặt lại mật khẩu" riêng',
-        }}
-      >
-        <FormSection title='Thông tin cơ bản'>
-          <FormGrid cols={2}>
-            <TextField
-              label='Họ và tên'
-              required
-              value={formState.data.name || ''}
-              onChange={(v) => updateFormData('name', v)}
-              placeholder='Nguyễn Văn A'
-            />
-            <TextField
-              label='Số điện thoại'
-              type='tel'
-              required
-              value={formState.data.phone || ''}
-              onChange={(v) => updateFormData('phone', v)}
-              placeholder='0901234567'
-            />
-          </FormGrid>
-
-          <TextField
-            label='Email'
-            type='email'
-            required
-            value={formState.data.email || ''}
-            onChange={(v) => updateFormData('email', v)}
-            placeholder='example@email.com'
-          />
-        </FormSection>
-
-        <FormSection title='Phân quyền'>
-          <FormGrid cols={2}>
-            <SelectField
-              label='Vai trò'
-              value={formState.data.role || ''}
-              onChange={(v) => updateFormData('role', v)}
-              options={[
-                { value: 'customer', label: 'Khách hàng' },
-                { value: 'pharmacist', label: 'Dược sĩ' },
-                { value: 'admin', label: 'Admin' },
-              ]}
-            />
-            <SelectField
-              label='Trạng thái'
-              value={formState.data.status || ''}
-              onChange={(v) => updateFormData('status', v)}
-              options={[
-                { value: 'active', label: 'Hoạt động' },
-                { value: 'inactive', label: 'Không hoạt động' },
-                { value: 'suspended', label: 'Đã khóa' },
-              ]}
-            />
-          </FormGrid>
-        </FormSection>
-      </EntityFormDialog>
-
-      {/* Delete Confirmation Dialog - Using reusable component */}
-      <EntityDeleteDialog
-        open={dialogState.isOpen && dialogState.mode === 'delete'}
-        onOpenChange={(open) => (open ? {} : closeDialog())}
-        entityName='người dùng'
-        entityDisplayName={dialogState.entity?.name}
-        onConfirm={confirmDelete}
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => setConfirmDialog({ ...confirmDialog, open })}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        onConfirm={confirmDialog.onConfirm}
+        variant={confirmDialog.variant}
       />
+
+      {/* View Details Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className='max-w-2xl'>
+          <DialogHeader>
+            <DialogTitle>Thông tin người dùng</DialogTitle>
+            <DialogDescription>Chi tiết thông tin người dùng trong hệ thống</DialogDescription>
+          </DialogHeader>
+          {selectedUser && (
+            <div className='space-y-4'>
+              <div className='grid grid-cols-2 gap-4'>
+                <div>
+                  <p className='text-sm font-medium text-gray-500'>Họ và tên</p>
+                  <p className='text-base font-semibold'>
+                    {selectedUser.firstName} {selectedUser.lastName}
+                  </p>
+                </div>
+                <div>
+                  <p className='text-sm font-medium text-gray-500'>Vai trò</p>
+                  {getRoleBadge(selectedUser.role)}
+                </div>
+                <div>
+                  <p className='text-sm font-medium text-gray-500'>Trạng thái</p>
+                  {getStatusBadge(selectedUser.status)}
+                </div>
+                <div>
+                  <p className='text-sm font-medium text-gray-500'>Email</p>
+                  <p className='text-base'>{selectedUser.email}</p>
+                </div>
+                <div>
+                  <p className='text-sm font-medium text-gray-500'>Số điện thoại</p>
+                  <p className='text-base'>{selectedUser.phoneNumber}</p>
+                </div>
+                <div>
+                  <p className='text-sm font-medium text-gray-500'>Ngày tham gia</p>
+                  <p className='text-base'>
+                    {selectedUser.createdAt
+                      ? format(new Date(selectedUser.createdAt), 'dd/MM/yyyy HH:mm', {
+                        locale: vi,
+                      })
+                      : 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <p className='text-sm font-medium text-gray-500'>ID</p>
+                  <p className='text-base font-mono text-sm'>{selectedUser._id}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className='max-w-2xl'>
+          <DialogHeader>
+            <DialogTitle>Chỉnh sửa thông tin người dùng</DialogTitle>
+            <DialogDescription>Cập nhật thông tin người dùng trong hệ thống</DialogDescription>
+          </DialogHeader>
+          <div className='space-y-4'>
+            <div className='grid grid-cols-2 gap-4'>
+              <div className='space-y-2'>
+                <label className='text-sm font-medium'>Họ</label>
+                <Input
+                  value={editFormData.firstName}
+                  onChange={(e) => setEditFormData({ ...editFormData, firstName: e.target.value })}
+                  placeholder='Nhập họ'
+                  className='border-2 border-blue-200'
+                />
+              </div>
+              <div className='space-y-2'>
+                <label className='text-sm font-medium'>Tên</label>
+                <Input
+                  value={editFormData.lastName}
+                  onChange={(e) => setEditFormData({ ...editFormData, lastName: e.target.value })}
+                  placeholder='Nhập tên'
+                  className='border-2 border-blue-200'
+                />
+              </div>
+            </div>
+            <div className='space-y-2'>
+              <label className='text-sm font-medium'>Email</label>
+              <Input
+                type='email'
+                value={editFormData.email}
+                onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                placeholder='email@example.com'
+                className='border-2 border-blue-200'
+              />
+            </div>
+            <div className='space-y-2'>
+              <label className='text-sm font-medium'>Số điện thoại</label>
+              <Input
+                type='tel'
+                value={editFormData.phoneNumber}
+                onChange={(e) => setEditFormData({ ...editFormData, phoneNumber: e.target.value })}
+                placeholder='0123456789'
+                className='border-2 border-blue-200'
+              />
+            </div>
+            <div className='flex justify-end gap-3 mt-6'>
+              <Button variant='outline' onClick={() => setIsEditDialogOpen(false)}>
+                Hủy
+              </Button>
+              <Button
+                onClick={handleSaveEdit}
+                className='bg-gradient-to-r from-[#0066CC] to-[#4A90E2]'
+                disabled={updateMutation.isPending}
+              >
+                {updateMutation.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

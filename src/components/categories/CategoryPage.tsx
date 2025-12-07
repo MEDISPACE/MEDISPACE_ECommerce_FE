@@ -16,6 +16,7 @@ import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
 import { productService } from '../../services/productService'
 import { categoryService } from '../../services/categoryService'
 import { useCart } from '../../contexts/CartContext'
+import { useWishlist } from '../../hooks/product/useWishlist'
 
 // Category icon mapping cho hệ thống MediSpace
 const categoryIcons = {
@@ -29,6 +30,7 @@ const categoryIcons = {
 export function CategoryPage() {
   const { slug } = useParams()
   const { addToCart } = useCart()
+  const { toggleWishlist, isInWishlist } = useWishlist()
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [sortBy, setSortBy] = useState('newest')
   const [searchQuery, setSearchQuery] = useState('')
@@ -49,7 +51,6 @@ export function CategoryPage() {
       try {
         const categoryData = await categoryService.getCategoryBySlug(slug || '')
         if (!categoryData) {
-          console.error('Category not found')
           return
         }
 
@@ -69,7 +70,6 @@ export function CategoryPage() {
         setProducts(allProducts)
         setCurrentCategory(categoryData)
       } catch (error) {
-        console.error('Error fetching data:', error)
       }
     }
 
@@ -378,6 +378,10 @@ export function CategoryPage() {
                             addToCart(originalProduct, 1)
                           }
                         }}
+                        onToggleWishlist={() => {
+                          toggleWishlist(product.id)
+                        }}
+                        isInWishlist={isInWishlist(product.id)}
                       />
                     )
                   })}

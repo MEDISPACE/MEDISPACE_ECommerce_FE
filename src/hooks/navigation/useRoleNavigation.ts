@@ -27,7 +27,7 @@ export const useRoleNavigation = () => {
       if (role === UserRole.Admin) {
         navigate('/admin/dashboard')
       } else if (role === UserRole.Pharmacist) {
-        navigate('/pharmacist')
+        navigate('/pharmacist/dashboard')
       } else {
         navigate('/')
       }

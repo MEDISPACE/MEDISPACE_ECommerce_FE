@@ -4,18 +4,7 @@ import { Card, CardContent } from "../ui/card";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
-
-interface Address {
-  id: string;
-  name: string;
-  phone: string;
-  address: string;
-  province: string;
-  district: string;
-  ward: string;
-  type: "home" | "office" | "other";
-  isDefault: boolean;
-}
+import type { Address } from "../../types/user";
 
 interface AddressCardProps {
   address: Address;
@@ -28,6 +17,7 @@ export function AddressCard({ address, onEdit, onDelete, onSetDefault }: Address
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
+    if (!address.id) return
     setIsDeleting(true);
     try {
       await onDelete(address.id);
@@ -92,7 +82,7 @@ export function AddressCard({ address, onEdit, onDelete, onSetDefault }: Address
           <MapPin className="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0" />
           <div className="text-sm text-gray-700 leading-relaxed">
             <p>{address.address}</p>
-            <p className="text-gray-500">{address.ward}, {address.district}, {address.province}</p>
+            <p className="text-gray-500">{address.ward}, {address.province}</p>
           </div>
         </div>
 
@@ -146,7 +136,7 @@ export function AddressCard({ address, onEdit, onDelete, onSetDefault }: Address
             <Button 
               variant="ghost" 
               size="sm"
-              onClick={() => onSetDefault(address.id)}
+              onClick={() => address.id && onSetDefault(address.id)}
               className="text-blue-600 hover:bg-blue-50"
             >
               Đặt làm mặc định

@@ -68,7 +68,6 @@ export function OrdersPage() {
       }))
       setOrders(transformedOrders)
     } catch (error) {
-      console.error('Failed to fetch orders:', error)
     } finally {
       setLoading(false)
     }

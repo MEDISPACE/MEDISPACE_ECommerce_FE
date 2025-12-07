@@ -17,6 +17,7 @@ import { categoryService } from '../../services/categoryService'
 import { productService } from '../../services/productService'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
 import { useCart } from '../../contexts/CartContext'
+import { useWishlist } from '../../hooks/product/useWishlist'
 import {
   getProductId,
   getProductImage,
@@ -31,6 +32,7 @@ import type { Category, Product } from '../../types/product'
 export function SubCategoryPage() {
   const { categorySlug, subCategorySlug } = useParams()
   const { addToCart } = useCart()
+  const { toggleWishlist, isInWishlist } = useWishlist()
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [sortBy, setSortBy] = useState('newest')
   const [searchQuery, setSearchQuery] = useState('')
@@ -74,7 +76,6 @@ export function SubCategoryPage() {
         setProducts(productsData)
 
       } catch (error) {
-        console.error('Error fetching category data:', error)
         setError('Không thể tải dữ liệu danh mục')
       } finally {
         setLoading(false)
@@ -432,6 +433,10 @@ export function SubCategoryPage() {
                         onAddToCart={() => {
                           addToCart(product, 1)
                         }}
+                        onToggleWishlist={() => {
+                          toggleWishlist(getProductId(product))
+                        }}
+                        isInWishlist={isInWishlist(getProductId(product))}
                       />
                     ))}
                   </div>

@@ -142,8 +142,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
           dispatch({ type: 'SELECT_ALL_ITEMS', payload: true })
         }
       } catch (error) {
-        console.error('Error loading cart:', error)
-        // For guest users, API will create empty cart
+        // For guest users or when API fails, set empty cart
+        console.warn('Failed to load cart:', error)
         dispatch({ type: 'SET_CART', payload: null })
       } finally {
         dispatch({ type: 'SET_LOADING', payload: false })
@@ -151,6 +151,63 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
 
     loadCart()
+  }, [])
+
+  // Listen for authentication changes via localStorage events
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'medispace_user_data' || e.key === 'medispace_access_token') {
+        // User logged in or out, reload cart
+        const loadCart = async () => {
+          try {
+            dispatch({ type: 'SET_LOADING', payload: true })
+            const cart = await cartService.getCart()
+            dispatch({ type: 'SET_CART', payload: cart })
+            // Auto-select all items
+            if (cart && cart.items.length > 0) {
+              dispatch({ type: 'SELECT_ALL_ITEMS', payload: true })
+            }
+          } catch (error) {
+            console.warn('Failed to reload cart after auth change:', error)
+            dispatch({ type: 'SET_CART', payload: null })
+          } finally {
+            dispatch({ type: 'SET_LOADING', payload: false })
+          }
+        }
+        loadCart()
+      }
+    }
+
+    // Listen for storage changes (works across tabs)
+    window.addEventListener('storage', handleStorageChange)
+
+    // Also listen for custom auth events (for same-tab changes)
+    const handleAuthChange = () => {
+      const loadCart = async () => {
+        try {
+          dispatch({ type: 'SET_LOADING', payload: true })
+          const cart = await cartService.getCart()
+          dispatch({ type: 'SET_CART', payload: cart })
+          // Auto-select all items
+          if (cart && cart.items.length > 0) {
+            dispatch({ type: 'SELECT_ALL_ITEMS', payload: true })
+          }
+        } catch (error) {
+          console.warn('Failed to reload cart after auth change:', error)
+          dispatch({ type: 'SET_CART', payload: null })
+        } finally {
+          dispatch({ type: 'SET_LOADING', payload: false })
+        }
+      }
+      loadCart()
+    }
+
+    window.addEventListener('auth-changed', handleAuthChange)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('auth-changed', handleAuthChange)
+    }
   }, [])
 
   // Load wishlist from localStorage
@@ -161,7 +218,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         const wishlistData = JSON.parse(savedWishlist)
         dispatch({ type: 'LOAD_WISHLIST_FROM_STORAGE', payload: wishlistData })
       } catch (error) {
-        console.error('Error loading wishlist from localStorage:', error)
+        console.warn('Failed to parse wishlist from localStorage:', error)
       }
     }
   }, [])
@@ -195,10 +252,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         },
       })
     } catch (error) {
-      console.error('Error adding to cart:', error)
-      const axiosError = error as any
+      const axiosError = error as { response?: { data?: { message?: string } } }
       const errorMessage = axiosError?.response?.data?.message || 'Vui lòng thử lại sau.'
-      console.error('Backend error details:', axiosError?.response?.data)
 
       toast.error('Không thể thêm vào giỏ hàng', {
         description: errorMessage,
@@ -216,7 +271,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const updatedCart = await cartService.updateCartItem(productId, request)
       dispatch({ type: 'UPDATE_QUANTITY_SUCCESS', payload: updatedCart })
     } catch (error) {
-      console.error('Error updating quantity:', error)
+      console.warn('Failed to update cart quantity:', error)
       toast.error('Không thể cập nhật số lượng', {
         description: 'Vui lòng thử lại sau.',
         duration: 3000,
@@ -234,7 +289,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       // Remove from selected items
       dispatch({ type: 'TOGGLE_ITEM_SELECTION', payload: productId })
     } catch (error) {
-      console.error('Error removing from cart:', error)
+      console.warn('Failed to remove from cart:', error)
       toast.error('Không thể xóa sản phẩm', {
         description: 'Vui lòng thử lại sau.',
         duration: 3000,
@@ -251,7 +306,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       dispatch({ type: 'CLEAR_CART_SUCCESS', payload: updatedCart })
       dispatch({ type: 'SELECT_ALL_ITEMS', payload: false })
     } catch (error) {
-      console.error('Error clearing cart:', error)
+      console.warn('Failed to clear cart:', error)
       toast.error('Không thể xóa giỏ hàng', {
         description: 'Vui lòng thử lại sau.',
         duration: 3000,
@@ -353,7 +408,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const showPrescriptionWarning = (productName: string) => {
     toast.warning('Cần kê đơn thuốc', {
       description: `"${productName}" yêu cầu đơn thuốc từ bác sĩ. Vui lòng tải lên đơn thuốc hoặc tư vấn dược sĩ.`,
-      duration: 5000,
+      duration: 3000,
       icon: <AlertCircle className='w-5 h-5 text-orange-600' />,
       action: {
         label: 'Tư vấn ngay',
@@ -383,7 +438,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const showOrderCreatedSuccess = (orderId: string) => {
     toast.success('Đơn hàng đã được tạo', {
       description: `Mã đơn hàng: ${orderId}`,
-      duration: 5000,
+      duration: 3000,
       icon: <CheckCircle className='w-5 h-5 text-green-600' />,
       action: {
         label: 'Xem đơn hàng',

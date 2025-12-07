@@ -1,12 +1,15 @@
 import { createContext, useContext, useState, useEffect, type ReactNode, useCallback } from 'react'
 import { toast } from 'sonner'
+import { AuthContext } from '../../contexts/AuthContext'
+import { wishlistService } from '../../services/wishlistService'
 
 // Define the shape of the context state
 interface WishlistContextState {
   wishlist: string[]
-  toggleWishlist: (productId: string) => void
+  toggleWishlist: (productId: string) => Promise<void>
   isInWishlist: (productId: string) => boolean
   wishlistCount: number
+  loading: boolean
 }
 
 // Create the context with a default undefined value
@@ -27,43 +30,57 @@ interface WishlistProviderProps {
 }
 
 export const WishlistProvider = ({ children }: WishlistProviderProps) => {
-  const [wishlist, setWishlist] = useState<string[]>(() => {
-    // Initialize state from localStorage (only on client side)
-    try {
-      if (typeof window !== 'undefined') {
-        const storedWishlist = window.localStorage.getItem('wishlist')
-        return storedWishlist ? JSON.parse(storedWishlist) : []
-      }
-      return []
-    } catch (error) {
-      console.error('Failed to parse wishlist from localStorage', error)
-      return []
-    }
-  })
+  // Use AuthContext directly - if not available, default to unauthenticated
+  const authContext = useContext(AuthContext)
+  const isAuthenticated = authContext?.isAuthenticated ?? false
 
-  // Persist state to localStorage whenever it changes (only on client side)
+  const [wishlist, setWishlist] = useState<string[]>([])
+  const [loading, setLoading] = useState(false)
+
+  // Load wishlist on mount and when auth state changes
   useEffect(() => {
+    const loadWishlist = async () => {
+      if (isAuthenticated) {
+        try {
+          setLoading(true)
+          const items = await wishlistService.getWishlist()
+          // Map Product[] to string[] (product IDs)
+          setWishlist(items.map(product => product._id || product.id).filter((id): id is string => !!id))
+        } catch (error) {
+          console.error('Failed to load wishlist from API', error)
+        } finally {
+          setLoading(false)
+        }
+      } else {
+        setWishlist([])
+      }
+    }
+
+    loadWishlist()
+  }, [isAuthenticated])
+
+  const toggleWishlist = useCallback(async (productId: string) => {
+    if (!isAuthenticated) {
+      toast.error('Bạn cần phải đăng nhập để thêm sản phẩm vào danh sách yêu thích')
+      return
+    }
+
+    const isIn = wishlist.includes(productId)
+
     try {
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem('wishlist', JSON.stringify(wishlist))
+      if (isIn) {
+        await wishlistService.removeFromWishlist(productId)
+        setWishlist(prev => prev.filter(id => id !== productId))
+        toast.info('Đã xóa sản phẩm khỏi danh sách yêu thích')
+      } else {
+        await wishlistService.addToWishlist(productId)
+        setWishlist(prev => [...prev, productId])
+        toast.success('Đã thêm sản phẩm vào danh sách yêu thích')
       }
     } catch (error) {
-      console.error('Failed to save wishlist to localStorage', error)
+      toast.error('Có lỗi xảy ra khi cập nhật danh sách yêu thích')
     }
-  }, [wishlist])
-
-  const toggleWishlist = useCallback((productId: string) => {
-    setWishlist((prevWishlist) => {
-      const isInWishlist = prevWishlist.includes(productId)
-      if (isInWishlist) {
-        toast.info('Đã xóa sản phẩm khỏi danh sách yêu thích')
-        return prevWishlist.filter((id) => id !== productId)
-      } else {
-        toast.success('Đã thêm sản phẩm vào danh sách yêu thích')
-        return [...prevWishlist, productId]
-      }
-    })
-  }, [])
+  }, [wishlist, isAuthenticated])
 
   const isInWishlist = useCallback(
     (productId: string) => {
@@ -77,6 +94,7 @@ export const WishlistProvider = ({ children }: WishlistProviderProps) => {
     toggleWishlist,
     isInWishlist,
     wishlistCount: wishlist.length,
+    loading
   }
 
   return <WishlistContext.Provider value={value}>{children}</WishlistContext.Provider>
