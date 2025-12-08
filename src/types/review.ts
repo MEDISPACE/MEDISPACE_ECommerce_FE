@@ -1,44 +1,96 @@
 // Review related types for MEDISPACE
+
+// Review status enum matching backend
+export enum ReviewStatus {
+  Pending = 'pending',
+  Approved = 'approved',
+  Rejected = 'rejected'
+}
+
+// Main review interface
 export interface Review {
-  id: string
+  _id: string // Changed from 'id' to match backend
   productId: string
   userId: string
+  orderId: string // NEW - required for verification
   userName: string
-  rating: number
+  userAvatar?: string // NEW - for display
+  rating: number // 1-5
   title: string
   comment: string
   images: string[]
   isVerifiedPurchase: boolean
-  helpful: number
+  helpfulCount: number // Changed from 'helpful'
+  helpfulVotes?: string[] // NEW - track who voted
+  status: ReviewStatus // NEW - moderation status
+  moderatedBy?: string // NEW - admin who moderated
+  moderatedAt?: string // NEW - moderation timestamp
+  moderationNotes?: string // NEW - rejection reason
   createdAt: string
   updatedAt: string
+  // Populated fields (from API joins)
+  productName?: string
+  productImage?: string
+  productSlug?: string
 }
 
-export interface CreateReviewRequest {
+// Create review request
+export interface CreateReviewData {
   productId: string
+  orderId: string // NEW - required
   rating: number
   title: string
   comment: string
   images?: string[]
 }
 
+// Update review request
+export interface UpdateReviewData {
+  rating?: number
+  title?: string
+  comment?: string
+  images?: string[]
+}
+
+// Legacy alias for backward compatibility
+export type CreateReviewRequest = CreateReviewData
+
+// Review filter options
 export interface ReviewFilter {
   rating?: number
   verifiedOnly?: boolean
-  sortBy?: 'newest' | 'oldest' | 'helpful' | 'rating'
+  sortBy?: 'newest' | 'oldest' | 'helpful' | 'highest' | 'lowest'
   page?: number
   limit?: number
 }
 
+// Review stats from backend
 export interface ReviewStats {
-  productId: string
+  total: number // Changed from totalReviews
   averageRating: number
-  totalReviews: number
-  ratingDistribution: {
-    1: number
-    2: number
-    3: number
-    4: number
+  distribution: {
     5: number
+    4: number
+    3: number
+    2: number
+    1: number
+  }
+  percentages: {
+    5: number
+    4: number
+    3: number
+    2: number
+    1: number
+  }
+}
+
+// Paginated reviews response
+export interface ReviewsResponse {
+  reviews: Review[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
   }
 }

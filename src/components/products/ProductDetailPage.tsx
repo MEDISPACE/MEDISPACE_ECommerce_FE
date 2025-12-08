@@ -36,6 +36,11 @@ import { useWishlist } from '../../hooks/product/useWishlist'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
 import { useImageLightbox, useCarousel } from '~/hooks/ui'
 import type { Product, Review } from '~/types/product'
+import { ReviewList } from '../reviews/ReviewList'
+import { ReviewStats } from '../reviews/ReviewStats'
+import { WriteReviewDialog } from '../reviews/WriteReviewDialog'
+import { useProductReviews, useReviewActions } from '~/hooks/product/useReviews'
+import orderService from '~/services/orderService'
 import {
   getProductId,
   getProductImage,
@@ -63,8 +68,16 @@ export function ProductDetailPage() {
 
   const thumbnailScrollRef = useRef<HTMLDivElement>(null)
 
-  // Reviews - TODO: Replace with real API call
-  const reviews: Review[] = [] // mockReviews
+  // Review state
+  const [showWriteReview, setShowWriteReview] = useState(false)
+  const [selectedOrderId, setSelectedOrderId] = useState<string>('')
+  const [userCanReview, setUserCanReview] = useState(false)
+  const [checkingPurchase, setCheckingPurchase] = useState(false)
+
+  // Reviews - Use real API
+  const productId = product?._id || ''
+  const { reviews, stats, loading: reviewsLoading, page, totalPages, sortBy, setPage, setSortBy, refetch: refetchReviews } = useProductReviews(productId)
+  const { createReview, deleteReview, markHelpful } = useReviewActions()
 
   // Fetch product data
   useEffect(() => {
@@ -99,6 +112,38 @@ export function ProductDetailPage() {
 
     fetchProduct()
   }, [slug])
+
+  // Check if user can review this product
+  useEffect(() => {
+    const checkPurchaseStatus = async () => {
+      if (!product?._id) return
+
+      try {
+        setCheckingPurchase(true)
+        const orders = await orderService.getOrders()
+
+        // Find delivered order containing this product
+        const purchasedOrder = orders.find(order =>
+          order.status === 'delivered' &&
+          order.items.some(item => item.productId === product._id)
+        )
+
+        if (purchasedOrder) {
+          setUserCanReview(true)
+          setSelectedOrderId(purchasedOrder.id)
+        } else {
+          setUserCanReview(false)
+        }
+      } catch (error) {
+        console.error('Error checking purchase status:', error)
+        setUserCanReview(false)
+      } finally {
+        setCheckingPurchase(false)
+      }
+    }
+
+    checkPurchaseStatus()
+  }, [product])
 
   // Use custom hooks - temporarily disabled due to type conflicts
   // const breadcrumbItems = useBreadcrumb({ product: rawProduct })
@@ -542,13 +587,25 @@ export function ProductDetailPage() {
 
         {/* Product Details Tabs */}
         <Tabs defaultValue='description' className='mb-12'>
-          <TabsList className='grid w-full grid-cols-6 bg-blue-50/80 backdrop-blur-sm border border-blue-100'>
-            <TabsTrigger value='description'>Mô tả</TabsTrigger>
-            <TabsTrigger value='ingredients'>Thành phần</TabsTrigger>
-            <TabsTrigger value='uses'>Công dụng</TabsTrigger>
-            <TabsTrigger value='instructions'>Cách dùng</TabsTrigger>
-            <TabsTrigger value='warnings'>Chú ý</TabsTrigger>
-            <TabsTrigger value='reviews'>Đánh giá ({product.reviewCount})</TabsTrigger>
+          <TabsList className='inline-flex w-full overflow-x-auto bg-blue-100 p-1 rounded-lg shadow-sm scrollbar-hide'>
+            <TabsTrigger value='description' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+              <span className='whitespace-nowrap'>Mô tả</span>
+            </TabsTrigger>
+            <TabsTrigger value='ingredients' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+              <span className='whitespace-nowrap'>Thành phần</span>
+            </TabsTrigger>
+            <TabsTrigger value='uses' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+              <span className='whitespace-nowrap'>Công dụng</span>
+            </TabsTrigger>
+            <TabsTrigger value='instructions' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+              <span className='whitespace-nowrap'>Cách dùng</span>
+            </TabsTrigger>
+            <TabsTrigger value='warnings' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+              <span className='whitespace-nowrap'>Chú ý</span>
+            </TabsTrigger>
+            <TabsTrigger value='reviews' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+              <span className='whitespace-nowrap'>Đánh giá ({product.reviewCount})</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value='description' className='mt-6'>
@@ -640,102 +697,80 @@ export function ProductDetailPage() {
 
           <TabsContent value='reviews' className='mt-6'>
             <div className='space-y-6'>
-              {/* Review Summary */}
-              <Card className='border-blue-100 shadow-sm'>
-                <CardContent className='p-6'>
-                  <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-                    <div className='text-center'>
-                      <div className='text-4xl font-bold text-blue-600 mb-2'>{product.rating?.toFixed(1) || '0.0'}</div>
-                      <RatingStars rating={product.rating || 0} size='lg' showRating={false} />
-                      <div className='text-sm text-gray-600 mt-2'>{product.reviewCount} đánh giá</div>
-                    </div>
-
-                    <div className='space-y-2'>
-                      {[5, 4, 3, 2, 1].map((rating) => (
-                        <div key={rating} className='flex items-center gap-2'>
-                          <span className='text-sm w-8'>{rating} ⭐</span>
-                          <div className='flex-1 bg-gray-200 rounded-full h-2'>
-                            <div
-                              className='bg-yellow-400 h-2 rounded-full'
-                              style={{
-                                width: `${rating === 5 ? 70 : rating === 4 ? 20 : 10}%`,
-                              }}
-                            />
-                          </div>
-                          <span className='text-sm text-gray-600 w-8'>
-                            {rating === 5 ? '70%' : rating === 4 ? '20%' : '10%'}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <Separator className='my-6' />
-
-                  <Button className='w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 shadow-lg hover:shadow-xl transition-all'>
-                    <Star className='w-4 h-4 mr-2' />
-                    Viết đánh giá
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* Reviews List */}
-              <div className='space-y-4'>
-                {reviews.map((review: Review) => (
-                  <Card key={review.id} className='border-blue-100 shadow-sm hover:shadow-md transition-shadow'>
+              {/* Review Stats */}
+              <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+                <div className='md:col-span-1'>
+                  <ReviewStats stats={stats} loading={reviewsLoading} />
+                </div>
+                <div className='md:col-span-2'>
+                  <Card className='border-blue-200 shadow-sm'>
                     <CardContent className='p-6'>
-                      <div className='flex items-start gap-4'>
-                        <Avatar>
-                          <AvatarImage src={review.userAvatar} />
-                          <AvatarFallback className='bg-blue-100 text-blue-600'>
-                            {review.userName.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-
-                        <div className='flex-1'>
-                          <div className='flex items-center gap-2 mb-2'>
-                            <span className='font-medium'>{review.userName}</span>
-                            <span className='text-gray-400'>•</span>
-                            <span className='text-sm text-gray-500'>{review.date}</span>
-                          </div>
-
-                          <RatingStars rating={review.rating} size='sm' showRating={false} />
-
-                          <p className='text-gray-700 mt-3 leading-relaxed'>{review.comment}</p>
-
-                          {review.images && review.images.length > 0 && (
-                            <div className='flex gap-2 mt-4'>
-                              {review.images.map((image: string, index: number) => (
-                                <div
-                                  key={index}
-                                  className='w-20 h-20 rounded-lg overflow-hidden border border-blue-100'
-                                >
-                                  <ImageWithFallback
-                                    src={image}
-                                    alt={`Review ${index + 1}`}
-                                    className='w-full h-full object-cover'
-                                  />
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          <div className='flex items-center gap-4 mt-4'>
-                            <Button variant='ghost' size='sm' className='text-gray-500 hover:text-blue-600'>
-                              <ThumbsUp className='w-4 h-4 mr-1' />
-                              Hữu ích ({review.helpful})
-                            </Button>
-                            <Button variant='ghost' size='sm' className='text-gray-500 hover:text-blue-600'>
-                              Trả lời
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
+                      {userCanReview ? (
+                        <>
+                          <Button
+                            className='w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 shadow-lg hover:shadow-xl transition-all text-white'
+                            onClick={() => setShowWriteReview(true)}
+                            disabled={checkingPurchase}
+                          >
+                            <Star className='w-4 h-4 mr-2' />
+                            Viết đánh giá
+                          </Button>
+                          <p className='text-xs text-green-600 text-center mt-2'>
+                            ✓ Bạn đã mua sản phẩm này
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <Button
+                            className='w-full bg-gray-300 text-gray-600 cursor-not-allowed'
+                            disabled
+                          >
+                            <Star className='w-4 h-4 mr-2' />
+                            Viết đánh giá
+                          </Button>
+                          <p className='text-xs text-gray-500 text-center mt-2'>
+                            {checkingPurchase ? 'Đang kiểm tra...' : 'Chỉ khách hàng đã mua sản phẩm mới có thể đánh giá'}
+                          </p>
+                        </>
+                      )}
                     </CardContent>
                   </Card>
-                ))}
+                </div>
               </div>
+
+              {/* Reviews List */}
+              <ReviewList
+                reviews={reviews}
+                loading={reviewsLoading}
+                page={page}
+                totalPages={totalPages}
+                sortBy={sortBy}
+                onPageChange={setPage}
+                onSortChange={(sort) => setSortBy(sort as any)}
+                onHelpful={async (reviewId) => {
+                  await markHelpful(reviewId)
+                  refetchReviews()
+                }}
+              />
             </div>
+
+            {/* Write Review Dialog */}
+            {product && (
+              <WriteReviewDialog
+                open={showWriteReview}
+                onOpenChange={setShowWriteReview}
+                product={{
+                  id: product._id || '',
+                  name: product.name,
+                  image: getProductImage(product)
+                }}
+                orderId={selectedOrderId}
+                onSubmit={async (data) => {
+                  await createReview(data)
+                  refetchReviews()
+                }}
+              />
+            )}
           </TabsContent>
         </Tabs>
 

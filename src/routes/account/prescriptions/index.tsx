@@ -11,7 +11,7 @@ export default function AccountPrescriptions() {
       </div>
 
       <div className='grid gap-6'>
-        <div className='bg-white p-6 rounded-lg border'>
+        <div className='bg-white p-6 rounded-lg border border-blue-200 hover:shadow-md transition-all duration-300'>
           <div className='text-center py-12'>
             <p className='text-gray-500 mb-4'>Chưa có đơn thuốc nào</p>
             <button className='bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700'>Upload đơn thuốc</button>

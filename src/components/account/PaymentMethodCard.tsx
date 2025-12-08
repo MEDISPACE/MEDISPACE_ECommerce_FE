@@ -80,9 +80,8 @@ export function PaymentMethodCard({ paymentMethod, onEdit, onDelete, onSetDefaul
 
   return (
     <Card
-      className={`relative transition-all duration-200 hover:shadow-lg ${
-        paymentMethod.isDefault ? 'ring-2 ring-blue-500 bg-gradient-to-br from-blue-50 to-cyan-50' : 'hover:shadow-md'
-      }`}
+      className={`relative transition-all duration-200 hover:shadow-lg ${paymentMethod.isDefault ? 'ring-2 ring-blue-500 bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200' : 'hover:shadow-md border-blue-200'
+        }`}
     >
       {paymentMethod.isDefault && (
         <div className='absolute -top-2 -right-2'>
@@ -132,7 +131,7 @@ export function PaymentMethodCard({ paymentMethod, onEdit, onDelete, onSetDefaul
           )}
         </div>
 
-        <div className='flex items-center justify-between pt-4 border-t'>
+        <div className='flex items-center justify-between pt-4 border-t border-blue-200'>
           <div className='flex gap-2'>
             <Button
               variant='outline'

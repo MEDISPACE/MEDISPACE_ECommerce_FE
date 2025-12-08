@@ -231,372 +231,378 @@ export function PaymentMethodsPage() {
   const bankAccounts = paymentMethods.filter((m) => m.type === 'bank')
 
   return (
-    
+
+    <div className='space-y-6'>
+      {/* Header */}
+      <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
+        <div className='flex flex-col md:flex-row md:items-center justify-between gap-4'>
+          <div>
+            <h1 className='bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 bg-clip-text text-transparent'>
+              Phương thức thanh toán
+            </h1>
+            <p className='text-gray-600 mt-1'>Quản lý thẻ và ví điện tử của bạn</p>
+          </div>
+
+          <Button
+            onClick={handleAddPaymentMethod}
+            className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white shadow-lg'
+          >
+            <Plus className='w-4 h-4 mr-2' />
+            Thêm phương thức mới
+          </Button>
+        </div>
+
+        <div className='flex items-center gap-2 mt-4 p-3 bg-green-50 border border-green-200 rounded-lg'>
+          <Shield className='w-5 h-5 text-green-600' />
+          <span className='text-sm text-green-800 font-medium'>
+            🔒 Thông tin được mã hóa SSL và tuân thủ chuẩn PCI DSS
+          </span>
+        </div>
+      </div>
+
+      {/* Payment Methods */}
       <div className='space-y-6'>
-        {/* Header */}
-        <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
-          <div className='flex flex-col md:flex-row md:items-center justify-between gap-4'>
-            <div>
-              <h1 className='bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 bg-clip-text text-transparent'>
-                Phương thức thanh toán
-              </h1>
-              <p className='text-gray-600 mt-1'>Quản lý thẻ và ví điện tử của bạn</p>
+        {/* Credit/Debit Cards */}
+        {cardTypes.length > 0 && (
+          <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
+            <div className='flex items-center gap-3 mb-4'>
+              <CreditCard className='w-5 h-5 text-blue-600' />
+              <h2 className='font-medium text-gray-900'>Thẻ tín dụng / Ghi nợ</h2>
+              <Badge variant='secondary'>{cardTypes.length}</Badge>
             </div>
-
-            <Button
-              onClick={handleAddPaymentMethod}
-              className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white shadow-lg'
-            >
-              <Plus className='w-4 h-4 mr-2' />
-              Thêm phương thức mới
-            </Button>
+            <div className='space-y-4'>
+              {cardTypes.map((method) => (
+                <PaymentMethodCard
+                  key={method.id}
+                  paymentMethod={method}
+                  onEdit={handleEditPaymentMethod}
+                  onDelete={handleDeletePaymentMethod}
+                  onSetDefault={handleSetDefault}
+                />
+              ))}
+            </div>
           </div>
+        )}
 
-          <div className='flex items-center gap-2 mt-4 p-3 bg-green-50 border border-green-200 rounded-lg'>
-            <Shield className='w-5 h-5 text-green-600' />
-            <span className='text-sm text-green-800 font-medium'>
-              🔒 Thông tin được mã hóa SSL và tuân thủ chuẩn PCI DSS
-            </span>
+        {/* E-Wallets */}
+        {ewallets.length > 0 && (
+          <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
+            <div className='flex items-center gap-3 mb-4'>
+              <Smartphone className='w-5 h-5 text-green-600' />
+              <h2 className='font-medium text-gray-900'>Ví điện tử</h2>
+              <Badge variant='secondary'>{ewallets.length}</Badge>
+            </div>
+            <div className='space-y-4'>
+              {ewallets.map((method) => (
+                <PaymentMethodCard
+                  key={method.id}
+                  paymentMethod={method}
+                  onEdit={handleEditPaymentMethod}
+                  onDelete={handleDeletePaymentMethod}
+                  onSetDefault={handleSetDefault}
+                />
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Payment Methods */}
-        <div className='space-y-6'>
-          {/* Credit/Debit Cards */}
-          {cardTypes.length > 0 && (
-            <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
-              <div className='flex items-center gap-3 mb-4'>
-                <CreditCard className='w-5 h-5 text-blue-600' />
-                <h2 className='font-medium text-gray-900'>Thẻ tín dụng / Ghi nợ</h2>
-                <Badge variant='secondary'>{cardTypes.length}</Badge>
-              </div>
-              <div className='space-y-4'>
-                {cardTypes.map((method) => (
-                  <PaymentMethodCard
-                    key={method.id}
-                    paymentMethod={method}
-                    onEdit={handleEditPaymentMethod}
-                    onDelete={handleDeletePaymentMethod}
-                    onSetDefault={handleSetDefault}
-                  />
-                ))}
-              </div>
+        {/* Bank Accounts */}
+        {bankAccounts.length > 0 && (
+          <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
+            <div className='flex items-center gap-3 mb-4'>
+              <Building className='w-5 h-5 text-gray-600' />
+              <h2 className='font-medium text-gray-900'>Tài khoản ngân hàng</h2>
+              <Badge variant='secondary'>{bankAccounts.length}</Badge>
             </div>
-          )}
-
-          {/* E-Wallets */}
-          {ewallets.length > 0 && (
-            <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
-              <div className='flex items-center gap-3 mb-4'>
-                <Smartphone className='w-5 h-5 text-green-600' />
-                <h2 className='font-medium text-gray-900'>Ví điện tử</h2>
-                <Badge variant='secondary'>{ewallets.length}</Badge>
-              </div>
-              <div className='space-y-4'>
-                {ewallets.map((method) => (
-                  <PaymentMethodCard
-                    key={method.id}
-                    paymentMethod={method}
-                    onEdit={handleEditPaymentMethod}
-                    onDelete={handleDeletePaymentMethod}
-                    onSetDefault={handleSetDefault}
-                  />
-                ))}
-              </div>
+            <div className='space-y-4'>
+              {bankAccounts.map((method) => (
+                <PaymentMethodCard
+                  key={method.id}
+                  paymentMethod={method}
+                  onEdit={handleEditPaymentMethod}
+                  onDelete={handleDeletePaymentMethod}
+                  onSetDefault={handleSetDefault}
+                />
+              ))}
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Bank Accounts */}
-          {bankAccounts.length > 0 && (
-            <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
-              <div className='flex items-center gap-3 mb-4'>
-                <Building className='w-5 h-5 text-gray-600' />
-                <h2 className='font-medium text-gray-900'>Tài khoản ngân hàng</h2>
-                <Badge variant='secondary'>{bankAccounts.length}</Badge>
-              </div>
-              <div className='space-y-4'>
-                {bankAccounts.map((method) => (
-                  <PaymentMethodCard
-                    key={method.id}
-                    paymentMethod={method}
-                    onEdit={handleEditPaymentMethod}
-                    onDelete={handleDeletePaymentMethod}
-                    onSetDefault={handleSetDefault}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Empty State */}
-          {paymentMethods.length === 0 && (
-            <Card className='bg-white/80 backdrop-blur-lg shadow-lg border border-blue-100'>
-              <CardContent className='p-12 text-center'>
-                <CreditCard className='w-16 h-16 mx-auto text-gray-300 mb-4' />
-                <h3 className='text-lg font-medium text-gray-900 mb-2'>Chưa có phương thức thanh toán</h3>
-                <p className='text-gray-500 mb-4'>Thêm thẻ hoặc ví điện tử để thanh toán nhanh chóng</p>
-                <Button
-                  onClick={handleAddPaymentMethod}
-                  className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'
-                >
-                  <Plus className='w-4 h-4 mr-2' />
-                  Thêm phương thức đầu tiên
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-
-        {/* Add Payment Method Modal */}
-        <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-          <DialogContent className='max-w-2xl max-h-[90vh] overflow-y-auto'>
-            <DialogHeader>
-              <DialogTitle>
-                {editingMethod ? 'Chỉnh sửa phương thức thanh toán' : 'Thêm phương thức thanh toán'}
-              </DialogTitle>
-              <DialogDescription>
-                {editingMethod
-                  ? 'Cập nhật thông tin phương thức thanh toán'
-                  : 'Thêm phương thức thanh toán mới vào tài khoản'}
-              </DialogDescription>
-            </DialogHeader>
-
-            <Tabs
-              value={selectedType}
-              onValueChange={(value: string) => {
-                if (isValidPaymentType(value)) {
-                  setSelectedType(value)
-                }
-              }}
-            >
-              <TabsList className='grid w-full grid-cols-3'>
-                <TabsTrigger value='card' className='flex items-center gap-2'>
-                  <CreditCard className='w-4 h-4' />
-                  Thẻ
-                </TabsTrigger>
-                <TabsTrigger value='ewallet' className='flex items-center gap-2'>
-                  <Smartphone className='w-4 h-4' />
-                  Ví điện tử
-                </TabsTrigger>
-                <TabsTrigger value='bank' className='flex items-center gap-2'>
-                  <Building className='w-4 h-4' />
-                  Ngân hàng
-                </TabsTrigger>
-              </TabsList>
-
-              {/* Credit Card Form */}
-              <TabsContent value='card' className='space-y-4'>
-                <div>
-                  <Label htmlFor='cardNumber'>Số thẻ *</Label>
-                  <Input
-                    id='cardNumber'
-                    value={cardForm.cardNumber}
-                    onChange={(e) =>
-                      setCardForm((prev) => ({
-                        ...prev,
-                        cardNumber: formatCardNumber(e.target.value),
-                      }))
-                    }
-                    placeholder='1234 5678 9012 3456'
-                    maxLength={19}
-                    className='border-2 border-blue-200 focus:border-blue-500'
-                  />
-                </div>
-
-                <div className='grid grid-cols-2 gap-4'>
-                  <div>
-                    <Label htmlFor='expiryDate'>Ngày hết hạn *</Label>
-                    <Input
-                      id='expiryDate'
-                      value={cardForm.expiryDate}
-                      onChange={(e) =>
-                        setCardForm((prev) => ({
-                          ...prev,
-                          expiryDate: formatExpiryDate(e.target.value),
-                        }))
-                      }
-                      placeholder='MM/YY'
-                      maxLength={5}
-                      className='border-2 border-blue-200 focus:border-blue-500'
-                    />
-                  </div>
-                  <div>
-                    <div className='flex items-center gap-2'>
-                      <Label htmlFor='cvv'>CVV *</Label>
-                      <Info className='w-4 h-4 text-gray-400' />
-                    </div>
-                    <Input
-                      id='cvv'
-                      value={cardForm.cvv}
-                      onChange={(e) =>
-                        setCardForm((prev) => ({
-                          ...prev,
-                          cvv: e.target.value.replace(/[^0-9]/g, ''),
-                        }))
-                      }
-                      placeholder='123'
-                      maxLength={4}
-                      type='password'
-                      className='border-2 border-blue-200 focus:border-blue-500'
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor='cardholderName'>Tên chủ thẻ *</Label>
-                  <Input
-                    id='cardholderName'
-                    value={cardForm.cardholderName}
-                    onChange={(e) =>
-                      setCardForm((prev) => ({
-                        ...prev,
-                        cardholderName: e.target.value.toUpperCase(),
-                      }))
-                    }
-                    placeholder='NGUYEN VAN A'
-                    className='border-2 border-blue-200 focus:border-blue-500'
-                  />
-                </div>
-
-                <div className='flex items-center space-x-2'>
-                  <Checkbox
-                    id='saveCard'
-                    checked={cardForm.saveForFuture}
-                    onCheckedChange={(checked) => setCardForm((prev) => ({ ...prev, saveForFuture: !!checked }))}
-                  />
-                  <Label htmlFor='saveCard'>Lưu để thanh toán nhanh</Label>
-                </div>
-              </TabsContent>
-
-              {/* E-wallet Form */}
-              <TabsContent value='ewallet' className='space-y-4'>
-                <div>
-                  <Label>Nhà cung cấp *</Label>
-                  <Select
-                    value={ewalletForm.provider}
-                    onValueChange={(value) => setEwalletForm((prev) => ({ ...prev, provider: value }))}
-                  >
-                    <SelectTrigger className='border-2 border-blue-200 focus:border-blue-500'>
-                      <SelectValue placeholder='Chọn ví điện tử' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ewalletOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          <div className='flex items-center gap-2'>
-                            <span>{option.icon}</span>
-                            <span>{option.label}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor='phoneNumber'>Số điện thoại *</Label>
-                  <Input
-                    id='phoneNumber'
-                    value={ewalletForm.phoneNumber}
-                    onChange={(e) =>
-                      setEwalletForm((prev) => ({
-                        ...prev,
-                        phoneNumber: e.target.value.replace(/[^0-9]/g, ''),
-                      }))
-                    }
-                    placeholder='0901234567'
-                    maxLength={11}
-                    className='border-2 border-blue-200 focus:border-blue-500'
-                  />
-                </div>
-
-                <div className='flex items-center space-x-2'>
-                  <Checkbox
-                    id='saveEwallet'
-                    checked={ewalletForm.saveForFuture}
-                    onCheckedChange={(checked) => setEwalletForm((prev) => ({ ...prev, saveForFuture: !!checked }))}
-                  />
-                  <Label htmlFor='saveEwallet'>Lưu để thanh toán nhanh</Label>
-                </div>
-              </TabsContent>
-
-              {/* Bank Form */}
-              <TabsContent value='bank' className='space-y-4'>
-                <div>
-                  <Label>Ngân hàng *</Label>
-                  <Select
-                    value={bankForm.bankName}
-                    onValueChange={(value) => setBankForm((prev) => ({ ...prev, bankName: value }))}
-                  >
-                    <SelectTrigger className='border-2 border-blue-200 focus:border-blue-500'>
-                      <SelectValue placeholder='Chọn ngân hàng' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {bankOptions.map((bank) => (
-                        <SelectItem key={bank} value={bank}>
-                          {bank}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor='accountNumber'>Số tài khoản *</Label>
-                  <Input
-                    id='accountNumber'
-                    value={bankForm.accountNumber}
-                    onChange={(e) =>
-                      setBankForm((prev) => ({
-                        ...prev,
-                        accountNumber: e.target.value.replace(/[^0-9]/g, ''),
-                      }))
-                    }
-                    placeholder='1234567890'
-                    className='border-2 border-blue-200 focus:border-blue-500'
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor='accountHolder'>Tên chủ tài khoản *</Label>
-                  <Input
-                    id='accountHolder'
-                    value={bankForm.accountHolder}
-                    onChange={(e) =>
-                      setBankForm((prev) => ({
-                        ...prev,
-                        accountHolder: e.target.value.toUpperCase(),
-                      }))
-                    }
-                    placeholder='NGUYEN VAN A'
-                    className='border-2 border-blue-200 focus:border-blue-500'
-                  />
-                </div>
-
-                <div className='flex items-center space-x-2'>
-                  <Checkbox
-                    id='saveBank'
-                    checked={bankForm.saveForFuture}
-                    onCheckedChange={(checked) => setBankForm((prev) => ({ ...prev, saveForFuture: !!checked }))}
-                  />
-                  <Label htmlFor='saveBank'>Lưu để thanh toán nhanh</Label>
-                </div>
-              </TabsContent>
-            </Tabs>
-
-            <div className='flex justify-end gap-3 pt-4 border-t'>
-              <Button variant='outline' onClick={() => setIsAddModalOpen(false)}>
-                Hủy
-              </Button>
+        {/* Empty State */}
+        {paymentMethods.length === 0 && (
+          <Card className='bg-white/80 backdrop-blur-lg shadow-lg border border-blue-100'>
+            <CardContent className='p-12 text-center'>
+              <CreditCard className='w-16 h-16 mx-auto text-gray-300 mb-4' />
+              <h3 className='text-lg font-medium text-gray-900 mb-2'>Chưa có phương thức thanh toán</h3>
+              <p className='text-gray-500 mb-4'>Thêm thẻ hoặc ví điện tử để thanh toán nhanh chóng</p>
               <Button
-                onClick={handleSavePaymentMethod}
+                onClick={handleAddPaymentMethod}
                 className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'
               >
-                {editingMethod ? 'Cập nhật' : 'Thêm phương thức'}
+                <Plus className='w-4 h-4 mr-2' />
+                Thêm phương thức đầu tiên
               </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </CardContent>
+          </Card>
+        )}
       </div>
-    
+
+      {/* Add Payment Method Modal */}
+      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+        <DialogContent className='max-w-2xl max-h-[90vh] overflow-y-auto'>
+          <DialogHeader>
+            <DialogTitle>
+              {editingMethod ? 'Chỉnh sửa phương thức thanh toán' : 'Thêm phương thức thanh toán'}
+            </DialogTitle>
+            <DialogDescription>
+              {editingMethod
+                ? 'Cập nhật thông tin phương thức thanh toán'
+                : 'Thêm phương thức thanh toán mới vào tài khoản'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <Tabs
+            value={selectedType}
+            onValueChange={(value: string) => {
+              if (isValidPaymentType(value)) {
+                setSelectedType(value)
+              }
+            }}
+          >
+            <TabsList className='inline-flex w-full overflow-x-auto bg-blue-100 p-1 rounded-lg shadow-sm scrollbar-hide'>
+              <TabsTrigger value='card' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 !text-blue-600 border-0 data-[state=active]:!bg-blue-500 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+                <span className='whitespace-nowrap flex items-center gap-1'>
+                  <CreditCard className='w-4 h-4' />
+                  Thẻ
+                </span>
+              </TabsTrigger>
+              <TabsTrigger value='ewallet' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 !text-blue-600 border-0 data-[state=active]:!bg-blue-500 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+                <span className='whitespace-nowrap flex items-center gap-1'>
+                  <Smartphone className='w-4 h-4' />
+                  Ví điện tử
+                </span>
+              </TabsTrigger>
+              <TabsTrigger value='bank' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 !text-blue-600 border-0 data-[state=active]:!bg-blue-500 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+                <span className='whitespace-nowrap flex items-center gap-1'>
+                  <Building className='w-4 h-4' />
+                  Ngân hàng
+                </span>
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Credit Card Form */}
+            <TabsContent value='card' className='space-y-4'>
+              <div>
+                <Label htmlFor='cardNumber'>Số thẻ *</Label>
+                <Input
+                  id='cardNumber'
+                  value={cardForm.cardNumber}
+                  onChange={(e) =>
+                    setCardForm((prev) => ({
+                      ...prev,
+                      cardNumber: formatCardNumber(e.target.value),
+                    }))
+                  }
+                  placeholder='1234 5678 9012 3456'
+                  maxLength={19}
+                  className='mt-2 border-2 border-blue-200 focus:border-blue-500'
+                />
+              </div>
+
+              <div className='grid grid-cols-2 gap-4'>
+                <div>
+                  <Label htmlFor='expiryDate'>Ngày hết hạn *</Label>
+                  <Input
+                    id='expiryDate'
+                    value={cardForm.expiryDate}
+                    onChange={(e) =>
+                      setCardForm((prev) => ({
+                        ...prev,
+                        expiryDate: formatExpiryDate(e.target.value),
+                      }))
+                    }
+                    placeholder='MM/YY'
+                    maxLength={5}
+                    className='mt-2 border-2 border-blue-200 focus:border-blue-500'
+                  />
+                </div>
+                <div>
+                  <div className='flex items-center gap-2'>
+                    <Label htmlFor='cvv'>CVV *</Label>
+                    <Info className='w-4 h-4 text-gray-400' />
+                  </div>
+                  <Input
+                    id='cvv'
+                    value={cardForm.cvv}
+                    onChange={(e) =>
+                      setCardForm((prev) => ({
+                        ...prev,
+                        cvv: e.target.value.replace(/[^0-9]/g, ''),
+                      }))
+                    }
+                    placeholder='123'
+                    maxLength={4}
+                    type='password'
+                    className='mt-2 border-2 border-blue-200 focus:border-blue-500'
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor='cardholderName'>Tên chủ thẻ *</Label>
+                <Input
+                  id='cardholderName'
+                  value={cardForm.cardholderName}
+                  onChange={(e) =>
+                    setCardForm((prev) => ({
+                      ...prev,
+                      cardholderName: e.target.value.toUpperCase(),
+                    }))
+                  }
+                  placeholder='NGUYEN VAN A'
+                  className='mt-2 border-2 border-blue-200 focus:border-blue-500'
+                />
+              </div>
+
+              <div className='flex items-center space-x-2'>
+                <Checkbox
+                  id='saveCard'
+                  checked={cardForm.saveForFuture}
+                  onCheckedChange={(checked) => setCardForm((prev) => ({ ...prev, saveForFuture: !!checked }))}
+                />
+                <Label htmlFor='saveCard'>Lưu để thanh toán nhanh</Label>
+              </div>
+            </TabsContent>
+
+            {/* E-wallet Form */}
+            <TabsContent value='ewallet' className='space-y-4'>
+              <div>
+                <Label>Nhà cung cấp *</Label>
+                <Select
+                  value={ewalletForm.provider}
+                  onValueChange={(value) => setEwalletForm((prev) => ({ ...prev, provider: value }))}
+                >
+                  <SelectTrigger className='mt-2 border-2 border-blue-200 focus:border-blue-500'>
+                    <SelectValue placeholder='Chọn ví điện tử' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ewalletOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        <div className='flex items-center gap-2'>
+                          <span>{option.icon}</span>
+                          <span>{option.label}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor='phoneNumber'>Số điện thoại *</Label>
+                <Input
+                  id='phoneNumber'
+                  value={ewalletForm.phoneNumber}
+                  onChange={(e) =>
+                    setEwalletForm((prev) => ({
+                      ...prev,
+                      phoneNumber: e.target.value.replace(/[^0-9]/g, ''),
+                    }))
+                  }
+                  placeholder='0901234567'
+                  maxLength={11}
+                  className='mt-2 border-2 border-blue-200 focus:border-blue-500'
+                />
+              </div>
+
+              <div className='flex items-center space-x-2'>
+                <Checkbox
+                  id='saveEwallet'
+                  checked={ewalletForm.saveForFuture}
+                  onCheckedChange={(checked) => setEwalletForm((prev) => ({ ...prev, saveForFuture: !!checked }))}
+                />
+                <Label htmlFor='saveEwallet'>Lưu để thanh toán nhanh</Label>
+              </div>
+            </TabsContent>
+
+            {/* Bank Form */}
+            <TabsContent value='bank' className='space-y-4'>
+              <div>
+                <Label>Ngân hàng *</Label>
+                <Select
+                  value={bankForm.bankName}
+                  onValueChange={(value) => setBankForm((prev) => ({ ...prev, bankName: value }))}
+                >
+                  <SelectTrigger className='mt-2 border-2 border-blue-200 focus:border-blue-500'>
+                    <SelectValue placeholder='Chọn ngân hàng' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {bankOptions.map((bank) => (
+                      <SelectItem key={bank} value={bank}>
+                        {bank}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor='accountNumber'>Số tài khoản *</Label>
+                <Input
+                  id='accountNumber'
+                  value={bankForm.accountNumber}
+                  onChange={(e) =>
+                    setBankForm((prev) => ({
+                      ...prev,
+                      accountNumber: e.target.value.replace(/[^0-9]/g, ''),
+                    }))
+                  }
+                  placeholder='1234567890'
+                  className='mt-2 border-2 border-blue-200 focus:border-blue-500'
+                />
+              </div>
+
+              <div>
+                <Label htmlFor='accountHolder'>Tên chủ tài khoản *</Label>
+                <Input
+                  id='accountHolder'
+                  value={bankForm.accountHolder}
+                  onChange={(e) =>
+                    setBankForm((prev) => ({
+                      ...prev,
+                      accountHolder: e.target.value.toUpperCase(),
+                    }))
+                  }
+                  placeholder='NGUYEN VAN A'
+                  className='mt-2 border-2 border-blue-200 focus:border-blue-500'
+                />
+              </div>
+
+              <div className='flex items-center space-x-2'>
+                <Checkbox
+                  id='saveBank'
+                  checked={bankForm.saveForFuture}
+                  onCheckedChange={(checked) => setBankForm((prev) => ({ ...prev, saveForFuture: !!checked }))}
+                />
+                <Label htmlFor='saveBank'>Lưu để thanh toán nhanh</Label>
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          <div className='flex justify-end gap-3 pt-4 border-t border-blue-300'>
+            <Button variant='outline' onClick={() => setIsAddModalOpen(false)}>
+              Hủy
+            </Button>
+            <Button
+              onClick={handleSavePaymentMethod}
+              className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'
+            >
+              {editingMethod ? 'Cập nhật' : 'Thêm phương thức'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+
   )
 }

@@ -29,7 +29,7 @@ export interface Order {
   id: string;
   customerId: string;
   orderNumber: string;
-  status: 'pending_payment' | 'confirmed' | 'processing' | 'preparing' | 'shipping' | 'delivered' | 'cancelled';
+  status: 'pending' | 'pending_payment' | 'confirmed' | 'processing' | 'preparing' | 'shipping' | 'delivered' | 'cancelled';
   items: OrderItem[];
   subtotal: number;
   shippingFee: number;
