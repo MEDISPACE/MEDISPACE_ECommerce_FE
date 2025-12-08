@@ -1,7 +1,12 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router'
 import { Calendar, Package, Star, RotateCcw, Eye } from 'lucide-react'
 import { Card, CardContent } from '../ui/card'
 import { Button } from '../ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog'
+import { WriteReviewDialog } from '../reviews/WriteReviewDialog'
+import { reviewService } from '../../services/reviewService'
+import { toast } from 'sonner'
 import { getOrderStatusBadge } from '../../utils/badgeUtils'
 import { type Order, type OrderItem } from '../../types/account'
 
@@ -11,6 +16,28 @@ interface OrderCardProps {
 }
 
 export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
+  const [showProductSelection, setShowProductSelection] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState<OrderItem | null>(null)
+  const [showWriteReview, setShowWriteReview] = useState(false)
+  const [reviewedProductIds, setReviewedProductIds] = useState<Set<string>>(new Set())
+
+  // Check which products have been reviewed
+  useEffect(() => {
+    const checkReviewedProducts = async () => {
+      try {
+        const userReviews = await reviewService.getUserReviews()
+        const reviewedIds = new Set(userReviews.map(review => review.productId))
+        setReviewedProductIds(reviewedIds)
+      } catch (error) {
+        console.error('Error fetching user reviews:', error)
+      }
+    }
+
+    if (order.status === 'delivered') {
+      checkReviewedProducts()
+    }
+  }, [order.status])
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('vi-VN', {
       day: '2-digit',
@@ -36,6 +63,10 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
     }
     return ''
   }
+
+  // Check if all products in order have been reviewed
+  const allProductsReviewed = order.items && order.items.length > 0 &&
+    order.items.every(item => reviewedProductIds.has(item.productId))
 
   if (variant === 'compact') {
     return (
@@ -92,7 +123,7 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
           {getOrderStatusBadge(order.status)}
         </div>
 
-        <div className='border-t border-b py-4 my-4'>
+        <div className='border-t border-b py-4 my-4 border-blue-300'>
           {order.items && order.items.length > 0 && (
             <div className='space-y-3'>
               {order.items.slice(0, 2).map((item: OrderItem) => (
@@ -133,7 +164,7 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
 
         <div className='flex gap-2'>
           <Link to={`/account/orders/${order.id}`} className='flex-1'>
-            <Button variant='outline' className='w-full text-blue-600 border-blue-200'>
+            <Button variant='outline' className='w-full text-blue-600 border-blue-300'>
               <Eye className='w-4 h-4 mr-2' />
               Xem chi tiết
             </Button>
@@ -146,13 +177,118 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
             </Button>
           )}
 
-          {order.status === 'delivered' && (
-            <Button className='bg-blue-600 hover:bg-blue-700 text-white'>
-              <Star className='w-4 h-4 mr-2' />
-              Đánh giá
-            </Button>
+          {order.status === 'delivered' && order.items && order.items.length > 0 && (
+            <>
+              {allProductsReviewed ? (
+                <Link to='/account/reviews' className='flex-1'>
+                  <Button className='w-full bg-green-600 hover:bg-green-700 text-white'>
+                    <Star className='w-4 h-4 mr-2' />
+                    Xem đánh giá
+                  </Button>
+                </Link>
+              ) : (
+                <Button
+                  className='flex-1 bg-blue-600 hover:bg-blue-700 text-white'
+                  onClick={() => setShowProductSelection(true)}
+                >
+                  <Star className='w-4 h-4 mr-2' />
+                  Đánh giá
+                </Button>
+              )}
+            </>
           )}
         </div>
+
+        {/* Product Selection Dialog */}
+        <Dialog open={showProductSelection} onOpenChange={setShowProductSelection}>
+          <DialogContent className='max-w-2xl'>
+            <DialogHeader>
+              <DialogTitle>Chọn sản phẩm để đánh giá</DialogTitle>
+              <DialogDescription>
+                Chọn sản phẩm bạn muốn đánh giá từ đơn hàng #{order.orderNumber}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className='space-y-3 max-h-[400px] overflow-y-auto'>
+              {order.items.map((item) => {
+                const isReviewed = reviewedProductIds.has(item.productId)
+                return (
+                  <div
+                    key={item.id}
+                    className={`flex items-center gap-4 p-4 border rounded-lg transition-colors ${isReviewed
+                        ? 'border-green-200 bg-green-50 cursor-not-allowed opacity-60'
+                        : 'border-blue-200 hover:bg-blue-50 cursor-pointer'
+                      }`}
+                    onClick={() => {
+                      if (isReviewed) {
+                        toast.info('Bạn đã đánh giá sản phẩm này rồi!')
+                        return
+                      }
+                      setSelectedProduct(item)
+                      setShowProductSelection(false)
+                      setShowWriteReview(true)
+                    }}
+                  >
+                    <div className='w-16 h-16 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center'>
+                      {item.productImage ? (
+                        <img src={item.productImage} alt={item.productName} className='w-full h-full object-cover rounded-lg' />
+                      ) : (
+                        <Package className='w-8 h-8 text-gray-400' />
+                      )}
+                    </div>
+                    <div className='flex-1'>
+                      <h4 className='font-medium'>{item.productName}</h4>
+                      <p className='text-sm text-gray-500'>x{item.quantity}</p>
+                      {isReviewed && (
+                        <p className='text-xs text-green-600 mt-1'>✓ Đã đánh giá</p>
+                      )}
+                    </div>
+                    {isReviewed ? (
+                      <div className='w-5 h-5 rounded-full bg-green-500 flex items-center justify-center'>
+                        <span className='text-white text-xs'>✓</span>
+                      </div>
+                    ) : (
+                      <Star className='w-5 h-5 text-blue-600' />
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Write Review Dialog */}
+        {selectedProduct && (
+          <WriteReviewDialog
+            open={showWriteReview}
+            onOpenChange={setShowWriteReview}
+            product={{
+              id: selectedProduct.productId,
+              name: selectedProduct.productName,
+              image: selectedProduct.productImage || ''
+            }}
+            orderId={order.id}
+            onSubmit={async (data) => {
+              try {
+                await reviewService.createReview(data)
+                toast.success('Đánh giá của bạn đã được gửi thành công!')
+                setShowWriteReview(false)
+                setSelectedProduct(null)
+                // Refresh reviewed products list
+                const userReviews = await reviewService.getUserReviews()
+                const reviewedIds = new Set(userReviews.map(review => review.productId))
+                setReviewedProductIds(reviewedIds)
+              } catch (error: any) {
+                if (error.response?.status === 409) {
+                  toast.error('Bạn đã đánh giá sản phẩm này rồi!')
+                } else {
+                  toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi gửi đánh giá. Vui lòng thử lại.')
+                }
+                console.error('Error submitting review:', error)
+              }
+            }}
+          />
+        )}
       </CardContent>
     </Card>
   )
