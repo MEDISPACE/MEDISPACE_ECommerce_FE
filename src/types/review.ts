@@ -22,6 +22,14 @@ export interface Review {
   isVerifiedPurchase: boolean
   helpfulCount: number // Changed from 'helpful'
   helpfulVotes?: string[] // NEW - track who voted
+
+  // Hybrid Moderation
+  autoApproved?: boolean // True if auto-approved by system
+  flagged?: boolean // True if flagged for review
+  flagReason?: 'spam' | 'inappropriate' | 'fake' | 'sensitive' | 'other'
+  flaggedBy?: string
+  flaggedAt?: string
+
   status: ReviewStatus // NEW - moderation status
   moderatedBy?: string // NEW - admin who moderated
   moderatedAt?: string // NEW - moderation timestamp
@@ -82,6 +90,16 @@ export interface ReviewStats {
     2: number
     1: number
   }
+}
+
+// Admin review stats (for dashboard)
+export interface AdminReviewStats {
+  total: number
+  pending: number
+  approved: number
+  rejected: number
+  autoApproved: number
+  flagged: number
 }
 
 // Paginated reviews response

@@ -40,6 +40,7 @@ import { ReviewList } from '../reviews/ReviewList'
 import { ReviewStats } from '../reviews/ReviewStats'
 import { WriteReviewDialog } from '../reviews/WriteReviewDialog'
 import { useProductReviews, useReviewActions } from '~/hooks/product/useReviews'
+import { ProductStructuredData } from '~/components/seo'
 import orderService from '~/services/orderService'
 import {
   getProductId,
@@ -65,19 +66,14 @@ export function ProductDetailPage() {
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState('description')
 
   const thumbnailScrollRef = useRef<HTMLDivElement>(null)
 
-  // Review state
-  const [showWriteReview, setShowWriteReview] = useState(false)
-  const [selectedOrderId, setSelectedOrderId] = useState<string>('')
-  const [userCanReview, setUserCanReview] = useState(false)
-  const [checkingPurchase, setCheckingPurchase] = useState(false)
-
-  // Reviews - Use real API
+  // Reviews - Use real API (read-only)
   const productId = product?._id || ''
   const { reviews, stats, loading: reviewsLoading, page, totalPages, sortBy, setPage, setSortBy, refetch: refetchReviews } = useProductReviews(productId)
-  const { createReview, deleteReview, markHelpful } = useReviewActions()
+  const { markHelpful } = useReviewActions()
 
   // Fetch product data
   useEffect(() => {
@@ -113,37 +109,6 @@ export function ProductDetailPage() {
     fetchProduct()
   }, [slug])
 
-  // Check if user can review this product
-  useEffect(() => {
-    const checkPurchaseStatus = async () => {
-      if (!product?._id) return
-
-      try {
-        setCheckingPurchase(true)
-        const orders = await orderService.getOrders()
-
-        // Find delivered order containing this product
-        const purchasedOrder = orders.find(order =>
-          order.status === 'delivered' &&
-          order.items.some(item => item.productId === product._id)
-        )
-
-        if (purchasedOrder) {
-          setUserCanReview(true)
-          setSelectedOrderId(purchasedOrder.id)
-        } else {
-          setUserCanReview(false)
-        }
-      } catch (error) {
-        console.error('Error checking purchase status:', error)
-        setUserCanReview(false)
-      } finally {
-        setCheckingPurchase(false)
-      }
-    }
-
-    checkPurchaseStatus()
-  }, [product])
 
   // Use custom hooks - temporarily disabled due to type conflicts
   // const breadcrumbItems = useBreadcrumb({ product: rawProduct })
@@ -263,6 +228,15 @@ export function ProductDetailPage() {
 
   return (
     <PageTransition>
+      {/* SEO: Structured Data for Google Rich Snippets */}
+      {product && (
+        <ProductStructuredData
+          product={product}
+          reviews={reviews}
+          stats={stats}
+        />
+      )}
+
       <div className='max-w-7xl mx-auto px-4 py-6'>
         {/* Breadcrumb */}
         <UniversalBreadcrumb items={breadcrumbItems} />
@@ -407,11 +381,24 @@ export function ProductDetailPage() {
 
               <div className='flex items-center gap-2 mb-4'>
                 <RatingStars
-                  rating={getProductRating(product)}
+                  rating={stats?.averageRating || 0}
                   size='lg'
-                  reviewCount={getProductReviewCount(product)}
+                  reviewCount={reviews.length}
                 />
-                <span className='text-blue-600 hover:underline cursor-pointer text-sm'>Xem đánh giá</span>
+                <span
+                  className='text-blue-600 hover:underline cursor-pointer text-sm'
+                  onClick={() => {
+                    setActiveTab('reviews')
+                    setTimeout(() => {
+                      const tabsSection = document.querySelector('[role="tablist"]')
+                      if (tabsSection) {
+                        tabsSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                      }
+                    }, 100)
+                  }}
+                >
+                  Xem đánh giá
+                </span>
               </div>
             </div>
 
@@ -586,7 +573,7 @@ export function ProductDetailPage() {
         </div>
 
         {/* Product Details Tabs */}
-        <Tabs defaultValue='description' className='mb-12'>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className='mb-12'>
           <TabsList className='inline-flex w-full overflow-x-auto bg-blue-100 p-1 rounded-lg shadow-sm scrollbar-hide'>
             <TabsTrigger value='description' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
               <span className='whitespace-nowrap'>Mô tả</span>
@@ -604,7 +591,7 @@ export function ProductDetailPage() {
               <span className='whitespace-nowrap'>Chú ý</span>
             </TabsTrigger>
             <TabsTrigger value='reviews' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
-              <span className='whitespace-nowrap'>Đánh giá ({product.reviewCount})</span>
+              <span className='whitespace-nowrap'>Đánh giá ({reviews.length})</span>
             </TabsTrigger>
           </TabsList>
 
@@ -705,34 +692,21 @@ export function ProductDetailPage() {
                 <div className='md:col-span-2'>
                   <Card className='border-blue-200 shadow-sm'>
                     <CardContent className='p-6'>
-                      {userCanReview ? (
-                        <>
-                          <Button
-                            className='w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 shadow-lg hover:shadow-xl transition-all text-white'
-                            onClick={() => setShowWriteReview(true)}
-                            disabled={checkingPurchase}
-                          >
-                            <Star className='w-4 h-4 mr-2' />
-                            Viết đánh giá
-                          </Button>
-                          <p className='text-xs text-green-600 text-center mt-2'>
-                            ✓ Bạn đã mua sản phẩm này
-                          </p>
-                        </>
-                      ) : (
-                        <>
-                          <Button
-                            className='w-full bg-gray-300 text-gray-600 cursor-not-allowed'
-                            disabled
-                          >
-                            <Star className='w-4 h-4 mr-2' />
-                            Viết đánh giá
-                          </Button>
-                          <p className='text-xs text-gray-500 text-center mt-2'>
-                            {checkingPurchase ? 'Đang kiểm tra...' : 'Chỉ khách hàng đã mua sản phẩm mới có thể đánh giá'}
-                          </p>
-                        </>
-                      )}
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+                        <Star className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+                        <h4 className="font-semibold text-blue-900 mb-2">
+                          Đánh giá sản phẩm
+                        </h4>
+                        <p className="text-sm text-blue-700 mb-3">
+                          Để đảm bảo tính xác thực, bạn chỉ có thể đánh giá sản phẩm từ đơn hàng đã hoàn thành.
+                        </p>
+                        <Link
+                          to="/account/orders"
+                          className="inline-flex items-center text-sm text-blue-600 hover:text-blue-700 underline font-medium"
+                        >
+                          Xem đơn hàng của tôi →
+                        </Link>
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
@@ -753,24 +727,6 @@ export function ProductDetailPage() {
                 }}
               />
             </div>
-
-            {/* Write Review Dialog */}
-            {product && (
-              <WriteReviewDialog
-                open={showWriteReview}
-                onOpenChange={setShowWriteReview}
-                product={{
-                  id: product._id || '',
-                  name: product.name,
-                  image: getProductImage(product)
-                }}
-                orderId={selectedOrderId}
-                onSubmit={async (data) => {
-                  await createReview(data)
-                  refetchReviews()
-                }}
-              />
-            )}
           </TabsContent>
         </Tabs>
 
@@ -950,6 +906,6 @@ export function ProductDetailPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </PageTransition>
+    </PageTransition >
   )
 }

@@ -98,7 +98,8 @@ export function useReviewActions() {
         try {
             setLoading(true)
             const review = await reviewService.createReview(data)
-            toast.success('Đánh giá đã được gửi! Chờ duyệt để hiển thị.')
+            // Note: Toast is handled by parent component (WriteReviewDialog)
+            // to show different messages for auto-approved vs pending reviews
             return review
         } catch (error: any) {
             console.error('Failed to create review:', error)
@@ -113,7 +114,7 @@ export function useReviewActions() {
         try {
             setLoading(true)
             const review = await reviewService.updateReview(reviewId, data)
-            toast.success('Đánh giá đã được cập nhật!')
+            // Note: Toast is handled by parent component (WriteReviewDialog)
             return review
         } catch (error: any) {
             console.error('Failed to update review:', error)

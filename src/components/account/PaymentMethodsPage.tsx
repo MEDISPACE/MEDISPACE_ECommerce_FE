@@ -237,7 +237,7 @@ export function PaymentMethodsPage() {
       <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
         <div className='flex flex-col md:flex-row md:items-center justify-between gap-4'>
           <div>
-            <h1 className='bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 bg-clip-text text-transparent'>
+            <h1 className='text-2xl font-bold text-blue-800 mb-2'>
               Phương thức thanh toán
             </h1>
             <p className='text-gray-600 mt-1'>Quản lý thẻ và ví điện tử của bạn</p>

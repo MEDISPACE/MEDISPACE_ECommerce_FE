@@ -8,6 +8,7 @@ import { RatingStars } from '../shared/RatingStars'
 import { ImageWithFallback } from '../shared/ImageWithFallback'
 import { MultipleImageUploadField } from '../shared/MultipleImageUploadField'
 import { Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 import type { CreateReviewData, Review } from '~/types/review'
 
 interface WriteReviewDialogProps {
@@ -20,7 +21,7 @@ interface WriteReviewDialogProps {
     }
     orderId: string
     existingReview?: Review
-    onSubmit: (data: CreateReviewData) => Promise<void>
+    onSubmit: (data: CreateReviewData) => Promise<any>
 }
 
 export function WriteReviewDialog({
@@ -61,30 +62,47 @@ export function WriteReviewDialog({
         return Object.keys(newErrors).length === 0
     }
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
+    const resetForm = () => {
+        setRating(0)
+        setTitle('')
+        setComment('')
+        setImages([])
+        setErrors({})
+    }
 
+    const handleSubmit = async () => {
         if (!validate()) return
 
+        setLoading(true)
         try {
-            setLoading(true)
-            await onSubmit({
+            const reviewData: CreateReviewData = {
                 productId: product.id,
                 orderId,
                 rating,
                 title,
                 comment,
                 images: images.length > 0 ? images : undefined
-            })
+            }
+
+            // Call onSubmit and get the result
+            const result = await onSubmit(reviewData)
+
+            // Check if review was auto-approved or pending
+            // @ts-ignore - result may have status field
+            if (result?.status === 'approved') {
+                toast.success('Đánh giá đã được đăng ngay lập tức!', {
+                    description: 'Cảm ơn bạn đã chia sẻ trải nghiệm!'
+                })
+            } else {
+                toast.info('Đánh giá đang chờ kiểm duyệt', {
+                    description: 'Chúng tôi sẽ xem xét trong vòng 24 giờ.'
+                })
+            }
+
             onOpenChange(false)
-            // Reset form
-            setRating(0)
-            setTitle('')
-            setComment('')
-            setImages([])
-            setErrors({})
-        } catch (error) {
-            // Error handled by parent
+            resetForm()
+        } catch (error: any) {
+            toast.error(error.message || 'Có lỗi xảy ra khi gửi đánh giá')
         } finally {
             setLoading(false)
         }
@@ -92,13 +110,14 @@ export function WriteReviewDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white">
+            <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle className="text-2xl bg-gradient-to-r from-[#0066CC] to-[#4A90E2] bg-clip-text text-transparent">
-                        {existingReview ? 'Chỉnh sửa đánh giá' : 'Viết đánh giá'}
-                    </DialogTitle>
+                    <DialogTitle>{existingReview ? 'Chỉnh sửa đánh giá' : 'Viết đánh giá'}</DialogTitle>
                     <DialogDescription>
-                        Chia sẻ trải nghiệm của bạn về sản phẩm này
+                        {existingReview
+                            ? 'Cập nhật đánh giá của bạn về sản phẩm này'
+                            : 'Chia sẻ trải nghiệm của bạn để giúp người khác'
+                        }
                     </DialogDescription>
                 </DialogHeader>
 
@@ -115,7 +134,7 @@ export function WriteReviewDialog({
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-4">
                     {/* Rating */}
                     <div>
                         <Label className="mb-2 block">Đánh giá của bạn *</Label>

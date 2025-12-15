@@ -4,7 +4,7 @@ import { Card, CardContent } from '~/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { Button } from '~/components/ui/button'
 import { Badge } from '~/components/ui/badge'
-import { Loader2, Star, Edit, Trash2, Package } from 'lucide-react'
+import { Loader2, Star, Edit, Trash2, Package, Clock, CheckCircle, XCircle, Zap } from 'lucide-react'
 import { ImageWithFallback } from '~/components/shared/ImageWithFallback'
 import { RatingStars } from '~/components/shared/RatingStars'
 import { WriteReviewDialog } from '~/components/reviews/WriteReviewDialog'
@@ -21,6 +21,29 @@ export function AccountReviewsPage() {
     const [selectedTab, setSelectedTab] = useState<string>('all')
     const [editingReview, setEditingReview] = useState<Review | null>(null)
     const [showEditDialog, setShowEditDialog] = useState(false)
+
+    // Check if review can be edited (within 24 hours for approved reviews)
+    const canEditReview = (review: Review): boolean => {
+        // Rejected reviews cannot be edited
+        if (review.status === ReviewStatus.Rejected) {
+            return false
+        }
+
+        // Pending reviews can always be edited
+        if (review.status === ReviewStatus.Pending) {
+            return true
+        }
+
+        // Approved reviews: check 24-hour window
+        if (review.status === ReviewStatus.Approved) {
+            const createdAt = new Date(review.createdAt)
+            const now = new Date()
+            const hoursSinceCreation = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60)
+            return hoursSinceCreation < 24
+        }
+
+        return false
+    }
 
     // Filter reviews by status
     const filteredReviews = reviews.filter(review => {
@@ -47,15 +70,39 @@ export function AccountReviewsPage() {
         }
     }
 
-    const getStatusBadge = (status: ReviewStatus) => {
-        switch (status) {
-            case ReviewStatus.Pending:
-                return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Chờ duyệt</Badge>
-            case ReviewStatus.Approved:
-                return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Đã duyệt</Badge>
-            case ReviewStatus.Rejected:
-                return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Bị từ chối</Badge>
+    const getStatusBadge = (review: Review) => {
+        if (review.status === ReviewStatus.Pending) {
+            return (
+                <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                    <Clock className="w-3 h-3 mr-1" />
+                    Đang chờ duyệt
+                </Badge>
+            )
         }
+
+        if (review.status === ReviewStatus.Approved) {
+            return (
+                <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                        <CheckCircle className="w-3 h-3 mr-1" />
+                        Đã đăng
+                    </Badge>
+                    {review.autoApproved && (
+                        <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200 text-xs">
+                            <Zap className="w-3 h-3 mr-1" />
+                            Auto
+                        </Badge>
+                    )}
+                </div>
+            )
+        }
+
+        return (
+            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                <XCircle className="w-3 h-3 mr-1" />
+                Bị từ chối
+            </Badge>
+        )
     }
 
     const getStatusCount = (status: ReviewStatus) => {
@@ -64,10 +111,10 @@ export function AccountReviewsPage() {
 
     return (
         <PageTransition>
-            <div className="container mx-auto px-4 py-8">
+            <div className="space-y-6">
                 {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-[#0066CC] to-[#4A90E2] bg-clip-text text-transparent mb-2">
+                <div>
+                    <h1 className="text-2xl font-bold text-blue-800 mb-2">
                         Đánh giá của tôi
                     </h1>
                     <p className="text-gray-600">Quản lý các đánh giá bạn đã viết</p>
@@ -104,7 +151,7 @@ export function AccountReviewsPage() {
                                 <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
                             </div>
                         ) : filteredReviews.length === 0 ? (
-                            <Card>
+                            <Card className='border-blue-200'>
                                 <CardContent className="p-12 text-center">
                                     <Package className="w-16 h-16 mx-auto text-gray-300 mb-4" />
                                     <p className="text-gray-500 mb-2">
@@ -120,7 +167,7 @@ export function AccountReviewsPage() {
                             </Card>
                         ) : (
                             filteredReviews.map((review) => (
-                                <Card key={review._id} className="hover:shadow-md transition-shadow">
+                                <Card key={review._id} className="hover:shadow-md transition-shadow border-blue-200">
                                     <CardContent className="p-6">
                                         {/* Product Info */}
                                         <div className="flex items-start gap-4 mb-4">
@@ -141,7 +188,7 @@ export function AccountReviewsPage() {
                                                     {review.productName || 'Sản phẩm'}
                                                 </Link>
                                                 <div className="flex items-center gap-2 mt-1">
-                                                    {getStatusBadge(review.status)}
+                                                    {getStatusBadge(review)}
                                                     <span className="text-xs text-gray-500">
                                                         {formatDate(review.createdAt)}
                                                     </span>
@@ -183,7 +230,7 @@ export function AccountReviewsPage() {
 
                                         {/* Actions */}
                                         <div className="flex items-center gap-2 pt-4 border-t">
-                                            {review.status !== ReviewStatus.Rejected && (
+                                            {canEditReview(review) ? (
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
@@ -192,6 +239,17 @@ export function AccountReviewsPage() {
                                                 >
                                                     <Edit className="w-4 h-4 mr-1" />
                                                     Sửa
+                                                </Button>
+                                            ) : review.status === ReviewStatus.Approved && (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    disabled
+                                                    className="text-gray-400 cursor-not-allowed"
+                                                    title="Chỉ có thể chỉnh sửa trong vòng 24 giờ sau khi đăng"
+                                                >
+                                                    <Edit className="w-4 h-4 mr-1" />
+                                                    Đã hết hạn sửa
                                                 </Button>
                                             )}
                                             <Button
@@ -229,9 +287,10 @@ export function AccountReviewsPage() {
                         orderId={editingReview.orderId}
                         existingReview={editingReview}
                         onSubmit={async (data) => {
-                            await updateReview(editingReview._id, data)
+                            const result = await updateReview(editingReview._id, data)
                             refetch()
                             setEditingReview(null)
+                            return result
                         }}
                     />
                 )}
