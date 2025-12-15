@@ -123,6 +123,81 @@ export const reviewService = {
 
         throw new Error('Failed to mark review as helpful')
     },
+
+    /**
+     * Get all reviews for admin (with filtering)
+     */
+    async getAdminReviews(filters?: {
+        status?: string
+        page?: number
+        limit?: number
+        sortBy?: string
+        dateFrom?: string
+        dateTo?: string
+    }) {
+        const response = await apiClient.get('/reviews/admin', { params: filters })
+
+        if (response && response.data) {
+            const data = response.data as any
+            if (data.data) return data.data
+            return data
+        }
+
+        return { reviews: [], pagination: { page: 1, limit: 20, total: 0, totalPages: 0 } }
+    },
+
+    /**
+     * Get admin dashboard statistics
+     */
+    async getAdminReviewStats() {
+        const response = await apiClient.get('/reviews/admin/stats')
+
+        if (response && response.data) {
+            const data = response.data as any
+            if (data.data) return data.data
+            return data
+        }
+
+        return {
+            total: 0,
+            pending: 0,
+            approved: 0,
+            rejected: 0,
+            autoApproved: 0,
+            autoApprovedPercentage: 0,
+            averageRating: 0
+        }
+    },
+
+    /**
+     * Moderate a review (approve/reject)
+     */
+    async moderateReview(reviewId: string, status: string, notes?: string) {
+        const response = await apiClient.patch(`/reviews/${reviewId}/moderate`, { status, notes })
+
+        if (response && response.data) {
+            const data = response.data as any
+            if (data.data) return data.data
+            return data
+        }
+
+        throw new Error('Failed to moderate review')
+    },
+
+    /**
+     * Bulk moderate reviews
+     */
+    async bulkModerate(reviewIds: string[], action: 'approve' | 'reject') {
+        const response = await apiClient.post('/reviews/admin/bulk-moderate', { reviewIds, action })
+
+        if (response && response.data) {
+            const data = response.data as any
+            if (data.data) return data.data
+            return data
+        }
+
+        throw new Error('Failed to bulk moderate reviews')
+    },
 }
 
 export default reviewService

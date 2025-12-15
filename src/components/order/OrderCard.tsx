@@ -192,7 +192,7 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
                   onClick={() => setShowProductSelection(true)}
                 >
                   <Star className='w-4 h-4 mr-2' />
-                  Đánh giá
+                  Viết Đánh giá
                 </Button>
               )}
             </>
@@ -216,8 +216,8 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
                   <div
                     key={item.id}
                     className={`flex items-center gap-4 p-4 border rounded-lg transition-colors ${isReviewed
-                        ? 'border-green-200 bg-green-50 cursor-not-allowed opacity-60'
-                        : 'border-blue-200 hover:bg-blue-50 cursor-pointer'
+                      ? 'border-green-200 bg-green-50 cursor-not-allowed opacity-60'
+                      : 'border-blue-200 hover:bg-blue-50 cursor-pointer'
                       }`}
                     onClick={() => {
                       if (isReviewed) {

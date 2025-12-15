@@ -32,7 +32,7 @@ export function ReviewItem({ review, onEdit, onDelete, onHelpful, isOwner }: Rev
     }
 
     return (
-        <Card className="hover:shadow-md transition-shadow">
+        <Card className="border-blue-300 hover:shadow-md transition-shadow">
             <CardContent className="p-6">
                 {/* Header */}
                 <div className="flex items-start justify-between mb-4">
@@ -96,7 +96,7 @@ export function ReviewItem({ review, onEdit, onDelete, onHelpful, isOwner }: Rev
                 )}
 
                 {/* Actions */}
-                <div className="flex items-center gap-2 pt-4 border-t">
+                <div className="flex items-center gap-2 pt-4 border-t border-blue-300">
                     {/* Helpful Button */}
                     {!isOwner && onHelpful && (
                         <Button
