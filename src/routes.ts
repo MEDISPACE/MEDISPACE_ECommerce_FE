@@ -55,9 +55,6 @@ export default [
     // Health
     route('health', 'routes/health/_index.tsx'),
 
-    // Consultation
-    route('consultation', 'routes/consultation/_index.tsx'),
-
     // Search
     route('search', 'routes/search.tsx'),
 
@@ -87,11 +84,11 @@ export default [
     route('prescriptions', 'routes/pharmacist/prescriptions.tsx'),
     route('create-order', 'routes/pharmacist/create-order.tsx'),
     route('orders', 'routes/pharmacist/orders.tsx'),
-    route('chat', 'routes/pharmacist/chat.tsx'),
     route('drug-database', 'routes/pharmacist/drug-database.tsx'),
     route('patient-history', 'routes/pharmacist/patient-history.tsx'),
     route('reports', 'routes/pharmacist/reports.tsx'),
     route('settings', 'routes/pharmacist/settings.tsx'),
+    route('chat', 'routes/pharmacist/chat.tsx'),
   ]),
 
   // Admin routes (separate layout)

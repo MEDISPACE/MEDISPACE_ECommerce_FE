@@ -44,14 +44,17 @@ class ApiClient {
     this.client.interceptors.response.use(
       (response: AxiosResponse) => response,
       async (error: AxiosError) => {
-        console.error('API Error:', {
-          url: error.config?.url,
-          status: error.response?.status,
-          data: error.response?.data,
-          message: error.message,
-        })
-
         const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
+
+        // Only log errors that are NOT 401 or are 401 but already retried
+        if (error.response?.status !== 401 || originalRequest._retry) {
+          console.error('API Error:', {
+            url: error.config?.url,
+            status: error.response?.status,
+            data: error.response?.data,
+            message: error.message,
+          })
+        }
 
         if (error.response?.status === 401 && !originalRequest._retry) {
           originalRequest._retry = true
