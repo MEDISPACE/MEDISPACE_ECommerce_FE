@@ -205,7 +205,7 @@ export function OrderFailurePage() {
               </a>
 
               <Link
-                to="/consultation/chat"
+                to="/contact"
                 className="flex flex-col items-center gap-3 p-4 bg-white rounded-lg border border-blue-200 hover:border-blue-400 hover:shadow-md transition-all"
               >
                 <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">

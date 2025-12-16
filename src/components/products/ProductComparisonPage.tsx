@@ -232,7 +232,7 @@ export function ProductComparisonPage() {
   }
 
   const handleConsultPharmacist = () => {
-    navigate('/consultation/chat')
+    navigate('/contact')
   }
 
   const handleShare = () => {

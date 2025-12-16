@@ -316,7 +316,7 @@ export function FAQPage() {
                 variant='outline'
                 className='bg-blue-700 text-white border-2 border-white/20 hover:bg-blue-800'
               >
-                <a href='/consultation/chat' className='gap-2'>
+                <a href='/contact' className='gap-2'>
                   Chat với dược sĩ
                 </a>
               </Button>

@@ -164,7 +164,7 @@ export function HomePage() {
                   <Button
                     variant='outline'
                     size='lg'
-                    onClick={() => (window.location.href = '/consultation/chat')}
+                    onClick={() => (window.location.href = '/contact')}
                     className='border-2 border-blue-200 text-blue-700 hover:bg-blue-50 backdrop-blur-sm h-14'
                   >
                     <MessageCircle className='w-5 h-5 mr-2' />
@@ -230,7 +230,7 @@ export function HomePage() {
                   {/* Core Action Cards - 3 Cards */}
                   <div className='grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto'>
                     {/* Tư vấn dược sĩ */}
-                    <Link to='/consultation/chat'>
+                    <Link to='/contact'>
                       <div
                         className='rounded-xl p-6 text-white hover:shadow-xl hover:scale-[1.02] transition-all group cursor-pointer'
                         style={{
