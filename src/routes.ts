@@ -88,6 +88,7 @@ export default [
     route('patient-history', 'routes/pharmacist/patient-history.tsx'),
     route('reports', 'routes/pharmacist/reports.tsx'),
     route('settings', 'routes/pharmacist/settings.tsx'),
+    route('chat', 'routes/pharmacist/chat.tsx'),
   ]),
 
   // Admin routes (separate layout)

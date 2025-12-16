@@ -79,6 +79,11 @@ const navigationItems: NavItem[] = [
     icon: ShoppingCart,
   },
   {
+    label: 'Chat với khách hàng',
+    href: '/pharmacist/chat',
+    icon: MessageSquare,
+  },
+  {
     label: 'Lịch sử bệnh nhân',
     href: '/pharmacist/patients',
     icon: Users,
@@ -209,8 +214,8 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
             checked={isOnline}
             onCheckedChange={handleStatusToggle}
             className={`${isOnline
-                ? 'data-[state=checked]:bg-green-600'
-                : 'data-[state=unchecked]:bg-gray-300 data-[state=unchecked]:border-gray-300'
+              ? 'data-[state=checked]:bg-green-600'
+              : 'data-[state=unchecked]:bg-gray-300 data-[state=unchecked]:border-gray-300'
               }`}
           />
         </div>
@@ -230,8 +235,8 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
                   to={item.href}
                   onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative ${isActive
-                      ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/30'
-                      : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700'
+                    ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/30'
+                    : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700'
                     }`}
                 >
                   <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'}`} />
@@ -239,12 +244,12 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
                   {item.badge && (
                     <Badge
                       className={`text-xs ${item.badgeVariant === 'destructive'
-                          ? 'bg-red-500'
-                          : item.badgeVariant === 'warning'
-                            ? 'bg-yellow-500'
-                            : item.badgeVariant === 'success'
-                              ? 'bg-green-500'
-                              : 'bg-blue-500'
+                        ? 'bg-red-500'
+                        : item.badgeVariant === 'warning'
+                          ? 'bg-yellow-500'
+                          : item.badgeVariant === 'success'
+                            ? 'bg-green-500'
+                            : 'bg-blue-500'
                         } text-white`}
                     >
                       {item.badge}

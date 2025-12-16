@@ -28,15 +28,19 @@ export async function uploadImage(file: File): Promise<string> {
     }
 
     try {
-        const response = await axios.post<UploadResponse>(`${API_URL}/medias/upload-image`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-                Authorization: `Bearer ${token}`,
-            },
-        })
+        const response = await axios.post<{ result: MediaResponse[]; message: string }>(
+            `${API_URL}/medias/upload-image`,
+            formData,
+            {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        )
 
-        if (response.data.url && response.data.url.length > 0) {
-            return response.data.url[0].url
+        if (response.data.result && response.data.result.length > 0) {
+            return response.data.result[0].url
         }
 
         throw new Error('Không nhận được URL từ server')
@@ -74,15 +78,19 @@ export async function uploadImages(files: File[]): Promise<string[]> {
     }
 
     try {
-        const response = await axios.post<UploadResponse>(`${API_URL}/medias/upload-image`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-                Authorization: `Bearer ${token}`,
-            },
-        })
+        const response = await axios.post<{ result: MediaResponse[]; message: string }>(
+            `${API_URL}/medias/upload-image`,
+            formData,
+            {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        )
 
-        if (response.data.url && response.data.url.length > 0) {
-            return response.data.url.map((item) => item.url)
+        if (response.data.result && response.data.result.length > 0) {
+            return response.data.result.map((item) => item.url)
         }
 
         throw new Error('Không nhận được URL từ server')
@@ -163,21 +171,25 @@ export async function uploadImageWithProgress(
     }
 
     try {
-        const response = await axios.post<UploadResponse>(`${API_URL}/medias/upload-image`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-                Authorization: `Bearer ${token}`,
-            },
-            onUploadProgress: (progressEvent) => {
-                if (progressEvent.total && onProgress) {
-                    const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
-                    onProgress(percentCompleted)
-                }
-            },
-        })
+        const response = await axios.post<{ result: MediaResponse[]; message: string }>(
+            `${API_URL}/medias/upload-image`,
+            formData,
+            {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    Authorization: `Bearer ${token}`,
+                },
+                onUploadProgress: (progressEvent) => {
+                    if (progressEvent.total && onProgress) {
+                        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+                        onProgress(percentCompleted)
+                    }
+                },
+            }
+        )
 
-        if (response.data.url && response.data.url.length > 0) {
-            return response.data.url[0].url
+        if (response.data.result && response.data.result.length > 0) {
+            return response.data.result[0].url
         }
 
         throw new Error('Không nhận được URL từ server')
