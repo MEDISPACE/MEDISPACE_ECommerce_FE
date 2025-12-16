@@ -129,7 +129,7 @@ export function PrescriptionManagementPage() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleStartChat = (customerPhone: string) => {
     // Open chat with customer
-    window.location.href = `/consultation/chat?phone=${customerPhone}`
+    window.location.href = `/contact?phone=${customerPhone}`
   }
 
   const formatDateTime = (dateStr: string) => {

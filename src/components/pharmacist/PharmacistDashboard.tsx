@@ -196,17 +196,11 @@ export function PharmacistDashboard() {
       badge:
         (stats?.pendingPrescriptions || 0) > 0
           ? {
-              text: 'Cần xử lý',
-              icon: AlertCircle,
-              show: true,
-            }
+            text: 'Cần xử lý',
+            icon: AlertCircle,
+            show: true,
+          }
           : undefined,
-    },
-    {
-      title: 'Chat đang hoạt động',
-      value: stats?.activeChats || 0,
-      icon: MessageCircle,
-      color: 'blue',
     },
     {
       title: 'Đơn hàng hôm nay',
@@ -221,10 +215,10 @@ export function PharmacistDashboard() {
       color: 'emerald',
       trend: stats?.prescriptionsToday
         ? {
-            value: `${stats.prescriptionsToday.verified}/${stats.prescriptionsToday.total}`,
-            type: 'positive' as const,
-            label: 'đơn đã duyệt',
-          }
+          value: `${stats.prescriptionsToday.verified}/${stats.prescriptionsToday.total}`,
+          type: 'positive' as const,
+          label: 'đơn đã duyệt',
+        }
         : undefined,
     },
   ]
@@ -245,7 +239,7 @@ export function PharmacistDashboard() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className='space-y-6'>
-        <TabsList className='grid w-full grid-cols-5 bg-white shadow-lg border-2 border-blue-100 rounded-lg p-1.5 gap-1 h-auto'>
+        <TabsList className='grid w-full grid-cols-4 bg-white shadow-lg border-2 border-blue-100 rounded-lg p-1.5 gap-1 h-auto'>
           <TabsTrigger
             value='overview'
             className='border-0 outline-none focus-visible:ring-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-500 data-[state=active]:!text-white data-[state=active]:shadow-md text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all rounded-md font-medium py-2'
@@ -263,12 +257,6 @@ export function PharmacistDashboard() {
             className='border-0 outline-none focus-visible:ring-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-500 data-[state=active]:!text-white data-[state=active]:shadow-md text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all rounded-md font-medium py-2'
           >
             Tạo đơn hàng
-          </TabsTrigger>
-          <TabsTrigger
-            value='chats'
-            className='border-0 outline-none focus-visible:ring-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-500 data-[state=active]:!text-white data-[state=active]:shadow-md text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all rounded-md font-medium py-2'
-          >
-            Tư vấn
           </TabsTrigger>
           <TabsTrigger
             value='reports'
@@ -503,27 +491,6 @@ export function PharmacistDashboard() {
           </Card>
         </TabsContent>
 
-        {/* Chats Tab */}
-        <TabsContent value='chats'>
-          <Card className='bg-white/80 backdrop-blur-lg shadow-lg border-2 border-blue-100'>
-            <CardHeader>
-              <CardTitle className='text-blue-800'>Quản lý tư vấn</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className='text-center py-12'>
-                <MessageCircle className='w-16 h-16 text-blue-300 mx-auto mb-4' />
-                <h3 className='text-xl font-medium text-gray-900 mb-2'>Module Chat</h3>
-                <p className='text-gray-600 mb-6'>Tính năng chat tư vấn sẽ được triển khai khi API Chat hoàn thành</p>
-                <Link to='/pharmacist/chat'>
-                  <Button className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'>
-                    <MessageCircle className='w-4 h-4 mr-2' />
-                    Đi đến trang Chat
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
 
         {/* Reports Tab */}
         <TabsContent value='reports'>

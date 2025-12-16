@@ -45,7 +45,7 @@ export function CategoryQuickActions({
   return (
     <div className={`flex items-center gap-3 ${className}`}>
       {showConsultation && (
-        <Link to='/consultation/chat'>
+        <Link to='/contact'>
           <Button variant='outline' size='sm' className='border-blue-200 text-blue-600 hover:bg-blue-50'>
             Tư vấn miễn phí
           </Button>

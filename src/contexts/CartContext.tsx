@@ -412,7 +412,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       icon: <AlertCircle className='w-5 h-5 text-orange-600' />,
       action: {
         label: 'Tư vấn ngay',
-        onClick: () => (window.location.href = '/consultation/chat'),
+        onClick: () => (window.location.href = '/contact'),
       },
     })
   }

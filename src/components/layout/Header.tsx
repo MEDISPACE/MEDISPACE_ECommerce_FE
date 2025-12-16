@@ -272,13 +272,6 @@ export function Header() {
               <span className='absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-cyan-500 group-hover:w-full transition-all duration-300'></span>
             </Link>
 
-            <Link
-              to='/consultation/chat'
-              className='px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-cyan-600 to-blue-800 hover:from-blue-700 hover:via-cyan-700 hover:to-blue-900 text-white font-medium hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-200 border-0'
-            >
-              Tư vấn dược sĩ
-            </Link>
-
             {/* Unified Mega Menu */}
             <UnifiedMegaMenu
               activeCategory={activeMegaMenuCategory}

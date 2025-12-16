@@ -168,7 +168,7 @@ export function UploadPrescriptionPage() {
                 <Button
                   variant='outline'
                   className='border-blue-200 text-blue-700 hover:bg-blue-50'
-                  onClick={() => navigate('/consultation/chat')}
+                  onClick={() => navigate('/contact')}
                 >
                   💬 Chat với dược sĩ
                 </Button>
