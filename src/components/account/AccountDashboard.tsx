@@ -57,7 +57,7 @@ export function AccountDashboard() {
             addressLine1: order.shippingAddress.address,
             ward: order.shippingAddress.ward,
             district: order.shippingAddress.district,
-            city: order.shippingAddress.city,
+            city: order.shippingAddress.province,
             isDefault: false,
           },
           paymentMethod: order.paymentMethod,
@@ -289,9 +289,8 @@ export function AccountDashboard() {
               {notifications.slice(0, 2).map((notification) => (
                 <div
                   key={notification.id}
-                  className={`p-3 rounded-lg border ${
-                    notification.isRead ? 'bg-gray-50 border-gray-200' : 'bg-blue-50 border-blue-200'
-                  }`}
+                  className={`p-3 rounded-lg border ${notification.isRead ? 'bg-gray-50 border-gray-200' : 'bg-blue-50 border-blue-200'
+                    }`}
                 >
                   <div className='flex items-start gap-2'>
                     <div className='text-sm'>

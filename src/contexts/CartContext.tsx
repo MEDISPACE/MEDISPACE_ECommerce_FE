@@ -133,6 +133,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // Load cart data from API on mount
   useEffect(() => {
     const loadCart = async () => {
+      // Check if user is logged in before fetching cart
+      const token = localStorage.getItem('medispace_access_token')
+      if (!token) {
+        // User not logged in, set empty cart
+        dispatch({ type: 'SET_CART', payload: null })
+        return
+      }
+
       try {
         dispatch({ type: 'SET_LOADING', payload: true })
         const cart = await cartService.getCart()
@@ -159,6 +167,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (e.key === 'medispace_user_data' || e.key === 'medispace_access_token') {
         // User logged in or out, reload cart
         const loadCart = async () => {
+          // Check if user is logged in
+          const token = localStorage.getItem('medispace_access_token')
+          if (!token) {
+            // User logged out, clear cart
+            dispatch({ type: 'SET_CART', payload: null })
+            return
+          }
+
           try {
             dispatch({ type: 'SET_LOADING', payload: true })
             const cart = await cartService.getCart()
@@ -184,6 +200,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
     // Also listen for custom auth events (for same-tab changes)
     const handleAuthChange = () => {
       const loadCart = async () => {
+        // Check if user is logged in
+        const token = localStorage.getItem('medispace_access_token')
+        if (!token) {
+          // User logged out, clear cart
+          dispatch({ type: 'SET_CART', payload: null })
+          return
+        }
+
         try {
           dispatch({ type: 'SET_LOADING', payload: true })
           const cart = await cartService.getCart()

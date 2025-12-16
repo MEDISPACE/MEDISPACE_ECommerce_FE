@@ -1,0 +1,1 @@
+export { ProductStructuredData } from './ProductStructuredData'
