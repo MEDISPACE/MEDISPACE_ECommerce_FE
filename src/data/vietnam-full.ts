@@ -14151,7 +14151,7 @@ export const vietnamProvinces: Province[] = [
     ]
   },
   {
-    "name": "T���nh Hải Dương",
+    "name": "Tỉnh Hải Dương",
     "code": "30",
     "districts": [
       {

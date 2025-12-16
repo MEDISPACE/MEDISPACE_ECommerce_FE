@@ -137,6 +137,11 @@ export const ORDER_STATUS_BADGES: Record<string, BadgeConfig> = {
     className: 'bg-yellow-100 text-yellow-800 border-yellow-200',
     icon: Clock,
   },
+  pending_payment: {
+    label: 'Chờ thanh toán',
+    className: 'bg-orange-100 text-orange-800 border-orange-200',
+    icon: AlertCircle,
+  },
   confirmed: {
     label: 'Đã xác nhận',
     className: 'bg-blue-100 text-blue-800 border-blue-200',
@@ -146,6 +151,16 @@ export const ORDER_STATUS_BADGES: Record<string, BadgeConfig> = {
     label: 'Đang xử lý',
     className: 'bg-blue-100 text-blue-800 border-blue-200',
     icon: Activity,
+  },
+  preparing: {
+    label: 'Đang chuẩn bị',
+    className: 'bg-cyan-100 text-cyan-800 border-cyan-200',
+    icon: Package,
+  },
+  shipped: {
+    label: 'Đang giao',
+    className: 'bg-purple-100 text-purple-800 border-purple-200',
+    icon: Package,
   },
   shipping: {
     label: 'Đang giao',
