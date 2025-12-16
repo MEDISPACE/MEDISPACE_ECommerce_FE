@@ -224,7 +224,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
   return (
     <div className='space-y-6'>
       {/* Profile Header */}
-      <Card>
+      <Card className='border border-blue-200 hover:shadow-md transition-all duration-300'>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
             <UserIcon className='w-5 h-5 text-blue-600' />
@@ -361,7 +361,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
       </Card>
 
       {/* Edit Form */}
-      <Card>
+      <Card className='border border-blue-200 hover:shadow-md transition-all duration-300'>
         <CardHeader>
           <CardTitle>Chỉnh sửa thông tin</CardTitle>
         </CardHeader>

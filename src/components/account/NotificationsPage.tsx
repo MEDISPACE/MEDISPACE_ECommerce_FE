@@ -174,29 +174,62 @@ export function NotificationsPage() {
       <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className='px-6 pt-6'>
-            <TabsList className='grid grid-cols-6 w-full'>
-              <TabsTrigger value='all' className='flex items-center gap-1'>
-                Tất cả
-                {getTabCount('all') > 0 && (
-                  <Badge variant='secondary' className='ml-1 text-xs'>
-                    {getTabCount('all')}
-                  </Badge>
-                )}
+            <TabsList className='inline-flex w-full overflow-x-auto bg-blue-100 p-1 rounded-lg shadow-sm scrollbar-hide'>
+              <TabsTrigger value='all' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+                <span className='whitespace-nowrap flex items-center gap-1'>
+                  Tất cả
+                  {getTabCount('all') > 0 && (
+                    <span className='ml-1 rounded-full px-2 py-0.5 text-xs font-medium bg-white text-blue-600'>
+                      {getTabCount('all')}
+                    </span>
+                  )}
+                </span>
               </TabsTrigger>
-              <TabsTrigger value='unread' className='flex items-center gap-1'>
-                Chưa đọc
-                {getTabCount('unread') > 0 && (
-                  <Badge variant='secondary' className='ml-1 text-xs bg-red-100 text-red-800'>
-                    {getTabCount('unread')}
-                  </Badge>
-                )}
+              <TabsTrigger value='unread' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+                <span className='whitespace-nowrap flex items-center gap-1'>
+                  Chưa đọc
+                  {getTabCount('unread') > 0 && (
+                    <span className='ml-1 rounded-full px-2 py-0.5 text-xs font-medium bg-red-500 text-white'>
+                      {getTabCount('unread')}
+                    </span>
+                  )}
+                </span>
               </TabsTrigger>
-              <TabsTrigger value='order'>Đơn hàng ({getTabCount('order')})</TabsTrigger>
-              <TabsTrigger value='promotion'>Khuyến mãi ({getTabCount('promotion')})</TabsTrigger>
-              <TabsTrigger value='health'>Sức khỏe ({getTabCount('health')})</TabsTrigger>
-              <TabsTrigger value='settings' className='flex items-center gap-1'>
-                <Settings className='w-4 h-4' />
-                Cài đặt
+              <TabsTrigger value='order' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:!shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+                <span className='whitespace-nowrap flex items-center gap-1'>
+                  Đơn hàng
+                  {getTabCount('order') > 0 && (
+                    <span className='ml-1 rounded-full px-2 py-0.5 text-xs font-medium bg-white text-blue-600'>
+                      {getTabCount('order')}
+                    </span>
+                  )}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger value='promotion' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:!shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+                <span className='whitespace-nowrap flex items-center gap-1'>
+                  Khuyến mãi
+                  {getTabCount('promotion') > 0 && (
+                    <span className='ml-1 rounded-full px-2 py-0.5 text-xs font-medium bg-white text-blue-600'>
+                      {getTabCount('promotion')}
+                    </span>
+                  )}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger value='health' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:!shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+                <span className='whitespace-nowrap flex items-center gap-1'>
+                  Sức khỏe
+                  {getTabCount('health') > 0 && (
+                    <span className='ml-1 rounded-full px-2 py-0.5 text-xs font-medium bg-white text-blue-600'>
+                      {getTabCount('health')}
+                    </span>
+                  )}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger value='settings' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+                <span className='whitespace-nowrap flex items-center gap-1'>
+                  <Settings className='w-4 h-4' />
+                  Cài đặt
+                </span>
               </TabsTrigger>
             </TabsList>
           </div>

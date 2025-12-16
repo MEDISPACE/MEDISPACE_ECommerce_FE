@@ -230,7 +230,7 @@ export function CategoryPage() {
           <div className='hidden lg:block w-1/4'>
             <div className='space-y-6'>
               {/* Sub-categories */}
-              <Card>
+              <Card className='border-blue-200 shadow-sm'>
                 <CardHeader>
                   <CardTitle className='text-lg'>Danh mục con</CardTitle>
                 </CardHeader>
@@ -251,7 +251,7 @@ export function CategoryPage() {
               </Card>
 
               {/* Brands Filter */}
-              <Card>
+              <Card className='border-blue-200 shadow-sm'>
                 <CardHeader>
                   <CardTitle className='text-lg'>Thương hiệu</CardTitle>
                 </CardHeader>
