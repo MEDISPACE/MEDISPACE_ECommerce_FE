@@ -21,6 +21,7 @@ import {
   TrendingUp,
   Tag,
   MessageSquare,
+  Star,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { Button } from '../ui/button'
@@ -98,6 +99,11 @@ const navigationItems: NavItem[] = [
     label: 'Quản lý nội dung',
     href: '/admin/content',
     icon: MessageSquare,
+  },
+  {
+    label: 'Quản lý đánh giá',
+    href: '/admin/reviews',
+    icon: Star,
   },
   {
     label: 'Báo cáo & Phân tích',
@@ -207,10 +213,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   {badge && (
                     <Badge
                       className={`text-xs ${badgeVariant === 'destructive'
-                          ? 'bg-red-500'
-                          : badgeVariant === 'warning'
-                            ? 'bg-yellow-500'
-                            : 'bg-blue-500'
+                        ? 'bg-red-500'
+                        : badgeVariant === 'warning'
+                          ? 'bg-yellow-500'
+                          : 'bg-blue-500'
                         } text-white`}
                     >
                       {badge}

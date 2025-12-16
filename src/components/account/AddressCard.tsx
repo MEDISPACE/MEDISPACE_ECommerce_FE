@@ -43,11 +43,10 @@ export function AddressCard({ address, onEdit, onDelete, onSetDefault }: Address
   };
 
   return (
-    <Card className={`relative transition-all duration-200 hover:shadow-lg ${
-      address.isDefault 
-        ? "ring-2 ring-blue-500 bg-gradient-to-br from-blue-50 to-cyan-50" 
-        : "hover:shadow-md"
-    }`}>
+    <Card className={`relative transition-all duration-200 hover:shadow-lg border ${address.isDefault
+      ? "ring-2 ring-blue-500 bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200"
+      : "hover:shadow-md border-blue-200"
+      }`}>
       {address.isDefault && (
         <div className="absolute -top-2 -right-2">
           <Badge className="bg-gradient-to-r from-blue-600 to-cyan-500 text-white px-3 py-1 rounded-full shadow-lg">
@@ -56,7 +55,7 @@ export function AddressCard({ address, onEdit, onDelete, onSetDefault }: Address
           </Badge>
         </div>
       )}
-      
+
       <CardContent className="p-6">
         <div className="flex justify-between items-start mb-4">
           <div className="flex items-center gap-3">
@@ -72,7 +71,7 @@ export function AddressCard({ address, onEdit, onDelete, onSetDefault }: Address
               </div>
             </div>
           </div>
-          
+
           <Badge variant="outline" className="text-xs">
             {getTypeLabel(address.type)}
           </Badge>
@@ -86,10 +85,10 @@ export function AddressCard({ address, onEdit, onDelete, onSetDefault }: Address
           </div>
         </div>
 
-        <div className="flex items-center justify-between pt-4 border-t">
+        <div className="flex items-center justify-between pt-4 border-t border-blue-200">
           <div className="flex gap-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               onClick={() => onEdit(address)}
               className="text-blue-600 border-blue-200 hover:bg-blue-50"
@@ -97,12 +96,12 @@ export function AddressCard({ address, onEdit, onDelete, onSetDefault }: Address
               <Edit className="w-4 h-4 mr-1" />
               Sửa
             </Button>
-            
+
             {!address.isDefault && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size="sm"
                     className="text-red-600 border-red-200 hover:bg-red-50"
                     disabled={isDeleting}
@@ -120,7 +119,7 @@ export function AddressCard({ address, onEdit, onDelete, onSetDefault }: Address
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Hủy</AlertDialogCancel>
-                    <AlertDialogAction 
+                    <AlertDialogAction
                       onClick={handleDelete}
                       className="bg-red-600 hover:bg-red-700"
                     >
@@ -133,8 +132,8 @@ export function AddressCard({ address, onEdit, onDelete, onSetDefault }: Address
           </div>
 
           {!address.isDefault && (
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
               onClick={() => address.id && onSetDefault(address.id)}
               className="text-blue-600 hover:bg-blue-50"
