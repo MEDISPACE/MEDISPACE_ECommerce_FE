@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router'
 import { Header } from '../components/layout/Header'
 import { Footer } from '../components/layout/Footer'
+import { FloatingChatWidget } from '../components/chat'
 
 export default function Layout() {
   return (
@@ -19,6 +20,9 @@ export default function Layout() {
 
       {/* Footer with links, contact info */}
       <Footer />
+
+      {/* Floating Chat Widget (Customer only) */}
+      <FloatingChatWidget />
     </div>
   )
 }
