@@ -262,7 +262,7 @@ export function AboutUsPage() {
               Khám phá sản phẩm
             </a>
             <a
-              href='/consultation/chat'
+              href='/contact'
               className='inline-flex items-center justify-center gap-2 px-8 py-3 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-colors border-2 border-white/20'
             >
               Tư vấn miễn phí

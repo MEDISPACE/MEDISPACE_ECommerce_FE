@@ -1,5 +1,5 @@
-import { ChatManagementPage } from '~/components/pharmacist'
+import { PharmacistChatPage } from '~/components/pharmacist/PharmacistChatPage'
 
 export default function PharmacistChatRoute() {
-  return <ChatManagementPage />
+    return <PharmacistChatPage />
 }

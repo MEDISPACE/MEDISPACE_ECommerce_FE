@@ -490,7 +490,7 @@ export function CategoriesOverviewPage() {
               </p>
 
               <div className='flex flex-col sm:flex-row items-center justify-center gap-4'>
-                <Link to='/consultation/chat'>
+                <Link to='/contact'>
                   <Button
                     size='lg'
                     className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-8 py-4 text-lg'
