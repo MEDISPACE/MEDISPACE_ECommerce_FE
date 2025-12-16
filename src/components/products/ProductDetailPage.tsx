@@ -451,7 +451,7 @@ export function ProductDetailPage() {
                         Upload đơn thuốc
                       </Button>
                     </Link>
-                    <Link to={`/consultation/chat?product=${product.slug}`} className='flex-1'>
+                    <Link to={`/contact?product=${product.slug}`} className='flex-1'>
                       <Button
                         variant='outline'
                         className='w-full border-2 border-purple-200 text-purple-600 hover:bg-purple-50 hover:border-purple-300 h-12 shadow-md hover:shadow-lg transition-all'

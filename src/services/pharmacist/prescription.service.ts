@@ -67,15 +67,11 @@ export const prescriptionService = {
         }
         : undefined
 
-      console.log('Calling /prescriptions/pending with params:', queryParams)
-
       // Use /prescriptions/pending endpoint which is designed for pharmacists to see all prescriptions
       const response: AxiosResponse<{ message: string; result: { prescriptions: Prescription[]; pagination: any } }> =
         await apiClient.get('/prescriptions/pending', {
           params: queryParams,
         })
-
-      console.log('Response from /prescriptions/pending:', response.data)
 
       // Handle new response format with pagination
       if (response.data.result && response.data.result.prescriptions) {
@@ -84,12 +80,6 @@ export const prescriptionService = {
 
       return []
     } catch (error: unknown) {
-      const err = error as { response?: { data?: unknown; status?: number }; message?: string }
-      console.error('prescriptionService.getAll error:', {
-        status: err?.response?.status,
-        data: err?.response?.data,
-        message: err?.message,
-      })
       throw error
     }
   },
@@ -133,7 +123,6 @@ export const prescriptionService = {
       const response: AxiosResponse<{ message: string; result: PrescriptionStats }> =
         await apiClient.get('/prescriptions/stats')
 
-      console.log('Response from /prescriptions/stats:', response.data)
       return response.data.result
     } catch (error: unknown) {
       const err = error as { response?: { data?: unknown; status?: number }; message?: string }
