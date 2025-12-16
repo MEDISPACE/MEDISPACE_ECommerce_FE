@@ -231,8 +231,8 @@ export function AddressFormDialog({
             </div>
           )}
 
-          <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-2">
+          <div className="grid grid-cols-3 gap-3">
+            <div className="space-y-2 col-span-3">
               <Label htmlFor="province">Tỉnh/Thành phố</Label>
               <Select value={formData.province} onValueChange={(value) => setFormData(prev => ({ ...prev, province: value }))}>
                 <SelectTrigger>
@@ -247,7 +247,7 @@ export function AddressFormDialog({
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 col-span-1.5">
               <Label htmlFor="district">Quận/Huyện</Label>
               <Select
                 value={formData.district}
@@ -266,7 +266,7 @@ export function AddressFormDialog({
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 col-span-1">
               <Label htmlFor="ward">Phường/Xã</Label>
               <Select
                 value={formData.ward}

@@ -248,347 +248,352 @@ export function RewardsPage() {
   ]
 
   return (
-    
-      <EnhancedPageTransition>
-        <div className='space-y-6'>
-          {/* Page Header */}
-          <div className='flex items-center justify-between'>
-            <div>
-              <h1 className='text-3xl mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent'>
-                Điểm thưởng của tôi
-              </h1>
-              <p className='text-gray-600'>Tích điểm mỗi lần mua sắm và nhận nhiều ưu đãi hấp dẫn</p>
-            </div>
-            <Button className='bg-gradient-to-r from-blue-600 to-purple-600 text-white'>
-              <Gift className='w-4 h-4 mr-2' />
-              Lịch sử đổi quà
-            </Button>
+
+    <EnhancedPageTransition>
+      <div className='space-y-6'>
+        {/* Page Header */}
+        <div className='flex items-center justify-between'>
+          <div>
+            <h1 className='text-3xl mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent'>
+              Điểm thưởng của tôi
+            </h1>
+            <p className='text-gray-600'>Tích điểm mỗi lần mua sắm và nhận nhiều ưu đãi hấp dẫn</p>
           </div>
-
-          {/* Points Overview Card */}
-          <Card className='bg-gradient-to-br from-blue-600 via-purple-600 to-pink-500 text-white border-0 shadow-2xl overflow-hidden relative'>
-            <div className='absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32'></div>
-            <div className='absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24'></div>
-
-            <CardContent className='p-8 relative z-10'>
-              <div className='grid md:grid-cols-3 gap-8'>
-                {/* Total Points */}
-                <div>
-                  <div className='flex items-center gap-2 mb-2 opacity-90'>
-                    <Sparkles className='w-5 h-5' />
-                    <span className='text-sm'>Điểm hiện tại</span>
-                  </div>
-                  <div className='text-5xl mb-1'>{userPoints.toLocaleString()}</div>
-                  <p className='text-sm opacity-75'>điểm</p>
-                </div>
-
-                {/* Current Tier */}
-                <div>
-                  <div className='flex items-center gap-2 mb-2 opacity-90'>
-                    <Trophy className='w-5 h-5' />
-                    <span className='text-sm'>Hạng thành viên</span>
-                  </div>
-                  <div className='flex items-center gap-3 mb-1'>
-                    <div
-                      className={`w-12 h-12 bg-gradient-to-br ${currentTier.color} rounded-full flex items-center justify-center`}
-                    >
-                      {currentTier.icon}
-                    </div>
-                    <div>
-                      <div className='text-2xl'>{currentTier.name}</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Lifetime Points */}
-                <div>
-                  <div className='flex items-center gap-2 mb-2 opacity-90'>
-                    <TrendingUp className='w-5 h-5' />
-                    <span className='text-sm'>Tổng điểm tích lũy</span>
-                  </div>
-                  <div className='text-5xl mb-1'>{lifetimePoints.toLocaleString()}</div>
-                  <p className='text-sm opacity-75'>điểm</p>
-                </div>
-              </div>
-
-              {/* Progress to Next Tier */}
-              {nextTier && (
-                <div className='mt-8 p-4 bg-white/10 backdrop-blur-sm rounded-xl'>
-                  <div className='flex items-center justify-between mb-2 text-sm'>
-                    <span>Tiến độ lên hạng {nextTier.name}</span>
-                    <span>{pointsToNextTier.toLocaleString()} điểm nữa</span>
-                  </div>
-                  <Progress value={tierProgress} className='h-2 bg-white/20' />
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Tabs */}
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className='grid w-full grid-cols-4 bg-white/80 backdrop-blur-lg border-2 border-blue-100'>
-              <TabsTrigger value='overview' className='data-[state=active]:bg-blue-600 data-[state=active]:text-white'>
-                <Award className='w-4 h-4 mr-2' />
-                Tổng quan
-              </TabsTrigger>
-              <TabsTrigger value='vouchers' className='data-[state=active]:bg-blue-600 data-[state=active]:text-white'>
-                <Gift className='w-4 h-4 mr-2' />
-                Đổi quà
-              </TabsTrigger>
-              <TabsTrigger value='earn' className='data-[state=active]:bg-blue-600 data-[state=active]:text-white'>
-                <Zap className='w-4 h-4 mr-2' />
-                Cách tích điểm
-              </TabsTrigger>
-              <TabsTrigger value='history' className='data-[state=active]:bg-blue-600 data-[state=active]:text-white'>
-                <Clock className='w-4 h-4 mr-2' />
-                Lịch sử
-              </TabsTrigger>
-            </TabsList>
-
-            {/* Overview Tab */}
-            <TabsContent value='overview' className='space-y-6'>
-              {/* Membership Tiers */}
-              <Card className='bg-white/80 backdrop-blur-lg border-2 border-blue-100'>
-                <CardHeader>
-                  <CardTitle className='flex items-center gap-2'>
-                    <Trophy className='w-6 h-6 text-blue-600' />
-                    Các hạng thành viên
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className='grid md:grid-cols-4 gap-4'>
-                    {rewardTiers.map((tier, index) => (
-                      <motion.div
-                        key={tier.name}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                      >
-                        <Card
-                          className={`relative overflow-hidden ${
-                            index === currentTierIndex ? 'border-2 border-blue-500 shadow-lg' : 'border border-gray-200'
-                          }`}
-                        >
-                          {index === currentTierIndex && (
-                            <div className='absolute top-2 right-2'>
-                              <Badge className='bg-blue-600'>Hạng hiện tại</Badge>
-                            </div>
-                          )}
-                          <CardContent className='p-4 text-center'>
-                            <div
-                              className={`w-16 h-16 mx-auto mb-3 bg-gradient-to-br ${tier.color} rounded-full flex items-center justify-center text-white`}
-                            >
-                              {tier.icon}
-                            </div>
-                            <h3 className='mb-2'>{tier.name}</h3>
-                            <p className='text-xs text-gray-500 mb-3'>
-                              {tier.minPoints.toLocaleString()} -{' '}
-                              {tier.maxPoints === Infinity ? '∞' : tier.maxPoints.toLocaleString()} điểm
-                            </p>
-                            <div className='text-left space-y-1'>
-                              {tier.benefits.map((benefit, i) => (
-                                <p key={i} className='text-xs text-gray-600 flex items-start gap-1'>
-                                  <CheckCircle className='w-3 h-3 text-green-600 mt-0.5 flex-shrink-0' />
-                                  <span>{benefit}</span>
-                                </p>
-                              ))}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </motion.div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Quick Stats */}
-              <div className='grid md:grid-cols-3 gap-4'>
-                <Card className='bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200'>
-                  <CardContent className='p-6'>
-                    <div className='flex items-center justify-between'>
-                      <div>
-                        <p className='text-sm text-gray-600 mb-1'>Điểm sắp hết hạn</p>
-                        <p className='text-3xl text-blue-600'>0</p>
-                      </div>
-                      <div className='w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center'>
-                        <Clock className='w-6 h-6 text-white' />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className='bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200'>
-                  <CardContent className='p-6'>
-                    <div className='flex items-center justify-between'>
-                      <div>
-                        <p className='text-sm text-gray-600 mb-1'>Voucher đã đổi</p>
-                        <p className='text-3xl text-green-600'>8</p>
-                      </div>
-                      <div className='w-12 h-12 bg-green-600 rounded-full flex items-center justify-center'>
-                        <Gift className='w-6 h-6 text-white' />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className='bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200'>
-                  <CardContent className='p-6'>
-                    <div className='flex items-center justify-between'>
-                      <div>
-                        <p className='text-sm text-gray-600 mb-1'>Điểm tháng này</p>
-                        <p className='text-3xl text-purple-600'>+450</p>
-                      </div>
-                      <div className='w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center'>
-                        <TrendingUp className='w-6 h-6 text-white' />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-
-            {/* Vouchers Tab */}
-            <TabsContent value='vouchers' className='space-y-4'>
-              <div className='grid md:grid-cols-2 lg:grid-cols-3 gap-4'>
-                {voucherOffers.map((voucher, index) => (
-                  <motion.div
-                    key={voucher.id}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: index * 0.05 }}
-                  >
-                    <Card className='bg-white/80 backdrop-blur-lg border-2 border-blue-100 hover:border-blue-300 hover:shadow-lg transition-all'>
-                      <CardContent className='p-4'>
-                        <div className='flex items-start justify-between mb-3'>
-                          <Badge className='bg-blue-600 text-white'>{voucher.pointsCost} điểm</Badge>
-                          <Badge variant='outline' className='text-xs'>
-                            Còn {voucher.available}
-                          </Badge>
-                        </div>
-                        <h3 className='text-lg mb-1'>{voucher.title}</h3>
-                        <p className='text-sm text-gray-600 mb-3'>{voucher.description}</p>
-                        <div className='flex items-center justify-between text-xs text-gray-500 mb-4'>
-                          <span className='flex items-center gap-1'>
-                            <Clock className='w-3 h-3' />
-                            HSD: {voucher.validUntil}
-                          </span>
-                        </div>
-                        <Button
-                          className='w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white'
-                          disabled={userPoints < voucher.pointsCost}
-                        >
-                          {userPoints >= voucher.pointsCost ? 'Đổi ngay' : 'Chưa đủ điểm'}
-                          <ArrowRight className='w-4 h-4 ml-2' />
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
-              </div>
-            </TabsContent>
-
-            {/* Earn Points Tab */}
-            <TabsContent value='earn' className='space-y-6'>
-              <Card className='bg-white/80 backdrop-blur-lg border-2 border-blue-100'>
-                <CardHeader>
-                  <CardTitle className='flex items-center gap-2'>
-                    <Zap className='w-6 h-6 text-yellow-600' />
-                    Các cách tích điểm
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className='grid md:grid-cols-2 gap-6'>
-                    {earnPointsWays.map((way, index) => (
-                      <motion.div
-                        key={way.title}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        className='flex gap-4 p-4 bg-gray-50 rounded-xl hover:bg-blue-50 transition-colors'
-                      >
-                        <div className='flex-shrink-0'>{way.icon}</div>
-                        <div className='flex-1'>
-                          <h3 className='mb-1'>{way.title}</h3>
-                          <p className='text-sm text-gray-600 mb-2'>{way.description}</p>
-                          <Badge className='bg-blue-600 text-white'>{way.points}</Badge>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Tips */}
-              <Card className='bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-200'>
-                <CardContent className='p-6'>
-                  <div className='flex gap-3'>
-                    <Info className='w-6 h-6 text-yellow-600 flex-shrink-0' />
-                    <div>
-                      <h3 className='mb-2 text-yellow-900'>Mẹo tích điểm nhanh</h3>
-                      <ul className='space-y-1 text-sm text-yellow-800'>
-                        <li>• Mua sắm vào ngày sinh nhật để nhận điểm x2</li>
-                        <li>• Tham gia các chương trình khuyến mãi đặc biệt</li>
-                        <li>• Đánh giá sản phẩm sau khi mua để tích thêm điểm</li>
-                        <li>• Giới thiệu bạn bè để nhận 100 điểm/người</li>
-                      </ul>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* History Tab */}
-            <TabsContent value='history' className='space-y-4'>
-              <Card className='bg-white/80 backdrop-blur-lg border-2 border-blue-100'>
-                <CardHeader>
-                  <CardTitle>Lịch sử giao dịch điểm</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className='space-y-3'>
-                    {recentTransactions.map((transaction) => (
-                      <div
-                        key={transaction.id}
-                        className='flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-blue-50 transition-colors'
-                      >
-                        <div className='flex items-center gap-4'>
-                          <div
-                            className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                              transaction.type === 'earn' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
-                            }`}
-                          >
-                            {transaction.type === 'earn' ? (
-                              <TrendingUp className='w-5 h-5' />
-                            ) : (
-                              <Gift className='w-5 h-5' />
-                            )}
-                          </div>
-                          <div>
-                            <p className='font-medium'>{transaction.description}</p>
-                            <p className='text-sm text-gray-500'>{transaction.date}</p>
-                          </div>
-                        </div>
-                        <div className='text-right'>
-                          <p
-                            className={`text-lg font-semibold ${
-                              transaction.type === 'earn' ? 'text-green-600' : 'text-red-600'
-                            }`}
-                          >
-                            {transaction.type === 'earn' ? '+' : ''}
-                            {transaction.points.toLocaleString()}
-                          </p>
-                          <Badge variant={transaction.status === 'completed' ? 'default' : 'outline'}>
-                            {transaction.status === 'completed' ? 'Hoàn thành' : 'Đang xử lý'}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+          <Button className='bg-gradient-to-r from-blue-600 to-purple-600 text-white'>
+            <Gift className='w-4 h-4 mr-2' />
+            Lịch sử đổi quà
+          </Button>
         </div>
-      </EnhancedPageTransition>
-    
+
+        {/* Points Overview Card */}
+        <Card className='bg-gradient-to-br from-blue-600 via-purple-600 to-pink-500 text-white border-0 shadow-2xl overflow-hidden relative'>
+          <div className='absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32'></div>
+          <div className='absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24'></div>
+
+          <CardContent className='p-8 relative z-10'>
+            <div className='grid md:grid-cols-3 gap-8'>
+              {/* Total Points */}
+              <div>
+                <div className='flex items-center gap-2 mb-2 opacity-90'>
+                  <Sparkles className='w-5 h-5' />
+                  <span className='text-sm'>Điểm hiện tại</span>
+                </div>
+                <div className='text-5xl mb-1'>{userPoints.toLocaleString()}</div>
+                <p className='text-sm opacity-75'>điểm</p>
+              </div>
+
+              {/* Current Tier */}
+              <div>
+                <div className='flex items-center gap-2 mb-2 opacity-90'>
+                  <Trophy className='w-5 h-5' />
+                  <span className='text-sm'>Hạng thành viên</span>
+                </div>
+                <div className='flex items-center gap-3 mb-1'>
+                  <div
+                    className={`w-12 h-12 bg-gradient-to-br ${currentTier.color} rounded-full flex items-center justify-center`}
+                  >
+                    {currentTier.icon}
+                  </div>
+                  <div>
+                    <div className='text-2xl'>{currentTier.name}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Lifetime Points */}
+              <div>
+                <div className='flex items-center gap-2 mb-2 opacity-90'>
+                  <TrendingUp className='w-5 h-5' />
+                  <span className='text-sm'>Tổng điểm tích lũy</span>
+                </div>
+                <div className='text-5xl mb-1'>{lifetimePoints.toLocaleString()}</div>
+                <p className='text-sm opacity-75'>điểm</p>
+              </div>
+            </div>
+
+            {/* Progress to Next Tier */}
+            {nextTier && (
+              <div className='mt-8 p-4 bg-white/10 backdrop-blur-sm rounded-xl'>
+                <div className='flex items-center justify-between mb-2 text-sm'>
+                  <span>Tiến độ lên hạng {nextTier.name}</span>
+                  <span>{pointsToNextTier.toLocaleString()} điểm nữa</span>
+                </div>
+                <Progress value={tierProgress} className='h-2 bg-white/20' />
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className='inline-flex w-full overflow-x-auto bg-blue-100 p-1 rounded-lg shadow-sm scrollbar-hide'>
+            <TabsTrigger value='overview' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+              <span className='whitespace-nowrap flex items-center gap-1'>
+                <Award className='w-4 h-4' />
+                Tổng quan
+              </span>
+            </TabsTrigger>
+            <TabsTrigger value='vouchers' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+              <span className='whitespace-nowrap flex items-center gap-1'>
+                <Gift className='w-4 h-4' />
+                Đổi quà
+              </span>
+            </TabsTrigger>
+            <TabsTrigger value='earn' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+              <span className='whitespace-nowrap flex items-center gap-1'>
+                <Zap className='w-4 h-4' />
+                Cách tích điểm
+              </span>
+            </TabsTrigger>
+            <TabsTrigger value='history' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+              <span className='whitespace-nowrap flex items-center gap-1'>
+                <Clock className='w-4 h-4' />
+                Lịch sử
+              </span>
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Overview Tab */}
+          <TabsContent value='overview' className='space-y-6'>
+            {/* Membership Tiers */}
+            <Card className='bg-white/80 backdrop-blur-lg border-2 border-blue-100'>
+              <CardHeader>
+                <CardTitle className='flex items-center gap-2'>
+                  <Trophy className='w-6 h-6 text-blue-600' />
+                  Các hạng thành viên
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className='grid md:grid-cols-4 gap-4'>
+                  {rewardTiers.map((tier, index) => (
+                    <motion.div
+                      key={tier.name}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <Card
+                        className={`relative overflow-hidden ${index === currentTierIndex ? 'border-2 border-blue-500 shadow-lg' : 'border border-gray-200'
+                          }`}
+                      >
+                        {index === currentTierIndex && (
+                          <div className='absolute top-2 right-2'>
+                            <Badge className='bg-blue-600'>Hạng hiện tại</Badge>
+                          </div>
+                        )}
+                        <CardContent className='p-4 text-center'>
+                          <div
+                            className={`w-16 h-16 mx-auto mb-3 bg-gradient-to-br ${tier.color} rounded-full flex items-center justify-center text-white`}
+                          >
+                            {tier.icon}
+                          </div>
+                          <h3 className='mb-2'>{tier.name}</h3>
+                          <p className='text-xs text-gray-500 mb-3'>
+                            {tier.minPoints.toLocaleString()} -{' '}
+                            {tier.maxPoints === Infinity ? '∞' : tier.maxPoints.toLocaleString()} điểm
+                          </p>
+                          <div className='text-left space-y-1'>
+                            {tier.benefits.map((benefit, i) => (
+                              <p key={i} className='text-xs text-gray-600 flex items-start gap-1'>
+                                <CheckCircle className='w-3 h-3 text-green-600 mt-0.5 flex-shrink-0' />
+                                <span>{benefit}</span>
+                              </p>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Quick Stats */}
+            <div className='grid md:grid-cols-3 gap-4'>
+              <Card className='bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200'>
+                <CardContent className='p-6'>
+                  <div className='flex items-center justify-between'>
+                    <div>
+                      <p className='text-sm text-gray-600 mb-1'>Điểm sắp hết hạn</p>
+                      <p className='text-3xl text-blue-600'>0</p>
+                    </div>
+                    <div className='w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center'>
+                      <Clock className='w-6 h-6 text-white' />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className='bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200'>
+                <CardContent className='p-6'>
+                  <div className='flex items-center justify-between'>
+                    <div>
+                      <p className='text-sm text-gray-600 mb-1'>Voucher đã đổi</p>
+                      <p className='text-3xl text-green-600'>8</p>
+                    </div>
+                    <div className='w-12 h-12 bg-green-600 rounded-full flex items-center justify-center'>
+                      <Gift className='w-6 h-6 text-white' />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className='bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200'>
+                <CardContent className='p-6'>
+                  <div className='flex items-center justify-between'>
+                    <div>
+                      <p className='text-sm text-gray-600 mb-1'>Điểm tháng này</p>
+                      <p className='text-3xl text-purple-600'>+450</p>
+                    </div>
+                    <div className='w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center'>
+                      <TrendingUp className='w-6 h-6 text-white' />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Vouchers Tab */}
+          <TabsContent value='vouchers' className='space-y-4'>
+            <div className='grid md:grid-cols-2 lg:grid-cols-3 gap-4'>
+              {voucherOffers.map((voucher, index) => (
+                <motion.div
+                  key={voucher.id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <Card className='bg-white/80 backdrop-blur-lg border-2 border-blue-100 hover:border-blue-300 hover:shadow-lg transition-all'>
+                    <CardContent className='p-4'>
+                      <div className='flex items-start justify-between mb-3'>
+                        <Badge className='bg-blue-600 text-white'>{voucher.pointsCost} điểm</Badge>
+                        <Badge variant='outline' className='text-xs'>
+                          Còn {voucher.available}
+                        </Badge>
+                      </div>
+                      <h3 className='text-lg mb-1'>{voucher.title}</h3>
+                      <p className='text-sm text-gray-600 mb-3'>{voucher.description}</p>
+                      <div className='flex items-center justify-between text-xs text-gray-500 mb-4'>
+                        <span className='flex items-center gap-1'>
+                          <Clock className='w-3 h-3' />
+                          HSD: {voucher.validUntil}
+                        </span>
+                      </div>
+                      <Button
+                        className='w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white'
+                        disabled={userPoints < voucher.pointsCost}
+                      >
+                        {userPoints >= voucher.pointsCost ? 'Đổi ngay' : 'Chưa đủ điểm'}
+                        <ArrowRight className='w-4 h-4 ml-2' />
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </TabsContent>
+
+          {/* Earn Points Tab */}
+          <TabsContent value='earn' className='space-y-6'>
+            <Card className='bg-white/80 backdrop-blur-lg border-2 border-blue-100'>
+              <CardHeader>
+                <CardTitle className='flex items-center gap-2'>
+                  <Zap className='w-6 h-6 text-yellow-600' />
+                  Các cách tích điểm
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className='grid md:grid-cols-2 gap-6'>
+                  {earnPointsWays.map((way, index) => (
+                    <motion.div
+                      key={way.title}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className='flex gap-4 p-4 bg-gray-50 rounded-xl hover:bg-blue-50 transition-colors'
+                    >
+                      <div className='flex-shrink-0'>{way.icon}</div>
+                      <div className='flex-1'>
+                        <h3 className='mb-1'>{way.title}</h3>
+                        <p className='text-sm text-gray-600 mb-2'>{way.description}</p>
+                        <Badge className='bg-blue-600 text-white'>{way.points}</Badge>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Tips */}
+            <Card className='bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-200'>
+              <CardContent className='p-6'>
+                <div className='flex gap-3'>
+                  <Info className='w-6 h-6 text-yellow-600 flex-shrink-0' />
+                  <div>
+                    <h3 className='mb-2 text-yellow-900'>Mẹo tích điểm nhanh</h3>
+                    <ul className='space-y-1 text-sm text-yellow-800'>
+                      <li>• Mua sắm vào ngày sinh nhật để nhận điểm x2</li>
+                      <li>• Tham gia các chương trình khuyến mãi đặc biệt</li>
+                      <li>• Đánh giá sản phẩm sau khi mua để tích thêm điểm</li>
+                      <li>• Giới thiệu bạn bè để nhận 100 điểm/người</li>
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* History Tab */}
+          <TabsContent value='history' className='space-y-4'>
+            <Card className='bg-white/80 backdrop-blur-lg border-2 border-blue-100'>
+              <CardHeader>
+                <CardTitle>Lịch sử giao dịch điểm</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className='space-y-3'>
+                  {recentTransactions.map((transaction) => (
+                    <div
+                      key={transaction.id}
+                      className='flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-blue-50 transition-colors'
+                    >
+                      <div className='flex items-center gap-4'>
+                        <div
+                          className={`w-10 h-10 rounded-full flex items-center justify-center ${transaction.type === 'earn' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                            }`}
+                        >
+                          {transaction.type === 'earn' ? (
+                            <TrendingUp className='w-5 h-5' />
+                          ) : (
+                            <Gift className='w-5 h-5' />
+                          )}
+                        </div>
+                        <div>
+                          <p className='font-medium'>{transaction.description}</p>
+                          <p className='text-sm text-gray-500'>{transaction.date}</p>
+                        </div>
+                      </div>
+                      <div className='text-right'>
+                        <p
+                          className={`text-lg font-semibold ${transaction.type === 'earn' ? 'text-green-600' : 'text-red-600'
+                            }`}
+                        >
+                          {transaction.type === 'earn' ? '+' : ''}
+                          {transaction.points.toLocaleString()}
+                        </p>
+                        <Badge variant={transaction.status === 'completed' ? 'default' : 'outline'}>
+                          {transaction.status === 'completed' ? 'Hoàn thành' : 'Đang xử lý'}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </EnhancedPageTransition>
+
   )
 }

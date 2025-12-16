@@ -97,6 +97,7 @@ export default [
     route('create-order', 'routes/admin/create-order.tsx'),
     route('categories', 'routes/admin/categories.tsx'),
     route('content', 'routes/admin/content.tsx'),
+    route('reviews', 'routes/admin/reviews.tsx'),
     route('customers', 'routes/admin/customers/index.tsx'),
     route('inventory', 'routes/admin/inventory/index.tsx'),
     route('orders', 'routes/admin/orders.tsx'),

@@ -67,11 +67,11 @@ export function NotificationItem({ notification, onMarkAsRead, onAction }: Notif
     const date = new Date(timestamp);
     const now = new Date();
     const diff = now.getTime() - date.getTime();
-    
+
     const minutes = Math.floor(diff / (1000 * 60));
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    
+
     if (minutes < 60) {
       return `${minutes} phút trước`;
     } else if (hours < 24) {
@@ -85,7 +85,7 @@ export function NotificationItem({ notification, onMarkAsRead, onAction }: Notif
 
   const handleMarkAsRead = async () => {
     if (notification.isRead) return;
-    
+
     setIsProcessing(true);
     try {
       await onMarkAsRead(notification.id);
@@ -101,17 +101,16 @@ export function NotificationItem({ notification, onMarkAsRead, onAction }: Notif
   };
 
   return (
-    <Card className={`transition-all duration-200 hover:shadow-md ${
-      !notification.isRead 
-        ? "border-l-4 border-l-blue-500 bg-gradient-to-r from-blue-50/50 to-transparent" 
-        : ""
-    }`}>
+    <Card className={`transition-all duration-200 hover:shadow-md ${!notification.isRead
+      ? "border-blue-200 border-l-4 border-l-blue-500 bg-gradient-to-r from-blue-50/50 to-transparent"
+      : "border-blue-200"
+      }`}>
       <CardContent className="p-4">
         <div className="flex items-start gap-4">
           <div className="flex-shrink-0 mt-1">
             {getIcon()}
           </div>
-          
+
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
@@ -122,7 +121,7 @@ export function NotificationItem({ notification, onMarkAsRead, onAction }: Notif
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                 )}
               </div>
-              
+
               <div className="flex items-center gap-2 text-xs text-gray-500">
                 <Clock className="w-3 h-3" />
                 {formatTimestamp(notification.timestamp)}
@@ -132,7 +131,7 @@ export function NotificationItem({ notification, onMarkAsRead, onAction }: Notif
             <h4 className="font-medium text-gray-900 mb-1 line-clamp-1">
               {notification.title}
             </h4>
-            
+
             <p className="text-sm text-gray-600 line-clamp-2 mb-3 leading-relaxed">
               {notification.message}
             </p>
@@ -140,8 +139,8 @@ export function NotificationItem({ notification, onMarkAsRead, onAction }: Notif
             <div className="flex items-center justify-between">
               <div className="flex gap-2">
                 {notification.actionUrl && notification.actionText && (
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size="sm"
                     onClick={handleAction}
                     className="text-blue-600 border-blue-200 hover:bg-blue-50"
@@ -152,8 +151,8 @@ export function NotificationItem({ notification, onMarkAsRead, onAction }: Notif
               </div>
 
               {!notification.isRead && (
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="sm"
                   onClick={handleMarkAsRead}
                   disabled={isProcessing}

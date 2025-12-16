@@ -99,16 +99,15 @@ export const API_ENDPOINTS = {
     CHECKOUT: '/cart/checkout',
   },
 
-  // Review endpoints (TODO: Update when backend implements reviews API)
+  // Review endpoints
   REVIEWS: {
     BASE: '/reviews',
-    BY_ID: (id: string) => `/reviews/${id}`,
-    BY_PRODUCT: '/reviews/product',
-    CREATE: '/reviews',
-    UPDATE: (id: string) => `/reviews/${id}`,
-    DELETE: (id: string) => `/reviews/${id}`,
-    MARK_HELPFUL: (id: string) => `/reviews/${id}/helpful`,
-    GET_RATING: (productId: string) => `/reviews/rating/${productId}`,
+    BY_PRODUCT: (productId: string) => `/reviews/product/${productId}`,
+    STATS: (productId: string) => `/reviews/product/${productId}/stats`,
+    USER: '/reviews/user',
+    BY_ID: (reviewId: string) => `/reviews/${reviewId}`,
+    HELPFUL: (reviewId: string) => `/reviews/${reviewId}/helpful`,
+    MODERATE: (reviewId: string) => `/reviews/${reviewId}/moderate`,
   },
 } as const
 

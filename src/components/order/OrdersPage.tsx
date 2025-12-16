@@ -25,47 +25,61 @@ export function OrdersPage() {
       setLoading(true)
       const fetchedOrders = await orderService.getOrders()
       // Transform to account Order type
-      const transformedOrders: Order[] = fetchedOrders.map(order => ({
-        id: order.id,
-        customerId: order.userId,
-        orderNumber: order.orderNumber,
-        status: (order.status === 'pending' ? 'pending_payment' : order.status === 'shipped' ? 'shipping' : order.status === 'confirmed' ? 'confirmed' : order.status === 'processing' ? 'processing' : order.status === 'delivered' ? 'delivered' : order.status === 'cancelled' ? 'cancelled' : 'pending_payment') as 'pending_payment' | 'confirmed' | 'processing' | 'preparing' | 'shipping' | 'delivered' | 'cancelled',
-        items: order.items.map(item => ({
-          id: item.id,
-          productId: item.productId,
-          productName: item.product.name,
-          productImage: item.product.images?.[0] || '',
-          brand: item.product.brand?.name || '',
-          unit: item.product.unit || 'viên',
-          quantity: item.quantity,
-          unitPrice: item.price,
-          subtotal: item.total,
-          isPrescription: item.product.requiresPrescription || false,
-        })),
-        subtotal: order.subtotal,
-        shippingFee: order.shipping,
-        discount: order.discount,
-        total: order.total,
-        shippingAddress: {
-          id: '',
-          userId: order.userId,
-          type: 'home',
-          recipientName: `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`,
-          phone: order.shippingAddress.phone,
-          addressLine1: order.shippingAddress.address,
-          ward: order.shippingAddress.ward,
-          district: order.shippingAddress.district,
-          city: order.shippingAddress.city,
-          isDefault: false,
-        },
-        paymentMethod: order.paymentMethod,
-        paymentStatus: (order.paymentStatus === 'pending' ? 'pending' : order.paymentStatus === 'paid' ? 'paid' : order.paymentStatus === 'failed' ? 'failed' : order.paymentStatus === 'refunded' ? 'refunded' : 'pending') as 'pending' | 'paid' | 'failed' | 'refunded',
-        createdAt: order.createdAt,
-        updatedAt: order.updatedAt,
-        deliveryMethod: order.shippingMethod,
-        notes: order.notes,
-        timeline: [], // TODO: Add timeline if available
-      }))
+      const transformedOrders: Order[] = fetchedOrders.map(order => {
+        // Determine display status based on both orderStatus and paymentStatus
+        let displayStatus: 'pending_payment' | 'confirmed' | 'processing' | 'preparing' | 'shipping' | 'delivered' | 'cancelled' | 'pending'
+
+        if (order.status === 'pending') {
+          // If order is pending, check payment status
+          displayStatus = order.paymentStatus === 'pending' ? 'pending_payment' : 'pending'
+        } else if (order.status === 'shipped') {
+          displayStatus = 'shipping'
+        } else {
+          displayStatus = order.status as any
+        }
+
+        return {
+          id: order.id,
+          customerId: order.userId,
+          orderNumber: order.orderNumber,
+          status: displayStatus,
+          items: order.items.map(item => ({
+            id: item.id,
+            productId: item.productId,
+            productName: item.product.name,
+            productImage: item.product.images?.[0] || '',
+            brand: item.product.brand?.name || '',
+            unit: item.product.unit || 'viên',
+            quantity: item.quantity,
+            unitPrice: item.price,
+            subtotal: item.total,
+            isPrescription: item.product.requiresPrescription || false,
+          })),
+          subtotal: order.subtotal,
+          shippingFee: order.shipping,
+          discount: order.discount,
+          total: order.total,
+          shippingAddress: {
+            id: '',
+            userId: order.userId,
+            type: 'home',
+            recipientName: `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`,
+            phone: order.shippingAddress.phone,
+            addressLine1: order.shippingAddress.address,
+            ward: order.shippingAddress.ward,
+            district: order.shippingAddress.district,
+            city: order.shippingAddress.province,
+            isDefault: false,
+          },
+          paymentMethod: order.paymentMethod,
+          paymentStatus: (order.paymentStatus === 'pending' ? 'pending' : order.paymentStatus === 'paid' ? 'paid' : order.paymentStatus === 'failed' ? 'failed' : order.paymentStatus === 'refunded' ? 'refunded' : 'pending') as 'pending' | 'paid' | 'failed' | 'refunded',
+          createdAt: order.createdAt,
+          updatedAt: order.updatedAt,
+          deliveryMethod: order.shippingMethod,
+          notes: order.notes,
+          timeline: [], // TODO: Add timeline if available,
+        }
+      })
       setOrders(transformedOrders)
     } catch (error) {
     } finally {
@@ -188,19 +202,24 @@ export function OrdersPage() {
 
       {/* Status Tabs */}
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className='w-full'>
-        <TabsList className='grid w-full grid-cols-2 md:grid-cols-6 bg-blue-50'>
+        <TabsList className='inline-flex w-full overflow-x-auto bg-blue-100 p-1 rounded-lg shadow-sm scrollbar-hide'>
           {tabs.map((tab) => (
-            <TabsTrigger key={tab.value} value={tab.value} className='text-xs md:text-sm'>
-              {tab.label}
+            <TabsTrigger key={tab.value} value={tab.value} className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 !text-gray-700 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+              <span className='whitespace-nowrap'>{tab.label}</span>
               {tab.count > 0 && (
-                <span className='ml-2 bg-blue-600 text-white rounded-full px-2 py-0.5 text-xs'>{tab.count}</span>
+                <span className={`ml-2 rounded-full px-2 py-0.5 text-xs font-medium ${selectedTab === tab.value
+                  ? 'bg-white text-blue-500'
+                  : 'bg-blue-400 text-white'
+                  }`}>
+                  {tab.count}
+                </span>
               )}
             </TabsTrigger>
           ))}
         </TabsList>
 
         {/* Orders List */}
-        <div className='mt-6'>
+        <div className='mt-5'>
           {filteredOrders.length > 0 ? (
             <div className='space-y-4'>
               {filteredOrders.map((order) => (

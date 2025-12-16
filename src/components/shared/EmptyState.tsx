@@ -10,17 +10,17 @@ interface EmptyStateProps {
   onAction?: () => void;
 }
 
-export function EmptyState({ 
-  icon, 
-  title, 
-  description, 
-  actionLabel, 
-  actionUrl, 
-  onAction 
+export function EmptyState({
+  icon,
+  title,
+  description,
+  actionLabel,
+  actionUrl,
+  onAction
 }: EmptyStateProps) {
   return (
     <Card className="border-blue-100">
-      <CardContent className="text-center py-12 px-6">
+      <CardContent className="text-center py-12 px-6 border-blue-100">
         <div className="text-blue-300 mb-4 flex justify-center">
           {icon}
         </div>
@@ -30,7 +30,7 @@ export function EmptyState({
         <p className="text-gray-600 mb-6 max-w-md mx-auto">
           {description}
         </p>
-        
+
         {(actionLabel && (actionUrl || onAction)) && (
           <div>
             {actionUrl ? (
@@ -40,7 +40,7 @@ export function EmptyState({
                 </Button>
               </a>
             ) : (
-              <Button 
+              <Button
                 onClick={onAction}
                 className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600"
               >
