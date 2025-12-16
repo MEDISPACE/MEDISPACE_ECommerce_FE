@@ -10,10 +10,10 @@ interface RatingStarsProps {
   onRatingChange?: (rating: number) => void;
 }
 
-export function RatingStars({ 
-  rating, 
-  maxRating = 5, 
-  size = "md", 
+export function RatingStars({
+  rating,
+  maxRating = 5,
+  size = "md",
   showRating = true,
   reviewCount,
   clickable = false,
@@ -21,7 +21,7 @@ export function RatingStars({
 }: RatingStarsProps) {
   const sizeClasses = {
     sm: "w-3 h-3",
-    md: "w-4 h-4", 
+    md: "w-4 h-4",
     lg: "w-5 h-5"
   };
 
@@ -44,28 +44,28 @@ export function RatingStars({
           const starRating = index + 1;
           const isFilled = starRating <= rating;
           const isHalfFilled = starRating - 0.5 <= rating && starRating > rating;
-          
+
           return (
             <button
               key={index}
+              type="button"
               onClick={() => handleStarClick(starRating)}
               className={`${clickable ? 'cursor-pointer hover:scale-110' : 'cursor-default'} transition-transform`}
               disabled={!clickable}
             >
-              <Star 
-                className={`${sizeClasses[size]} ${
-                  isFilled 
-                    ? 'fill-yellow-400 text-yellow-400' 
-                    : isHalfFilled 
-                    ? 'fill-yellow-400/50 text-yellow-400' 
-                    : 'fill-gray-200 text-gray-200'
-                }`}
+              <Star
+                className={`${sizeClasses[size]} ${isFilled
+                    ? 'fill-yellow-400 text-yellow-400'
+                    : isHalfFilled
+                      ? 'fill-yellow-400/50 text-yellow-400'
+                      : 'fill-gray-200 text-gray-200'
+                  }`}
               />
             </button>
           );
         })}
       </div>
-      
+
       {showRating && (
         <div className={`${textSizeClasses[size]} text-gray-600 flex items-center gap-1`}>
           <span className="font-medium">{rating.toFixed(1)}</span>

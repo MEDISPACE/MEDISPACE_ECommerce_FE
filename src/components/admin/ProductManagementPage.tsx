@@ -32,7 +32,16 @@ import {
 } from '../ui/dropdown-menu'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { EntityFormDialog, EntityDeleteDialog } from '../shared/EntityFormDialog'
-import { TextField, SelectField, FormGrid, FormSection, SwitchField, TextAreaField, ImageUploadField, MultipleImageUploadField } from '../shared/EntityFormFields'
+import {
+  TextField,
+  SelectField,
+  FormGrid,
+  FormSection,
+  SwitchField,
+  TextAreaField,
+  ImageUploadField,
+  MultipleImageUploadField,
+} from '../shared/EntityFormFields'
 import { getStatusBadge, getPrescriptionBadge } from '../../utils/badgeUtils'
 import productService from '../../services/productService'
 import adminService from '../../services/adminService'
@@ -41,29 +50,7 @@ import { PaginationComponent } from '../shared/PaginationComponent'
 import { toast } from 'sonner'
 
 // Use Product type from types/product.ts
-import type { Product as ProductType } from '../../types/product'
-interface Product {
-  id: string
-  name: string
-  slug: string
-  sku: string
-  category: string
-  manufacturer: string
-  price: number
-  originalPrice?: number
-  stock: number
-  status: 'active' | 'inactive' | 'out_of_stock'
-  requiresPrescription: boolean
-  salesCount: number
-  createdAt: string
-  image?: string
-  images?: string[]
-  description?: string
-  featured?: boolean
-}
-
-// Extend with local fields if needed
-type Product = ProductType
+import type { Product } from '../../types/product'
 
 export function ProductManagementPage() {
   const queryClient = useQueryClient()
@@ -507,10 +494,13 @@ export function ProductManagementPage() {
                 <SelectItem value='otc'>OTC</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={itemsPerPage.toString()} onValueChange={(v) => {
-              setItemsPerPage(Number(v))
-              setCurrentPage(1)
-            }}>
+            <Select
+              value={itemsPerPage.toString()}
+              onValueChange={(v) => {
+                setItemsPerPage(Number(v))
+                setCurrentPage(1)
+              }}
+            >
               <SelectTrigger className='w-40 border-2 border-blue-200'>
                 <SelectValue />
               </SelectTrigger>
@@ -567,14 +557,18 @@ export function ProductManagementPage() {
                     <TableRow key={product._id} className='hover:bg-blue-50/50'>
                       <TableCell>
                         <div className='w-48 sm:w-56 md:w-64 lg:w-72 xl:w-80'>
-                          <p className='font-medium text-gray-900 truncate' title={product.name}>{product.name}</p>
+                          <p className='font-medium text-gray-900 truncate' title={product.name}>
+                            {product.name}
+                          </p>
                           <p className='text-sm text-gray-500 truncate'>{product.brand?.name || 'N/A'}</p>
                         </div>
                       </TableCell>
                       <TableCell className='hidden sm:table-cell'>
                         <div className='flex items-center gap-1 w-24 sm:w-28 lg:w-32 overflow-hidden'>
                           <Barcode className='w-4 h-4 text-gray-400 flex-shrink-0' />
-                          <span className='font-mono text-sm truncate block' title={product.sku}>{product.sku}</span>
+                          <span className='font-mono text-sm truncate block' title={product.sku}>
+                            {product.sku}
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell className='hidden md:table-cell'>
@@ -605,9 +599,7 @@ export function ProductManagementPage() {
                               Hoạt động
                             </Badge>
                           ) : (
-                            <Badge className='bg-gray-100 text-gray-700 hover:bg-gray-200'>
-                              Không hoạt động
-                            </Badge>
+                            <Badge className='bg-gray-100 text-gray-700 hover:bg-gray-200'>Không hoạt động</Badge>
                           )}
                         </div>
                       </TableCell>
@@ -652,13 +644,10 @@ export function ProductManagementPage() {
           {productsData.length > 0 && totalPages > 1 && (
             <div className='mt-6 flex items-center justify-between border-t pt-4'>
               <div className='text-sm text-gray-600'>
-                Hiển thị {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, productsData.length)} trong tổng số {productsData.length} sản phẩm
+                Hiển thị {(currentPage - 1) * itemsPerPage + 1} -{' '}
+                {Math.min(currentPage * itemsPerPage, productsData.length)} trong tổng số {productsData.length} sản phẩm
               </div>
-              <PaginationComponent
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-              />
+              <PaginationComponent currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
             </div>
           )}
         </CardContent>
@@ -798,8 +787,9 @@ export function ProductManagementPage() {
             onChange={(v) => updateFormData('featuredImage', v)}
             placeholder='https://example.com/image.jpg'
           />
+        </FormSection>
 
-        <FormSection title='Hình ảnh sản phẩm'>
+        <FormSection title='Hình ảnh sản phẩm (Legacy)'>
           <ImageUploadField
             label='Ảnh đại diện'
             value={formState.data.image || ''}

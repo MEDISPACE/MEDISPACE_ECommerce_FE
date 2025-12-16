@@ -1,5 +1,6 @@
 // Account management barrel export
 export { AccountDashboard } from './AccountDashboard';
+export { AccountReviewsPage } from './AccountReviewsPage';
 export { AddressBookPage } from './AddressBookPage';
 export { AddressCard } from './AddressCard';
 export { ChangePasswordPage } from './ChangePasswordPage';
