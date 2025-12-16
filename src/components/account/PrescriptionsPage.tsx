@@ -220,7 +220,7 @@ export function PrescriptionsPage() {
             </DialogContent>
           </Dialog>
 
-          <Link to={`/consultation/chat?prescription=${prescription.id}`}>
+          <Link to={`/contact?prescription=${prescription.id}`}>
             <Button variant='outline' size='sm'>
               <MessageCircle className='w-4 h-4 mr-1' />
               Chat DS

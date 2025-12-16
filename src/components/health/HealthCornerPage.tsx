@@ -261,7 +261,7 @@ export function HealthCornerPage() {
                 </CardHeader>
                 <CardContent className='space-y-3'>
                   <Button variant='outline' className='w-full justify-start text-left' asChild>
-                    <a href='/consultation/chat'>
+                    <a href='/contact'>
                       <Stethoscope className='w-4 h-4 mr-2' />
                       Tư vấn dược sĩ
                     </a>

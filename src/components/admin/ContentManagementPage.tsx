@@ -68,7 +68,7 @@ const mockBanners: Banner[] = [
     id: 'B002',
     title: 'Tư vấn miễn phí 24/7',
     imageUrl: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800',
-    link: '/consultation/chat',
+    link: '/contact',
     position: 'sidebar',
     status: 'active',
     startDate: '2025-01-01',

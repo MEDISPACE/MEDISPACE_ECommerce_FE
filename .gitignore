@@ -8,3 +8,5 @@
 
 # Custom ignore
 README.txt
+
+.env
