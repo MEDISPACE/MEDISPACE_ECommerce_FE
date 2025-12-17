@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { format, isToday, isYesterday } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import type { Message } from '../../types/chat'
@@ -24,6 +24,7 @@ export function MessageList({
     onLoadMore,
     hasMore
 }: MessageListProps) {
+    const [selectedImage, setSelectedImage] = useState<string | null>(null)
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const messagesContainerRef = useRef<HTMLDivElement>(null)
 
@@ -152,11 +153,21 @@ export function MessageList({
                                 >
                                     {/* Image message */}
                                     {message.type === 'image' && message.imageUrl && (
-                                        <img
-                                            src={message.imageUrl}
-                                            alt="Sent image"
-                                            className="max-w-xs rounded-lg mb-2"
-                                        />
+                                        <div
+                                            className="relative group cursor-pointer"
+                                            onClick={() => setSelectedImage(message.imageUrl || null)}
+                                        >
+                                            <img
+                                                src={message.imageUrl}
+                                                alt="Sent image"
+                                                className="max-w-xs rounded-lg mb-2 hover:opacity-90 transition-opacity"
+                                            />
+                                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded-lg">
+                                                <div className="bg-black/50 p-2 rounded-full text-white">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                                </div>
+                                            </div>
+                                        </div>
                                     )}
 
                                     {/* Text content */}
@@ -195,6 +206,27 @@ export function MessageList({
 
             {/* Scroll anchor */}
             <div ref={messagesEndRef} />
+
+            {/* Image Viewer Modal */}
+            {selectedImage && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 animate-in fade-in duration-200"
+                    onClick={() => setSelectedImage(null)}
+                >
+                    <button
+                        className="absolute top-4 right-4 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 p-2 rounded-full transition-colors"
+                        onClick={() => setSelectedImage(null)}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                    <img
+                        src={selectedImage}
+                        alt="Full view"
+                        className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                </div>
+            )}
         </div>
     )
 }
