@@ -5,6 +5,7 @@ import { Badge } from '../ui/badge'
 import { ChatWindow } from './ChatWindow'
 import { chatService } from '~/services/chatService'
 import { useAuth } from '~/contexts/AuthContext'
+import { useSocket } from '~/hooks/useSocket'
 import type { Conversation } from '~/types/chat'
 import { toast } from 'sonner'
 
@@ -18,6 +19,30 @@ export function FloatingChatWidget() {
 
     // Only show for customers
     const isCustomer = user?.role === 0
+
+    // Socket integration for real-time updates
+    const { isConnected } = useSocket({
+        onNewMessage: (message) => {
+            // Update unread count if chat is closed or minimized
+            if (!isOpen || isMinimized) {
+                setUnreadCount(prev => prev + 1)
+            }
+
+            // Reload conversation if it's the current one
+            if (conversation && message.conversationId === conversation._id) {
+                // The ChatWindow component will handle adding the message
+                // We just need to update the conversation metadata
+                setConversation(prev => {
+                    if (!prev) return prev
+                    return {
+                        ...prev,
+                        lastMessage: message.content,
+                        lastMessageAt: message.createdAt
+                    }
+                })
+            }
+        }
+    })
 
     // Load conversation when opening
     useEffect(() => {
@@ -74,7 +99,11 @@ export function FloatingChatWidget() {
     const handleToggle = () => {
         if (isMinimized) {
             setIsMinimized(false)
+            setUnreadCount(0) // Reset unread when un-minimizing
         } else {
+            if (!isOpen) {
+                setUnreadCount(0) // Reset unread when opening
+            }
             setIsOpen(!isOpen)
         }
     }
