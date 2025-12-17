@@ -40,21 +40,22 @@ export function ChatWindow({
         leaveConversation,
         sendMessage: sendSocketMessage,
         startTyping,
-        stopTyping,
-        markAsRead
+        stopTyping
     } = useSocket({
-        onNewMessage: (message) => {
-            if (message.conversationId === conversation._id) {
-                console.log('📨 Received message:', message._id)
-                setMessages((prev) => [...prev, message])
+        onNewMessage: (message: Message) => {
 
-                // Mark as read if message is from other user
-                if (message.senderId !== currentUserId) {
-                    markAsRead(conversation._id)
-                }
+            if (message.conversationId === conversation._id) {
+                // Check if message already exists to prevent duplicates
+                setMessages((prev) => {
+                    const exists = prev.some(m => m._id === message._id)
+                    if (exists) {
+                        return prev // Don't add duplicate
+                    }
+                    return [...prev, message]
+                })
             }
         },
-        onUserTyping: (data) => {
+        onUserTyping: (data: { userId: string, conversationId: string }) => {
             if (data.conversationId === conversation._id && data.userId !== currentUserId) {
                 setTypingUserId(data.userId)
 
@@ -69,13 +70,16 @@ export function ChatWindow({
                 }, 3000)
             }
         },
-        onUserStopTyping: (data) => {
+        onUserStopTyping: (data: { userId: string, conversationId: string }) => {
             if (data.conversationId === conversation._id) {
                 setTypingUserId(null)
             }
         },
-        onError: (error) => {
-            toast.error(error.message)
+        onError: (error: { message: string }) => {
+            // Only show toast for critical errors, ignore initial connection failures as they might be due to race conditions
+            if (!error.message.includes('connect')) {
+                toast.error(error.message)
+            }
         }
     })
 
@@ -98,7 +102,7 @@ export function ChatWindow({
             setHasMore(response.pagination.page < response.pagination.totalPages)
             setPage(pageNum)
         } catch (error) {
-            console.error('Failed to load messages:', error)
+
             toast.error('Không thể tải tin nhắn')
         } finally {
             setIsLoading(false)
@@ -136,7 +140,7 @@ export function ChatWindow({
                 setMessages((prev) => [...prev, message])
             }
         } catch (error) {
-            console.error('Failed to send message:', error)
+
             toast.error('Không thể gửi tin nhắn')
         }
     }
@@ -157,13 +161,11 @@ export function ChatWindow({
     // Join conversation room on mount
     useEffect(() => {
         if (isConnected) {
-            console.log('🔵 Joining conversation room:', conversation._id)
             joinConversation(conversation._id)
         }
 
         return () => {
             if (isConnected) {
-                console.log('🔴 Leaving conversation room:', conversation._id)
                 leaveConversation(conversation._id)
             }
         }
@@ -174,12 +176,42 @@ export function ChatWindow({
         loadMessages(1)
     }, [loadMessages])
 
-    // Mark messages as read when opening chat
+    // Fail-safe: Polling for new messages every 3 seconds
+    // Deduplicated by _id to prevent double messages
     useEffect(() => {
-        if (isConnected) {
-            markAsRead(conversation._id)
-        }
-    }, [conversation._id, isConnected, markAsRead])
+        const interval = setInterval(async () => {
+            // Only poll first page
+            try {
+                const response = await chatService.getMessages({
+                    conversationId: conversation._id,
+                    page: 1,
+                    limit: 20
+                })
+
+                if (response.messages && response.messages.length > 0) {
+                    setMessages(prev => {
+                        // Find messages that don't exist in current state
+                        const newMessages = response.messages.filter(
+                            remoteMsg => !prev.some(localMsg => localMsg._id === remoteMsg._id)
+                        )
+
+                        if (newMessages.length > 0) {
+                            // Merge and sort by creation time
+                            const merged = [...prev, ...newMessages].sort(
+                                (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+                            )
+                            return merged
+                        }
+                        return prev
+                    })
+                }
+            } catch (err) {
+                // Silent fail
+            }
+        }, 3000)
+
+        return () => clearInterval(interval)
+    }, [conversation._id])
 
     return (
         <div className="flex flex-col h-full bg-white">

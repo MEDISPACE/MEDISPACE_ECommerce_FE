@@ -52,7 +52,7 @@ export function PrescriptionManagementPage() {
     try {
       setLoading(true)
       const mappedStatus = mapStatusToBackend(statusFilter)
-      console.log('Loading prescriptions with status:', statusFilter, '→', mappedStatus)
+
 
       // Load stats and prescriptions in parallel
       const [statsData, prescriptionsData] = await Promise.all([
@@ -67,7 +67,7 @@ export function PrescriptionManagementPage() {
       setStats(statsData)
       setPrescriptions(prescriptionsData)
     } catch (error) {
-      console.error('Failed to load prescriptions:', error)
+
       toast.error('Không thể tải danh sách đơn thuốc', {
         description: 'Vui lòng thử lại sau',
       })
@@ -149,10 +149,10 @@ export function PrescriptionManagementPage() {
       badge:
         (stats?.pending || 0) > 0
           ? {
-              text: 'Cần xử lý',
-              icon: AlertTriangle,
-              show: true,
-            }
+            text: 'Cần xử lý',
+            icon: AlertTriangle,
+            show: true,
+          }
           : undefined,
     },
     {

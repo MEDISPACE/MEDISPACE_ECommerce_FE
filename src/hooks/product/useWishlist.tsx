@@ -47,7 +47,7 @@ export const WishlistProvider = ({ children }: WishlistProviderProps) => {
           // Map Product[] to string[] (product IDs)
           setWishlist(items.map(product => product._id || product.id).filter((id): id is string => !!id))
         } catch (error) {
-          console.error('Failed to load wishlist from API', error)
+
         } finally {
           setLoading(false)
         }
