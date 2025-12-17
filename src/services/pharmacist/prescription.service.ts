@@ -3,6 +3,7 @@ import type { AxiosResponse } from 'axios'
 
 // Import Prescription type from dashboard service
 import type { Prescription } from './dashboard.service'
+import { API_ENDPOINTS } from '../../constants'
 
 // ==================== TYPES ====================
 
@@ -47,7 +48,7 @@ export const prescriptionService = {
    */
   upload: async (data: UploadPrescriptionData): Promise<Prescription> => {
     const response: AxiosResponse<{ message: string; result: Prescription }> = await apiClient.post(
-      '/prescriptions',
+      API_ENDPOINTS.PRESCRIPTIONS.BASE,
       data,
     )
     return response.data.result
@@ -69,7 +70,7 @@ export const prescriptionService = {
 
       // Use /prescriptions/pending endpoint which is designed for pharmacists to see all prescriptions
       const response: AxiosResponse<{ message: string; result: { prescriptions: Prescription[]; pagination: any } }> =
-        await apiClient.get('/prescriptions/pending', {
+        await apiClient.get(API_ENDPOINTS.PRESCRIPTIONS.PENDING, {
           params: queryParams,
         })
 
@@ -89,7 +90,7 @@ export const prescriptionService = {
    */
   getPending: async (): Promise<Prescription[]> => {
     const response: AxiosResponse<{ message: string; result: Prescription[] }> =
-      await apiClient.get('/prescriptions/pending')
+      await apiClient.get(API_ENDPOINTS.PRESCRIPTIONS.PENDING)
     return response.data.result
   },
 
@@ -98,7 +99,7 @@ export const prescriptionService = {
    */
   getById: async (id: string): Promise<Prescription> => {
     const response: AxiosResponse<{ message: string; result: Prescription }> = await apiClient.get(
-      `/prescriptions/${id}`,
+      API_ENDPOINTS.PRESCRIPTIONS.BY_ID(id),
     )
     return response.data.result
   },
@@ -108,7 +109,7 @@ export const prescriptionService = {
    */
   verify: async (id: string, data: VerifyPrescriptionData): Promise<Prescription> => {
     const response: AxiosResponse<{ message: string; result: Prescription }> = await apiClient.put(
-      `/prescriptions/${id}/verify`,
+      API_ENDPOINTS.PRESCRIPTIONS.VERIFY(id),
       data,
     )
     return response.data.result
@@ -119,18 +120,14 @@ export const prescriptionService = {
    */
   getStats: async (): Promise<PrescriptionStats> => {
     try {
-      console.log('Calling /prescriptions/stats')
+
       const response: AxiosResponse<{ message: string; result: PrescriptionStats }> =
-        await apiClient.get('/prescriptions/stats')
+        await apiClient.get(API_ENDPOINTS.PRESCRIPTIONS.STATS)
 
       return response.data.result
     } catch (error: unknown) {
       const err = error as { response?: { data?: unknown; status?: number }; message?: string }
-      console.error('prescriptionService.getStats error:', {
-        status: err?.response?.status,
-        data: err?.response?.data,
-        message: err?.message,
-      })
+
       throw error
     }
   },

@@ -87,23 +87,22 @@ export function ConversationList({
                 return (
                     <div
                         key={conversation._id}
-                        className={`relative group w-full p-4 flex items-start gap-3 hover:bg-blue-50 transition-colors ${isSelected ? 'bg-blue-50 border-l-4 border-blue-600' : ''
+                        className={`relative group w-full p-3 flex items-start gap-3 hover:bg-blue-50 transition-colors ${isSelected ? 'bg-blue-50 border-l-4 border-blue-600' : ''
                             }`}
                     >
                         <button
                             onClick={() => onSelectConversation(conversation)}
                             className="flex-1 flex items-start gap-3 text-left"
                         >
-                            {/* Avatar with online status */}
                             <div className="relative flex-shrink-0">
-                                <Avatar className="w-12 h-12 bg-gradient-to-r from-blue-600 to-cyan-500">
+                                <Avatar className="w-10 h-10 bg-gradient-to-r from-blue-600 to-cyan-500">
                                     <AvatarImage src={otherUser?.avatar} />
-                                    <AvatarFallback className="text-white font-medium">
+                                    <AvatarFallback className="text-white font-medium text-sm">
                                         {otherUserName.charAt(0).toUpperCase()}
                                     </AvatarFallback>
                                 </Avatar>
                                 <Circle
-                                    className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${isOnline ? 'fill-green-500 text-green-500' : 'fill-gray-400 text-gray-400'
+                                    className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-white ${isOnline ? 'fill-green-500 text-green-500' : 'fill-gray-400 text-gray-400'
                                         }`}
                                 />
                             </div>
@@ -111,7 +110,7 @@ export function ConversationList({
                             {/* Conversation info */}
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between mb-1">
-                                    <h4 className={`font-medium truncate ${unreadCount > 0 ? 'text-gray-900' : 'text-gray-700'}`}>
+                                    <h4 className={`font-medium truncate text-gray-900`}>
                                         {otherUserName}
                                     </h4>
                                     <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
@@ -126,11 +125,14 @@ export function ConversationList({
                                     >
                                         {conversation.lastMessage || 'Chưa có tin nhắn'}
                                     </p>
+                                    {/* Unread count badge removed as requested */}
+                                    {/* 
                                     {unreadCount > 0 && (
                                         <Badge className="ml-2 bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full flex-shrink-0">
                                             {unreadCount}
                                         </Badge>
                                     )}
+                                    */}
                                 </div>
                             </div>
                         </button>

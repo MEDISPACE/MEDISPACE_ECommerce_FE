@@ -46,7 +46,7 @@ export function PharmacistSettingsPage() {
       const data = await settingsService.getProfile()
       setProfile(data)
     } catch (error) {
-      console.error('Load profile error:', error)
+
       toast.error('Lỗi tải thông tin tài khoản')
     } finally {
       setLoading(false)
@@ -72,7 +72,7 @@ export function PharmacistSettingsPage() {
       toast.success('Đã lưu thông tin cá nhân')
       await loadProfile()
     } catch (error) {
-      console.error('Save profile error:', error)
+
       toast.error('Lỗi lưu thông tin')
     } finally {
       setSaving(false)
@@ -136,7 +136,7 @@ export function PharmacistSettingsPage() {
       setPasswordData({ oldPassword: '', newPassword: '', confirmPassword: '' })
       setPasswordErrors({ oldPassword: '', newPassword: '', confirmPassword: '' })
     } catch (error: unknown) {
-      console.error('Change password error:', error)
+
 
       // Handle specific error from API
       const apiError = error as { response?: { data?: { message?: string } } }
@@ -383,8 +383,8 @@ export function PharmacistSettingsPage() {
                       }
                     }}
                     className={`pl-10 pr-10 border-2 ${passwordErrors.oldPassword
-                        ? 'border-red-500 focus:border-red-600'
-                        : 'border-blue-200 focus:border-blue-500'
+                      ? 'border-red-500 focus:border-red-600'
+                      : 'border-blue-200 focus:border-blue-500'
                       }`}
                     placeholder='Nhập mật khẩu hiện tại'
                   />
@@ -419,8 +419,8 @@ export function PharmacistSettingsPage() {
                       }
                     }}
                     className={`pl-10 pr-10 border-2 ${passwordErrors.newPassword
-                        ? 'border-red-500 focus:border-red-600'
-                        : 'border-blue-200 focus:border-blue-500'
+                      ? 'border-red-500 focus:border-red-600'
+                      : 'border-blue-200 focus:border-blue-500'
                       }`}
                     placeholder='Nhập mật khẩu mới'
                   />
@@ -455,8 +455,8 @@ export function PharmacistSettingsPage() {
                       }
                     }}
                     className={`pl-10 pr-10 border-2 ${passwordErrors.confirmPassword
-                        ? 'border-red-500 focus:border-red-600'
-                        : 'border-blue-200 focus:border-blue-500'
+                      ? 'border-red-500 focus:border-red-600'
+                      : 'border-blue-200 focus:border-blue-500'
                       }`}
                     placeholder='Nhập lại mật khẩu mới'
                   />

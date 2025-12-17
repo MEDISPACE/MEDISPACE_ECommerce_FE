@@ -5,9 +5,11 @@ import { ChatWindow } from '../chat/ChatWindow'
 import { ConversationList } from '../chat/ConversationList'
 import { chatService } from '~/services/chatService'
 import { useAuth } from '~/contexts/AuthContext'
+import { useSocket } from '~/hooks/useSocket'
 import type { Conversation } from '~/types/chat'
 import { toast } from 'sonner'
 
+// Removed space-y-6
 export function PharmacistChatPage() {
     const { user } = useAuth()
     const [conversations, setConversations] = useState<Conversation[]>([])
@@ -15,24 +17,68 @@ export function PharmacistChatPage() {
     const [isLoading, setIsLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState('')
 
-    // Load conversations
-    useEffect(() => {
-        const loadConversations = async () => {
-            try {
-                setIsLoading(true)
-                const response = await chatService.getConversations({ page: 1, limit: 50 })
-                setConversations(response.conversations)
-            } catch (error) {
-                console.error('Failed to load conversations:', error)
-                toast.error('Không thể tải danh sách trò chuyện')
-            } finally {
-                setIsLoading(false)
-            }
-        }
+    // Socket integration for real-time updates
+    const { isConnected } = useSocket({
+        onNewMessage: (message) => {
+            // Update conversation list when new message arrives
+            setConversations(prev => {
+                const conversationIndex = prev.findIndex(c => c._id === message.conversationId)
 
+                if (conversationIndex === -1) {
+                    // New conversation - reload the list
+                    loadConversations()
+                    return prev
+                }
+
+                // Update existing conversation
+                const updatedConversations = [...prev]
+                const conversation = { ...updatedConversations[conversationIndex] }
+
+                // Update lastMessage (it's a string, not an object)
+                conversation.lastMessage = message.content
+                conversation.lastMessageAt = message.createdAt
+
+                // Removed unread counting logic as requested
+                /*
+                // Update unread count if message is from customer (not from pharmacist)
+                if (message.senderRole === 'customer') {
+                    conversation.unreadCount = {
+                        ...conversation.unreadCount,
+                        pharmacist: (conversation.unreadCount?.pharmacist || 0) + 1
+                    }
+                }
+                */
+
+                // Remove from current position
+                updatedConversations.splice(conversationIndex, 1)
+
+                // Add to top
+                updatedConversations.unshift(conversation)
+
+                return updatedConversations
+            })
+        }
+    })
+
+    // Load conversations function
+    const loadConversations = async () => {
+        try {
+            setIsLoading(true)
+            const response = await chatService.getConversations({ page: 1, limit: 50 })
+            setConversations(response.conversations)
+        } catch (error) {
+
+            toast.error('Không thể tải danh sách trò chuyện')
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    // Load conversations on mount
+    useEffect(() => {
         loadConversations()
 
-        // Auto-refresh every 30 seconds
+        // Auto-refresh every 30 seconds as fallback
         const interval = setInterval(loadConversations, 30000)
         return () => clearInterval(interval)
     }, [])
@@ -58,34 +104,23 @@ export function PharmacistChatPage() {
 
             toast.success('Đã xóa cuộc trò chuyện')
         } catch (error: any) {
-            console.error('Failed to delete conversation:', error)
+
             toast.error(error?.message || 'Không thể xóa cuộc trò chuyện')
         }
     }
 
     return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div className="bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6">
-                <h1
-                    className="text-3xl font-bold bg-clip-text text-transparent"
-                    style={{
-                        backgroundImage: `linear-gradient(to right, #0066CC, #4A90E2)`,
-                    }}
-                >
-                    <MessageCircle className="inline-block w-8 h-8 mr-2 text-blue-600" />
-                    Quản lý Chat
-                </h1>
-                <p className="text-gray-600 mt-2">Trả lời tin nhắn từ khách hàng</p>
-            </div>
-
-            {/* Chat Interface */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-250px)]">
+        // Removed space-y-6 as we want a fixed container
+        <div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[calc(100vh-140px)] overflow-hidden">
                 {/* Conversations List */}
-                <div className="lg:col-span-1 bg-white rounded-lg shadow-lg border-2 border-blue-100 overflow-hidden flex flex-col max-h-full">
+                <div className="lg:col-span-1 bg-white rounded-lg shadow-lg border-2 border-blue-100 flex flex-col h-full overflow-hidden">
                     <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-cyan-500 flex-shrink-0">
                         <div className="flex items-center justify-between mb-3">
-                            <h2 className="text-lg font-semibold text-white">Cuộc trò chuyện</h2>
+                            <h2 className="text-lg font-semibold text-white flex items-center">
+                                <MessageCircle className="w-5 h-5 mr-2" />
+                                Tin nhắn
+                            </h2>
                             <button
                                 onClick={async () => {
                                     setIsLoading(true)
@@ -114,7 +149,7 @@ export function PharmacistChatPage() {
                                 placeholder="Tìm khách hàng..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-10 bg-white"
+                                className="pl-10 bg-white h-9 text-sm"
                             />
                         </div>
                     </div>
@@ -141,9 +176,9 @@ export function PharmacistChatPage() {
                 </div>
 
                 {/* Chat Window */}
-                <div className="lg:col-span-2">
+                <div className="lg:col-span-2 h-full overflow-hidden">
                     {selectedConversation ? (
-                        <div className="h-full bg-white rounded-lg shadow-lg border-2 border-blue-100 overflow-hidden flex flex-col">
+                        <div className="h-full bg-white rounded-lg shadow-lg border-2 border-blue-100 flex flex-col overflow-hidden">
                             {/* Customer Info Header */}
                             <div className="p-4 border-b border-gray-200 bg-gray-50">
                                 <div className="flex items-center gap-3">
@@ -161,12 +196,14 @@ export function PharmacistChatPage() {
                                 </div>
                             </div>
 
-                            <ChatWindow
-                                conversation={selectedConversation}
-                                currentUserId={user?._id || ''}
-                                currentUserRole="pharmacist"
-                                showHeader={false}
-                            />
+                            <div className="flex-1 min-h-0">
+                                <ChatWindow
+                                    conversation={selectedConversation}
+                                    currentUserId={user?._id || ''}
+                                    currentUserRole="pharmacist"
+                                    showHeader={false}
+                                />
+                            </div>
                         </div>
                     ) : (
                         <div className="h-full bg-white rounded-lg shadow-lg border-2 border-blue-100 flex items-center justify-center">

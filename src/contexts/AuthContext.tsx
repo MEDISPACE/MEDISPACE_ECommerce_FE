@@ -101,11 +101,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       logger.warn('Login failed - invalid credentials', { email })
       return null
     } catch (error) {
-      // console.error('❌ Login failed with error', error)
-      // Log detailed error information
-      // if (error && typeof error === 'object') {
-      //   console.error('Error details:', JSON.stringify(error, null, 2))
-      // }
       logger.error('Login failed with error', error)
       return null
     } finally {

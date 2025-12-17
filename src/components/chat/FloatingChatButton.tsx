@@ -5,6 +5,7 @@ import { Badge } from '../ui/badge'
 import { ChatWindow } from './ChatWindow'
 import { chatService } from '~/services/chatService'
 import { useAuth } from '~/contexts/AuthContext'
+import { useSocket } from '~/hooks/useSocket'
 import type { Conversation } from '~/types/chat'
 import { toast } from 'sonner'
 
@@ -18,6 +19,31 @@ export function FloatingChatWidget() {
 
     // Only show for customers
     const isCustomer = user?.role === 0
+
+    // Socket integration for real-time updates
+    const { isConnected } = useSocket({
+        onNewMessage: (message) => {
+            {/* Unread counting disabled
+            if (!isOpen || isMinimized) {
+                setUnreadCount(prev => prev + 1)
+            }
+            */}
+
+            // Reload conversation if it's the current one
+            if (conversation && message.conversationId === conversation._id) {
+                // The ChatWindow component will handle adding the message
+                // We just need to update the conversation metadata
+                setConversation(prev => {
+                    if (!prev) return prev
+                    return {
+                        ...prev,
+                        lastMessage: message.content,
+                        lastMessageAt: message.createdAt
+                    }
+                })
+            }
+        }
+    })
 
     // Load conversation when opening
     useEffect(() => {
@@ -35,7 +61,7 @@ export function FloatingChatWidget() {
                     setConversation(null)
                 }
             } catch (error: any) {
-                console.error('Failed to load conversation:', error)
+
                 setConversation(null)
             } finally {
                 setIsLoading(false)
@@ -74,7 +100,11 @@ export function FloatingChatWidget() {
     const handleToggle = () => {
         if (isMinimized) {
             setIsMinimized(false)
+            setUnreadCount(0) // Reset unread when un-minimizing
         } else {
+            if (!isOpen) {
+                setUnreadCount(0) // Reset unread when opening
+            }
             setIsOpen(!isOpen)
         }
     }
@@ -96,7 +126,7 @@ export function FloatingChatWidget() {
             setConversation(newConv)
             toast.success('Đã kết nối với dược sĩ')
         } catch (error: any) {
-            console.error('Failed to create conversation:', error)
+
             toast.error(error?.message || 'Không thể tạo cuộc trò chuyện')
         } finally {
             setIsLoading(false)
@@ -107,7 +137,7 @@ export function FloatingChatWidget() {
         <>
             {/* Chat Widget Window */}
             {isOpen && !isMinimized && (
-                <div className="fixed bottom-24 right-6 z-50 w-[400px] h-[600px] bg-white rounded-2xl shadow-2xl border-2 border-blue-100 flex flex-col overflow-hidden slide-up-animation">
+                <div className="fixed bottom-24 right-6 z-50 w-[90vw] sm:w-[360px] h-[80vh] sm:h-[550px] max-h-[600px] bg-white rounded-2xl shadow-2xl border-2 border-blue-100 flex flex-col overflow-hidden slide-up-animation">
                     {/* Header */}
                     <div className="bg-gradient-to-r from-blue-600 to-cyan-500 text-white p-4 flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -203,11 +233,14 @@ export function FloatingChatWidget() {
                         <>
                             <MessageCircle className="w-6 h-6" />
 
+                            {/* Unread count badge removed as requested */}
+                            {/* 
                             {unreadCount > 0 && (
                                 <Badge className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full border-2 border-white min-w-[20px] h-5 flex items-center justify-center animate-pulse">
                                     {unreadCount > 99 ? '99+' : unreadCount}
                                 </Badge>
                             )}
+                            */}
 
                             <span className="absolute inset-0 rounded-full bg-blue-400 opacity-75 animate-ping" />
                         </>

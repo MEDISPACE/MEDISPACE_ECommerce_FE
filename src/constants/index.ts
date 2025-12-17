@@ -57,6 +57,15 @@ export const API_ENDPOINTS = {
     ME: '/users/me',
     UPDATE_ME: '/users/me',
     CHANGE_PASSWORD: '/users/change-password',
+    WISHLIST: '/users/wishlist',
+    WISHLIST_ITEM: (productId: string) => `/users/wishlist/${productId}`,
+  },
+
+  // Address endpoints
+  ADDRESSES: {
+    BASE: '/addresses',
+    BY_ID: (id: string) => `/addresses/${id}`,
+    SET_DEFAULT: (id: string) => `/addresses/${id}/default`,
   },
 
   // Product endpoints
@@ -108,6 +117,20 @@ export const API_ENDPOINTS = {
     BY_ID: (reviewId: string) => `/reviews/${reviewId}`,
     HELPFUL: (reviewId: string) => `/reviews/${reviewId}/helpful`,
     MODERATE: (reviewId: string) => `/reviews/${reviewId}/moderate`,
+  },
+
+  // Prescription endpoints
+  PRESCRIPTIONS: {
+    BASE: '/prescriptions',
+    PENDING: '/prescriptions/pending',
+    STATS: '/prescriptions/stats',
+    BY_ID: (id: string) => `/prescriptions/${id}`,
+    VERIFY: (id: string) => `/prescriptions/${id}/verify`,
+  },
+
+  // Admin endpoints
+  ADMIN: {
+    USERS: '/admin/users',
   },
 } as const
 

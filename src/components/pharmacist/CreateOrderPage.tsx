@@ -175,30 +175,48 @@ export function CreateOrderPage() {
 
     try {
       setIsSearchingCustomer(true)
-      const patient = await dashboardService.searchPatient(searchPhone)
+      const results = await dashboardService.searchPatient(searchPhone)
 
-      // Map patient data to customer info
-      setCustomerInfo({
-        phone: patient.phoneNumber || searchPhone,
-        name: `${patient.firstName} ${patient.lastName}`,
-        email: patient.email,
-        tier: 'regular', // Default tier, could be calculated based on history
-        totalPurchase: 0, // Would need to fetch from order history
-      })
+      if (results.length > 0) {
+        const patient = results[0]
 
-      // Auto-fill shipping address if customer found
-      setShippingAddress((prev) => ({
-        ...prev,
-        firstName: patient.firstName,
-        lastName: patient.lastName,
-        phone: patient.phoneNumber || searchPhone,
-        email: patient.email,
-      }))
+        // Split full name if needed
+        const nameParts = patient.fullName.split(' ')
+        const lastName = nameParts.pop() || ''
+        const firstName = nameParts.join(' ') || lastName
 
-      toast.success(`Đã tìm thấy khách hàng: ${patient.firstName} ${patient.lastName}`)
+        // Map patient data to customer info
+        setCustomerInfo({
+          phone: patient.phoneNumber || searchPhone,
+          name: patient.fullName,
+          email: patient.email || '',
+          tier: 'regular',
+          totalPurchase: 0,
+        })
+
+        // Auto-fill shipping address if customer found
+        setShippingAddress((prev) => ({
+          ...prev,
+          firstName: firstName,
+          lastName: lastName,
+          phone: patient.phoneNumber || searchPhone,
+          email: patient.email || '',
+        }))
+
+        toast.success(`Đã tìm thấy khách hàng: ${patient.fullName}`)
+      } else {
+        // If customer not found, use phone number only
+        setCustomerInfo({
+          phone: searchPhone,
+          name: '',
+          email: '',
+          tier: 'regular',
+          totalPurchase: 0,
+        })
+        toast.info('Không tìm thấy khách hàng. Vui lòng nhập thông tin địa chỉ giao hàng.')
+      }
     } catch (error) {
-      console.error('Failed to search customer:', error)
-      // If customer not found, use phone number only
+      // If error, use phone number only
       setCustomerInfo({
         phone: searchPhone,
         name: '',
@@ -206,7 +224,7 @@ export function CreateOrderPage() {
         tier: 'regular',
         totalPurchase: 0,
       })
-      toast.info('Không tìm thấy khách hàng. Vui lòng nhập thông tin địa chỉ giao hàng.')
+      toast.info('Lỗi khi tìm kiếm. Vui lòng thử lại.')
     } finally {
       setIsSearchingCustomer(false)
     }
@@ -378,7 +396,7 @@ export function CreateOrderPage() {
       // Redirect to order details or list
       // window.location.href = `/pharmacist/orders/${response.orderId}`
     } catch (error) {
-      console.error('Failed to create order:', error)
+
       toast.error('Không thể tạo đơn hàng', {
         description: 'Vui lòng kiểm tra lại thông tin và thử lại',
       })
@@ -820,11 +838,10 @@ export function CreateOrderPage() {
                 return (
                   <div
                     key={option.id}
-                    className={`p-3 border rounded-lg cursor-pointer transition-all ${
-                      selectedDelivery === option.id
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-blue-300'
-                    }`}
+                    className={`p-3 border rounded-lg cursor-pointer transition-all ${selectedDelivery === option.id
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:border-blue-300'
+                      }`}
                     onClick={() => setSelectedDelivery(option.id)}
                   >
                     <div className='flex items-center justify-between'>
@@ -870,11 +887,10 @@ export function CreateOrderPage() {
                 return (
                   <div
                     key={method.id}
-                    className={`p-3 border rounded-lg cursor-pointer transition-all ${
-                      selectedPayment === method.id
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-blue-300'
-                    }`}
+                    className={`p-3 border rounded-lg cursor-pointer transition-all ${selectedPayment === method.id
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:border-blue-300'
+                      }`}
                     onClick={() => setSelectedPayment(method.id)}
                   >
                     <div className='flex items-center gap-3'>

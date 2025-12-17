@@ -6,7 +6,7 @@
 type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 
 class Logger {
-  private isDevelopment = process.env.NODE_ENV === 'development'
+  private isDevelopment = import.meta.env.MODE === 'development'
 
   private shouldLog(level: LogLevel): boolean {
     if (!this.isDevelopment) {
