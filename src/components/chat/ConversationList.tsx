@@ -110,7 +110,7 @@ export function ConversationList({
                             {/* Conversation info */}
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between mb-1">
-                                    <h4 className={`font-medium truncate ${unreadCount > 0 ? 'text-gray-900' : 'text-gray-700'}`}>
+                                    <h4 className={`font-medium truncate text-gray-900`}>
                                         {otherUserName}
                                     </h4>
                                     <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
@@ -125,11 +125,14 @@ export function ConversationList({
                                     >
                                         {conversation.lastMessage || 'Chưa có tin nhắn'}
                                     </p>
+                                    {/* Unread count badge removed as requested */}
+                                    {/* 
                                     {unreadCount > 0 && (
                                         <Badge className="ml-2 bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full flex-shrink-0">
                                             {unreadCount}
                                         </Badge>
                                     )}
+                                    */}
                                 </div>
                             </div>
                         </button>

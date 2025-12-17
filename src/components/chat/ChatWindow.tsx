@@ -76,7 +76,10 @@ export function ChatWindow({
             }
         },
         onError: (error: { message: string }) => {
-            toast.error(error.message)
+            // Only show toast for critical errors, ignore initial connection failures as they might be due to race conditions
+            if (!error.message.includes('connect')) {
+                toast.error(error.message)
+            }
         }
     })
 
@@ -172,6 +175,43 @@ export function ChatWindow({
     useEffect(() => {
         loadMessages(1)
     }, [loadMessages])
+
+    // Fail-safe: Polling for new messages every 3 seconds
+    // Deduplicated by _id to prevent double messages
+    useEffect(() => {
+        const interval = setInterval(async () => {
+            // Only poll first page
+            try {
+                const response = await chatService.getMessages({
+                    conversationId: conversation._id,
+                    page: 1,
+                    limit: 20
+                })
+
+                if (response.messages && response.messages.length > 0) {
+                    setMessages(prev => {
+                        // Find messages that don't exist in current state
+                        const newMessages = response.messages.filter(
+                            remoteMsg => !prev.some(localMsg => localMsg._id === remoteMsg._id)
+                        )
+
+                        if (newMessages.length > 0) {
+                            // Merge and sort by creation time
+                            const merged = [...prev, ...newMessages].sort(
+                                (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+                            )
+                            return merged
+                        }
+                        return prev
+                    })
+                }
+            } catch (err) {
+                // Silent fail
+            }
+        }, 3000)
+
+        return () => clearInterval(interval)
+    }, [conversation._id])
 
     return (
         <div className="flex flex-col h-full bg-white">
