@@ -38,6 +38,8 @@ export function PharmacistChatPage() {
                 conversation.lastMessage = message.content
                 conversation.lastMessageAt = message.createdAt
 
+                // Removed unread counting logic as requested
+                /*
                 // Update unread count if message is from customer (not from pharmacist)
                 if (message.senderRole === 'customer') {
                     conversation.unreadCount = {
@@ -45,6 +47,7 @@ export function PharmacistChatPage() {
                         pharmacist: (conversation.unreadCount?.pharmacist || 0) + 1
                     }
                 }
+                */
 
                 // Remove from current position
                 updatedConversations.splice(conversationIndex, 1)

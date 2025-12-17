@@ -94,10 +94,10 @@ export const useSocket = (options: UseSocketOptions = {}) => {
                         }
                     })
                     .catch(err => {
-                        optionsRef.current.onError?.({ message: 'Session expired. Please login again.' })
+                        optionsRef.current.onError?.({ message: 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.' })
                     })
             } else {
-                optionsRef.current.onError?.({ message: 'Failed to connect to chat server' })
+                optionsRef.current.onError?.({ message: 'Không thể kết nối đến máy chủ chat' })
             }
         })
 
@@ -130,7 +130,7 @@ export const useSocket = (options: UseSocketOptions = {}) => {
         socketRef.current.on('error', (error: { message: string }) => {
             optionsRef.current.onError?.(error)
         })
-         
+
     }, []) // Empty deps - but we use optionsRef so it's fine
 
     // Disconnect from socket

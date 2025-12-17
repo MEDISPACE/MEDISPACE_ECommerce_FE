@@ -23,10 +23,11 @@ export function FloatingChatWidget() {
     // Socket integration for real-time updates
     const { isConnected } = useSocket({
         onNewMessage: (message) => {
-            // Update unread count if chat is closed or minimized
+            {/* Unread counting disabled
             if (!isOpen || isMinimized) {
                 setUnreadCount(prev => prev + 1)
             }
+            */}
 
             // Reload conversation if it's the current one
             if (conversation && message.conversationId === conversation._id) {
@@ -136,7 +137,7 @@ export function FloatingChatWidget() {
         <>
             {/* Chat Widget Window */}
             {isOpen && !isMinimized && (
-                <div className="fixed bottom-24 right-6 z-50 w-[400px] h-[600px] bg-white rounded-2xl shadow-2xl border-2 border-blue-100 flex flex-col overflow-hidden slide-up-animation">
+                <div className="fixed bottom-24 right-6 z-50 w-[90vw] sm:w-[360px] h-[80vh] sm:h-[550px] max-h-[600px] bg-white rounded-2xl shadow-2xl border-2 border-blue-100 flex flex-col overflow-hidden slide-up-animation">
                     {/* Header */}
                     <div className="bg-gradient-to-r from-blue-600 to-cyan-500 text-white p-4 flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -232,11 +233,14 @@ export function FloatingChatWidget() {
                         <>
                             <MessageCircle className="w-6 h-6" />
 
+                            {/* Unread count badge removed as requested */}
+                            {/* 
                             {unreadCount > 0 && (
                                 <Badge className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full border-2 border-white min-w-[20px] h-5 flex items-center justify-center animate-pulse">
                                     {unreadCount > 99 ? '99+' : unreadCount}
                                 </Badge>
                             )}
+                            */}
 
                             <span className="absolute inset-0 rounded-full bg-blue-400 opacity-75 animate-ping" />
                         </>
