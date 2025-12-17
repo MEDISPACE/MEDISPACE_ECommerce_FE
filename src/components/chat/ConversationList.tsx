@@ -87,23 +87,22 @@ export function ConversationList({
                 return (
                     <div
                         key={conversation._id}
-                        className={`relative group w-full p-4 flex items-start gap-3 hover:bg-blue-50 transition-colors ${isSelected ? 'bg-blue-50 border-l-4 border-blue-600' : ''
+                        className={`relative group w-full p-3 flex items-start gap-3 hover:bg-blue-50 transition-colors ${isSelected ? 'bg-blue-50 border-l-4 border-blue-600' : ''
                             }`}
                     >
                         <button
                             onClick={() => onSelectConversation(conversation)}
                             className="flex-1 flex items-start gap-3 text-left"
                         >
-                            {/* Avatar with online status */}
                             <div className="relative flex-shrink-0">
-                                <Avatar className="w-12 h-12 bg-gradient-to-r from-blue-600 to-cyan-500">
+                                <Avatar className="w-10 h-10 bg-gradient-to-r from-blue-600 to-cyan-500">
                                     <AvatarImage src={otherUser?.avatar} />
-                                    <AvatarFallback className="text-white font-medium">
+                                    <AvatarFallback className="text-white font-medium text-sm">
                                         {otherUserName.charAt(0).toUpperCase()}
                                     </AvatarFallback>
                                 </Avatar>
                                 <Circle
-                                    className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${isOnline ? 'fill-green-500 text-green-500' : 'fill-gray-400 text-gray-400'
+                                    className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-white ${isOnline ? 'fill-green-500 text-green-500' : 'fill-gray-400 text-gray-400'
                                         }`}
                                 />
                             </div>
