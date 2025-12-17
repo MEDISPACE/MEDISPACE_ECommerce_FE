@@ -1,5 +1,6 @@
 import { apiClient } from '../apiClient'
 import type { AxiosResponse } from 'axios'
+import type { PatientSearchResult } from './types'
 
 // ==================== TYPES ====================
 
@@ -154,14 +155,26 @@ export const dashboardService = {
   /**
    * Search patient by phone number
    */
-  searchPatient: async (phone: string): Promise<PatientInfo> => {
+  searchPatient: async (phone: string): Promise<PatientSearchResult[]> => {
     const response: AxiosResponse<{ message: string; result: PatientInfo }> = await apiClient.get(
       '/pharmacist/patients/search',
       {
         params: { phone },
       },
     )
-    return response.data.result
+
+    // Map single result to array for PatientHistoryPage
+    if (response.data.result) {
+      const patient = response.data.result
+      return [{
+        customerId: patient._id,
+        fullName: `${patient.firstName} ${patient.lastName}`,
+        phoneNumber: patient.phoneNumber || '',
+        email: patient.email,
+        avatar: patient.avatar
+      }]
+    }
+    return []
   },
 
   /**

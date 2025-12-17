@@ -32,7 +32,7 @@ class ApiClient {
           const isProtectedEndpoint = protectedEndpoints.some(endpoint => config.url?.includes(endpoint))
 
           if (isProtectedEndpoint) {
-            console.warn('API Request without token:', config.method?.toUpperCase(), config.url)
+
           }
         }
         return config
@@ -50,12 +50,7 @@ class ApiClient {
 
         // Only log errors that are NOT 401 or are 401 but already retried
         if (error.response?.status !== 401 || originalRequest._retry) {
-          console.error('API Error:', {
-            url: error.config?.url,
-            status: error.response?.status,
-            data: error.response?.data,
-            message: error.message,
-          })
+
         }
 
         // Handle 401 errors with token refresh

@@ -92,7 +92,7 @@ export function ChatInput({ onSendMessage, onTyping, onStopTyping, disabled, pla
             setImageUrl(uploadedUrl)
             toast.success('Tải ảnh lên thành công')
         } catch (error: any) {
-            console.error('Upload error:', error)
+
 
             // Parse error message
             const errorMsg = error?.message || 'Không thể tải ảnh lên'

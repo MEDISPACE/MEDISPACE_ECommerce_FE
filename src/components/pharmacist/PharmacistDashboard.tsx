@@ -64,7 +64,7 @@ export function PharmacistDashboard() {
         setRecentPrescriptions(prescriptions)
         setRecentOrders(orders)
       } catch (error) {
-        console.error('Failed to load dashboard data:', error)
+
         const err = error as { response?: { status?: number; data?: { message?: string } } }
 
         // Check if it's an authentication error
@@ -375,7 +375,7 @@ export function PharmacistDashboard() {
                               setSelectedOrder(orderDetails)
                               setShowOrderDetails(true)
                             } catch (error) {
-                              console.error('Failed to load order details:', error)
+
                               toast.error('Không thể tải chi tiết đơn hàng')
                             }
                           }}

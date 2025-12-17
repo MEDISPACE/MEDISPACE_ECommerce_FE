@@ -29,7 +29,7 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
         const reviewedIds = new Set(userReviews.map(review => review.productId))
         setReviewedProductIds(reviewedIds)
       } catch (error) {
-        console.error('Error fetching user reviews:', error)
+
       }
     }
 
@@ -284,7 +284,7 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
                 } else {
                   toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi gửi đánh giá. Vui lòng thử lại.')
                 }
-                console.error('Error submitting review:', error)
+
               }
             }}
           />
