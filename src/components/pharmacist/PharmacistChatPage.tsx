@@ -63,7 +63,7 @@ export function PharmacistChatPage() {
             const response = await chatService.getConversations({ page: 1, limit: 50 })
             setConversations(response.conversations)
         } catch (error) {
-            console.error('Failed to load conversations:', error)
+
             toast.error('Không thể tải danh sách trò chuyện')
         } finally {
             setIsLoading(false)
@@ -100,7 +100,7 @@ export function PharmacistChatPage() {
 
             toast.success('Đã xóa cuộc trò chuyện')
         } catch (error: any) {
-            console.error('Failed to delete conversation:', error)
+
             toast.error(error?.message || 'Không thể xóa cuộc trò chuyện')
         }
     }

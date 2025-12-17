@@ -76,7 +76,7 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
       onClose()
       setPharmacistNotes('')
     } catch (error) {
-      console.error('Failed to update prescription:', error)
+
       toast.error('Không thể cập nhật đơn thuốc', {
         description: 'Vui lòng thử lại sau',
       })
@@ -192,9 +192,8 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
               }
               rows={3}
               disabled={prescription?.status !== 'pending'}
-              className={`border-2 focus:border-blue-500 ${
-                prescription?.status !== 'pending' ? 'bg-gray-100 cursor-not-allowed' : 'border-blue-200'
-              }`}
+              className={`border-2 focus:border-blue-500 ${prescription?.status !== 'pending' ? 'bg-gray-100 cursor-not-allowed' : 'border-blue-200'
+                }`}
             />
           </div>
 

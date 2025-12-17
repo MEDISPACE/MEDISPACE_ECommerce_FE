@@ -156,7 +156,7 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
           setOrders(mappedOrders)
         }
       } catch (error) {
-        console.error('Failed to fetch orders:', error)
+
         toast.error('Không thể tải danh sách đơn hàng', {
           description: 'Vui lòng thử lại sau',
         })
@@ -225,7 +225,7 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
         toast.info('Chi tiết đơn hàng đang được phát triển')
       }
     } catch (error) {
-      console.error('Failed to load order details:', error)
+
       toast.error('Không thể tải chi tiết đơn hàng')
     }
   }
@@ -286,7 +286,7 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
       setCurrentOrder(null)
       setNotes('')
     } catch (error) {
-      console.error('Failed to update order status:', error)
+
       toast.error('Cập nhật thất bại', {
         description: 'Vui lòng thử lại sau',
       })

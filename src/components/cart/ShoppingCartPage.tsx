@@ -45,7 +45,7 @@ export function ShoppingCartPage() {
         const defaultAddr = fetchedAddresses.find(addr => addr.isDefault) || fetchedAddresses[0] || null
         setDefaultAddress(defaultAddr)
       } catch (error) {
-        console.error('Failed to fetch addresses:', error)
+
       } finally {
         setLoadingAddress(false)
       }

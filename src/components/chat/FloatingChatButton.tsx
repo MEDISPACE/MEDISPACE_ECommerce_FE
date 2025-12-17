@@ -60,7 +60,7 @@ export function FloatingChatWidget() {
                     setConversation(null)
                 }
             } catch (error: any) {
-                console.error('Failed to load conversation:', error)
+
                 setConversation(null)
             } finally {
                 setIsLoading(false)
@@ -125,7 +125,7 @@ export function FloatingChatWidget() {
             setConversation(newConv)
             toast.success('Đã kết nối với dược sĩ')
         } catch (error: any) {
-            console.error('Failed to create conversation:', error)
+
             toast.error(error?.message || 'Không thể tạo cuộc trò chuyện')
         } finally {
             setIsLoading(false)

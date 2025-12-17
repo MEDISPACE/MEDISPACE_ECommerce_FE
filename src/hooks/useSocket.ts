@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { io, Socket } from 'socket.io-client'
+import { io, type Socket } from 'socket.io-client'
 import { authService } from '../services/authService'
 import apiClient from '../services/apiClient'
 import type { Message } from '../types/chat'
@@ -33,7 +33,7 @@ export const useSocket = (options: UseSocketOptions = {}) => {
 
         const token = authService.getAccessToken()
         if (!token) {
-            console.warn('No access token available for socket connection')
+
             return
         }
 
@@ -52,7 +52,7 @@ export const useSocket = (options: UseSocketOptions = {}) => {
 
         // Connection events
         socketRef.current.on('connect', () => {
-            console.log('✅ Socket connected')
+
             setIsConnected(true)
             setIsConnecting(false)
 
@@ -61,7 +61,7 @@ export const useSocket = (options: UseSocketOptions = {}) => {
         })
 
         socketRef.current.on('disconnect', (reason) => {
-            console.log('❌ Socket disconnected:', reason)
+
             setIsConnected(false)
 
             // If disconnected due to auth error, try to reconnect with fresh token
@@ -78,24 +78,22 @@ export const useSocket = (options: UseSocketOptions = {}) => {
         })
 
         socketRef.current.on('connect_error', (error) => {
-            console.error('❌ Socket connection error:', error.message)
+
             setIsConnecting(false)
 
             // If authentication error, try to reconnect with fresh token
             if (error.message.includes('Authentication') || error.message.includes('jwt expired')) {
-                console.log('🔄 Socket Auth Error. Attempting to refresh token...')
+
 
                 // Call API refresh token
                 apiClient.refreshToken()
                     .then(freshToken => {
-                        console.log('✅ Token refreshed for socket. Reconnecting...')
                         if (freshToken && socketRef.current) {
                             socketRef.current.auth = { token: freshToken }
                             socketRef.current.connect()
                         }
                     })
                     .catch(err => {
-                        console.error('❌ Failed to refresh token for socket:', err)
                         optionsRef.current.onError?.({ message: 'Session expired. Please login again.' })
                     })
             } else {
@@ -105,7 +103,7 @@ export const useSocket = (options: UseSocketOptions = {}) => {
 
         // Chat events - use optionsRef to call latest callbacks
         socketRef.current.on('message:new', (message: Message) => {
-            console.log('📨 Socket received message:', message)
+
             optionsRef.current.onNewMessage?.(message)
         })
 
@@ -132,7 +130,7 @@ export const useSocket = (options: UseSocketOptions = {}) => {
         socketRef.current.on('error', (error: { message: string }) => {
             optionsRef.current.onError?.(error)
         })
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+         
     }, []) // Empty deps - but we use optionsRef so it's fine
 
     // Disconnect from socket

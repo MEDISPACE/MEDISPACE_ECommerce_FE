@@ -43,7 +43,7 @@ export function ChatWindow({
         stopTyping
     } = useSocket({
         onNewMessage: (message: Message) => {
-            console.log('ChatWindow received message:', message)
+
             if (message.conversationId === conversation._id) {
                 // Check if message already exists to prevent duplicates
                 setMessages((prev) => {
@@ -99,7 +99,7 @@ export function ChatWindow({
             setHasMore(response.pagination.page < response.pagination.totalPages)
             setPage(pageNum)
         } catch (error) {
-            console.error('Failed to load messages:', error)
+
             toast.error('Không thể tải tin nhắn')
         } finally {
             setIsLoading(false)
@@ -137,7 +137,7 @@ export function ChatWindow({
                 setMessages((prev) => [...prev, message])
             }
         } catch (error) {
-            console.error('Failed to send message:', error)
+
             toast.error('Không thể gửi tin nhắn')
         }
     }
