@@ -5,6 +5,7 @@ import { ChatWindow } from '../chat/ChatWindow'
 import { ConversationList } from '../chat/ConversationList'
 import { chatService } from '~/services/chatService'
 import { useAuth } from '~/contexts/AuthContext'
+import { useSocket } from '~/hooks/useSocket'
 import type { Conversation } from '~/types/chat'
 import { toast } from 'sonner'
 
@@ -15,24 +16,65 @@ export function PharmacistChatPage() {
     const [isLoading, setIsLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState('')
 
-    // Load conversations
-    useEffect(() => {
-        const loadConversations = async () => {
-            try {
-                setIsLoading(true)
-                const response = await chatService.getConversations({ page: 1, limit: 50 })
-                setConversations(response.conversations)
-            } catch (error) {
-                console.error('Failed to load conversations:', error)
-                toast.error('Không thể tải danh sách trò chuyện')
-            } finally {
-                setIsLoading(false)
-            }
-        }
+    // Socket integration for real-time updates
+    const { isConnected } = useSocket({
+        onNewMessage: (message) => {
+            // Update conversation list when new message arrives
+            setConversations(prev => {
+                const conversationIndex = prev.findIndex(c => c._id === message.conversationId)
 
+                if (conversationIndex === -1) {
+                    // New conversation - reload the list
+                    loadConversations()
+                    return prev
+                }
+
+                // Update existing conversation
+                const updatedConversations = [...prev]
+                const conversation = { ...updatedConversations[conversationIndex] }
+
+                // Update lastMessage (it's a string, not an object)
+                conversation.lastMessage = message.content
+                conversation.lastMessageAt = message.createdAt
+
+                // Update unread count if message is from customer (not from pharmacist)
+                if (message.senderRole === 'customer') {
+                    conversation.unreadCount = {
+                        ...conversation.unreadCount,
+                        pharmacist: (conversation.unreadCount?.pharmacist || 0) + 1
+                    }
+                }
+
+                // Remove from current position
+                updatedConversations.splice(conversationIndex, 1)
+
+                // Add to top
+                updatedConversations.unshift(conversation)
+
+                return updatedConversations
+            })
+        }
+    })
+
+    // Load conversations function
+    const loadConversations = async () => {
+        try {
+            setIsLoading(true)
+            const response = await chatService.getConversations({ page: 1, limit: 50 })
+            setConversations(response.conversations)
+        } catch (error) {
+            console.error('Failed to load conversations:', error)
+            toast.error('Không thể tải danh sách trò chuyện')
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    // Load conversations on mount
+    useEffect(() => {
         loadConversations()
 
-        // Auto-refresh every 30 seconds
+        // Auto-refresh every 30 seconds as fallback
         const interval = setInterval(loadConversations, 30000)
         return () => clearInterval(interval)
     }, [])

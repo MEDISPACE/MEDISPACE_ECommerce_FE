@@ -40,21 +40,22 @@ export function ChatWindow({
         leaveConversation,
         sendMessage: sendSocketMessage,
         startTyping,
-        stopTyping,
-        markAsRead
+        stopTyping
     } = useSocket({
-        onNewMessage: (message) => {
+        onNewMessage: (message: Message) => {
+            console.log('ChatWindow received message:', message)
             if (message.conversationId === conversation._id) {
-                console.log('📨 Received message:', message._id)
-                setMessages((prev) => [...prev, message])
-
-                // Mark as read if message is from other user
-                if (message.senderId !== currentUserId) {
-                    markAsRead(conversation._id)
-                }
+                // Check if message already exists to prevent duplicates
+                setMessages((prev) => {
+                    const exists = prev.some(m => m._id === message._id)
+                    if (exists) {
+                        return prev // Don't add duplicate
+                    }
+                    return [...prev, message]
+                })
             }
         },
-        onUserTyping: (data) => {
+        onUserTyping: (data: { userId: string, conversationId: string }) => {
             if (data.conversationId === conversation._id && data.userId !== currentUserId) {
                 setTypingUserId(data.userId)
 
@@ -69,12 +70,12 @@ export function ChatWindow({
                 }, 3000)
             }
         },
-        onUserStopTyping: (data) => {
+        onUserStopTyping: (data: { userId: string, conversationId: string }) => {
             if (data.conversationId === conversation._id) {
                 setTypingUserId(null)
             }
         },
-        onError: (error) => {
+        onError: (error: { message: string }) => {
             toast.error(error.message)
         }
     })
@@ -157,13 +158,11 @@ export function ChatWindow({
     // Join conversation room on mount
     useEffect(() => {
         if (isConnected) {
-            console.log('🔵 Joining conversation room:', conversation._id)
             joinConversation(conversation._id)
         }
 
         return () => {
             if (isConnected) {
-                console.log('🔴 Leaving conversation room:', conversation._id)
                 leaveConversation(conversation._id)
             }
         }
@@ -173,13 +172,6 @@ export function ChatWindow({
     useEffect(() => {
         loadMessages(1)
     }, [loadMessages])
-
-    // Mark messages as read when opening chat
-    useEffect(() => {
-        if (isConnected) {
-            markAsRead(conversation._id)
-        }
-    }, [conversation._id, isConnected, markAsRead])
 
     return (
         <div className="flex flex-col h-full bg-white">

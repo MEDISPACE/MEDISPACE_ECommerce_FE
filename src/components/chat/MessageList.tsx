@@ -146,8 +146,8 @@ export function MessageList({
                             <div className={`flex flex-col ${isOwnMessage ? 'items-end' : 'items-start'} max-w-[70%]`}>
                                 <div
                                     className={`rounded-2xl px-4 py-2 ${isOwnMessage
-                                            ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white'
-                                            : 'bg-white border border-gray-200 text-gray-900'
+                                        ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white'
+                                        : 'bg-white border border-gray-200 text-gray-900'
                                         } shadow-sm`}
                                 >
                                     {/* Image message */}
@@ -169,7 +169,6 @@ export function MessageList({
                                 {isLastInGroup && (
                                     <span className="text-xs text-gray-500 mt-1 px-1">
                                         {formatMessageTime(message.createdAt)}
-                                        {isOwnMessage && message.isRead && ' • Đã xem'}
                                     </span>
                                 )}
                             </div>

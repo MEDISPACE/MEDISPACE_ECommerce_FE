@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { io, Socket } from 'socket.io-client'
-import type { Message } from '../types/chat'
 import { authService } from '../services/authService'
+import apiClient from '../services/apiClient'
+import type { Message } from '../types/chat'
 
 interface UseSocketOptions {
     onNewMessage?: (message: Message) => void
@@ -17,6 +18,12 @@ export const useSocket = (options: UseSocketOptions = {}) => {
     const socketRef = useRef<Socket | null>(null)
     const [isConnected, setIsConnected] = useState(false)
     const [isConnecting, setIsConnecting] = useState(false)
+
+    // Keep reference to latest options to avoid stale closures in event handlers
+    const optionsRef = useRef(options)
+    useEffect(() => {
+        optionsRef.current = options
+    })
 
     // Connect to socket
     const connect = useCallback(() => {
@@ -39,57 +46,94 @@ export const useSocket = (options: UseSocketOptions = {}) => {
             transports: ['websocket', 'polling'],
             reconnection: true,
             reconnectionAttempts: 5,
-            reconnectionDelay: 1000
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000
         })
 
         // Connection events
         socketRef.current.on('connect', () => {
-            console.log('Socket connected')
+            console.log('✅ Socket connected')
             setIsConnected(true)
             setIsConnecting(false)
+
+            // Force join personal room
+            socketRef.current?.emit('user:join')
         })
 
-        socketRef.current.on('disconnect', () => {
-            console.log('Socket disconnected')
+        socketRef.current.on('disconnect', (reason) => {
+            console.log('❌ Socket disconnected:', reason)
             setIsConnected(false)
+
+            // If disconnected due to auth error, try to reconnect with fresh token
+            if (reason === 'io server disconnect') {
+                // Server disconnected, try to reconnect with fresh token
+                setTimeout(() => {
+                    const freshToken = authService.getAccessToken()
+                    if (freshToken && socketRef.current) {
+                        socketRef.current.auth = { token: freshToken }
+                        socketRef.current.connect()
+                    }
+                }, 1000)
+            }
         })
 
         socketRef.current.on('connect_error', (error) => {
-            console.error('Socket connection error:', error)
+            console.error('❌ Socket connection error:', error.message)
             setIsConnecting(false)
-            options.onError?.({ message: 'Failed to connect to chat server' })
+
+            // If authentication error, try to reconnect with fresh token
+            if (error.message.includes('Authentication') || error.message.includes('jwt expired')) {
+                console.log('🔄 Socket Auth Error. Attempting to refresh token...')
+
+                // Call API refresh token
+                apiClient.refreshToken()
+                    .then(freshToken => {
+                        console.log('✅ Token refreshed for socket. Reconnecting...')
+                        if (freshToken && socketRef.current) {
+                            socketRef.current.auth = { token: freshToken }
+                            socketRef.current.connect()
+                        }
+                    })
+                    .catch(err => {
+                        console.error('❌ Failed to refresh token for socket:', err)
+                        optionsRef.current.onError?.({ message: 'Session expired. Please login again.' })
+                    })
+            } else {
+                optionsRef.current.onError?.({ message: 'Failed to connect to chat server' })
+            }
         })
 
-        // Chat events
+        // Chat events - use optionsRef to call latest callbacks
         socketRef.current.on('message:new', (message: Message) => {
-            options.onNewMessage?.(message)
+            console.log('📨 Socket received message:', message)
+            optionsRef.current.onNewMessage?.(message)
         })
 
         socketRef.current.on('messages:read', (data: { conversationId: string; userId: string }) => {
-            options.onMessageRead?.(data)
+            optionsRef.current.onMessageRead?.(data)
         })
 
         socketRef.current.on('typing:user', (data: { userId: string; conversationId: string }) => {
-            options.onUserTyping?.(data)
+            optionsRef.current.onUserTyping?.(data)
         })
 
         socketRef.current.on('typing:stop', (data: { userId: string; conversationId: string }) => {
-            options.onUserStopTyping?.(data)
+            optionsRef.current.onUserStopTyping?.(data)
         })
 
         socketRef.current.on('user:online', (data: { userId: string }) => {
-            options.onUserOnline?.(data)
+            optionsRef.current.onUserOnline?.(data)
         })
 
         socketRef.current.on('user:offline', (data: { userId: string }) => {
-            options.onUserOffline?.(data)
+            optionsRef.current.onUserOffline?.(data)
         })
 
         socketRef.current.on('error', (error: { message: string }) => {
-            options.onError?.(error)
+            optionsRef.current.onError?.(error)
         })
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []) // Empty deps - options are captured from closure
+    }, []) // Empty deps - but we use optionsRef so it's fine
 
     // Disconnect from socket
     const disconnect = useCallback(() => {
