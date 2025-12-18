@@ -109,7 +109,7 @@ export function ShoppingCartPage() {
     return (
       <div className='max-w-7xl mx-auto px-4 py-6'>
         <UniversalBreadcrumb items={breadcrumbItems} />
-        <Card className='max-w-md mx-auto text-center p-8'>
+        <Card className='max-w-md mx-auto text-center p-8 border-blue-200'>
           <CardContent>
             <ShoppingCart className='w-24 h-24 text-blue-300 mx-auto mb-6' />
             <h2 className='text-2xl font-bold text-gray-900 mb-2'>Giỏ hàng trống</h2>

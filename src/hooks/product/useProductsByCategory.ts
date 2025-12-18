@@ -16,12 +16,8 @@ export function useProductsByCategory(categoryId: string | undefined, limit: num
     const fetchProducts = async () => {
       try {
         setLoading(true)
-        // Use the existing getProducts method with category filter and sort by newest
         const products = await productService.getProducts({
-          categories: [categoryId],
-          brands: [],
-          priceRange: [0, 10000000],
-          rating: 0,
+          categoryId,
           limit,
           sortBy: 'createdAt',
           sortOrder: 'desc'
