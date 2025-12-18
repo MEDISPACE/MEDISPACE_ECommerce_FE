@@ -1,3 +1,34 @@
+// ProductDetails interface for extended product information
+export interface ProductDetails {
+  _id?: string
+  productId?: string
+  activeIngredients?: string
+  dosageForm?: string
+  packSize?: string
+  manufacturer?: string
+  indications?: string
+  dosageInstructions?: string
+  storageInstructions?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+// ProductMedia interface for product images
+export interface ProductMediaImage {
+  url: string
+  alt?: string
+  type: 'main' | 'gallery'
+  sortOrder: number
+}
+
+export interface ProductMedia {
+  _id?: string
+  productId?: string
+  images?: ProductMediaImage[]
+  createdAt?: string
+  updatedAt?: string
+}
+
 // Main Product interface matching backend schema
 export interface Product {
   _id: string // MongoDB ObjectId as string
@@ -32,6 +63,8 @@ export interface Product {
   // Extended properties for UI (populated from references)
   category?: Category
   brand?: Brand
+  details?: ProductDetails // From productDetails collection
+  media?: ProductMedia // From productMedia collection
 
   // Legacy properties for backward compatibility
   id?: string // Alias for _id
@@ -59,6 +92,7 @@ export interface Product {
   warnings?: string[]
   tags?: string[]
 }
+
 
 // Brand interface matching backend schema
 export interface Brand {

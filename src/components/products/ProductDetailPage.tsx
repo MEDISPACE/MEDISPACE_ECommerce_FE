@@ -35,7 +35,8 @@ import { useCart } from '../../contexts/CartContext'
 import { useWishlist } from '../../hooks/product/useWishlist'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
 import { useImageLightbox, useCarousel } from '~/hooks/ui'
-import type { Product, Review } from '~/types/product'
+import type { Product, Review, Category } from '~/types/product'
+
 import { ReviewList } from '../reviews/ReviewList'
 import { ReviewStats } from '../reviews/ReviewStats'
 import { WriteReviewDialog } from '../reviews/WriteReviewDialog'
@@ -109,14 +110,69 @@ export function ProductDetailPage() {
     fetchProduct()
   }, [slug])
 
+  // Fetch all categories for breadcrumb name lookup
+  const [allCategoriesFlat, setAllCategoriesFlat] = useState<Category[]>([])
 
-  // Use custom hooks - temporarily disabled due to type conflicts
-  // const breadcrumbItems = useBreadcrumb({ product: rawProduct })
-  const breadcrumbItems = [
-    { label: 'Trang chủ', href: '/' },
-    { label: 'Sản phẩm', href: '/products' },
-    { label: product?.name || 'Chi tiết sản phẩm', href: '#' },
-  ]
+  useEffect(() => {
+    const fetchAllCategories = async () => {
+      try {
+        const { categoryService } = await import('../../services/categoryService')
+        const data = await categoryService.getCategories()
+        setAllCategoriesFlat(data)
+      } catch (error) {
+        console.error('Failed to fetch categories for breadcrumb:', error)
+      }
+    }
+    fetchAllCategories()
+  }, [])
+
+  // Lookup category name from slug using fetched categories
+  const getCategoryNameBySlug = (slugStr: string): string => {
+    const foundCategory = allCategoriesFlat.find(cat => cat.slug === slugStr)
+    if (foundCategory) {
+      return foundCategory.name // Vietnamese name with diacritics
+    }
+    // Fallback: capitalize slug
+    return slugStr
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+  }
+
+  // Build breadcrumb from product category path hierarchy
+  const buildCategoryBreadcrumb = () => {
+    if (!product?.category) return []
+
+    const categoryPath = product.category.path // e.g., "/thuoc/thuoc-bo-vitamin/thuoc-tang-cuong"
+    if (!categoryPath) {
+      // Fallback: just show current category
+      return [{
+        label: product.category.name,
+        href: `/products?category=${product.category.slug}`
+      }]
+    }
+
+    // Parse path into slugs (remove leading slash and split)
+    const slugs = categoryPath.split('/').filter(Boolean) // ['thuoc', 'thuoc-bo-vitamin', 'thuoc-tang-cuong']
+
+    // Build breadcrumb items from slugs
+    const items = slugs.map((slugItem, index) => {
+      const isLast = index === slugs.length - 1
+      return {
+        label: isLast ? product.category!.name : getCategoryNameBySlug(slugItem),
+        href: `/categories/${slugItem}`
+      }
+    })
+
+
+    return items
+  }
+
+  const breadcrumbItems = buildCategoryBreadcrumb()
+
+
+
+
 
   const lightbox = useImageLightbox({
     images: product ? getProductImages(product) : [],
@@ -180,16 +236,32 @@ export function ProductDetailPage() {
     toggleWishlist(getProductId(product))
   }
 
-  // Thumbnail gallery scroll handlers
-  const scrollThumbnails = (direction: 'left' | 'right') => {
-    if (!thumbnailScrollRef.current) return
-    const scrollAmount = 96 // width of thumbnail (80px) + gap (16px)
-    const newScrollLeft = thumbnailScrollRef.current.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount)
-    thumbnailScrollRef.current.scrollTo({
-      left: newScrollLeft,
-      behavior: 'smooth',
-    })
+  // Image navigation - changes main image and auto-scrolls thumbnails
+  const navigateImage = (direction: 'prev' | 'next') => {
+    const images = getProductImages(product)
+    const totalImages = images.length
+
+    let newIndex: number
+    if (direction === 'prev') {
+      newIndex = selectedImage === 0 ? totalImages - 1 : selectedImage - 1
+    } else {
+      newIndex = selectedImage === totalImages - 1 ? 0 : selectedImage + 1
+    }
+
+    setSelectedImage(newIndex)
+
+    // Auto-scroll thumbnails to keep selected visible
+    if (thumbnailScrollRef.current) {
+      const thumbnailWidth = 88 // 80px + 8px gap
+      const containerWidth = thumbnailScrollRef.current.clientWidth
+      const scrollTarget = newIndex * thumbnailWidth - containerWidth / 2 + thumbnailWidth / 2
+      thumbnailScrollRef.current.scrollTo({
+        left: Math.max(0, scrollTarget),
+        behavior: 'smooth',
+      })
+    }
   }
+
 
   const scrollToSlide = (index: number) => {
     carousel.goToSlide(index)
@@ -237,11 +309,12 @@ export function ProductDetailPage() {
         />
       )}
 
-      <div className='max-w-7xl mx-auto px-4 py-6'>
-        {/* Breadcrumb */}
-        <UniversalBreadcrumb items={breadcrumbItems} />
+      {/* Breadcrumb - Must be OUTSIDE container for sticky to work */}
+      <UniversalBreadcrumb items={breadcrumbItems} />
 
+      <div className='max-w-7xl mx-auto px-4 py-6'>
         {/* Product Info Section */}
+
         <div className='grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12 mt-4'>
           {/* Product Images */}
           <div>
@@ -260,10 +333,12 @@ export function ProductDetailPage() {
                 aria-label='Click to view full size image'
               >
                 <ImageWithFallback
-                  src={getProductImages(product)[lightbox.currentIndex] || getProductImage(product)}
+                  key={selectedImage}
+                  src={getProductImages(product)[selectedImage] || getProductImage(product)}
                   alt={product.name}
-                  className='w-full h-full object-cover hover:scale-105 transition-transform duration-300'
+                  className='w-full h-full object-cover hover:scale-105 transition-transform duration-300 animate-fade-in'
                 />
+
               </div>
 
               {/* Badges - Top Left */}
@@ -278,8 +353,9 @@ export function ProductDetailPage() {
               {getProductImages(product).length > 1 && (
                 <div className='absolute bottom-4 left-4 z-20 bg-gradient-to-r from-blue-600 to-cyan-500 text-white px-3 py-1.5 rounded-lg shadow-lg backdrop-blur-sm'>
                   <span className='font-medium text-sm'>
-                    {lightbox.currentIndex + 1}/{getProductImages(product).length}
+                    {selectedImage + 1}/{getProductImages(product).length}
                   </span>
+
                 </div>
               )}
 
@@ -299,25 +375,26 @@ export function ProductDetailPage() {
             <div className='w-full'>
               {/* Centered gallery wrapper with max-width */}
               <div className='relative group mx-auto' style={{ maxWidth: '440px' }}>
-                {/* Navigation arrows - only show if more than 5 images */}
-                {getProductImages(product).length > 5 && (
+                {/* Navigation arrows - show if more than 1 image */}
+                {getProductImages(product).length > 1 && (
                   <>
                     <button
-                      onClick={() => scrollThumbnails('left')}
-                      className='absolute -left-3 top-1/2 -translate-y-1/2 z-20 bg-white/90 backdrop-blur-lg border border-blue-100 shadow-lg hover:shadow-xl rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-blue-50 disabled:opacity-0 p-2'
-                      aria-label='Scroll left'
+                      onClick={() => navigateImage('prev')}
+                      className='absolute -left-3 top-1/2 -translate-y-1/2 z-20 bg-white/95 backdrop-blur-lg border border-blue-200 shadow-md hover:shadow-lg rounded-full transition-all hover:bg-blue-50 hover:border-blue-300 p-2'
+                      aria-label='Previous image'
                     >
                       <ChevronLeft className='w-4 h-4 text-blue-600' />
                     </button>
                     <button
-                      onClick={() => scrollThumbnails('right')}
-                      className='absolute -right-3 top-1/2 -translate-y-1/2 z-20 bg-white/90 backdrop-blur-lg border border-blue-100 shadow-lg hover:shadow-xl rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-blue-50 disabled:opacity-0 p-2'
-                      aria-label='Scroll right'
+                      onClick={() => navigateImage('next')}
+                      className='absolute -right-3 top-1/2 -translate-y-1/2 z-20 bg-white/95 backdrop-blur-lg border border-blue-200 shadow-md hover:shadow-lg rounded-full transition-all hover:bg-blue-50 hover:border-blue-300 p-2'
+                      aria-label='Next image'
                     >
                       <ChevronRight className='w-4 h-4 text-blue-600' />
                     </button>
                   </>
                 )}
+
 
                 {/* Thumbnail gallery with smooth scroll */}
                 <div
@@ -446,7 +523,7 @@ export function ProductDetailPage() {
 
                   <div className='flex gap-3'>
                     <Link to={`/prescription/upload?product=${product.slug}`} className='flex-1'>
-                      <Button className='w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 h-12 shadow-lg hover:shadow-xl transition-all'>
+                      <Button className='w-full bg-gradient-to-r text-white from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 h-12 shadow-lg hover:shadow-xl transition-all'>
                         <FileText className='w-5 h-5 mr-2' />
                         Upload đơn thuốc
                       </Button>
@@ -454,7 +531,7 @@ export function ProductDetailPage() {
                     <Link to={`/contact?product=${product.slug}`} className='flex-1'>
                       <Button
                         variant='outline'
-                        className='w-full border-2 border-purple-200 text-purple-600 hover:bg-purple-50 hover:border-purple-300 h-12 shadow-md hover:shadow-lg transition-all'
+                        className='w-full border-2 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 h-12 shadow-md hover:shadow-lg transition-all'
                       >
                         <MessageCircle className='w-5 h-5 mr-2' />
                         Chat dược sĩ
@@ -513,13 +590,13 @@ export function ProductDetailPage() {
                   <Heart className={`w-4 h-4 mr-2 ${isInWishlist(getProductId(product)) ? 'fill-red-600' : ''}`} />
                   {isInWishlist(getProductId(product)) ? 'Đã yêu thích' : 'Yêu thích'}
                 </Button>
-                <Button
+                {/* <Button
                   variant='outline'
                   size='sm'
                   className='flex-1 border-2 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 transition-all'
                 >
                   So sánh sản phẩm
-                </Button>
+                </Button> */}
                 <Button
                   variant='outline'
                   size='sm'
@@ -596,7 +673,7 @@ export function ProductDetailPage() {
           </TabsList>
 
           <TabsContent value='description' className='mt-6'>
-            <Card className='border-blue-100 shadow-sm'>
+            <Card className='bg-white border-blue-100 shadow-sm'>
               <CardContent className='p-6'>
                 <div className='prose max-w-none'>
                   <p className='text-gray-700 leading-relaxed'>{getProductDescription(product)}</p>
@@ -610,16 +687,32 @@ export function ProductDetailPage() {
           </TabsContent>
 
           <TabsContent value='ingredients' className='mt-6'>
-            <Card className='border-blue-100 shadow-sm'>
+            <Card className='bg-white border-blue-100 shadow-sm'>
               <CardContent className='p-6'>
                 <div className='space-y-4'>
-                  {(product.ingredients && product.ingredients.length > 0) ? (
-                    product.ingredients.map((ingredient, index) => (
-                      <div key={index} className='flex justify-between py-2 border-b border-blue-50 last:border-0'>
-                        <span className='font-medium'>{ingredient}</span>
-                        <span className='text-gray-600'>Chính</span>
-                      </div>
-                    ))
+                  {product.details?.activeIngredients ? (
+                    <div className='prose max-w-none'>
+                      <h4 className='font-semibold text-gray-900 mb-3'>Thành phần hoạt chất</h4>
+                      <p className='text-gray-700 leading-relaxed'>{product.details.activeIngredients}</p>
+                      {product.details.dosageForm && (
+                        <div className='mt-4 pt-4 border-t border-blue-50'>
+                          <span className='font-medium text-gray-600'>Dạng bào chế: </span>
+                          <span className='text-gray-800'>{product.details.dosageForm}</span>
+                        </div>
+                      )}
+                      {product.details.packSize && (
+                        <div className='mt-2'>
+                          <span className='font-medium text-gray-600'>Quy cách đóng gói: </span>
+                          <span className='text-gray-800'>{product.details.packSize}</span>
+                        </div>
+                      )}
+                      {product.details.manufacturer && (
+                        <div className='mt-2'>
+                          <span className='font-medium text-gray-600'>Nhà sản xuất: </span>
+                          <span className='text-gray-800'>{product.details.manufacturer}</span>
+                        </div>
+                      )}
+                    </div>
                   ) : (
                     <p className='text-gray-600'>Thông tin thành phần đang được cập nhật...</p>
                   )}
@@ -629,54 +722,60 @@ export function ProductDetailPage() {
           </TabsContent>
 
           <TabsContent value='uses' className='mt-6'>
-            <Card className='border-blue-100 shadow-sm'>
+            <Card className='bg-white border-blue-100 shadow-sm'>
               <CardContent className='p-6'>
-                <ul className='space-y-2'>
-                  {(product.uses && product.uses.length > 0) ? (
-                    product.uses.map((use, index) => (
-                      <li key={index} className='flex items-start gap-2'>
-                        <div className='w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0' />
-                        <span>{use}</span>
-                      </li>
-                    ))
+                <div className='prose max-w-none'>
+                  {product.details?.indications ? (
+                    <p className='text-gray-700 leading-relaxed whitespace-pre-line'>{product.details.indications}</p>
                   ) : (
-                    <li className='text-gray-600'>Thông tin công dụng đang được cập nhật...</li>
+                    <p className='text-gray-600'>Thông tin công dụng đang được cập nhật...</p>
                   )}
-                </ul>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
 
           <TabsContent value='instructions' className='mt-6'>
-            <Card className='border-blue-100 shadow-sm'>
+            <Card className='bg-white border-blue-100 shadow-sm'>
               <CardContent className='p-6'>
                 <div className='prose max-w-none'>
-                  <p className='text-gray-700 leading-relaxed'>{product.instructions || 'Thông tin hướng dẫn sử dụng đang được cập nhật...'}</p>
+                  {product.details?.dosageInstructions ? (
+                    <p className='text-gray-700 leading-relaxed whitespace-pre-line'>{product.details.dosageInstructions}</p>
+                  ) : (
+                    <p className='text-gray-600'>Thông tin hướng dẫn sử dụng đang được cập nhật...</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
           <TabsContent value='warnings' className='mt-6'>
-            <Card className='border-blue-100 shadow-sm'>
+            <Card className='bg-white border-blue-100 shadow-sm'>
               <CardContent className='p-6'>
-                <div className='space-y-3'>
-                  {(product.warnings && product.warnings.length > 0) ? (
-                    product.warnings.map((warning, index) => (
-                      <div
-                        key={index}
-                        className='flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg'
-                      >
-                        <div className='w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0' />
-                        <span className='text-yellow-800'>{warning}</span>
-                      </div>
-                    ))
-                  ) : (
-                    <div className='flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg'>
-                      <div className='w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0' />
-                      <span className='text-blue-800'>Sản phẩm an toàn khi sử dụng theo hướng dẫn. Vui lòng đọc kỹ hướng dẫn sử dụng trước khi dùng.</span>
+                <div className='space-y-4'>
+                  {product.details?.storageInstructions && (
+                    <div className='p-4 bg-amber-50 border border-amber-200 rounded-lg'>
+                      <h4 className='font-semibold text-amber-900 mb-2'>Bảo quản</h4>
+                      <p className='text-amber-800 leading-relaxed'>{product.details.storageInstructions}</p>
                     </div>
                   )}
+                  <div className='p-4 bg-blue-50 border border-blue-200 rounded-lg'>
+                    <h4 className='font-semibold text-blue-900 mb-2'>Lưu ý khi sử dụng</h4>
+                    <ul className='space-y-2 text-blue-800'>
+                      <li className='flex items-start gap-2'>
+                        <div className='w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0' />
+                        <span>Đọc kỹ hướng dẫn sử dụng trước khi dùng.</span>
+                      </li>
+                      <li className='flex items-start gap-2'>
+                        <div className='w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0' />
+                        <span>Để xa tầm tay trẻ em.</span>
+                      </li>
+                      <li className='flex items-start gap-2'>
+                        <div className='w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0' />
+                        <span>Tham khảo ý kiến bác sĩ hoặc dược sĩ nếu cần thiết.</span>
+                      </li>
+                    </ul>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -690,7 +789,7 @@ export function ProductDetailPage() {
                   <ReviewStats stats={stats} loading={reviewsLoading} />
                 </div>
                 <div className='md:col-span-2'>
-                  <Card className='border-blue-200 shadow-sm'>
+                  <Card className='bg-white border-blue-200 shadow-sm'>
                     <CardContent className='p-6'>
                       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
                         <Star className="w-8 h-8 text-blue-600 mx-auto mb-2" />

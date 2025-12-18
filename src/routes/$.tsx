@@ -20,7 +20,7 @@ export default function NotFound() {
         </div>
 
         <div className='space-y-4'>
-          <Button asChild className='bg-blue-600 hover:bg-blue-700'>
+          <Button asChild className='bg-blue-600 hover:bg-blue-700 text-white mr-4'>
             <Link to='/'>
               <Home className='bg-whiw-4 h-4 mr-2' />
               Về trang chủ

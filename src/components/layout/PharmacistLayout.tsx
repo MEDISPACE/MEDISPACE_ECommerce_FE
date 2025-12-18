@@ -135,7 +135,7 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
         const data = await dashboardService.getStats()
         setStats(data)
       } catch (error) {
-        console.error('Failed to load dashboard stats:', error)
+
       }
     }
     loadStats()
@@ -177,7 +177,7 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
       // Rollback on error
       setIsOnline(previousStatus)
       toast.error('Không thể cập nhật trạng thái. Vui lòng thử lại.')
-      console.error('Failed to update online status:', error)
+
     }
   }
 

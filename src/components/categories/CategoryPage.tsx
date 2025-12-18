@@ -36,7 +36,12 @@ export function CategoryPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [products, setProducts] = useState<Product[]>([])
+  const [subcategories, setSubcategories] = useState<Category[]>([])
+  const [showAllSubcategories, setShowAllSubcategories] = useState(false)
   const [currentCategory, setCurrentCategory] = useState<Category | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [notFound, setNotFound] = useState(false)
+
   const [filters, setFilters] = useState<ProductFilter>({
     categories: [],
     priceRange: [0, 5000000],
@@ -48,9 +53,13 @@ export function CategoryPage() {
 
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true)
+      setNotFound(false)
       try {
         const categoryData = await categoryService.getCategoryBySlug(slug || '')
         if (!categoryData) {
+          setNotFound(true)
+          setIsLoading(false)
           return
         }
 
@@ -68,8 +77,13 @@ export function CategoryPage() {
         const allProducts = productResults.flat()
 
         setProducts(allProducts)
+        setSubcategories(subcategoriesData)
         setCurrentCategory(categoryData)
+
       } catch (error) {
+        setNotFound(true)
+      } finally {
+        setIsLoading(false)
       }
     }
 
@@ -82,11 +96,61 @@ export function CategoryPage() {
   // Get icon component for this category
   const IconComponent = categoryIcons[slug as keyof typeof categoryIcons] || Pill
 
-  // Create breadcrumb items for MainLayout
-  const breadcrumbItems = [
-    { label: 'Danh mục', href: '/categories' },
-    { label: category?.name || 'Danh mục', count: category?.productCount },
-  ]
+  // Fetch all categories for breadcrumb name lookup
+  const [allCategoriesFlat, setAllCategoriesFlat] = useState<Category[]>([])
+
+  useEffect(() => {
+    const fetchAllCategories = async () => {
+      try {
+        const data = await categoryService.getCategories()
+        setAllCategoriesFlat(data)
+      } catch (error) {
+        console.error('Failed to fetch categories for breadcrumb:', error)
+      }
+    }
+    fetchAllCategories()
+  }, [])
+
+  // Lookup category name from slug using fetched categories
+  const getCategoryNameBySlug = (slugStr: string): string => {
+    const foundCategory = allCategoriesFlat.find(cat => cat.slug === slugStr)
+    if (foundCategory) {
+      return foundCategory.name // Vietnamese name with diacritics
+    }
+    // Fallback: capitalize slug
+    return slugStr
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+  }
+
+  const buildCategoryBreadcrumb = () => {
+    if (!category) return []
+
+    const categoryPath = category.path // e.g., "/thuoc/thuoc-bo-vitamin"
+    if (!categoryPath) {
+      // Fallback: just show current category
+      return [{ label: category.name }]
+    }
+
+    // Parse path into slugs (remove leading slash and split)
+    const slugs = categoryPath.split('/').filter(Boolean)
+
+    // Build breadcrumb items from slugs  
+    const items = slugs.map((slugItem, index) => {
+      const isLast = index === slugs.length - 1
+      return {
+        label: isLast ? category.name : getCategoryNameBySlug(slugItem),
+        href: isLast ? undefined : `/categories/${slugItem}`, // No link for current category
+      }
+    })
+
+    return items
+  }
+
+
+  const breadcrumbItems = buildCategoryBreadcrumb()
+
 
   // Apply filters and search
   const filteredProducts = products.filter((product: Product) => {
@@ -150,7 +214,57 @@ export function CategoryPage() {
   const startIndex = (currentPage - 1) * itemsPerPage
   const paginatedProducts = transformedProducts.slice(startIndex, startIndex + itemsPerPage)
 
-  if (!category) {
+  // Loading state - show skeleton
+  if (isLoading) {
+    return (
+      <div className='max-w-7xl mx-auto px-4 py-6'>
+        <div className='animate-pulse'>
+          {/* Breadcrumb skeleton */}
+          <div className='h-5 bg-gray-200 rounded w-64 mb-6'></div>
+
+          {/* Category header skeleton */}
+          <div className='bg-gray-50 rounded-2xl p-6 mb-6'>
+            <div className='flex items-center gap-4'>
+              <div className='w-16 h-16 bg-gray-200 rounded-xl'></div>
+              <div>
+                <div className='h-8 bg-gray-200 rounded w-48 mb-2'></div>
+                <div className='h-4 bg-gray-200 rounded w-32'></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Subcategories skeleton */}
+          <div className='mb-8'>
+            <div className='h-6 bg-gray-200 rounded w-40 mb-4'></div>
+            <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className='bg-white rounded-lg p-4 border border-gray-100 shadow-sm'>
+                  <div className='w-12 h-12 bg-gray-200 rounded-lg mx-auto mb-3'></div>
+                  <div className='h-4 bg-gray-200 rounded w-24 mx-auto mb-2'></div>
+                  <div className='h-3 bg-gray-200 rounded w-16 mx-auto'></div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Products skeleton */}
+          <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+            {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+              <div key={i} className='bg-white rounded-lg p-4 border border-gray-100 shadow-sm'>
+
+                <div className='h-40 bg-gray-200 rounded mb-3'></div>
+                <div className='h-4 bg-gray-200 rounded w-full mb-2'></div>
+                <div className='h-4 bg-gray-200 rounded w-3/4'></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Not found state - show error
+  if (notFound || !category) {
     return (
       <div className='max-w-7xl mx-auto px-4 py-6'>
         <UniversalBreadcrumb items={breadcrumbItems} />
@@ -166,7 +280,9 @@ export function CategoryPage() {
 
   return (
     <EnhancedPageTransition>
+      <UniversalBreadcrumb items={breadcrumbItems} />
       <div className='max-w-7xl mx-auto px-4 py-6'>
+
         {/* Category Header */}
         <div
           className='bg-gradient-to-r from-white to-gray-50 rounded-2xl p-6 mb-6 border-l-4 border-blue-500'
@@ -194,64 +310,91 @@ export function CategoryPage() {
           </div>
         </div>
 
-        {/* Sub-categories Featured Grid */}
-        <div className='mb-8'>
-          <h2 className='text-xl font-bold text-gray-900 mb-4'>Danh mục phổ biến</h2>
-          <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-            {category.subcategories?.slice(0, 8).map((subCategory) => (
-              <Card
-                key={subCategory._id}
-                className='group hover:shadow-md transition-all duration-300 hover:border-blue-200'
-              >
-                <CardContent className='p-4 text-center'>
-                  <div
-                    className='w-12 h-12 rounded-lg mx-auto mb-3 flex items-center justify-center text-white font-bold bg-blue-500'
-                  >
-                    {subCategory.name.charAt(0)}
-                  </div>
-                  <h3 className='font-medium text-sm group-hover:text-blue-600 transition-colors mb-1'>
-                    {subCategory.name}
-                  </h3>
-                  <p className='text-xs text-gray-500 mb-3'>{subCategory.productCount} sản phẩm</p>
-                  <Link to={`/categories/${category.slug}/${subCategory.slug}`}>
-                    <Button size='sm' variant='outline' className='w-full text-xs'>
-                      Xem ngay
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            ))}
+        {/* Sub-categories Featured Grid - Only show if has subcategories */}
+        {subcategories.length > 0 && (
+          <div className='mb-8'>
+            <h2 className='text-xl font-bold text-gray-900 mb-4'>Danh mục phổ biến</h2>
+            <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+              {subcategories.slice(0, 8).map((subCategory) => (
+                <Card
+                  key={subCategory._id}
+                  className='group bg-white border-blue-100 hover:shadow-md transition-all duration-300 hover:border-blue-200'
+                >
+
+
+                  <CardContent className='p-4 text-center'>
+                    <div
+                      className='w-12 h-12 rounded-lg mx-auto mb-3 flex items-center justify-center text-white font-bold bg-blue-500'
+                    >
+                      {subCategory.name.charAt(0)}
+                    </div>
+                    <h3 className='font-medium text-sm group-hover:text-blue-600 transition-colors mb-1'>
+                      {subCategory.name}
+                    </h3>
+                    <p className='text-xs text-gray-500 mb-3'>{subCategory.productCount} sản phẩm</p>
+                    <Link to={`/categories/${subCategory.slug}`}>
+                      <Button size='sm' variant='outline' className='w-full text-xs border-blue-200 text-blue-600 hover:!bg-[#eff6ff] hover:border-blue-400 transition-all duration-300'>
+                        Xem ngay
+                      </Button>
+                    </Link>
+
+
+
+
+
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
+
 
         {/* Products Section */}
         <div className='flex gap-6'>
           {/* Sidebar - Desktop */}
           <div className='hidden lg:block w-1/4'>
             <div className='space-y-6'>
-              {/* Sub-categories */}
-              <Card className='border-blue-200 shadow-sm'>
-                <CardHeader>
-                  <CardTitle className='text-lg'>Danh mục con</CardTitle>
-                </CardHeader>
-                <CardContent className='space-y-3'>
-                  {category.subcategories?.map((subCategory) => (
-                    <Link
-                      key={subCategory._id}
-                      to={`/categories/${category.slug}/${subCategory.slug}`}
-                      className='flex items-center justify-between py-2 px-3 rounded-lg hover:bg-blue-50 transition-colors group'
-                    >
-                      <span className='text-sm group-hover:text-blue-600'>{subCategory.name}</span>
-                      <Badge variant='secondary' className='text-xs'>
-                        {subCategory.productCount}
-                      </Badge>
-                    </Link>
-                  ))}
-                </CardContent>
-              </Card>
+              {/* Sub-categories - Only show if has subcategories */}
+              {subcategories.length > 0 && (
+                <Card className='bg-white border-blue-200 shadow-sm'>
+
+                  <CardHeader>
+                    <CardTitle className='text-lg'>Danh mục con</CardTitle>
+                  </CardHeader>
+                  <CardContent className='space-y-2'>
+                    {(showAllSubcategories ? subcategories : subcategories.slice(0, 6)).map((subCategory) => (
+                      <Link
+                        key={subCategory._id}
+                        to={`/categories/${subCategory.slug}`}
+                        className='flex items-center justify-between py-2 px-3 rounded-lg hover:bg-blue-50 transition-colors group'
+                      >
+                        <span className='text-sm group-hover:text-blue-600'>{subCategory.name}</span>
+                        <Badge variant='secondary' className='text-xs'>
+                          {subCategory.productCount}
+                        </Badge>
+                      </Link>
+                    ))}
+                    {subcategories.length > 6 && (
+                      <Button
+                        variant='ghost'
+                        size='sm'
+                        onClick={() => setShowAllSubcategories(!showAllSubcategories)}
+                        className='w-full text-blue-600 hover:text-blue-700 hover:bg-blue-50 mt-2'
+                      >
+                        {showAllSubcategories
+                          ? 'Thu gọn'
+                          : `+ Xem thêm ${subcategories.length - 6} danh mục`}
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
 
               {/* Brands Filter */}
-              <Card className='border-blue-200 shadow-sm'>
+              <Card className='bg-white border-blue-200 shadow-sm'>
+
                 <CardHeader>
                   <CardTitle className='text-lg'>Thương hiệu</CardTitle>
                 </CardHeader>
@@ -338,12 +481,12 @@ export function CategoryPage() {
                 </Select>
 
                 {/* View Mode */}
-                <div className='flex items-center border rounded-lg'>
+                <div className='flex items-center border border-blue-200 rounded-lg overflow-hidden'>
                   <Button
                     variant={viewMode === 'grid' ? 'default' : 'ghost'}
                     size='sm'
                     onClick={() => setViewMode('grid')}
-                    className='rounded-r-none'
+                    className={viewMode === 'grid' ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white rounded-r-none' : 'text-gray-600 rounded-r-none'}
                   >
                     <Grid className='w-4 h-4' />
                   </Button>
@@ -351,11 +494,12 @@ export function CategoryPage() {
                     variant={viewMode === 'list' ? 'default' : 'ghost'}
                     size='sm'
                     onClick={() => setViewMode('list')}
-                    className='rounded-l-none'
+                    className={viewMode === 'list' ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white rounded-l-none' : 'text-gray-600 rounded-l-none'}
                   >
                     <List className='w-4 h-4' />
                   </Button>
                 </div>
+
               </div>
             </div>
 
@@ -426,6 +570,6 @@ export function CategoryPage() {
           </div>
         </div>
       </div>
-    </EnhancedPageTransition>
+    </EnhancedPageTransition >
   )
 }

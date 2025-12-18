@@ -28,7 +28,7 @@ export function useProductReviews(productId: string) {
             setTotalPages(reviewsData.pagination.totalPages)
             setStats(statsData)
         } catch (error) {
-            console.error('Failed to fetch reviews:', error)
+
             toast.error('Không thể tải đánh giá')
         } finally {
             setLoading(false)
@@ -70,7 +70,7 @@ export function useUserReviews() {
             const data = await reviewService.getUserReviews()
             setReviews(data)
         } catch (error) {
-            console.error('Failed to fetch user reviews:', error)
+
             toast.error('Không thể tải đánh giá của bạn')
         } finally {
             setLoading(false)
@@ -102,7 +102,7 @@ export function useReviewActions() {
             // to show different messages for auto-approved vs pending reviews
             return review
         } catch (error: any) {
-            console.error('Failed to create review:', error)
+
             toast.error(error.response?.data?.message || 'Không thể gửi đánh giá')
             throw error
         } finally {
@@ -117,7 +117,7 @@ export function useReviewActions() {
             // Note: Toast is handled by parent component (WriteReviewDialog)
             return review
         } catch (error: any) {
-            console.error('Failed to update review:', error)
+
             toast.error(error.response?.data?.message || 'Không thể cập nhật đánh giá')
             throw error
         } finally {
@@ -131,7 +131,7 @@ export function useReviewActions() {
             await reviewService.deleteReview(reviewId)
             toast.success('Đánh giá đã được xóa!')
         } catch (error: any) {
-            console.error('Failed to delete review:', error)
+
             toast.error(error.response?.data?.message || 'Không thể xóa đánh giá')
             throw error
         } finally {
@@ -144,7 +144,7 @@ export function useReviewActions() {
             await reviewService.markReviewHelpful(reviewId)
             toast.success('Cảm ơn phản hồi của bạn!')
         } catch (error: any) {
-            console.error('Failed to mark helpful:', error)
+
             toast.error(error.response?.data?.message || 'Không thể đánh dấu hữu ích')
             throw error
         }

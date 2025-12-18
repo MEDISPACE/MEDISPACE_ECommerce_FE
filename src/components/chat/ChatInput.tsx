@@ -92,7 +92,7 @@ export function ChatInput({ onSendMessage, onTyping, onStopTyping, disabled, pla
             setImageUrl(uploadedUrl)
             toast.success('Tải ảnh lên thành công')
         } catch (error: any) {
-            console.error('Upload error:', error)
+
 
             // Parse error message
             const errorMsg = error?.message || 'Không thể tải ảnh lên'
@@ -111,7 +111,7 @@ export function ChatInput({ onSendMessage, onTyping, onStopTyping, disabled, pla
     }
 
     return (
-        <div className="border-t border-gray-200 bg-white p-4">
+        <div className="border-t border-gray-200 bg-white p-3 flex-shrink-0">
             {/* Image preview */}
             {imageUrl && (
                 <div className="mb-3 relative inline-block">
@@ -146,7 +146,7 @@ export function ChatInput({ onSendMessage, onTyping, onStopTyping, disabled, pla
                     onKeyDown={handleKeyDown}
                     placeholder={placeholder}
                     disabled={disabled}
-                    className="flex-1 min-h-[44px] max-h-32 resize-none border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    className="flex-1 min-h-[40px] max-h-24 resize-none border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm"
                     rows={1}
                 />
 
@@ -154,7 +154,7 @@ export function ChatInput({ onSendMessage, onTyping, onStopTyping, disabled, pla
                 <Button
                     onClick={handleSend}
                     disabled={disabled || (!message.trim() && !imageUrl)}
-                    className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-4 py-2 h-[44px]"
+                    className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-4 py-2 h-[40px]"
                 >
                     <Send className="w-5 h-5" />
                 </Button>
