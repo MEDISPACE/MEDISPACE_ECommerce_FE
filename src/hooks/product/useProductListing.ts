@@ -39,20 +39,24 @@ export function useProductListing({
 }: UseProductListingOptions): UseProductListingReturn {
   const [searchParams] = useSearchParams()
 
+  // Read category from URL query params
+  const categoryFromUrl = searchParams.get('category')
+
   // States
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [sortBy, setSortBy] = useState(searchParams.get('sort') || 'newest')
   const [resultsPerPage, setResultsPerPage] = useState(defaultResultsPerPage)
   const [currentPage, setCurrentPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '')
-  const [filters, setFilters] = useState<ProductFilter>({
-    categories: [],
+  const [filters, setFilters] = useState<ProductFilter>(() => ({
+    categories: categoryFromUrl ? [categoryFromUrl] : [],
     brands: [],
     priceRange: [0, 1000000],
     rating: 0,
     inStock: undefined,
     isPrescription: undefined,
-  })
+  }))
+
 
   // Filter products
   const filteredProducts = useMemo(() => {
