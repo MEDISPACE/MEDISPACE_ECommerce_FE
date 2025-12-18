@@ -58,7 +58,7 @@ export function SettingsForm({ onSuccess }: SettingsFormProps) {
 
       onSuccess?.()
     } catch (error) {
-      console.error('Failed to save settings:', error)
+
       toast.error('Lưu cài đặt thất bại', {
         description: 'Có lỗi xảy ra khi lưu cài đặt. Vui lòng thử lại.',
       })

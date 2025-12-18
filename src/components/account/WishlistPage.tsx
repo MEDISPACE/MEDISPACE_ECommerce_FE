@@ -74,7 +74,7 @@ export function WishlistPage() {
           setWishlistProducts([])
         }
       } catch (error) {
-        console.error('Failed to fetch wishlist products', error)
+
         toast.error('Không thể tải danh sách yêu thích')
       } finally {
         setLoading(false)

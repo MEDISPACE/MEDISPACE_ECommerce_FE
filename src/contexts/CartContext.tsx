@@ -151,7 +151,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         }
       } catch (error) {
         // For guest users or when API fails, set empty cart
-        console.warn('Failed to load cart:', error)
+
         dispatch({ type: 'SET_CART', payload: null })
       } finally {
         dispatch({ type: 'SET_LOADING', payload: false })
@@ -184,7 +184,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
               dispatch({ type: 'SELECT_ALL_ITEMS', payload: true })
             }
           } catch (error) {
-            console.warn('Failed to reload cart after auth change:', error)
+
             dispatch({ type: 'SET_CART', payload: null })
           } finally {
             dispatch({ type: 'SET_LOADING', payload: false })
@@ -217,7 +217,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             dispatch({ type: 'SELECT_ALL_ITEMS', payload: true })
           }
         } catch (error) {
-          console.warn('Failed to reload cart after auth change:', error)
+
           dispatch({ type: 'SET_CART', payload: null })
         } finally {
           dispatch({ type: 'SET_LOADING', payload: false })
@@ -242,7 +242,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         const wishlistData = JSON.parse(savedWishlist)
         dispatch({ type: 'LOAD_WISHLIST_FROM_STORAGE', payload: wishlistData })
       } catch (error) {
-        console.warn('Failed to parse wishlist from localStorage:', error)
+
       }
     }
   }, [])
@@ -295,7 +295,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const updatedCart = await cartService.updateCartItem(productId, request)
       dispatch({ type: 'UPDATE_QUANTITY_SUCCESS', payload: updatedCart })
     } catch (error) {
-      console.warn('Failed to update cart quantity:', error)
+
       toast.error('Không thể cập nhật số lượng', {
         description: 'Vui lòng thử lại sau.',
         duration: 3000,
@@ -313,7 +313,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       // Remove from selected items
       dispatch({ type: 'TOGGLE_ITEM_SELECTION', payload: productId })
     } catch (error) {
-      console.warn('Failed to remove from cart:', error)
+
       toast.error('Không thể xóa sản phẩm', {
         description: 'Vui lòng thử lại sau.',
         duration: 3000,
@@ -330,7 +330,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       dispatch({ type: 'CLEAR_CART_SUCCESS', payload: updatedCart })
       dispatch({ type: 'SELECT_ALL_ITEMS', payload: false })
     } catch (error) {
-      console.warn('Failed to clear cart:', error)
+
       toast.error('Không thể xóa giỏ hàng', {
         description: 'Vui lòng thử lại sau.',
         duration: 3000,

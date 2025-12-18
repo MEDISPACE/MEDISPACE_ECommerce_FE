@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { motion } from 'framer-motion'
+// import { motion } from 'framer-motion' // DISABLED for performance
 import { useCart } from '../../contexts/CartContext'
 import { useWishlist } from '../../hooks/product/useWishlist'
 import {
@@ -98,7 +98,9 @@ export function CategoriesOverviewPage() {
 
   const breadcrumbItems = [{ label: 'Danh mục sản phẩm' }]
 
-  const filteredCategories = categories
+  // Only show parent categories (level 0) for cleaner UI
+  const filteredCategories = categories.filter(cat => cat.level === 0)
+
 
   if (loading) {
     return (
@@ -131,28 +133,28 @@ export function CategoriesOverviewPage() {
       <section className='relative bg-gradient-to-br from-blue-50 via-white to-cyan-50 overflow-hidden'>
         {/* Floating Elements */}
         <div className='absolute inset-0 overflow-hidden pointer-events-none'>
-          <motion.div
+          <div
             className='absolute top-20 left-10 w-20 h-20 bg-blue-200/30 rounded-full'
-            animate={{ y: [0, -20, 0], rotate: [0, 180, 360] }}
-            transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+
+
           />
-          <motion.div
+          <div
             className='absolute top-32 right-20 w-16 h-16 bg-cyan-200/30 rounded-full'
-            animate={{ y: [0, 15, 0], x: [0, 10, 0] }}
-            transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+
+
           />
-          <motion.div
+          <div
             className='absolute bottom-32 left-1/4 w-12 h-12 bg-blue-300/20 rounded-full'
-            animate={{ y: [0, -10, 0], scale: [1, 1.2, 1] }}
-            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+
+
           />
         </div>
 
         <div className='max-w-7xl mx-auto px-4 py-16'>
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+          <div
+
+
+
             className='text-center mt-8'
           >
             <h1 className='text-5xl font-bold bg-gradient-to-r from-blue-800 via-blue-600 to-cyan-600 bg-clip-text text-transparent mb-4 px-[0px] py-[12px]'>
@@ -161,26 +163,26 @@ export function CategoriesOverviewPage() {
             <p className='text-xl text-gray-600 mb-8 max-w-2xl mx-auto'>
               Hơn 50,000 sản phẩm y tế chất lượng cao, được tư vấn bởi đội ngũ dược sĩ chuyên nghiệp
             </p>
-          </motion.div>
+          </div>
         </div>
       </section>
 
       {/* Stats Section */}
       <section className='py-16 bg-white'>
         <div className='max-w-7xl mx-auto px-4'>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+          <div
+
+
+
             className='grid grid-cols-2 md:grid-cols-4 gap-8'
           >
             {stats.map((stat, index) => (
-              <motion.div
+              <div
                 key={index}
-                initial={{ opacity: 0, scale: 0.8 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
+
+
+
+
                 className='text-center group'
               >
                 <div className='bg-gradient-to-br from-blue-500 to-cyan-500 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 hover:scale-110 transition-transform duration-300'>
@@ -188,100 +190,92 @@ export function CategoriesOverviewPage() {
                 </div>
                 <h3 className='text-3xl font-bold text-blue-800 mb-2'>{stat.value}</h3>
                 <p className='text-gray-600'>{stat.label}</p>
-              </motion.div>
+              </div>
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
 
       <div className='max-w-7xl mx-auto px-4 py-12 pb-24'>
         {/* Main Categories Grid */}
         <section className='mb-16'>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+          <div
+
+
+
             className='text-center mb-12'
           >
             <h2 className='text-4xl font-bold bg-gradient-to-r from-blue-800 to-cyan-600 bg-clip-text text-transparent mb-4'>
               Danh mục sản phẩm
             </h2>
             <p className='text-xl text-gray-600'>Tìm kiếm sản phẩm phù hợp với nhu cầu của bạn</p>
-          </motion.div>
+          </div>
 
-          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-5 gap-6'>
-            {filteredCategories.map((category, index) => {
+          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6'>
+            {filteredCategories.map((category) => {
               const IconComponent = categoryIcons[category.slug] || ShoppingBag
+              // Get child categories for this parent
+              const childCategories = categories.filter(cat => cat.parentId === category._id)
 
               return (
-                <motion.div
+                <Card
                   key={category._id}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
+                  className='bg-white border border-gray-200 hover:border-blue-300 hover:shadow-xl transition-all duration-300 h-full flex flex-col overflow-hidden'
                 >
-                  <Card className='hover:shadow-2xl transition-all duration-500 bg-white/80 backdrop-blur-lg border border-blue-100 hover:border-blue-300 overflow-hidden relative h-full flex flex-col cursor-pointer' onClick={() => {
-                    navigate(`/categories/${category.slug}`)
-                  }}>
-                    {/* Gradient Background */}
-                    <div
-                      className='absolute inset-0 opacity-0 hover:opacity-10 transition-opacity duration-500'
-                      style={{
-                        background: `linear-gradient(135deg, #0066CC20, #0066CC10)`,
-                      }}
-                    />
+                  {/* Header with Icon and Badge */}
+                  <CardHeader className='pb-3'>
+                    <div className='flex items-center justify-between mb-4'>
+                      <div className='w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg'>
+                        <IconComponent className='w-7 h-7 text-white' />
+                      </div>
+                      <Badge className='bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-0 px-3 py-1 text-sm font-semibold'>
+                        {category.productCount?.toLocaleString() || 0} SP
+                      </Badge>
+                    </div>
+                    <CardTitle className='text-xl font-bold text-gray-900'>
+                      {category.name}
+                    </CardTitle>
+                  </CardHeader>
 
-                    <CardHeader className='pb-2'>
-                      <div className='flex items-center justify-between mb-3'>
-                        <motion.div
-                          className='w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform duration-300'
-                          style={{
-                            background: `linear-gradient(135deg, #0066CC, #0066CCdd)`,
-                          }}
-                          whileHover={{ rotate: 5 }}
+                  <CardContent className='flex-1 flex flex-col pt-0'>
+                    {/* Description */}
+                    <p className='text-gray-500 text-sm italic mb-4 line-clamp-2'>
+                      {category.description || 'Khám phá các sản phẩm chất lượng cao'}
+                    </p>
+
+                    {/* Subcategories List */}
+                    <div className='flex-1 space-y-2 mb-4'>
+                      {childCategories.slice(0, 3).map((sub) => (
+                        <div
+                          key={sub._id}
+                          className='flex items-center justify-between text-sm'
                         >
-                          <IconComponent className='w-6 h-6' />
-                        </motion.div>
-                        <Badge className='bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-0'>
-                          {category.productCount.toLocaleString()} SP
-                        </Badge>
-                      </div>
-                      <CardTitle className='text-xl hover:text-blue-600 transition-colors duration-300'>
-                        {category.name}
-                      </CardTitle>
-                    </CardHeader>
-
-                    <CardContent className='pt-0 flex-1 flex flex-col'>
-                      <p className='text-gray-600 mb-4 leading-relaxed text-sm'>{category.description}</p>
-
-                      {/* Top subcategories */}
-                      <div className='space-y-1.5 mb-4 flex-1'>
-                        {category.subcategories?.slice(0, 3).map((sub: Category) => (
-                          <div
-                            key={sub._id}
-                            className='flex items-center justify-between text-sm bg-gray-50 rounded-lg px-2.5 py-1.5 hover:bg-blue-50 transition-colors'
-                          >
-                            <span className='text-gray-700 text-xs'>{sub.name}</span>
-                            <span className='text-blue-600 font-medium text-xs'>({sub.productCount})</span>
-                          </div>
-                        ))}
-                        {category.subcategories && category.subcategories.length > 3 && (
-                          <div className='text-xs text-gray-500 text-center py-1'>
-                            +{category.subcategories!.length - 3} danh mục khác
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Button always at bottom */}
-                      <div className='mt-auto'>
-                        <div className='text-center text-blue-600 font-medium text-sm'>
-                          Khám phá ngay →
+                          <span className='text-gray-700'>{sub.name}</span>
+                          <span className='text-blue-600 font-medium'>({sub.productCount || 0})</span>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
+                      ))}
+                      {childCategories.length > 3 && (
+                        <div className='text-sm text-gray-400 pt-1'>
+                          +{childCategories.length - 3} danh mục khác
+                        </div>
+                      )}
+                      {childCategories.length === 0 && (
+                        <div className='text-sm text-gray-400 italic'>
+                          Xem chi tiết danh mục
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Full-width Button */}
+                    <Button
+                      className='w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-medium'
+                      onClick={() => navigate(`/categories/${category.slug}`)}
+                    >
+                      Khám phá ngay
+                      <ArrowRight className='w-4 h-4 ml-2' />
+                    </Button>
+                  </CardContent>
+                </Card>
               )
             })}
           </div>
@@ -289,17 +283,13 @@ export function CategoriesOverviewPage() {
 
         {/* Featured Products Section */}
         <section className='mb-16'>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className='text-center mb-12'
-          >
+          <div className='text-center mb-12'>
             <h2 className='text-4xl font-bold bg-gradient-to-r from-blue-800 to-cyan-600 bg-clip-text text-transparent mb-4'>
               Sản phẩm nổi bật
             </h2>
             <p className='text-xl text-gray-600'>
               Chất lượng cao với thiết kế chuyên nghiệp và thông tin đóng gói chi tiết
+
             </p>
 
             {/* View All Products Button */}
@@ -315,22 +305,22 @@ export function CategoriesOverviewPage() {
                 </Button>
               </Link>
             </div>
-          </motion.div>
+          </div>
 
           {/* 4 Products Carousel with Smooth Sliding */}
-          <motion.div
+          <div
             className='relative px-16 lg:px-20'
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+
+
+
           >
             {/* Navigation Arrows - Positioned outside product area */}
             {featuredTotalPages > 1 && (
               <>
-                <motion.div
+                <div
                   className='absolute left-0 top-1/2 -translate-y-1/2 z-20'
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+
+
                 >
                   <Button
                     variant='outline'
@@ -340,12 +330,12 @@ export function CategoriesOverviewPage() {
                   >
                     <ChevronLeft className='w-6 h-6' />
                   </Button>
-                </motion.div>
+                </div>
 
-                <motion.div
+                <div
                   className='absolute right-0 top-1/2 -translate-y-1/2 z-20'
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+
+
                 >
                   <Button
                     variant='outline'
@@ -355,23 +345,15 @@ export function CategoriesOverviewPage() {
                   >
                     <ChevronRight className='w-6 h-6' />
                   </Button>
-                </motion.div>
+                </div>
               </>
             )}
 
             {/* Products Carousel Container */}
             <div className='overflow-hidden rounded-2xl'>
-              <motion.div
-                className='flex'
-                animate={{
-                  x: `${-featuredCurrentIndex * 100}%`,
-                }}
-                transition={{
-                  type: 'spring',
-                  stiffness: 300,
-                  damping: 30,
-                  mass: 0.8,
-                }}
+              <div
+                className='flex transition-transform duration-500'
+                style={{ transform: `translateX(-${featuredCurrentIndex * 100}%)` }}
               >
                 {Array.from({ length: featuredTotalPages }).map((_, pageIndex) => (
                   <div
@@ -379,20 +361,9 @@ export function CategoriesOverviewPage() {
                     className='w-full flex-shrink-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 p-[10px] m-[10px]'
                   >
                     {featuredProducts.slice(pageIndex * 4, (pageIndex + 1) * 4).map((product, productIndex) => (
-                      <motion.div
+                      <div
                         key={`${product._id || product.id || `product-${productIndex}-${pageIndex}`}-${pageIndex}`}
-                        className='h-full'
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{
-                          delay: productIndex * 0.1,
-                          duration: 0.5,
-                          ease: 'easeOut',
-                        }}
-                        whileHover={{
-                          y: -5,
-                          transition: { duration: 0.2 },
-                        }}
+                        className='h-full hover:-translate-y-1 transition-transform duration-200'
                       >
                         <ProductCard
                           product={{
@@ -408,6 +379,7 @@ export function CategoriesOverviewPage() {
                             inStock: product.stockQuantity > 0,
                             isPrescription: product.requiresPrescription,
                             isOnSale: false,
+
                             discountPercentage: 0,
                             unit: 'Hộp',
                             packaging: '',
@@ -422,49 +394,49 @@ export function CategoriesOverviewPage() {
                           }}
                           isInWishlist={isInWishlist(product._id)}
                         />
-                      </motion.div>
+                      </div>
                     ))}
                   </div>
                 ))}
-              </motion.div>
+              </div>
             </div>
 
             {/* Enhanced Page Indicators */}
             {featuredTotalPages > 1 && (
-              <motion.div
+              <div
                 className='flex justify-center items-center gap-2 mt-8'
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
+
+
+
               >
                 {Array.from({ length: featuredTotalPages }).map((_, index) => (
-                  <motion.button
+                  <button
                     key={index}
                     onClick={() => setFeaturedCurrentIndex(index)}
                     className={`h-3 rounded-full transition-all duration-300 ${index === featuredCurrentIndex
-                        ? 'bg-blue-600 w-8 shadow-lg'
-                        : 'bg-blue-200 hover:bg-blue-300 w-3'
+                      ? 'bg-blue-600 w-8 shadow-lg'
+                      : 'bg-blue-200 hover:bg-blue-300 w-3'
                       }`}
                     whileHover={{
                       scale: 1.2,
                       backgroundColor: index === featuredCurrentIndex ? '#0066CC' : '#4A90E2',
                     }}
-                    whileTap={{ scale: 0.9 }}
+
                   />
                 ))}
-              </motion.div>
+              </div>
             )}
-          </motion.div>
+          </div>
 
           {/* View All Button */}
         </section>
 
         {/* Medical Consultation CTA */}
         <section className='mb-16'>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
+          <div
+
+
+
             className='glass-consultation rounded-3xl p-12 text-center relative overflow-hidden'
           >
             {/* Background Pattern */}
@@ -475,13 +447,13 @@ export function CategoriesOverviewPage() {
             </div>
 
             <div className='relative z-10'>
-              <motion.div
-                animate={{ rotate: [0, 10, -10, 0] }}
-                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+              <div
+
+
                 className='w-24 h-24 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center mx-auto mb-8'
               >
                 <Stethoscope className='w-12 h-12 text-white' />
-              </motion.div>
+              </div>
 
               <h2 className='text-4xl font-bold text-blue-800 mb-4'>Cần tư vấn từ dược sĩ?</h2>
               <p className='text-xl text-gray-700 mb-8 max-w-2xl mx-auto'>
@@ -511,22 +483,22 @@ export function CategoriesOverviewPage() {
                 </Link>
               </div>
             </div>
-          </motion.div>
+          </div>
         </section>
 
         {/* Health Tips Section */}
         <section className='mb-16'>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+          <div
+
+
+
             className='text-center mb-12'
           >
             <h2 className='text-4xl font-bold bg-gradient-to-r from-blue-800 to-cyan-600 bg-clip-text text-transparent mb-4'>
               Góc sức khỏe
             </h2>
             <p className='text-xl text-gray-600'>Kiến thức và mẹo hay để bảo vệ sức khỏe gia đình</p>
-          </motion.div>
+          </div>
 
           <div className='grid grid-cols-1 md:grid-cols-3 gap-8'>
             {[
@@ -549,12 +521,12 @@ export function CategoriesOverviewPage() {
                 color: 'from-pink-500 to-purple-500',
               },
             ].map((tip, index) => (
-              <motion.div
+              <div
                 key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.2 }}
+
+
+
+
               >
                 <Card className='group hover:shadow-xl transition-all duration-500 bg-white/80 backdrop-blur-sm border border-gray-100 hover:border-blue-200 h-full'>
                   <CardContent className='p-6'>
@@ -574,41 +546,41 @@ export function CategoriesOverviewPage() {
                     </Link>
                   </CardContent>
                 </Card>
-              </motion.div>
+              </div>
             ))}
           </div>
         </section>
 
         {/* Newsletter Section */}
         <section>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+          <div
+
+
+
             className='bg-gradient-to-r from-blue-600 via-blue-700 to-cyan-600 rounded-3xl p-12 text-center text-white relative overflow-hidden'
           >
             {/* Background Effects */}
             <div className='absolute inset-0 opacity-20'>
-              <motion.div
+              <div
                 className='absolute top-4 left-4 w-16 h-16 bg-white rounded-full'
-                animate={{ scale: [1, 1.2, 1], rotate: [0, 180, 360] }}
-                transition={{ duration: 8, repeat: Infinity }}
+
+
               />
-              <motion.div
+              <div
                 className='absolute bottom-4 right-4 w-20 h-20 bg-white rounded-full'
-                animate={{ scale: [1.2, 1, 1.2], rotate: [360, 180, 0] }}
-                transition={{ duration: 6, repeat: Infinity }}
+
+
               />
             </div>
 
             <div className='relative z-10'>
-              <motion.div
-                animate={{ y: [0, -10, 0] }}
-                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+              <div
+
+
                 className='w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-8'
               >
                 <Zap className='w-10 h-10 text-white' />
-              </motion.div>
+              </div>
 
               <h2 className='text-4xl font-bold mb-4'>Nhận ưu đãi độc quyền</h2>
               <p className='text-xl mb-8 max-w-2xl mx-auto opacity-90'>
@@ -624,9 +596,9 @@ export function CategoriesOverviewPage() {
                 <Button className='bg-white text-blue-600 hover:bg-gray-100 font-semibold px-8'>Đăng ký</Button>
               </div>
             </div>
-          </motion.div>
+          </div>
         </section>
-      </div>
-    </div>
+      </div >
+    </div >
   )
 }
