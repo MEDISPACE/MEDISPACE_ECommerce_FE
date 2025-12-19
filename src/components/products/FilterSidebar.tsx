@@ -22,6 +22,7 @@ interface FilterSidebarProps {
 export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterSidebarProps) {
   const [expandedCategories, setExpandedCategories] = useState<string[]>(['categories'])
   const [brandSearch, setBrandSearch] = useState('')
+  const [categorySearch, setCategorySearch] = useState('')
   const [categories, setCategories] = useState<Category[]>([])
   const [brands, setBrands] = useState<Brand[]>([])
 
@@ -32,7 +33,12 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
           categoryService.getCategories(),
           brandService.getBrands(),
         ])
-        setCategories(categoriesData)
+        // Remove duplicate categories by slug to prevent React key conflicts
+        const uniqueCategories = categoriesData.filter(
+          (category, index, self) =>
+            index === self.findIndex((c) => c.slug === category.slug)
+        )
+        setCategories(uniqueCategories)
         setBrands(brandsData)
       } catch (error) {
       }
@@ -81,6 +87,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
       isPrescription: undefined,
     })
     setBrandSearch('')
+    setCategorySearch('')
   }
 
   const brandMap = brands.reduce(
@@ -99,6 +106,10 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
     {} as Record<string, string>,
   )
 
+  const filteredCategories = categories.filter((category) =>
+    category.name.toLowerCase().includes(categorySearch.toLowerCase())
+  )
+
   const filteredBrands = brands.filter((brand) => brand.name.toLowerCase().includes(brandSearch.toLowerCase()))
 
   const hasActiveFilters =
@@ -111,7 +122,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
   return (
     <div className='space-y-4'>
       <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
-        <CardHeader className='pb-4'>
+        <CardHeader className='pb-0'>
           <CardTitle className='text-blue-800 flex items-center justify-between'>
             Bộ lọc sản phẩm
             {hasActiveFilters && (
@@ -123,13 +134,13 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
           <div className='text-sm text-gray-600'>{resultCount} sản phẩm tìm thấy</div>
         </CardHeader>
 
-        <CardContent className='p-4 space-y-4 overflow-hidden'>
+        <CardContent className='p-4 pt-0 space-y-4 overflow-hidden'>
           {/* Categories */}
           <div>
             <Button
               variant='ghost'
               onClick={() => toggleCategory('categories')}
-              className='w-full justify-between p-2 h-auto font-medium text-gray-700 hover:bg-blue-50'
+              className='w-full justify-between p-2 h-auto font-medium text-gray-700 hover:!bg-blue-100 hover:!text-blue-800'
             >
               <span className='text-sm'>Danh mục sản phẩm</span>
               {expandedCategories.includes('categories') ? (
@@ -140,25 +151,38 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
             </Button>
 
             {expandedCategories.includes('categories') && (
-              <div className='mt-2 space-y-1.5'>
-                {categories.map((category) => (
-                  <div key={category.slug} className='space-y-1.5'>
-                    <div className='flex items-start space-x-2 min-h-[24px]'>
+              <div className='mt-2 space-y-2'>
+                {/* Search input for categories */}
+                <div className='relative'>
+                  <Search className='absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3' />
+                  <Input
+                    placeholder='Tìm danh mục...'
+                    value={categorySearch}
+                    onChange={(e) => setCategorySearch(e.target.value)}
+                    className='pl-7 h-8 text-xs border-blue-200 focus:border-blue-500'
+                  />
+                </div>
+
+                {/* Scrollable categories list */}
+                <div className='space-y-1.5 max-h-32 overflow-y-auto scrollbar-thin'>
+                  {filteredCategories.map((category) => (
+                    <div key={category.slug} className='flex items-center space-x-2 min-h-[20px]'>
                       <Checkbox
                         id={`category-${category.slug}`}
                         checked={(filters.categories || []).includes(category.slug)}
                         onCheckedChange={(checked) => handleCategoryChange(category.slug, checked as boolean)}
-                        className='mt-0.5 shrink-0'
+                        className='shrink-0'
                       />
                       <Label
                         htmlFor={`category-${category.slug}`}
-                        className='text-xs cursor-pointer leading-tight flex-1 min-w-0'
+                        className='text-xs cursor-pointer flex-1 min-w-0 truncate'
+                        title={category.name}
                       >
-                        <span className='block break-words'>{category.name}</span>
+                        {category.name}
                       </Label>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -170,7 +194,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
             <Button
               variant='ghost'
               onClick={() => toggleCategory('brands')}
-              className='w-full justify-between p-2 h-auto font-medium text-gray-700 hover:bg-blue-50'
+              className='w-full justify-between p-2 h-auto font-medium text-gray-700 hover:!bg-blue-50 hover:!text-blue-800'
             >
               <span className='text-sm'>Thương hiệu</span>
               {expandedCategories.includes('brands') ? (
@@ -185,7 +209,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
                 <div className='relative'>
                   <Search className='absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3' />
                   <Input
-                    placeholder='Tìm...'
+                    placeholder='Tìm thương hiệu'
                     value={brandSearch}
                     onChange={(e) => setBrandSearch(e.target.value)}
                     className='pl-7 h-8 text-xs border-blue-200 focus:border-blue-500'

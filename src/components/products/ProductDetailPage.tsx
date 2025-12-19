@@ -481,11 +481,15 @@ export function ProductDetailPage() {
 
             {/* Price */}
             <div>
-              <PriceDisplay
-                originalPrice={product.originalPrice}
-                salePrice={product.salePrice ?? product.price ?? 0}
-                size='lg'
-              />
+              {isProductPrescription(product) ? (
+                <p className='text-lg text-blue-600 font-semibold'>Sản phẩm cần tư vấn từ dược sĩ</p>
+              ) : (
+                <PriceDisplay
+                  originalPrice={product.originalPrice}
+                  salePrice={product.salePrice ?? product.price ?? 0}
+                  size='lg'
+                />
+              )}
             </div>
 
             {/* Stock Status */}
@@ -710,6 +714,12 @@ export function ProductDetailPage() {
                         <div className='mt-2'>
                           <span className='font-medium text-gray-600'>Nhà sản xuất: </span>
                           <span className='text-gray-800'>{product.details.manufacturer}</span>
+                        </div>
+                      )}
+                      {product.details.registrationNumber && (
+                        <div className='mt-2'>
+                          <span className='font-medium text-gray-600'>Số đăng ký: </span>
+                          <span className='text-gray-800'>{product.details.registrationNumber}</span>
                         </div>
                       )}
                     </div>
