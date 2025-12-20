@@ -11,13 +11,15 @@ import {
   Package,
   FileText,
   Heart,
+  Home,
 } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
-import { Link, useNavigate } from 'react-router'
+import { Link, useNavigate, useLocation } from 'react-router'
 import { UnifiedMegaMenu } from './UnifiedMegaMenu'
 import { EnhancedSearchBar } from '../shared/EnhancedSearchBar'
 import { useAuth } from '~/contexts/AuthContext'
+import { useBreadcrumbContext } from '~/contexts/BreadcrumbContext'
 import { UserRole } from '~/types/user'
 import {
   DropdownMenu,
@@ -28,6 +30,7 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
+import { ChevronRight } from 'lucide-react'
 import { useCart } from '~/contexts/CartContext'
 import { useCategories } from '~/hooks/product'
 import type { Category } from '../../types/product'
@@ -243,9 +246,9 @@ export function Header() {
               </Link>
             </div>
 
-            {/* Desktop Categories with unified mega menu */}
+            {/* Desktop Categories with unified mega menu - Only show main categories (level 0) */}
             <div className='hidden lg:flex items-center gap-4'>
-              {categories.map((category) => (
+              {categories.filter((cat) => cat.level === 0).map((category) => (
                 <div key={category._id} className='relative' onMouseEnter={() => handleCategoryHover(category)}>
                   <Link
                     to={`/categories/${category.slug}`}
@@ -281,6 +284,56 @@ export function Header() {
           </nav>
         </div>
       </div>
+
+      {/* Breadcrumb - Inside header for sticky behavior */}
+      <HeaderBreadcrumb />
     </header>
+  )
+}
+
+// Breadcrumb component that renders inside header
+function HeaderBreadcrumb() {
+  const { items } = useBreadcrumbContext()
+  const location = useLocation()
+
+  // Hide on admin/pharmacist routes
+  if (location.pathname.startsWith('/admin') || location.pathname.startsWith('/pharmacist')) {
+    return null
+  }
+
+  // Hide if no items
+  if (items.length === 0) return null
+
+  return (
+    <div className='bg-blue-50/50 border-t border-gray-100'>
+      <div className='max-w-7xl mx-auto px-4 py-3'>
+        <nav className='flex items-center text-sm text-gray-600' aria-label='Breadcrumb'>
+          <Link to='/' className='flex items-center gap-1 text-gray-500 hover:text-blue-600 transition-colors'>
+            <Home className='w-4 h-4' />
+            <span>Trang chủ</span>
+          </Link>
+          {items.length > 0 && <ChevronRight className='w-4 h-4 mx-2 text-gray-400' />}
+
+          {items.map((item, index) => (
+            <div key={index} className='flex items-center'>
+              {item.href ? (
+                <Link
+                  to={item.href}
+                  className='text-gray-500 hover:text-blue-600 transition-colors flex items-center gap-2'
+                >
+                  <span>{item.label}</span>
+                </Link>
+              ) : (
+                <div className='text-gray-900 font-medium flex items-center gap-2'>
+                  <span>{item.label}</span>
+                </div>
+              )}
+
+              {index < items.length - 1 && <ChevronRight className='w-4 h-4 mx-2 text-gray-400' />}
+            </div>
+          ))}
+        </nav>
+      </div>
+    </div>
   )
 }

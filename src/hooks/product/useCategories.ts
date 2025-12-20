@@ -14,14 +14,27 @@ export function useCategories() {
         const data = await categoryService.getCategories()
 
         // Transform flat categories into hierarchical structure
-        const mainCategories = data.filter((cat) => cat.level === 1)
-        const subCategories = data.filter((cat) => cat.level === 2)
+        // Level 0 = Main categories (Thuốc, TPCN, Dược mỹ phẩm, etc.)
+        // Level 1 = Subcategories
+        // Level 2 = Sub-subcategories
+        const mainCategories = data.filter((cat) => cat.level === 0)
+        const subCategories = data.filter((cat) => cat.level === 1)
+        const subSubCategories = data.filter((cat) => cat.level === 2)
 
-        // Add subcategories to main categories
-        const hierarchicalCategories = mainCategories.map((mainCat) => ({
-          ...mainCat,
-          subcategories: subCategories.filter((subCat) => subCat.path?.startsWith((mainCat.path || '') + '/'))
-        }))
+        // Build 3-level hierarchy
+        const hierarchicalCategories = mainCategories.map((mainCat) => {
+          const subs = subCategories.filter((subCat) => subCat.path?.startsWith((mainCat.path || '') + '/'))
+
+          return {
+            ...mainCat,
+            subcategories: subs.map((subCat) => ({
+              ...subCat,
+              subcategories: subSubCategories.filter((subSubCat) =>
+                subSubCat.path?.startsWith((subCat.path || '') + '/')
+              )
+            }))
+          }
+        })
 
         setCategories(hierarchicalCategories)
         setError(null)
