@@ -86,7 +86,7 @@ export function UploadPrescriptionPage() {
       case 1:
         return (
           <div className='space-y-6'>
-        <UniversalBreadcrumb items={breadcrumbItems} />
+            <UniversalBreadcrumb items={breadcrumbItems} />
             <ImageUploader onImagesChange={handleImagesChange} maxFiles={5} maxSize={10} />
 
             <div className='flex justify-end space-x-3'>
@@ -168,7 +168,14 @@ export function UploadPrescriptionPage() {
                 <Button
                   variant='outline'
                   className='border-blue-200 text-blue-700 hover:bg-blue-50'
-                  onClick={() => navigate('/contact')}
+                  onClick={() => {
+                    const chatBtn = document.querySelector('button[aria-label="Chat với dược sĩ"]') as HTMLButtonElement | null
+                    if (chatBtn) {
+                      chatBtn.click()
+                    } else {
+                      navigate('/contact')
+                    }
+                  }}
                 >
                   💬 Chat với dược sĩ
                 </Button>
@@ -208,130 +215,126 @@ export function UploadPrescriptionPage() {
 
   return (
     <div className='max-w-6xl mx-auto px-4 py-6'>
-        <div className='mb-8'>
-          <h1 className='text-2xl text-blue-900 mb-2'>Upload đơn thuốc</h1>
-          <ProgressStepper steps={uploadSteps} currentStep={currentStep} />
-        </div>
+      <div className='mb-8'>
+        <h1 className='text-2xl text-blue-900 mb-2'>Upload đơn thuốc</h1>
+        <ProgressStepper steps={uploadSteps} currentStep={currentStep} />
+      </div>
 
-        <div className='grid grid-cols-1 lg:grid-cols-4 gap-6'>
-          {/* Main Content */}
-          <div className='lg:col-span-3'>{renderStepContent()}</div>
+      <div className='grid grid-cols-1 lg:grid-cols-4 gap-6'>
+        {/* Main Content */}
+        <div className='lg:col-span-3'>{renderStepContent()}</div>
 
-          {/* Sidebar */}
-          {currentStep < 3 && (
-            <div className='space-y-6'>
-              {/* Product Info */}
-              {product && (
-                <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
-                  <CardHeader>
-                    <CardTitle className='text-blue-800'>Sản phẩm liên quan</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className='flex gap-3'>
-                      <img
-                        src={(product as Product).images?.[0] || (product as Product).featuredImage || '/placeholder-product.jpg'}
-                        alt={(product as Product).name}
-                        className='w-16 h-16 object-cover rounded border border-gray-200'
-                      />
-                      <div className='flex-1'>
-                        <h3 className='font-medium line-clamp-2'>{(product as Product).name}</h3>
-                        <p className='text-sm text-gray-500'>{(product as Product).brand?.name || 'Unknown Brand'}</p>
-                        {(product as Product).requiresPrescription && (
-                          <Badge variant='destructive' className='mt-1 text-xs'>
-                            Kê đơn
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Process Timeline */}
+        {/* Sidebar */}
+        {currentStep < 3 && (
+          <div className='space-y-6'>
+            {/* Product Info */}
+            {product && (
               <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
                 <CardHeader>
-                  <CardTitle className='text-blue-800'>Quy trình xử lý</CardTitle>
+                  <CardTitle className='text-blue-800'>Sản phẩm liên quan</CardTitle>
                 </CardHeader>
-                <CardContent className='space-y-4'>
-                  <div className='space-y-3'>
-                    <div className='flex items-start gap-3'>
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
-                          currentStep >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
-                        }`}
-                      >
-                        <Upload className='w-4 h-4' />
-                      </div>
-                      <div className='text-sm'>
-                        <p className='font-medium'>Upload đơn thuốc</p>
-                        <p className='text-gray-600'>Gửi ảnh đơn thuốc rõ ràng</p>
-                      </div>
-                    </div>
-
-                    <div className='flex items-start gap-3'>
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
-                          currentStep >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
-                        }`}
-                      >
-                        <UserCheck className='w-4 h-4' />
-                      </div>
-                      <div className='text-sm'>
-                        <p className='font-medium'>Dược sĩ xem xét</p>
-                        <p className='text-gray-600'>Xác minh tính hợp lệ</p>
-                      </div>
-                    </div>
-
-                    <div className='flex items-start gap-3'>
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
-                          currentStep >= 3 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
-                        }`}
-                      >
-                        <Package className='w-4 h-4' />
-                      </div>
-                      <div className='text-sm'>
-                        <p className='font-medium'>Tạo đơn hàng</p>
-                        <p className='text-gray-600'>Dược sĩ tạo đơn hàng</p>
-                      </div>
-                    </div>
-
-                    <div className='flex items-start gap-3'>
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
-                          currentStep >= 3 ? 'bg-emerald-600 text-white' : 'bg-gray-300 text-gray-600'
-                        }`}
-                      >
-                        <CheckCircle className='w-4 h-4' />
-                      </div>
-                      <div className='text-sm'>
-                        <p className='font-medium'>Hoàn thành</p>
-                        <p className='text-gray-600'>Nhận thông báo kết quả</p>
-                      </div>
+                <CardContent>
+                  <div className='flex gap-3'>
+                    <img
+                      src={(product as Product).images?.[0] || (product as Product).featuredImage || '/placeholder-product.jpg'}
+                      alt={(product as Product).name}
+                      className='w-16 h-16 object-cover rounded border border-gray-200'
+                    />
+                    <div className='flex-1'>
+                      <h3 className='font-medium line-clamp-2'>{(product as Product).name}</h3>
+                      <p className='text-sm text-gray-500'>{(product as Product).brand?.name || 'Unknown Brand'}</p>
+                      {(product as Product).requiresPrescription && (
+                        <Badge variant='destructive' className='mt-1 text-xs'>
+                          Kê đơn
+                        </Badge>
+                      )}
                     </div>
                   </div>
                 </CardContent>
               </Card>
+            )}
 
-              {/* Support Info */}
-              <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
-                <CardContent className='p-4'>
-                  <Alert>
-                    <AlertDescription>
-                      <div className='space-y-2'>
-                        <p className='font-medium'>Cần hỗ trợ?</p>
-                        <p className='text-sm'>
-                          Liên hệ hotline: <span className='font-medium text-blue-600'>1800 6928</span>
-                        </p>
-                        <p className='text-sm'>Hoặc chat trực tiếp với dược sĩ</p>
-                      </div>
-                    </AlertDescription>
-                  </Alert>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-        </div>
+            {/* Process Timeline */}
+            <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+              <CardHeader>
+                <CardTitle className='text-blue-800'>Quy trình xử lý</CardTitle>
+              </CardHeader>
+              <CardContent className='space-y-4'>
+                <div className='space-y-3'>
+                  <div className='flex items-start gap-3'>
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${currentStep >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
+                        }`}
+                    >
+                      <Upload className='w-4 h-4' />
+                    </div>
+                    <div className='text-sm'>
+                      <p className='font-medium'>Upload đơn thuốc</p>
+                      <p className='text-gray-600'>Gửi ảnh đơn thuốc rõ ràng</p>
+                    </div>
+                  </div>
+
+                  <div className='flex items-start gap-3'>
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${currentStep >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
+                        }`}
+                    >
+                      <UserCheck className='w-4 h-4' />
+                    </div>
+                    <div className='text-sm'>
+                      <p className='font-medium'>Dược sĩ xem xét</p>
+                      <p className='text-gray-600'>Xác minh tính hợp lệ</p>
+                    </div>
+                  </div>
+
+                  <div className='flex items-start gap-3'>
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${currentStep >= 3 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
+                        }`}
+                    >
+                      <Package className='w-4 h-4' />
+                    </div>
+                    <div className='text-sm'>
+                      <p className='font-medium'>Tạo đơn hàng</p>
+                      <p className='text-gray-600'>Dược sĩ tạo đơn hàng</p>
+                    </div>
+                  </div>
+
+                  <div className='flex items-start gap-3'>
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${currentStep >= 3 ? 'bg-emerald-600 text-white' : 'bg-gray-300 text-gray-600'
+                        }`}
+                    >
+                      <CheckCircle className='w-4 h-4' />
+                    </div>
+                    <div className='text-sm'>
+                      <p className='font-medium'>Hoàn thành</p>
+                      <p className='text-gray-600'>Nhận thông báo kết quả</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Support Info */}
+            <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+              <CardContent className='p-4'>
+                <Alert>
+                  <AlertDescription>
+                    <div className='space-y-2'>
+                      <p className='font-medium'>Cần hỗ trợ?</p>
+                      <p className='text-sm'>
+                        Liên hệ hotline: <span className='font-medium text-blue-600'>1800 6928</span>
+                      </p>
+                      <p className='text-sm'>Hoặc chat trực tiếp với dược sĩ</p>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
+    </div>
   )
 }

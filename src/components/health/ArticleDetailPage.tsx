@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Clock, User, Eye, Calendar, ArrowLeft, Share2 } from 'lucide-react'
 import { Button } from '../ui/button'
@@ -14,12 +14,21 @@ export function ArticleDetailPage() {
     const [article, setArticle] = useState<Article | null>(null)
     const [relatedArticles, setRelatedArticles] = useState<Article[]>([])
     const [loading, setLoading] = useState(true)
+    const viewCountedRef = useRef<string | null>(null)
 
     useEffect(() => {
         if (slug) {
             loadArticle(slug)
         }
     }, [slug])
+
+    // Separate effect for incrementing view count to avoid double counting
+    useEffect(() => {
+        if (article && slug && viewCountedRef.current !== slug) {
+            viewCountedRef.current = slug
+            articleService.incrementViewCount(slug)
+        }
+    }, [article, slug])
 
     const loadArticle = async (articleSlug: string) => {
         setLoading(true)
@@ -32,8 +41,7 @@ export function ArticleDetailPage() {
             if (articleData) {
                 setArticle(articleData)
                 setRelatedArticles(related)
-                // Increment view count
-                articleService.incrementViewCount(articleSlug)
+                // View count increment moved to separate useEffect
             }
         } catch (error) {
             console.error('Error loading article:', error)
@@ -185,7 +193,7 @@ export function ArticleDetailPage() {
 
                         {/* Article Content */}
                         <div
-                            className="prose prose-lg max-w-none prose-headings:font-bold prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4 prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3 prose-p:mb-4 prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2"
+                            className="prose prose-lg max-w-none overflow-hidden prose-headings:font-bold prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4 prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3 prose-p:mb-4 prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2"
                             dangerouslySetInnerHTML={{ __html: article.content }}
                         />
 

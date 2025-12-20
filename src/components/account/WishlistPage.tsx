@@ -141,7 +141,7 @@ export function WishlistPage() {
     }
   }
 
-  const handleAddSelectedToCart = () => {
+  const handleAddSelectedToCart = async () => {
     const inStockSelected = selectedProducts.filter((id) => {
       const product = wishlistProducts.find((p) => p.id === id)
       return product?.inStock
@@ -152,26 +152,41 @@ export function WishlistPage() {
       return
     }
 
-    // We need full product objects to add to cart. 
-    // Since we mapped to WishlistProduct, we might need to re-fetch or store original product.
-    // For now, let's assume we can't add directly without full product object if addToCart requires it.
-    // But useCart's addToCart usually takes a Product object.
-    // Let's try to reconstruct a minimal Product object or fetch it.
-    // Actually, we should probably store the original product in WishlistProduct or fetch it.
+    // Add each selected product to cart
+    let successCount = 0
+    for (const id of inStockSelected) {
+      const product = wishlistProducts.find((p) => p.id === id)
+      if (product) {
+        try {
+          // Reconstruct Product object for addToCart
+          const productData: any = {
+            _id: product.id,
+            id: product.id,
+            name: product.name,
+            price: product.originalPrice || product.currentPrice,
+            salePrice: product.currentPrice,
+            images: [product.image],
+            featuredImage: product.image,
+            slug: product.slug,
+            stockQuantity: 10, // Assume stock
+            requiresPrescription: product.isRx,
+            isPrescription: product.isRx
+          }
 
-    // Simplest way for now: Iterate and fetch/add. Or better, update WishlistProduct to include full original product.
-    // Let's just show success message for now as implementing bulk add might require more changes to CartContext.
-    // OR: We can just loop and add if we have enough info.
+          await addToCart(productData, 1)
+          successCount++
+        } catch (error) {
+          console.error(`Failed to add product ${id} to cart:`, error)
+        }
+      }
+    }
 
-    inStockSelected.forEach(id => {
-      // This is a simplification. Ideally we pass the full product.
-      // We can try to find the product in our fetched list and cast it if it has enough fields.
-      // But mapped product is missing some fields.
-      // Let's just notify user for now or implement single add.
-    })
-
-    toast.success(`Đã thêm ${inStockSelected.length} sản phẩm vào giỏ hàng`)
-    setSelectedProducts([])
+    if (successCount > 0) {
+      toast.success(`Đã thêm ${successCount} sản phẩm vào giỏ hàng`)
+      setSelectedProducts([])
+    } else {
+      toast.error('Không thể thêm sản phẩm vào giỏ hàng')
+    }
   }
 
   // Custom add to cart for single item that we can implement easily
@@ -210,7 +225,11 @@ export function WishlistPage() {
       return
     }
 
-    toast.success(`Đã gửi danh sách yêu thích đến ${shareEmail}`)
+    // TODO: Implement backend API to send wishlist via email
+    toast.info('Tính năng chia sẻ danh sách yêu thích đang được phát triển', {
+      description: 'Chúng tôi sẽ sớm ra mắt tính năng này trong thời gian tới',
+      duration: 4000
+    })
     setShareEmail('')
     setIsShareModalOpen(false)
   }
