@@ -46,7 +46,7 @@ export function CategoryQuickActions({
     <div className={`flex items-center gap-3 ${className}`}>
       {showConsultation && (
         <Link to='/contact'>
-          <Button variant='outline' size='sm' className='border-blue-200 text-blue-600 hover:bg-blue-50'>
+          <Button variant='outline' size='sm' className='border-blue-200 text-blue-600 hover:!bg-[#eff6ff] hover:border-blue-400 transition-all duration-300'>
             Tư vấn miễn phí
           </Button>
         </Link>
@@ -54,7 +54,7 @@ export function CategoryQuickActions({
 
       {showComparison && (
         <Link to='/compare'>
-          <Button variant='outline' size='sm' className='border-blue-200 text-blue-600 hover:bg-blue-50'>
+          <Button variant='outline' size='sm' className='border-blue-200 text-blue-600 hover:!bg-[#eff6ff] hover:border-blue-400 transition-all duration-300'>
             So sánh sản phẩm
           </Button>
         </Link>
@@ -62,7 +62,7 @@ export function CategoryQuickActions({
 
       {showHealthGuide && (
         <Link to='/health-corner'>
-          <Button variant='outline' size='sm' className='border-blue-200 text-blue-600 hover:bg-blue-50'>
+          <Button variant='outline' size='sm' className='border-blue-200 text-blue-600 hover:!bg-[#eff6ff] hover:border-blue-400 transition-all duration-300'>
             Hướng dẫn sử dụng
           </Button>
         </Link>

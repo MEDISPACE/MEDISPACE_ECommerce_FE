@@ -4,13 +4,13 @@ import { API_ENDPOINTS } from '../constants'
 
 type CategoriesResponse =
   | {
-      message?: string
-      result?: {
-        categories?: Category[]
-        pagination?: unknown
-      }
+    message?: string
+    result?: {
       categories?: Category[]
+      pagination?: unknown
     }
+    categories?: Category[]
+  }
   | Category[]
 
 export const categoryService = {
@@ -18,7 +18,7 @@ export const categoryService = {
    * Get all categories
    */
   async getCategories(): Promise<Category[]> {
-    const response = await apiClient.get(API_ENDPOINTS.CATEGORIES.BASE, { params: { limit: 100 } })
+    const response = await apiClient.get(API_ENDPOINTS.CATEGORIES.BASE, { params: { limit: 500 } })
     // Backend returns { message, result } where result contains categories + pagination
     if (response && response.data) {
       const data = response.data as CategoriesResponse

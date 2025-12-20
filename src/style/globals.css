@@ -549,12 +549,14 @@ html.scroll-instant {
  * This is the optimal UX - both always visible, perfectly aligned!
  */
 .sticky-breadcrumb {
-  position: sticky !important;
-  /* Sticky position - stays in document flow */
-  position: -webkit-sticky !important;
-  /* Safari support */
-  /* TOP is set dynamically via inline style from JavaScript */
-  /* This ensures perfect positioning regardless of responsive changes */
+  /* Use FIXED instead of sticky to avoid parent transform issues */
+  /* Framer-motion's transform breaks sticky, but fixed works perfectly */
+  position: fixed !important;
+  -webkit-position: fixed !important;
+  top: 156px !important;
+  /* Header height */
+  left: 0 !important;
+  right: 0 !important;
   z-index: 40 !important;
   /* Below header (z-50) - correct stacking */
   background: rgba(255, 255, 255, 0.95) !important;
@@ -578,6 +580,10 @@ html.scroll-instant {
   contain: layout style paint !important;
   /* CSS containment for performance */
 }
+
+/* Add padding to body/main to account for fixed breadcrumb height */
+/* This prevents content from being hidden behind the fixed breadcrumb */
+
 
 /* DEBUG: Uncomment to visualize sticky positions */
 /*
