@@ -25,22 +25,22 @@ const shippingMethods: ShippingMethod[] = [
   {
     id: 'standard',
     name: 'Giao hàng tiêu chuẩn',
-    description: 'Giao hàng trong 2-3 ngày',
-    price: 25000,
-    estimatedDays: '2-3 ngày',
+    description: 'Giao hàng trong 2-4 ngày. Miễn phí cho đơn từ 300k',
+    price: 30000,
+    estimatedDays: '2-4 ngày',
   },
   {
     id: 'fast',
     name: 'Giao hàng nhanh',
-    description: 'Giao hàng trong ngày',
-    price: 15000,
-    estimatedDays: 'Trong ngày',
+    description: 'Giao hàng nhanh trong 1-2 ngày',
+    price: 45000,
+    estimatedDays: '1-2 ngày',
   },
   {
     id: 'express',
-    name: 'Giao hàng siêu tốc',
-    description: 'Giao hàng trong 2-4 giờ',
-    price: 25000,
+    name: 'Giao hàng hỏa tốc',
+    description: 'Giao hàng trong 2-4 giờ (Nội thành)',
+    price: 60000,
     estimatedDays: '2-4 giờ',
   },
 ]
@@ -168,7 +168,15 @@ export function CheckoutPage() {
     : getSelectedItemsTotal()
   const discount = 0
   const selectedShipping = shippingMethods.find((method) => method.id === shippingMethod)
-  const shippingFee = selectedShipping?.price || 0
+  let bgShippingFee = selectedShipping?.price || 0
+
+  // Apply logic Freeship Frontend
+  if (subtotal >= 300000) {
+    if (shippingMethod === 'standard') bgShippingFee = 0
+    else bgShippingFee = Math.max(0, bgShippingFee - 30000)
+  }
+
+  const shippingFee = bgShippingFee
   const total = subtotal - discount + shippingFee
 
   const handlePlaceOrder = async () => {
@@ -233,19 +241,16 @@ export function CheckoutPage() {
       }
 
       // Create order using real API
-      // Map selected items to backend format
-      // Use cartItems local variable which handles both Cart selection and Buy Now mode
-      const selectedItems = cartItems.map(item => ({
-        productId: item.productId,
-        quantity: item.quantity,
-        unit: item.unit
-      }))
-
       const orderData = {
-        items: selectedItems, // Send selected items with productId and quantity
-        isDirectBuy: isBuyNow, // Flag to indicate direct purchase (skip cart check)
+        items: cartItems.map(item => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          unit: item.unit
+        })),
+        isDirectBuy: isBuyNow,
         shippingAddress: addressObj,
         paymentMethod: paymentMethodMap[paymentMethod] || 'cod',
+        shippingMethod: shippingMethod, // Send shipping method
         notes: orderNotes,
       }
 
@@ -427,8 +432,23 @@ export function CheckoutPage() {
                               <div className='flex items-center gap-2'>
                                 <Clock className='w-4 h-4 text-blue-500' />
                                 <span className='font-medium'>{method.name}</span>
-                                {method.price === 0 && (
-                                  <Badge className='bg-green-100 text-green-700'>Miễn phí</Badge>
+                                {subtotal >= 300000 ? (
+                                  method.id === 'standard' ? (
+                                    <Badge variant='secondary' className='bg-green-100 text-green-800 hover:bg-green-100'>
+                                      Miễn phí
+                                    </Badge>
+                                  ) : (
+                                    <div className='flex gap-2 items-center'>
+                                      <span className='line-through text-gray-400 text-xs'>
+                                        {new Intl.NumberFormat('vi-VN').format(method.price)}đ
+                                      </span>
+                                      <span>
+                                        {new Intl.NumberFormat('vi-VN').format(Math.max(0, method.price - 30000))}đ
+                                      </span>
+                                    </div>
+                                  )
+                                ) : (
+                                  <span>{new Intl.NumberFormat('vi-VN').format(method.price)}đ</span>
                                 )}
                               </div>
                               <span className='font-medium text-blue-600'>
