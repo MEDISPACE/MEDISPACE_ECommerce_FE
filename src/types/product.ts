@@ -9,6 +9,7 @@ export interface ProductDetails {
   indications?: string
   dosageInstructions?: string
   storageInstructions?: string
+  registrationNumber?: string // Số đăng ký (GPLH/GPNK)
   createdAt?: string
   updatedAt?: string
 }
@@ -77,6 +78,7 @@ export interface Product {
   reviewCount?: number
   price?: number
   originalPrice?: number
+  costPrice?: number // Giá vốn (chỉ admin thấy)
   salePrice?: number
   discountPercentage?: number
   onSale?: boolean

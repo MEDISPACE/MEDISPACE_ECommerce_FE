@@ -61,9 +61,8 @@ export function ProductCard({
     return (
       <Link to={`/products/${product.slug}`} className='block'>
         <Card
-          className={`group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm border hover:border-blue-300 ${
-            isConsultationRequired ? 'border-2 border-blue-300' : 'border-blue-100'
-          } ${!product.inStock ? 'opacity-75' : ''}`}
+          className={`group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm border hover:border-blue-300 ${isConsultationRequired ? 'border-2 border-blue-300' : 'border-blue-100'
+            } ${!product.inStock ? 'opacity-75' : ''}`}
         >
           <CardContent className='p-4'>
             <div className='flex gap-4'>
@@ -73,9 +72,8 @@ export function ProductCard({
                   <ImageWithFallback
                     src={product.image}
                     alt={product.name}
-                    className={`w-full h-full object-contain transition-transform duration-300 ${
-                      !product.inStock ? 'grayscale' : 'group-hover:scale-110'
-                    }`}
+                    className={`w-full h-full object-contain transition-transform duration-300 ${!product.inStock ? 'grayscale' : 'group-hover:scale-110'
+                      }`}
                   />
                   {/* Out of stock overlay */}
                   {!product.inStock && (
@@ -114,20 +112,26 @@ export function ProductCard({
                 <div className='mt-auto flex items-center justify-between gap-4'>
                   {/* Price Section */}
                   <div>
-                    <div className='flex items-baseline gap-2 mb-1'>
-                      <span className={`font-semibold ${!product.inStock ? 'text-gray-400' : 'text-blue-600'}`}>
-                        {product.salePrice.toLocaleString('vi-VN')}đ
-                      </span>
-                      <span className='text-xs text-gray-500'>/ {product.unit?.split(',')[0] || 'Hộp'}</span>
-                    </div>
-                    <div className='flex items-center gap-2'>
-                      {product.originalPrice && product.originalPrice > product.salePrice && product.inStock && (
-                        <span className='text-xs text-gray-400 line-through'>
-                          {product.originalPrice.toLocaleString('vi-VN')}đ
-                        </span>
-                      )}
-                      {!product.inStock && <span className='text-xs text-red-500 font-medium'>Tạm hết hàng</span>}
-                    </div>
+                    {isConsultationRequired ? (
+                      <p className='text-sm text-gray-500 italic'>Sản phẩm cần tư vấn từ dược sĩ</p>
+                    ) : (
+                      <>
+                        <div className='flex items-baseline gap-2 mb-1'>
+                          <span className={`font-semibold ${!product.inStock ? 'text-gray-400' : 'text-blue-600'}`}>
+                            {product.salePrice.toLocaleString('vi-VN')}đ
+                          </span>
+                          <span className='text-xs text-gray-500'>/ {product.unit?.split(',')[0] || 'Hộp'}</span>
+                        </div>
+                        <div className='flex items-center gap-2'>
+                          {product.originalPrice && product.originalPrice > product.salePrice && product.inStock && (
+                            <span className='text-xs text-gray-400 line-through'>
+                              {product.originalPrice.toLocaleString('vi-VN')}đ
+                            </span>
+                          )}
+                          {!product.inStock && <span className='text-xs text-red-500 font-medium'>Tạm hết hàng</span>}
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* Action Buttons */}
@@ -181,9 +185,8 @@ export function ProductCard({
   return (
     <Link to={`/products/${product.slug}`} className='block h-full'>
       <Card
-        className={`group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm relative overflow-hidden h-full ${
-          isConsultationRequired ? 'border-2 border-blue-300' : 'border border-blue-100 hover:border-blue-300'
-        } ${!product.inStock ? 'opacity-75' : ''}`}
+        className={`group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm relative overflow-hidden h-full ${isConsultationRequired ? 'border-2 border-blue-300' : 'border border-blue-100 hover:border-blue-300'
+          } ${!product.inStock ? 'opacity-75' : ''}`}
       >
         <CardContent className='p-0 flex flex-col h-full'>
           {/* Image Section */}
@@ -192,9 +195,8 @@ export function ProductCard({
               <ImageWithFallback
                 src={product.image}
                 alt={product.name}
-                className={`w-full h-full object-contain transition-transform duration-300 ${
-                  !product.inStock ? 'grayscale' : 'group-hover:scale-105'
-                }`}
+                className={`w-full h-full object-contain transition-transform duration-300 ${!product.inStock ? 'grayscale' : 'group-hover:scale-105'
+                  }`}
               />
               {/* Out of stock overlay */}
               {!product.inStock && (
@@ -239,18 +241,24 @@ export function ProductCard({
 
             {/* Price section */}
             <div className='mb-2'>
-              <div className='flex items-baseline gap-1'>
-                <span className={`font-semibold ${!product.inStock ? 'text-gray-400' : 'text-blue-600'}`}>
-                  {product.salePrice.toLocaleString('vi-VN')}đ
-                </span>
-                <span className='text-xs text-gray-500'>/ {product.unit?.split(',')[0] || 'Hộp'}</span>
-              </div>
-              {product.originalPrice && product.originalPrice > product.salePrice && product.inStock && (
-                <span className='text-xs text-gray-400 line-through'>
-                  {product.originalPrice.toLocaleString('vi-VN')}đ
-                </span>
+              {isConsultationRequired ? (
+                <p className='text-sm text-gray-500 italic'>Sản phẩm cần tư vấn từ dược sĩ</p>
+              ) : (
+                <>
+                  <div className='flex items-baseline gap-1'>
+                    <span className={`font-semibold ${!product.inStock ? 'text-gray-400' : 'text-blue-600'}`}>
+                      {product.salePrice.toLocaleString('vi-VN')}đ
+                    </span>
+                    <span className='text-xs text-gray-500'>/ {product.unit?.split(',')[0] || 'Hộp'}</span>
+                  </div>
+                  {product.originalPrice && product.originalPrice > product.salePrice && product.inStock && (
+                    <span className='text-xs text-gray-400 line-through'>
+                      {product.originalPrice.toLocaleString('vi-VN')}đ
+                    </span>
+                  )}
+                  {!product.inStock && <p className='text-xs text-red-500 font-medium mt-1'>Tạm hết hàng</p>}
+                </>
               )}
-              {!product.inStock && <p className='text-xs text-red-500 font-medium mt-1'>Tạm hết hàng</p>}
             </div>
 
             {/* Packaging info */}
