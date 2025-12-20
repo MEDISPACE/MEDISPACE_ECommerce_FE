@@ -20,8 +20,9 @@ import { useSearchParams } from 'react-router-dom'
 import type { User, Address } from '../../types/user'
 import type { CartItem } from '../../types/cart'
 import { productService } from '../../services/productService'
+import { ghnService } from '../../services/ghnService'
 
-const shippingMethods: ShippingMethod[] = [
+const DEFAULT_SHIPPING_METHODS: ShippingMethod[] = [
   {
     id: 'standard',
     name: 'Giao hàng tiêu chuẩn',
@@ -84,6 +85,7 @@ export function CheckoutPage() {
 
   const [user, setUser] = useState<User | null>(null)
   const [addresses, setAddresses] = useState<Address[]>([])
+  const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>(DEFAULT_SHIPPING_METHODS)
   const [loading, setLoading] = useState(true)
   const [selectedAddress, setSelectedAddress] = useState<string>('')
   const [useNewAddress, setUseNewAddress] = useState(false)
@@ -162,6 +164,45 @@ export function CheckoutPage() {
     ? (buyNowItem ? [buyNowItem] : [])
     : (state.cart?.items.filter(item => state.selectedItems.has(createSelectionKey(item.productId, item.unit))) || [])
 
+  const addressObj = addresses.find((a) => a.id === selectedAddress)
+
+  // Calculate Shipping Fee Dynamic
+  useEffect(() => {
+    const fetchShippingFee = async () => {
+      // Reset to default if no address or missing IDs (fallback to 30k)
+      if (!addressObj?.districtId || !addressObj?.wardCode) {
+        setShippingMethods(DEFAULT_SHIPPING_METHODS)
+        return
+      }
+
+      try {
+        // Call API
+        const feeData = await ghnService.calculateFee({
+          to_district_id: addressObj.districtId,
+          to_ward_code: addressObj.wardCode,
+          weight: 2000, // Estimated 2kg
+          service_type_id: 2 // Standard
+        })
+
+        if (feeData && feeData.total) {
+          const newFee = feeData.total
+          setShippingMethods(prev => prev.map(m => {
+            if (m.id === 'standard') {
+              return { ...m, price: newFee, description: `Giao hàng tiêu chuẩn (GHN). Tạm tính: ${new Intl.NumberFormat('vi-VN').format(newFee)}đ` }
+            }
+            return m
+          }))
+        }
+      } catch (error) {
+        console.error('Failed to calculate shipping fee', error)
+        // Keep default on error
+        setShippingMethods(DEFAULT_SHIPPING_METHODS)
+      }
+    }
+
+    fetchShippingFee()
+  }, [addressObj])
+
   // Calculate totals
   const subtotal = isBuyNow
     ? (buyNowItem ? buyNowItem.totalPrice : 0)
@@ -212,6 +253,9 @@ export function CheckoutPage() {
         province: string
         phone: string
         email: string
+        provinceId?: number
+        districtId?: number
+        wardCode?: string
       }
 
       const selectedAddr = addresses.find(addr => addr.id === validSelectedAddress)
@@ -225,6 +269,9 @@ export function CheckoutPage() {
           province: selectedAddr.province,
           phone: selectedAddr.phone || user.phoneNumber || '',
           email: user.email,
+          provinceId: selectedAddr.provinceId,
+          districtId: selectedAddr.districtId,
+          wardCode: selectedAddr.wardCode,
         }
       } else {
         // This should not happen after validation above
