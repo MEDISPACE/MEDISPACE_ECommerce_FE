@@ -3,286 +3,325 @@ import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Badge } from '../ui/badge'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ImageWithFallback } from '../shared/ImageWithFallback'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
+import { Link } from 'react-router-dom'
+import articleService from '@/services/articleService'
+import type { Article, HealthCategory } from '@/types/article'
 
-const healthCategories = [
-  {
-    id: 'tim-mach',
-    name: 'Tim mạch',
-    icon: Heart,
-    color: 'text-red-500 bg-red-50',
-    articleCount: 45,
-    description: 'Bệnh tim, huyết áp, mạch máu',
-  },
-  {
-    id: 'than-kinh',
-    name: 'Thần kinh',
-    icon: Brain,
-    color: 'text-purple-500 bg-purple-50',
-    articleCount: 32,
-    description: 'Đau đầu, mất ngủ, căng thẳng',
-  },
-  {
-    id: 'ho-hap',
-    name: 'Hô hấp',
-    icon: Stethoscope,
-    color: 'text-blue-500 bg-blue-50',
-    articleCount: 38,
-    description: 'Cảm cúm, ho, hen suyễn',
-  },
-  {
-    id: 'mat',
-    name: 'Mắt',
-    icon: Eye,
-    color: 'text-green-500 bg-green-50',
-    articleCount: 24,
-    description: 'Cận thị, khô mắt, đau mắt',
-  },
-  {
-    id: 'xuong-khop',
-    name: 'Xương khớp',
-    icon: Bone,
-    color: 'text-orange-500 bg-orange-50',
-    articleCount: 29,
-    description: 'Viêm khớp, đau lưng, gout',
-  },
-]
-
-const featuredArticles = [
-  {
-    id: '1',
-    title: '10 dấu hiệu cảnh báo bệnh tim bạn không nên bỏ qua',
-    excerpt: 'Nhận biết sớm các triệu chứng bệnh tim để có biện pháp điều trị kịp thời và hiệu quả nhất.',
-    category: 'Tim mạch',
-    author: 'BS. Nguyễn Văn An',
-    publishDate: '2024-01-15',
-    readTime: '5 phút đọc',
-    image: '/images/heart-health.jpg',
-    isPopular: true,
-  },
-  {
-    id: '2',
-    title: 'Cách phòng ngừa cảm cúm mùa đông hiệu quả',
-    excerpt: 'Hướng dẫn chi tiết các biện pháp phòng ngừa cảm cúm trong mùa lạnh để bảo vệ sức khỏe gia đình.',
-    category: 'Hô hấp',
-    author: 'BS. Trần Thị Lan',
-    publishDate: '2024-01-12',
-    readTime: '4 phút đọc',
-    image: '/images/flu-prevention.jpg',
-    isPopular: false,
-  },
-  {
-    id: '3',
-    title: 'Tập thể dục đúng cách để giảm đau lưng',
-    excerpt: 'Những bài tập đơn giản giúp giảm đau lưng và tăng cường sức khỏe cột sống hiệu quả.',
-    category: 'Xương khớp',
-    author: 'ThS. Lê Minh Tuấn',
-    publishDate: '2024-01-10',
-    readTime: '6 phút đọc',
-    image: '/images/back-pain-exercise.jpg',
-    isPopular: true,
-  },
-]
-
-const healthTips = [
-  {
-    id: '1',
-    title: 'Uống đủ nước mỗi ngày',
-    description: '2-2.5 lít nước giúp cơ thể hoạt động tốt',
-  },
-  {
-    id: '2',
-    title: 'Ngủ đủ 7-8 tiếng mỗi đêm',
-    description: 'Giấc ngủ chất lượng giúp phục hồi sức khỏe',
-  },
-  {
-    id: '3',
-    title: 'Vận động 30 phút mỗi ngày',
-    description: 'Tập thể dục đều đặn tăng cường miễn dịch',
-  },
-  {
-    id: '4',
-    title: 'Ăn nhiều rau xanh và trái cây',
-    description: 'Cung cấp vitamin và chất xơ cần thiết',
-  },
-]
+// Icon mapping for categories
+const iconMap: Record<string, React.ElementType> = {
+  Heart,
+  Brain,
+  Stethoscope,
+  Eye,
+  Bone
+}
 
 export function HealthCornerPage() {
   const [searchQuery, setSearchQuery] = useState('')
+  const [categories, setCategories] = useState<HealthCategory[]>([])
+  const [featuredArticles, setFeaturedArticles] = useState<Article[]>([])
+  const [latestArticles, setLatestArticles] = useState<Article[]>([])
+  const [popularArticles, setPopularArticles] = useState<Article[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const breadcrumbItems = [{ label: 'Bệnh & Góc sức khỏe' }]
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  const loadData = async () => {
+    setLoading(true)
+    try {
+      const [cats, featured, latest, popular] = await Promise.all([
+        articleService.getHealthCategories({ isActive: true }),
+        articleService.getFeaturedArticles(3),
+        articleService.getLatestArticles(6),
+        articleService.getPopularArticles(5)
+      ])
+      setCategories(cats)
+      setFeaturedArticles(featured)
+      setLatestArticles(latest)
+      setPopularArticles(popular)
+    } catch (error) {
+      console.error('Error loading health corner data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (searchQuery.trim()) {
-      // Handle search logic here
+      window.location.href = `/health/search?q=${encodeURIComponent(searchQuery)}`
     }
   }
 
-  return (
-    <div className='min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50'>
-        <UniversalBreadcrumb items={breadcrumbItems} />
-        {/* Hero Section */}
-        <div className='bg-gradient-to-r from-blue-600 to-cyan-500 text-white py-16'>
-          <div className='max-w-7xl mx-auto px-4'>
-            <div className='text-center mb-8'>
-              <h1 className='text-4xl md:text-5xl font-bold mb-4'>Bệnh & Góc sức khỏe</h1>
-              <p className='text-xl text-blue-100 max-w-2xl mx-auto'>
-                Kiến thức y khoa uy tín, lời khuyên sức khỏe từ các chuyên gia hàng đầu
-              </p>
-            </div>
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('vi-VN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+  }
 
-            {/* Search Bar */}
-            <div className='max-w-2xl mx-auto'>
-              <form onSubmit={handleSearch} className='relative'>
+  const getIconForCategory = (iconName?: string) => {
+    if (!iconName) return Heart
+    return iconMap[iconName] || Heart
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Đang tải...</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-100 to-cyan-50 py-8 border-b border-blue-200">
+        <div className="container mx-auto px-4">
+          <UniversalBreadcrumb
+            items={[
+              { label: 'Trang chủ', href: '/' },
+              { label: 'Góc sức khỏe', href: '/health' }
+            ]}
+          />
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-800 to-cyan-600 bg-clip-text text-transparent mt-4">
+            Góc sức khỏe
+          </h1>
+          <p className="text-gray-700 mt-2">
+            Chia sẻ kiến thức y khoa và sống khỏe mỗi ngày
+          </p>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-8">
+        {/* Search Bar */}
+        <Card className="mb-8 border-blue-200">
+          <CardContent className="pt-6">
+            <form onSubmit={handleSearch} className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
-                  type='text'
-                  placeholder='Tìm kiếm thông tin sức khỏe...'
+                  type="text"
+                  placeholder="Tìm kiếm bài viết sức khỏe..."
+                  className="pl-10"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className='pl-12 pr-4 py-4 text-lg text-gray-900 placeholder:text-gray-500 bg-white/90 backdrop-blur-sm border-2 border-blue-200 focus:border-blue-500 focus:bg-white shadow-lg rounded-2xl'
                 />
-                <Search className='absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400' />
-                <Button
-                  type='submit'
-                  className='absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 rounded-[16px] px-[16px] py-[8px] mt-[0px] mr-[-8px] mb-[0px] ml-[0px]'
-                >
-                  Tìm kiếm
-                </Button>
-              </form>
-            </div>
-          </div>
-        </div>
+              </div>
+              <Button type="submit" className="bg-gradient-to-r from-blue-600 to-cyan-500">Tìm kiếm</Button>
+            </form>
+          </CardContent>
+        </Card>
 
-        <div className='max-w-7xl mx-auto px-4 py-12'>
-          <div className='grid grid-cols-1 lg:grid-cols-4 gap-8'>
-            {/* Main Content */}
-            <div className='lg:col-span-3'>
-              {/* Health Categories */}
-              <section className='mb-12'>
-                <h2 className='text-2xl font-bold text-gray-900 mb-6'>Chuyên mục sức khỏe</h2>
-                <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4'>
-                  {healthCategories.map((category) => {
-                    const IconComponent = category.icon
-                    return (
-                      <Card key={category.id} className='hover:shadow-lg transition-all cursor-pointer group'>
-                        <CardContent className='p-4 text-center'>
-                          <div
-                            className={`w-12 h-12 rounded-full ${category.color} flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform`}
-                          >
-                            <IconComponent className='w-6 h-6' />
-                          </div>
-                          <h3 className='font-medium text-gray-900 mb-1'>{category.name}</h3>
-                          <p className='text-xs text-gray-500 mb-2'>{category.description}</p>
-                          <Badge variant='secondary' className='text-xs'>
-                            {category.articleCount} bài viết
-                          </Badge>
-                        </CardContent>
-                      </Card>
-                    )
-                  })}
-                </div>
-              </section>
-
-              {/* Featured Articles */}
-              <section className='mb-12'>
-                <div className='flex items-center justify-between mb-6'>
-                  <h2 className='text-2xl font-bold text-gray-900'>Bài viết nổi bật</h2>
-                  <Button variant='outline' className='text-blue-600 border-blue-200 hover:bg-blue-50'>
-                    Xem tất cả
-                    <ArrowRight className='w-4 h-4 ml-2' />
-                  </Button>
-                </div>
-
-                <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-                  {featuredArticles.map((article) => (
-                    <Card
-                      key={article.id}
-                      className='overflow-hidden hover:shadow-xl transition-all cursor-pointer group'
-                    >
-                      <div className='relative'>
-                        <ImageWithFallback
-                          src={article.image}
-                          alt={article.title}
-                          className='w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300'
-                        />
-                        {article.isPopular && (
-                          <Badge className='absolute top-3 left-3 bg-red-500 hover:bg-red-600'>Phổ biến</Badge>
-                        )}
-                        <Badge variant='secondary' className='absolute top-3 right-3'>
-                          {article.category}
-                        </Badge>
+        {/* Health Categories */}
+        <section className="mb-12">
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-800 to-cyan-600 bg-clip-text text-transparent mb-6">
+            Danh mục sức khỏe
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+            {categories.map((category) => {
+              const IconComponent = getIconForCategory(category.icon)
+              return (
+                <Link key={category._id} to={`/health/category/${category.slug}`}>
+                  <Card className="hover:shadow-xl transition-all duration-300 cursor-pointer h-full border-blue-100 hover:border-blue-300 bg-white/80 backdrop-blur-sm">
+                    <CardContent className="p-6">
+                      <div className={`w-12 h-12 rounded-lg ${category.color || 'bg-blue-100'} flex items-center justify-center mb-4`}>
+                        <IconComponent className="h-6 w-6" />
                       </div>
-                      <CardContent className='p-6'>
-                        <h3 className='font-semibold text-lg text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors'>
-                          {article.title}
-                        </h3>
-                        <p className='text-gray-600 text-sm mb-4 line-clamp-3'>{article.excerpt}</p>
-                        <div className='flex items-center justify-between text-xs text-gray-500'>
-                          <div className='flex items-center'>
-                            <User className='w-3 h-3 mr-1' />
-                            {article.author}
+                      <h3 className="font-semibold text-gray-900 mb-1">{category.name}</h3>
+                      <p className="text-sm text-gray-600 mb-2">{category.description}</p>
+                      <p className="text-xs text-blue-600 font-medium">{category.articleCount} bài viết</p>
+                    </CardContent>
+                  </Card>
+                </Link>
+              )
+            })}
+          </div>
+        </section>
+
+        {/* Featured Articles */}
+        {featuredArticles.length > 0 && (
+          <section className="mb-12">
+            <div className="mb-6">
+              <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-800 to-cyan-600 bg-clip-text text-transparent">
+                Bài viết nổi bật
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {featuredArticles.map((article) => (
+                <Link key={article._id} to={`/health/article/${article.slug}`}>
+                  <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 h-full border-blue-100 hover:border-blue-300 bg-white/80 backdrop-blur-sm">
+                    <div className="aspect-video relative overflow-hidden bg-gradient-to-br from-blue-100 to-cyan-100">
+                      {article.featuredImage && (
+                        <ImageWithFallback
+                          src={article.featuredImage}
+                          alt={article.title}
+                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                        />
+                      )}
+                      {article.isFeatured && (
+                        <Badge className="absolute top-2 right-2 bg-red-500">Nổi bật</Badge>
+                      )}
+                    </div>
+                    <CardContent className="p-6">
+                      <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                        <Badge variant="outline" className="border-blue-300 text-blue-600">{article.category?.name}</Badge>
+                        <span>•</span>
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          <span>{article.readTime} phút đọc</span>
+                        </div>
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+                        {article.title}
+                      </h3>
+                      <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+                        {article.excerpt}
+                      </p>
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <div className="flex items-center gap-1">
+                          <User className="h-3 w-3" />
+                          <span>{article.authorName}</span>
+                        </div>
+                        <span>{formatDate(article.publishedAt || article.createdAt)}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Latest Articles and Quick Tips */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Latest Articles */}
+          <div className="lg:col-span-2">
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-800 to-cyan-600 bg-clip-text text-transparent mb-6">
+              Bài viết mới nhất
+            </h2>
+            <div className="space-y-6">
+              {latestArticles.map((article) => (
+                <Link key={article._id} to={`/health/article/${article.slug}`}>
+                  <Card className="hover:shadow-md transition-shadow border-blue-100 bg-white/80 backdrop-blur-sm">
+                    <CardContent className="p-6">
+                      <div className="flex gap-4">
+                        {article.featuredImage && (
+                          <div className="w-32 h-24 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-blue-100 to-cyan-100">
+                            <ImageWithFallback
+                              src={article.featuredImage}
+                              alt={article.title}
+                              className="w-full h-full object-cover"
+                            />
                           </div>
-                          <div className='flex items-center'>
-                            <Clock className='w-3 h-3 mr-1' />
-                            {article.readTime}
+                        )}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                            <Badge variant="outline" className="text-xs border-blue-300 text-blue-600">
+                              {article.category?.name}
+                            </Badge>
+                            <span>•</span>
+                            <span>{formatDate(article.publishedAt || article.createdAt)}</span>
+                          </div>
+                          <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+                            {article.title}
+                          </h3>
+                          <p className="text-sm text-gray-600 line-clamp-2 mb-2">
+                            {article.excerpt}
+                          </p>
+                          <div className="flex items-center gap-4 text-xs text-gray-500">
+                            <div className="flex items-center gap-1">
+                              <User className="h-3 w-3" />
+                              <span>{article.authorName}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              <span>{article.readTime} phút</span>
+                            </div>
+                            <span>{article.viewCount} lượt xem</span>
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </section>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Popular Articles Sidebar */}
+          <div>
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-800 to-cyan-600 bg-clip-text text-transparent mb-6">
+              Bài viết phổ biến
+            </h2>
+            <div className="space-y-4">
+              {popularArticles.map((article, index) => (
+                <Link key={article._id} to={`/health/article/${article.slug}`}>
+                  <Card className="hover:shadow-md transition-shadow border-blue-100 bg-white/80 backdrop-blur-sm">
+                    <CardContent className="p-4">
+                      <div className="flex gap-3">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 text-white flex items-center justify-center font-bold text-sm">
+                          {index + 1}
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-sm text-gray-900 mb-1 line-clamp-2">
+                            {article.title}
+                          </h4>
+                          <div className="flex items-center gap-2 text-xs text-gray-600">
+                            <span>{article.viewCount} lượt xem</span>
+                            <span>•</span>
+                            <span>{article.readTime} phút</span>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
             </div>
 
-            {/* Sidebar */}
-            <div className='lg:col-span-1'>
-              {/* Health Tips */}
-              <Card className='mb-8'>
-                <CardHeader>
-                  <CardTitle className='text-lg text-blue-600'>Mẹo sức khỏe hàng ngày</CardTitle>
-                </CardHeader>
-                <CardContent className='space-y-4'>
-                  {healthTips.map((tip) => (
-                    <div key={tip.id} className='p-3 bg-blue-50 rounded-lg'>
-                      <h4 className='font-medium text-gray-900 mb-1'>{tip.title}</h4>
-                      <p className='text-sm text-gray-600'>{tip.description}</p>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-
-              {/* Quick Actions */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className='text-lg text-blue-600'>Dịch vụ nhanh</CardTitle>
-                </CardHeader>
-                <CardContent className='space-y-3'>
-                  <Button variant='outline' className='w-full justify-start text-left' asChild>
-                    <a href='/contact'>
-                      <Stethoscope className='w-4 h-4 mr-2' />
-                      Tư vấn dược sĩ
-                    </a>
-                  </Button>
-                  <Button variant='outline' className='w-full justify-start text-left' asChild>
-                    <a href='/prescription/upload'>
-                      <Search className='w-4 h-4 mr-2' />
-                      Gửi đơn thuốc
-                    </a>
-                  </Button>
-                  <Button variant='outline' className='w-full justify-start text-left' asChild>
-                    <a href='/products'>
-                      <Heart className='w-4 h-4 mr-2' />
-                      Mua thuốc online
-                    </a>
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
+            {/* Health Tips */}
+            <Card className="mt-8 bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200">
+              <CardHeader>
+                <CardTitle className="text-lg text-blue-900">Mẹo sức khỏe</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-3 text-sm text-gray-700">
+                  <li className="flex gap-2">
+                    <span className="text-blue-600">•</span>
+                    <span>Uống đủ 2-2.5 lít nước mỗi ngày</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="text-blue-600">•</span>
+                    <span>Ngủ đủ 7-8 tiếng mỗi đêm</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="text-blue-600">•</span>
+                    <span>Tập thể dục 30 phút mỗi ngày</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="text-blue-600">•</span>
+                    <span>Ăn nhiều rau xanh, hoa quả</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="text-blue-600">•</span>
+                    <span>Giảm stress bằng thiền định</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
+    </div>
   )
 }
