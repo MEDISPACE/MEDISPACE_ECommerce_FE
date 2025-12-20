@@ -268,7 +268,7 @@ export function Header() {
             </div>
 
             <Link
-              to='/health-corner'
+              to='/health'
               className='relative px-2 py-3 text-gray-700 font-medium hover:text-blue-600 transition-colors duration-200 group'
             >
               Bệnh & Góc sức khỏe
