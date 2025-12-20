@@ -101,6 +101,11 @@ const navigationItems: NavItem[] = [
     icon: MessageSquare,
   },
   {
+    label: 'Quản lý bài viết',
+    href: '/admin/articles',
+    icon: FileText,
+  },
+  {
     label: 'Quản lý đánh giá',
     href: '/admin/reviews',
     icon: Star,
