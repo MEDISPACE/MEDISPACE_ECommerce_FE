@@ -417,11 +417,6 @@ export function CategoriesOverviewPage() {
                       ? 'bg-blue-600 w-8 shadow-lg'
                       : 'bg-blue-200 hover:bg-blue-300 w-3'
                       }`}
-                    whileHover={{
-                      scale: 1.2,
-                      backgroundColor: index === featuredCurrentIndex ? '#0066CC' : '#4A90E2',
-                    }}
-
                   />
                 ))}
               </div>
@@ -539,7 +534,7 @@ export function CategoriesOverviewPage() {
                       {tip.title}
                     </h3>
                     <p className='text-gray-600 mb-4'>{tip.description}</p>
-                    <Link to='/health-corner'>
+                    <Link to='/health'>
                       <Button variant='ghost' className='text-blue-600 hover:bg-blue-50 p-0'>
                         Đọc thêm <ArrowRight className='ml-1 w-4 h-4' />
                       </Button>
