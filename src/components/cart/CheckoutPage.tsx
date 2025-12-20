@@ -472,7 +472,9 @@ export function CheckoutPage() {
                         </div>
                         <div className='flex-1 min-w-0'>
                           <div className='font-medium text-sm line-clamp-1'>{item.name}</div>
-                          <div className='text-xs text-gray-500'>SL: {item.quantity}</div>
+                          <div className='text-xs text-gray-500'>
+                            SL: {item.quantity}{item.unit ? ` x ${item.unit}` : ''}
+                          </div>
                         </div>
                         <div className='text-sm font-medium text-blue-600'>
                           {new Intl.NumberFormat('vi-VN').format(item.totalPrice)}đ
@@ -548,7 +550,7 @@ export function CheckoutPage() {
                   <Button
                     onClick={handlePlaceOrder}
                     disabled={!agreeToTerms || isProcessing}
-                    className='w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 h-12 text-lg font-semibold'
+                    className='w-full text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 h-12 text-lg font-semibold'
                   >
                     {isProcessing ? (
                       <div className='flex items-center gap-2'>

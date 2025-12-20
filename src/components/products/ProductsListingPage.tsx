@@ -12,6 +12,10 @@ import {
   isProductInStock,
   isProductPrescription,
   getProductSalePrice,
+  getProductOriginalPrice,
+  getProductUnit,
+  getDiscountPercentage,
+  isProductOnSale,
   getBrandName,
 } from '../../utils/productHelpers'
 
@@ -318,18 +322,22 @@ export function ProductsListingPage() {
                               slug: product.slug,
                               brand: getBrandName(product),
                               image: getProductImage(product),
-                              originalPrice: product.originalPrice,
+                              originalPrice: getProductOriginalPrice(product),
                               salePrice: getProductSalePrice(product) || 0,
-                              discountPercentage: product.discountPercentage,
+                              discountPercentage: getDiscountPercentage(product),
                               rating: getProductRating(product),
                               reviewCount: getProductReviewCount(product),
                               inStock: isProductInStock(product),
                               isPrescription: isProductPrescription(product),
-                              isOnSale: product.isOnSale,
+                              isOnSale: isProductOnSale(product),
+                              unit: getProductUnit(product),
+                              priceVariants: product.priceVariants,
                             }}
                             variant={viewMode}
-                            onAddToCart={() => {
-                              addToCart(product, 1)
+                            onAddToCart={(selectedUnit) => {
+                              const variant = product.priceVariants?.find(v => v.unit === selectedUnit)
+                              const price = variant?.price || product.priceVariants?.[0]?.price
+                              addToCart(product, 1, selectedUnit, price)
                             }}
                             onToggleWishlist={() => {
                               toggleWishlist(getProductId(product))

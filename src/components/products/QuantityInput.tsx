@@ -11,10 +11,10 @@ interface QuantityInputProps {
   disabled?: boolean;
 }
 
-export function QuantityInput({ 
-  value, 
-  onChange, 
-  min = 1, 
+export function QuantityInput({
+  value,
+  onChange,
+  min = 1,
   max = 999,
   size = "md",
   disabled = false
@@ -25,7 +25,7 @@ export function QuantityInput({
       input: "h-8 w-12 text-sm"
     },
     md: {
-      button: "h-9 w-9", 
+      button: "h-9 w-9",
       input: "h-9 w-14 text-base"
     },
     lg: {
@@ -64,7 +64,7 @@ export function QuantityInput({
       >
         <Minus className="w-3 h-3" />
       </Button>
-      
+
       <Input
         type="number"
         value={value}
@@ -72,9 +72,9 @@ export function QuantityInput({
         min={min}
         max={max}
         disabled={disabled}
-        className={`${sizeClasses[size].input} border-0 text-center rounded-none focus:ring-0 focus:border-0 bg-white`}
+        className={`${sizeClasses[size].input} border-0 text-center rounded-none focus:ring-0 focus:border-0 bg-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
       />
-      
+
       <Button
         variant="ghost"
         size="sm"
