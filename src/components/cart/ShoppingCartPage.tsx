@@ -82,7 +82,7 @@ export function ShoppingCartPage() {
   // Calculate totals
   const subtotal = getSelectedItemsTotal()
   const discount = 0 // No discount
-  const shippingFee = subtotal >= 300000 ? 0 : 25000
+  const shippingFee = subtotal >= 300000 ? 0 : 30000
   const total = subtotal - discount + shippingFee
 
   // Handle select all
@@ -374,7 +374,7 @@ export function ShoppingCartPage() {
                     • WELCOME10 - Giảm 10% cho đơn hàng đầu tiên
                   </div>
                   <div className='text-sm text-blue-600 cursor-pointer hover:underline'>
-                    • FREESHIP - Miễn phí vận chuyển cho đơn từ 200k
+                    • FREESHIP - Miễn phí vận chuyển Tiêu chuẩn cho đơn từ 300k
                   </div>
                 </div>
               </div>
