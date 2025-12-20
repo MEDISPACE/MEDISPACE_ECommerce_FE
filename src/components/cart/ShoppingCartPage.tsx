@@ -7,6 +7,7 @@ import { Checkbox } from '../ui/checkbox'
 import { Input } from '../ui/input'
 import { Separator } from '../ui/separator'
 import { Badge } from '../ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { ImageWithFallback } from '~/components/shared/ImageWithFallback'
 import { useCart } from '../../contexts/CartContext'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
@@ -17,6 +18,7 @@ export function ShoppingCartPage() {
   const {
     state: { cart, selectedItems },
     updateQuantity,
+    updateUnit,
     removeFromCart,
     toggleItemSelection,
     selectAllItems,
@@ -109,7 +111,7 @@ export function ShoppingCartPage() {
     return (
       <div className='max-w-7xl mx-auto px-4 py-6'>
         <UniversalBreadcrumb items={breadcrumbItems} />
-        <Card className='max-w-md mx-auto text-center p-8 border-blue-200'>
+        <Card className='max-w-md mx-auto text-center p-8 border-blue-200 bg-white'>
           <CardContent>
             <ShoppingCart className='w-24 h-24 text-blue-300 mx-auto mb-6' />
             <h2 className='text-2xl font-bold text-gray-900 mb-2'>Giỏ hàng trống</h2>
@@ -141,7 +143,7 @@ export function ShoppingCartPage() {
         {/* Cart Items - 70% width */}
         <div className='lg:col-span-7 space-y-6'>
           {/* Cart Header */}
-          <Card className='border-blue-100'>
+          <Card className='bg-white border-blue-100 hover:shadow-md transition-shadow'>
             <CardContent className='p-4'>
               <div className='flex items-center justify-between'>
                 <div className='flex items-center gap-3'>
@@ -153,7 +155,7 @@ export function ShoppingCartPage() {
                   <Button
                     variant='ghost'
                     size='sm'
-                    className='text-gray-500 hover:text-red-500'
+                    className='text-gray-500 hover:text-red-500 hover:!bg-red-100 hover:!border-red-100 hover:shadow-md transition-shadow'
                     onClick={() => {
                       const selectedProductIds = Array.from(selectedItems)
                       selectedProductIds.forEach((id) => removeFromCart(id))
@@ -162,7 +164,7 @@ export function ShoppingCartPage() {
                     <Trash2 className='w-4 h-4 mr-1' />
                     Xóa đã chọn
                   </Button>
-                  <Button variant='ghost' size='sm' className='text-gray-500 hover:text-pink-500'>
+                  <Button variant='ghost' size='sm' className='text-gray-500 hover:text-blue-600 hover:!bg-blue-100 hover:!border-blue-100 hover:shadow-md transition-shadow'>
                     <Heart className='w-4 h-4 mr-1' />
                     Thêm vào yêu thích
                   </Button>
@@ -174,7 +176,7 @@ export function ShoppingCartPage() {
           {/* Cart Items */}
           <div className='space-y-4'>
             {cart?.items.map((item) => (
-              <Card key={item.productId} className='border-blue-100 hover:shadow-md transition-shadow'>
+              <Card key={item.productId} className='bg-white border-blue-100 hover:shadow-md transition-shadow'>
                 <CardContent className='p-6'>
                   <div className='flex items-start gap-4'>
                     <Checkbox
@@ -200,9 +202,38 @@ export function ShoppingCartPage() {
                       <p className='text-sm text-gray-500 mb-2'>MediSpace Pharmacy</p>
                       <p className='text-xs text-gray-400 mb-2'>SKU: {item.sku}</p>
 
+                      {/* Unit selector - show dropdown when multiple variants */}
+                      {item.priceVariants && item.priceVariants.length > 1 ? (
+                        <div className='flex items-center gap-2 mb-2'>
+                          <span className='text-xs text-gray-500'>Đơn vị:</span>
+                          <Select
+                            value={item.unit}
+                            onValueChange={(value) => updateUnit(item.productId, value)}
+                          >
+                            <SelectTrigger className='h-7 w-[100px] text-xs border-blue-200'>
+                              <SelectValue placeholder="Chọn đơn vị" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {item.priceVariants.map((variant) => (
+                                <SelectItem key={variant.unit} value={variant.unit} className='text-xs'>
+                                  {variant.unit}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      ) : item.unit && (
+                        <div className='mb-2'>
+                          <span className='inline-flex items-center px-2 py-1 text-xs bg-blue-50 text-blue-600 rounded-full'>
+                            Đơn vị: {item.unit}
+                          </span>
+                        </div>
+                      )}
+
                       <div className='flex items-center justify-between'>
                         <div className='text-lg font-bold text-blue-600'>
                           {new Intl.NumberFormat('vi-VN').format(item.unitPrice)}đ
+                          {item.unit && <span className='text-sm font-normal text-gray-500 ml-1'>/ {item.unit}</span>}
                         </div>
 
                         <div className='flex items-center gap-4'>
@@ -270,7 +301,7 @@ export function ShoppingCartPage() {
           </div>
 
           {/* Promotion Section */}
-          <Card className='border-blue-100'>
+          <Card className='bg-white border-blue-100 hover:shadow-md transition-shadow'>
             <CardHeader>
               <CardTitle className='text-blue-800 flex items-center gap-2'>
                 <Gift className='w-5 h-5' />
@@ -335,7 +366,7 @@ export function ShoppingCartPage() {
         <div className='lg:col-span-3'>
           <div className='sticky top-6 space-y-6'>
             {/* Order Summary */}
-            <Card className='border-blue-100'>
+            <Card className='bg-white border-blue-100 hover:shadow-md transition-shadow'>
               <CardHeader>
                 <CardTitle className='text-blue-800'>Tóm tắt đơn hàng</CardTitle>
               </CardHeader>
@@ -385,7 +416,7 @@ export function ShoppingCartPage() {
 
                 <div className='text-center'>
                   <Link to='/products'>
-                    <Button variant='outline' className='w-full border-blue-200 text-blue-600'>
+                    <Button variant='outline' className='w-full !border-blue-200 hover:!bg-blue-100 hover:!border-blue-100 hover:shadow-md transition-shadow text-blue-600'>
                       Tiếp tục mua sắm
                     </Button>
                   </Link>
@@ -394,7 +425,7 @@ export function ShoppingCartPage() {
             </Card>
 
             {/* Shipping Info */}
-            <Card className='border-blue-100'>
+            {/* <Card className='bg-white border-blue-100 hover:shadow-md transition-shadow'>
               <CardContent className='p-4 space-y-3'>
                 <div className='text-sm'>
                   <span className='font-medium'>Giao đến:</span>
@@ -422,10 +453,10 @@ export function ShoppingCartPage() {
                   Dự kiến giao hàng: <span className='font-medium text-blue-600'>2-4 giờ</span>
                 </div>
               </CardContent>
-            </Card>
+            </Card> */}
 
             {/* Trust Badges */}
-            <Card className='border-blue-100'>
+            <Card className='bg-white border-blue-100 hover:shadow-md transition-shadow'>
               <CardContent className='p-4 space-y-3'>
                 <div className='flex items-center gap-2 text-sm text-gray-600'>
                   <Shield className='w-4 h-4 text-green-500' />

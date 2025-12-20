@@ -21,8 +21,10 @@ import { Badge } from '../ui/badge'
 import { Separator } from '../ui/separator'
 import { getOrderStatusBadge, getPaymentStatusBadge } from '../../utils/badgeUtils'
 import { orderService } from '../../services/orderService'
+import { reviewService } from '../../services/reviewService'
 import { useCart } from '../../contexts/CartContext'
-import type { Order } from '../../types/account'
+import { WriteReviewDialog } from '../reviews/WriteReviewDialog'
+import type { Order, OrderItem } from '../../types/account'
 import { useState, useEffect, useCallback } from 'react'
 
 export function OrderDetailPage() {
@@ -31,6 +33,8 @@ export function OrderDetailPage() {
   const { addToCart } = useCart()
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false)
+  const [selectedProductForReview, setSelectedProductForReview] = useState<OrderItem | null>(null)
 
   const fetchOrder = useCallback(async () => {
     if (!orderId) return
@@ -51,7 +55,7 @@ export function OrderDetailPage() {
             productName: item.product.name,
             productImage: item.product.images?.[0] || '',
             brand: item.product.brand?.name || '',
-            unit: item.product.unit || 'viên',
+            unit: (item as any).unit || item.product.unit || 'viên',
             quantity: item.quantity,
             unitPrice: item.price,
             subtotal: item.total,
@@ -243,16 +247,43 @@ export function OrderDetailPage() {
 
                     <div className='flex items-center gap-2'>
                       <Link to={`/products/${item.productId}`}>
-                        <Button variant='outline' size='sm'>
+                        <Button variant='outline' size='sm' className='!border-blue-200 !text-blue-600 hover:!bg-blue-50'>
                           Xem sản phẩm
                         </Button>
                       </Link>
-                      <Button variant='outline' size='sm'>
+                      <Button
+                        size='sm'
+                        className='bg-blue-600 text-white hover:!bg-blue-700'
+                        onClick={async () => {
+                          try {
+                            const product = {
+                              _id: item.productId,
+                              name: item.productName,
+                              price: item.unitPrice,
+                              image: item.productImage,
+                            } as any
+                            await addToCart(product, item.quantity, item.unit, item.unitPrice)
+                            toast.success('Đã thêm vào giỏ hàng', {
+                              description: `${item.productName} x${item.quantity}`,
+                            })
+                          } catch (error) {
+                            toast.error('Không thể thêm vào giỏ hàng')
+                          }
+                        }}
+                      >
                         <RotateCcw className='w-4 h-4 mr-1' />
                         Mua lại
                       </Button>
                       {order.status === 'delivered' && (
-                        <Button variant='outline' size='sm'>
+                        <Button
+                          variant='outline'
+                          size='sm'
+                          className='!border-yellow-400 !text-yellow-600 hover:!bg-yellow-50'
+                          onClick={() => {
+                            setSelectedProductForReview(item)
+                            setReviewDialogOpen(true)
+                          }}
+                        >
                           <Star className='w-4 h-4 mr-1' />
                           Đánh giá
                         </Button>
@@ -356,7 +387,7 @@ export function OrderDetailPage() {
             <CardContent className='p-4 space-y-3'>
               {order.status === 'pending_payment' && (
                 <Button
-                  className='w-full bg-gradient-to-r from-blue-600 to-cyan-500'
+                  className='w-full text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:!bg-gradient-to-r hover:from-blue-700 hover:to-cyan-600'
                   onClick={async () => {
                     try {
                       const paymentUrl = await orderService.getPaymentUrl(order.id)
@@ -377,7 +408,7 @@ export function OrderDetailPage() {
               {(order.status === 'pending_payment' || order.status === 'confirmed') && (
                 <Button
                   variant='outline'
-                  className='w-full border-red-200 text-red-600'
+                  className='w-full !border-red-200 !text-red-600 hover:!bg-red-50 hover:!text-red-700'
                   onClick={async () => {
                     if (!confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')) return
                     try {
@@ -395,7 +426,7 @@ export function OrderDetailPage() {
               )}
 
               <Link to='/contact' className='block w-full'>
-                <Button variant='outline' className='w-full'>
+                <Button variant='outline' className='w-full !border-blue-200 !text-blue-600 hover:!bg-blue-50 hover:!text-blue-700'>
                   <Phone className='w-4 h-4 mr-2' />
                   Liên hệ hỗ trợ
                 </Button>
@@ -403,7 +434,7 @@ export function OrderDetailPage() {
 
               <Button
                 variant='outline'
-                className='w-full'
+                className='w-full !border-blue-200 !text-blue-600 hover:!bg-blue-50 hover:!text-blue-700'
                 onClick={async () => {
                   try {
                     // Add items to cart sequentially
@@ -431,7 +462,35 @@ export function OrderDetailPage() {
           </Card>
         </div>
       </div>
-    </div>
 
+      {/* Write Review Dialog - Direct for specific product */}
+      {selectedProductForReview && order && (
+        <WriteReviewDialog
+          open={reviewDialogOpen}
+          onOpenChange={setReviewDialogOpen}
+          product={{
+            id: selectedProductForReview.productId,
+            name: selectedProductForReview.productName,
+            image: selectedProductForReview.productImage || ''
+          }}
+          orderId={order.id}
+          onSubmit={async (data) => {
+            try {
+              const result = await reviewService.createReview(data)
+              setReviewDialogOpen(false)
+              setSelectedProductForReview(null)
+              return result
+            } catch (error: any) {
+              if (error.response?.status === 409) {
+                toast.error('Bạn đã đánh giá sản phẩm này rồi!')
+              } else {
+                toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi gửi đánh giá.')
+              }
+              throw error
+            }
+          }}
+        />
+      )}
+    </div>
   )
 }

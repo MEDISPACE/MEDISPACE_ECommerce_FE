@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Heart, ShoppingCart } from 'lucide-react'
 import { Link } from 'react-router'
 import { Button } from '../ui/button'
@@ -5,6 +6,13 @@ import { Badge } from '../ui/badge'
 import { Card, CardContent } from '../ui/card'
 import { ImageWithFallback } from '../shared/ImageWithFallback'
 import { RxBadge, OTCBadge } from './MedicalBadge'
+
+interface PriceVariant {
+  unit: string
+  price: number
+  originalPrice?: number
+  isDefault?: boolean
+}
 
 interface ProductCardProps {
   product: {
@@ -24,9 +32,10 @@ interface ProductCardProps {
     unit?: string // Đơn vị: Hộp, Gói, Lọ, Viên
     packaging?: string // Thông tin đóng gói: "Hộp 10 vi x 10 viên"
     needsConsultation?: boolean // Cần tư vấn dược sĩ
+    priceVariants?: PriceVariant[] // Multiple unit options
   }
   variant?: 'grid' | 'list'
-  onAddToCart?: () => void
+  onAddToCart?: (selectedUnit?: string) => void
   onToggleWishlist?: () => void
   isInWishlist?: boolean
 }
@@ -38,11 +47,21 @@ export function ProductCard({
   onToggleWishlist,
   isInWishlist = false,
 }: ProductCardProps) {
+  // Find default variant or first variant
+  const defaultVariant = product.priceVariants?.find(v => v.isDefault) || product.priceVariants?.[0]
+  const [selectedUnit, setSelectedUnit] = useState<string>(defaultVariant?.unit || product.unit || 'Hộp')
+
+  // Get current variant based on selected unit
+  const currentVariant = product.priceVariants?.find(v => v.unit === selectedUnit) || defaultVariant
+  const currentPrice = currentVariant?.price || product.salePrice
+  const currentOriginalPrice = currentVariant?.originalPrice || product.originalPrice
+  const hasDiscount = currentOriginalPrice && currentOriginalPrice > currentPrice
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
     if (onAddToCart) {
-      onAddToCart()
+      onAddToCart(selectedUnit)
     }
   }
 
@@ -52,6 +71,12 @@ export function ProductCard({
     if (onToggleWishlist) {
       onToggleWishlist()
     }
+  }
+
+  const handleUnitSelect = (e: React.MouseEvent, unit: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setSelectedUnit(unit)
   }
 
   const isConsultationRequired = product.needsConsultation || product.isPrescription
@@ -105,6 +130,24 @@ export function ProductCard({
                   <p className='text-sm text-gray-500'>{product.brand}</p>
                 </div>
 
+                {/* Unit selector - only show when multiple variants */}
+                {product.priceVariants && product.priceVariants.length > 1 && !isConsultationRequired && (
+                  <div className='flex border border-gray-300 rounded-md overflow-hidden mb-2 max-w-[200px]'>
+                    {product.priceVariants.map((variant, index) => (
+                      <button
+                        key={variant.unit}
+                        onClick={(e) => handleUnitSelect(e, variant.unit)}
+                        className={`flex-1 px-2 py-1.5 text-xs font-medium transition-all ${selectedUnit === variant.unit
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-white text-gray-600 hover:bg-gray-50'
+                          } ${index > 0 ? 'border-l border-gray-300' : ''}`}
+                      >
+                        {variant.unit}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 {/* Packaging */}
                 {product.packaging && <p className='text-xs text-gray-500 mb-3 line-clamp-1'>{product.packaging}</p>}
 
@@ -118,14 +161,14 @@ export function ProductCard({
                       <>
                         <div className='flex items-baseline gap-2 mb-1'>
                           <span className={`font-semibold ${!product.inStock ? 'text-gray-400' : 'text-blue-600'}`}>
-                            {product.salePrice.toLocaleString('vi-VN')}đ
+                            {currentPrice.toLocaleString('vi-VN')}đ
                           </span>
-                          <span className='text-xs text-gray-500'>/ {product.unit?.split(',')[0] || 'Hộp'}</span>
+                          <span className='text-sm text-gray-500'>/ {selectedUnit}</span>
                         </div>
                         <div className='flex items-center gap-2'>
-                          {product.originalPrice && product.originalPrice > product.salePrice && product.inStock && (
+                          {hasDiscount && product.inStock && (
                             <span className='text-xs text-gray-400 line-through'>
-                              {product.originalPrice.toLocaleString('vi-VN')}đ
+                              {currentOriginalPrice?.toLocaleString('vi-VN')}đ
                             </span>
                           )}
                           {!product.inStock && <span className='text-xs text-red-500 font-medium'>Tạm hết hàng</span>}
@@ -239,6 +282,24 @@ export function ProductCard({
               {product.name}
             </h3>
 
+            {/* Unit selector - only show when multiple variants */}
+            {product.priceVariants && product.priceVariants.length > 1 && !isConsultationRequired && (
+              <div className='flex border border-gray-300 rounded-md overflow-hidden mb-2'>
+                {product.priceVariants.map((variant, index) => (
+                  <button
+                    key={variant.unit}
+                    onClick={(e) => handleUnitSelect(e, variant.unit)}
+                    className={`flex-1 px-2 py-1.5 text-xs font-medium transition-all ${selectedUnit === variant.unit
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white text-gray-600 hover:bg-gray-50'
+                      } ${index > 0 ? 'border-l border-gray-300' : ''}`}
+                  >
+                    {variant.unit}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* Price section */}
             <div className='mb-2'>
               {isConsultationRequired ? (
@@ -247,13 +308,13 @@ export function ProductCard({
                 <>
                   <div className='flex items-baseline gap-1'>
                     <span className={`font-semibold ${!product.inStock ? 'text-gray-400' : 'text-blue-600'}`}>
-                      {product.salePrice.toLocaleString('vi-VN')}đ
+                      {currentPrice.toLocaleString('vi-VN')}đ
                     </span>
-                    <span className='text-xs text-gray-500'>/ {product.unit?.split(',')[0] || 'Hộp'}</span>
+                    <span className='text-sm text-gray-500'>/ {selectedUnit}</span>
                   </div>
-                  {product.originalPrice && product.originalPrice > product.salePrice && product.inStock && (
+                  {hasDiscount && product.inStock && (
                     <span className='text-xs text-gray-400 line-through'>
-                      {product.originalPrice.toLocaleString('vi-VN')}đ
+                      {currentOriginalPrice?.toLocaleString('vi-VN')}đ
                     </span>
                   )}
                   {!product.inStock && <p className='text-xs text-red-500 font-medium mt-1'>Tạm hết hàng</p>}

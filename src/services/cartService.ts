@@ -18,6 +18,14 @@ class CartService {
     return response.data.result
   }
 
+  async updateCartItemUnit(productId: string, unit: string): Promise<Cart> {
+    const response = await apiClient.put<{ message: string; result: Cart }>(
+      API_ENDPOINTS.CART.UPDATE_ITEM_UNIT(productId),
+      { unit }
+    )
+    return response.data.result
+  }
+
   async removeFromCart(productId: string): Promise<Cart> {
     const response = await apiClient.delete<{ message: string; result: Cart }>(API_ENDPOINTS.CART.REMOVE_ITEM(productId))
     return response.data.result

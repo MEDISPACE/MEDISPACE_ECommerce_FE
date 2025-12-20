@@ -128,15 +128,25 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
             <div className='space-y-3'>
               {order.items.slice(0, 2).map((item: OrderItem) => (
                 <div key={item.id} className='flex gap-3'>
-                  <div className='w-16 h-16 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center'>
-                    <Package className='w-6 h-6 text-gray-400' />
-                  </div>
+                  <Link to={`/products/${item.productId}`} className='w-16 h-16 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden'>
+                    {item.productImage ? (
+                      <img src={item.productImage} alt={item.productName} className='w-full h-full object-cover' />
+                    ) : (
+                      <div className='w-full h-full flex items-center justify-center'>
+                        <Package className='w-6 h-6 text-gray-400' />
+                      </div>
+                    )}
+                  </Link>
                   <div className='flex-1 min-w-0'>
-                    <h4 className='font-medium text-sm line-clamp-1'>{item.productName}</h4>
-                    <p className='text-sm text-gray-500'>x{item.quantity}</p>
+                    <Link to={`/products/${item.productId}`} className='font-medium text-sm line-clamp-1 hover:text-blue-600 transition-colors'>
+                      {item.productName}
+                    </Link>
+                    <p className='text-sm text-gray-500'>
+                      x{item.quantity} {item.unit && <span className='text-gray-400'>/ {item.unit}</span>}
+                    </p>
                   </div>
                   <div className='text-right'>
-                    <p className='font-medium text-blue-600'>{formatPrice(item.unitPrice * item.quantity)}</p>
+                    <p className='font-medium text-blue-600'>{formatPrice(item.subtotal || item.unitPrice * item.quantity)}</p>
                   </div>
                 </div>
               ))}
@@ -164,14 +174,14 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
 
         <div className='flex gap-2'>
           <Link to={`/account/orders/${order.id}`} className='flex-1'>
-            <Button variant='outline' className='w-full text-blue-600 border-blue-300'>
+            <Button variant='outline' className='w-full text-blue-600 !border-blue-200 hover:!bg-blue-50 hover:!text-blue-700'>
               <Eye className='w-4 h-4 mr-2' />
               Xem chi tiết
             </Button>
           </Link>
 
           {order.status === 'delivered' && (
-            <Button variant='outline' className='text-blue-600 border-blue-200'>
+            <Button variant='outline' className='text-blue-600 !border-blue-200 hover:!bg-blue-50 hover:!text-blue-700'>
               <RotateCcw className='w-4 h-4 mr-2' />
               Mua lại
             </Button>
@@ -181,7 +191,7 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
             <>
               {allProductsReviewed ? (
                 <Link to='/account/reviews' className='flex-1'>
-                  <Button className='w-full bg-green-600 hover:bg-green-700 text-white'>
+                  <Button className='w-full bg-green-600 !border-green-200 hover:!bg-green-700/90 hover:!text-white text-white'>
                     <Star className='w-4 h-4 mr-2' />
                     Xem đánh giá
                   </Button>

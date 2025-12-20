@@ -20,6 +20,13 @@ import { brandService } from '../../services/brandService'
 import { useCart } from '../../contexts/CartContext'
 import { useWishlist } from '../../hooks/product/useWishlist'
 import type { Product, Category, Brand } from '../../types/product'
+import {
+  getProductSalePrice,
+  getProductOriginalPrice,
+  getProductUnit,
+  getDiscountPercentage,
+  isProductOnSale,
+} from '../../utils/productHelpers'
 
 export function SearchResultsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -96,7 +103,7 @@ export function SearchResultsPage() {
 
     // Price range filter
     filtered = filtered.filter((product) => {
-      const price = product.salePrice || product.originalPrice || 0
+      const price = getProductSalePrice(product) || 0
       return price >= priceRange[0] && price <= priceRange[1]
     })
 
@@ -124,10 +131,10 @@ export function SearchResultsPage() {
     // Sort products
     switch (sortBy) {
       case 'price_asc':
-        filtered.sort((a, b) => (a.salePrice || a.originalPrice || 0) - (b.salePrice || b.originalPrice || 0))
+        filtered.sort((a, b) => (getProductSalePrice(a) || 0) - (getProductSalePrice(b) || 0))
         break
       case 'price_desc':
-        filtered.sort((a, b) => (b.salePrice || b.originalPrice || 0) - (a.salePrice || a.originalPrice || 0))
+        filtered.sort((a, b) => (getProductSalePrice(b) || 0) - (getProductSalePrice(a) || 0))
         break
       case 'rating':
         filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0))
@@ -501,18 +508,22 @@ export function SearchResultsPage() {
                       slug: product.slug,
                       brand: product.brand?.name || '',
                       image: product.featuredImage || '',
-                      originalPrice: product.originalPrice,
-                      salePrice: product.price || product.originalPrice || product.salePrice || 0,
+                      originalPrice: getProductOriginalPrice(product),
+                      salePrice: getProductSalePrice(product) || 0,
                       rating: product.rating || 0,
                       reviewCount: product.reviewCount || 0,
                       inStock: product.stockQuantity > 0,
                       isPrescription: product.requiresPrescription,
-                      isOnSale: product.isOnSale,
-                      discountPercentage: product.discountPercentage,
+                      isOnSale: isProductOnSale(product),
+                      discountPercentage: getDiscountPercentage(product),
+                      unit: getProductUnit(product),
+                      priceVariants: product.priceVariants,
                     }}
                     variant={viewMode}
-                    onAddToCart={() => {
-                      addToCart(product, 1)
+                    onAddToCart={(selectedUnit) => {
+                      const variant = product.priceVariants?.find(v => v.unit === selectedUnit)
+                      const price = variant?.price || product.priceVariants?.[0]?.price
+                      addToCart(product, 1, selectedUnit, price)
                     }}
                     onToggleWishlist={() => {
                       toggleWishlist(product._id)

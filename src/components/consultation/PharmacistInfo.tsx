@@ -128,9 +128,8 @@ export function PharmacistInfo({
               {[1, 2, 3, 4, 5].map((star) => (
                 <Star
                   key={star}
-                  className={`w-4 h-4 ${
-                    star <= Math.floor(pharmacist.rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
-                  }`}
+                  className={`w-4 h-4 ${star <= Math.floor(pharmacist.rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
+                    }`}
                 />
               ))}
             </div>
@@ -197,7 +196,7 @@ export function PharmacistInfo({
                     <div>{order.total.toLocaleString('vi-VN')}đ</div>
                     <div>{order.itemCount} sản phẩm</div>
                   </div>
-                  <Button size='sm' className='bg-emerald-600 hover:bg-emerald-700 text-white'>
+                  <Button size='sm' className='bg-emerald-600 hover:!bg-emerald-700 text-white'>
                     Thanh toán ngay
                   </Button>
                 </div>
