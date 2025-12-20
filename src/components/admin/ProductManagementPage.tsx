@@ -48,6 +48,7 @@ import adminService from '../../services/adminService'
 import brandService from '../../services/brandService'
 import { PaginationComponent } from '../shared/PaginationComponent'
 import { toast } from 'sonner'
+import { HybridPriceEditor, type PriceVariant } from './HybridPriceEditor'
 
 // Use Product type from types/product.ts
 import type { Product } from '../../types/product'
@@ -206,7 +207,7 @@ export function ProductManagementPage() {
         status: 'active',
         requiresPrescription: false,
         stockQuantity: 0,
-        price: 0,
+        priceVariants: [],
         maxOrderQuantity: 10,
       },
       errors: {},
@@ -572,10 +573,19 @@ export function ProductManagementPage() {
                         </div>
                       </TableCell>
                       <TableCell className='hidden md:table-cell'>
-                        <Badge variant='outline'>{product.category?.name || 'N/A'}</Badge>
+                        <Badge className='bg-blue-100 text-blue-700 hover:bg-blue-100'>{product.category?.name || 'N/A'}</Badge>
                       </TableCell>
                       <TableCell>
-                        <p className='font-semibold text-blue-600'>{(product.price || 0).toLocaleString('vi-VN')}đ</p>
+                        <p className='font-semibold text-blue-600'>
+                          {(() => {
+                            const defaultVariant = product.priceVariants?.find(v => v.isDefault) || product.priceVariants?.[0]
+                            const price = defaultVariant?.price || 0
+                            return price.toLocaleString('vi-VN') + 'đ'
+                          })()}
+                        </p>
+                        {product.priceVariants && product.priceVariants.length > 1 && (
+                          <span className='text-xs text-gray-500'>{product.priceVariants.length} đơn vị</span>
+                        )}
                       </TableCell>
                       <TableCell className='hidden lg:table-cell'>
                         <div className='flex items-center gap-1'>
@@ -721,16 +731,15 @@ export function ProductManagementPage() {
           </FormGrid>
         </FormSection>
 
-        <FormSection title='Giá và kho'>
-          <FormGrid cols={3}>
-            <TextField
-              label='Giá bán (VNĐ)'
-              type='number'
-              value={formState.data.price?.toString() || ''}
-              onChange={(v) => updateFormData('price', Number(v) || 0)}
-              placeholder='0'
-              error={formState.errors.price}
-            />
+        <FormSection title='Đơn vị & Giá bán'>
+          <HybridPriceEditor
+            variants={(formState.data.priceVariants as PriceVariant[]) || []}
+            onChange={(variants) => updateFormData('priceVariants', variants)}
+          />
+        </FormSection>
+
+        <FormSection title='Kho hàng'>
+          <FormGrid cols={2}>
             <TextField
               label='Tồn kho'
               type='number'
