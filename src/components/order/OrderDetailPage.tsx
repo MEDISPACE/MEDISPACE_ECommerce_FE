@@ -158,7 +158,18 @@ export function OrderDetailPage() {
             <Download className='w-4 h-4 mr-2' />
             Tải PDF
           </Button>
-          <Button variant='outline' size='sm'>
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={() => {
+              const chatBtn = document.querySelector('button[aria-label="Chat với dược sĩ"]') as HTMLButtonElement | null
+              if (chatBtn) {
+                chatBtn.click()
+              } else {
+                window.location.href = '/contact'
+              }
+            }}
+          >
             <MessageCircle className='w-4 h-4 mr-2' />
             Hỗ trợ
           </Button>
@@ -382,23 +393,16 @@ export function OrderDetailPage() {
           </Card>
 
           {/* Actions */}
-          {/* Actions */}
           <Card className='border-blue-100'>
             <CardContent className='p-4 space-y-3'>
-              {order.status === 'pending_payment' && (
+              {order.paymentStatus === 'pending' && order.paymentMethod !== 'cod' && (
                 <Button
                   className='w-full text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:!bg-gradient-to-r hover:from-blue-700 hover:to-cyan-600'
-                  onClick={async () => {
-                    try {
-                      const paymentUrl = await orderService.getPaymentUrl(order.id)
-                      if (paymentUrl) {
-                        window.location.href = paymentUrl
-                      } else {
-                        toast.error('Không thể tạo link thanh toán')
-                      }
-                    } catch (error) {
-                      toast.error('Lỗi khi tạo link thanh toán')
-                    }
+                  onClick={() => {
+                    toast.info('Tính năng thanh toán lại đang được phát triển', {
+                      description: 'Vui lòng liên hệ hỗ trợ để được trợ giúp thanh toán',
+                      duration: 4000
+                    })
                   }}
                 >
                   Thanh toán ngay
@@ -425,12 +429,21 @@ export function OrderDetailPage() {
                 </Button>
               )}
 
-              <Link to='/contact' className='block w-full'>
-                <Button variant='outline' className='w-full !border-blue-200 !text-blue-600 hover:!bg-blue-50 hover:!text-blue-700'>
-                  <Phone className='w-4 h-4 mr-2' />
-                  Liên hệ hỗ trợ
-                </Button>
-              </Link>
+              <Button
+                variant='outline'
+                className='w-full !border-blue-200 !text-blue-600 hover:!bg-blue-50 hover:!text-blue-700'
+                onClick={() => {
+                  const chatBtn = document.querySelector('button[aria-label="Chat với dược sĩ"]') as HTMLButtonElement | null
+                  if (chatBtn) {
+                    chatBtn.click()
+                  } else {
+                    window.location.href = '/contact'
+                  }
+                }}
+              >
+                <Phone className='w-4 h-4 mr-2' />
+                Liên hệ hỗ trợ
+              </Button>
 
               <Button
                 variant='outline'

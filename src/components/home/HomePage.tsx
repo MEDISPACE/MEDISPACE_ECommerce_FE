@@ -646,6 +646,12 @@ export function HomePage() {
                   <div className='flex flex-col sm:flex-row gap-6 justify-center'>
                     <Button
                       size='lg'
+                      onClick={() => {
+                        const chatBtn = document.querySelector('button[aria-label="Chat với dược sĩ"]') as HTMLButtonElement | null
+                        if (chatBtn) {
+                          chatBtn.click()
+                        }
+                      }}
                       className='bg-white text-blue-700 hover:bg-blue-50 hover:text-blue-800 shadow-2xl px-10 h-16 text-lg font-semibold'
                     >
                       <MessageCircle className='w-6 h-6 mr-3' />

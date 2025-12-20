@@ -9,10 +9,14 @@ import { Separator } from '../ui/separator'
 import { Badge } from '../ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { ImageWithFallback } from '~/components/shared/ImageWithFallback'
-import { useCart } from '../../contexts/CartContext'
+import { useCart, createSelectionKey } from '../../contexts/CartContext'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
 import { addressService } from '../../services/addressService'
 import type { Address } from '../../types/user'
+
+import { useNavigate } from 'react-router'
+import { toast } from 'sonner'
+import { useAuth } from '../../contexts/AuthContext'
 
 export function ShoppingCartPage() {
   const {
@@ -27,6 +31,9 @@ export function ShoppingCartPage() {
     getSelectedItemsTotal,
   } = useCart()
 
+  const { isAuthenticated } = useAuth()
+  const navigate = useNavigate()
+
   const [couponCode, setCouponCode] = useState('')
   const [appliedCoupons, setAppliedCoupons] = useState<string[]>([])
   const [addresses, setAddresses] = useState<Address[]>([])
@@ -38,6 +45,8 @@ export function ShoppingCartPage() {
   // Fetch addresses on mount
   useEffect(() => {
     const fetchAddresses = async () => {
+      if (!isAuthenticated) return // Don't fetch addresses if not logged in
+
       try {
         setLoadingAddress(true)
         const fetchedAddresses = await addressService.getAddresses()
@@ -54,10 +63,21 @@ export function ShoppingCartPage() {
     }
 
     fetchAddresses()
-  }, [])
+  }, [isAuthenticated])
+
+  // Handle checkout navigation
+  const handleCheckout = () => {
+    if (!isAuthenticated) {
+      toast.info('Vui lòng đăng nhập để tiếp tục thanh toán')
+      navigate('/login', { state: { returnUrl: '/cart/checkout' } })
+      return
+    }
+    navigate('/cart/checkout')
+  }
+
 
   // Calculate if all items are selected
-  const allSelected = cart?.items && cart.items.length > 0 && cart.items.every(item => selectedItems.has(item.productId))
+  const allSelected = cart?.items && cart.items.length > 0 && cart.items.every(item => selectedItems.has(createSelectionKey(item.productId, item.unit)))
 
   // Calculate totals
   const subtotal = getSelectedItemsTotal()
@@ -71,8 +91,8 @@ export function ShoppingCartPage() {
   }
 
   // Handle select item
-  const handleSelectItem = (productId: string) => {
-    toggleItemSelection(productId)
+  const handleSelectItem = (productId: string, unit?: string) => {
+    toggleItemSelection(productId, unit)
   }
 
   // Handle quantity change
@@ -176,12 +196,12 @@ export function ShoppingCartPage() {
           {/* Cart Items */}
           <div className='space-y-4'>
             {cart?.items.map((item) => (
-              <Card key={item.productId} className='bg-white border-blue-100 hover:shadow-md transition-shadow'>
+              <Card key={createSelectionKey(item.productId, item.unit)} className='bg-white border-blue-100 hover:shadow-md transition-shadow'>
                 <CardContent className='p-6'>
                   <div className='flex items-start gap-4'>
                     <Checkbox
-                      checked={selectedItems.has(item.productId)}
-                      onCheckedChange={() => handleSelectItem(item.productId)}
+                      checked={selectedItems.has(createSelectionKey(item.productId, item.unit))}
+                      onCheckedChange={() => handleSelectItem(item.productId, item.unit)}
                     />
 
                     <div className='w-20 h-20 flex-shrink-0'>
@@ -405,14 +425,13 @@ export function ShoppingCartPage() {
                   <span className='font-bold text-blue-600'>{new Intl.NumberFormat('vi-VN').format(total)}đ</span>
                 </div>
 
-                <Link to='/cart/checkout'>
-                  <Button
-                    className='w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white h-12 mt-4 mb-2'
-                    disabled={getSelectedItemsCount() === 0}
-                  >
-                    Thanh toán ({getSelectedItemsCount()})
-                  </Button>
-                </Link>
+                <Button
+                  className='w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white h-12 mt-4 mb-2'
+                  disabled={getSelectedItemsCount() === 0}
+                  onClick={handleCheckout}
+                >
+                  Thanh toán ({getSelectedItemsCount()})
+                </Button>
 
                 <div className='text-center'>
                   <Link to='/products'>
