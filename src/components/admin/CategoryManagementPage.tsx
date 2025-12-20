@@ -484,7 +484,9 @@ export function CategoryManagementPage() {
                         <code className='text-sm bg-gray-100 px-2 py-1 rounded'>{category.slug}</code>
                       </TableCell>
                       <TableCell>
-                        <Badge variant='outline'>{category.productCount || 0} SP</Badge>
+                        <Badge className='bg-blue-100 text-blue-700 hover:bg-blue-100'>
+                          {category.productCount || 0} SP
+                        </Badge>
                       </TableCell>
                       <TableCell>
                         <span className='text-gray-600'>{category.sortOrder}</span>
