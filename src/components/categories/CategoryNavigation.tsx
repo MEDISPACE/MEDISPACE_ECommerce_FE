@@ -61,7 +61,7 @@ export function CategoryQuickActions({
       )}
 
       {showHealthGuide && (
-        <Link to='/health-corner'>
+        <Link to='/health'>
           <Button variant='outline' size='sm' className='border-blue-200 text-blue-600 hover:!bg-[#eff6ff] hover:border-blue-400 transition-all duration-300'>
             Hướng dẫn sử dụng
           </Button>

@@ -99,6 +99,11 @@ const navigationItems: NavItem[] = [
     icon: BarChart3,
   },
   {
+    label: 'Quản lý bài viết',
+    href: '/pharmacist/articles',
+    icon: FileText,
+  },
+  {
     label: 'Cài đặt',
     href: '/pharmacist/settings',
     icon: Settings,
