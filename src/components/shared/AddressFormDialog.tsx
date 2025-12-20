@@ -10,7 +10,7 @@ import { Checkbox } from '../ui/checkbox'
 import { toast } from 'sonner'
 import { addressService } from '../../services/addressService'
 import type { Address } from '../../types/user'
-import { getProvinces, getDistricts, getWards } from '../../data/vietnam-full'
+import { ghnService } from '../../services/ghnService'
 
 interface AddressFormDialogProps {
   open: boolean
@@ -48,31 +48,45 @@ export function AddressFormDialog({
     province: '',
     district: '',
     ward: '',
+    provinceId: undefined as number | undefined,
+    districtId: undefined as number | undefined,
+    wardCode: undefined as string | undefined,
     address: '',
     type: defaultType as 'home' | 'office' | 'other',
     isDefault: false,
   })
 
-  const [availableDistricts, setAvailableDistricts] = useState<{ name: string, code: string }[]>([])
-  const [availableWards, setAvailableWards] = useState<{ name: string, code: string }[]>([])
+  interface GHNProvince { ProvinceID: number; ProvinceName: string }
+  interface GHNDistrict { DistrictID: number; DistrictName: string }
+  interface GHNWard { WardCode: string; WardName: string }
 
-  // Reset form when dialog opens/closes or editing address changes
+  const [provinces, setProvinces] = useState<GHNProvince[]>([])
+  const [districts, setDistricts] = useState<GHNDistrict[]>([])
+  const [wards, setWards] = useState<GHNWard[]>([])
+
+  // Load provinces on mount
+  useEffect(() => {
+    ghnService.getProvinces()
+      .then(data => setProvinces(data || []))
+      .catch(err => console.error('Failed to load provinces', err))
+  }, [])
+
+  // Update logic when editing address
   useEffect(() => {
     if (open) {
       if (editingAddress) {
-        // Find province code from name
-        const provinceObj = getProvinces().find(p => p.name === editingAddress.province)
-        const provinceCode = provinceObj?.code || editingAddress.province
-
         setFormData({
           firstName: editingAddress.name.split(' ')[0] || '',
           lastName: editingAddress.name.split(' ').slice(1).join(' ') || '',
           fullName: editingAddress.name,
           phone: editingAddress.phone,
-          email: '', // Address type doesn't have email field
-          province: provinceCode,
-          district: editingAddress.district || '',
+          email: '',
+          province: editingAddress.province,
+          district: editingAddress.district,
           ward: editingAddress.ward,
+          provinceId: editingAddress.provinceId,
+          districtId: editingAddress.districtId,
+          wardCode: editingAddress.wardCode,
           address: editingAddress.address,
           type: editingAddress.type,
           isDefault: editingAddress.isDefault,
@@ -87,6 +101,9 @@ export function AddressFormDialog({
           province: '',
           district: '',
           ward: '',
+          provinceId: undefined,
+          districtId: undefined,
+          wardCode: undefined,
           address: '',
           type: defaultType,
           isDefault: false,
@@ -95,31 +112,27 @@ export function AddressFormDialog({
     }
   }, [open, editingAddress, defaultType])
 
-  // Update available districts when province changes
+  // Fetch districts when provinceId changes
   useEffect(() => {
-    if (formData.province) {
-      const districts = getDistricts(formData.province)
-      setAvailableDistricts(districts)
-      // Reset district and ward when province changes
-      setFormData(prev => ({ ...prev, district: '', ward: '' }))
-      setAvailableWards([])
+    if (formData.provinceId) {
+      ghnService.getDistricts(formData.provinceId)
+        .then(data => setDistricts(data || []))
+        .catch(console.error)
     } else {
-      setAvailableDistricts([])
-      setAvailableWards([])
+      setDistricts([])
     }
-  }, [formData.province])
+  }, [formData.provinceId])
 
-  // Update available wards when district changes
+  // Fetch wards when districtId changes
   useEffect(() => {
-    if (formData.province && formData.district) {
-      const wards = getWards(formData.province, formData.district)
-      setAvailableWards(wards)
-      // Reset ward when district changes
-      setFormData(prev => ({ ...prev, ward: '' }))
+    if (formData.districtId) {
+      ghnService.getWards(formData.districtId)
+        .then(data => setWards(data || []))
+        .catch(console.error)
     } else {
-      setAvailableWards([])
+      setWards([])
     }
-  }, [formData.province, formData.district])
+  }, [formData.districtId])
 
   const handleSubmitAddress = async () => {
     const requiredFields = showEmail
@@ -136,9 +149,12 @@ export function AddressFormDialog({
     const addressData = {
       name: showNameFields ? `${formData.firstName} ${formData.lastName}` : formData.fullName,
       phone: formData.phone,
-      province: getProvinces().find(p => p.code === formData.province)?.name || formData.province,
-      district: availableDistricts.find(d => d.code === formData.district)?.name || formData.district,
-      ward: availableWards.find(w => w.code === formData.ward)?.name || formData.ward,
+      province: formData.province,
+      district: formData.district,
+      ward: formData.ward,
+      provinceId: formData.provinceId,
+      districtId: formData.districtId,
+      wardCode: formData.wardCode,
       address: formData.address,
       type: formData.type,
       isDefault: formData.isDefault,
@@ -234,52 +250,68 @@ export function AddressFormDialog({
           <div className="grid grid-cols-3 gap-3">
             <div className="space-y-2 col-span-3">
               <Label htmlFor="province">Tỉnh/Thành phố</Label>
-              <Select value={formData.province} onValueChange={(value) => setFormData(prev => ({ ...prev, province: value }))}>
+              <Select
+                value={formData.provinceId ? formData.provinceId.toString() : ''}
+                onValueChange={(value) => {
+                  const id = Number(value)
+                  const name = provinces.find(p => p.ProvinceID === id)?.ProvinceName || ''
+                  setFormData(prev => ({ ...prev, provinceId: id, province: name, districtId: undefined, district: '', wardCode: undefined, ward: '' }))
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Chọn tỉnh/thành" />
                 </SelectTrigger>
                 <SelectContent className="max-h-60 overflow-y-auto">
-                  {getProvinces().map((province) => (
-                    <SelectItem key={province.code} value={province.code}>
-                      {province.name}
+                  {provinces.map((province) => (
+                    <SelectItem key={province.ProvinceID} value={province.ProvinceID.toString()}>
+                      {province.ProvinceName}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+
             <div className="space-y-2 col-span-1.5">
               <Label htmlFor="district">Quận/Huyện</Label>
               <Select
-                value={formData.district}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, district: value }))}
-                disabled={!formData.province}
+                value={formData.districtId ? formData.districtId.toString() : ''}
+                onValueChange={(value) => {
+                  const id = Number(value)
+                  const name = districts.find(d => d.DistrictID === id)?.DistrictName || ''
+                  setFormData(prev => ({ ...prev, districtId: id, district: name, wardCode: undefined, ward: '' }))
+                }}
+                disabled={!formData.provinceId}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Chọn quận/huyện" />
                 </SelectTrigger>
                 <SelectContent className="max-h-60 overflow-y-auto">
-                  {availableDistricts.map((district) => (
-                    <SelectItem key={district.code} value={district.code}>
-                      {district.name}
+                  {districts.map((district) => (
+                    <SelectItem key={district.DistrictID} value={district.DistrictID.toString()}>
+                      {district.DistrictName}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+
             <div className="space-y-2 col-span-1">
               <Label htmlFor="ward">Phường/Xã</Label>
               <Select
-                value={formData.ward}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, ward: value }))}
-                disabled={!formData.district}
+                value={formData.wardCode || ''}
+                onValueChange={(value) => {
+                  const name = wards.find(w => w.WardCode === value)?.WardName || ''
+                  setFormData(prev => ({ ...prev, wardCode: value, ward: name }))
+                }}
+                disabled={!formData.districtId}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Chọn phường/xã" />
                 </SelectTrigger>
                 <SelectContent className="max-h-60 overflow-y-auto">
-                  {availableWards.map((ward) => (
-                    <SelectItem key={ward.code} value={ward.code}>
-                      {ward.name}
+                  {wards.map((ward) => (
+                    <SelectItem key={ward.WardCode} value={ward.WardCode}>
+                      {ward.WardName}
                     </SelectItem>
                   ))}
                 </SelectContent>
