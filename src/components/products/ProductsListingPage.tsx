@@ -34,13 +34,19 @@ export function ProductsListingPage() {
   const { addToCart } = useCart()
   const { toggleWishlist, isInWishlist } = useWishlist()
   const [products, setProducts] = useState<Product[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const fetchProducts = async () => {
+      setIsLoading(true)
       try {
-        const productsData = await productService.getProducts()
+        // Load all products (increase limit to get products from all categories)
+        const productsData = await productService.getProducts({ limit: 5000 })
         setProducts(productsData)
       } catch (error) {
+        console.error('Error fetching products:', error)
+      } finally {
+        setIsLoading(false)
       }
     }
 
@@ -80,7 +86,39 @@ export function ProductsListingPage() {
   // Breadcrumb generation
   const breadcrumbItems = useBreadcrumbGeneration({ searchQuery })
 
-  // Empty state
+  // Loading state
+  if (isLoading) {
+    return (
+      <EnhancedPageTransition variant='slide' direction='up'>
+        <UniversalBreadcrumb items={breadcrumbItems} />
+        <div className='max-w-7xl mx-auto px-4 py-6'>
+          <div className='flex flex-col xl:flex-row gap-6'>
+            <ScrollReveal direction='left' delay={0.2}>
+              <div className='w-full xl:w-80 lg:w-72 xl:sticky xl:top-4 xl:self-start shrink-0'>
+                <FilterSidebar filters={filters} onFiltersChange={setFilters} resultCount={0} />
+              </div>
+            </ScrollReveal>
+
+            <ScrollReveal direction='right' delay={0.3} className='flex-1 w-full'>
+              <div className='w-full'>
+                <Card className='border-blue-100 bg-white w-full'>
+                  <CardContent className='p-12 text-center flex flex-col items-center justify-center min-h-[400px]'>
+                    <div className='flex flex-col items-center gap-4'>
+                      <div className='w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin'></div>
+                      <h3 className='text-xl font-medium text-gray-900'>Đang tải sản phẩm...</h3>
+                      <p className='text-gray-600'>Vui lòng đợi trong giây lát</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </ScrollReveal>
+          </div>
+        </div>
+      </EnhancedPageTransition>
+    )
+  }
+
+  // Empty state (after loading is complete)
   if (filteredProducts.length === 0) {
     return (
       <EnhancedPageTransition variant='slide' direction='up'>

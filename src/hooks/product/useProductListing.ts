@@ -58,6 +58,30 @@ export function useProductListing({
   }))
 
 
+  // Helper function to check if product belongs to selected category (including children)
+  const matchesCategoryFilter = (product: Product, selectedCategories: string[]): boolean => {
+    if (!selectedCategories || selectedCategories.length === 0) return true
+    if (!product.category) return false
+
+    const productCategorySlug = product.category.slug || ''
+    const productCategoryPath = product.category.path || ''
+
+    // Check if the product's category matches any of the selected categories
+    // This includes: exact match OR the category path contains the selected slug
+    return selectedCategories.some((selectedSlug) => {
+      // Exact match with product's category slug
+      if (productCategorySlug === selectedSlug) return true
+
+      // Check if product's category path contains the selected category
+      // e.g., path "/thuoc/thuoc-tieu-hoa-gan-mat/thuoc-tieu-hoa" contains "thuoc"
+      if (productCategoryPath.includes(`/${selectedSlug}/`) || productCategoryPath.includes(`/${selectedSlug}`)) {
+        return true
+      }
+
+      return false
+    })
+  }
+
   // Filter products
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
@@ -71,13 +95,13 @@ export function useProductListing({
         return false
       }
 
-      // Category filter
-      if ((filters.categories?.length || 0) > 0 && !(filters.categories || []).includes(product.category?.slug || '')) {
+      // Category filter - now supports parent-child hierarchy
+      if (!matchesCategoryFilter(product, filters.categories || [])) {
         return false
       }
 
       // Brand filter
-      if ((filters.brands?.length || 0) > 0 && !(filters.brands || []).includes(product.brand?.name || '')) {
+      if ((filters.brands?.length || 0) > 0 && !(filters.brands || []).includes(product.brand?._id || '')) {
         return false
       }
 
