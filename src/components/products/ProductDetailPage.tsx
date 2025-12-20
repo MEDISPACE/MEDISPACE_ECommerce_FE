@@ -54,7 +54,9 @@ import {
   isProductPrescription,
   getBrandName,
   getProductDescription,
+  getDefaultPriceVariant,
 } from '../../utils/productHelpers'
+import type { PriceVariant } from '../../types/product'
 import productService from '../../services/productService'
 
 export function ProductDetailPage() {
@@ -68,6 +70,7 @@ export function ProductDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState('description')
+  const [selectedVariantIndex, setSelectedVariantIndex] = useState(0)
 
   const thumbnailScrollRef = useRef<HTMLDivElement>(null)
 
@@ -109,6 +112,17 @@ export function ProductDetailPage() {
 
     fetchProduct()
   }, [slug])
+
+  // Initialize selectedVariantIndex when product loads
+  useEffect(() => {
+    if (product?.priceVariants && product.priceVariants.length > 0) {
+      const defaultIndex = product.priceVariants.findIndex(v => v.isDefault)
+      setSelectedVariantIndex(defaultIndex >= 0 ? defaultIndex : 0)
+    }
+  }, [product])
+
+  // Get currently selected price variant
+  const selectedVariant: PriceVariant | null = product?.priceVariants?.[selectedVariantIndex] || null
 
   // Fetch all categories for breadcrumb name lookup
   const [allCategoriesFlat, setAllCategoriesFlat] = useState<Category[]>([])
@@ -201,12 +215,12 @@ export function ProductDetailPage() {
   if (error || !product) {
     return (
       <PageTransition>
-        <div className='max-w-7xl mx-auto px-4 py-6'>
+        <div className='max-w-7xl mx-auto px-4 py-6 border-b border-gray-200'>
           <UniversalBreadcrumb items={breadcrumbItems} />
           <div className='text-center py-12'>
             <h2 className='text-2xl font-bold text-gray-900 mb-2'>Sản phẩm không tồn tại</h2>
             <p className='text-gray-600 mb-6'>{error || 'Sản phẩm bạn đang tìm kiếm không có trong hệ thống.'}</p>
-            <Button onClick={() => window.history.back()}>Quay lại</Button>
+            <Button className='!border-blue-200 !text-blue-600 hover:!bg-blue-50 hover:!text-blue-700' onClick={() => window.history.back()}>Quay lại</Button>
           </div>
         </div>
       </PageTransition>
@@ -219,7 +233,7 @@ export function ProductDetailPage() {
       showPrescriptionWarning(product.name)
       return
     }
-    addToCart(product, quantity)
+    addToCart(product, quantity, selectedVariant?.unit, selectedVariant?.price)
   }
 
   const handleBuyNow = () => {
@@ -228,7 +242,7 @@ export function ProductDetailPage() {
       showPrescriptionWarning(product.name)
       return
     }
-    buyNow(product, quantity)
+    buyNow(product, quantity, selectedVariant?.unit, selectedVariant?.price)
   }
 
   const handleWishlistToggle = () => {
@@ -480,15 +494,43 @@ export function ProductDetailPage() {
             </div>
 
             {/* Price */}
-            <div>
+            <div className='space-y-3'>
               {isProductPrescription(product) ? (
-                <p className='text-lg text-blue-600 font-semibold'>Sản phẩm cần tư vấn từ dược sĩ</p>
+                <p className='text-lg text-blue-800 font-semibold'>Sản phẩm cần tư vấn từ dược sĩ</p>
               ) : (
-                <PriceDisplay
-                  originalPrice={product.originalPrice}
-                  salePrice={product.salePrice ?? product.price ?? 0}
-                  size='lg'
-                />
+                <>
+                  {/* Unit Selector - Show if multiple variants exist */}
+                  {product.priceVariants && product.priceVariants.length > 1 && (
+                    <div className='space-y-2'>
+                      <span className='text-sm font-medium text-gray-700'>Chọn đơn vị:</span>
+                      <div className='flex flex-wrap gap-2'>
+                        {product.priceVariants.map((variant, index) => (
+                          <button
+                            key={variant.unit}
+                            onClick={() => setSelectedVariantIndex(index)}
+                            className={`px-4 py-2 rounded-lg border-2 text-sm font-medium transition-all ${selectedVariantIndex === index
+                              ? 'border-blue-500 bg-blue-50 text-blue-700'
+                              : 'border-gray-200 bg-white text-gray-700 hover:border-blue-200 hover:bg-blue-50/50'
+                              }`}
+                          >
+                            <span>{variant.unit}</span>
+                            <span className='ml-2 text-xs opacity-75'>
+                              {variant.price.toLocaleString('vi-VN')}đ
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Price Display */}
+                  <PriceDisplay
+                    originalPrice={selectedVariant?.originalPrice || product.originalPrice}
+                    salePrice={selectedVariant?.price || getProductSalePrice(product) || 0}
+                    size='lg'
+                    unit={selectedVariant?.unit}
+                  />
+                </>
               )}
             </div>
 
@@ -496,7 +538,8 @@ export function ProductDetailPage() {
             <div className='flex items-center gap-2'>
               <div className={`w-3 h-3 rounded-full ${isProductInStock(product) ? 'bg-green-500' : 'bg-red-500'}`} />
               <span className={`font-medium ${isProductInStock(product) ? 'text-green-600' : 'text-red-600'}`}>
-                {isProductInStock(product) ? `Còn hàng (${product.stockQuantity} sản phẩm)` : 'Hết hàng'}
+                {/* {isProductInStock(product) ? `Còn hàng (${product.stockQuantity} sản phẩm)` : 'Hết hàng'} */}
+                {isProductInStock(product) ? `Còn hàng` : 'Hết hàng'}
               </span>
             </div>
 

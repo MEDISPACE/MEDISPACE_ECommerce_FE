@@ -9,6 +9,13 @@ export interface CartItem {
   totalPrice: number
   prescriptionRequired: boolean
   image?: string
+  unit?: string // Selected unit from priceVariants (e.g., "Hộp", "Viên")
+  priceVariants?: Array<{
+    unit: string
+    price: number
+    originalPrice?: number
+    isDefault?: boolean
+  }>
 }
 
 export interface Cart {
@@ -44,6 +51,8 @@ export interface AppliedCoupon {
 export interface AddToCartRequest {
   productId: string
   quantity: number
+  unit?: string // Selected unit from priceVariants
+  price?: number // Unit price for the selected variant
 }
 
 export interface UpdateCartItemRequest {

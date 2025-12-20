@@ -31,6 +31,13 @@ import { useWishlist } from '../../hooks/product/useWishlist'
 import { useCategories } from '../../hooks/product'
 import { useCart } from '../../contexts/CartContext'
 import type { Product } from '../../types/product'
+import {
+  getProductSalePrice,
+  getProductOriginalPrice,
+  getProductUnit,
+  getDiscountPercentage,
+  isProductOnSale,
+} from '../../utils/productHelpers'
 
 // Now using proper Product type from service
 
@@ -85,17 +92,18 @@ export function HomePage() {
     slug: product.slug,
     brand: product.brand?.name || 'Jpanwell',
     image: product.featuredImage || product.image || '/placeholder-product.png',
-    originalPrice: product.originalPrice || product.price,
-    salePrice: product.salePrice || product.price || 0,
+    originalPrice: getProductOriginalPrice(product),
+    salePrice: getProductSalePrice(product) || 0,
     rating: product.rating || 4.5,
     reviewCount: product.reviewCount || 0,
     inStock: product.inStock !== false && (product.stockQuantity || 0) > 0,
     isPrescription: product.requiresPrescription || product.isPrescription || false,
-    isOnSale: product.isOnSale || product.onSale || false,
-    discountPercentage: product.discountPercentage || 0,
-    unit: product.unit || 'Hộp',
+    isOnSale: isProductOnSale(product),
+    discountPercentage: getDiscountPercentage(product),
+    unit: getProductUnit(product),
     packaging: product.packaging || '',
     needsConsultation: product.needsConsultation || product.requiresPrescription || false,
+    priceVariants: product.priceVariants,
   }))
 
   const scrollFeatured = (direction: 'left' | 'right') => {
@@ -539,8 +547,10 @@ export function HomePage() {
                                     <ProductCard
                                       product={product}
                                       variant='grid'
-                                      onAddToCart={() => {
-                                        addToCart(originalProduct, 1)
+                                      onAddToCart={(selectedUnit) => {
+                                        const variant = originalProduct?.priceVariants?.find(v => v.unit === selectedUnit)
+                                        const price = variant?.price || originalProduct?.priceVariants?.[0]?.price
+                                        addToCart(originalProduct, 1, selectedUnit, price)
                                       }}
                                       onToggleWishlist={() => {
                                         toggleWishlist(product.id)

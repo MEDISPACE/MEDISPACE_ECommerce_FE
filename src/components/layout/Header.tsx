@@ -105,7 +105,7 @@ export function Header() {
           <div className='flex items-center gap-4'>
             {/* Cart */}
             <Link to='/cart' className='relative'>
-              <Button variant='ghost' size='sm' className='flex items-center gap-2'>
+              <Button variant='ghost' size='sm' className='flex items-center gap-2 hover:!bg-blue-50'>
                 <ShoppingCart className='w-5 h-5' />
                 <span className='hidden md:inline'>Giỏ hàng</span>
                 <Badge className='absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center'>
@@ -151,7 +151,7 @@ export function Header() {
 
                   {/* Role-specific dashboard links */}
                   {user?.role === UserRole.Admin && (
-                    <DropdownMenuItem asChild className='cursor-pointer hover:bg-blue-50'>
+                    <DropdownMenuItem asChild className='cursor-pointer hover:!bg-blue-50'>
                       <Link to='/admin/dashboard' className='flex items-center gap-2'>
                         <Settings className='h-4 w-4' />
                         <span>Admin Dashboard</span>
@@ -160,7 +160,7 @@ export function Header() {
                   )}
 
                   {user?.role === UserRole.Pharmacist && (
-                    <DropdownMenuItem asChild className='cursor-pointer hover:bg-blue-50'>
+                    <DropdownMenuItem asChild className='cursor-pointer hover:!bg-blue-50'>
                       <Link to='/pharmacist/dashboard' className='flex items-center gap-2'>
                         <Settings className='h-4 w-4' />
                         <span>Dược sĩ Dashboard</span>
@@ -168,35 +168,35 @@ export function Header() {
                     </DropdownMenuItem>
                   )}
 
-                  <DropdownMenuItem asChild className='cursor-pointer hover:bg-blue-50'>
+                  <DropdownMenuItem asChild className='cursor-pointer hover:!bg-blue-50'>
                     <Link to='/account' className='flex items-center gap-2'>
                       <User className='h-4 w-4' />
                       <span>Thông tin tài khoản</span>
                     </Link>
                   </DropdownMenuItem>
 
-                  <DropdownMenuItem asChild className='cursor-pointer hover:bg-blue-50'>
+                  <DropdownMenuItem asChild className='cursor-pointer hover:!bg-blue-50'>
                     <Link to='/account/orders' className='flex items-center gap-2'>
                       <Package className='h-4 w-4' />
                       <span>Đơn hàng của tôi</span>
                     </Link>
                   </DropdownMenuItem>
 
-                  <DropdownMenuItem asChild className='cursor-pointer hover:bg-blue-50'>
+                  <DropdownMenuItem asChild className='cursor-pointer hover:!bg-blue-50'>
                     <Link to='/account/prescriptions' className='flex items-center gap-2'>
                       <FileText className='h-4 w-4' />
                       <span>Đơn thuốc</span>
                     </Link>
                   </DropdownMenuItem>
 
-                  <DropdownMenuItem asChild className='cursor-pointer hover:bg-blue-50'>
+                  <DropdownMenuItem asChild className='cursor-pointer hover:!bg-blue-50'>
                     <Link to='/account/wishlist' className='flex items-center gap-2'>
                       <Heart className='h-4 w-4' />
                       <span>Yêu thích</span>
                     </Link>
                   </DropdownMenuItem>
 
-                  <DropdownMenuItem asChild className='cursor-pointer hover:bg-blue-50'>
+                  <DropdownMenuItem asChild className='cursor-pointer hover:!bg-blue-50'>
                     <Link to='/account/notifications' className='flex items-center gap-2'>
                       <Settings className='h-4 w-4' />
                       <span>Cài đặt</span>
@@ -206,7 +206,7 @@ export function Header() {
                   <DropdownMenuSeparator className='bg-blue-100' />
 
                   <DropdownMenuItem
-                    className='cursor-pointer text-red-600 hover:bg-red-50 hover:text-red-700'
+                    className='cursor-pointer text-red-600 hover:!bg-red-50 hover:!text-red-700'
                     onClick={() => logout()}
                   >
                     <LogOut className='h-4 w-4 mr-2' />
@@ -216,7 +216,7 @@ export function Header() {
               </DropdownMenu>
             ) : (
               <Link to='/login' className='flex items-center gap-2'>
-                <Button variant='ghost' size='sm' className='flex items-center gap-2 hover:bg-blue-50'>
+                <Button variant='ghost' size='sm' className='flex items-center gap-2 hover:!bg-blue-50'>
                   <User className='w-5 h-5' />
                   <span className='hidden md:inline'>Đăng nhập</span>
                 </Button>
@@ -305,7 +305,7 @@ function HeaderBreadcrumb() {
   if (items.length === 0) return null
 
   return (
-    <div className='bg-blue-50/50 border-t border-gray-100'>
+    <div className='bg-blue-40 border-t border-gray-100'>
       <div className='max-w-7xl mx-auto px-4 py-3'>
         <nav className='flex items-center text-sm text-gray-600' aria-label='Breadcrumb'>
           <Link to='/' className='flex items-center gap-1 text-gray-500 hover:text-blue-600 transition-colors'>

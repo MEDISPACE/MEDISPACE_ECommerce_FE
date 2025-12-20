@@ -26,6 +26,11 @@ import {
   isProductInStock,
   isProductPrescription,
   getBrandName,
+  getProductSalePrice,
+  getProductOriginalPrice,
+  getProductUnit,
+  getDiscountPercentage,
+  isProductOnSale,
 } from '../../utils/productHelpers'
 import type { Category, Product } from '../../types/product'
 
@@ -118,9 +123,9 @@ export function SubCategoryPage() {
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     switch (sortBy) {
       case 'price_asc':
-        return (a.salePrice ?? a.originalPrice ?? 0) - (b.salePrice ?? b.originalPrice ?? 0)
+        return (getProductSalePrice(a) || 0) - (getProductSalePrice(b) || 0)
       case 'price_desc':
-        return (b.salePrice ?? b.originalPrice ?? 0) - (a.salePrice ?? a.originalPrice ?? 0)
+        return (getProductSalePrice(b) || 0) - (getProductSalePrice(a) || 0)
       case 'rating':
         return getProductRating(b) - getProductRating(a)
       case 'newest':
@@ -419,19 +424,23 @@ export function SubCategoryPage() {
                           slug: product.slug,
                           brand: getBrandName(product),
                           image: getProductImage(product),
-                          originalPrice: product.originalPrice,
-                          salePrice: product.salePrice ?? product.originalPrice ?? 0,
+                          originalPrice: getProductOriginalPrice(product),
+                          salePrice: getProductSalePrice(product) || 0,
                           rating: getProductRating(product),
                           reviewCount: getProductReviewCount(product),
                           inStock: isProductInStock(product),
                           isPrescription: isProductPrescription(product),
-                          isOnSale: product.isOnSale,
-                          discountPercentage: product.discountPercentage,
+                          isOnSale: isProductOnSale(product),
+                          discountPercentage: getDiscountPercentage(product),
+                          unit: getProductUnit(product),
                           needsConsultation: product.needsConsultation,
+                          priceVariants: product.priceVariants,
                         }}
                         variant={viewMode}
-                        onAddToCart={() => {
-                          addToCart(product, 1)
+                        onAddToCart={(selectedUnit) => {
+                          const variant = product.priceVariants?.find(v => v.unit === selectedUnit)
+                          const price = variant?.price || product.priceVariants?.[0]?.price
+                          addToCart(product, 1, selectedUnit, price)
                         }}
                         onToggleWishlist={() => {
                           toggleWishlist(getProductId(product))
@@ -451,7 +460,7 @@ export function SubCategoryPage() {
                   </div>
                 </>
               ) : (
-                <Card className='text-center py-12'>
+                <Card className='text-center py-12 border-blue-200 bg-white'>
                   <CardContent>
                     <div className='text-gray-500 mb-4'>
                       <Search className='w-16 h-16 mx-auto mb-4 text-gray-300' />

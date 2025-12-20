@@ -14,6 +14,15 @@ export interface ProductDetails {
   updatedAt?: string
 }
 
+// Price Variant for multi-unit pricing (Viên, Vỉ, Hộp, Tuýp...)
+export interface PriceVariant {
+  unit: string           // Đơn vị: "Viên", "Vỉ", "Hộp"...
+  price: number          // Giá bán
+  originalPrice?: number // Giá niêm yết (trước giảm)
+  costPrice?: number     // Giá vốn (chỉ admin/pharmacist thấy)
+  isDefault: boolean     // Đơn vị mặc định
+}
+
 // ProductMedia interface for product images
 export interface ProductMediaImage {
   url: string
@@ -42,6 +51,9 @@ export interface Product {
   shortDescription: string
   categoryId: string // ObjectId as string
   brandId?: string // ObjectId as string
+
+  // Pricing - Multi-unit pricing (REQUIRED)
+  priceVariants: PriceVariant[]
 
   // Inventory Summary
   stockQuantity: number

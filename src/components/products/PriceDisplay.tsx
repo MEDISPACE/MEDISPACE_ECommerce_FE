@@ -7,6 +7,7 @@ interface PriceDisplayProps {
   size?: 'sm' | 'md' | 'lg'
   showDiscount?: boolean
   className?: string
+  unit?: string // Optional unit display (e.g., "Viên", "Hộp")
 }
 
 export function PriceDisplay({
@@ -16,6 +17,7 @@ export function PriceDisplay({
   size = 'md',
   showDiscount = true,
   className = '',
+  unit,
 }: PriceDisplayProps) {
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN').format(price)
@@ -46,14 +48,15 @@ export function PriceDisplay({
     <div className={`flex items-center gap-2 ${className}`}>
       <div className='flex flex-col'>
         {/* Sale Price */}
-        <div className={`${sizeClasses[size].sale} font-bold text-blue-600`}>
+        <div className={`${sizeClasses[size].sale} font-bold text-blue-700`}>
           {formatPrice(salePrice)}
           {currency}
+          {unit && <span className='text-gray-500 font-normal text-sm ml-1'>/ {unit}</span>}
         </div>
 
         {/* Original Price */}
         {hasDiscount && (
-          <div className={`${sizeClasses[size].original} text-gray-500 line-through`}>
+          <div className={`${sizeClasses[size].original} !text-gray-500 line-through`}>
             {formatPrice(originalPrice!)}
             {currency}
           </div>
@@ -62,7 +65,7 @@ export function PriceDisplay({
 
       {/* Discount Badge */}
       {hasDiscount && showDiscount && (
-        <Badge variant='destructive' className={`${sizeClasses[size].discount} bg-red-500 text-white`}>
+        <Badge variant='destructive' className={`${sizeClasses[size].discount} !bg-red-500 text-white`}>
           -{discount}%
         </Badge>
       )}

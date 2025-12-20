@@ -105,8 +105,9 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 // Cart context interface
 interface CartContextType {
   state: CartState
-  addToCart: (product: Product, quantity?: number) => Promise<void>
+  addToCart: (product: Product, quantity?: number, unit?: string, price?: number) => Promise<void>
   updateQuantity: (productId: string, quantity: number) => Promise<void>
+  updateUnit: (productId: string, unit: string) => Promise<void>
   removeFromCart: (productId: string) => Promise<void>
   clearCart: () => Promise<void>
   toggleItemSelection: (productId: string) => void
@@ -117,7 +118,7 @@ interface CartContextType {
   getSelectedItemsCount: () => number
   getSelectedItemsTotal: () => number
   moveToWishlist: (productId: string, productName: string) => void
-  buyNow: (product: Product, quantity?: number) => void
+  buyNow: (product: Product, quantity?: number, unit?: string, price?: number) => void
   showPrescriptionWarning: (productName: string) => void
   showOutOfStockWarning: (productName: string) => void
   showOrderCreatedSuccess: (orderId: string) => void
@@ -253,12 +254,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [state.wishlist])
 
   // Cart actions
-  const addToCart = async (product: Product, quantity: number = 1) => {
+  const addToCart = async (product: Product, quantity: number = 1, unit?: string, price?: number) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true })
       const request: AddToCartRequest = {
         productId: product._id,
         quantity,
+        unit,
+        price,
       }
       const updatedCart = await cartService.addToCart(request)
       dispatch({ type: 'ADD_TO_CART_SUCCESS', payload: updatedCart })
@@ -297,6 +300,25 @@ export function CartProvider({ children }: { children: ReactNode }) {
     } catch (error) {
 
       toast.error('Không thể cập nhật số lượng', {
+        description: 'Vui lòng thử lại sau.',
+        duration: 3000,
+      })
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false })
+    }
+  }
+
+  const updateUnit = async (productId: string, unit: string) => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true })
+      const updatedCart = await cartService.updateCartItemUnit(productId, unit)
+      dispatch({ type: 'UPDATE_QUANTITY_SUCCESS', payload: updatedCart })
+      toast.success('Đã cập nhật đơn vị', {
+        description: `Đã đổi sang ${unit}`,
+        duration: 2000,
+      })
+    } catch (error) {
+      toast.error('Không thể cập nhật đơn vị', {
         description: 'Vui lòng thử lại sau.',
         duration: 3000,
       })
@@ -419,9 +441,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     })
   }
 
-  const buyNow = (product: Product, quantity: number = 1) => {
+  const buyNow = (product: Product, quantity: number = 1, unit?: string, price?: number) => {
     // Add to cart first
-    addToCart(product, quantity)
+    addToCart(product, quantity, unit, price)
 
     // Small delay to show toast, then redirect
     setTimeout(() => {
@@ -475,6 +497,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     state,
     addToCart,
     updateQuantity,
+    updateUnit,
     removeFromCart,
     clearCart,
     toggleItemSelection,
