@@ -150,10 +150,18 @@ export function OrderDetailsDrawer({ isOpen, onClose, order }: OrderDetailsDrawe
                 >
                   <div className='flex-1 space-y-1'>
                     <p className='font-semibold text-gray-900'>{item.name}</p>
-                    <p className='text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded inline-block'>SKU: {item.sku}</p>
+                    <div className='flex items-center gap-2 flex-wrap'>
+                      <span className='text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded'>SKU: {item.sku}</span>
+                      {(item as any).unit && (
+                        <span className='text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded'>
+                          {(item as any).unit}
+                        </span>
+                      )}
+                    </div>
                     <p className='text-sm text-gray-600'>
-                      <span className='text-blue-600 font-medium'>{formatCurrency(item.unitPrice)}</span> x{' '}
-                      {item.quantity}
+                      <span className='text-blue-600 font-medium'>{formatCurrency(item.unitPrice)}</span>
+                      {(item as any).unit && <span className='text-gray-400'>/{(item as any).unit}</span>}
+                      {' '}x {item.quantity}
                     </p>
                   </div>
                   <div className='text-right flex flex-col justify-center'>
