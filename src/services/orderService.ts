@@ -8,6 +8,7 @@ interface BackendOrderItem {
   productId: string
   name: string
   sku: string
+  unit: string           // Unit selected by user: "Viên", "Hộp", "Vỉ"...
   quantity: number
   unitPrice: number
   totalPrice: number
@@ -125,8 +126,11 @@ class OrderService {
           image: item.image,
           images: item.image ? [item.image] : [],
           price: item.unitPrice,
-          originalPrice: item.unitPrice
+          originalPrice: item.unitPrice,
+          unit: item.unit,          // Pass unit from order item
+          priceVariants: []         // Empty array to satisfy Product type
         },
+        unit: item.unit,           // Also at item level for direct access
         quantity: item.quantity,
         price: item.unitPrice,
         total: item.totalPrice,

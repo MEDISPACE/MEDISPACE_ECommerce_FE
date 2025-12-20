@@ -360,42 +360,54 @@ export function CategoriesOverviewPage() {
                     key={pageIndex}
                     className='w-full flex-shrink-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 p-[10px] m-[10px]'
                   >
-                    {featuredProducts.slice(pageIndex * 4, (pageIndex + 1) * 4).map((product, productIndex) => (
-                      <div
-                        key={`${product._id || product.id || `product-${productIndex}-${pageIndex}`}-${pageIndex}`}
-                        className='h-full hover:-translate-y-1 transition-transform duration-200'
-                      >
-                        <ProductCard
-                          product={{
-                            id: product._id,
-                            name: product.name,
-                            slug: product.slug,
-                            brand: product.brand?.name || 'Unknown',
-                            image: product.featuredImage || '/images/product-placeholder.jpg',
-                            originalPrice: product.price || 0,
-                            salePrice: product.price || 0,
-                            rating: product.rating || 0,
-                            reviewCount: product.reviewCount || 0,
-                            inStock: product.stockQuantity > 0,
-                            isPrescription: product.requiresPrescription,
-                            isOnSale: false,
+                    {featuredProducts.slice(pageIndex * 4, (pageIndex + 1) * 4).map((product, productIndex) => {
+                      // Extract price from priceVariants (new data format)
+                      const defaultVariant = product.priceVariants?.find(v => v.isDefault) || product.priceVariants?.[0]
+                      const salePrice = defaultVariant?.price || product.price || 0
+                      const originalPrice = defaultVariant?.originalPrice || salePrice
+                      const hasDiscount = originalPrice > salePrice
+                      const discountPercentage = hasDiscount ? Math.round((1 - salePrice / originalPrice) * 100) : 0
+                      const unit = defaultVariant?.unit || 'Hộp'
 
-                            discountPercentage: 0,
-                            unit: 'Hộp',
-                            packaging: '',
-                            needsConsultation: false,
-                          }}
-                          variant='grid'
-                          onAddToCart={() => {
-                            addToCart(product, 1)
-                          }}
-                          onToggleWishlist={() => {
-                            toggleWishlist(product._id)
-                          }}
-                          isInWishlist={isInWishlist(product._id)}
-                        />
-                      </div>
-                    ))}
+                      return (
+                        <div
+                          key={`${product._id || product.id || `product-${productIndex}-${pageIndex}`}-${pageIndex}`}
+                          className='h-full hover:-translate-y-1 transition-transform duration-200'
+                        >
+                          <ProductCard
+                            product={{
+                              id: product._id,
+                              name: product.name,
+                              slug: product.slug,
+                              brand: product.brand?.name || 'Unknown',
+                              image: product.featuredImage || '/images/product-placeholder.jpg',
+                              originalPrice: originalPrice,
+                              salePrice: salePrice,
+                              rating: product.rating || 0,
+                              reviewCount: product.reviewCount || 0,
+                              inStock: product.stockQuantity > 0,
+                              isPrescription: product.requiresPrescription,
+                              isOnSale: hasDiscount,
+                              discountPercentage: discountPercentage,
+                              unit: unit,
+                              packaging: '',
+                              needsConsultation: false,
+                              priceVariants: product.priceVariants,
+                            }}
+                            variant='grid'
+                            onAddToCart={(selectedUnit) => {
+                              const variant = product.priceVariants?.find(v => v.unit === selectedUnit)
+                              const price = variant?.price || product.priceVariants?.[0]?.price
+                              addToCart(product, 1, selectedUnit, price)
+                            }}
+                            onToggleWishlist={() => {
+                              toggleWishlist(product._id)
+                            }}
+                            isInWishlist={isInWishlist(product._id)}
+                          />
+                        </div>
+                      )
+                    })}
                   </div>
                 ))}
               </div>
@@ -417,11 +429,6 @@ export function CategoriesOverviewPage() {
                       ? 'bg-blue-600 w-8 shadow-lg'
                       : 'bg-blue-200 hover:bg-blue-300 w-3'
                       }`}
-                    whileHover={{
-                      scale: 1.2,
-                      backgroundColor: index === featuredCurrentIndex ? '#0066CC' : '#4A90E2',
-                    }}
-
                   />
                 ))}
               </div>

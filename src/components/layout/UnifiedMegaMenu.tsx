@@ -172,7 +172,11 @@ export function UnifiedMegaMenu({ activeCategory, isVisible, onClose }: UnifiedM
                       </Badge>
                     )}
                     <p className='text-sm text-blue-600 font-semibold'>
-                      {product.price ? product.price.toLocaleString('vi-VN') + 'đ' : 'Liên hệ'}
+                      {product.requiresPrescription ? 'Liên hệ' : (() => {
+                        const defaultVariant = product.priceVariants?.find(v => v.isDefault) || product.priceVariants?.[0]
+                        const price = defaultVariant?.price
+                        return price ? price.toLocaleString('vi-VN') + 'đ' : 'Liên hệ'
+                      })()}
                     </p>
                   </div>
                 </Link>

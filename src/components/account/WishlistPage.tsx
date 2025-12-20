@@ -16,6 +16,7 @@ import { useCart } from '../../contexts/CartContext'
 import { wishlistService } from '../../services/wishlistService'
 import { productService } from '../../services/productService'
 import type { Product } from '../../types/product'
+import { getProductSalePrice, getProductOriginalPrice } from '../../utils/productHelpers'
 
 interface WishlistProduct {
   id: string
@@ -58,8 +59,8 @@ export function WishlistPage() {
             id: product._id || product.id || '',
             name: product.name,
             image: product.featuredImage || product.images?.[0] || product.image || '/placeholder-product.jpg',
-            currentPrice: product.salePrice || product.price || 0,
-            originalPrice: product.price,
+            currentPrice: getProductSalePrice(product) || 0,
+            originalPrice: getProductOriginalPrice(product),
             addedDate: product.createdAt || new Date().toISOString(),
             priceChange: 0, // API doesn't provide this yet
             inStock: (product.stockQuantity || 0) > 0,

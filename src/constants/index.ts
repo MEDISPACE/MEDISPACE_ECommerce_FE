@@ -103,6 +103,7 @@ export const API_ENDPOINTS = {
     GET: '/cart',
     ADD_ITEM: '/cart/add',
     UPDATE_ITEM: (productId: string) => `/cart/update/${productId}`,
+    UPDATE_ITEM_UNIT: (productId: string) => `/cart/update-unit/${productId}`,
     REMOVE_ITEM: (productId: string) => `/cart/remove/${productId}`,
     CLEAR: '/cart/clear',
     CHECKOUT: '/cart/checkout',

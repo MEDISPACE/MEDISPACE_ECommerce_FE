@@ -49,7 +49,7 @@ export function OrdersPage() {
             productName: item.product.name,
             productImage: item.product.images?.[0] || '',
             brand: item.product.brand?.name || '',
-            unit: item.product.unit || 'viên',
+            unit: (item as any).unit || item.product.unit || 'viên',
             quantity: item.quantity,
             unitPrice: item.price,
             subtotal: item.total,

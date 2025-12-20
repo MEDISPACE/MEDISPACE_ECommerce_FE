@@ -1,4 +1,4 @@
-import type { Product, Category, Brand } from '../types/product'
+import type { Product, Category, Brand, PriceVariant } from '../types/product'
 
 /**
  * Helper functions to safely access Product properties with fallbacks
@@ -59,28 +59,77 @@ export const getProductReviewCount = (product: Product): number => {
   return product.reviewCount || 0
 }
 
+/**
+ * Get the default price variant from a product
+ * Returns the variant with isDefault=true, or the first variant if none is marked default
+ */
+export const getDefaultPriceVariant = (product: Product): PriceVariant | null => {
+  if (!product.priceVariants || product.priceVariants.length === 0) {
+    return null
+  }
+  return product.priceVariants.find(v => v.isDefault) || product.priceVariants[0]
+}
+
+/**
+ * Get the unit name for the default variant
+ */
+export const getProductUnit = (product: Product): string => {
+  const defaultVariant = getDefaultPriceVariant(product)
+  return defaultVariant?.unit || (product as any).unit || 'Sản phẩm'
+}
+
 export const getProductPrice = (product: Product): number => {
-  return product.price || product.salePrice || product.originalPrice || 0
+  // First try priceVariants (new format)
+  const defaultVariant = getDefaultPriceVariant(product)
+  if (defaultVariant) {
+    return defaultVariant.price
+  }
+  // Fallback to legacy fields
+  return (product as any).price || (product as any).salePrice || (product as any).originalPrice || 0
 }
 
 export const getProductOriginalPrice = (product: Product): number | undefined => {
-  return product.originalPrice || product.price
+  // First try priceVariants (new format)
+  const defaultVariant = getDefaultPriceVariant(product)
+  if (defaultVariant?.originalPrice) {
+    return defaultVariant.originalPrice
+  }
+  // Fallback to legacy fields
+  return (product as any).originalPrice || (product as any).price
 }
 
 export const getProductSalePrice = (product: Product): number | undefined => {
-  return product.salePrice || product.price
+  // First try priceVariants (new format) - salePrice = current price
+  const defaultVariant = getDefaultPriceVariant(product)
+  if (defaultVariant) {
+    return defaultVariant.price
+  }
+  // Fallback to legacy fields
+  return (product as any).salePrice || (product as any).price
 }
 
 export const isProductOnSale = (product: Product): boolean => {
-  if (product.onSale !== undefined) {
-    return product.onSale
+  if ((product as any).onSale !== undefined) {
+    return (product as any).onSale
   }
-  if (product.isOnSale !== undefined) {
-    return product.isOnSale
+  if ((product as any).isOnSale !== undefined) {
+    return (product as any).isOnSale
   }
   const originalPrice = getProductOriginalPrice(product)
   const salePrice = getProductSalePrice(product)
   return originalPrice !== undefined && salePrice !== undefined && salePrice < originalPrice
+}
+
+/**
+ * Calculate discount percentage
+ */
+export const getDiscountPercentage = (product: Product): number => {
+  const originalPrice = getProductOriginalPrice(product)
+  const salePrice = getProductSalePrice(product)
+  if (originalPrice && salePrice && originalPrice > salePrice) {
+    return Math.round(((originalPrice - salePrice) / originalPrice) * 100)
+  }
+  return (product as any).discountPercentage || 0
 }
 
 export const getBrandName = (product: Product): string => {

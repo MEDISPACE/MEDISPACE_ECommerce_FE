@@ -17,6 +17,14 @@ import { productService } from '../../services/productService'
 import { categoryService } from '../../services/categoryService'
 import { useCart } from '../../contexts/CartContext'
 import { useWishlist } from '../../hooks/product/useWishlist'
+import {
+  getProductSalePrice,
+  getProductOriginalPrice,
+  getProductUnit,
+  getDiscountPercentage,
+  isProductOnSale,
+  getProductPrice,
+} from '../../utils/productHelpers'
 
 // Category icon mapping cho hệ thống MediSpace
 const categoryIcons = {
@@ -65,22 +73,19 @@ export function CategoryPage() {
 
         // Get subcategories for this category
         const subcategoriesData = await categoryService.getCategoryChildren(categoryData._id)
-        const allCategoryIds = [categoryData._id, ...subcategoriesData.map((sub: Category) => sub._id)]
 
-        // Fetch products for each category
-        const productPromises = allCategoryIds.map(categoryId =>
-          productService.getProducts({ categoryId })
-        )
-        const productResults = await Promise.all(productPromises)
+        // Backend handles category hierarchy - single API call gets products from all descendants
+        const productsData = await productService.getProducts({
+          categoryId: categoryData._id,
+          limit: 5000 // Get all products
+        })
 
-        // Combine all products
-        const allProducts = productResults.flat()
-
-        setProducts(allProducts)
+        setProducts(productsData)
         setSubcategories(subcategoriesData)
         setCurrentCategory(categoryData)
 
       } catch (error) {
+        console.error('Error fetching category data:', error)
         setNotFound(true)
       } finally {
         setIsLoading(false)
@@ -195,17 +200,18 @@ export function CategoryPage() {
     slug: product.slug,
     brand: product.brand?.name || 'Unknown Brand',
     image: product.images?.[0] || product.featuredImage || '/placeholder-product.jpg',
-    originalPrice: product.discountPercentage && product.discountPercentage > 0 ? Math.round((product.price || 0) / (1 - (product.discountPercentage / 100))) : undefined,
-    salePrice: product.price || 0,
+    originalPrice: getProductOriginalPrice(product),
+    salePrice: getProductSalePrice(product) || 0,
     rating: product.rating || 0,
     reviewCount: product.reviewCount || 0,
     inStock: product.stockQuantity > 0,
     isPrescription: product.requiresPrescription,
-    isOnSale: (product.discountPercentage || 0) > 0,
-    discountPercentage: product.discountPercentage || 0,
-    unit: product.unit,
+    isOnSale: isProductOnSale(product),
+    discountPercentage: getDiscountPercentage(product),
+    unit: getProductUnit(product),
     packaging: product.packaging,
     needsConsultation: product.needsConsultation,
+    priceVariants: product.priceVariants,
   }))
 
   // Pagination
@@ -433,7 +439,7 @@ export function CategoryPage() {
             {/* Toolbar */}
             <div className='flex items-center justify-between mb-6'>
               <div className='flex items-center gap-4'>
-                <h2 className='font-medium'>{sortedProducts.length} sản phẩm</h2>
+                <h2 className='font-medium text-lg text-blue-600'>{sortedProducts.length} sản phẩm</h2>
 
                 {/* Mobile Filter Button */}
                 <Sheet>
@@ -517,9 +523,12 @@ export function CategoryPage() {
                         key={product.id}
                         product={product}
                         variant={viewMode}
-                        onAddToCart={() => {
+                        onAddToCart={(selectedUnit) => {
                           if (originalProduct) {
-                            addToCart(originalProduct, 1)
+                            // Find the price for the selected unit from priceVariants
+                            const variant = originalProduct.priceVariants?.find(v => v.unit === selectedUnit)
+                            const price = variant?.price || originalProduct.priceVariants?.[0]?.price
+                            addToCart(originalProduct, 1, selectedUnit, price)
                           }
                         }}
                         onToggleWishlist={() => {
@@ -541,7 +550,7 @@ export function CategoryPage() {
                 </div>
               </>
             ) : (
-              <Card className='text-center py-12'>
+              <Card className='text-center py-12 border-blue-200 bg-white'>
                 <CardContent>
                   <div className='text-gray-500 mb-4'>
                     <Search className='w-16 h-16 mx-auto mb-4 text-gray-300' />
