@@ -54,6 +54,8 @@ export default [
 
     // Health
     route('health', 'routes/health/_index.tsx'),
+    route('health/article/:slug', 'routes/health/article.$slug.tsx'),
+    route('health/category/:slug', 'routes/health/category.$slug.tsx'),
 
     // Search
     route('search', 'routes/search.tsx'),
@@ -89,6 +91,9 @@ export default [
     route('reports', 'routes/pharmacist/reports.tsx'),
     route('settings', 'routes/pharmacist/settings.tsx'),
     route('chat', 'routes/pharmacist/chat.tsx'),
+    route('articles', 'routes/pharmacist/articles/_index.tsx'),
+    route('articles/new', 'routes/pharmacist/articles/new.tsx'),
+    route('articles/:id/edit', 'routes/pharmacist/articles/$id.edit.tsx'),
   ]),
 
   // Admin routes (separate layout)
@@ -109,6 +114,9 @@ export default [
     route('products/list', 'routes/admin/products/index.tsx'),
     route('products/new', 'routes/admin/products/new.tsx'),
     route('products/:id/edit', 'routes/admin/products/$id.edit.tsx'),
+    route('articles', 'routes/admin/articles/_index.tsx'),
+    route('articles/new', 'routes/admin/articles/new.tsx'),
+    route('articles/:id/edit', 'routes/admin/articles/$id.edit.tsx'),
     route('prescriptions', 'routes/admin/prescriptions.tsx'),
     route('prescriptions/list', 'routes/admin/prescriptions/index.tsx'),
     route('prescriptions/pending', 'routes/admin/prescriptions/pending.tsx'),
