@@ -90,7 +90,7 @@ const navigationItems: NavItem[] = [
   },
   {
     label: 'Cơ sở dữ liệu thuốc',
-    href: '/pharmacist/drugs',
+    href: '/pharmacist/drug-database',
     icon: Database,
   },
   {
