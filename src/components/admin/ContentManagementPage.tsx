@@ -6,6 +6,7 @@ import { Badge } from '../ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import { toast } from 'sonner'
 import { getContentStatusBadge as getBadge } from '../../utils/badgeUtils'
+import { HealthCategoryManagement } from './articles/HealthCategoryManagement'
 
 interface Banner {
   id: string
@@ -244,6 +245,9 @@ export function ContentManagementPage() {
             <TabsTrigger value='banners' className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'>
               Banners
             </TabsTrigger>
+            <TabsTrigger value='categories' className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'>
+              Danh mục
+            </TabsTrigger>
             <TabsTrigger value='news' className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'>
               Tin tức
             </TabsTrigger>
@@ -254,6 +258,7 @@ export function ContentManagementPage() {
 
           {/* Banners Tab */}
           <TabsContent value='banners' className='space-y-4 mt-4'>
+            {/* ... banner content ... */}
             <div className='flex justify-between items-center'>
               <h3 className='text-blue-900'>Quản lý banners</h3>
               <Button
@@ -320,6 +325,11 @@ export function ContentManagementPage() {
                 </Card>
               ))}
             </div>
+          </TabsContent>
+
+          {/* Categories Tab */}
+          <TabsContent value='categories' className='space-y-4 mt-4'>
+            <HealthCategoryManagement />
           </TabsContent>
 
           {/* News Tab */}
