@@ -2,215 +2,776 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
-  }
+@custom-variant dark (&:is(.dark *));
 
-  * {
-    border-color: hsl(var(--border));
-  }
+:root {
+  --font-size: 16px;
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #0066cc;
+  --primary-foreground: #ffffff;
+  --secondary: #f0f9ff;
+  --secondary-foreground: #0f172a;
+  --muted: #f8fafc;
+  --muted-foreground: #64748b;
+  --accent: #eff6ff;
+  --accent-foreground: #0066cc;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e2e8f0;
+  --input: transparent;
+  --input-background: #f8fafc;
+  --switch-background: #e2e8f0;
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --ring: #0066cc;
+  --chart-1: #0066cc;
+  --chart-2: #4a90e2;
+  --chart-3: #00bfff;
+  --chart-4: #10b981;
+  --chart-5: #f59e0b;
+  --radius: 0.625rem;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0f172a;
+  --sidebar-primary: #0066cc;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eff6ff;
+  --sidebar-accent-foreground: #0066cc;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #0066cc;
 
-  body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
-    font-family: 'Inter', system-ui, sans-serif;
-    margin: 0;
-    padding: 0;
-  }
+  /* ===== MEDISPACE LAYOUT SYSTEM ===== */
+
+  /* Header dimensions - Precise measurements for sticky positioning */
+  /* Calculated from actual Header.tsx structure:
+    - Top bar: py-2 (0.5rem * 2) + content (~24px) = ~40px
+    - Main header: py-4 (1rem * 2) + content (~52px) = ~68px  
+    - Navigation: py-3 (0.75rem * 2) + content (~36px) = ~48px
+    - Border-bottom: included in header element height
+    - Total: Approximately 156px
+    - NOTE: If breadcrumb still overlaps with header when scrolling, 
+        increase this value slightly (try 157px, 158px, 160px)
+  */
+  --header-height: 156px;
+  --header-top-bar-height: 40px;
+  --header-main-height: 68px;
+  --header-nav-height: 48px;
+  --breadcrumb-top-offset: var(--header-height);
+
+  /* Breadcrumb dimensions */
+  --breadcrumb-height: 52px;
+
+  /* Performance optimizations for sticky elements */
+  --will-change-sticky: transform, opacity;
+  --gpu-acceleration: translateZ(0);
+
+  /* ===== MEDISPACE SEMANTIC COLOR SYSTEM ===== */
+
+  /* Core Brand Colors */
+  --primary-50: #eff6ff;
+  --primary-100: #dbeafe;
+  --primary-200: #bfdbfe;
+  --primary-300: #93c5fd;
+  --primary-400: #4a90e2;
+  --primary-500: #0066cc;
+  --primary-600: #0066cc;
+  --primary-700: #1d4ed8;
+  --primary-800: #1e40af;
+  --primary-900: #1e3a8a;
+
+  /* Medical Semantic Colors */
+  --medical-consultation: #0066cc;
+  /* Primary blue - consultation, main brand */
+  --medical-consultation-light: #4a90e2;
+  --medical-consultation-bg: #eff6ff;
+
+  --medical-otc: #10b981;
+  /* Green - Over-the-counter, safe, approved */
+  --medical-otc-light: #34d399;
+  --medical-otc-bg: #ecfdf5;
+
+  --medical-rx: #ef4444;
+  /* Red - Prescription required, caution */
+  --medical-rx-light: #f87171;
+  --medical-rx-bg: #fef2f2;
+
+  --medical-pharmacy: #6366f1;
+  /* Purple - Pharmacy services, professional */
+  --medical-pharmacy-light: #8b5cf6;
+  --medical-pharmacy-bg: #f0f0ff;
+
+  /* Functional Colors */
+  --success: #10b981;
+  --success-light: #34d399;
+  --success-bg: #ecfdf5;
+
+  --warning: #f59e0b;
+  --warning-light: #fbbf24;
+  --warning-bg: #fffbeb;
+
+  --danger: #ef4444;
+  --danger-light: #f87171;
+  --danger-bg: #fef2f2;
+
+  --info: #0066cc;
+  --info-light: #4a90e2;
+  --info-bg: #eff6ff;
+
+  /* Neutral Palette */
+  --gray-50: #f8fafc;
+  --gray-100: #f1f5f9;
+  --gray-200: #e2e8f0;
+  --gray-300: #cbd5e1;
+  --gray-400: #94a3b8;
+  --gray-500: #64748b;
+  --gray-600: #475569;
+  --gray-700: #334155;
+  --gray-800: #1e293b;
+  --gray-900: #0f172a;
+
+  /* Gradient Definitions */
+  --gradient-consultation: linear-gradient(135deg, #0066cc 0%, #4a90e2 100%);
+  --gradient-otc: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+  --gradient-rx: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+  --gradient-pharmacy: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  --gradient-primary: linear-gradient(135deg, #0066cc 0%, #1d4ed8 100%);
+  --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  --gradient-warning: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  --gradient-danger: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Medical Semantic Colors for Tailwind */
+  --color-medical-consultation: var(--medical-consultation);
+  --color-medical-consultation-light: var(--medical-consultation-light);
+  --color-medical-consultation-bg: var(--medical-consultation-bg);
+  --color-medical-otc: var(--medical-otc);
+  --color-medical-otc-light: var(--medical-otc-light);
+  --color-medical-otc-bg: var(--medical-otc-bg);
+  --color-medical-rx: var(--medical-rx);
+  --color-medical-rx-light: var(--medical-rx-light);
+  --color-medical-rx-bg: var(--medical-rx-bg);
+  --color-medical-pharmacy: var(--medical-pharmacy);
+  --color-medical-pharmacy-light: var(--medical-pharmacy-light);
+  --color-medical-pharmacy-bg: var(--medical-pharmacy-bg);
+  --color-success: var(--success);
+  --color-success-light: var(--success-light);
+  --color-success-bg: var(--success-bg);
+  --color-warning: var(--warning);
+  --color-warning-light: var(--warning-light);
+  --color-warning-bg: var(--warning-bg);
+  --color-danger: var(--danger);
+  --color-danger-light: var(--danger-light);
+  --color-danger-bg: var(--danger-bg);
+  --color-info: var(--info);
+  --color-info-light: var(--info-light);
+  --color-info-bg: var(--info-bg);
 }
 
 @layer base {
   * {
-    border-color: hsl(var(--border));
+    @apply border-border outline-ring/50;
   }
 
   body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
-    font-family: Inter, system-ui, sans-serif;
-    margin: 0;
-    padding: 0;
-  }
-
-  html {
-    margin: 0;
-    padding: 0;
+    @apply bg-background text-foreground;
   }
 }
 
-/* Medical themed animations */
-@keyframes float-slow {
+/**
+ * Base typography. This is not applied to elements which have an ancestor with a Tailwind text class.
+ */
+@layer base {
+  :where(:not(:has([class*=' text-']), :not(:has([class^='text-'])))) {
+    h1 {
+      font-size: var(--text-2xl);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h2 {
+      font-size: var(--text-xl);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h3 {
+      font-size: var(--text-lg);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h4 {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    p {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-normal);
+      line-height: 1.5;
+    }
+
+    label {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    button {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    input {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-normal);
+      line-height: 1.5;
+    }
+  }
+}
+
+html {
+  font-size: var(--font-size);
+}
+
+/* Simple transitions only */
+.mega-menu-dropdown a,
+.mega-menu-dropdown button {
+  transition:
+    color 100ms ease,
+    background-color 100ms ease;
+}
+
+/* FloatingChatWidget animations */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.slide-up-animation {
+  animation: slideUp 300ms ease-out;
+}
+
+/* Auth Layout Animations */
+@keyframes gradientShift {
+
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes floatSlow {
+
   0%,
   100% {
     transform: translateY(0px) rotate(0deg);
   }
+
   50% {
-    transform: translateY(-20px) rotate(5deg);
+    transform: translateY(-30px) rotate(5deg);
   }
 }
 
-@keyframes float-medium {
-  0%,
-  100% {
-    transform: translateY(0px) rotate(0deg);
-  }
-  50% {
-    transform: translateY(-15px) rotate(-3deg);
-  }
-}
+@keyframes pulse {
 
-@keyframes float-fast {
   0%,
   100% {
-    transform: translateY(0px) rotate(0deg);
+    opacity: 1;
   }
-  50% {
-    transform: translateY(-10px) rotate(3deg);
-  }
-}
 
-@keyframes pulse-slow {
-  0%,
-  100% {
-    opacity: 0.3;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.6;
-    transform: scale(1.1);
-  }
-}
-
-@keyframes pulse-medium {
-  0%,
-  100% {
-    opacity: 0.25;
-    transform: scale(1);
-  }
   50% {
     opacity: 0.5;
-    transform: scale(1.05);
   }
 }
 
-@keyframes pulse-fast {
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes floatPattern {
+
   0%,
   100% {
-    opacity: 0.35;
-    transform: scale(1);
+    transform: translate(0, 0);
   }
+
+  25% {
+    transform: translate(10px, -10px);
+  }
+
   50% {
-    opacity: 0.7;
-    transform: scale(1.15);
+    transform: translate(20px, 5px);
   }
-}
 
-@keyframes heartbeat {
-  0%,
-  50%,
-  100% {
-    transform: scale(1);
-    opacity: 0.2;
-  }
-  25% {
-    transform: scale(1.1);
-    opacity: 0.4;
-  }
   75% {
-    transform: scale(1.05);
-    opacity: 0.3;
+    transform: translate(5px, 15px);
   }
 }
 
-@keyframes heartbeat-slow {
-  0%,
-  50%,
-  100% {
-    transform: scale(1);
-    opacity: 0.25;
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
-  25% {
-    transform: scale(1.15);
-    opacity: 0.5;
-  }
-  75% {
-    transform: scale(1.08);
-    opacity: 0.35;
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-@keyframes rotate-slow {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradientShift 10s ease infinite;
 }
 
-@keyframes rotate-medium {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+.animate-float {
+  animation: float 6s ease-in-out infinite;
 }
 
-/* Animation classes */
 .animate-float-slow {
-  animation: float-slow 6s ease-in-out infinite;
+  animation: floatSlow 8s ease-in-out infinite;
 }
 
-.animate-float-medium {
-  animation: float-medium 4s ease-in-out infinite;
+.animate-pulse-soft {
+  animation: pulse 3s ease-in-out infinite;
 }
 
-.animate-float-fast {
-  animation: float-fast 3s ease-in-out infinite;
+.animate-slide-in-left {
+  animation: slideInLeft 0.6s ease-out;
 }
 
-.animate-pulse-slow {
-  animation: pulse-slow 3s ease-in-out infinite;
+.animate-slide-in-right {
+  animation: slideInRight 0.6s ease-out;
 }
 
-.animate-pulse-medium {
-  animation: pulse-medium 2.5s ease-in-out infinite;
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out;
 }
 
-.animate-pulse-fast {
-  animation: pulse-fast 2s ease-in-out infinite;
+.animate-slide-in-up {
+  animation: slideInUp 0.5s ease-out;
 }
 
-.animate-heartbeat {
-  animation: heartbeat 2s ease-in-out infinite;
+.animate-float-pattern {
+  animation: floatPattern 20s ease-in-out infinite;
 }
 
-.animate-heartbeat-slow {
-  animation: heartbeat-slow 3s ease-in-out infinite;
+/* Smooth scrolling for better UX */
+html {
+  scroll-behavior: smooth;
 }
 
-.animate-rotate-slow {
-  animation: rotate-slow 20s linear infinite;
+/* Override smooth scroll for instant navigation */
+html.scroll-instant {
+  scroll-behavior: auto !important;
 }
 
-.animate-rotate-medium {
-  animation: rotate-medium 15s linear infinite;
+/* ===== MEDISPACE TOAST NOTIFICATION ANIMATIONS ===== */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
 }
 
-/* Medical icon glow effect */
-.medical-icon-glow {
-  filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.3));
-  transition: filter 0.3s ease;
+@keyframes slideOutRight {
+  from {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateX(100%) scale(0.95);
+  }
 }
 
-.medical-icon-glow:hover {
-  filter: drop-shadow(0 0 12px rgba(59, 130, 246, 0.5));
+/* Toast enter animation */
+[data-sonner-toast] {
+  animation: slideInRight 0.3s cubic-bezier(0.21, 1.02, 0.73, 1) forwards;
+}
+
+/* Toast exit animation */
+[data-sonner-toast][data-removed='true'] {
+  animation: slideOutRight 0.2s cubic-bezier(0.06, 0.71, 0.55, 1) forwards;
+}
+
+/* Toast hover effect - pause auto-dismiss */
+[data-sonner-toast]:hover {
+  transform: scale(1.02);
+  transition: transform 0.2s ease;
+}
+
+/* ===== CRITICAL STICKY BREADCRUMB ===== */
+/* Must be outside @layer for maximum priority */
+/* 
+ * ✨ PERFECT DUAL-STICKY SOLUTION WITH DYNAMIC POSITIONING ✨
+ * 
+ * Both header AND breadcrumb are sticky - they work together perfectly!
+ * 
+ * SETUP:
+ * - Header: sticky top-0 z-50 (height: DYNAMIC - varies by responsive)
+ * - Breadcrumb: sticky top-[DYNAMIC] z-40 (positioned via JavaScript)
+ * 
+ * DYNAMIC POSITIONING (Option 1 - JavaScript):
+ * - MainLayout.tsx measures header.offsetHeight in real-time
+ * - Uses ResizeObserver to detect responsive changes
+ * - Sets breadcrumb top position via inline style
+ * - Result: ALWAYS perfectly positioned below header, NO OVERLAP
+ * 
+ * WHY DYNAMIC?
+ * - Header has responsive logo: h-8 (mobile) → h-12 (desktop)
+ * - Hidden elements change: .hidden md:flex, .lg:hidden
+ * - Hard to predict exact height at all breakpoints
+ * - JavaScript gives 100% accuracy across all screen sizes
+ * 
+ * BEHAVIOR:
+ * When scrolling down:
+ * 1. Header sticks to viewport top (position 0px)
+ * 2. Breadcrumb sticks to position [header.offsetHeight]px
+ * 3. GUARANTEED NO OVERLAP - position is measured, not guessed
+ * 
+ * VISUAL RESULT:
+ * ┌─────────────────────────┐ ← 0px (viewport top)
+ * │ Header (sticky)          │ [Dynamic height: 144-172px]
+ * ├─────────────────────────┤ ← [Measured height]px
+ * │ Breadcrumb (sticky)      │ ~52px
+ * ├─────────────────────────┤ 
+ * │ Content (scrolling)      │
+ * └─────────────────────────┘
+ * 
+ * This is the optimal UX - both always visible, perfectly aligned!
+ */
+.sticky-breadcrumb {
+  /* Use FIXED instead of sticky to avoid parent transform issues */
+  /* Framer-motion's transform breaks sticky, but fixed works perfectly */
+  position: fixed !important;
+  -webkit-position: fixed !important;
+  top: 156px !important;
+  /* Header height */
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 40 !important;
+  /* Below header (z-50) - correct stacking */
+  background: rgba(255, 255, 255, 0.95) !important;
+  /* Glass effect background */
+  backdrop-filter: blur(8px) !important;
+  /* Blur effect for glassmorphism */
+  -webkit-backdrop-filter: blur(8px) !important;
+  /* Safari support */
+  border-bottom: 1px solid rgb(229, 231, 235) !important;
+  /* Subtle border */
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1) !important;
+  /* Soft shadow */
+  will-change: transform !important;
+  /* Performance optimization */
+  transform: translateZ(0) !important;
+  /* GPU acceleration */
+  backface-visibility: hidden !important;
+  /* Prevent flickering */
+  -webkit-backface-visibility: hidden !important;
+  /* Safari support */
+  contain: layout style paint !important;
+  /* CSS containment for performance */
+}
+
+/* Add padding to body/main to account for fixed breadcrumb height */
+/* This prevents content from being hidden behind the fixed breadcrumb */
+
+
+/* DEBUG: Uncomment to visualize sticky positions */
+/*
+.sticky-breadcrumb::before {
+  content: 'Breadcrumb sticky at ' attr(data-top) 'px';
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: red;
+  color: white;
+  padding: 2px 8px;
+  font-size: 10px;
+  border-radius: 4px;
+  z-index: 9999;
+}
+*/
+
+/* ===== MEDISPACE SEMANTIC UTILITY CLASSES ===== */
+@layer utilities {
+
+  /* Performance optimizations for sticky elements */
+  .will-change-transform {
+    will-change: var(--will-change-sticky);
+  }
+
+  .gpu-accelerated {
+    transform: var(--gpu-acceleration);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+
+  /* Improved sticky positioning */
+  .sticky-top-header {
+    position: sticky;
+    top: var(--header-height);
+    z-index: 40;
+  }
+
+  /* Layout utilities */
+  .header-fixed-height {
+    min-height: var(--header-height);
+  }
+
+  /* Ensure proper stacking context for sticky elements */
+  .sticky-container {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Medical Semantic Background Classes */
+  .bg-medical-consultation {
+    background-color: var(--medical-consultation);
+    color: white;
+  }
+
+  .bg-medical-consultation-light {
+    background-color: var(--medical-consultation-bg);
+    color: var(--medical-consultation);
+  }
+
+  .bg-medical-otc {
+    background-color: var(--medical-otc);
+    color: white;
+  }
+
+  .bg-medical-otc-light {
+    background-color: var(--medical-otc-bg);
+    color: var(--medical-otc);
+  }
+
+  .bg-medical-rx {
+    background-color: var(--medical-rx);
+    color: white;
+  }
+
+  .bg-medical-rx-light {
+    background-color: var(--medical-rx-bg);
+    color: var(--medical-rx);
+  }
+
+  .bg-medical-pharmacy {
+    background-color: var(--medical-pharmacy);
+    color: white;
+  }
+
+  .bg-medical-pharmacy-light {
+    background-color: var(--medical-pharmacy-bg);
+    color: var(--medical-pharmacy);
+  }
+
+  /* Semantic Text Classes */
+  .text-medical-consultation {
+    color: var(--medical-consultation);
+  }
+
+  .text-medical-otc {
+    color: var(--medical-otc);
+  }
+
+  .text-medical-rx {
+    color: var(--medical-rx);
+  }
+
+  .text-medical-pharmacy {
+    color: var(--medical-pharmacy);
+  }
+
+  /* Semantic Border Classes */
+  .border-medical-consultation {
+    border-color: var(--medical-consultation);
+  }
+
+  .border-medical-otc {
+    border-color: var(--medical-otc);
+  }
+
+  .border-medical-rx {
+    border-color: var(--medical-rx);
+  }
+
+  .border-medical-pharmacy {
+    border-color: var(--medical-pharmacy);
+  }
+
+  /* Semantic Gradient Classes */
+  .bg-gradient-consultation {
+    background: var(--gradient-consultation);
+    color: white;
+  }
+
+  .bg-gradient-otc {
+    background: var(--gradient-otc);
+    color: white;
+  }
+
+  .bg-gradient-rx {
+    background: var(--gradient-rx);
+    color: white;
+  }
+
+  .bg-gradient-pharmacy {
+    background: var(--gradient-pharmacy);
+    color: white;
+  }
+
+  .bg-gradient-primary {
+    background: var(--gradient-primary);
+    color: white;
+  }
+
+  .bg-gradient-success {
+    background: var(--gradient-success);
+    color: white;
+  }
+
+  .bg-gradient-warning {
+    background: var(--gradient-warning);
+    color: white;
+  }
+
+  .bg-gradient-danger {
+    background: var(--gradient-danger);
+    color: white;
+  }
+
+  /* Glassmorphism with Semantic Colors */
+  .glass-consultation {
+    background: rgba(0, 102, 204, 0.1);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(0, 102, 204, 0.2);
+  }
+
+  .glass-otc {
+    background: rgba(16, 185, 129, 0.1);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+  }
+
+  .glass-rx {
+    background: rgba(239, 68, 68, 0.1);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+  }
+
+  .glass-pharmacy {
+    background: rgba(99, 102, 241, 0.1);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+  }
 }

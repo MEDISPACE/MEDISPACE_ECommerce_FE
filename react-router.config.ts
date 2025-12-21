@@ -7,4 +7,6 @@ export default {
   appDirectory: 'src',
   // Build output directory
   buildDirectory: 'build',
+  // Use file-based routing (automatic route detection from src/routes/)
+  basename: '/',
 } satisfies Config

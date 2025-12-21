@@ -1,0 +1,14 @@
+import { Outlet } from 'react-router'
+import { PharmacistLayout } from '~/components/layout/PharmacistLayout'
+
+export function meta() {
+  return [{ title: 'Dược sĩ | MEDISPACE' }, { name: 'description', content: 'Khu vực dành cho dược sĩ' }]
+}
+
+export default function PharmacistLayoutRoute() {
+  return (
+    <PharmacistLayout>
+      <Outlet />
+    </PharmacistLayout>
+  )
+}

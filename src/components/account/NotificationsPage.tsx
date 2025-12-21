@@ -1,0 +1,457 @@
+import { useEffect, useState } from 'react'
+import { Bell, Check, Settings } from 'lucide-react'
+
+import { NotificationItem } from './NotificationItem'
+import { Button } from '../ui/button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
+import { Switch } from '../ui/switch'
+import { Label } from '../ui/label'
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
+import { Separator } from '../ui/separator'
+import { Badge } from '../ui/badge'
+import { toast } from 'sonner'
+import { notificationService } from '../../services/notificationService'
+import type { Notification as ApiNotification } from '../../types/account'
+
+type UiNotification = {
+  id: string
+  type: 'order' | 'prescription' | 'promotion' | 'health' | 'system'
+  title: string
+  message: string
+  timestamp: string
+  isRead: boolean
+  actionUrl?: string
+  actionText?: string
+}
+
+const mapApiToUi = (n: ApiNotification): UiNotification => {
+  const obj = n as unknown as {
+    id?: string
+    _id?: string
+    type?: string
+    title?: string
+    message?: string
+    createdAt?: string
+    timestamp?: string
+    isRead?: boolean
+    actionUrl?: string
+    actionText?: string
+  }
+
+  return {
+    id: obj.id ?? obj._id ?? '',
+    type: (obj.type as UiNotification['type']) ?? 'system',
+    title: obj.title ?? '',
+    message: obj.message ?? '',
+    timestamp: obj.createdAt ?? obj.timestamp ?? new Date().toISOString(),
+    isRead: Boolean(obj.isRead),
+    actionUrl: obj.actionUrl,
+    actionText: obj.actionText,
+  }
+}
+
+interface NotificationSettings {
+  email: boolean
+  sms: boolean
+  push: boolean
+  orderUpdates: boolean
+  prescriptionReminders: boolean
+  promotions: boolean
+  healthTips: boolean
+  systemAlerts: boolean
+  quietHours: boolean
+}
+
+export function NotificationsPage() {
+  const [notifications, setNotifications] = useState<UiNotification[]>([])
+  const [activeTab, setActiveTab] = useState('all')
+  const [settings, setSettings] = useState<NotificationSettings>({
+    email: true,
+    sms: false,
+    push: true,
+    orderUpdates: true,
+    prescriptionReminders: true,
+    promotions: true,
+    healthTips: false,
+    systemAlerts: true,
+    quietHours: true,
+  })
+
+  const filteredNotifications = notifications.filter((notification) => {
+    if (activeTab === 'all') return true
+    if (activeTab === 'unread') return !notification.isRead
+    return notification.type === activeTab
+  })
+
+  const unreadCount = notifications.filter((n) => !n.isRead).length
+
+  const handleMarkAsRead = (notificationId: string) => {
+    setNotifications((prev) =>
+      prev.map((notification) =>
+        notification.id === notificationId ? { ...notification, isRead: true } : notification,
+      ),
+    )
+    toast.success('Đã đánh dấu là đã đọc')
+  }
+
+  const handleMarkAllAsRead = () => {
+    setNotifications((prev) =>
+      prev.map((notification) => ({
+        ...notification,
+        isRead: true,
+      })),
+    )
+    toast.success('Đã đánh dấu tất cả là đã đọc')
+  }
+
+  const handleNotificationAction = (actionUrl: string) => {
+    // Navigate to the action URL
+    window.location.href = actionUrl
+  }
+
+  const handleSettingChange = (key: keyof NotificationSettings, value: boolean) => {
+    setSettings((prev) => ({ ...prev, [key]: value }))
+    toast.success('Đã cập nhật cài đặt thông báo')
+  }
+
+  const getTabCount = (type: string) => {
+    if (type === 'all') return notifications.length
+    if (type === 'unread') return unreadCount
+    return notifications.filter((n) => n.type === type).length
+  }
+
+  useEffect(() => {
+    let mounted = true
+    const load = async () => {
+      try {
+        const data = await notificationService.getNotifications()
+        if (mounted) setNotifications(data.map(mapApiToUi))
+      } catch (err) {
+        try {
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+
+    load()
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  return (
+    <div className='space-y-6'>
+      {/* Header */}
+      <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
+        <div className='flex flex-col md:flex-row md:items-center justify-between gap-4'>
+          <div>
+            <div className='flex items-center gap-3'>
+              <h1 className='bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 bg-clip-text text-transparent'>
+                Thông báo
+              </h1>
+              {unreadCount > 0 && <Badge className='bg-red-500 text-white'>{unreadCount} chưa đọc</Badge>}
+            </div>
+            <p className='text-gray-600 mt-1'>Theo dõi các thông báo quan trọng</p>
+          </div>
+
+          <div className='flex gap-2'>
+            {unreadCount > 0 && (
+              <Button
+                variant='outline'
+                onClick={handleMarkAllAsRead}
+                className='text-blue-600 border-blue-200 hover:bg-blue-50'
+              >
+                <Check className='w-4 h-4 mr-2' />
+                Đánh dấu tất cả đã đọc
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <div className='px-6 pt-6'>
+            <TabsList className='inline-flex w-full overflow-x-auto bg-blue-100 p-1 rounded-lg shadow-sm scrollbar-hide'>
+              <TabsTrigger value='all' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+                <span className='whitespace-nowrap flex items-center gap-1'>
+                  Tất cả
+                  {getTabCount('all') > 0 && (
+                    <span className='ml-1 rounded-full px-2 py-0.5 text-xs font-medium bg-white text-blue-600'>
+                      {getTabCount('all')}
+                    </span>
+                  )}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger value='unread' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+                <span className='whitespace-nowrap flex items-center gap-1'>
+                  Chưa đọc
+                  {getTabCount('unread') > 0 && (
+                    <span className='ml-1 rounded-full px-2 py-0.5 text-xs font-medium bg-red-500 text-white'>
+                      {getTabCount('unread')}
+                    </span>
+                  )}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger value='order' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:!shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+                <span className='whitespace-nowrap flex items-center gap-1'>
+                  Đơn hàng
+                  {getTabCount('order') > 0 && (
+                    <span className='ml-1 rounded-full px-2 py-0.5 text-xs font-medium bg-white text-blue-600'>
+                      {getTabCount('order')}
+                    </span>
+                  )}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger value='promotion' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:!shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+                <span className='whitespace-nowrap flex items-center gap-1'>
+                  Khuyến mãi
+                  {getTabCount('promotion') > 0 && (
+                    <span className='ml-1 rounded-full px-2 py-0.5 text-xs font-medium bg-white text-blue-600'>
+                      {getTabCount('promotion')}
+                    </span>
+                  )}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger value='health' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:!shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+                <span className='whitespace-nowrap flex items-center gap-1'>
+                  Sức khỏe
+                  {getTabCount('health') > 0 && (
+                    <span className='ml-1 rounded-full px-2 py-0.5 text-xs font-medium bg-white text-blue-600'>
+                      {getTabCount('health')}
+                    </span>
+                  )}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger value='settings' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+                <span className='whitespace-nowrap flex items-center gap-1'>
+                  <Settings className='w-4 h-4' />
+                  Cài đặt
+                </span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <Separator />
+
+          {/* Notification Lists */}
+          <TabsContent value='all' className='p-6 space-y-4'>
+            {filteredNotifications.length === 0 ? (
+              <div className='text-center py-12'>
+                <Bell className='w-16 h-16 mx-auto text-gray-300 mb-4' />
+                <h3 className='text-lg font-medium text-gray-900 mb-2'>Chưa có thông báo</h3>
+                <p className='text-gray-500'>Các thông báo mới sẽ xuất hiện tại đây</p>
+              </div>
+            ) : (
+              filteredNotifications.map((notification) => (
+                <NotificationItem
+                  key={notification.id}
+                  notification={notification}
+                  onMarkAsRead={handleMarkAsRead}
+                  onAction={handleNotificationAction}
+                />
+              ))
+            )}
+          </TabsContent>
+
+          <TabsContent value='unread' className='p-6 space-y-4'>
+            {filteredNotifications.length === 0 ? (
+              <div className='text-center py-12'>
+                <Check className='w-16 h-16 mx-auto text-green-300 mb-4' />
+                <h3 className='text-lg font-medium text-gray-900 mb-2'>Tất cả đã đọc</h3>
+                <p className='text-gray-500'>Bạn đã đọc hết tất cả thông báo</p>
+              </div>
+            ) : (
+              filteredNotifications.map((notification) => (
+                <NotificationItem
+                  key={notification.id}
+                  notification={notification}
+                  onMarkAsRead={handleMarkAsRead}
+                  onAction={handleNotificationAction}
+                />
+              ))
+            )}
+          </TabsContent>
+
+          <TabsContent value='order' className='p-6 space-y-4'>
+            {filteredNotifications.map((notification) => (
+              <NotificationItem
+                key={notification.id}
+                notification={notification}
+                onMarkAsRead={handleMarkAsRead}
+                onAction={handleNotificationAction}
+              />
+            ))}
+          </TabsContent>
+
+          <TabsContent value='promotion' className='p-6 space-y-4'>
+            {filteredNotifications.map((notification) => (
+              <NotificationItem
+                key={notification.id}
+                notification={notification}
+                onMarkAsRead={handleMarkAsRead}
+                onAction={handleNotificationAction}
+              />
+            ))}
+          </TabsContent>
+
+          <TabsContent value='health' className='p-6 space-y-4'>
+            {filteredNotifications.map((notification) => (
+              <NotificationItem
+                key={notification.id}
+                notification={notification}
+                onMarkAsRead={handleMarkAsRead}
+                onAction={handleNotificationAction}
+              />
+            ))}
+          </TabsContent>
+
+          {/* Settings Tab */}
+          <TabsContent value='settings' className='p-6'>
+            <div className='space-y-6'>
+              <Card>
+                <CardHeader>
+                  <CardTitle className='flex items-center gap-2'>
+                    <Settings className='w-5 h-5' />
+                    Cài đặt thông báo
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className='space-y-6'>
+                  {/* Notification Channels */}
+                  <div>
+                    <h3 className='font-medium mb-4'>Kênh nhận thông báo</h3>
+                    <div className='space-y-4'>
+                      <div className='flex items-center justify-between'>
+                        <div>
+                          <Label htmlFor='email'>Email</Label>
+                          <p className='text-sm text-gray-500'>Nhận thông báo qua email</p>
+                        </div>
+                        <Switch
+                          id='email'
+                          checked={settings.email}
+                          onCheckedChange={(checked) => handleSettingChange('email', checked)}
+                        />
+                      </div>
+
+                      <div className='flex items-center justify-between'>
+                        <div>
+                          <Label htmlFor='sms'>SMS</Label>
+                          <p className='text-sm text-gray-500'>Nhận thông báo qua tin nhắn</p>
+                        </div>
+                        <Switch
+                          id='sms'
+                          checked={settings.sms}
+                          onCheckedChange={(checked) => handleSettingChange('sms', checked)}
+                        />
+                      </div>
+
+                      <div className='flex items-center justify-between'>
+                        <div>
+                          <Label htmlFor='push'>Push Notification</Label>
+                          <p className='text-sm text-gray-500'>Thông báo đẩy trên trình duyệt</p>
+                        </div>
+                        <Switch
+                          id='push'
+                          checked={settings.push}
+                          onCheckedChange={(checked) => handleSettingChange('push', checked)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Notification Types */}
+                  <div>
+                    <h3 className='font-medium mb-4'>Loại thông báo</h3>
+                    <div className='space-y-4'>
+                      <div className='flex items-center justify-between'>
+                        <div>
+                          <Label htmlFor='orderUpdates'>Cập nhật đơn hàng</Label>
+                          <p className='text-sm text-gray-500'>Trạng thái giao hàng, thanh toán</p>
+                        </div>
+                        <Switch
+                          id='orderUpdates'
+                          checked={settings.orderUpdates}
+                          onCheckedChange={(checked) => handleSettingChange('orderUpdates', checked)}
+                        />
+                      </div>
+
+                      <div className='flex items-center justify-between'>
+                        <div>
+                          <Label htmlFor='prescriptionReminders'>Nhắc nhở đơn thuốc</Label>
+                          <p className='text-sm text-gray-500'>Thời gian uống thuốc, tái khám</p>
+                        </div>
+                        <Switch
+                          id='prescriptionReminders'
+                          checked={settings.prescriptionReminders}
+                          onCheckedChange={(checked) => handleSettingChange('prescriptionReminders', checked)}
+                        />
+                      </div>
+
+                      <div className='flex items-center justify-between'>
+                        <div>
+                          <Label htmlFor='promotions'>Khuyến mãi & Ưu đãi</Label>
+                          <p className='text-sm text-gray-500'>Sale, discount, voucher mới</p>
+                        </div>
+                        <Switch
+                          id='promotions'
+                          checked={settings.promotions}
+                          onCheckedChange={(checked) => handleSettingChange('promotions', checked)}
+                        />
+                      </div>
+
+                      <div className='flex items-center justify-between'>
+                        <div>
+                          <Label htmlFor='healthTips'>Lời khuyên sức khỏe</Label>
+                          <p className='text-sm text-gray-500'>Tips chăm sóc sức khỏe</p>
+                        </div>
+                        <Switch
+                          id='healthTips'
+                          checked={settings.healthTips}
+                          onCheckedChange={(checked) => handleSettingChange('healthTips', checked)}
+                        />
+                      </div>
+
+                      <div className='flex items-center justify-between'>
+                        <div>
+                          <Label htmlFor='systemAlerts'>Cảnh báo hệ thống</Label>
+                          <p className='text-sm text-gray-500'>Bảo mật, cập nhật hệ thống</p>
+                        </div>
+                        <Switch
+                          id='systemAlerts'
+                          checked={settings.systemAlerts}
+                          onCheckedChange={(checked) => handleSettingChange('systemAlerts', checked)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Quiet Hours */}
+                  <div>
+                    <h3 className='font-medium mb-4'>Giờ yên tĩnh</h3>
+                    <div className='flex items-center justify-between'>
+                      <div>
+                        <Label htmlFor='quietHours'>Tắt thông báo từ 21:00 - 07:00</Label>
+                        <p className='text-sm text-gray-500'>Không nhận thông báo trong giờ nghỉ ngơi</p>
+                      </div>
+                      <Switch
+                        id='quietHours'
+                        checked={settings.quietHours}
+                        onCheckedChange={(checked) => handleSettingChange('quietHours', checked)}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  )
+}

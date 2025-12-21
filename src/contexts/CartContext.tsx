@@ -1,0 +1,600 @@
+import React, { createContext, useContext, useReducer, useEffect } from 'react'
+import type { ReactNode } from 'react'
+import { toast } from 'sonner'
+import { ShoppingCart, Heart, Package, AlertCircle, CheckCircle } from 'lucide-react'
+import { cartService } from '../services/cartService'
+import type { Cart, AddToCartRequest, UpdateCartItemRequest } from '../types/cart'
+import type { Product } from '../types/product'
+
+// Cart state interface - combines backend data with UI state
+interface CartState {
+  cart: Cart | null
+  selectedItems: Set<string> // productIds that are selected for checkout
+  wishlist: Set<string>
+  isLoading: boolean
+}
+
+// Cart actions
+type CartAction =
+  | { type: 'SET_LOADING'; payload: boolean }
+  | { type: 'SET_CART'; payload: Cart | null }
+  | { type: 'ADD_TO_CART_SUCCESS'; payload: Cart }
+  | { type: 'UPDATE_QUANTITY_SUCCESS'; payload: Cart }
+  | { type: 'REMOVE_FROM_CART_SUCCESS'; payload: Cart }
+  | { type: 'CLEAR_CART_SUCCESS'; payload: Cart }
+  | { type: 'TOGGLE_ITEM_SELECTION'; payload: string }
+  | { type: 'SELECT_ALL_ITEMS'; payload: boolean }
+  | { type: 'SET_SELECTED_ITEMS'; payload: string[] }
+  | { type: 'ADD_TO_WISHLIST'; payload: string }
+  | { type: 'REMOVE_FROM_WISHLIST'; payload: string }
+  | { type: 'LOAD_WISHLIST_FROM_STORAGE'; payload: string[] }
+
+// Initial state
+const initialState: CartState = {
+  cart: null,
+  selectedItems: new Set(),
+  wishlist: new Set(),
+  isLoading: false,
+}
+
+// Cart reducer
+function cartReducer(state: CartState, action: CartAction): CartState {
+  switch (action.type) {
+    case 'SET_LOADING':
+      return { ...state, isLoading: action.payload }
+
+    case 'SET_CART':
+      return { ...state, cart: action.payload }
+
+    case 'ADD_TO_CART_SUCCESS':
+      return { ...state, cart: action.payload }
+
+    case 'UPDATE_QUANTITY_SUCCESS':
+      return { ...state, cart: action.payload }
+
+    case 'REMOVE_FROM_CART_SUCCESS':
+      return { ...state, cart: action.payload }
+
+    case 'CLEAR_CART_SUCCESS':
+      return { ...state, cart: action.payload }
+
+    case 'TOGGLE_ITEM_SELECTION': {
+      const newSelected = new Set(state.selectedItems)
+      if (newSelected.has(action.payload)) {
+        newSelected.delete(action.payload)
+      } else {
+        newSelected.add(action.payload)
+      }
+      return { ...state, selectedItems: newSelected }
+    }
+
+    case 'SELECT_ALL_ITEMS': {
+      if (action.payload && state.cart) {
+        const allKeys = state.cart.items.map((item) => createSelectionKey(item.productId, item.unit))
+        return { ...state, selectedItems: new Set(allKeys) }
+      } else {
+        return { ...state, selectedItems: new Set() }
+      }
+    }
+
+    case 'SET_SELECTED_ITEMS': {
+      return { ...state, selectedItems: new Set(action.payload) }
+    }
+
+    case 'ADD_TO_WISHLIST':
+      return {
+        ...state,
+        wishlist: new Set([...state.wishlist, action.payload]),
+      }
+
+    case 'REMOVE_FROM_WISHLIST': {
+      const newWishlist = new Set(state.wishlist)
+      newWishlist.delete(action.payload)
+      return {
+        ...state,
+        wishlist: newWishlist,
+      }
+    }
+
+    case 'LOAD_WISHLIST_FROM_STORAGE':
+      return {
+        ...state,
+        wishlist: new Set(action.payload),
+      }
+
+    default:
+      return state
+  }
+}
+
+// Helper to create unique selection key
+export const createSelectionKey = (productId: string, unit?: string) => {
+  return unit ? `${productId}-${unit}` : productId
+}
+
+// Cart context interface
+interface CartContextType {
+  state: CartState
+  addToCart: (product: Product, quantity?: number, unit?: string, price?: number) => Promise<void>
+  updateQuantity: (productId: string, quantity: number, unit?: string) => Promise<void>
+  updateUnit: (productId: string, unit: string, currentUnit?: string) => Promise<void>
+  removeFromCart: (productId: string, unit?: string) => Promise<void>
+  clearCart: () => Promise<void>
+  refreshCart: () => Promise<void>
+  toggleItemSelection: (productId: string, unit?: string) => void
+  selectAllItems: (selected: boolean) => void
+  toggleWishlist: (productId: string, productName: string) => boolean
+  isInWishlist: (productId: string) => boolean
+  getCartItemsCount: () => number
+  getSelectedItemsCount: () => number
+  getSelectedItemsTotal: () => number
+  moveToWishlist: (productId: string, productName: string) => void
+  addToWishlistOnly: (productId: string, productName: string) => void
+  buyNow: (product: Product, quantity?: number, unit?: string, price?: number) => void
+  showPrescriptionWarning: (productName: string) => void
+  showOutOfStockWarning: (productName: string) => void
+  showOrderCreatedSuccess: (orderId: string) => void
+}
+
+// Create context
+const CartContext = createContext<CartContextType | undefined>(undefined)
+
+// Cart provider component
+export function CartProvider({ children }: { children: ReactNode }) {
+  const [state, dispatch] = useReducer(cartReducer, initialState)
+
+  // Load cart data from API on mount
+  useEffect(() => {
+    const loadCart = async () => {
+      // Check if user is logged in before fetching cart
+      const token = localStorage.getItem('medispace_access_token')
+      if (!token) {
+        // User not logged in, set empty cart
+        dispatch({ type: 'SET_CART', payload: null })
+        return
+      }
+
+      try {
+        dispatch({ type: 'SET_LOADING', payload: true })
+        const cart = await cartService.getCart()
+        dispatch({ type: 'SET_CART', payload: cart })
+
+        // Restore selectedItems from sessionStorage if available
+        const savedSelections = sessionStorage.getItem('medispace_selected_items')
+        if (savedSelections && cart && cart.items.length > 0) {
+          try {
+            const selections = JSON.parse(savedSelections) as string[]
+            // Filter to only include items that still exist in cart
+            const validSelections = selections.filter(key =>
+              cart.items.some(item => createSelectionKey(item.productId, item.unit) === key)
+            )
+            if (validSelections.length > 0) {
+              dispatch({ type: 'SET_SELECTED_ITEMS', payload: validSelections })
+            }
+          } catch {
+            // Ignore parse errors
+          }
+        }
+      } catch (error) {
+        // For guest users or when API fails, set empty cart
+
+        dispatch({ type: 'SET_CART', payload: null })
+      } finally {
+        dispatch({ type: 'SET_LOADING', payload: false })
+      }
+    }
+
+    loadCart()
+  }, [])
+
+  // Listen for authentication changes via localStorage events
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'medispace_user_data' || e.key === 'medispace_access_token') {
+        // User logged in or out, reload cart
+        const loadCart = async () => {
+          // Check if user is logged in
+          const token = localStorage.getItem('medispace_access_token')
+          if (!token) {
+            // User logged out, clear cart
+            dispatch({ type: 'SET_CART', payload: null })
+            return
+          }
+
+          try {
+            dispatch({ type: 'SET_LOADING', payload: true })
+            const cart = await cartService.getCart()
+            dispatch({ type: 'SET_CART', payload: cart })
+            // Don't auto-select items
+          } catch (error) {
+
+            dispatch({ type: 'SET_CART', payload: null })
+          } finally {
+            dispatch({ type: 'SET_LOADING', payload: false })
+          }
+        }
+        loadCart()
+      }
+    }
+
+    // Listen for storage changes (works across tabs)
+    window.addEventListener('storage', handleStorageChange)
+
+    // Also listen for custom auth events (for same-tab changes)
+    const handleAuthChange = () => {
+      const loadCart = async () => {
+        // Check if user is logged in
+        const token = localStorage.getItem('medispace_access_token')
+        if (!token) {
+          // User logged out, clear cart
+          dispatch({ type: 'SET_CART', payload: null })
+          return
+        }
+
+        try {
+          dispatch({ type: 'SET_LOADING', payload: true })
+          const cart = await cartService.getCart()
+          dispatch({ type: 'SET_CART', payload: cart })
+          // Don't auto-select items
+        } catch (error) {
+
+          dispatch({ type: 'SET_CART', payload: null })
+        } finally {
+          dispatch({ type: 'SET_LOADING', payload: false })
+        }
+      }
+      loadCart()
+    }
+
+    window.addEventListener('auth-changed', handleAuthChange)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('auth-changed', handleAuthChange)
+    }
+  }, [])
+
+  // Load wishlist from localStorage
+  useEffect(() => {
+    const savedWishlist = localStorage.getItem('medispace_wishlist')
+    if (savedWishlist) {
+      try {
+        const wishlistData = JSON.parse(savedWishlist)
+        dispatch({ type: 'LOAD_WISHLIST_FROM_STORAGE', payload: wishlistData })
+      } catch (error) {
+
+      }
+    }
+  }, [])
+
+  // Save wishlist to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('medispace_wishlist', JSON.stringify([...state.wishlist]))
+  }, [state.wishlist])
+
+  // Cart actions
+  const addToCart = async (product: Product, quantity: number = 1, unit?: string, price?: number) => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true })
+      const request: AddToCartRequest = {
+        productId: product._id,
+        quantity,
+        unit,
+        price,
+      }
+      const updatedCart = await cartService.addToCart(request)
+      dispatch({ type: 'ADD_TO_CART_SUCCESS', payload: updatedCart })
+
+      // Auto-select the new item
+      dispatch({ type: 'TOGGLE_ITEM_SELECTION', payload: product._id })
+
+      toast.success('Đã thêm vào giỏ hàng', {
+        description: `"${product.name}" (x${quantity})`,
+        duration: 3000,
+        icon: <ShoppingCart className='w-5 h-5 text-blue-600' />,
+        action: {
+          label: 'Xem giỏ hàng',
+          onClick: () => (window.location.href = '/cart'),
+        },
+      })
+    } catch (error) {
+      const axiosError = error as { response?: { data?: { message?: string } } }
+      const errorMessage = axiosError?.response?.data?.message || 'Vui lòng thử lại sau.'
+
+      toast.error('Không thể thêm vào giỏ hàng', {
+        description: errorMessage,
+        duration: 3000,
+      })
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false })
+    }
+  }
+
+  const updateQuantity = async (productId: string, quantity: number) => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true })
+      const request: UpdateCartItemRequest = { quantity }
+      const updatedCart = await cartService.updateCartItem(productId, request)
+      dispatch({ type: 'UPDATE_QUANTITY_SUCCESS', payload: updatedCart })
+    } catch (error) {
+
+      toast.error('Không thể cập nhật số lượng', {
+        description: 'Vui lòng thử lại sau.',
+        duration: 3000,
+      })
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false })
+    }
+  }
+
+  const updateUnit = async (productId: string, unit: string) => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true })
+      const updatedCart = await cartService.updateCartItemUnit(productId, unit)
+      dispatch({ type: 'UPDATE_QUANTITY_SUCCESS', payload: updatedCart })
+      toast.success('Đã cập nhật đơn vị', {
+        description: `Đã đổi sang ${unit}`,
+        duration: 2000,
+      })
+    } catch (error) {
+      toast.error('Không thể cập nhật đơn vị', {
+        description: 'Vui lòng thử lại sau.',
+        duration: 3000,
+      })
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false })
+    }
+  }
+
+  const removeFromCart = async (productId: string, unit?: string) => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true })
+      const updatedCart = await cartService.removeFromCart(productId, unit)
+      dispatch({ type: 'REMOVE_FROM_CART_SUCCESS', payload: updatedCart })
+      // Remove from selected items
+      const key = createSelectionKey(productId, unit)
+      dispatch({ type: 'TOGGLE_ITEM_SELECTION', payload: key }) // This toggles, but we want to ensure remove. Ideally logic handles check.
+      // Better: check if selected, then toggle. But toggle logic is simple.
+      // If the item is gone from cart, validation effect in ShoppingCartPage will clean it up anyway.
+    } catch (error) {
+
+      toast.error('Không thể xóa sản phẩm', {
+        description: 'Vui lòng thử lại sau.',
+        duration: 3000,
+      })
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false })
+    }
+  }
+
+  const clearCart = async () => {
+    try {
+      await cartService.clearCart()
+      dispatch({ type: 'SET_CART', payload: null })
+      toast.success('Đã xóa giỏ hàng')
+    } catch (error) {
+      toast.error('Không thể xóa giỏ hàng')
+    }
+  }
+
+  const refreshCart = async () => {
+    try {
+      const token = localStorage.getItem('medispace_access_token')
+      if (!token) {
+        dispatch({ type: 'SET_CART', payload: null })
+        return
+      }
+
+      const cart = await cartService.getCart()
+      dispatch({ type: 'SET_CART', payload: cart })
+      // Don't auto-select items when refreshing cart
+      // User should manually select items they want to checkout
+    } catch (error) {
+      // Silently fail, don't show error to user
+    }
+  }
+
+  const toggleItemSelection = (productId: string, unit?: string) => {
+    const key = createSelectionKey(productId, unit)
+
+    // Check if this action would result in NO items selected
+    // If user is deselecting the last selected item, we just allow it
+    // The selection validation happens at checkout time
+
+    dispatch({ type: 'TOGGLE_ITEM_SELECTION', payload: key })
+
+    // Save to sessionStorage after toggle
+    const newSelected = new Set(state.selectedItems)
+    if (newSelected.has(key)) {
+      newSelected.delete(key)
+    } else {
+      newSelected.add(key)
+    }
+    sessionStorage.setItem('medispace_selected_items', JSON.stringify([...newSelected]))
+  }
+
+  const selectAllItems = (selected: boolean) => {
+    dispatch({ type: 'SELECT_ALL_ITEMS', payload: selected })
+
+    // Save to sessionStorage
+    if (selected && state.cart) {
+      const allKeys = state.cart.items.map((item) => createSelectionKey(item.productId, item.unit))
+      sessionStorage.setItem('medispace_selected_items', JSON.stringify(allKeys))
+    } else {
+      sessionStorage.setItem('medispace_selected_items', JSON.stringify([]))
+    }
+  }
+
+  const toggleWishlist = (productId: string, productName: string): boolean => {
+    const isInWishlist = state.wishlist.has(productId)
+
+    if (isInWishlist) {
+      dispatch({ type: 'REMOVE_FROM_WISHLIST', payload: productId })
+      toast.info('Đã xóa khỏi yêu thích', {
+        description: `"${productName}"`,
+        duration: 2500,
+        icon: <Heart className='w-5 h-5 text-gray-400' />,
+      })
+      return false
+    } else {
+      dispatch({ type: 'ADD_TO_WISHLIST', payload: productId })
+      toast.success('Đã thêm vào yêu thích', {
+        description: `"${productName}"`,
+        duration: 2500,
+        icon: <Heart className='w-5 h-5 text-red-500 fill-red-500' />,
+        action: {
+          label: 'Xem danh sách',
+          onClick: () => (window.location.href = '/account/wishlist'),
+        },
+      })
+      return true
+    }
+  }
+
+  const isInWishlist = (productId: string): boolean => {
+    return state.wishlist.has(productId)
+  }
+
+  const getCartItemsCount = (): number => {
+    return state.cart?.itemCount || 0
+  }
+
+  const getSelectedItemsCount = (): number => {
+    return state.selectedItems.size
+  }
+
+  const getSelectedItemsTotal = (): number => {
+    if (!state.cart) return 0
+    return state.cart.items
+      .filter((item) => state.selectedItems.has(createSelectionKey(item.productId, item.unit)))
+      .reduce((total, item) => total + item.totalPrice, 0)
+  }
+
+  const moveToWishlist = (productId: string, productName: string) => {
+    // Remove from cart
+    removeFromCart(productId)
+
+    // Add to wishlist
+    dispatch({ type: 'ADD_TO_WISHLIST', payload: productId })
+
+    toast.info('Đã chuyển sang yêu thích', {
+      description: `"${productName}" đã được chuyển từ giỏ hàng sang danh sách yêu thích`,
+      duration: 3000,
+      icon: <Heart className='w-5 h-5 text-red-500 fill-red-500' />,
+      action: {
+        label: 'Hoàn tác',
+        onClick: () => {
+          // Undo: remove from wishlist, add back to cart
+          dispatch({ type: 'REMOVE_FROM_WISHLIST', payload: productId })
+          // Note: We can't easily add back to cart without product data
+          toast.success('Đã hoàn tác', {
+            description: `"${productName}" đã được xóa khỏi yêu thích`,
+            duration: 2000,
+          })
+        },
+      },
+    })
+  }
+
+  const addToWishlistOnly = (productId: string, productName: string) => {
+    dispatch({ type: 'ADD_TO_WISHLIST', payload: productId })
+
+    toast.success('Đã thêm vào yêu thích', {
+      description: `"${productName}" đã được thêm vào danh sách yêu thích`,
+      duration: 3000,
+      icon: <Heart className='w-5 h-5 text-red-500 fill-red-500' />,
+      action: {
+        label: 'Xem danh sách',
+        onClick: () => (window.location.href = '/account/wishlist'),
+      },
+    })
+  }
+
+  const buyNow = (product: Product, quantity: number = 1, unit?: string, price?: number) => {
+    // Navigate to checkout directly with query params for Buy Now mode
+    // This allows checkout without adding item to cart
+    const params = new URLSearchParams()
+    params.set('mode', 'buy_now')
+    params.set('productId', product._id)
+    params.set('quantity', quantity.toString())
+    if (unit) params.set('unit', unit)
+
+    window.location.href = `/cart/checkout?${params.toString()}`
+  }
+
+  const showPrescriptionWarning = (productName: string) => {
+    toast.warning('Cần kê đơn thuốc', {
+      description: `"${productName}" yêu cầu đơn thuốc từ bác sĩ. Vui lòng tải lên đơn thuốc hoặc tư vấn dược sĩ.`,
+      duration: 3000,
+      icon: <AlertCircle className='w-5 h-5 text-orange-600' />,
+      action: {
+        label: 'Tư vấn ngay',
+        onClick: () => (window.location.href = '/contact'),
+      },
+    })
+  }
+
+  const showOutOfStockWarning = (productName: string) => {
+    toast.error('Sản phẩm hết hàng', {
+      description: `"${productName}" tạm thời hết hàng. Chúng tôi sẽ thông báo khi có hàng trở lại.`,
+      duration: 4000,
+      icon: <Package className='w-5 h-5 text-red-600' />,
+      action: {
+        label: 'Nhận thông báo',
+        onClick: () => {
+          toast.success('Đã đăng ký nhận thông báo', {
+            description: 'Chúng tôi sẽ email cho bạn khi sản phẩm có hàng trở lại',
+            duration: 3000,
+            icon: <CheckCircle className='w-5 h-5 text-green-600' />,
+          })
+        },
+      },
+    })
+  }
+
+  const showOrderCreatedSuccess = (orderId: string) => {
+    toast.success('Đơn hàng đã được tạo', {
+      description: `Mã đơn hàng: ${orderId}`,
+      duration: 3000,
+      icon: <CheckCircle className='w-5 h-5 text-green-600' />,
+      action: {
+        label: 'Xem đơn hàng',
+        onClick: () => (window.location.href = `/account/orders/${orderId}`),
+      },
+    })
+  }
+
+  const value: CartContextType = {
+    state,
+    addToCart,
+    updateQuantity,
+    updateUnit,
+    removeFromCart,
+    clearCart,
+    refreshCart,
+    toggleItemSelection,
+    selectAllItems,
+    toggleWishlist,
+    isInWishlist,
+    getCartItemsCount,
+    getSelectedItemsCount,
+    getSelectedItemsTotal,
+    moveToWishlist,
+    addToWishlistOnly,
+    buyNow,
+    showPrescriptionWarning,
+    showOutOfStockWarning,
+    showOrderCreatedSuccess,
+  }
+
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>
+}
+
+// Custom hook to use cart context
+export function useCart() {
+  const context = useContext(CartContext)
+  if (context === undefined) {
+    throw new Error('useCart must be used within a CartProvider')
+  }
+  return context
+}

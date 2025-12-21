@@ -1,3 +1,4 @@
+
 .DS_Store
 /node_modules/
 
@@ -7,3 +8,5 @@
 
 # Custom ignore
 README.txt
+
+.env
