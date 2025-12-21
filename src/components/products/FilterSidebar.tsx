@@ -123,7 +123,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
     <div className='space-y-4'>
       <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
         <CardHeader className='pb-0'>
-          <CardTitle className='text-blue-800 flex items-center justify-between'>
+          <CardTitle className='text-blue-800 text-xl font-bold flex items-center justify-between'>
             Bộ lọc sản phẩm
             {hasActiveFilters && (
               <Button variant='ghost' size='sm' onClick={clearFilters} className='text-gray-500 hover:text-red-500'>
@@ -255,23 +255,25 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
               />
               <div className='grid grid-cols-2 gap-1'>
                 <Input
-                  type='number'
-                  value={filters.priceRange?.[0] || 0}
-                  onChange={(e) => handlePriceRangeChange([parseInt(e.target.value) || 0, filters.priceRange?.[1] || 1000000])}
+                  type='text'
+                  value={new Intl.NumberFormat('vi-VN').format(filters.priceRange?.[0] || 0)}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value.replace(/\./g, '')) || 0
+                    handlePriceRangeChange([value, filters.priceRange?.[1] || 1000000])
+                  }}
                   placeholder='Từ'
                   className='h-8 text-xs border-blue-200 focus:border-blue-500'
                 />
                 <Input
-                  type='number'
-                  value={filters.priceRange?.[1] || 1000000}
-                  onChange={(e) => handlePriceRangeChange([filters.priceRange?.[0] || 0, parseInt(e.target.value) || 1000000])}
+                  type='text'
+                  value={new Intl.NumberFormat('vi-VN').format(filters.priceRange?.[1] || 1000000)}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value.replace(/\./g, '')) || 0
+                    handlePriceRangeChange([filters.priceRange?.[0] || 0, value])
+                  }}
                   placeholder='Đến'
                   className='h-8 text-xs border-blue-200 focus:border-blue-500'
                 />
-              </div>
-              <div className='text-xs text-gray-600 leading-tight'>
-                {new Intl.NumberFormat('vi-VN').format(filters.priceRange?.[0] || 0)}đ -{' '}
-                {new Intl.NumberFormat('vi-VN').format(filters.priceRange?.[1] || 1000000)}đ
               </div>
             </div>
           </div>

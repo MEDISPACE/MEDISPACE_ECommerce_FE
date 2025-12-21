@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useSearchParams } from 'react-router'
 import type { Product, ProductFilter } from '~/types/product'
+import { getProductPrice } from '~/utils/priceUtils'
 
 interface UseProductListingOptions {
   products: Product[]
@@ -106,7 +107,7 @@ export function useProductListing({
       }
 
       // Price filter
-      const productPrice = product.price || 0
+      const productPrice = getProductPrice(product)
       if (productPrice < (filters.priceRange?.[0] || 0) || productPrice > (filters.priceRange?.[1] || 1000000)) {
         return false
       }
@@ -135,9 +136,9 @@ export function useProductListing({
     return [...filteredProducts].sort((a, b) => {
       switch (sortBy) {
         case 'price-asc':
-          return (a.price || 0) - (b.price || 0)
+          return getProductPrice(a) - getProductPrice(b)
         case 'price-desc':
-          return (b.price || 0) - (a.price || 0)
+          return getProductPrice(b) - getProductPrice(a)
         case 'rating':
           return (b.rating || 0) - (a.rating || 0)
         case 'bestseller':
