@@ -311,6 +311,7 @@ export function CheckoutPage() {
         shippingAddress: addressObj,
         paymentMethod: paymentMethodMap[paymentMethod] || 'cod',
         shippingMethod: shippingMethod,
+        shippingFee: shippingFee, // Pass calculated shipping fee to backend
         estimatedDeliveryDate,
         notes: orderNotes,
       }
