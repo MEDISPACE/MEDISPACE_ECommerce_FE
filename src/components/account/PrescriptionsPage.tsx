@@ -244,7 +244,7 @@ export function PrescriptionsPage() {
           )}
 
           {prescription.status === 'rejected' && (
-            <Link to={`/prescription/upload?resubmit=${prescription.id}`}>
+            <Link to={`/upload-prescription?resubmit=${prescription.id}`}>
               <Button size='sm' variant='outline'>
                 <Upload className='w-4 h-4 mr-1' />
                 Gửi lại
@@ -265,112 +265,111 @@ export function PrescriptionsPage() {
   ]
 
   return (
-    
-      <div className='space-y-6'>
-        {/* Header */}
-        <div className='flex items-center justify-between'>
-          <div>
-            <h1 className='text-2xl font-bold text-blue-800 mb-2'>Lịch sử đơn thuốc</h1>
-            <p className='text-gray-600'>Quản lý và theo dõi tất cả đơn thuốc của bạn</p>
-          </div>
 
-          <Link to='/prescription/upload'>
-            <Button className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600'>
-              <Upload className='w-4 h-4 mr-2' />
-              Gửi đơn thuốc mới
-            </Button>
-          </Link>
+    <div className='space-y-6'>
+      {/* Header */}
+      <div className='flex items-center justify-between'>
+        <div>
+          <h1 className='text-2xl font-bold text-blue-800 mb-2'>Lịch sử đơn thuốc</h1>
+          <p className='text-gray-600'>Quản lý và theo dõi tất cả đơn thuốc của bạn</p>
         </div>
 
-        {/* Status Tabs */}
-        <Tabs value={selectedTab} onValueChange={setSelectedTab} className='w-full'>
-          <TabsList className='grid w-full grid-cols-5 bg-blue-50'>
-            {tabs.map((tab) => (
-              <TabsTrigger key={tab.value} value={tab.value} className='text-sm'>
-                {tab.label}
-                {tab.count > 0 && (
-                  <span className='ml-2 bg-blue-600 text-white rounded-full px-2 py-0.5 text-xs'>{tab.count}</span>
-                )}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-
-          {/* Prescriptions List */}
-          <div className='mt-6'>
-            {filteredPrescriptions.length > 0 ? (
-              <div className='space-y-6'>
-                {filteredPrescriptions.map((prescription) => (
-                  <PrescriptionCard key={prescription.id} prescription={prescription} />
-                ))}
-
-                {/* Load More or Pagination */}
-                {filteredPrescriptions.length > 5 && (
-                  <div className='flex justify-center pt-6'>
-                    <Button variant='outline'>Xem thêm</Button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <EmptyState
-                icon={<FileText className='w-16 h-16' />}
-                title={
-                  selectedTab === 'all'
-                    ? 'Chưa có đơn thuốc nào'
-                    : `Không có đơn thuốc ${
-                        selectedTab === 'pending'
-                          ? 'chờ xử lý'
-                          : selectedTab === 'approved'
-                            ? 'đã xác nhận'
-                            : selectedTab === 'rejected'
-                              ? 'bị từ chối'
-                              : 'hoàn thành'
-                      }`
-                }
-                description={
-                  selectedTab === 'all'
-                    ? 'Bạn chưa gửi đơn thuốc nào. Hãy upload đơn thuốc để được dược sĩ tư vấn và tạo đơn hàng.'
-                    : `Hiện tại không có đơn thuốc nào ở trạng thái này.`
-                }
-                actionLabel='Gửi đơn thuốc mới'
-                actionUrl='/prescription/upload'
-              />
-            )}
-          </div>
-        </Tabs>
-
-        {/* Quick Stats */}
-        {prescriptions.length > 0 && (
-          <div className='grid grid-cols-1 md:grid-cols-4 gap-4 pt-6 border-t border-gray-100'>
-            <Card className='border-blue-100'>
-              <CardContent className='p-4 text-center'>
-                <div className='text-2xl font-bold text-blue-600'>{tabCounts.all}</div>
-                <div className='text-sm text-gray-600'>Tổng đơn thuốc</div>
-              </CardContent>
-            </Card>
-
-            <Card className='border-blue-100'>
-              <CardContent className='p-4 text-center'>
-                <div className='text-2xl font-bold text-yellow-600'>{tabCounts.pending}</div>
-                <div className='text-sm text-gray-600'>Chờ xử lý</div>
-              </CardContent>
-            </Card>
-
-            <Card className='border-blue-100'>
-              <CardContent className='p-4 text-center'>
-                <div className='text-2xl font-bold text-green-600'>{tabCounts.completed}</div>
-                <div className='text-sm text-gray-600'>Hoàn thành</div>
-              </CardContent>
-            </Card>
-
-            <Card className='border-blue-100'>
-              <CardContent className='p-4 text-center'>
-                <div className='text-2xl font-bold text-red-600'>{tabCounts.rejected}</div>
-                <div className='text-sm text-gray-600'>Từ chối</div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+        <Link to='/upload-prescription'>
+          <Button className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600'>
+            <Upload className='w-4 h-4 mr-2' />
+            Gửi đơn thuốc mới
+          </Button>
+        </Link>
       </div>
-    
+
+      {/* Status Tabs */}
+      <Tabs value={selectedTab} onValueChange={setSelectedTab} className='w-full'>
+        <TabsList className='grid w-full grid-cols-5 bg-blue-50'>
+          {tabs.map((tab) => (
+            <TabsTrigger key={tab.value} value={tab.value} className='text-sm'>
+              {tab.label}
+              {tab.count > 0 && (
+                <span className='ml-2 bg-blue-600 text-white rounded-full px-2 py-0.5 text-xs'>{tab.count}</span>
+              )}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+
+        {/* Prescriptions List */}
+        <div className='mt-6'>
+          {filteredPrescriptions.length > 0 ? (
+            <div className='space-y-6'>
+              {filteredPrescriptions.map((prescription) => (
+                <PrescriptionCard key={prescription.id} prescription={prescription} />
+              ))}
+
+              {/* Load More or Pagination */}
+              {filteredPrescriptions.length > 5 && (
+                <div className='flex justify-center pt-6'>
+                  <Button variant='outline'>Xem thêm</Button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <EmptyState
+              icon={<FileText className='w-16 h-16' />}
+              title={
+                selectedTab === 'all'
+                  ? 'Chưa có đơn thuốc nào'
+                  : `Không có đơn thuốc ${selectedTab === 'pending'
+                    ? 'chờ xử lý'
+                    : selectedTab === 'approved'
+                      ? 'đã xác nhận'
+                      : selectedTab === 'rejected'
+                        ? 'bị từ chối'
+                        : 'hoàn thành'
+                  }`
+              }
+              description={
+                selectedTab === 'all'
+                  ? 'Bạn chưa gửi đơn thuốc nào. Hãy upload đơn thuốc để được dược sĩ tư vấn và tạo đơn hàng.'
+                  : `Hiện tại không có đơn thuốc nào ở trạng thái này.`
+              }
+              actionLabel='Gửi đơn thuốc mới'
+              actionUrl='/upload-prescription'
+            />
+          )}
+        </div>
+      </Tabs>
+
+      {/* Quick Stats */}
+      {prescriptions.length > 0 && (
+        <div className='grid grid-cols-1 md:grid-cols-4 gap-4 pt-6 border-t border-gray-100'>
+          <Card className='border-blue-100'>
+            <CardContent className='p-4 text-center'>
+              <div className='text-2xl font-bold text-blue-600'>{tabCounts.all}</div>
+              <div className='text-sm text-gray-600'>Tổng đơn thuốc</div>
+            </CardContent>
+          </Card>
+
+          <Card className='border-blue-100'>
+            <CardContent className='p-4 text-center'>
+              <div className='text-2xl font-bold text-yellow-600'>{tabCounts.pending}</div>
+              <div className='text-sm text-gray-600'>Chờ xử lý</div>
+            </CardContent>
+          </Card>
+
+          <Card className='border-blue-100'>
+            <CardContent className='p-4 text-center'>
+              <div className='text-2xl font-bold text-green-600'>{tabCounts.completed}</div>
+              <div className='text-sm text-gray-600'>Hoàn thành</div>
+            </CardContent>
+          </Card>
+
+          <Card className='border-blue-100'>
+            <CardContent className='p-4 text-center'>
+              <div className='text-2xl font-bold text-red-600'>{tabCounts.rejected}</div>
+              <div className='text-sm text-gray-600'>Từ chối</div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </div>
+
   )
 }
