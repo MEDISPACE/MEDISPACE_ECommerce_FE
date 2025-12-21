@@ -22,7 +22,6 @@ export enum PaymentStatus {
 export enum PaymentMethod {
   COD = 'cod',
   VNPay = 'vnpay',
-  Momo = 'momo',
   Banking = 'banking',
   Credit = 'credit',
 }

@@ -24,6 +24,7 @@ type CartAction =
   | { type: 'CLEAR_CART_SUCCESS'; payload: Cart }
   | { type: 'TOGGLE_ITEM_SELECTION'; payload: string }
   | { type: 'SELECT_ALL_ITEMS'; payload: boolean }
+  | { type: 'SET_SELECTED_ITEMS'; payload: string[] }
   | { type: 'ADD_TO_WISHLIST'; payload: string }
   | { type: 'REMOVE_FROM_WISHLIST'; payload: string }
   | { type: 'LOAD_WISHLIST_FROM_STORAGE'; payload: string[] }
@@ -74,6 +75,10 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       } else {
         return { ...state, selectedItems: new Set() }
       }
+    }
+
+    case 'SET_SELECTED_ITEMS': {
+      return { ...state, selectedItems: new Set(action.payload) }
     }
 
     case 'ADD_TO_WISHLIST':
@@ -153,9 +158,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
         dispatch({ type: 'SET_LOADING', payload: true })
         const cart = await cartService.getCart()
         dispatch({ type: 'SET_CART', payload: cart })
-        // Auto-select all items
-        if (cart && cart.items.length > 0) {
-          dispatch({ type: 'SELECT_ALL_ITEMS', payload: true })
+
+        // Restore selectedItems from sessionStorage if available
+        const savedSelections = sessionStorage.getItem('medispace_selected_items')
+        if (savedSelections && cart && cart.items.length > 0) {
+          try {
+            const selections = JSON.parse(savedSelections) as string[]
+            // Filter to only include items that still exist in cart
+            const validSelections = selections.filter(key =>
+              cart.items.some(item => createSelectionKey(item.productId, item.unit) === key)
+            )
+            if (validSelections.length > 0) {
+              dispatch({ type: 'SET_SELECTED_ITEMS', payload: validSelections })
+            }
+          } catch {
+            // Ignore parse errors
+          }
         }
       } catch (error) {
         // For guest users or when API fails, set empty cart
@@ -187,10 +205,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             dispatch({ type: 'SET_LOADING', payload: true })
             const cart = await cartService.getCart()
             dispatch({ type: 'SET_CART', payload: cart })
-            // Auto-select all items
-            if (cart && cart.items.length > 0) {
-              dispatch({ type: 'SELECT_ALL_ITEMS', payload: true })
-            }
+            // Don't auto-select items
           } catch (error) {
 
             dispatch({ type: 'SET_CART', payload: null })
@@ -220,10 +235,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           dispatch({ type: 'SET_LOADING', payload: true })
           const cart = await cartService.getCart()
           dispatch({ type: 'SET_CART', payload: cart })
-          // Auto-select all items
-          if (cart && cart.items.length > 0) {
-            dispatch({ type: 'SELECT_ALL_ITEMS', payload: true })
-          }
+          // Don't auto-select items
         } catch (error) {
 
           dispatch({ type: 'SET_CART', payload: null })
@@ -390,10 +402,27 @@ export function CartProvider({ children }: { children: ReactNode }) {
     // The selection validation happens at checkout time
 
     dispatch({ type: 'TOGGLE_ITEM_SELECTION', payload: key })
+
+    // Save to sessionStorage after toggle
+    const newSelected = new Set(state.selectedItems)
+    if (newSelected.has(key)) {
+      newSelected.delete(key)
+    } else {
+      newSelected.add(key)
+    }
+    sessionStorage.setItem('medispace_selected_items', JSON.stringify([...newSelected]))
   }
 
   const selectAllItems = (selected: boolean) => {
     dispatch({ type: 'SELECT_ALL_ITEMS', payload: selected })
+
+    // Save to sessionStorage
+    if (selected && state.cart) {
+      const allKeys = state.cart.items.map((item) => createSelectionKey(item.productId, item.unit))
+      sessionStorage.setItem('medispace_selected_items', JSON.stringify(allKeys))
+    } else {
+      sessionStorage.setItem('medispace_selected_items', JSON.stringify([]))
+    }
   }
 
   const toggleWishlist = (productId: string, productName: string): boolean => {

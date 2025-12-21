@@ -12,10 +12,21 @@ import {
   CheckCircle,
   Clock,
   X,
+  AlertTriangle,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Button } from '../ui/button'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../ui/alert-dialog'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Badge } from '../ui/badge'
 import { Separator } from '../ui/separator'
@@ -34,6 +45,7 @@ export function OrderDetailPage() {
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false)
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
   const [selectedProductForReview, setSelectedProductForReview] = useState<OrderItem | null>(null)
 
   const fetchOrder = useCallback(async () => {
@@ -48,7 +60,7 @@ export function OrderDetailPage() {
           id: fetchedOrder.id,
           customerId: fetchedOrder.userId,
           orderNumber: fetchedOrder.orderNumber,
-          status: (fetchedOrder.status === 'pending' ? 'pending_payment' : fetchedOrder.status === 'shipped' ? 'shipping' : fetchedOrder.status === 'confirmed' ? 'confirmed' : fetchedOrder.status === 'processing' ? 'processing' : fetchedOrder.status === 'delivered' ? 'delivered' : fetchedOrder.status === 'cancelled' ? 'cancelled' : 'pending_payment') as 'pending_payment' | 'confirmed' | 'processing' | 'preparing' | 'shipping' | 'delivered' | 'cancelled',
+          status: fetchedOrder.status as 'pending' | 'pending_payment' | 'confirmed' | 'processing' | 'preparing' | 'shipping' | 'delivered' | 'cancelled',
           items: fetchedOrder.items.map(item => ({
             id: item.id,
             productId: item.productId,
@@ -83,6 +95,7 @@ export function OrderDetailPage() {
           updatedAt: fetchedOrder.updatedAt,
           deliveryMethod: fetchedOrder.shippingMethod,
           notes: fetchedOrder.notes,
+          estimatedDelivery: fetchedOrder.estimatedDeliveryDate, // Add this line
           timeline: [], // TODO: Add timeline if available
         }
         setOrder(transformedOrder)
@@ -360,7 +373,7 @@ export function OrderDetailPage() {
               {order.estimatedDelivery && (
                 <div>
                   <p className='text-sm font-medium'>Dự kiến giao hàng:</p>
-                  <p className='text-sm text-gray-600'>{formatDate(order.estimatedDelivery)}</p>
+                  <p className='text-sm text-gray-600'>{order.estimatedDelivery}</p>
                 </div>
               )}
             </CardContent>
@@ -413,16 +426,7 @@ export function OrderDetailPage() {
                 <Button
                   variant='outline'
                   className='w-full !border-red-200 !text-red-600 hover:!bg-red-50 hover:!text-red-700'
-                  onClick={async () => {
-                    if (!confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')) return
-                    try {
-                      await orderService.cancelOrder(order.id)
-                      toast.success('Đã hủy đơn hàng')
-                      fetchOrder()
-                    } catch (error) {
-                      toast.error('Không thể hủy đơn hàng')
-                    }
-                  }}
+                  onClick={() => setCancelDialogOpen(true)}
                 >
                   <X className='w-4 h-4 mr-2' />
                   Hủy đơn hàng
@@ -504,6 +508,57 @@ export function OrderDetailPage() {
           }}
         />
       )}
+
+      {/* Cancel Order Confirmation Dialog */}
+      <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className='flex items-center gap-2 text-red-600'>
+              <AlertTriangle className='w-5 h-5' />
+              {order.paymentStatus === 'paid' ? 'Huỷ đơn hàng đã thanh toán?' : 'Xác nhận hủy đơn hàng'}
+            </AlertDialogTitle>
+            <AlertDialogDescription className='text-base text-gray-600 mt-2'>
+              {order.paymentStatus === 'paid' ? (
+                <span>
+                  Đơn hàng này <b>đã được thanh toán</b>. Nếu bạn hủy ngay bây giờ, <b>Medispace</b> sẽ liên hệ và hoàn tiền cho bạn trong vòng <b>72h làm việc</b>.
+                </span>
+              ) : (
+                'Bạn có chắc chắn muốn hủy đơn hàng này không? Hành động này không thể hoàn tác.'
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Không, giữ lại</AlertDialogCancel>
+            <AlertDialogAction
+              className='bg-red-600 hover:bg-red-700 text-white'
+              onClick={async () => {
+                const isPaid = order.paymentStatus === 'paid'
+                try {
+                  await orderService.cancelOrder(order.id)
+
+                  if (isPaid) {
+                    toast.success('Gửi yêu cầu hủy thành công', {
+                      description: 'Chúng tôi sẽ liên hệ trong 72h để hoàn tiền.',
+                      duration: 5000,
+                      icon: '💸'
+                    })
+                  } else {
+                    toast.success('Đã hủy đơn hàng thành công')
+                  }
+
+                  fetchOrder()
+                } catch (error) {
+                  toast.error('Không thể hủy đơn hàng')
+                } finally {
+                  setCancelDialogOpen(false)
+                }
+              }}
+            >
+              Tôi muốn hủy
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

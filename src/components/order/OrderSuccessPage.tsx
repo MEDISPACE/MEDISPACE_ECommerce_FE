@@ -22,6 +22,11 @@ export function OrderSuccessPage() {
     // Scroll to top on mount
     window.scrollTo(0, 0)
 
+    // Clear selectedItems from sessionStorage on successful payment
+    if (paymentStatus === 'success') {
+      sessionStorage.removeItem('medispace_selected_items')
+    }
+
     // Fetch order data if orderId is provided
     if (orderId) {
       fetchOrderData(orderId)
@@ -29,7 +34,7 @@ export function OrderSuccessPage() {
       setLoading(false)
       setError('Không tìm thấy mã đơn hàng')
     }
-  }, [orderId])
+  }, [orderId, paymentStatus])
 
   const fetchOrderData = async (id: string) => {
     try {
@@ -172,7 +177,6 @@ export function OrderSuccessPage() {
               <Package className='w-6 h-6 text-blue-600' />
               <span className='text-blue-900'>Thông tin đơn hàng</span>
             </div>
-            <Badge className='bg-green-100 text-green-800 border-green-200'>Đã xác nhận</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className='p-6 space-y-4'>
@@ -194,7 +198,7 @@ export function OrderSuccessPage() {
             </div>
             <div>
               <p className='text-sm text-gray-500 mb-1'>Thời gian giao hàng dự kiến</p>
-              <p className='text-gray-900'>{order.estimatedDeliveryDate || '2-3 ngày làm việc'}</p>
+              <p className='text-gray-900'>{order.estimatedDeliveryDate}</p>
             </div>
           </div>
 
@@ -257,7 +261,7 @@ export function OrderSuccessPage() {
             </div>
             <div className='flex-1'>
               <p className='text-gray-900'>
-                Đơn hàng sẽ được giao đến địa chỉ của bạn trong <strong>2-3 ngày</strong>
+                Đơn hàng sẽ được giao đến địa chỉ của bạn trong <strong>{order.estimatedDeliveryDate || '2-3 ngày'}</strong>
               </p>
             </div>
           </div>
