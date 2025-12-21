@@ -45,6 +45,7 @@ import { getDashboardStats } from '../../services/adminService'
 import { notificationService } from '../../services/notificationService'
 import { formatDistanceToNow } from 'date-fns'
 import { vi } from 'date-fns/locale'
+import faviconLogo from '../../assets/MEDISPACE_Logo_favicon.png'
 
 interface AdminLayoutProps {
   children: ReactNode
@@ -172,7 +173,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       <div className='p-6 border-b border-blue-100 flex-shrink-0'>
         <Link to='/admin/dashboard' className='flex items-center gap-3'>
           <div className='w-10 h-10 rounded-lg flex items-center justify-center shadow-lg'>
-            <img src='/src/assets/MEDISPACE_Logo_favicon.png' alt='MEDISPACE' className='w-8 h-8' />
+            <img src={faviconLogo} alt='MEDISPACE' className='w-8 h-8' />
           </div>
           <div className='flex-1'>
             <h2 className='font-semibold text-gray-900'>MEDISPACE</h2>
