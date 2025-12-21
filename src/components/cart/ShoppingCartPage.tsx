@@ -65,6 +65,30 @@ export function ShoppingCartPage() {
     fetchAddresses()
   }, [isAuthenticated])
 
+  // Validate selected items when component mounts or cart changes
+  useEffect(() => {
+    if (!cart?.items || cart.items.length === 0) {
+      // Cart is empty, clear all selections
+      selectAllItems(false)
+      return
+    }
+
+    // Check if any selected items are no longer in cart
+    const validKeys = new Set(cart.items.map(item => createSelectionKey(item.productId, item.unit)))
+    let hasInvalidSelection = false
+
+    selectedItems.forEach(key => {
+      if (!validKeys.has(key)) {
+        hasInvalidSelection = true
+      }
+    })
+
+    // If there are invalid selections, clear all and let user re-select
+    if (hasInvalidSelection) {
+      selectAllItems(false)
+    }
+  }, [cart?.items])
+
   // Handle checkout navigation
   const handleCheckout = () => {
     if (!isAuthenticated) {
@@ -82,7 +106,7 @@ export function ShoppingCartPage() {
   // Calculate totals
   const subtotal = getSelectedItemsTotal()
   const discount = 0 // No discount
-  const shippingFee = subtotal >= 300000 ? 0 : 30000
+  const shippingFee = getSelectedItemsCount() === 0 ? 0 : (subtotal >= 300000 ? 0 : 30000)
   const total = subtotal - discount + shippingFee
 
   // Handle select all
@@ -407,10 +431,10 @@ export function ShoppingCartPage() {
                   )}
 
                   <div className='flex justify-between'>
-                    <span className='text-gray-600'>Phí vận chuyển</span>
+                    <span className='text-gray-600'>Phí vận chuyển (ước tính)</span>
                     <span className='font-medium'>
                       {shippingFee === 0 ? (
-                        <span className='text-green-600'>Miễn phí</span>
+                        <span className='text-green-600'>0đ</span>
                       ) : (
                         `${new Intl.NumberFormat('vi-VN').format(shippingFee)}đ`
                       )}
@@ -427,10 +451,10 @@ export function ShoppingCartPage() {
 
                 <Button
                   className='w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white h-12 mt-4 mb-2'
-                  disabled={getSelectedItemsCount() === 0}
+                  disabled={!cart?.items || cart.items.length === 0 || getSelectedItemsCount() === 0}
                   onClick={handleCheckout}
                 >
-                  Thanh toán ({getSelectedItemsCount()})
+                  Thanh toán ({getSelectedItemsCount()} sản phẩm)
                 </Button>
 
                 <div className='text-center'>
