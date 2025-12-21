@@ -34,6 +34,7 @@ import { ChevronRight } from 'lucide-react'
 import { useCart } from '~/contexts/CartContext'
 import { useCategories } from '~/hooks/product'
 import type { Category } from '../../types/product'
+import medispaceLogo from '../../assets/MEDISPACE_Logo_Final.png'
 
 export function Header() {
   const navigate = useNavigate()
@@ -89,10 +90,9 @@ export function Header() {
       {/* Main header */}
       <div className='max-w-7xl mx-auto px-4 py-4'>
         <div className='flex items-center justify-between'>
-          {/* Logo */}
           <Link to='/' className='flex items-center group'>
             <img
-              src='/src/assets/MEDISPACE_Logo_Final.svg'
+              src={medispaceLogo}
               alt='MEDISPACE - Sức khỏe trong tầm tay'
               className='h-8 md:h-12 w-auto object-contain transition-transform group-hover:scale-105'
             />

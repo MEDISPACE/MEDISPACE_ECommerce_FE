@@ -1,11 +1,8 @@
 node_modules
-build
 .git
 .gitignore
 *.md
-.env*
 .editorconfig
 .prettier*
-.react-router
 eslint.config.js
 docs
