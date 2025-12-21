@@ -69,24 +69,27 @@ export function ShoppingCartPage() {
   // Validate selected items when component mounts or cart changes
   useEffect(() => {
     if (!cart?.items || cart.items.length === 0) {
-      // Cart is empty, clear all selections
+      // Cart is empty, clear all selections and sessionStorage
       selectAllItems(false)
+      sessionStorage.removeItem('medispace_selected_items')
       return
     }
 
     // Check if any selected items are no longer in cart
     const validKeys = new Set(cart.items.map(item => createSelectionKey(item.productId, item.unit)))
-    let hasInvalidSelection = false
+    const invalidKeys: string[] = []
 
     selectedItems.forEach(key => {
       if (!validKeys.has(key)) {
-        hasInvalidSelection = true
+        invalidKeys.push(key)
       }
     })
 
-    // If there are invalid selections, clear all and let user re-select
-    if (hasInvalidSelection) {
-      selectAllItems(false)
+    // Only remove invalid selections, keep valid ones
+    if (invalidKeys.length > 0) {
+      invalidKeys.forEach(key => {
+        toggleItemSelection(key.split('-')[0], key.includes('-') ? key.split('-').slice(1).join('-') : undefined)
+      })
     }
   }, [cart?.items])
 
@@ -101,11 +104,8 @@ export function ShoppingCartPage() {
   }
 
 
-  // Clear stale selections on mount
-  useEffect(() => {
-    // On first mount, clear all selections to avoid stale data
-    selectAllItems(false)
-  }, [])
+  // Note: Don't clear selections on mount anymore
+  // Selections are managed by CartContext and persisted in sessionStorage
 
   // Calculate if all items are selected
   const allSelected = cart?.items && cart.items.length > 0 && cart.items.every(item => selectedItems.has(createSelectionKey(item.productId, item.unit)))
