@@ -35,13 +35,6 @@ const mockPaymentMethods: PaymentMethod[] = [
     isDefault: true,
   },
   {
-    id: '2',
-    type: 'ewallet',
-    name: 'MoMo',
-    details: '0901234567',
-    isDefault: false,
-  },
-  {
     id: '3',
     type: 'bank',
     name: 'Techcombank',
@@ -51,7 +44,6 @@ const mockPaymentMethods: PaymentMethod[] = [
 ]
 
 const ewalletOptions = [
-  { value: 'momo', label: 'MoMo', icon: '💜' },
   { value: 'zalopay', label: 'ZaloPay', icon: '🔵' },
   { value: 'shopeepay', label: 'ShopeePay', icon: '🟠' },
   { value: 'vnpay', label: 'VNPay', icon: '🔴' },
