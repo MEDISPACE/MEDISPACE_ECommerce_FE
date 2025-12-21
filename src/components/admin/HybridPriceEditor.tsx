@@ -35,6 +35,7 @@ export interface PriceVariant {
     originalPrice?: number
     costPrice?: number
     isDefault: boolean
+    quantityPerUnit?: number // Số lượng đơn vị nhỏ nhất trong 1 đơn vị này
 }
 
 interface HybridPriceEditorProps {
