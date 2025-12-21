@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router'
 import {
   Plus,
@@ -35,7 +35,7 @@ import { DrugInteractionChecker } from '../products/DrugInteractionChecker'
 import { ProductNoteModal } from '../products/ProductNoteModal'
 import { ImageWithFallback } from '../shared/ImageWithFallback'
 import { toast } from 'sonner'
-import { orderService, dashboardService } from '~/services/pharmacist'
+import { orderService, dashboardService, prescriptionService } from '~/services/pharmacist'
 
 interface Product {
   id: string
@@ -101,7 +101,8 @@ const paymentMethods = [
 
 export function CreateOrderPage() {
   const [searchParams] = useSearchParams()
-  const prescriptionId = searchParams.get('prescription')
+  // Support both 'prescriptionId' and 'prescription' query params
+  const prescriptionId = searchParams.get('prescriptionId') || searchParams.get('prescription')
 
   const [orderItems, setOrderItems] = useState<OrderItem[]>([])
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
@@ -113,6 +114,7 @@ export function CreateOrderPage() {
   })
   const [searchPhone, setSearchPhone] = useState('')
   const [isSearchingCustomer, setIsSearchingCustomer] = useState(false)
+  const [isLoadingPrescription, setIsLoadingPrescription] = useState(false)
   const [selectedDelivery, setSelectedDelivery] = useState('fast')
   const [selectedPayment, setSelectedPayment] = useState('cod')
   const [orderNotes, setOrderNotes] = useState('')
@@ -140,6 +142,83 @@ export function CreateOrderPage() {
     district: '',
     province: '',
   })
+
+  // Fetch prescription data when creating order from prescription
+  useEffect(() => {
+    const fetchPrescriptionData = async () => {
+      if (!prescriptionId) return
+
+      try {
+        setIsLoadingPrescription(true)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const prescription = await prescriptionService.getById(prescriptionId) as any
+
+        if (prescription) {
+          // Extract customer info from populated prescription
+          const customer = prescription.customer
+
+          if (customer) {
+            const fullName = `${customer.firstName || ''} ${customer.lastName || ''}`.trim()
+
+            // Update customer info
+            setCustomerInfo({
+              phone: customer.phoneNumber || '',
+              name: fullName,
+              email: customer.email || '',
+              tier: 'regular',
+              totalPurchase: 0,
+              prescriptionId: prescription.prescriptionNumber || prescription._id,
+            })
+
+            // Update search phone field
+            if (customer.phoneNumber) {
+              setSearchPhone(customer.phoneNumber)
+            }
+
+            // Get default address from customer's addresses array
+            const addresses = customer.addresses || []
+            const defaultAddress = addresses.find((addr: { isDefault?: boolean }) => addr.isDefault) || addresses[0]
+
+            // Update shipping address with customer info and default address
+            setShippingAddress({
+              firstName: customer.firstName || '',
+              lastName: customer.lastName || '',
+              phone: defaultAddress?.phone || customer.phoneNumber || '',
+              email: customer.email || '',
+              address: defaultAddress?.address || '',
+              ward: defaultAddress?.ward || '',
+              district: defaultAddress?.district || '',
+              province: defaultAddress?.province || '',
+            })
+
+            toast.success(`Đã tải thông tin khách hàng: ${fullName}`)
+          } else {
+            // No customer info in prescription, just set prescription ID
+            setCustomerInfo(prev => ({
+              ...prev,
+              prescriptionId: prescription.prescriptionNumber || prescription._id,
+            }))
+            toast.info('Đã tải đơn thuốc. Vui lòng nhập thông tin khách hàng.')
+          }
+
+          // Set pharmacist notes from prescription
+          if (prescription.pharmacistNotes) {
+            setPharmacistNotes(prescription.pharmacistNotes)
+          }
+          if (prescription.notes) {
+            setOrderNotes(prescription.notes)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching prescription:', error)
+        toast.error('Không thể tải thông tin đơn thuốc')
+      } finally {
+        setIsLoadingPrescription(false)
+      }
+    }
+
+    fetchPrescriptionData()
+  }, [prescriptionId])
 
   const handleProductAdd = (product: Product, quantity: number) => {
     const existingItem = orderItems.find((item) => item.product.id === product.id)

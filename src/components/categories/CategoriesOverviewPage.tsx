@@ -478,7 +478,7 @@ export function CategoriesOverviewPage() {
                     Tư vấn ngay
                   </Button>
                 </Link>
-                <Link to='/prescription/upload'>
+                <Link to='/upload-prescription'>
                   <Button
                     variant='outline'
                     size='lg'
