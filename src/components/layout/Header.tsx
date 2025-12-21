@@ -34,7 +34,7 @@ import { ChevronRight } from 'lucide-react'
 import { useCart } from '~/contexts/CartContext'
 import { useCategories } from '~/hooks/product'
 import type { Category } from '../../types/product'
-import medispaceLogo from '../../assets/MEDISPACE_Logo_Final.png'
+import medispaceLogo from '../../assets/MEDISPACE_Logo_Final.svg'
 
 export function Header() {
   const navigate = useNavigate()
