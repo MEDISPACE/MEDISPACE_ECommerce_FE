@@ -1,6 +1,16 @@
 ﻿import { useState, useEffect } from 'react'
 import { Link } from 'react-router'
-import { Download, ShoppingCart, Plus } from 'lucide-react'
+import { Download, ShoppingCart, Plus, AlertTriangle } from 'lucide-react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../../ui/alert-dialog'
 import { Button } from '../../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../../ui/dialog'
@@ -110,6 +120,7 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
   const [filterDate, setFilterDate] = useState<string>('all')
   const [selectedOrders, setSelectedOrders] = useState<string[]>([])
   const [showUpdateDialog, setShowUpdateDialog] = useState(false)
+  const [showCancelConfirmDialog, setShowCancelConfirmDialog] = useState(false)
   const [showDetailsDrawer, setShowDetailsDrawer] = useState(false)
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null)
   const [detailsOrder, setDetailsOrder] = useState<ApiOrder | null>(null)
@@ -244,7 +255,7 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
     setShowUpdateDialog(true)
   }
 
-  const confirmUpdateStatus = async () => {
+  const executeStatusUpdate = async () => {
     if (!currentOrder || !newStatus) return
 
     try {
@@ -278,11 +289,19 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
       // Update local state
       setOrders(orders.map((o) => (o.id === currentOrder.id ? { ...o, status: newStatus } : o)))
 
-      toast.success('Cập nhật thành công', {
-        description: `Đã cập nhật trạng thái đơn hàng thành công`,
-      })
+      // Show specific message for paid orders cancellation
+      if (newStatus === 'cancelled' && currentOrder.paymentStatus === 'paid') {
+        toast.success('Huỷ thành công', {
+          description: 'Medispace sẽ liên hệ và hoàn tiền trong 72h làm việc.'
+        })
+      } else {
+        toast.success('Cập nhật thành công', {
+          description: `Đã cập nhật trạng thái đơn hàng thành công`,
+        })
+      }
 
       setShowUpdateDialog(false)
+      setShowCancelConfirmDialog(false)
       setCurrentOrder(null)
       setNotes('')
     } catch (error) {
@@ -291,6 +310,19 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
         description: 'Vui lòng thử lại sau',
       })
     }
+  }
+
+  const confirmUpdateStatus = () => {
+    if (!currentOrder || !newStatus) return
+
+    // Special handling for cancelling paid orders
+    if (newStatus === 'cancelled' && currentOrder.paymentStatus === 'paid') {
+      setShowCancelConfirmDialog(true)
+      return
+    }
+
+    // Otherwise proceed directly
+    executeStatusUpdate()
   }
 
   const handleSelectAll = (checked: boolean) => {
@@ -498,6 +530,34 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Cancel Paid Order Confirmation Dialog */}
+      <AlertDialog open={showCancelConfirmDialog} onOpenChange={setShowCancelConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className='flex items-center gap-2 text-red-600'>
+              <AlertTriangle className='w-5 h-5' />
+              Xác nhận hủy đơn hàng đã thanh toán
+            </AlertDialogTitle>
+            <AlertDialogDescription className='text-base text-gray-600 mt-2'>
+              Đơn hàng <b>#{currentOrder?.id}</b> đang có trạng thái thanh toán là <b>ĐÃ THANH TOÁN</b>.
+              <br /><br />
+              Việc hủy đơn hàng này sẽ yêu cầu quy trình hoàn tiền thủ công. <b>Medispace</b> cam kết sẽ hoàn tiền cho khách hàng trong vòng <b>72h làm việc</b>.
+              <br /><br />
+              Bạn có chắc chắn muốn tiếp tục hủy không?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Quay lại</AlertDialogCancel>
+            <AlertDialogAction
+              className='bg-red-600 hover:bg-red-700 text-white'
+              onClick={executeStatusUpdate}
+            >
+              Xác nhận hủy & Hoàn tiền
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

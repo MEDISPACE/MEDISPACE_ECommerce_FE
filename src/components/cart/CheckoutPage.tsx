@@ -55,13 +55,6 @@ const paymentMethods: PaymentMethod[] = [
     type: 'cod',
   },
   {
-    id: 'momo',
-    name: 'Ví MoMo',
-    description: 'Thanh toán qua ví điện tử MoMo',
-    icon: '📱',
-    type: 'ewallet',
-  },
-  {
     id: 'vnpay',
     name: 'VNPay',
     description: 'Thanh toán qua ví VNPay (ATM/Visa/Master/JCB/QR Pay)',
@@ -324,18 +317,19 @@ export function CheckoutPage() {
 
       const { order, paymentUrl } = await orderService.createOrder(orderData)
 
-      // Refresh cart to sync with backend (backend removed selected items)
+      // Refresh cart to sync with backend (backend removed selected items for COD)
       await refreshCart()
-
-      // Clear selected items to avoid stale selections
-      selectAllItems(false)
 
       // Redirect logic
       if (paymentUrl) {
-        // Redirect to VNPay
+        // For online payments, keep selectedItems in sessionStorage
+        // They will be cleared when payment succeeds (in OrderSuccessPage)
+        // DON'T call selectAllItems(false) here - it would clear sessionStorage!
         window.location.href = paymentUrl
       } else {
-        // Redirect to success page
+        // COD: Clear selections and sessionStorage
+        selectAllItems(false)
+        sessionStorage.removeItem('medispace_selected_items')
         window.location.href = `/order/success?orderId=${order.id}`
       }
     } catch (error) {
@@ -502,7 +496,7 @@ export function CheckoutPage() {
                                 <span className='font-medium'>{method.name}</span>
                                 {subtotal >= 300000 && method.price > 0 && (
                                   <Badge variant='secondary' className='bg-green-100 text-green-800 hover:bg-green-100 text-xs'>
-                                    -30k Ship
+                                    Freeship
                                   </Badge>
                                 )}
                               </div>
@@ -515,7 +509,8 @@ export function CheckoutPage() {
                                 )}
                                 <span className='font-medium text-blue-600'>
                                   {(() => {
-                                    const finalPrice = subtotal >= 300000 ? Math.max(0, method.price - 30000) : method.price
+                                    // Rule: Orders >= 300k are completely free shipping
+                                    const finalPrice = subtotal >= 300000 ? 0 : method.price
                                     return finalPrice === 0 ? 'Miễn phí' : `${new Intl.NumberFormat('vi-VN').format(finalPrice)}đ`
                                   })()}
                                 </span>

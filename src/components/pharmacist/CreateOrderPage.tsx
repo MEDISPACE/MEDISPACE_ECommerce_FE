@@ -96,7 +96,7 @@ const deliveryOptions = [
 const paymentMethods = [
   { id: 'cod', label: 'Thanh toán khi nhận hàng (COD)', icon: Package },
   { id: 'transfer', label: 'Chuyển khoản ngân hàng', icon: Building2 },
-  { id: 'ewallet', label: 'Ví điện tử (MoMo/ZaloPay)', icon: CreditCard },
+  { id: 'ewallet', label: 'Ví điện tử (VNPay/ZaloPay)', icon: CreditCard },
 ]
 
 export function CreateOrderPage() {

@@ -45,6 +45,7 @@ interface BackendOrder {
   createdAt: string
   updatedAt: string
   shippingMethod?: string
+  estimatedDeliveryDate?: string
   notes?: string
 }
 
@@ -70,13 +71,15 @@ class OrderService {
 
   async createOrder(orderData: CreateOrderRequest): Promise<{ order: Order, paymentUrl?: string }> {
     const requestBody = {
-      items: orderData.items, // Include selected product IDs
+      selectedItems: orderData.items, // Map 'items' from frontend to 'selectedItems' for backend
       shippingAddress: orderData.shippingAddress,
       paymentMethod: orderData.paymentMethod,
+      shippingMethod: (orderData as any).shippingMethod, // Pass shipping method
+      estimatedDeliveryDate: (orderData as any).estimatedDeliveryDate, // Pass estimated delivery date
       notes: orderData.notes,
       isDirectBuy: orderData.isDirectBuy
     }
-    const response = await apiClient.post<{ message: string, result: { order: BackendOrder, orderId: string, paymentUrl?: string } }>(API_ENDPOINTS.ORDERS.CREATE, requestBody)
+    const response = await apiClient.post<{ message: string, result: { order: BackendOrder, paymentUrl?: string } }>(API_ENDPOINTS.ORDERS.CREATE, requestBody)
     return {
       order: this.transformOrderFromBackend(response.data.result.order),
       paymentUrl: response.data.result.paymentUrl
@@ -155,6 +158,7 @@ class OrderService {
       },
       shippingMethod: backendOrder.shippingMethod || 'standard',
       shippingCost: backendOrder.shippingFee,
+      estimatedDeliveryDate: backendOrder.estimatedDeliveryDate,
       paymentMethod: backendOrder.paymentMethod as PaymentMethod,
       paymentStatus: backendOrder.paymentStatus as PaymentStatus,
       status: backendOrder.orderStatus as OrderStatus,
