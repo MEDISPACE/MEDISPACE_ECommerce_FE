@@ -11,6 +11,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Badge } from '../ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet'
+import { Slider } from '../ui/slider'
+import { Checkbox } from '../ui/checkbox'
+import { Label } from '../ui/label'
+import { Separator } from '../ui/separator'
+import { RatingStars } from '../shared/RatingStars'
 import { type ProductFilter, type Product, type Category } from '../../types/product'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
 import { productService } from '../../services/productService'
@@ -25,6 +30,7 @@ import {
   isProductOnSale,
   getProductPrice,
 } from '../../utils/productHelpers'
+import { getProductPrice as getPriceFromVariants } from '../../utils/priceUtils'
 
 // Category icon mapping cho hệ thống MediSpace
 const categoryIcons = {
@@ -162,26 +168,28 @@ export function CategoryPage() {
     const matchesSearch =
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (product.shortDescription?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false)
+    const productPrice = getPriceFromVariants(product)
     const matchesPrice =
-      (product.price ?? 0) >= (filters.priceRange?.[0] ?? 0) &&
-      (product.price ?? 0) <= (filters.priceRange?.[1] ?? 5000000)
+      productPrice >= (filters.priceRange?.[0] ?? 0) &&
+      productPrice <= (filters.priceRange?.[1] ?? 5000000)
     const matchesRating = (product.rating ?? 0) >= (filters.rating ?? 0)
     const matchesStock = !filters.inStock || product.stockQuantity > 0
     const matchesBrands =
       (filters.brands?.length ?? 0) === 0 ||
       filters.brands?.some((brand: string) => product.brand?.name?.toLowerCase().includes(brand.toLowerCase())) ||
       false
+    const matchesPrescription = !filters.isPrescription || product.requiresPrescription === true
 
-    return matchesSearch && matchesPrice && matchesRating && matchesStock && matchesBrands
+    return matchesSearch && matchesPrice && matchesRating && matchesStock && matchesBrands && matchesPrescription
   })
 
   // Apply sorting
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     switch (sortBy) {
       case 'price_asc':
-        return (a.price ?? 0) - (b.price ?? 0)
+        return getPriceFromVariants(a) - getPriceFromVariants(b)
       case 'price_desc':
-        return (b.price ?? 0) - (a.price ?? 0)
+        return getPriceFromVariants(b) - getPriceFromVariants(a)
       case 'rating':
         return (b.rating ?? 0) - (a.rating ?? 0)
       case 'newest':
@@ -405,25 +413,28 @@ export function CategoryPage() {
                   <CardTitle className='text-lg'>Thương hiệu</CardTitle>
                 </CardHeader>
                 <CardContent className='space-y-2'>
-                  {brands.slice(0, 6).map((brand: string) => (
-                    <label key={brand} className='flex items-center space-x-2 cursor-pointer'>
-                      <input
-                        type='checkbox'
-                        className='rounded border-gray-300'
-                        onChange={(e) => {
-                          const isChecked = e.target.checked
-                          setFilters((prev) => ({
-                            ...prev,
-                            brands: isChecked
-                              ? [...(prev.brands || []), brand]
-                              : (prev.brands || []).filter((b: string) => b !== brand),
-                          }))
-                        }}
-                      />
-                      <span className='text-sm'>{brand}</span>
-                      <span className='text-xs text-gray-500'>({Math.floor(Math.random() * 50) + 1})</span>
-                    </label>
-                  ))}
+                  {brands.slice(0, 6).map((brand: string) => {
+                    const brandProductCount = products.filter((p: Product) => p.brand?.name === brand).length
+                    return (
+                      <label key={brand} className='flex items-center space-x-2 cursor-pointer'>
+                        <input
+                          type='checkbox'
+                          className='rounded border-gray-300'
+                          onChange={(e) => {
+                            const isChecked = e.target.checked
+                            setFilters((prev) => ({
+                              ...prev,
+                              brands: isChecked
+                                ? [...(prev.brands || []), brand]
+                                : (prev.brands || []).filter((b: string) => b !== brand),
+                            }))
+                          }}
+                        />
+                        <span className='text-sm'>{brand}</span>
+                        <span className='text-xs text-gray-500'>({brandProductCount})</span>
+                      </label>
+                    )
+                  })}
                   {brands.length > 6 && (
                     <Button variant='ghost' className='text-xs p-0 h-auto text-blue-600'>
                       + Xem thêm
@@ -431,6 +442,108 @@ export function CategoryPage() {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Price Range Filter */}
+              <Card className='bg-white border-blue-200 shadow-sm'>
+                <CardHeader>
+                  <CardTitle className='text-lg'>Khoảng giá</CardTitle>
+                </CardHeader>
+                <CardContent className='space-y-3'>
+                  <Slider
+                    value={filters.priceRange}
+                    onValueChange={(value) => setFilters(prev => ({ ...prev, priceRange: [value[0], value[1]] }))}
+                    max={5000000}
+                    min={0}
+                    step={50000}
+                    className='w-full'
+                  />
+                  <div className='grid grid-cols-2 gap-2'>
+                    <Input
+                      type='text'
+                      value={new Intl.NumberFormat('vi-VN').format(filters.priceRange?.[0] || 0)}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value.replace(/\./g, '')) || 0
+                        setFilters(prev => ({ ...prev, priceRange: [value, prev.priceRange?.[1] || 5000000] }))
+                      }}
+                      placeholder='Từ'
+                      className='h-8 text-xs border-blue-200'
+                    />
+                    <Input
+                      type='text'
+                      value={new Intl.NumberFormat('vi-VN').format(filters.priceRange?.[1] || 5000000)}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value.replace(/\./g, '')) || 0
+                        setFilters(prev => ({ ...prev, priceRange: [prev.priceRange?.[0] || 0, value] }))
+                      }}
+                      placeholder='Đến'
+                      className='h-8 text-xs border-blue-200'
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Rating Filter */}
+              <Card className='bg-white border-blue-200 shadow-sm'>
+                <CardHeader>
+                  <CardTitle className='text-lg'>Đánh giá</CardTitle>
+                </CardHeader>
+                <CardContent className='space-y-2'>
+                  {[5, 4, 3, 2, 1].map((rating) => (
+                    <div key={rating} className='flex items-center space-x-2'>
+                      <Checkbox
+                        id={`rating-${rating}`}
+                        checked={filters.rating === rating}
+                        onCheckedChange={(checked) => setFilters(prev => ({ ...prev, rating: checked ? rating : 0 }))}
+                      />
+                      <Label htmlFor={`rating-${rating}`} className='text-sm cursor-pointer flex items-center gap-1'>
+                        <RatingStars rating={rating} size='sm' showRating={false} />
+                        <span className='text-xs'>từ {rating} sao</span>
+                      </Label>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              {/* Stock & Prescription Filter */}
+              <Card className='bg-white border-blue-200 shadow-sm'>
+                <CardHeader>
+                  <CardTitle className='text-lg'>Tình trạng</CardTitle>
+                </CardHeader>
+                <CardContent className='space-y-2'>
+                  <div className='flex items-center space-x-2'>
+                    <Checkbox
+                      id='in-stock'
+                      checked={filters.inStock === true}
+                      onCheckedChange={(checked) => setFilters(prev => ({ ...prev, inStock: checked ? true : false }))}
+                    />
+                    <Label htmlFor='in-stock' className='text-sm cursor-pointer'>Còn hàng</Label>
+                  </div>
+                  <div className='flex items-center space-x-2'>
+                    <Checkbox
+                      id='prescription'
+                      checked={filters.isPrescription === true}
+                      onCheckedChange={(checked) => setFilters(prev => ({ ...prev, isPrescription: checked ? true : false }))}
+                    />
+                    <Label htmlFor='prescription' className='text-sm cursor-pointer'>Thuốc kê đơn</Label>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Clear Filters Button */}
+              <Button
+                variant='outline'
+                className='w-full border-blue-200 text-blue-600 hover:bg-blue-50'
+                onClick={() => setFilters({
+                  categories: [],
+                  priceRange: [0, 5000000],
+                  brands: [],
+                  rating: 0,
+                  inStock: false,
+                  isPrescription: false,
+                })}
+              >
+                Xóa tất cả bộ lọc
+              </Button>
             </div>
           </div>
 
