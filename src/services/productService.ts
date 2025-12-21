@@ -46,11 +46,17 @@ export const productService = {
   },
 
   /**
-   * Get featured products
+   * Get featured products (non-prescription products that can be purchased directly)
    */
   async getFeaturedProducts(limit = 12): Promise<Product[]> {
-    // Real API call - get all products and filter featured ones
-    const response = await apiClient.get(API_ENDPOINTS.PRODUCTS.BASE, { params: { limit } })
+    // Get non-prescription products (OTC) as featured products
+    const response = await apiClient.get(API_ENDPOINTS.PRODUCTS.BASE, {
+      params: {
+        limit,
+        requiresPrescription: 'false',
+        isActive: 'true'
+      }
+    })
     if (response && response.data) {
       const data = response.data as ProductsResponse
       if (

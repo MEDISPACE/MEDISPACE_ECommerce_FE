@@ -13,6 +13,7 @@ import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet'
 import { Checkbox } from '../ui/checkbox'
 import { Label } from '../ui/label'
 import { Slider } from '../ui/slider'
+import { RatingStars } from '../shared/RatingStars'
 import { categoryService } from '../../services/categoryService'
 import { productService } from '../../services/productService'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
@@ -32,6 +33,7 @@ import {
   getDiscountPercentage,
   isProductOnSale,
 } from '../../utils/productHelpers'
+import { getProductPrice } from '../../utils/priceUtils'
 import type { Category, Product } from '../../types/product'
 
 export function SubCategoryPage() {
@@ -45,6 +47,9 @@ export function SubCategoryPage() {
   const [priceRange, setPriceRange] = useState([0, 2000000])
   const [selectedBrands, setSelectedBrands] = useState<string[]>([])
   const [selectedFilters, setSelectedFilters] = useState<{ [key: string]: string[] }>({})
+  const [ratingFilter, setRatingFilter] = useState(0)
+  const [inStockFilter, setInStockFilter] = useState(false)
+  const [prescriptionFilter, setPrescriptionFilter] = useState(false)
 
   const [category, setCategory] = useState<Category | null>(null)
   const [subCategory, setSubCategory] = useState<Category | null>(null)
@@ -109,14 +114,18 @@ export function SubCategoryPage() {
     const matchesSearch =
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.shortDescription.toLowerCase().includes(searchQuery.toLowerCase())
+    const productPrice = getProductPrice(product)
     const matchesPrice =
-      (product.price ?? 0) >= priceRange[0] &&
-      (product.price ?? 0) <= priceRange[1]
+      productPrice >= priceRange[0] &&
+      productPrice <= priceRange[1]
     const matchesBrands =
       selectedBrands.length === 0 ||
       selectedBrands.some((brand: string) => product.brand?.name?.toLowerCase().includes(brand.toLowerCase()))
+    const matchesRating = (product.rating ?? 0) >= ratingFilter
+    const matchesStock = !inStockFilter || product.stockQuantity > 0
+    const matchesPrescription = !prescriptionFilter || product.requiresPrescription === true
 
-    return matchesSearch && matchesPrice && matchesBrands
+    return matchesSearch && matchesPrice && matchesBrands && matchesRating && matchesStock && matchesPrescription
   })
 
   // Apply sorting
@@ -161,6 +170,9 @@ export function SubCategoryPage() {
     setPriceRange([0, 2000000])
     setSelectedBrands([])
     setSelectedFilters({})
+    setRatingFilter(0)
+    setInStockFilter(false)
+    setPrescriptionFilter(false)
     setCurrentPage(1)
   }
 
@@ -274,19 +286,22 @@ export function SubCategoryPage() {
                     <CardTitle className='text-lg'>Thương hiệu</CardTitle>
                   </CardHeader>
                   <CardContent className='space-y-2'>
-                    {brands.slice(0, 6).map((brand: string) => (
-                      <div key={brand} className='flex items-center space-x-2'>
-                        <Checkbox
-                          id={brand}
-                          checked={selectedBrands.includes(brand)}
-                          onCheckedChange={() => handleBrandToggle(brand)}
-                        />
-                        <Label htmlFor={brand} className='text-sm cursor-pointer flex-1'>
-                          {brand}
-                        </Label>
-                        <span className='text-xs text-gray-500'>({Math.floor(Math.random() * 50) + 1})</span>
-                      </div>
-                    ))}
+                    {brands.slice(0, 6).map((brand: string) => {
+                      const brandProductCount = products.filter((p: Product) => p.brand?.name === brand).length
+                      return (
+                        <div key={brand} className='flex items-center space-x-2'>
+                          <Checkbox
+                            id={brand}
+                            checked={selectedBrands.includes(brand)}
+                            onCheckedChange={() => handleBrandToggle(brand)}
+                          />
+                          <Label htmlFor={brand} className='text-sm cursor-pointer flex-1'>
+                            {brand}
+                          </Label>
+                          <span className='text-xs text-gray-500'>({brandProductCount})</span>
+                        </div>
+                      )
+                    })}
                     {brands.length > 6 && (
                       <Button variant='ghost' className='text-xs p-0 h-auto text-blue-600'>
                         + Xem thêm
@@ -300,18 +315,83 @@ export function SubCategoryPage() {
                   <CardHeader>
                     <CardTitle className='text-lg'>Khoảng giá</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className='space-y-3'>
                     <Slider
                       value={priceRange}
                       onValueChange={setPriceRange}
                       max={2000000}
                       min={0}
                       step={50000}
-                      className='mb-4'
+                      className='w-full'
                     />
-                    <div className='flex justify-between text-sm text-gray-600'>
-                      <span>{priceRange[0].toLocaleString()}đ</span>
-                      <span>{priceRange[1].toLocaleString()}đ</span>
+                    <div className='grid grid-cols-2 gap-2'>
+                      <Input
+                        type='text'
+                        value={new Intl.NumberFormat('vi-VN').format(priceRange[0])}
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value.replace(/\./g, '')) || 0
+                          setPriceRange([value, priceRange[1]])
+                        }}
+                        placeholder='Từ'
+                        className='h-8 text-xs border-blue-200'
+                      />
+                      <Input
+                        type='text'
+                        value={new Intl.NumberFormat('vi-VN').format(priceRange[1])}
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value.replace(/\./g, '')) || 0
+                          setPriceRange([priceRange[0], value])
+                        }}
+                        placeholder='Đến'
+                        className='h-8 text-xs border-blue-200'
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Rating Filter */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className='text-lg'>Đánh giá</CardTitle>
+                  </CardHeader>
+                  <CardContent className='space-y-2'>
+                    {[5, 4, 3, 2, 1].map((rating) => (
+                      <div key={rating} className='flex items-center space-x-2'>
+                        <Checkbox
+                          id={`sub-rating-${rating}`}
+                          checked={ratingFilter === rating}
+                          onCheckedChange={(checked) => setRatingFilter(checked ? rating : 0)}
+                        />
+                        <Label htmlFor={`sub-rating-${rating}`} className='text-sm cursor-pointer flex items-center gap-1'>
+                          <RatingStars rating={rating} size='sm' showRating={false} />
+                          <span className='text-xs'>từ {rating} sao</span>
+                        </Label>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                {/* Stock & Prescription Filter */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className='text-lg'>Tình trạng</CardTitle>
+                  </CardHeader>
+                  <CardContent className='space-y-2'>
+                    <div className='flex items-center space-x-2'>
+                      <Checkbox
+                        id='sub-in-stock'
+                        checked={inStockFilter}
+                        onCheckedChange={(checked) => setInStockFilter(checked as boolean)}
+                      />
+                      <Label htmlFor='sub-in-stock' className='text-sm cursor-pointer'>Còn hàng</Label>
+                    </div>
+                    <div className='flex items-center space-x-2'>
+                      <Checkbox
+                        id='sub-prescription'
+                        checked={prescriptionFilter}
+                        onCheckedChange={(checked) => setPrescriptionFilter(checked as boolean)}
+                      />
+                      <Label htmlFor='sub-prescription' className='text-sm cursor-pointer'>Thuốc kê đơn</Label>
                     </div>
                   </CardContent>
                 </Card>
@@ -326,6 +406,9 @@ export function SubCategoryPage() {
                     priceRange[0] === 0 &&
                     priceRange[1] === 2000000 &&
                     selectedBrands.length === 0 &&
+                    ratingFilter === 0 &&
+                    !inStockFilter &&
+                    !prescriptionFilter &&
                     Object.keys(selectedFilters).length === 0
                   }
                 >

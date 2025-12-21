@@ -5,7 +5,7 @@ import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
 import { Card, CardContent } from '../ui/card'
 import { ImageWithFallback } from '../shared/ImageWithFallback'
-import { RxBadge, OTCBadge } from './MedicalBadge'
+import { RxBadge } from './MedicalBadge'
 
 interface PriceVariant {
   unit: string
@@ -110,7 +110,7 @@ export function ProductCard({
 
                 {/* Badges */}
                 <div className='absolute top-2 left-2'>
-                  {!product.inStock ? null : product.isPrescription ? <RxBadge size='sm' /> : <OTCBadge size='sm' />}
+                  {product.inStock && product.isPrescription && <RxBadge size='sm' />}
                 </div>
 
                 {product.isOnSale && product.inStock && (
@@ -253,7 +253,7 @@ export function ProductCard({
 
             {/* Top badges */}
             <div className='absolute top-3 left-3'>
-              {!product.inStock ? null : product.isPrescription ? <RxBadge size='sm' /> : <OTCBadge size='sm' />}
+              {product.inStock && product.isPrescription && <RxBadge size='sm' />}
             </div>
 
             {product.isOnSale && product.inStock && (
