@@ -30,7 +30,7 @@ export function DrugDatabasePage() {
       setLoading(true)
       try {
         const [productsData, categoriesData] = await Promise.all([
-          productService.getProducts({ limit: 1000 }),
+          productService.getProducts({ limit: 5000 }),
           categoryService.getCategories()
         ])
         setProducts(Array.isArray(productsData) ? productsData : [])
@@ -356,8 +356,8 @@ export function DrugDatabasePage() {
                 <div className='grid md:grid-cols-3 gap-4'>
                   <div className='p-4 bg-blue-50 border border-blue-200 rounded-lg text-center'>
                     <Package className='w-8 h-8 mx-auto mb-2 text-blue-600' />
-                    <p className='text-2xl font-bold text-blue-600'>{selectedProduct.stockQuantity}</p>
-                    <p className='text-sm text-gray-600'>Tồn kho hiện tại</p>
+                    <p className='text-2xl font-bold text-blue-600'>{selectedProduct.stockQuantity.toLocaleString('vi-VN')}</p>
+                    <p className='text-sm text-gray-600'>Tồn kho (đơn vị nhỏ nhất)</p>
                   </div>
                   <div className='p-4 bg-green-50 border border-green-200 rounded-lg text-center'>
                     <ShoppingCart className='w-8 h-8 mx-auto mb-2 text-green-600' />
@@ -370,6 +370,24 @@ export function DrugDatabasePage() {
                     <p className='text-sm text-gray-600'>Trạng thái</p>
                   </div>
                 </div>
+
+                {/* Stock breakdown by unit */}
+                {selectedProduct.priceVariants && selectedProduct.priceVariants.length > 0 && (
+                  <div className='p-4 bg-white border border-blue-200 rounded-lg'>
+                    <p className='text-sm font-medium text-gray-700 mb-3'>📦 Quy đổi tồn kho theo đơn vị:</p>
+                    <div className='grid grid-cols-2 md:grid-cols-3 gap-3'>
+                      {selectedProduct.priceVariants.map((variant, idx) => {
+                        const stockByUnit = Math.floor(selectedProduct.stockQuantity / (variant.quantityPerUnit || 1))
+                        return (
+                          <div key={idx} className='flex items-center justify-between p-2 bg-gray-50 rounded-lg'>
+                            <span className='text-sm text-gray-600'>{variant.unit}</span>
+                            <span className='font-semibold text-blue-600'>{stockByUnit.toLocaleString('vi-VN')}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 <div className={`p-4 rounded-lg ${selectedProduct.stockQuantity > 10 ? 'bg-green-50 border-green-200' : selectedProduct.stockQuantity > 0 ? 'bg-yellow-50 border-yellow-200' : 'bg-red-50 border-red-200'} border`}>
                   <p className={`font-medium ${selectedProduct.stockQuantity > 10 ? 'text-green-800' : selectedProduct.stockQuantity > 0 ? 'text-yellow-800' : 'text-red-800'}`}>

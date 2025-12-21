@@ -81,7 +81,7 @@ export function ProductManagementPage() {
     queryKey: ['admin', 'products', searchQuery, filterCategory, filterStatus, filterPrescription],
     queryFn: () =>
       productService.getProducts({
-        limit: 100, // Backend max limit is 100
+        limit: 5000, // Load all products for admin management
         sortBy: 'createdAt',
         sortOrder: 'desc',
       }),
@@ -741,7 +741,7 @@ export function ProductManagementPage() {
         <FormSection title='Kho hàng'>
           <FormGrid cols={2}>
             <TextField
-              label='Tồn kho'
+              label='Tồn kho (đơn vị nhỏ nhất)'
               type='number'
               required
               value={formState.data.stockQuantity?.toString() || ''}
@@ -758,6 +758,24 @@ export function ProductManagementPage() {
               error={formState.errors.maxOrderQuantity}
             />
           </FormGrid>
+
+          {/* Stock breakdown by unit */}
+          {formState.data.priceVariants && (formState.data.priceVariants as PriceVariant[]).length > 0 && formState.data.stockQuantity !== undefined && formState.data.stockQuantity > 0 && (
+            <div className='p-3 bg-blue-50 border border-blue-200 rounded-lg mt-3'>
+              <p className='text-xs font-medium text-gray-600 mb-2'>📦 Quy đổi tồn kho theo đơn vị:</p>
+              <div className='flex flex-wrap gap-2'>
+                {(formState.data.priceVariants as PriceVariant[]).map((variant, idx) => {
+                  const stockByUnit = Math.floor((formState.data.stockQuantity || 0) / (variant.quantityPerUnit || 1))
+                  return (
+                    <div key={idx} className='flex items-center gap-1 px-2 py-1 bg-white rounded border border-blue-100'>
+                      <span className='text-xs text-gray-600'>{variant.unit}:</span>
+                      <span className='text-sm font-semibold text-blue-600'>{stockByUnit.toLocaleString('vi-VN')}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </FormSection>
 
         <FormSection title='Trạng thái'>
