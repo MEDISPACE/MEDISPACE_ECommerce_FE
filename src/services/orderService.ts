@@ -70,9 +70,11 @@ class OrderService {
 
   async createOrder(orderData: CreateOrderRequest): Promise<{ order: Order, paymentUrl?: string }> {
     const requestBody = {
+      items: orderData.items, // Include selected product IDs
       shippingAddress: orderData.shippingAddress,
       paymentMethod: orderData.paymentMethod,
-      notes: orderData.notes
+      notes: orderData.notes,
+      isDirectBuy: orderData.isDirectBuy
     }
     const response = await apiClient.post<{ message: string, result: { order: BackendOrder, orderId: string, paymentUrl?: string } }>(API_ENDPOINTS.ORDERS.CREATE, requestBody)
     return {
@@ -91,10 +93,10 @@ class OrderService {
     return this.transformOrderFromBackend(response.data.result)
   }
 
-  async getPaymentUrl(orderId: string): Promise<string> {
-    const response = await apiClient.post<{ message: string, result: { paymentUrl: string } }>(API_ENDPOINTS.ORDERS.PAYMENT_URL(orderId))
-    return response.data.result.paymentUrl
-  }
+  // async getPaymentUrl(orderId: string): Promise<string> {
+  //   const response = await apiClient.post<{ message: string, result: { paymentUrl: string } }>(API_ENDPOINTS.ORDERS.PAYMENT_URL(orderId))
+  //   return response.data.result.paymentUrl
+  // }
 
   // Transform backend order format to frontend format
   private transformOrderFromBackend(backendOrder: BackendOrder): Order {

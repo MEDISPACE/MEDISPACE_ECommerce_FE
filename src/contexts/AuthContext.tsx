@@ -92,16 +92,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           window.dispatchEvent(new CustomEvent('auth-changed'))
           return userProfile
         } catch (profileError) {
-          logger.error('Failed to fetch user profile after login', profileError)
           authService.clearTokens()
           return null
         }
       }
 
-      logger.warn('Login failed - invalid credentials', { email })
       return null
     } catch (error) {
-      logger.error('Login failed with error', error)
       return null
     } finally {
       setLoading(false)
@@ -111,21 +108,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const register = async (userData: RegisterRequest): Promise<boolean> => {
     try {
       setLoading(true)
-      logger.info('User attempting registration', { email: userData.email })
 
       const response: RegisterResponse = await authService.register(userData)
 
       if (response.userId) {
-        // Registration successful, but user needs to login to get tokens
-        // The userId is just a confirmation, not tokens
-        logger.info('User registration successful', { email: userData.email, userId: response.userId })
         return true
       }
 
-      logger.warn('Registration failed - no userId returned', { email: userData.email })
       return false
     } catch (error) {
-      logger.error('Registration failed with error', error)
       return false
     } finally {
       setLoading(false)

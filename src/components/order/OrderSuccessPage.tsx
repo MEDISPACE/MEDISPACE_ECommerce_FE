@@ -35,20 +35,16 @@ export function OrderSuccessPage() {
     try {
       setLoading(true)
       setError(null)
-      logger.info('OrderSuccess: Fetching order data', { orderId: id })
 
       const orderData = await orderService.getOrderById(id)
       if (orderData) {
         setOrder(orderData)
-        logger.info('OrderSuccess: Order data loaded successfully', { orderId: id })
       } else {
         setError('Không tìm thấy thông tin đơn hàng')
-        logger.warn('OrderSuccess: Order not found', { orderId: id })
       }
     } catch (err) {
       const errorMessage = 'Không thể tải thông tin đơn hàng'
       setError(errorMessage)
-      logger.error('OrderSuccess: Failed to fetch order data', err)
     } finally {
       setLoading(false)
     }

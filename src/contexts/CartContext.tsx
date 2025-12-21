@@ -69,8 +69,8 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 
     case 'SELECT_ALL_ITEMS': {
       if (action.payload && state.cart) {
-        const allProductIds = state.cart.items.map((item) => item.productId)
-        return { ...state, selectedItems: new Set(allProductIds) }
+        const allKeys = state.cart.items.map((item) => createSelectionKey(item.productId, item.unit))
+        return { ...state, selectedItems: new Set(allKeys) }
       } else {
         return { ...state, selectedItems: new Set() }
       }
@@ -102,15 +102,21 @@ function cartReducer(state: CartState, action: CartAction): CartState {
   }
 }
 
+// Helper to create unique selection key
+export const createSelectionKey = (productId: string, unit?: string) => {
+  return unit ? `${productId}-${unit}` : productId
+}
+
 // Cart context interface
 interface CartContextType {
   state: CartState
   addToCart: (product: Product, quantity?: number, unit?: string, price?: number) => Promise<void>
-  updateQuantity: (productId: string, quantity: number) => Promise<void>
-  updateUnit: (productId: string, unit: string) => Promise<void>
-  removeFromCart: (productId: string) => Promise<void>
+  updateQuantity: (productId: string, quantity: number, unit?: string) => Promise<void>
+  updateUnit: (productId: string, unit: string, currentUnit?: string) => Promise<void>
+  removeFromCart: (productId: string, unit?: string) => Promise<void>
   clearCart: () => Promise<void>
-  toggleItemSelection: (productId: string) => void
+  refreshCart: () => Promise<void>
+  toggleItemSelection: (productId: string, unit?: string) => void
   selectAllItems: (selected: boolean) => void
   toggleWishlist: (productId: string, productName: string) => boolean
   isInWishlist: (productId: string) => boolean
@@ -118,6 +124,7 @@ interface CartContextType {
   getSelectedItemsCount: () => number
   getSelectedItemsTotal: () => number
   moveToWishlist: (productId: string, productName: string) => void
+  addToWishlistOnly: (productId: string, productName: string) => void
   buyNow: (product: Product, quantity?: number, unit?: string, price?: number) => void
   showPrescriptionWarning: (productName: string) => void
   showOutOfStockWarning: (productName: string) => void
@@ -347,23 +354,39 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clearCart = async () => {
     try {
-      dispatch({ type: 'SET_LOADING', payload: true })
-      const updatedCart = await cartService.clearCart()
-      dispatch({ type: 'CLEAR_CART_SUCCESS', payload: updatedCart })
-      dispatch({ type: 'SELECT_ALL_ITEMS', payload: false })
+      await cartService.clearCart()
+      dispatch({ type: 'SET_CART', payload: null })
+      toast.success('Đã xóa giỏ hàng')
     } catch (error) {
-
-      toast.error('Không thể xóa giỏ hàng', {
-        description: 'Vui lòng thử lại sau.',
-        duration: 3000,
-      })
-    } finally {
-      dispatch({ type: 'SET_LOADING', payload: false })
+      toast.error('Không thể xóa giỏ hàng')
     }
   }
 
-  const toggleItemSelection = (productId: string) => {
-    dispatch({ type: 'TOGGLE_ITEM_SELECTION', payload: productId })
+  const refreshCart = async () => {
+    try {
+      const token = localStorage.getItem('medispace_access_token')
+      if (!token) {
+        dispatch({ type: 'SET_CART', payload: null })
+        return
+      }
+
+      const cart = await cartService.getCart()
+      dispatch({ type: 'SET_CART', payload: cart })
+      // Don't auto-select items when refreshing cart
+      // User should manually select items they want to checkout
+    } catch (error) {
+      // Silently fail, don't show error to user
+    }
+  }
+
+  const toggleItemSelection = (productId: string, unit?: string) => {
+    const key = createSelectionKey(productId, unit)
+
+    // Check if this action would result in NO items selected
+    // If user is deselecting the last selected item, we just allow it
+    // The selection validation happens at checkout time
+
+    dispatch({ type: 'TOGGLE_ITEM_SELECTION', payload: key })
   }
 
   const selectAllItems = (selected: boolean) => {
@@ -411,7 +434,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const getSelectedItemsTotal = (): number => {
     if (!state.cart) return 0
     return state.cart.items
-      .filter((item) => state.selectedItems.has(item.productId))
+      .filter((item) => state.selectedItems.has(createSelectionKey(item.productId, item.unit)))
       .reduce((total, item) => total + item.totalPrice, 0)
   }
 
@@ -441,14 +464,30 @@ export function CartProvider({ children }: { children: ReactNode }) {
     })
   }
 
-  const buyNow = (product: Product, quantity: number = 1, unit?: string, price?: number) => {
-    // Add to cart first
-    addToCart(product, quantity, unit, price)
+  const addToWishlistOnly = (productId: string, productName: string) => {
+    dispatch({ type: 'ADD_TO_WISHLIST', payload: productId })
 
-    // Small delay to show toast, then redirect
-    setTimeout(() => {
-      window.location.href = '/cart/checkout'
-    }, 1000)
+    toast.success('Đã thêm vào yêu thích', {
+      description: `"${productName}" đã được thêm vào danh sách yêu thích`,
+      duration: 3000,
+      icon: <Heart className='w-5 h-5 text-red-500 fill-red-500' />,
+      action: {
+        label: 'Xem danh sách',
+        onClick: () => (window.location.href = '/account/wishlist'),
+      },
+    })
+  }
+
+  const buyNow = (product: Product, quantity: number = 1, unit?: string, price?: number) => {
+    // Navigate to checkout directly with query params for Buy Now mode
+    // This allows checkout without adding item to cart
+    const params = new URLSearchParams()
+    params.set('mode', 'buy_now')
+    params.set('productId', product._id)
+    params.set('quantity', quantity.toString())
+    if (unit) params.set('unit', unit)
+
+    window.location.href = `/cart/checkout?${params.toString()}`
   }
 
   const showPrescriptionWarning = (productName: string) => {
@@ -500,6 +539,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     updateUnit,
     removeFromCart,
     clearCart,
+    refreshCart,
     toggleItemSelection,
     selectAllItems,
     toggleWishlist,
@@ -508,6 +548,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     getSelectedItemsCount,
     getSelectedItemsTotal,
     moveToWishlist,
+    addToWishlistOnly,
     buyNow,
     showPrescriptionWarning,
     showOutOfStockWarning,
