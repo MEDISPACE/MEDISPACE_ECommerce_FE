@@ -21,6 +21,7 @@ export interface PriceVariant {
   originalPrice?: number // Giá niêm yết (trước giảm)
   costPrice?: number     // Giá vốn (chỉ admin/pharmacist thấy)
   isDefault: boolean     // Đơn vị mặc định
+  quantityPerUnit: number // Số lượng đơn vị nhỏ nhất trong 1 đơn vị này
 }
 
 // ProductMedia interface for product images
