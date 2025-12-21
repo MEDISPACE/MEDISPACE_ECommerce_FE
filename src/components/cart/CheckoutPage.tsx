@@ -211,10 +211,9 @@ export function CheckoutPage() {
   const selectedShipping = shippingMethods.find((method) => method.id === shippingMethod)
   let bgShippingFee = selectedShipping?.price || 0
 
-  // Apply logic Freeship Frontend
+  // Apply logic Freeship Frontend: Free shipping for orders >= 300k
   if (subtotal >= 300000) {
-    if (shippingMethod === 'standard') bgShippingFee = 0
-    else bgShippingFee = Math.max(0, bgShippingFee - 30000)
+    bgShippingFee = 0
   }
 
   const shippingFee = bgShippingFee
