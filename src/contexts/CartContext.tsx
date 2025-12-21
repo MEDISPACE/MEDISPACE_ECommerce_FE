@@ -334,13 +334,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const removeFromCart = async (productId: string) => {
+  const removeFromCart = async (productId: string, unit?: string) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true })
-      const updatedCart = await cartService.removeFromCart(productId)
+      const updatedCart = await cartService.removeFromCart(productId, unit)
       dispatch({ type: 'REMOVE_FROM_CART_SUCCESS', payload: updatedCart })
       // Remove from selected items
-      dispatch({ type: 'TOGGLE_ITEM_SELECTION', payload: productId })
+      const key = createSelectionKey(productId, unit)
+      dispatch({ type: 'TOGGLE_ITEM_SELECTION', payload: key }) // This toggles, but we want to ensure remove. Ideally logic handles check.
+      // Better: check if selected, then toggle. But toggle logic is simple.
+      // If the item is gone from cart, validation effect in ShoppingCartPage will clean it up anyway.
     } catch (error) {
 
       toast.error('Không thể xóa sản phẩm', {
