@@ -77,6 +77,7 @@ export interface Order {
   shippingMethod: string
   shippingCost: number
   trackingNumber?: string
+  estimatedDeliveryDate?: string
 
   // Payment
   paymentMethod: PaymentMethod

@@ -22,7 +22,7 @@ import type { CartItem } from '../../types/cart'
 import { productService } from '../../services/productService'
 import { ghnService } from '../../services/ghnService'
 
-const DEFAULT_SHIPPING_METHODS: ShippingMethod[] = [
+const GLOBAL_DEFAULT_SHIPPING_METHODS: ShippingMethod[] = [
   {
     id: 'standard',
     name: 'Giao hàng tiêu chuẩn',
@@ -85,7 +85,7 @@ export function CheckoutPage() {
 
   const [user, setUser] = useState<User | null>(null)
   const [addresses, setAddresses] = useState<Address[]>([])
-  const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>(DEFAULT_SHIPPING_METHODS)
+  const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>(GLOBAL_DEFAULT_SHIPPING_METHODS)
   const [loading, setLoading] = useState(true)
   const [selectedAddress, setSelectedAddress] = useState<string>('')
   const [useNewAddress, setUseNewAddress] = useState(false)
@@ -166,42 +166,48 @@ export function CheckoutPage() {
 
   const addressObj = addresses.find((a) => a.id === selectedAddress)
 
-  // Calculate Shipping Fee Dynamic
+  // Calculate Shipping Fee & Options
   useEffect(() => {
-    const fetchShippingFee = async () => {
-      // Reset to default if no address or missing IDs (fallback to 30k)
+    const fetchOptions = async () => {
+      // Reset to default if no address or missing IDs
       if (!addressObj?.districtId || !addressObj?.wardCode) {
-        setShippingMethods(DEFAULT_SHIPPING_METHODS)
+        setShippingMethods(GLOBAL_DEFAULT_SHIPPING_METHODS)
         return
       }
 
       try {
-        // Call API
-        const feeData = await ghnService.calculateFee({
+        const options = await ghnService.getShippingOptions({
           to_district_id: addressObj.districtId,
           to_ward_code: addressObj.wardCode,
-          weight: 2000, // Estimated 2kg
-          service_type_id: 2 // Standard
+          weight: 500 // Estimated 500g
         })
 
-        if (feeData && feeData.total) {
-          const newFee = feeData.total
-          setShippingMethods(prev => prev.map(m => {
-            if (m.id === 'standard') {
-              return { ...m, price: newFee, description: `Giao hàng tiêu chuẩn (GHN). Tạm tính: ${new Intl.NumberFormat('vi-VN').format(newFee)}đ` }
-            }
-            return m
+        if (options && options.length > 0) {
+          const mappedOptions: ShippingMethod[] = options.map(opt => ({
+            id: opt.id.toString(),
+            name: opt.name,
+            description: `Giao hàng bởi GHN`,
+            price: opt.price,
+            estimatedDays: opt.estimatedDays
           }))
+          setShippingMethods(mappedOptions)
+          // Auto-select cheapest/first optio
+          if (mappedOptions.length > 0) {
+            setShippingMethod(mappedOptions[0].id)
+          }
+        } else {
+          setShippingMethods(GLOBAL_DEFAULT_SHIPPING_METHODS)
         }
       } catch (error) {
-        console.error('Failed to calculate shipping fee', error)
-        // Keep default on error
-        setShippingMethods(DEFAULT_SHIPPING_METHODS)
+        console.error('Failed to fetch shipping options', error)
+        setShippingMethods(GLOBAL_DEFAULT_SHIPPING_METHODS)
       }
     }
 
-    fetchShippingFee()
+    fetchOptions()
   }, [addressObj])
+
+
 
   // Calculate totals
   const subtotal = isBuyNow
@@ -224,6 +230,17 @@ export function CheckoutPage() {
 
     if (!user) {
       alert('Không thể lấy thông tin người dùng. Vui lòng đăng nhập lại.')
+      return
+    }
+
+    // Validate Cart / Selection
+    if (!isBuyNow && state.selectedItems.size === 0) {
+      alert('Vui lòng chọn sản phẩm để thanh toán')
+      return
+    }
+
+    if (!selectedAddress) {
+      alert('Vui lòng chọn địa chỉ giao hàng')
       return
     }
 
@@ -287,6 +304,10 @@ export function CheckoutPage() {
         'payos': 'payos'
       }
 
+      // Get estimated delivery date from selected shipping method
+      const selectedShippingMethod = shippingMethods.find(m => m.id === shippingMethod)
+      const estimatedDeliveryDate = selectedShippingMethod?.estimatedDays || '2-3 ngày'
+
       // Create order using real API
       const orderData = {
         items: cartItems.map(item => ({
@@ -297,7 +318,8 @@ export function CheckoutPage() {
         isDirectBuy: isBuyNow,
         shippingAddress: addressObj,
         paymentMethod: paymentMethodMap[paymentMethod] || 'cod',
-        shippingMethod: shippingMethod, // Send shipping method
+        shippingMethod: shippingMethod,
+        estimatedDeliveryDate,
         notes: orderNotes,
       }
 
@@ -479,33 +501,31 @@ export function CheckoutPage() {
                               <div className='flex items-center gap-2'>
                                 <Clock className='w-4 h-4 text-blue-500' />
                                 <span className='font-medium'>{method.name}</span>
-                                {subtotal >= 300000 ? (
-                                  method.id === 'standard' ? (
-                                    <Badge variant='secondary' className='bg-green-100 text-green-800 hover:bg-green-100'>
-                                      Miễn phí
-                                    </Badge>
-                                  ) : (
-                                    <div className='flex gap-2 items-center'>
-                                      <span className='line-through text-gray-400 text-xs'>
-                                        {new Intl.NumberFormat('vi-VN').format(method.price)}đ
-                                      </span>
-                                      <span>
-                                        {new Intl.NumberFormat('vi-VN').format(Math.max(0, method.price - 30000))}đ
-                                      </span>
-                                    </div>
-                                  )
-                                ) : (
-                                  <span>{new Intl.NumberFormat('vi-VN').format(method.price)}đ</span>
+                                {subtotal >= 300000 && method.price > 0 && (
+                                  <Badge variant='secondary' className='bg-green-100 text-green-800 hover:bg-green-100 text-xs'>
+                                    -30k Ship
+                                  </Badge>
                                 )}
                               </div>
-                              <span className='font-medium text-blue-600'>
-                                {method.price === 0
-                                  ? 'Miễn phí'
-                                  : `${new Intl.NumberFormat('vi-VN').format(method.price)}đ`}
-                              </span>
+
+                              <div className='flex items-center gap-2'>
+                                {subtotal >= 300000 && method.price > 0 && (
+                                  <span className='line-through text-gray-400 text-xs'>
+                                    {new Intl.NumberFormat('vi-VN').format(method.price)}đ
+                                  </span>
+                                )}
+                                <span className='font-medium text-blue-600'>
+                                  {(() => {
+                                    const finalPrice = subtotal >= 300000 ? Math.max(0, method.price - 30000) : method.price
+                                    return finalPrice === 0 ? 'Miễn phí' : `${new Intl.NumberFormat('vi-VN').format(finalPrice)}đ`
+                                  })()}
+                                </span>
+                              </div>
                             </div>
                             <div className='text-sm text-gray-600'>{method.description}</div>
-                            <div className='text-sm text-blue-600 mt-1'>Dự kiến: {method.estimatedDays}</div>
+                            <div className='text-sm text-blue-600 mt-1'>
+                              Dự kiến: {method.estimatedDays !== 'N/A' ? method.estimatedDays : '2-3 ngày'}
+                            </div>
                           </div>
                         </Label>
                       </div>
