@@ -299,11 +299,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
       })
     } catch (error) {
       const axiosError = error as { response?: { data?: { message?: string } } }
-      const errorMessage = axiosError?.response?.data?.message || 'Vui lòng thử lại sau.'
+      const errorMessage = axiosError?.response?.data?.message || ''
 
-      toast.error('Không thể thêm vào giỏ hàng', {
-        description: errorMessage,
-        duration: 3000,
+      // Parse specific error messages for better UX
+      let title = 'Không thể thêm vào giỏ hàng'
+      let description = 'Vui lòng thử lại sau.'
+
+      if (errorMessage.toLowerCase().includes('insufficient stock') || errorMessage.toLowerCase().includes('không đủ')) {
+        title = 'Không đủ số lượng trong kho'
+        description = `Sản phẩm "${product.name}" không đủ số lượng bạn yêu cầu. Vui lòng giảm số lượng.`
+      } else if (errorMessage) {
+        description = errorMessage
+      }
+
+      toast.error(title, {
+        description,
+        duration: 4000,
       })
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false })
@@ -317,10 +328,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const updatedCart = await cartService.updateCartItem(productId, request)
       dispatch({ type: 'UPDATE_QUANTITY_SUCCESS', payload: updatedCart })
     } catch (error) {
+      const axiosError = error as { response?: { data?: { message?: string } } }
+      const errorMessage = axiosError?.response?.data?.message || ''
 
-      toast.error('Không thể cập nhật số lượng', {
-        description: 'Vui lòng thử lại sau.',
-        duration: 3000,
+      // Parse specific error messages for better UX
+      let title = 'Không thể cập nhật số lượng'
+      let description = 'Vui lòng thử lại sau.'
+
+      if (errorMessage.toLowerCase().includes('insufficient stock') || errorMessage.toLowerCase().includes('không đủ')) {
+        title = 'Không đủ số lượng trong kho'
+        description = 'Số lượng bạn yêu cầu vượt quá tồn kho. Vui lòng giảm số lượng.'
+      } else if (errorMessage) {
+        description = errorMessage
+      }
+
+      toast.error(title, {
+        description,
+        duration: 4000,
       })
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false })
