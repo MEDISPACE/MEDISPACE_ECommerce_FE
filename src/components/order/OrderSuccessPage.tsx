@@ -194,7 +194,7 @@ export function OrderSuccessPage() {
             </div>
             <div>
               <p className='text-sm text-gray-500 mb-1'>Thời gian giao hàng dự kiến</p>
-              <p className='text-gray-900'>2-3 ngày làm việc</p>
+              <p className='text-gray-900'>{order.estimatedDeliveryDate || '2-3 ngày làm việc'}</p>
             </div>
           </div>
 
