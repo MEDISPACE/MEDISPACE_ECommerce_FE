@@ -6,19 +6,14 @@ import { Button } from '../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Alert, AlertDescription } from '../ui/alert'
 import { Badge } from '../ui/badge'
-import { ImageUploader } from '../forms/ImageUploader'
+import { ImageUploader, type UploadedImage } from '../forms/ImageUploader'
 import { PrescriptionForm } from '../forms/PrescriptionForm'
 import { ProgressStepper } from '../forms/ProgressStepper'
 import { toast } from 'sonner'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
+import { prescriptionsAPI } from '../../lib/api/prescriptions'
+import { useAuth } from '../../contexts/AuthContext'
 import type { Product } from '../../types/product'
-
-interface UploadedImage {
-  id: string
-  file: File
-  url: string
-  name: string
-}
 
 const uploadSteps = [
   { id: 'upload', title: 'Upload ảnh', description: 'Tải lên đơn thuốc' },
@@ -28,28 +23,47 @@ const uploadSteps = [
 
 export function UploadPrescriptionPage() {
   const navigate = useNavigate()
+  const { isAuthenticated, user } = useAuth()
 
   const [currentStep, setCurrentStep] = useState(1)
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([])
   const [prescriptionId, setPrescriptionId] = useState<string | null>(null)
+  const [prescriptionNumber, setPrescriptionNumber] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Find product if specified - TODO: Replace with real API call
-  const product: Product | null = null // productSlug ? mockProducts.find((p: Product) => p.slug === productSlug) : null
+  const product: Product | null = null
 
   const breadcrumbItems = [
-    { label: 'Trang chủ', href: '/' },
     ...(product ? [{ label: (product as Product).name, href: `/products/${(product as Product).slug}` }] : []),
     { label: 'Upload đơn thuốc' },
   ]
+
+  // Get S3 URLs of successfully uploaded images
+  const getUploadedImageUrls = (): string[] => {
+    return uploadedImages
+      .filter(img => img.isUploaded && img.url.startsWith('http'))
+      .map(img => img.url)
+  }
 
   const handleImagesChange = (images: UploadedImage[]) => {
     setUploadedImages(images)
   }
 
   const handleNextStep = () => {
-    if (currentStep === 1 && uploadedImages.length === 0) {
-      toast.error('Vui lòng tải lên ít nhất một ảnh đơn thuốc')
-      return
+    if (currentStep === 1) {
+      const uploadedUrls = getUploadedImageUrls()
+      if (uploadedUrls.length === 0) {
+        toast.error('Vui lòng tải lên ít nhất một ảnh đơn thuốc')
+        return
+      }
+
+      // Check if any images are still uploading
+      const stillUploading = uploadedImages.some(img => img.isUploading)
+      if (stillUploading) {
+        toast.error('Vui lòng đợi ảnh tải lên hoàn tất')
+        return
+      }
     }
 
     if (currentStep < uploadSteps.length) {
@@ -63,22 +77,89 @@ export function UploadPrescriptionPage() {
     }
   }
 
-  const handleFormSubmit = async () => {
+  const handleFormSubmit = async (formData: {
+    patientName: string
+    patientAge: string
+    patientGender: string
+    phoneNumber: string
+    relationship: string
+    doctorName: string
+    hospitalName: string
+    examinationDate: Date | undefined
+    diagnosis: string
+    specialNotes: string
+    agreements: {
+      authentic: boolean
+      contactPermission: boolean
+      legalUnderstanding: boolean
+    }
+  }) => {
+    // Check authentication
+    if (!isAuthenticated) {
+      toast.error('Vui lòng đăng nhập để gửi đơn thuốc')
+      navigate('/login', { state: { from: '/upload-prescription' } })
+      return
+    }
+
+    const imageUrls = getUploadedImageUrls()
+    if (imageUrls.length === 0) {
+      toast.error('Không có ảnh đơn thuốc. Vui lòng quay lại bước 1')
+      setCurrentStep(1)
+      return
+    }
+
+    setIsSubmitting(true)
+
     try {
-      // Quick simulation
-      setTimeout(() => {
-        const newPrescriptionId = 'DT' + Math.random().toString().substr(2, 6)
-        setPrescriptionId(newPrescriptionId)
+      // Prepare data for API - matching backend UploadPrescriptionReqBody
+      const prescriptionData = {
+        doctorName: formData.doctorName,
+        hospitalName: formData.hospitalName,
+        prescriptionDate: formData.examinationDate
+          ? formData.examinationDate.toISOString()
+          : new Date().toISOString(),
+        images: imageUrls,
+        medications: [
+          {
+            productName: formData.diagnosis || 'Theo đơn thuốc',
+            dosage: 'Theo chỉ định bác sĩ',
+            quantity: 1,
+            instructions: formData.specialNotes || 'Theo hướng dẫn của bác sĩ'
+          }
+        ],
+      }
+
+      // Call the actual API
+      const response = await prescriptionsAPI.submitPrescription(prescriptionData)
+
+      if (response?.result) {
+        setPrescriptionId(response.result._id)
+        setPrescriptionNumber(response.result.prescriptionNumber)
         setCurrentStep(3)
         toast.success('Đơn thuốc đã được gửi thành công!')
-      }, 500)
-    } catch (error) {
-      toast.error('Có lỗi xảy ra')
+      } else {
+        throw new Error('Invalid response from server')
+      }
+    } catch (error: any) {
+      console.error('Error submitting prescription:', error)
+
+      // Handle specific errors
+      if (error.response?.status === 401) {
+        toast.error('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại')
+        navigate('/login', { state: { from: '/upload-prescription' } })
+      } else if (error.response?.data?.message) {
+        toast.error(error.response.data.message)
+      } else {
+        toast.error('Có lỗi xảy ra khi gửi đơn thuốc. Vui lòng thử lại.')
+      }
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   const handleSaveDraft = () => {
     toast.success('Đã lưu nháp thành công')
+    // TODO: Implement draft saving to localStorage or API
   }
 
   const renderStepContent = () => {
@@ -87,12 +168,27 @@ export function UploadPrescriptionPage() {
         return (
           <div className='space-y-6'>
             <UniversalBreadcrumb items={breadcrumbItems} />
-            <ImageUploader onImagesChange={handleImagesChange} maxFiles={5} maxSize={10} />
+
+            {/* Login reminder */}
+            {!isAuthenticated && (
+              <Alert className='border-amber-200 bg-amber-50'>
+                <AlertDescription className='text-amber-800'>
+                  ⚠️ Bạn cần <Button variant="link" className="p-0 h-auto text-amber-800 underline" onClick={() => navigate('/login', { state: { from: '/upload-prescription' } })}>đăng nhập</Button> để gửi đơn thuốc.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <ImageUploader
+              onImagesChange={handleImagesChange}
+              maxFiles={5}
+              maxSize={10}
+              uploadToServer={true}
+            />
 
             <div className='flex justify-end space-x-3'>
               <Button
                 onClick={handleNextStep}
-                disabled={uploadedImages.length === 0}
+                disabled={uploadedImages.length === 0 || uploadedImages.some(img => img.isUploading)}
                 className='bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-700 hover:to-blue-600'
               >
                 Tiếp tục
@@ -104,13 +200,31 @@ export function UploadPrescriptionPage() {
       case 2:
         return (
           <div className='space-y-6'>
-            <PrescriptionForm onSubmit={handleFormSubmit} onSaveDraft={handleSaveDraft} />
+            {/* Show uploaded images summary */}
+            <Card className='bg-emerald-50 border-emerald-200'>
+              <CardContent className='p-4'>
+                <div className='flex items-center gap-2'>
+                  <CheckCircle className='w-5 h-5 text-emerald-600' />
+                  <span className='text-emerald-800'>
+                    Đã tải lên {getUploadedImageUrls().length} ảnh đơn thuốc
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <PrescriptionForm
+              onSubmit={handleFormSubmit}
+              onSaveDraft={handleSaveDraft}
+              // @ts-ignore - PrescriptionForm needs to be updated to accept isSubmitting
+              isSubmitting={isSubmitting}
+            />
 
             <div className='flex justify-between'>
               <Button
                 variant='outline'
                 onClick={handlePrevStep}
                 className='border-gray-300 text-gray-700 hover:bg-gray-50'
+                disabled={isSubmitting}
               >
                 <ArrowLeft className='w-4 h-4 mr-2' />
                 Quay lại
@@ -138,12 +252,16 @@ export function UploadPrescriptionPage() {
                   <div className='flex justify-between'>
                     <span className='text-gray-600'>📋 Mã đơn thuốc:</span>
                     <Badge variant='default' className='bg-blue-600'>
-                      #{prescriptionId}
+                      #{prescriptionNumber || prescriptionId}
                     </Badge>
                   </div>
                   <div className='flex justify-between'>
                     <span className='text-gray-600'>⏰ Thời gian gửi:</span>
                     <span>{new Date().toLocaleString('vi-VN')}</span>
+                  </div>
+                  <div className='flex justify-between'>
+                    <span className='text-gray-600'>📸 Số ảnh:</span>
+                    <span>{getUploadedImageUrls().length} ảnh</span>
                   </div>
                 </div>
               </div>
@@ -158,9 +276,8 @@ export function UploadPrescriptionPage() {
               <div className='bg-gray-50 rounded-lg p-4 mb-6'>
                 <p className='text-sm text-gray-700 mb-2'>📱 Chúng tôi sẽ thông báo qua:</p>
                 <div className='space-y-1 text-sm'>
-                  <div>• Tin nhắn SMS: 0901***567</div>
-                  <div>• Email: cust***@email.com</div>
-                  <div>• Thông báo trong app</div>
+                  <div>• Email: {user?.email || 'Email của bạn'}</div>
+                  <div>• Thông báo trong tài khoản</div>
                 </div>
               </div>
 
@@ -168,24 +285,9 @@ export function UploadPrescriptionPage() {
                 <Button
                   variant='outline'
                   className='border-blue-200 text-blue-700 hover:bg-blue-50'
-                  onClick={() => {
-                    const chatBtn = document.querySelector('button[aria-label="Chat với dược sĩ"]') as HTMLButtonElement | null
-                    if (chatBtn) {
-                      chatBtn.click()
-                    } else {
-                      navigate('/contact')
-                    }
-                  }}
+                  onClick={() => navigate('/account/prescriptions')}
                 >
-                  💬 Chat với dược sĩ
-                </Button>
-
-                <Button
-                  variant='outline'
-                  className='border-blue-200 text-blue-700 hover:bg-blue-50'
-                  onClick={() => navigate(`/account/prescriptions`)}
-                >
-                  📋 Xem đơn thuốc
+                  📋 Xem đơn thuốc của tôi
                 </Button>
 
                 <Button
@@ -202,6 +304,19 @@ export function UploadPrescriptionPage() {
                   onClick={() => navigate('/products')}
                 >
                   🛒 Tiếp tục mua sắm
+                </Button>
+
+                <Button
+                  className='bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-700 hover:to-blue-600'
+                  onClick={() => {
+                    // Reset form for new upload
+                    setCurrentStep(1)
+                    setUploadedImages([])
+                    setPrescriptionId(null)
+                    setPrescriptionNumber(null)
+                  }}
+                >
+                  ➕ Gửi đơn thuốc khác
                 </Button>
               </div>
             </CardContent>
