@@ -1,4 +1,11 @@
-.react-router
-build
 node_modules
-README.md
+build
+.git
+.gitignore
+*.md
+.env*
+.editorconfig
+.prettier*
+.react-router
+eslint.config.js
+docs
