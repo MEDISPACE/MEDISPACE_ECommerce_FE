@@ -93,7 +93,10 @@ export function FloatingChatWidget() {
         return () => clearInterval(interval)
     }, [isAuthenticated, isCustomer, isOpen])
 
-    if (!isAuthenticated || !isCustomer) {
+    // Show for customers and guests (login prompt)
+    const canShow = !user || user.role === 0
+
+    if (!canShow) {
         return null
     }
 
@@ -169,7 +172,29 @@ export function FloatingChatWidget() {
 
                     {/* Content */}
                     <div className="flex-1 overflow-hidden flex flex-col">
-                        {isLoading ? (
+                        {!isAuthenticated ? (
+                            <div className="flex flex-col items-center justify-center h-full p-6 text-center space-y-4">
+                                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-2">
+                                    <MessageCircle className="w-8 h-8 text-blue-600" />
+                                </div>
+                                <h3 className="text-lg font-semibold text-gray-900">Đăng nhập để chat</h3>
+                                <p className="text-gray-600 text-sm max-w-[240px]">
+                                    Bạn cần đăng nhập để được dược sĩ tư vấn và hỗ trợ tốt nhất.
+                                </p>
+                                <div className="flex flex-col gap-2 w-full max-w-[200px]">
+                                    <a href="/login" className="w-full">
+                                        <Button className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white">
+                                            Đăng nhập ngay
+                                        </Button>
+                                    </a>
+                                    <a href="/register" className="w-full">
+                                        <Button variant="outline" className="w-full border-blue-200 text-blue-600 hover:bg-blue-50">
+                                            Đăng ký tài khoản
+                                        </Button>
+                                    </a>
+                                </div>
+                            </div>
+                        ) : isLoading ? (
                             <div className="flex items-center justify-center h-full">
                                 <div className="text-center">
                                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2" />

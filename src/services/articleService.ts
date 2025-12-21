@@ -20,7 +20,8 @@ class ArticleService {
             const response = await apiClient.get<HealthCategoriesResponse>('/health-categories', {
                 params: filter
             })
-            return response.data.result.categories
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            return (response.data as any).result?.categories || []
         } catch (error) {
             console.error('Error fetching health categories:', error)
             return []
@@ -30,11 +31,28 @@ class ArticleService {
     async getHealthCategory(idOrSlug: string): Promise<HealthCategory | null> {
         try {
             const response = await apiClient.get<HealthCategoryResponse>(`/health-categories/${idOrSlug}`)
-            return response.data.result
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            return (response.data as any).result || null
         } catch (error) {
             console.error('Error fetching health category:', error)
             return null
         }
+    }
+
+    async createHealthCategory(data: any): Promise<HealthCategory> {
+        const response = await apiClient.post('/health-categories', data)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return (response.data as any).result
+    }
+
+    async updateHealthCategory(id: string, data: any): Promise<HealthCategory> {
+        const response = await apiClient.put(`/health-categories/${id}`, data)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return (response.data as any).result
+    }
+
+    async deleteHealthCategory(id: string): Promise<void> {
+        await apiClient.delete(`/health-categories/${id}`)
     }
 
     // ==================== ARTICLES ====================
@@ -52,7 +70,8 @@ class ArticleService {
             const response = await apiClient.get<ArticlesResponse>('/articles', {
                 params: filter
             })
-            return response.data.result
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            return (response.data as any).result || response.data.result
         } catch (error) {
             console.error('Error fetching articles:', error)
             return {
@@ -65,7 +84,8 @@ class ArticleService {
     async getArticle(slugOrId: string): Promise<Article | null> {
         try {
             const response = await apiClient.get<ArticleResponse>(`/articles/${slugOrId}`)
-            return response.data.result
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            return (response.data as any).result
         } catch (error) {
             console.error('Error fetching article:', error)
             return null
@@ -86,7 +106,8 @@ class ArticleService {
                 `/articles/${slugOrId}/related`,
                 { params: { limit } }
             )
-            return response.data.result
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            return (response.data as any).result
         } catch (error) {
             console.error('Error fetching related articles:', error)
             return []

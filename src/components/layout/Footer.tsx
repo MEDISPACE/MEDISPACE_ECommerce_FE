@@ -63,7 +63,7 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to='/news' className='text-gray-600 hover:text-primary-500 transition-colors'>
+                <Link to='/health' className='text-gray-600 hover:text-primary-500 transition-colors'>
                   Tin tức sức khỏe
                 </Link>
               </li>

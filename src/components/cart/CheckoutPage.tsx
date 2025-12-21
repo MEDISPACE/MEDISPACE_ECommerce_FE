@@ -10,35 +10,37 @@ import { Textarea } from '../ui/textarea'
 import { Separator } from '../ui/separator'
 import { Badge } from '../ui/badge'
 import { ImageWithFallback } from '../shared/ImageWithFallback'
-import { useCart } from '../../contexts/CartContext'
+import { useCart, createSelectionKey } from '../../contexts/CartContext'
 import type { ShippingMethod, PaymentMethod } from '../../types/product'
 import { AddressFormDialog } from '../shared/AddressFormDialog'
 import { addressService } from '../../services/addressService'
-import { logger } from '../../utils/logger'
 import { orderService } from '../../services/orderService'
 import { authService } from '../../services/authService'
+import { useSearchParams } from 'react-router-dom'
 import type { User, Address } from '../../types/user'
+import type { CartItem } from '../../types/cart'
+import { productService } from '../../services/productService'
 
 const shippingMethods: ShippingMethod[] = [
   {
     id: 'standard',
     name: 'Giao hàng tiêu chuẩn',
-    description: 'Giao hàng trong 2-3 ngày',
-    price: 25000,
-    estimatedDays: '2-3 ngày',
+    description: 'Giao hàng trong 2-4 ngày. Miễn phí cho đơn từ 300k',
+    price: 30000,
+    estimatedDays: '2-4 ngày',
   },
   {
     id: 'fast',
     name: 'Giao hàng nhanh',
-    description: 'Giao hàng trong ngày',
-    price: 15000,
-    estimatedDays: 'Trong ngày',
+    description: 'Giao hàng nhanh trong 1-2 ngày',
+    price: 45000,
+    estimatedDays: '1-2 ngày',
   },
   {
     id: 'express',
-    name: 'Giao hàng siêu tốc',
-    description: 'Giao hàng trong 2-4 giờ',
-    price: 25000,
+    name: 'Giao hàng hỏa tốc',
+    description: 'Giao hàng trong 2-4 giờ (Nội thành)',
+    price: 60000,
     estimatedDays: '2-4 giờ',
   },
 ]
@@ -75,7 +77,10 @@ const paymentMethods: PaymentMethod[] = [
 ]
 
 export function CheckoutPage() {
-  const { state, getSelectedItemsTotal, getSelectedItemsCount, clearCart } = useCart()
+  const { state, getSelectedItemsTotal, getSelectedItemsCount, clearCart, refreshCart, selectAllItems } = useCart()
+  const [searchParams] = useSearchParams()
+  const isBuyNow = searchParams.get('mode') === 'buy_now'
+  const [buyNowItem, setBuyNowItem] = useState<CartItem | null>(null)
 
   const [user, setUser] = useState<User | null>(null)
   const [addresses, setAddresses] = useState<Address[]>([])
@@ -87,6 +92,47 @@ export function CheckoutPage() {
   const [agreeToTerms, setAgreeToTerms] = useState(false)
   const [orderNotes, setOrderNotes] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
+
+  // Load Buy Now Item
+  useEffect(() => {
+    const loadBuyNowItem = async () => {
+      if (!isBuyNow) return
+
+      const productId = searchParams.get('productId')
+      if (!productId) return
+
+      try {
+        const product = await productService.getProductById(productId)
+        if (product) {
+          const quantity = parseInt(searchParams.get('quantity') || '1')
+          const unit = searchParams.get('unit')
+          let price = product.price
+
+          // Check for unit price variant
+          if (unit && product.priceVariants) {
+            const variant = product.priceVariants.find(v => v.unit === unit)
+            if (variant) price = variant.price
+          }
+
+          setBuyNowItem({
+            productId: product._id,
+            name: product.name,
+            sku: product.sku || '',
+            unit: unit || product.unit,
+            quantity: quantity || 1,
+            unitPrice: price || 0,
+            totalPrice: (price || 0) * (quantity || 1),
+            prescriptionRequired: product.requiresPrescription || false,
+            image: product.images?.[0] || '',
+            priceVariants: product.priceVariants
+          })
+        }
+      } catch (error) {
+      }
+    }
+
+    loadBuyNowItem()
+  }, [isBuyNow, searchParams])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -102,9 +148,7 @@ export function CheckoutPage() {
           const defaultAddr = userAddresses.find(addr => addr.isDefault) || userAddresses[0]
           setSelectedAddress(defaultAddr.id || '')
         }
-        logger.info('Checkout: User data and addresses loaded successfully', { userId: userData._id, addressCount: userAddresses.length })
       } catch (error) {
-        logger.warn('Checkout: Failed to fetch user data or addresses', error)
         // Failed to fetch user data, continue with null user
       } finally {
         setLoading(false)
@@ -114,13 +158,25 @@ export function CheckoutPage() {
     fetchData()
   }, [])
 
-  const cartItems = state.cart?.items.filter(item => state.selectedItems.has(item.productId)) || []
+  const cartItems = isBuyNow
+    ? (buyNowItem ? [buyNowItem] : [])
+    : (state.cart?.items.filter(item => state.selectedItems.has(createSelectionKey(item.productId, item.unit))) || [])
 
   // Calculate totals
-  const subtotal = getSelectedItemsTotal()
+  const subtotal = isBuyNow
+    ? (buyNowItem ? buyNowItem.totalPrice : 0)
+    : getSelectedItemsTotal()
   const discount = 0
   const selectedShipping = shippingMethods.find((method) => method.id === shippingMethod)
-  const shippingFee = selectedShipping?.price || 0
+  let bgShippingFee = selectedShipping?.price || 0
+
+  // Apply logic Freeship Frontend
+  if (subtotal >= 300000) {
+    if (shippingMethod === 'standard') bgShippingFee = 0
+    else bgShippingFee = Math.max(0, bgShippingFee - 30000)
+  }
+
+  const shippingFee = bgShippingFee
   const total = subtotal - discount + shippingFee
 
   const handlePlaceOrder = async () => {
@@ -144,11 +200,6 @@ export function CheckoutPage() {
     }
 
     setIsProcessing(true)
-    logger.info('Checkout: Starting order placement', {
-      userId: user._id,
-      itemCount: getSelectedItemsCount(),
-      total: total
-    })
 
     try {
       // Get the selected address object
@@ -191,24 +242,25 @@ export function CheckoutPage() {
 
       // Create order using real API
       const orderData = {
-        items: [], // Backend creates from cart, so items not needed
+        items: cartItems.map(item => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          unit: item.unit
+        })),
+        isDirectBuy: isBuyNow,
         shippingAddress: addressObj,
         paymentMethod: paymentMethodMap[paymentMethod] || 'cod',
+        shippingMethod: shippingMethod, // Send shipping method
         notes: orderNotes,
       }
 
-      logger.info('Checkout: Sending order', { paymentMethod, mapped: paymentMethodMap[paymentMethod] })
-
       const { order, paymentUrl } = await orderService.createOrder(orderData)
 
-      // Clear cart after successful order creation
-      await clearCart()
+      // Refresh cart to sync with backend (backend removed selected items)
+      await refreshCart()
 
-      logger.info('Checkout: Order created successfully', {
-        orderId: order.id,
-        userId: user._id,
-        total: total
-      })
+      // Clear selected items to avoid stale selections
+      selectAllItems(false)
 
       // Redirect logic
       if (paymentUrl) {
@@ -219,7 +271,6 @@ export function CheckoutPage() {
         window.location.href = `/order/success?orderId=${order.id}`
       }
     } catch (error) {
-      logger.error('Checkout: Order placement failed', error)
       alert('Đặt hàng thất bại. Vui lòng thử lại.')
     } finally {
       setIsProcessing(false)
@@ -381,8 +432,23 @@ export function CheckoutPage() {
                               <div className='flex items-center gap-2'>
                                 <Clock className='w-4 h-4 text-blue-500' />
                                 <span className='font-medium'>{method.name}</span>
-                                {method.price === 0 && (
-                                  <Badge className='bg-green-100 text-green-700'>Miễn phí</Badge>
+                                {subtotal >= 300000 ? (
+                                  method.id === 'standard' ? (
+                                    <Badge variant='secondary' className='bg-green-100 text-green-800 hover:bg-green-100'>
+                                      Miễn phí
+                                    </Badge>
+                                  ) : (
+                                    <div className='flex gap-2 items-center'>
+                                      <span className='line-through text-gray-400 text-xs'>
+                                        {new Intl.NumberFormat('vi-VN').format(method.price)}đ
+                                      </span>
+                                      <span>
+                                        {new Intl.NumberFormat('vi-VN').format(Math.max(0, method.price - 30000))}đ
+                                      </span>
+                                    </div>
+                                  )
+                                ) : (
+                                  <span>{new Intl.NumberFormat('vi-VN').format(method.price)}đ</span>
                                 )}
                               </div>
                               <span className='font-medium text-blue-600'>
@@ -558,7 +624,7 @@ export function CheckoutPage() {
                         Đang xử lý...
                       </div>
                     ) : (
-                      <>Đặt hàng ({getSelectedItemsCount()} sản phẩm - {new Intl.NumberFormat('vi-VN').format(total)}đ)</>
+                      <>Đặt hàng ({cartItems.length} sản phẩm - {new Intl.NumberFormat('vi-VN').format(total)}đ)</>
                     )}
                   </Button>
 
