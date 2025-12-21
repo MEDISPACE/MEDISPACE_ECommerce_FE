@@ -180,7 +180,7 @@ export function AccountDashboard() {
               </Button>
             </Link>
 
-            <Link to='/prescription/upload'>
+            <Link to='/upload-prescription'>
               <Button variant='outline' className='w-full h-20 flex-col gap-2 border-blue-200 hover:bg-blue-50'>
                 <FileText className='w-6 h-6 text-blue-600' />
                 <span className='text-sm'>Đơn thuốc</span>
