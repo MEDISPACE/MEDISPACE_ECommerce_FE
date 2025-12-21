@@ -35,13 +35,13 @@ export function EnhancedSearchBar({
   const [isOpen, setIsOpen] = useState(false)
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([])
   const [selectedIndex, setSelectedIndex] = useState(-1)
-  const [isUploading, setIsUploading] = useState(false)
+
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
 
   const searchRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+
   const navigate = useNavigate()
   const { recentSearches, addToHistory, removeFromHistory } = useSearchHistory()
 
@@ -207,49 +207,9 @@ export function EnhancedSearchBar({
   }
 
   const handlePrescriptionUpload = () => {
-    fileInputRef.current?.click()
-  }
-
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      return
-    }
-
-    // Validate file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      return
-    }
-
-    setIsUploading(true)
-
-    try {
-      // Create a FormData object to pass the file
-      const formData = new FormData()
-      formData.append('prescriptionImage', file)
-
-      // Navigate to prescription upload page with the file
-      // We'll pass the file through navigation state
-      navigate('/prescription/upload', {
-        state: {
-          uploadedFile: file,
-          source: 'search-bar',
-        },
-      })
-
-      setIsOpen(false)
-    } catch {
-      // Error uploading prescription
-    } finally {
-      setIsUploading(false)
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
-    }
+    // Navigate directly to prescription upload page
+    navigate('/upload-prescription')
+    setIsOpen(false)
   }
 
   // Keyboard navigation
@@ -348,22 +308,11 @@ export function EnhancedSearchBar({
             size='sm'
             variant='ghost'
             onClick={handlePrescriptionUpload}
-            disabled={isUploading}
             className='w-6 h-6 p-0 text-gray-400 hover:text-medical-consultation transition-colors'
             title='Upload đơn thuốc'
           >
-            {isUploading ? <Loader2 className='w-4 h-4 animate-spin' /> : <Camera className='w-4 h-4' />}
+            <Camera className='w-4 h-4' />
           </Button>
-
-          {/* Hidden file input */}
-          <input
-            ref={fileInputRef}
-            type='file'
-            accept='image/*'
-            onChange={handleFileUpload}
-            className='hidden'
-            aria-label='Upload prescription image'
-          />
         </div>
       </form>
 
@@ -385,9 +334,8 @@ export function EnhancedSearchBar({
                     <button
                       key={suggestion.id}
                       onClick={() => handleSuggestionClick(suggestion)}
-                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${
-                        selectedIndex === index ? 'bg-blue-100 border border-blue-300' : 'hover:bg-blue-50'
-                      }`}
+                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${selectedIndex === index ? 'bg-blue-100 border border-blue-300' : 'hover:bg-blue-50'
+                        }`}
                     >
                       <span className='text-lg'>{suggestion.icon}</span>
                       <div className='flex-1'>
@@ -429,11 +377,10 @@ export function EnhancedSearchBar({
                           <div key={recent} className='flex items-center gap-1'>
                             <button
                               onClick={() => handleSearch(recent)}
-                              className={`flex-1 flex items-center gap-3 p-2 rounded-lg transition-colors text-left text-sm ${
-                                selectedIndex === recentIndex
-                                  ? 'bg-blue-100 border border-blue-300'
-                                  : 'hover:bg-gray-50'
-                              }`}
+                              className={`flex-1 flex items-center gap-3 p-2 rounded-lg transition-colors text-left text-sm ${selectedIndex === recentIndex
+                                ? 'bg-blue-100 border border-blue-300'
+                                : 'hover:bg-gray-50'
+                                }`}
                             >
                               <History className='w-4 h-4 text-gray-400' />
                               {recent}

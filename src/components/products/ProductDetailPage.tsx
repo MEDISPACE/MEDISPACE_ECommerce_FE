@@ -569,7 +569,7 @@ export function ProductDetailPage() {
                   </div>
 
                   <div className='flex gap-3'>
-                    <Link to={`/prescription/upload?product=${product.slug}`} className='flex-1'>
+                    <Link to={`/upload-prescription?product=${product.slug}`} className='flex-1'>
                       <Button className='w-full bg-gradient-to-r text-white from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 h-12 shadow-lg hover:shadow-xl transition-all'>
                         <FileText className='w-5 h-5 mr-2' />
                         Upload đơn thuốc

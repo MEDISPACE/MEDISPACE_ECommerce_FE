@@ -25,10 +25,33 @@ class PrescriptionsAPI {
     return response.data
   }
 
-  // Submit prescription for approval
-  async submitPrescription(data: PrescriptionUpload) {
+  // Submit prescription for approval (matching backend UploadPrescriptionReqBody)
+  async submitPrescription(data: {
+    doctorName: string
+    hospitalName: string
+    prescriptionDate: string
+    medications: {
+      productName: string
+      dosage: string
+      quantity: number
+      instructions: string
+    }[]
+    images?: string[]
+  }): Promise<{
+    message: string
+    result: {
+      _id: string
+      prescriptionNumber: string
+    }
+  }> {
     const response = await apiClient.post('/prescriptions', data)
-    return response.data
+    return response.data as {
+      message: string
+      result: {
+        _id: string
+        prescriptionNumber: string
+      }
+    }
   }
 
   // Get prescription status

@@ -278,7 +278,7 @@ export function HomePage() {
                     </Link>
 
                     {/* Thuốc kê đơn Rx */}
-                    <Link to='/prescription/upload'>
+                    <Link to='/upload-prescription'>
                       <div
                         className='rounded-xl p-6 text-white hover:shadow-xl hover:scale-[1.02] transition-all group cursor-pointer'
                         style={{
