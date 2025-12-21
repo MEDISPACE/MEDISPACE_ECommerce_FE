@@ -113,6 +113,7 @@ export interface CreateOrderRequest {
   paymentMethod: string
   couponCode?: string
   notes?: string
+  isDirectBuy?: boolean
 }
 
 export interface OrderFilter {

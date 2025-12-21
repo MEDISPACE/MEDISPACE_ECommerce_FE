@@ -1,6 +1,5 @@
-import { Search, Heart, Brain, Stethoscope, Eye, Bone, Clock, User, ArrowRight } from 'lucide-react'
+import { Heart, Brain, Stethoscope, Eye, Bone, Clock, User, ArrowRight } from 'lucide-react'
 import { Button } from '../ui/button'
-import { Input } from '../ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Badge } from '../ui/badge'
 import { useState, useEffect } from 'react'
@@ -20,7 +19,6 @@ const iconMap: Record<string, React.ElementType> = {
 }
 
 export function HealthCornerPage() {
-  const [searchQuery, setSearchQuery] = useState('')
   const [categories, setCategories] = useState<HealthCategory[]>([])
   const [featuredArticles, setFeaturedArticles] = useState<Article[]>([])
   const [latestArticles, setLatestArticles] = useState<Article[]>([])
@@ -48,13 +46,6 @@ export function HealthCornerPage() {
       console.error('Error loading health corner data:', error)
     } finally {
       setLoading(false)
-    }
-  }
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (searchQuery.trim()) {
-      window.location.href = `/health/search?q=${encodeURIComponent(searchQuery)}`
     }
   }
 
@@ -103,24 +94,6 @@ export function HealthCornerPage() {
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Search Bar */}
-        <Card className="mb-8 border-blue-200">
-          <CardContent className="pt-6">
-            <form onSubmit={handleSearch} className="flex gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  type="text"
-                  placeholder="Tìm kiếm bài viết sức khỏe..."
-                  className="pl-10"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <Button type="submit" className="bg-gradient-to-r from-blue-600 to-cyan-500">Tìm kiếm</Button>
-            </form>
-          </CardContent>
-        </Card>
 
         {/* Health Categories */}
         <section className="mb-12">

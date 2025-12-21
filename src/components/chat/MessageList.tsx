@@ -160,7 +160,7 @@ export function MessageList({
                                             <img
                                                 src={message.imageUrl}
                                                 alt="Sent image"
-                                                className="max-w-xs rounded-lg mb-2 hover:opacity-90 transition-opacity"
+                                                className={`max-w-xs rounded-lg hover:opacity-90 transition-opacity ${message.content ? 'mb-2' : ''}`}
                                             />
                                             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded-lg">
                                                 <div className="bg-black/50 p-2 rounded-full text-white">
