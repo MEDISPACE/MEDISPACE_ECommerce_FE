@@ -26,8 +26,11 @@ class CartService {
     return response.data.result
   }
 
-  async removeFromCart(productId: string): Promise<Cart> {
-    const response = await apiClient.delete<{ message: string; result: Cart }>(API_ENDPOINTS.CART.REMOVE_ITEM(productId))
+  async removeFromCart(productId: string, unit?: string): Promise<Cart> {
+    const url = unit
+      ? `${API_ENDPOINTS.CART.REMOVE_ITEM(productId)}?unit=${encodeURIComponent(unit)}`
+      : API_ENDPOINTS.CART.REMOVE_ITEM(productId)
+    const response = await apiClient.delete<{ message: string; result: Cart }>(url)
     return response.data.result
   }
 
