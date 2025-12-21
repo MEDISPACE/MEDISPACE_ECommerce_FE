@@ -75,6 +75,7 @@ class OrderService {
       shippingAddress: orderData.shippingAddress,
       paymentMethod: orderData.paymentMethod,
       shippingMethod: (orderData as any).shippingMethod, // Pass shipping method
+      shippingFee: (orderData as any).shippingFee, // Pass calculated shipping fee
       estimatedDeliveryDate: (orderData as any).estimatedDeliveryDate, // Pass estimated delivery date
       notes: orderData.notes,
       isDirectBuy: orderData.isDirectBuy
