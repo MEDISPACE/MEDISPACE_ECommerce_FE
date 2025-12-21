@@ -657,14 +657,14 @@ export function HomePage() {
                       <MessageCircle className='w-6 h-6 mr-3' />
                       Chat ngay với dược sĩ
                     </Button>
-                    <Button
+                    {/* <Button
                       size='lg'
                       variant='outline'
                       className='border-2 border-white text-white hover:bg-white hover:text-blue-700 backdrop-blur-sm bg-white/10 px-10 h-16 text-lg font-semibold'
                     >
                       <Clock className='w-6 h-6 mr-3' />
                       Đặt lịch tư vấn
-                    </Button>
+                    </Button> */}
                   </div>
                 </StaggerItem>
               </StaggerContainer>
