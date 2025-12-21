@@ -12,6 +12,7 @@ import { ImageWithFallback } from '~/components/shared/ImageWithFallback'
 import { useCart, createSelectionKey } from '../../contexts/CartContext'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
 import { addressService } from '../../services/addressService'
+import wishlistService from '../../services/wishlistService'
 import type { Address } from '../../types/user'
 
 import { useNavigate } from 'react-router'
@@ -65,6 +66,30 @@ export function ShoppingCartPage() {
     fetchAddresses()
   }, [isAuthenticated])
 
+  // Validate selected items when component mounts or cart changes
+  useEffect(() => {
+    if (!cart?.items || cart.items.length === 0) {
+      // Cart is empty, clear all selections
+      selectAllItems(false)
+      return
+    }
+
+    // Check if any selected items are no longer in cart
+    const validKeys = new Set(cart.items.map(item => createSelectionKey(item.productId, item.unit)))
+    let hasInvalidSelection = false
+
+    selectedItems.forEach(key => {
+      if (!validKeys.has(key)) {
+        hasInvalidSelection = true
+      }
+    })
+
+    // If there are invalid selections, clear all and let user re-select
+    if (hasInvalidSelection) {
+      selectAllItems(false)
+    }
+  }, [cart?.items])
+
   // Handle checkout navigation
   const handleCheckout = () => {
     if (!isAuthenticated) {
@@ -76,13 +101,19 @@ export function ShoppingCartPage() {
   }
 
 
+  // Clear stale selections on mount
+  useEffect(() => {
+    // On first mount, clear all selections to avoid stale data
+    selectAllItems(false)
+  }, [])
+
   // Calculate if all items are selected
   const allSelected = cart?.items && cart.items.length > 0 && cart.items.every(item => selectedItems.has(createSelectionKey(item.productId, item.unit)))
 
   // Calculate totals
   const subtotal = getSelectedItemsTotal()
   const discount = 0 // No discount
-  const shippingFee = subtotal >= 300000 ? 0 : 30000
+  const shippingFee = getSelectedItemsCount() === 0 ? 0 : (subtotal >= 300000 ? 0 : 30000)
   const total = subtotal - discount + shippingFee
 
   // Handle select all
@@ -105,11 +136,13 @@ export function ShoppingCartPage() {
     removeFromCart(productId)
   }
 
-  // Handle move to wishlist
-  const handleMoveToWishlist = (productId: string) => {
-    const item = cart?.items.find(item => item.productId === productId)
-    if (item) {
-      moveToWishlist(productId, item.name)
+  // Handle add to wishlist (without removing from cart)
+  const handleAddToWishlist = async (productId: string) => {
+    try {
+      await wishlistService.addToWishlist(productId)
+      toast.success('Đã thêm sản phẩm vào danh sách yêu thích')
+    } catch (error) {
+      toast.error('Không thể thêm sản phẩm vào danh sách yêu thích')
     }
   }
 
@@ -176,15 +209,44 @@ export function ShoppingCartPage() {
                     variant='ghost'
                     size='sm'
                     className='text-gray-500 hover:text-red-500 hover:!bg-red-100 hover:!border-red-100 hover:shadow-md transition-shadow'
-                    onClick={() => {
-                      const selectedProductIds = Array.from(selectedItems)
-                      selectedProductIds.forEach((id) => removeFromCart(id))
+                    disabled={getSelectedItemsCount() === 0}
+                    onClick={async () => {
+                      // selectedItems is a Set of keys like "productId-unit"
+                      // Use sequential removal to avoid race conditions with backend/state
+                      for (const key of selectedItems) {
+                        const [productId, unit] = key.split('-')
+                        await removeFromCart(productId, unit)
+                      }
+
+                      // Clear selections after successful deletion
+                      selectAllItems(false)
+                      toast.success('Đã xóa sản phẩm đã chọn khỏi giỏ hàng')
                     }}
                   >
                     <Trash2 className='w-4 h-4 mr-1' />
                     Xóa đã chọn
                   </Button>
-                  <Button variant='ghost' size='sm' className='text-gray-500 hover:text-blue-600 hover:!bg-blue-100 hover:!border-blue-100 hover:shadow-md transition-shadow'>
+                  <Button
+                    variant='ghost'
+                    size='sm'
+                    className='text-gray-500 hover:text-blue-600 hover:!bg-blue-100 hover:!border-blue-100 hover:shadow-md transition-shadow'
+                    disabled={getSelectedItemsCount() === 0}
+                    onClick={async () => {
+                      let successCount = 0
+                      for (const key of selectedItems) {
+                        const [productId] = key.split('-')
+                        try {
+                          await wishlistService.addToWishlist(productId)
+                          successCount++
+                        } catch (error) {
+                          console.error('Failed to add to wishlist:', error)
+                        }
+                      }
+                      if (successCount > 0) {
+                        toast.success(`Đã thêm ${successCount} sản phẩm vào danh sách yêu thích`)
+                      }
+                    }}
+                  >
                     <Heart className='w-4 h-4 mr-1' />
                     Thêm vào yêu thích
                   </Button>
@@ -290,7 +352,7 @@ export function ShoppingCartPage() {
                             <Button
                               variant='ghost'
                               size='sm'
-                              onClick={() => handleMoveToWishlist(item.productId)}
+                              onClick={() => handleAddToWishlist(item.productId)}
                               className='text-gray-400 hover:text-pink-500'
                             >
                               <Heart className='w-4 h-4' />
@@ -393,7 +455,7 @@ export function ShoppingCartPage() {
               <CardContent className='space-y-4'>
                 <div className='space-y-3'>
                   <div className='flex justify-between'>
-                    <span className='text-gray-600'>Tạm tính ({getSelectedItemsCount()} sản phẩm)</span>
+                    <span className='text-gray-600'>Tạm tính</span>
                     <span className='font-medium'>{new Intl.NumberFormat('vi-VN').format(subtotal)}đ</span>
                   </div>
 
@@ -407,10 +469,10 @@ export function ShoppingCartPage() {
                   )}
 
                   <div className='flex justify-between'>
-                    <span className='text-gray-600'>Phí vận chuyển</span>
+                    <span className='text-gray-600'>Phí vận chuyển (ước tính)</span>
                     <span className='font-medium'>
                       {shippingFee === 0 ? (
-                        <span className='text-green-600'>Miễn phí</span>
+                        <span className='text-green-600'>0đ</span>
                       ) : (
                         `${new Intl.NumberFormat('vi-VN').format(shippingFee)}đ`
                       )}
@@ -427,10 +489,10 @@ export function ShoppingCartPage() {
 
                 <Button
                   className='w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white h-12 mt-4 mb-2'
-                  disabled={getSelectedItemsCount() === 0}
+                  disabled={!cart?.items || cart.items.length === 0 || getSelectedItemsCount() === 0}
                   onClick={handleCheckout}
                 >
-                  Thanh toán ({getSelectedItemsCount()})
+                  Thanh toán
                 </Button>
 
                 <div className='text-center'>
