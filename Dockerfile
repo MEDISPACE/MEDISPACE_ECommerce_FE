@@ -1,22 +1,21 @@
-FROM node:20-alpine AS development-dependencies-env
-COPY . /app
+# Stage 1: Dependencies (Cache layer này khi package.json không đổi)
+FROM node:20-alpine AS deps
 WORKDIR /app
+COPY package.json package-lock.json ./
 RUN npm ci
 
-FROM node:20-alpine AS production-dependencies-env
-COPY ./package.json package-lock.json /app/
+# Stage 2: Build (Chỉ rebuild khi code thay đổi)
+FROM node:20-alpine AS builder
 WORKDIR /app
-RUN npm ci --omit=dev
-
-FROM node:20-alpine AS build-env
-COPY . /app/
-COPY --from=development-dependencies-env /app/node_modules /app/node_modules
-WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+ARG VITE_API_URL=http://13.214.162.163:8000
+ENV VITE_API_URL=${VITE_API_URL}
 RUN npm run build
 
-FROM node:20-alpine
-COPY ./package.json package-lock.json /app/
-COPY --from=production-dependencies-env /app/node_modules /app/node_modules
-COPY --from=build-env /app/build /app/build
-WORKDIR /app
-CMD ["npm", "run", "start"]
+# Stage 3: Production (Nginx serve static files)
+FROM nginx:alpine
+COPY --from=builder /app/build/client /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
