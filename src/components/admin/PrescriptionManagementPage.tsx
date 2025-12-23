@@ -30,6 +30,7 @@ import { Textarea } from '../ui/textarea'
 import { toast } from 'sonner'
 import { getPrescriptionStatusBadge } from '../../utils/badgeUtils'
 import adminService from '../../services/adminService'
+import { PrescriptionImageViewer } from '../shared/PrescriptionImageViewer'
 
 interface Prescription {
   _id?: string // MongoDB ObjectId from backend
@@ -45,7 +46,7 @@ interface Prescription {
   pharmacistEmail?: string
   pharmacistLicense?: string
   images: string[]
-  status: 'pending' | 'processing' | 'approved' | 'rejected' | 'fulfilled'
+  status: 'pending' | 'processing' | 'approved' | 'rejected' | 'fulfilled' | 'expired'
 
 
   createdAt: string
@@ -78,6 +79,7 @@ export function PrescriptionManagementPage() {
   const [showRejectDialog, setShowRejectDialog] = useState(false)
   const [rejectionReason, setRejectionReason] = useState('')
   const [showApproveConfirm, setShowApproveConfirm] = useState(false)
+  const [showExpireConfirm, setShowExpireConfirm] = useState(false)
 
   // Fetch prescriptions with React Query
   const { data: prescriptionsData, isLoading, error } = useQuery({
@@ -241,6 +243,24 @@ export function PrescriptionManagementPage() {
         setSelectedPrescription(null)
         setShowRejectDialog(false)
         setRejectionReason('')
+      }
+    })
+  }
+
+  // Handle expire prescription
+  const handleExpirePrescription = () => {
+    if (!selectedPrescription) return
+
+    updateStatusMutation.mutate({
+      id: selectedPrescription._id || selectedPrescription.id,
+      data: {
+        status: 'expired',
+        pharmacistNotes: 'Đơn thuốc đã hết hạn sử dụng'
+      }
+    }, {
+      onSuccess: () => {
+        setSelectedPrescription(null)
+        setShowExpireConfirm(false)
       }
     })
   }
@@ -603,7 +623,7 @@ export function PrescriptionManagementPage() {
       {/* Prescription Detail Dialog */}
       {selectedPrescription && (
         <Dialog open={!!selectedPrescription} onOpenChange={() => setSelectedPrescription(null)}>
-          <DialogContent className='max-w-4xl max-h-[90vh] overflow-y-auto'>
+          <DialogContent className='!w-[900px] max-w-[95vw] max-h-[90vh] overflow-y-auto'>
             <DialogHeader>
               <DialogTitle className='flex items-center gap-3'>
                 <span>Chi tiết đơn thuốc #{selectedPrescription.id}</span>
@@ -670,21 +690,7 @@ export function PrescriptionManagementPage() {
               </div>
 
               {/* Prescription Images */}
-              <div>
-                <h4 className='mb-3'>Ảnh đơn thuốc ({selectedPrescription.images.length})</h4>
-                <div className='grid grid-cols-2 gap-4'>
-                  {selectedPrescription.images.map((image, index) => (
-                    <div key={index} className='relative group'>
-                      <img
-                        src={image}
-                        alt={`Đơn thuốc ${index + 1}`}
-                        className='w-full h-48 object-cover rounded-lg border-2 border-gray-200'
-                      />
-                      <Badge className='absolute top-2 left-2 bg-white/90 text-gray-800'>Ảnh {index + 1}</Badge>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <PrescriptionImageViewer images={selectedPrescription.images} />
 
               {/* Medical Information */}
               <div className='grid grid-cols-2 gap-6'>
@@ -783,6 +789,16 @@ export function PrescriptionManagementPage() {
                 >
                   Đóng
                 </Button>
+                {selectedPrescription.status !== 'expired' && (
+                  <Button
+                    onClick={() => setShowExpireConfirm(true)}
+                    className='flex-1 bg-gray-600 hover:bg-gray-700 text-white'
+                    disabled={updateStatusMutation.isPending}
+                  >
+                    <Clock className='w-4 h-4 mr-2 text-white' />
+                    Đánh dấu hết hạn
+                  </Button>
+                )}
                 <Button
                   onClick={() => setShowRejectDialog(true)}
                   className='flex-1 bg-red-600 hover:bg-red-700 text-white'
@@ -868,6 +884,34 @@ export function PrescriptionManagementPage() {
               className='flex-1 bg-green-600 hover:bg-green-700 text-white'
             >
               {updateStatusMutation.isPending ? 'Đang xử lý...' : 'Xác nhận phê duyệt'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Expire Confirmation Dialog */}
+      <Dialog open={showExpireConfirm} onOpenChange={setShowExpireConfirm}>
+        <DialogContent className='max-w-md'>
+          <DialogHeader>
+            <DialogTitle>Đánh dấu đơn thuốc hết hạn</DialogTitle>
+            <DialogDescription>
+              Bạn có chắc chắn muốn đánh dấu đơn thuốc này là hết hạn? Đơn thuốc sẽ không thể được sử dụng để mua thuốc.
+            </DialogDescription>
+          </DialogHeader>
+          <div className='flex gap-3'>
+            <Button
+              variant='outline'
+              onClick={() => setShowExpireConfirm(false)}
+              className='flex-1'
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={handleExpirePrescription}
+              disabled={updateStatusMutation.isPending}
+              className='flex-1 bg-gray-600 hover:bg-gray-700 text-white'
+            >
+              {updateStatusMutation.isPending ? 'Đang xử lý...' : 'Xác nhận hết hạn'}
             </Button>
           </div>
         </DialogContent>

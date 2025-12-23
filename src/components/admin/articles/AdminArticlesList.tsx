@@ -96,10 +96,10 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
 
     const getStatusBadge = (status: string) => {
         const variants: Record<string, { color: string; label: string }> = {
-            draft: { color: 'bg-gray-500', label: 'Nháp' },
-            pending: { color: 'bg-yellow-500', label: 'Chờ duyệt' },
-            published: { color: 'bg-green-500', label: 'Đã xuất bản' },
-            archived: { color: 'bg-red-500', label: 'Lưu trữ' }
+            draft: { color: 'bg-gray-100 text-gray-700', label: 'Nháp' },
+            pending: { color: 'bg-yellow-100 text-yellow-700', label: 'Chờ duyệt' },
+            published: { color: 'bg-green-100 text-green-700', label: 'Đã xuất bản' },
+            archived: { color: 'bg-red-100 text-red-700', label: 'Lưu trữ' }
         }
         const variant = variants[status] || variants.draft
         return <Badge className={variant.color}>{variant.label}</Badge>
@@ -139,7 +139,7 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card>
+                <Card className='bg-white backdrop-blur-lg border-blue-100'>
                     <CardContent className="p-6 flex items-center gap-4">
                         <div className="p-3 bg-blue-100 rounded-full">
                             <FileText className="h-6 w-6 text-blue-600" />
@@ -150,7 +150,7 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
                         </div>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className='bg-white backdrop-blur-lg border-blue-100'>
                     <CardContent className="p-6 flex items-center gap-4">
                         <div className="p-3 bg-green-100 rounded-full">
                             <CheckCircle className="h-6 w-6 text-green-600" />
@@ -161,7 +161,7 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
                         </div>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className='bg-white backdrop-blur-lg border-blue-100'>
                     <CardContent className="p-6 flex items-center gap-4">
                         <div className="p-3 bg-yellow-100 rounded-full">
                             <Clock className="h-6 w-6 text-yellow-600" />
@@ -172,7 +172,7 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
                         </div>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className='bg-white backdrop-blur-lg border-blue-100'>
                     <CardContent className="p-6 flex items-center gap-4">
                         <div className="p-3 bg-purple-100 rounded-full">
                             <Star className="h-6 w-6 text-purple-600" />
@@ -185,12 +185,12 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
                 </Card>
             </div>
 
-            <Card className="backdrop-blur-sm bg-white/50">
+            <Card className='bg-white backdrop-blur-lg border-blue-100'>
                 <CardContent className="p-6">
                     <div className="flex gap-4 mb-6">
                         <div className="w-48">
                             <Select value={filter.status} onValueChange={(value) => setFilter({ ...filter, status: value })}>
-                                <SelectTrigger className="bg-white">
+                                <SelectTrigger className='bg-white border-2 border-blue-200'>
                                     <SelectValue placeholder="Trạng thái" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -204,7 +204,7 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
                         </div>
                         <div className="w-48">
                             <Select value={filter.categoryId} onValueChange={(value) => setFilter({ ...filter, categoryId: value })}>
-                                <SelectTrigger className="bg-white">
+                                <SelectTrigger className='bg-white border-2 border-blue-200'>
                                     <SelectValue placeholder="Danh mục" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -219,7 +219,7 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
                         </div>
                     </div>
 
-                    <div className="rounded-md border bg-white">
+                    <div className='rounded-md border-2 border-blue-100 bg-white'>
                         <Table>
                             <TableHeader>
                                 <TableRow className="bg-gray-50 hover:bg-gray-50">
