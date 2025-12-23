@@ -550,7 +550,7 @@ export function ProductDetailPage() {
                 <QuantityInput
                   value={quantity}
                   onChange={setQuantity}
-                  max={product.stockQuantity}
+                  max={Math.floor(product.stockQuantity / (selectedVariant?.quantityPerUnit || 1))}
                   disabled={!isProductInStock(product)}
                 />
               </div>

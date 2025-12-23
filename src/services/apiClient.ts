@@ -13,7 +13,7 @@ class ApiClient {
   constructor() {
     this.client = axios.create({
       baseURL: API_BASE_URL,
-      timeout: 10000,
+      timeout: 30000, // Increased to 30 seconds for admin operations
       headers: {
         'Content-Type': 'application/json',
       },
@@ -29,10 +29,9 @@ class ApiClient {
         } else {
           // Only warn for protected endpoints that require authentication
           const protectedEndpoints = ['/cart', '/orders', '/profile', '/admin', '/wishlist', '/users/me']
-          const isProtectedEndpoint = protectedEndpoints.some(endpoint => config.url?.includes(endpoint))
+          const isProtectedEndpoint = protectedEndpoints.some((endpoint) => config.url?.includes(endpoint))
 
           if (isProtectedEndpoint) {
-
           }
         }
         return config
@@ -50,11 +49,14 @@ class ApiClient {
 
         // Only log errors that are NOT 401 or are 401 but already retried
         if (error.response?.status !== 401 || originalRequest._retry) {
-
         }
 
         // Handle 401 errors with token refresh
-        if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url?.includes('/refresh-token')) {
+        if (
+          error.response?.status === 401 &&
+          !originalRequest._retry &&
+          !originalRequest.url?.includes('/refresh-token')
+        ) {
           originalRequest._retry = true
 
           try {
@@ -113,7 +115,7 @@ class ApiClient {
       const response = await axios.post(
         `${API_BASE_URL}${API_ENDPOINTS.AUTH.REFRESH_TOKEN}`,
         {},
-        { withCredentials: true }
+        { withCredentials: true },
       )
 
       const { accessToken } = response.data.result
@@ -157,4 +159,3 @@ class ApiClient {
 
 export const apiClient = new ApiClient()
 export default apiClient
-

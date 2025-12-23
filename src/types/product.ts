@@ -16,11 +16,12 @@ export interface ProductDetails {
 
 // Price Variant for multi-unit pricing (Viên, Vỉ, Hộp, Tuýp...)
 export interface PriceVariant {
-  unit: string           // Đơn vị: "Viên", "Vỉ", "Hộp"...
-  price: number          // Giá bán
+  unit: string // Đơn vị: "Viên", "Vỉ", "Hộp"...
+  price: number // Giá bán
   originalPrice?: number // Giá niêm yết (trước giảm)
-  costPrice?: number     // Giá vốn (chỉ admin/pharmacist thấy)
-  isDefault: boolean     // Đơn vị mặc định
+  costPrice?: number // Giá vốn (chỉ admin/pharmacist thấy)
+  isDefault: boolean // Đơn vị mặc định
+  quantityPerUnit: number // Số lượng đơn vị nhỏ nhất trong 1 đơn vị này
 }
 
 // ProductMedia interface for product images
@@ -107,7 +108,6 @@ export interface Product {
   tags?: string[]
 }
 
-
 // Brand interface matching backend schema
 export interface Brand {
   _id: string
@@ -157,6 +157,7 @@ export interface Category {
 }
 
 export interface ProductFilter {
+  page?: number
   categories?: string[]
   categoryId?: string
   brands?: string[]
@@ -164,6 +165,9 @@ export interface ProductFilter {
   rating?: number
   inStock?: boolean
   isPrescription?: boolean
+  search?: string
+  status?: string
+  requiresPrescription?: boolean
 }
 
 export interface CartItem {
