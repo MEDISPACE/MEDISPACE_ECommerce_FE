@@ -8,6 +8,7 @@ import { Textarea } from '~/components/ui/textarea'
 import { Avatar, AvatarFallback } from '~/components/ui/avatar'
 import { toast } from 'sonner'
 import { prescriptionService, type Prescription } from '~/services/pharmacist'
+import { PrescriptionImageViewer } from '~/components/shared/PrescriptionImageViewer'
 
 interface PrescriptionDetailsDialogProps {
   isOpen: boolean
@@ -117,23 +118,7 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
           </div>
 
           {/* Prescription Images */}
-          <div>
-            <h4 className='font-medium mb-3'>Ảnh đơn thuốc</h4>
-            <div className='grid grid-cols-2 gap-4'>
-              {prescription.images.map((image, index) => (
-                <div key={index} className='relative'>
-                  <img
-                    src={image}
-                    alt={`Đơn thuốc ${index + 1}`}
-                    className='w-full h-48 object-cover rounded-lg border'
-                  />
-                  <div className='absolute top-2 left-2'>
-                    <Badge className='bg-white text-gray-800'>Ảnh {index + 1}</Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <PrescriptionImageViewer images={prescription.images} />
 
           {/* Prescription Details */}
           <div className='grid grid-cols-2 gap-6'>
