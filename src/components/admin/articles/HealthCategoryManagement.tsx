@@ -161,6 +161,7 @@ export function HealthCategoryManagement() {
                                 value={currentCategory.name || ''}
                                 onChange={e => setCurrentCategory({ ...currentCategory, name: e.target.value })}
                                 placeholder="Ví dụ: Bệnh tim mạch"
+                                className='border-2 border-blue-200 focus:border-blue-500'
                             />
                         </div>
                         <div className="space-y-2">
@@ -170,6 +171,7 @@ export function HealthCategoryManagement() {
                                 value={currentCategory.description || ''}
                                 onChange={e => setCurrentCategory({ ...currentCategory, description: e.target.value })}
                                 placeholder="Mô tả ngắn về danh mục..."
+                                className='border-2 border-blue-200 focus:border-blue-500'
                             />
                         </div>
                         <div className="space-y-2">
@@ -179,6 +181,7 @@ export function HealthCategoryManagement() {
                                 value={currentCategory.icon || ''}
                                 onChange={e => setCurrentCategory({ ...currentCategory, icon: e.target.value })}
                                 placeholder="VD: Heart, Brain, Stethoscope"
+                                className='border-2 border-blue-200 focus:border-blue-500'
                             />
                         </div>
                         <div className="flex items-center space-x-2">

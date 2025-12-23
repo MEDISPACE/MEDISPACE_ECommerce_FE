@@ -201,7 +201,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
 
             <form onSubmit={handleSubmit} className="space-y-8">
                 {/* Basic Information */}
-                <Card>
+                <Card className='bg-white backdrop-blur-lg border-blue-100'>
                     <CardHeader>
                         <CardTitle className="text-xl text-blue-800">Thông tin cơ bản</CardTitle>
                     </CardHeader>
@@ -214,7 +214,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                                 onChange={(e) => handleTitleChange(e.target.value)}
                                 required
                                 placeholder="Nhập tiêu đề bài viết"
-                                className="h-11"
+                                className='h-11 border-2 border-blue-200 focus:border-blue-500'
                             />
                         </div>
 
@@ -225,7 +225,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                                 value={formData.slug}
                                 onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
                                 placeholder="bai-viet-slug"
-                                className="h-11 bg-gray-50"
+                                className='h-11 bg-gray-50 border-2 border-blue-200 focus:border-blue-500'
                             />
                         </div>
 
@@ -238,7 +238,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                                 required
                                 rows={3}
                                 placeholder="Tóm tắt ngắn gọn về bài viết (10-500 ký tự)"
-                                className="resize-none"
+                                className='resize-none border-2 border-blue-200 focus:border-blue-500'
                             />
                         </div>
 
@@ -259,7 +259,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                             <div className="space-y-2">
                                 <Label htmlFor="categoryId" className="text-base font-medium">Danh mục *</Label>
                                 <Select value={formData.categoryId} onValueChange={(value) => setFormData({ ...formData, categoryId: value })}>
-                                    <SelectTrigger className="h-11">
+                                    <SelectTrigger className='h-11 border-2 border-blue-200'>
                                         <SelectValue placeholder="Chọn danh mục" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -279,7 +279,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                                     value={formData.featuredImage}
                                     onChange={(e) => setFormData({ ...formData, featuredImage: e.target.value })}
                                     placeholder="https://example.com/image.jpg"
-                                    className="h-11"
+                                    className='h-11 border-2 border-blue-200 focus:border-blue-500'
                                 />
                             </div>
                         </div>
@@ -291,14 +291,14 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                                 value={formData.tags}
                                 onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
                                 placeholder="sức khỏe, dinh dưỡng, vitamin"
-                                className="h-11"
+                                className='h-11 border-2 border-blue-200 focus:border-blue-500'
                             />
                         </div>
                     </CardContent>
                 </Card>
 
                 {/* SEO & Settings */}
-                <Card>
+                <Card className='bg-white backdrop-blur-lg border-blue-100'>
                     <CardHeader>
                         <CardTitle className="text-xl text-blue-800">SEO & Cài đặt</CardTitle>
                     </CardHeader>
@@ -310,7 +310,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                                 value={formData.metaTitle}
                                 onChange={(e) => setFormData({ ...formData, metaTitle: e.target.value })}
                                 placeholder="Tiêu đề hiển thị trên Google"
-                                className="h-11"
+                                className='h-11 border-2 border-blue-200 focus:border-blue-500'
                             />
                         </div>
 
@@ -322,7 +322,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                                 onChange={(e) => setFormData({ ...formData, metaDescription: e.target.value })}
                                 rows={2}
                                 placeholder="Mô tả ngắn hiển thị trên kết quả tìm kiếm"
-                                className="resize-none"
+                                className='resize-none border-2 border-blue-200 focus:border-blue-500'
                             />
                         </div>
 
@@ -333,7 +333,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                                 value={formData.metaKeywords}
                                 onChange={(e) => setFormData({ ...formData, metaKeywords: e.target.value })}
                                 placeholder="keyword1, keyword2, keyword3"
-                                className="h-11"
+                                className='h-11 border-2 border-blue-200 focus:border-blue-500'
                             />
                         </div>
 
@@ -344,7 +344,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                                     value={formData.status}
                                     onValueChange={(value: any) => setFormData({ ...formData, status: value })}
                                 >
-                                    <SelectTrigger className="h-11 bg-white">
+                                    <SelectTrigger className='h-11 bg-white border-2 border-blue-200'>
                                         <SelectValue placeholder="Chọn trạng thái" />
                                     </SelectTrigger>
                                     <SelectContent>
