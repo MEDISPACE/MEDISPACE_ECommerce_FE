@@ -22,6 +22,7 @@ import {
   Tag,
   MessageSquare,
   Star,
+  Building2,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { Button } from '../ui/button'
@@ -80,6 +81,11 @@ const navigationItems: NavItem[] = [
     label: 'Quản lý danh mục',
     href: '/admin/categories',
     icon: Tag,
+  },
+  {
+    label: 'Quản lý thương hiệu',
+    href: '/admin/brands',
+    icon: Building2,
   },
   {
     label: 'Quản lý đơn hàng',

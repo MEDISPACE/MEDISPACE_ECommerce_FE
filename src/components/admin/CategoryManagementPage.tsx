@@ -11,6 +11,7 @@ import {
   CheckCircle,
   XCircle,
   ChevronUp,
+  Loader2,
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Button } from '../ui/button'
@@ -32,7 +33,7 @@ import { TextField, SelectField, FormGrid, FormSection, TextAreaField } from '..
 import { getStatusBadge } from '../../utils/badgeUtils'
 import adminService from '../../services/adminService'
 import { toast } from 'sonner'
-import { ImageUploader } from '../forms/ImageUploader'
+import { uploadImage } from '../../services/mediaService'
 import { PaginationComponent } from '../shared/PaginationComponent'
 
 interface Category {
@@ -56,6 +57,8 @@ export function CategoryManagementPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [imageMode, setImageMode] = useState<'url' | 'upload'>('url')
+  const [isUploading, setIsUploading] = useState(false)
 
   // Dialog states
   const [dialogState, setDialogState] = useState<{
@@ -76,6 +79,14 @@ export function CategoryManagementPage() {
     queryKey: ['admin', 'categories', 'tree'],
     queryFn: adminService.getCategoryTree,
     staleTime: 30000,
+  })
+
+  // Fetch dashboard stats for accurate total products count
+  const { data: dashboardStats } = useQuery({
+    queryKey: ['admin', 'dashboard', 'stats'],
+    queryFn: adminService.getDashboardStats,
+    staleTime: 2 * 60 * 1000,
+    select: (data) => data.products,
   })
 
   // Flatten tree for table view (with indentation)
@@ -260,9 +271,10 @@ export function CategoryManagementPage() {
       inactive: flattenCategories.filter((c) => !c.isActive).length,
       root: flattenCategories.filter((c) => !c.parentId).length,
       subCategories: flattenCategories.filter((c) => c.parentId).length,
-      totalProducts: flattenCategories.reduce((sum, c) => sum + (c.productCount || 0), 0),
+      // Use dashboard stats for accurate total products count (no duplicates)
+      totalProducts: dashboardStats?.total || 0,
     }
-  }, [flattenCategories])
+  }, [flattenCategories, dashboardStats])
 
   // Get parent options for select
   const parentOptions = useMemo(() => {
@@ -396,10 +408,13 @@ export function CategoryManagementPage() {
                 <SelectItem value='inactive'>Không hoạt động</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={itemsPerPage.toString()} onValueChange={(v) => {
-              setItemsPerPage(Number(v))
-              setCurrentPage(1)
-            }}>
+            <Select
+              value={itemsPerPage.toString()}
+              onValueChange={(v) => {
+                setItemsPerPage(Number(v))
+                setCurrentPage(1)
+              }}
+            >
               <SelectTrigger className='w-40 border-2 border-blue-200'>
                 <SelectValue />
               </SelectTrigger>
@@ -538,13 +553,11 @@ export function CategoryManagementPage() {
           {filteredCategories.length > 0 && totalPages > 1 && (
             <div className='mt-6 flex items-center justify-between border-t pt-4'>
               <div className='text-sm text-gray-600'>
-                Hiển thị {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, filteredCategories.length)} trong tổng số {filteredCategories.length} danh mục
+                Hiển thị {(currentPage - 1) * itemsPerPage + 1} -{' '}
+                {Math.min(currentPage * itemsPerPage, filteredCategories.length)} trong tổng số{' '}
+                {filteredCategories.length} danh mục
               </div>
-              <PaginationComponent
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-              />
+              <PaginationComponent currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
             </div>
           )}
         </CardContent>
@@ -592,19 +605,118 @@ export function CategoryManagementPage() {
         <FormSection title='Hình ảnh & Icon'>
           <div className='space-y-4'>
             <label className='text-sm font-medium text-gray-700'>Ảnh đại diện</label>
-            <ImageUploader
-              maxFiles={1}
-              onImagesChange={(images) => {
-                if (images.length > 0) {
-                  // In a real app, you would upload the file here and get the URL
-                  // For now, we'll use the object URL preview
-                  // TODO: Implement actual file upload
-                  updateFormData('thumbnailImage', images[0].url)
-                } else {
-                  updateFormData('thumbnailImage', undefined)
-                }
-              }}
-            />
+
+            {/* Mode toggle */}
+            <div className='flex gap-2'>
+              <button
+                type='button'
+                onClick={() => setImageMode('url')}
+                className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  imageMode !== 'upload'
+                    ? 'bg-blue-100 text-blue-700 border border-blue-300'
+                    : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
+                }`}
+              >
+                Dán URL
+              </button>
+              <button
+                type='button'
+                onClick={() => setImageMode('upload')}
+                className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  imageMode === 'upload'
+                    ? 'bg-blue-100 text-blue-700 border border-blue-300'
+                    : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
+                }`}
+              >
+                Tải lên
+              </button>
+            </div>
+
+            {/* URL mode */}
+            {imageMode !== 'upload' && (
+              <TextField
+                label='URL Ảnh đại diện'
+                value={formState.data.thumbnailImage || ''}
+                onChange={(v) => updateFormData('thumbnailImage', v)}
+                placeholder='https://example.com/image.png'
+              />
+            )}
+
+            {/* Upload mode */}
+            {imageMode === 'upload' && (
+              <div className='space-y-3'>
+                <label className='text-sm font-medium text-gray-700'>Tải lên ảnh đại diện</label>
+                <div className='relative'>
+                  <input
+                    type='file'
+                    accept='image/*'
+                    disabled={isUploading}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+
+                      // Validate file size (2MB)
+                      if (file.size > 2 * 1024 * 1024) {
+                        toast.error('Kích thước file không được vượt quá 2MB')
+                        return
+                      }
+
+                      setIsUploading(true)
+                      try {
+                        const url = await uploadImage(file)
+                        updateFormData('thumbnailImage', url)
+                        toast.success('Tải ảnh thành công')
+                      } catch (error) {
+                        toast.error(error instanceof Error ? error.message : 'Tải ảnh thất bại')
+                      } finally {
+                        setIsUploading(false)
+                        e.target.value = '' // Reset input
+                      }
+                    }}
+                    className='block w-full text-sm text-gray-500
+                      file:mr-4 file:py-2 file:px-4
+                      file:rounded-lg file:border-0
+                      file:text-sm file:font-medium
+                      file:bg-blue-50 file:text-blue-700
+                      hover:file:bg-blue-100
+                      file:cursor-pointer file:transition-colors
+                      disabled:opacity-50 disabled:cursor-not-allowed'
+                  />
+                  {isUploading && (
+                    <div className='absolute inset-0 bg-white/80 flex items-center justify-center rounded-lg'>
+                      <Loader2 className='w-5 h-5 animate-spin text-blue-600' />
+                      <span className='ml-2 text-sm text-gray-600'>Đang tải...</span>
+                    </div>
+                  )}
+                </div>
+                <p className='text-xs text-gray-500'>Hỗ trợ: JPG, PNG, GIF (tối đa 2MB)</p>
+              </div>
+            )}
+
+            {/* Preview */}
+            {formState.data.thumbnailImage && (
+              <div className='mt-4'>
+                <p className='text-xs text-gray-500 mb-2'>Xem trước:</p>
+                <div className='relative inline-block'>
+                  <img
+                    src={formState.data.thumbnailImage}
+                    alt='Ảnh đại diện'
+                    className='w-24 h-24 object-contain rounded-lg border bg-white p-2'
+                    onError={(e) => {
+                      ;(e.target as HTMLImageElement).style.display = 'none'
+                    }}
+                  />
+                  <button
+                    type='button'
+                    onClick={() => updateFormData('thumbnailImage', '')}
+                    className='absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors'
+                    title='Xóa ảnh'
+                  >
+                    <XCircle className='w-3 h-3' />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <FormGrid cols={2}>

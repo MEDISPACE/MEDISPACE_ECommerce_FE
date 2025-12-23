@@ -18,74 +18,87 @@ export function AdminDashboard() {
   const [isRefreshing, setIsRefreshing] = useState(false)
 
   // Fetch dashboard stats
-  const { data: dashboardStats, isLoading: statsLoading, error: statsError, refetch: refetchStats } = useQuery({
+  const {
+    data: dashboardStats,
+    isLoading: statsLoading,
+    error: statsError,
+    refetch: refetchStats,
+  } = useQuery({
     queryKey: ['admin', 'dashboard', 'stats'],
     queryFn: adminService.getDashboardStats,
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
+    retry: 3, // Retry 3 times on failure
+    retryDelay: 1000, // Wait 1 second between retries
+    staleTime: 2 * 60 * 1000, // Consider data fresh for 2 minutes
   })
 
   // Fetch recent activities
-  const { data: recentActivities, isLoading: activitiesLoading, refetch: refetchActivities } = useQuery({
+  const {
+    data: recentActivities,
+    isLoading: activitiesLoading,
+    refetch: refetchActivities,
+  } = useQuery({
     queryKey: ['admin', 'dashboard', 'activities'],
     queryFn: () => adminService.getRecentActivities(10),
     refetchInterval: 2 * 60 * 1000, // Refetch every 2 minutes
+    retry: 2, // Retry 2 times on failure
+    staleTime: 1 * 60 * 1000, // Consider data fresh for 1 minute
   })
 
   // Format currency
   const formatCurrency = (amount: number) => {
-    if (amount >= 1000000) {
-      return `${(amount / 1000000).toFixed(1)}M ₫`
-    }
-    return `${amount.toLocaleString('vi-VN')} ₫`
+    return new Intl.NumberFormat('vi-VN').format(Math.round(amount)) + ' ₫'
   }
 
   // Quick stats configuration
-  const quickStats: StatCardConfig[] = dashboardStats ? [
-    {
-      title: 'Tổng người dùng',
-      value: dashboardStats.users.total,
-      icon: Users,
-      color: 'blue',
-      trend: {
-        value: `+${dashboardStats.users.newToday}`,
-        type: 'positive',
-        label: 'mới hôm nay',
-      },
-    },
-    {
-      title: 'Đơn hàng hôm nay',
-      value: dashboardStats.orders.todayCount,
-      icon: Package,
-      color: 'green',
-      trend: {
-        value: `${dashboardStats.orders.pending} chờ xử lý`,
-        type: dashboardStats.orders.pending > 10 ? 'negative' : 'positive',
-        label: '',
-      },
-    },
-    {
-      title: 'Doanh thu tháng',
-      value: formatCurrency(dashboardStats.revenue.month),
-      icon: DollarSign,
-      color: 'emerald',
-      trend: {
-        value: `${dashboardStats.revenue.growth > 0 ? '+' : ''}${dashboardStats.revenue.growth.toFixed(1)}%`,
-        type: dashboardStats.revenue.growth >= 0 ? 'positive' : 'negative',
-        label: 'so với tháng trước',
-      },
-    },
-    {
-      title: 'Đơn thuốc chờ',
-      value: dashboardStats.prescriptions.pending,
-      icon: FileText,
-      color: 'orange',
-      trend: {
-        value: `${dashboardStats.prescriptions.approved} đã duyệt`,
-        type: 'positive',
-        label: '',
-      },
-    },
-  ] : []
+  const quickStats: StatCardConfig[] = dashboardStats
+    ? [
+        {
+          title: 'Tổng người dùng',
+          value: dashboardStats.users.total,
+          icon: Users,
+          color: 'blue',
+          trend: {
+            value: `+${dashboardStats.users.newToday}`,
+            type: 'positive',
+            label: 'mới hôm nay',
+          },
+        },
+        {
+          title: 'Đơn hàng hôm nay',
+          value: dashboardStats.orders.todayCount,
+          icon: Package,
+          color: 'green',
+          trend: {
+            value: `${dashboardStats.orders.pending} chờ xử lý`,
+            type: dashboardStats.orders.pending > 10 ? 'negative' : 'positive',
+            label: '',
+          },
+        },
+        {
+          title: 'Doanh thu tháng',
+          value: formatCurrency(dashboardStats.revenue.month),
+          icon: DollarSign,
+          color: 'emerald',
+          trend: {
+            value: `${dashboardStats.revenue.growth > 0 ? '+' : ''}${dashboardStats.revenue.growth.toFixed(1)}%`,
+            type: dashboardStats.revenue.growth >= 0 ? 'positive' : 'negative',
+            label: 'so với tháng trước',
+          },
+        },
+        {
+          title: 'Đơn thuốc chờ',
+          value: dashboardStats.prescriptions.pending,
+          icon: FileText,
+          color: 'orange',
+          trend: {
+            value: `${dashboardStats.prescriptions.approved} đã duyệt`,
+            type: 'positive',
+            label: '',
+          },
+        },
+      ]
+    : []
 
   const quickActions = [
     {
@@ -124,10 +137,7 @@ export function AdminDashboard() {
     toast.loading('Đang làm mới dữ liệu...', { id: 'refresh-dashboard' })
 
     try {
-      await Promise.all([
-        refetchStats(),
-        refetchActivities()
-      ])
+      await Promise.all([refetchStats(), refetchActivities()])
 
       toast.success('Đã cập nhật dữ liệu mới nhất!', { id: 'refresh-dashboard' })
     } catch (error) {
@@ -140,13 +150,19 @@ export function AdminDashboard() {
 
   // Show error state
   if (statsError) {
+    console.error('Dashboard stats error:', statsError)
     return (
       <div className='flex items-center justify-center h-96'>
         <Card className='bg-white backdrop-blur-lg border-red-200 p-6'>
           <div className='flex flex-col items-center gap-4'>
             <AlertCircle className='w-12 h-12 text-red-500' />
             <h3 className='text-lg font-semibold text-red-800'>Lỗi tải dữ liệu</h3>
-            <p className='text-red-600'>Không thể tải thống kê dashboard. Vui lòng thử lại.</p>
+            <p className='text-red-600 text-center'>
+              Không thể tải thống kê dashboard.
+              {statsError instanceof Error && statsError.message && (
+                <span className='block text-sm mt-2'>Chi tiết: {statsError.message}</span>
+              )}
+            </p>
             <Button onClick={() => refetchStats()} className='bg-red-600 hover:bg-red-700'>
               Thử lại
             </Button>
@@ -174,12 +190,7 @@ export function AdminDashboard() {
               Chào mừng trở lại, {user ? `${user.firstName} ${user.lastName}` : 'Admin'} 👋
             </p>
           </div>
-          <Button
-            onClick={handleRefreshAll}
-            variant='outline'
-            className='gap-2'
-            disabled={isRefreshing}
-          >
+          <Button onClick={handleRefreshAll} variant='outline' className='gap-2' disabled={isRefreshing}>
             <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             Làm mới
           </Button>
@@ -226,14 +237,15 @@ export function AdminDashboard() {
                 {recentActivities?.map((activity) => (
                   <div key={activity.id} className='flex items-start gap-3'>
                     <div
-                      className={`w-2 h-2 rounded-full mt-2 ${activity.severity === 'success'
-                        ? 'bg-green-500'
-                        : activity.severity === 'warning'
-                          ? 'bg-yellow-500'
-                          : activity.severity === 'error'
-                            ? 'bg-red-500'
-                            : 'bg-blue-500'
-                        }`}
+                      className={`w-2 h-2 rounded-full mt-2 ${
+                        activity.severity === 'success'
+                          ? 'bg-green-500'
+                          : activity.severity === 'warning'
+                            ? 'bg-yellow-500'
+                            : activity.severity === 'error'
+                              ? 'bg-red-500'
+                              : 'bg-blue-500'
+                      }`}
                     />
                     <div className='flex-1'>
                       <p className='text-sm text-gray-900'>{activity.message}</p>
