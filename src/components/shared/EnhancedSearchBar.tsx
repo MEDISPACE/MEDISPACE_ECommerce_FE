@@ -16,6 +16,7 @@ interface SearchSuggestion {
   text: string
   type: 'product' | 'category' | 'brand' | 'recent' | 'trending'
   icon?: string
+  image?: string
   slug?: string
 }
 
@@ -51,7 +52,7 @@ export function EnhancedSearchBar({
       try {
         const [productsData, categoriesData] = await Promise.all([
           productService.getProducts(), // Get products for search
-          categoryService.getCategories()
+          categoryService.getCategories(),
         ])
         setProducts(productsData)
         setCategories(categoriesData)
@@ -93,7 +94,7 @@ export function EnhancedSearchBar({
           text: product.name,
           type: 'product' as const,
           slug: product.slug,
-          icon: product.requiresPrescription ? '🔴' : '💊',
+          image: product.featuredImage || product.images?.[0] || '',
         }))
 
       // Category suggestions
@@ -334,10 +335,19 @@ export function EnhancedSearchBar({
                     <button
                       key={suggestion.id}
                       onClick={() => handleSuggestionClick(suggestion)}
-                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${selectedIndex === index ? 'bg-blue-100 border border-blue-300' : 'hover:bg-blue-50'
-                        }`}
+                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${
+                        selectedIndex === index ? 'bg-blue-100 border border-blue-300' : 'hover:bg-blue-50'
+                      }`}
                     >
-                      <span className='text-lg'>{suggestion.icon}</span>
+                      {suggestion.type === 'product' && suggestion.image ? (
+                        <img
+                          src={suggestion.image}
+                          alt={suggestion.text}
+                          className='w-12 h-12 object-cover rounded-lg border border-gray-200'
+                        />
+                      ) : (
+                        <span className='text-lg'>{suggestion.icon}</span>
+                      )}
                       <div className='flex-1'>
                         <div className='font-medium'>{suggestion.text}</div>
                         <div className='text-xs text-gray-500 capitalize'>
@@ -377,10 +387,11 @@ export function EnhancedSearchBar({
                           <div key={recent} className='flex items-center gap-1'>
                             <button
                               onClick={() => handleSearch(recent)}
-                              className={`flex-1 flex items-center gap-3 p-2 rounded-lg transition-colors text-left text-sm ${selectedIndex === recentIndex
-                                ? 'bg-blue-100 border border-blue-300'
-                                : 'hover:bg-gray-50'
-                                }`}
+                              className={`flex-1 flex items-center gap-3 p-2 rounded-lg transition-colors text-left text-sm ${
+                                selectedIndex === recentIndex
+                                  ? 'bg-blue-100 border border-blue-300'
+                                  : 'hover:bg-gray-50'
+                              }`}
                             >
                               <History className='w-4 h-4 text-gray-400' />
                               {recent}

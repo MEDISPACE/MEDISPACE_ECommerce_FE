@@ -9,7 +9,6 @@ import {
   Shield,
   RotateCcw,
   Star,
-  ThumbsUp,
   BadgeAlert,
   FileText,
   MessageCircle,
@@ -27,22 +26,18 @@ import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
 import { Card, CardContent } from '../ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
-import { Separator } from '../ui/separator'
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Dialog, DialogContent, DialogClose, DialogTitle, DialogDescription } from '../ui/dialog'
 import { ImageWithFallback } from '~/components/shared/ImageWithFallback'
 import { useCart } from '../../contexts/CartContext'
 import { useWishlist } from '../../hooks/product/useWishlist'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
 import { useImageLightbox, useCarousel } from '~/hooks/ui'
-import type { Product, Review, Category } from '~/types/product'
+import type { Product, Category } from '~/types/product'
 
 import { ReviewList } from '../reviews/ReviewList'
 import { ReviewStats } from '../reviews/ReviewStats'
-import { WriteReviewDialog } from '../reviews/WriteReviewDialog'
 import { useProductReviews, useReviewActions } from '~/hooks/product/useReviews'
 import { ProductStructuredData } from '~/components/seo'
-import orderService from '~/services/orderService'
 import {
   getProductId,
   getProductImage,
@@ -54,7 +49,6 @@ import {
   isProductPrescription,
   getBrandName,
   getProductDescription,
-  getDefaultPriceVariant,
 } from '../../utils/productHelpers'
 import type { PriceVariant } from '../../types/product'
 import productService from '../../services/productService'
@@ -76,7 +70,17 @@ export function ProductDetailPage() {
 
   // Reviews - Use real API (read-only)
   const productId = product?._id || ''
-  const { reviews, stats, loading: reviewsLoading, page, totalPages, sortBy, setPage, setSortBy, refetch: refetchReviews } = useProductReviews(productId)
+  const {
+    reviews,
+    stats,
+    loading: reviewsLoading,
+    page,
+    totalPages,
+    sortBy,
+    setPage,
+    setSortBy,
+    refetch: refetchReviews,
+  } = useProductReviews(productId)
   const { markHelpful } = useReviewActions()
 
   // Fetch product data
@@ -103,7 +107,7 @@ export function ProductDetailPage() {
           )
           setRelatedProducts(related)
         }
-      } catch (err) {
+      } catch {
         setError('Không thể tải thông tin sản phẩm')
       } finally {
         setLoading(false)
@@ -116,7 +120,7 @@ export function ProductDetailPage() {
   // Initialize selectedVariantIndex when product loads
   useEffect(() => {
     if (product?.priceVariants && product.priceVariants.length > 0) {
-      const defaultIndex = product.priceVariants.findIndex(v => v.isDefault)
+      const defaultIndex = product.priceVariants.findIndex((v) => v.isDefault)
       setSelectedVariantIndex(defaultIndex >= 0 ? defaultIndex : 0)
     }
   }, [product])
@@ -142,14 +146,14 @@ export function ProductDetailPage() {
 
   // Lookup category name from slug using fetched categories
   const getCategoryNameBySlug = (slugStr: string): string => {
-    const foundCategory = allCategoriesFlat.find(cat => cat.slug === slugStr)
+    const foundCategory = allCategoriesFlat.find((cat) => cat.slug === slugStr)
     if (foundCategory) {
       return foundCategory.name // Vietnamese name with diacritics
     }
     // Fallback: capitalize slug
     return slugStr
       .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ')
   }
 
@@ -160,10 +164,12 @@ export function ProductDetailPage() {
     const categoryPath = product.category.path // e.g., "/thuoc/thuoc-bo-vitamin/thuoc-tang-cuong"
     if (!categoryPath) {
       // Fallback: just show current category
-      return [{
-        label: product.category.name,
-        href: `/products?category=${product.category.slug}`
-      }]
+      return [
+        {
+          label: product.category.name,
+          href: `/products?category=${product.category.slug}`,
+        },
+      ]
     }
 
     // Parse path into slugs (remove leading slash and split)
@@ -174,19 +180,14 @@ export function ProductDetailPage() {
       const isLast = index === slugs.length - 1
       return {
         label: isLast ? product.category!.name : getCategoryNameBySlug(slugItem),
-        href: `/categories/${slugItem}`
+        href: `/categories/${slugItem}`,
       }
     })
-
 
     return items
   }
 
   const breadcrumbItems = buildCategoryBreadcrumb()
-
-
-
-
 
   const lightbox = useImageLightbox({
     images: product ? getProductImages(product) : [],
@@ -220,7 +221,12 @@ export function ProductDetailPage() {
           <div className='text-center py-12'>
             <h2 className='text-2xl font-bold text-gray-900 mb-2'>Sản phẩm không tồn tại</h2>
             <p className='text-gray-600 mb-6'>{error || 'Sản phẩm bạn đang tìm kiếm không có trong hệ thống.'}</p>
-            <Button className='!border-blue-200 !text-blue-600 hover:!bg-blue-50 hover:!text-blue-700' onClick={() => window.history.back()}>Quay lại</Button>
+            <Button
+              className='!border-blue-200 !text-blue-600 hover:!bg-blue-50 hover:!text-blue-700'
+              onClick={() => window.history.back()}
+            >
+              Quay lại
+            </Button>
           </div>
         </div>
       </PageTransition>
@@ -276,7 +282,6 @@ export function ProductDetailPage() {
     }
   }
 
-
   const scrollToSlide = (index: number) => {
     carousel.goToSlide(index)
   }
@@ -315,13 +320,7 @@ export function ProductDetailPage() {
   return (
     <PageTransition>
       {/* SEO: Structured Data for Google Rich Snippets */}
-      {product && (
-        <ProductStructuredData
-          product={product}
-          reviews={reviews}
-          stats={stats}
-        />
-      )}
+      {product && <ProductStructuredData product={product} reviews={reviews} stats={stats} />}
 
       {/* Breadcrumb - Must be OUTSIDE container for sticky to work */}
       <UniversalBreadcrumb items={breadcrumbItems} />
@@ -352,7 +351,6 @@ export function ProductDetailPage() {
                   alt={product.name}
                   className='w-full h-full object-cover hover:scale-105 transition-transform duration-300 animate-fade-in'
                 />
-
               </div>
 
               {/* Badges - Top Left */}
@@ -369,7 +367,6 @@ export function ProductDetailPage() {
                   <span className='font-medium text-sm'>
                     {selectedImage + 1}/{getProductImages(product).length}
                   </span>
-
                 </div>
               )}
 
@@ -409,7 +406,6 @@ export function ProductDetailPage() {
                   </>
                 )}
 
-
                 {/* Thumbnail gallery with smooth scroll */}
                 <div
                   ref={thumbnailScrollRef}
@@ -424,10 +420,11 @@ export function ProductDetailPage() {
                     <button
                       key={index}
                       onClick={() => setSelectedImage(index)}
-                      className={`relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${selectedImage === index
-                        ? 'border-blue-500 shadow-lg scale-105 ring-2 ring-blue-200'
-                        : 'border-blue-100 hover:border-blue-300 hover:shadow-md'
-                        }`}
+                      className={`relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
+                        selectedImage === index
+                          ? 'border-blue-500 shadow-lg scale-105 ring-2 ring-blue-200'
+                          : 'border-blue-100 hover:border-blue-300 hover:shadow-md'
+                      }`}
                     >
                       <ImageWithFallback
                         src={image}
@@ -450,8 +447,9 @@ export function ProductDetailPage() {
                     <button
                       key={index}
                       onClick={() => setSelectedImage(index)}
-                      className={`h-1.5 rounded-full transition-all ${selectedImage === index ? 'w-6 bg-blue-600' : 'w-1.5 bg-blue-200 hover:bg-blue-300'
-                        }`}
+                      className={`h-1.5 rounded-full transition-all ${
+                        selectedImage === index ? 'w-6 bg-blue-600' : 'w-1.5 bg-blue-200 hover:bg-blue-300'
+                      }`}
                       aria-label={`View image ${index + 1}`}
                     />
                   ))}
@@ -471,11 +469,7 @@ export function ProductDetailPage() {
               </div>
 
               <div className='flex items-center gap-2 mb-4'>
-                <RatingStars
-                  rating={stats?.averageRating || 0}
-                  size='lg'
-                  reviewCount={reviews.length}
-                />
+                <RatingStars rating={stats?.averageRating || 0} size='lg' reviewCount={reviews.length} />
                 <span
                   className='text-blue-600 hover:underline cursor-pointer text-sm'
                   onClick={() => {
@@ -508,15 +502,14 @@ export function ProductDetailPage() {
                           <button
                             key={variant.unit}
                             onClick={() => setSelectedVariantIndex(index)}
-                            className={`px-4 py-2 rounded-lg border-2 text-sm font-medium transition-all ${selectedVariantIndex === index
-                              ? 'border-blue-500 bg-blue-50 text-blue-700'
-                              : 'border-gray-200 bg-white text-gray-700 hover:border-blue-200 hover:bg-blue-50/50'
-                              }`}
+                            className={`px-4 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
+                              selectedVariantIndex === index
+                                ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                : 'border-gray-200 bg-white text-gray-700 hover:border-blue-200 hover:bg-blue-50/50'
+                            }`}
                           >
                             <span>{variant.unit}</span>
-                            <span className='ml-2 text-xs opacity-75'>
-                              {variant.price.toLocaleString('vi-VN')}đ
-                            </span>
+                            <span className='ml-2 text-xs opacity-75'>{variant.price.toLocaleString('vi-VN')}đ</span>
                           </button>
                         ))}
                       </div>
@@ -578,7 +571,9 @@ export function ProductDetailPage() {
                     <Button
                       variant='outline'
                       onClick={() => {
-                        const chatBtn = document.querySelector('button[aria-label="Chat với dược sĩ"]') as HTMLButtonElement | null
+                        const chatBtn = document.querySelector(
+                          'button[aria-label="Chat với dược sĩ"]',
+                        ) as HTMLButtonElement | null
                         if (chatBtn) {
                           chatBtn.click()
                         }
@@ -613,7 +608,7 @@ export function ProductDetailPage() {
                     onClick={handleAddToCart}
                     disabled={!isProductInStock(product)}
                     variant='outline'
-                    className='flex-1 border-2 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 h-12 shadow-md hover:shadow-lg transition-all'
+                    className='flex-1 border-2 !bg-white !border-blue-200 text-blue-500 hover:bg-blue-50 hover:text-blue-600 hover:!border-blue-300 h-12 shadow-md hover:shadow-lg transition-all'
                   >
                     <ShoppingCart className='w-5 h-5 mr-2' />
                     Thêm giỏ hàng
@@ -633,10 +628,11 @@ export function ProductDetailPage() {
                   variant='outline'
                   size='sm'
                   onClick={handleWishlistToggle}
-                  className={`flex-1 border-2 transition-all ${isInWishlist(getProductId(product))
-                    ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100'
-                    : 'border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300'
-                    }`}
+                  className={`flex-1 border-2 transition-all ${
+                    isInWishlist(getProductId(product))
+                      ? '!bg-red-50 !border-red-200 !text-red-600 hover:!bg-red-100'
+                      : '!bg-white !border-blue-200 !text-blue-500 hover:!bg-blue-50 hover:!text-blue-600 hover:!border-blue-300'
+                  }`}
                 >
                   <Heart className={`w-4 h-4 mr-2 ${isInWishlist(getProductId(product)) ? 'fill-red-600' : ''}`} />
                   {isInWishlist(getProductId(product)) ? 'Đã yêu thích' : 'Yêu thích'}
@@ -703,22 +699,40 @@ export function ProductDetailPage() {
         {/* Product Details Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className='mb-12'>
           <TabsList className='inline-flex w-full overflow-x-auto bg-blue-100 p-1 rounded-lg shadow-sm scrollbar-hide'>
-            <TabsTrigger value='description' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+            <TabsTrigger
+              value='description'
+              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+            >
               <span className='whitespace-nowrap'>Mô tả</span>
             </TabsTrigger>
-            <TabsTrigger value='ingredients' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+            <TabsTrigger
+              value='ingredients'
+              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+            >
               <span className='whitespace-nowrap'>Thành phần</span>
             </TabsTrigger>
-            <TabsTrigger value='uses' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+            <TabsTrigger
+              value='uses'
+              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+            >
               <span className='whitespace-nowrap'>Công dụng</span>
             </TabsTrigger>
-            <TabsTrigger value='instructions' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+            <TabsTrigger
+              value='instructions'
+              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+            >
               <span className='whitespace-nowrap'>Cách dùng</span>
             </TabsTrigger>
-            <TabsTrigger value='warnings' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+            <TabsTrigger
+              value='warnings'
+              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+            >
               <span className='whitespace-nowrap'>Chú ý</span>
             </TabsTrigger>
-            <TabsTrigger value='reviews' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+            <TabsTrigger
+              value='reviews'
+              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+            >
               <span className='whitespace-nowrap'>Đánh giá ({reviews.length})</span>
             </TabsTrigger>
           </TabsList>
@@ -797,7 +811,9 @@ export function ProductDetailPage() {
               <CardContent className='p-6'>
                 <div className='prose max-w-none'>
                   {product.details?.dosageInstructions ? (
-                    <p className='text-gray-700 leading-relaxed whitespace-pre-line'>{product.details.dosageInstructions}</p>
+                    <p className='text-gray-700 leading-relaxed whitespace-pre-line'>
+                      {product.details.dosageInstructions}
+                    </p>
                   ) : (
                     <p className='text-gray-600'>Thông tin hướng dẫn sử dụng đang được cập nhật...</p>
                   )}
@@ -848,17 +864,15 @@ export function ProductDetailPage() {
                 <div className='md:col-span-2'>
                   <Card className='bg-white border-blue-200 shadow-sm'>
                     <CardContent className='p-6'>
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
-                        <Star className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-                        <h4 className="font-semibold text-blue-900 mb-2">
-                          Đánh giá sản phẩm
-                        </h4>
-                        <p className="text-sm text-blue-700 mb-3">
+                      <div className='bg-blue-50 border border-blue-200 rounded-lg p-4 text-center'>
+                        <Star className='w-8 h-8 text-blue-600 mx-auto mb-2' />
+                        <h4 className='font-semibold text-blue-900 mb-2'>Đánh giá sản phẩm</h4>
+                        <p className='text-sm text-blue-700 mb-3'>
                           Để đảm bảo tính xác thực, bạn chỉ có thể đánh giá sản phẩm từ đơn hàng đã hoàn thành.
                         </p>
                         <Link
-                          to="/account/orders"
-                          className="inline-flex items-center text-sm text-blue-600 hover:text-blue-700 underline font-medium"
+                          to='/account/orders'
+                          className='inline-flex items-center text-sm text-blue-600 hover:text-blue-700 underline font-medium'
                         >
                           Xem đơn hàng của tôi →
                         </Link>
@@ -876,7 +890,7 @@ export function ProductDetailPage() {
                 totalPages={totalPages}
                 sortBy={sortBy}
                 onPageChange={setPage}
-                onSortChange={(sort) => setSortBy(sort as any)}
+                onSortChange={setSortBy}
                 onHelpful={async (reviewId) => {
                   await markHelpful(reviewId)
                   refetchReviews()
@@ -969,10 +983,11 @@ export function ProductDetailPage() {
                     <button
                       key={index}
                       onClick={() => scrollToSlide(index)}
-                      className={`h-2 rounded-full transition-all ${carousel.currentSlide === index
-                        ? 'w-8 bg-gradient-to-r from-blue-600 to-cyan-500'
-                        : 'w-2 bg-blue-200 hover:bg-blue-300'
-                        }`}
+                      className={`h-2 rounded-full transition-all ${
+                        carousel.currentSlide === index
+                          ? 'w-8 bg-gradient-to-r from-blue-600 to-cyan-500'
+                          : 'w-2 bg-blue-200 hover:bg-blue-300'
+                      }`}
                       aria-label={`Go to slide ${index + 1}`}
                     />
                   ))}
@@ -1052,8 +1067,9 @@ export function ProductDetailPage() {
                   <button
                     key={index}
                     onClick={() => setSelectedImage(index)}
-                    className={`h-2 rounded-full transition-all ${selectedImage === index ? 'w-8 bg-white' : 'w-2 bg-white/40 hover:bg-white/60'
-                      }`}
+                    className={`h-2 rounded-full transition-all ${
+                      selectedImage === index ? 'w-8 bg-white' : 'w-2 bg-white/40 hover:bg-white/60'
+                    }`}
                     aria-label={`View image ${index + 1}`}
                   />
                 ))}
@@ -1062,6 +1078,6 @@ export function ProductDetailPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </PageTransition >
+    </PageTransition>
   )
 }
