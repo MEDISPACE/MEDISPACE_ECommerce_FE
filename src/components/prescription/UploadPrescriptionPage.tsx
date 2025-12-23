@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
-import { CheckCircle, ArrowLeft, Clock, UserCheck, Package, Upload } from 'lucide-react'
+import { CheckCircle, ArrowLeft, Clock, UserCheck, Package, Upload, AlertCircle } from 'lucide-react'
 
 import { Button } from '../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
@@ -41,9 +41,7 @@ export function UploadPrescriptionPage() {
 
   // Get S3 URLs of successfully uploaded images
   const getUploadedImageUrls = (): string[] => {
-    return uploadedImages
-      .filter(img => img.isUploaded && img.url.startsWith('http'))
-      .map(img => img.url)
+    return uploadedImages.filter((img) => img.isUploaded && img.url.startsWith('http')).map((img) => img.url)
   }
 
   const handleImagesChange = (images: UploadedImage[]) => {
@@ -59,7 +57,7 @@ export function UploadPrescriptionPage() {
       }
 
       // Check if any images are still uploading
-      const stillUploading = uploadedImages.some(img => img.isUploading)
+      const stillUploading = uploadedImages.some((img) => img.isUploading)
       if (stillUploading) {
         toast.error('Vui lòng đợi ảnh tải lên hoàn tất')
         return
@@ -115,17 +113,15 @@ export function UploadPrescriptionPage() {
       const prescriptionData = {
         doctorName: formData.doctorName,
         hospitalName: formData.hospitalName,
-        prescriptionDate: formData.examinationDate
-          ? formData.examinationDate.toISOString()
-          : new Date().toISOString(),
+        prescriptionDate: formData.examinationDate ? formData.examinationDate.toISOString() : new Date().toISOString(),
         images: imageUrls,
         medications: [
           {
             productName: formData.diagnosis || 'Theo đơn thuốc',
             dosage: 'Theo chỉ định bác sĩ',
             quantity: 1,
-            instructions: formData.specialNotes || 'Theo hướng dẫn của bác sĩ'
-          }
+            instructions: formData.specialNotes || 'Theo hướng dẫn của bác sĩ',
+          },
         ],
       }
 
@@ -140,15 +136,20 @@ export function UploadPrescriptionPage() {
       } else {
         throw new Error('Invalid response from server')
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error submitting prescription:', error)
 
       // Handle specific errors
-      if (error.response?.status === 401) {
-        toast.error('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại')
-        navigate('/login', { state: { from: '/upload-prescription' } })
-      } else if (error.response?.data?.message) {
-        toast.error(error.response.data.message)
+      if (error && typeof error === 'object' && 'response' in error) {
+        const apiError = error as { response?: { status?: number; data?: { message?: string } } }
+        if (apiError.response?.status === 401) {
+          toast.error('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại')
+          navigate('/login', { state: { from: '/upload-prescription' } })
+        } else if (apiError.response?.data?.message) {
+          toast.error(apiError.response.data.message)
+        } else {
+          toast.error('Có lỗi xảy ra khi gửi đơn thuốc. Vui lòng thử lại.')
+        }
       } else {
         toast.error('Có lỗi xảy ra khi gửi đơn thuốc. Vui lòng thử lại.')
       }
@@ -172,23 +173,27 @@ export function UploadPrescriptionPage() {
             {/* Login reminder */}
             {!isAuthenticated && (
               <Alert className='border-amber-200 bg-amber-50'>
-                <AlertDescription className='text-amber-800'>
-                  ⚠️ Bạn cần <Button variant="link" className="p-0 h-auto text-amber-800 underline" onClick={() => navigate('/login', { state: { from: '/upload-prescription' } })}>đăng nhập</Button> để gửi đơn thuốc.
+                <AlertDescription className='text-amber-800 flex items-center gap-2'>
+                  <AlertCircle className='w-5 h-5 text-amber-600 flex-shrink-0' />
+                  <span>Bạn cần</span>
+                  <Button
+                    variant='link'
+                    className='p-0 h-auto text-amber-800 underline font-medium hover:text-amber-900'
+                    onClick={() => navigate('/login', { state: { from: '/upload-prescription' } })}
+                  >
+                    đăng nhập
+                  </Button>
+                  <span>để gửi đơn thuốc.</span>
                 </AlertDescription>
               </Alert>
             )}
 
-            <ImageUploader
-              onImagesChange={handleImagesChange}
-              maxFiles={5}
-              maxSize={10}
-              uploadToServer={true}
-            />
+            <ImageUploader onImagesChange={handleImagesChange} maxFiles={5} maxSize={10} uploadToServer={true} />
 
             <div className='flex justify-end space-x-3'>
               <Button
                 onClick={handleNextStep}
-                disabled={uploadedImages.length === 0 || uploadedImages.some(img => img.isUploading)}
+                disabled={uploadedImages.length === 0 || uploadedImages.some((img) => img.isUploading)}
                 className='bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-700 hover:to-blue-600'
               >
                 Tiếp tục
@@ -205,9 +210,7 @@ export function UploadPrescriptionPage() {
               <CardContent className='p-4'>
                 <div className='flex items-center gap-2'>
                   <CheckCircle className='w-5 h-5 text-emerald-600' />
-                  <span className='text-emerald-800'>
-                    Đã tải lên {getUploadedImageUrls().length} ảnh đơn thuốc
-                  </span>
+                  <span className='text-emerald-800'>Đã tải lên {getUploadedImageUrls().length} ảnh đơn thuốc</span>
                 </div>
               </CardContent>
             </Card>
@@ -215,7 +218,7 @@ export function UploadPrescriptionPage() {
             <PrescriptionForm
               onSubmit={handleFormSubmit}
               onSaveDraft={handleSaveDraft}
-              // @ts-ignore - PrescriptionForm needs to be updated to accept isSubmitting
+              // @ts-expect-error - PrescriptionForm needs to be updated to accept isSubmitting
               isSubmitting={isSubmitting}
             />
 
@@ -351,7 +354,11 @@ export function UploadPrescriptionPage() {
                 <CardContent>
                   <div className='flex gap-3'>
                     <img
-                      src={(product as Product).images?.[0] || (product as Product).featuredImage || '/placeholder-product.jpg'}
+                      src={
+                        (product as Product).images?.[0] ||
+                        (product as Product).featuredImage ||
+                        '/placeholder-product.jpg'
+                      }
                       alt={(product as Product).name}
                       className='w-16 h-16 object-cover rounded border border-gray-200'
                     />
@@ -378,8 +385,9 @@ export function UploadPrescriptionPage() {
                 <div className='space-y-3'>
                   <div className='flex items-start gap-3'>
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${currentStep >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
-                        }`}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
+                        currentStep >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
+                      }`}
                     >
                       <Upload className='w-4 h-4' />
                     </div>
@@ -391,8 +399,9 @@ export function UploadPrescriptionPage() {
 
                   <div className='flex items-start gap-3'>
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${currentStep >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
-                        }`}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
+                        currentStep >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
+                      }`}
                     >
                       <UserCheck className='w-4 h-4' />
                     </div>
@@ -404,8 +413,9 @@ export function UploadPrescriptionPage() {
 
                   <div className='flex items-start gap-3'>
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${currentStep >= 3 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
-                        }`}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
+                        currentStep >= 3 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
+                      }`}
                     >
                       <Package className='w-4 h-4' />
                     </div>
@@ -417,8 +427,9 @@ export function UploadPrescriptionPage() {
 
                   <div className='flex items-start gap-3'>
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${currentStep >= 3 ? 'bg-emerald-600 text-white' : 'bg-gray-300 text-gray-600'
-                        }`}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
+                        currentStep >= 3 ? 'bg-emerald-600 text-white' : 'bg-gray-300 text-gray-600'
+                      }`}
                     >
                       <CheckCircle className='w-4 h-4' />
                     </div>
@@ -434,14 +445,14 @@ export function UploadPrescriptionPage() {
             {/* Support Info */}
             <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
               <CardContent className='p-4'>
-                <Alert>
+                <Alert className='border-blue-200 bg-blue-50'>
                   <AlertDescription>
                     <div className='space-y-2'>
-                      <p className='font-medium'>Cần hỗ trợ?</p>
-                      <p className='text-sm'>
+                      <p className='font-medium text-blue-900'>Cần hỗ trợ?</p>
+                      <p className='text-sm text-blue-800'>
                         Liên hệ hotline: <span className='font-medium text-blue-600'>1800 6928</span>
                       </p>
-                      <p className='text-sm'>Hoặc chat trực tiếp với dược sĩ</p>
+                      <p className='text-sm text-blue-800'>Hoặc chat trực tiếp với dược sĩ</p>
                     </div>
                   </AlertDescription>
                 </Alert>
