@@ -63,7 +63,7 @@ export function OrderDetailsDrawer({ isOpen, onClose, order }: OrderDetailsDrawe
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className='w-full sm:max-w-2xl overflow-y-auto bg-gradient-to-br from-blue-50/50 to-white'>
+      <SheetContent className='w-full sm:max-w-2xl overflow-y-auto !bg-gradient-to-br from-blue-50/50 to-white'>
         <SheetHeader className='pb-4 border-b border-blue-100'>
           <SheetTitle className='text-2xl font-bold text-blue-900 flex items-center gap-2'>
             <Package className='w-6 h-6 text-blue-600' />
