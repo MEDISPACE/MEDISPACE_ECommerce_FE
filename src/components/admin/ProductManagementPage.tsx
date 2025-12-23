@@ -53,6 +53,11 @@ import { HybridPriceEditor, type PriceVariant } from './HybridPriceEditor'
 // Use Product type from types/product.ts
 import type { Product } from '../../types/product'
 
+// Format currency helper
+const formatCurrency = (amount: number) => {
+  return new Intl.NumberFormat('vi-VN').format(Math.round(amount)) + ' đ'
+}
+
 export function ProductManagementPage() {
   const queryClient = useQueryClient()
   const [searchQuery, setSearchQuery] = useState('')
@@ -76,32 +81,53 @@ export function ProductManagementPage() {
     errors: Record<string, string>
   }>({ data: {}, errors: {} })
 
-  // Fetch products
-  const { data: productsData = [], isLoading } = useQuery({
-    queryKey: ['admin', 'products', searchQuery, filterCategory, filterStatus, filterPrescription],
-    queryFn: () =>
-      productService.getProducts({
-        limit: 5000, // Load all products for admin management
+  // Fetch products with server-side pagination
+  const {
+    data: productsResponse,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: [
+      'admin',
+      'products',
+      currentPage,
+      itemsPerPage,
+      searchQuery,
+      filterCategory,
+      filterStatus,
+      filterPrescription,
+    ],
+    queryFn: async () => {
+      console.log(`Fetching products page ${currentPage}...`)
+      const result = await productService.getProducts({
+        page: currentPage,
+        limit: itemsPerPage,
         sortBy: 'createdAt',
         sortOrder: 'desc',
-      }),
-    select: (data) => {
-      // Client-side filtering
-      return data.filter((product) => {
-        const matchesSearch =
-          !searchQuery ||
-          product.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          product.sku?.toLowerCase().includes(searchQuery.toLowerCase())
-        const matchesCategory = filterCategory === 'all' || product.categoryId === filterCategory
-        const matchesStatus = filterStatus === 'all' || product.status === filterStatus
-        const matchesPrescription =
-          filterPrescription === 'all' ||
-          (filterPrescription === 'rx' && product.requiresPrescription) ||
-          (filterPrescription === 'otc' && !product.requiresPrescription)
-        return matchesSearch && matchesCategory && matchesStatus && matchesPrescription
+        search: searchQuery || undefined,
+        categoryId: filterCategory !== 'all' ? filterCategory : undefined,
+        status: filterStatus !== 'all' ? filterStatus : undefined,
+        requiresPrescription: filterPrescription === 'rx' ? true : filterPrescription === 'otc' ? false : undefined,
       })
+      console.log(`✅ Loaded ${result.length} products for page ${currentPage}`)
+      return result
     },
-    staleTime: 30000,
+    staleTime: 60000,
+    retry: 2,
+    gcTime: 10 * 60 * 1000,
+    placeholderData: (previousData) => previousData, // Keep previous data while loading new page
+  })
+
+  const allProducts = useMemo(() => productsResponse || [], [productsResponse])
+
+  // No need for client-side filtering - server handles it
+
+  // Fetch product stats from dashboard API
+  const { data: dashboardStats } = useQuery({
+    queryKey: ['admin', 'dashboard', 'stats'],
+    queryFn: adminService.getDashboardStats,
+    staleTime: 2 * 60 * 1000, // Fresh for 2 minutes
+    select: (data) => data.products, // Only get products stats
   })
 
   // Fetch categories for dropdown
@@ -114,7 +140,7 @@ export function ProductManagementPage() {
   // Fetch brands for dropdown
   const { data: brandsData = [] } = useQuery({
     queryKey: ['brands'],
-    queryFn: brandService.getBrands,
+    queryFn: () => brandService.getBrands(),
     staleTime: 60000,
   })
 
@@ -300,32 +326,71 @@ export function ProductManagementPage() {
     }
   }
 
-  // Stats calculation
+  // Stats calculation - use global stats from dashboard API
   const stats = useMemo(() => {
-    return {
-      total: productsData.length,
-      active: productsData.filter((p) => p.status === 'active').length,
-      outOfStock: productsData.filter((p) => p.status === 'out_of_stock').length,
-      lowStock: productsData.filter((p) => (p.stockQuantity || 0) > 0 && (p.stockQuantity || 0) < 20).length,
-      totalValue: productsData.reduce((sum, p) => sum + (p.price || 0) * (p.stockQuantity || 0), 0),
-      rxProducts: productsData.filter((p) => p.requiresPrescription).length,
-      otcProducts: productsData.filter((p) => !p.requiresPrescription).length,
+    if (dashboardStats) {
+      return {
+        total: dashboardStats.total,
+        active: dashboardStats.active,
+        outOfStock: dashboardStats.outOfStock,
+        lowStock: dashboardStats.lowStock,
+        totalValue: dashboardStats.totalValue,
+        rxProducts: allProducts.filter((p) => p.requiresPrescription).length, // Per-page count
+        otcProducts: allProducts.filter((p) => !p.requiresPrescription).length, // Per-page count
+      }
     }
-  }, [productsData])
+    // Fallback to per-page calculation if dashboard stats not loaded
+    return {
+      total: allProducts.length,
+      active: allProducts.filter((p) => p.status === 'active').length,
+      outOfStock: allProducts.filter((p) => p.status === 'out_of_stock').length,
+      lowStock: allProducts.filter((p) => (p.stockQuantity || 0) > 0 && (p.stockQuantity || 0) < 20).length,
+      totalValue: allProducts.reduce((sum, p) => sum + (p.price || 0) * (p.stockQuantity || 0), 0),
+      rxProducts: allProducts.filter((p) => p.requiresPrescription).length,
+      otcProducts: allProducts.filter((p) => !p.requiresPrescription).length,
+    }
+  }, [dashboardStats, allProducts])
 
-  // Pagination logic
-  const paginatedProducts = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage
-    const endIndex = startIndex + itemsPerPage
-    return productsData.slice(startIndex, endIndex)
-  }, [productsData, currentPage, itemsPerPage])
+  // Server-side pagination - use products directly (no client-side slicing)
+  const paginatedProducts = allProducts
 
-  const totalPages = Math.ceil(productsData.length / itemsPerPage)
+  // Calculate total pages from dashboard stats
+  const totalPages = dashboardStats ? Math.ceil(dashboardStats.total / itemsPerPage) : Math.ceil(3238 / itemsPerPage)
 
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1)
   }, [searchQuery, filterCategory, filterStatus, filterPrescription])
+
+  // Show error state
+  if (error) {
+    console.error('Product management error:', error)
+    return (
+      <div className='space-y-6'>
+        <h1
+          className='text-3xl font-bold bg-clip-text text-transparent'
+          style={{
+            backgroundImage: `linear-gradient(to right, #0066CC, #4A90E2)`,
+          }}
+        >
+          Quản lý sản phẩm
+        </h1>
+        <Card className='bg-red-50 border-red-200'>
+          <CardContent className='p-6'>
+            <div className='flex items-center gap-4'>
+              <AlertTriangle className='w-8 h-8 text-red-500' />
+              <div>
+                <h3 className='text-lg font-semibold text-red-800'>Không thể tải danh sách sản phẩm</h3>
+                <p className='text-red-600 mt-1'>
+                  {error instanceof Error ? error.message : 'Đã xảy ra lỗi khi tải dữ liệu'}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className='space-y-6'>
@@ -340,7 +405,14 @@ export function ProductManagementPage() {
           >
             Quản lý sản phẩm
           </h1>
-          <p className='text-gray-600 mt-2'>Quản lý danh mục sản phẩm và tồn kho</p>
+          <p className='text-gray-600 mt-2'>
+            Quản lý danh mục sản phẩm và tồn kho
+            {dashboardStats && (
+              <span className='ml-2 text-sm font-medium text-blue-600'>
+                (Trang {currentPage}/{totalPages} - Tổng: {dashboardStats.total} sản phẩm)
+              </span>
+            )}
+          </p>
         </div>
         <div className='flex gap-2'>
           <Button variant='outline' className='gap-2'>
@@ -367,7 +439,7 @@ export function ProductManagementPage() {
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
-                <p className='text-xs text-gray-600'>Tổng SP</p>
+                <p className='text-xs text-gray-600'>Tổng Sản Phẩm</p>
                 <p className='text-2xl font-semibold text-blue-600'>{stats.total}</p>
               </div>
               <Package className='w-8 h-8 text-blue-400' />
@@ -416,7 +488,7 @@ export function ProductManagementPage() {
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-xs text-gray-600'>Giá trị kho</p>
-                <p className='text-lg font-semibold text-[#4A90E2]'>{(stats.totalValue / 1000000).toFixed(1)}M</p>
+                <p className='text-lg font-semibold text-[#4A90E2]'>{formatCurrency(stats.totalValue)}</p>
               </div>
               <DollarSign className='w-8 h-8 text-[#4A90E2]' />
             </div>
@@ -521,7 +593,7 @@ export function ProductManagementPage() {
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
             <Package className='w-5 h-5 text-blue-600' />
-            Danh sách sản phẩm ({productsData.length})
+            Danh sách sản phẩm ({allProducts.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -573,12 +645,15 @@ export function ProductManagementPage() {
                         </div>
                       </TableCell>
                       <TableCell className='hidden md:table-cell'>
-                        <Badge className='bg-blue-100 text-blue-700 hover:bg-blue-100'>{product.category?.name || 'N/A'}</Badge>
+                        <Badge className='bg-blue-100 text-blue-700 hover:bg-blue-100'>
+                          {product.category?.name || 'N/A'}
+                        </Badge>
                       </TableCell>
                       <TableCell>
                         <p className='font-semibold text-blue-600'>
                           {(() => {
-                            const defaultVariant = product.priceVariants?.find(v => v.isDefault) || product.priceVariants?.[0]
+                            const defaultVariant =
+                              product.priceVariants?.find((v) => v.isDefault) || product.priceVariants?.[0]
                             const price = defaultVariant?.price || 0
                             return price.toLocaleString('vi-VN') + 'đ'
                           })()}
@@ -651,11 +726,11 @@ export function ProductManagementPage() {
           </div>
 
           {/* Pagination */}
-          {productsData.length > 0 && totalPages > 1 && (
+          {allProducts.length > 0 && totalPages > 1 && (
             <div className='mt-6 flex items-center justify-between border-t pt-4'>
               <div className='text-sm text-gray-600'>
-                Hiển thị {(currentPage - 1) * itemsPerPage + 1} -{' '}
-                {Math.min(currentPage * itemsPerPage, productsData.length)} trong tổng số {productsData.length} sản phẩm
+                Trang {currentPage}/{totalPages} - Hiển thị {allProducts.length} sản phẩm
+                {dashboardStats && <span> (Tổng: {dashboardStats.total} sản phẩm)</span>}
               </div>
               <PaginationComponent currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
             </div>
@@ -760,22 +835,30 @@ export function ProductManagementPage() {
           </FormGrid>
 
           {/* Stock breakdown by unit */}
-          {formState.data.priceVariants && (formState.data.priceVariants as PriceVariant[]).length > 0 && formState.data.stockQuantity !== undefined && formState.data.stockQuantity > 0 && (
-            <div className='p-3 bg-blue-50 border border-blue-200 rounded-lg mt-3'>
-              <p className='text-xs font-medium text-gray-600 mb-2'>📦 Quy đổi tồn kho theo đơn vị:</p>
-              <div className='flex flex-wrap gap-2'>
-                {(formState.data.priceVariants as PriceVariant[]).map((variant, idx) => {
-                  const stockByUnit = Math.floor((formState.data.stockQuantity || 0) / (variant.quantityPerUnit || 1))
-                  return (
-                    <div key={idx} className='flex items-center gap-1 px-2 py-1 bg-white rounded border border-blue-100'>
-                      <span className='text-xs text-gray-600'>{variant.unit}:</span>
-                      <span className='text-sm font-semibold text-blue-600'>{stockByUnit.toLocaleString('vi-VN')}</span>
-                    </div>
-                  )
-                })}
+          {formState.data.priceVariants &&
+            (formState.data.priceVariants as PriceVariant[]).length > 0 &&
+            formState.data.stockQuantity !== undefined &&
+            formState.data.stockQuantity > 0 && (
+              <div className='p-3 bg-blue-50 border border-blue-200 rounded-lg mt-3'>
+                <p className='text-xs font-medium text-gray-600 mb-2'>📦 Quy đổi tồn kho theo đơn vị:</p>
+                <div className='flex flex-wrap gap-2'>
+                  {(formState.data.priceVariants as PriceVariant[]).map((variant, idx) => {
+                    const stockByUnit = Math.floor((formState.data.stockQuantity || 0) / (variant.quantityPerUnit || 1))
+                    return (
+                      <div
+                        key={idx}
+                        className='flex items-center gap-1 px-2 py-1 bg-white rounded border border-blue-100'
+                      >
+                        <span className='text-xs text-gray-600'>{variant.unit}:</span>
+                        <span className='text-sm font-semibold text-blue-600'>
+                          {stockByUnit.toLocaleString('vi-VN')}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            )}
         </FormSection>
 
         <FormSection title='Trạng thái'>
