@@ -31,6 +31,9 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog'
+import { Label } from '../ui/label'
+import { Textarea } from '../ui/textarea'
 import { EntityFormDialog, EntityDeleteDialog } from '../shared/EntityFormDialog'
 import {
   TextField,
@@ -81,6 +84,14 @@ export function ProductManagementPage() {
     errors: Record<string, string>
   }>({ data: {}, errors: {} })
 
+  // Stock adjustment dialog
+  const [stockDialog, setStockDialog] = useState<{
+    isOpen: boolean
+    product: Product | null
+    quantity: number
+    note: string
+  }>({ isOpen: false, product: null, quantity: 0, note: '' })
+
   // Fetch products with server-side pagination
   const {
     data: productsResponse,
@@ -98,7 +109,7 @@ export function ProductManagementPage() {
       filterPrescription,
     ],
     queryFn: async () => {
-      console.log(`Fetching products page ${currentPage}...`)
+      // console.log(`Fetching products page ${currentPage}...`)
       const result = await productService.getProducts({
         page: currentPage,
         limit: itemsPerPage,
@@ -109,7 +120,8 @@ export function ProductManagementPage() {
         status: filterStatus !== 'all' ? filterStatus : undefined,
         requiresPrescription: filterPrescription === 'rx' ? true : filterPrescription === 'otc' ? false : undefined,
       })
-      console.log(`✅ Loaded ${result.length} products for page ${currentPage}`)
+      // console.log(`✅ Loaded ${result.length} products for page ${currentPage}`)
+      // console.log('Sample product with brand:', result[0])
       return result
     },
     staleTime: 60000,
@@ -140,9 +152,16 @@ export function ProductManagementPage() {
   // Fetch brands for dropdown
   const { data: brandsData = [] } = useQuery({
     queryKey: ['brands'],
-    queryFn: () => brandService.getBrands(),
+    queryFn: () => brandService.getBrands({ limit: 450 }), // Fetch all brands
     staleTime: 60000,
   })
+
+  // Debug brands data
+  // useEffect(() => {
+  //   if (brandsData.length > 0) {
+  //     console.log(`✅ Loaded ${brandsData.length} brands:`, brandsData.slice(0, 5))
+  //   }
+  // }, [brandsData])
 
   // Flatten categories for dropdown
   const categories = useMemo(() => {
@@ -240,9 +259,80 @@ export function ProductManagementPage() {
     })
   }
 
+  const openStockDialog = (product: Product) => {
+    setStockDialog({
+      isOpen: true,
+      product,
+      quantity: 0,
+      note: '',
+    })
+  }
+
+  const handleStockAdjustment = async () => {
+    if (!stockDialog.product || stockDialog.quantity === 0) {
+      toast.error('Vui lòng nhập số lượng')
+      return
+    }
+
+    const newStock = (stockDialog.product.stockQuantity || 0) + stockDialog.quantity
+
+    // Validate new stock is not negative
+    if (newStock < 0) {
+      toast.error(`Không thể xuất nhiều hơn tồn kho hiện tại (${stockDialog.product.stockQuantity || 0} đơn vị)`)
+      return
+    }
+
+    try {
+      // Use dedicated stock update API
+      await productService.updateStock(stockDialog.product._id, newStock)
+
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['admin', 'products'] })
+
+      toast.success(`Đã ${stockDialog.quantity > 0 ? 'nhập' : 'xuất'} ${Math.abs(stockDialog.quantity)} đơn vị`)
+      setStockDialog({ isOpen: false, product: null, quantity: 0, note: '' })
+    } catch (error) {
+      const err = error as { response?: { data?: { message?: string } } }
+      toast.error(err.response?.data?.message || 'Cập nhật tồn kho thất bại')
+    }
+  }
+
   const openEditDialog = (entity: Product) => {
     setDialogState({ isOpen: true, mode: 'edit', entity })
-    setFormState({ data: entity, errors: {} })
+
+    // Normalize data: ensure brandId and categoryId are strings, not objects
+    const normalizedData = {
+      ...entity,
+      // Handle brandId: can be entity.brand._id or entity.brandId (if string)
+      brandId:
+        entity.brand?._id ||
+        (typeof entity.brandId === 'object' && entity.brandId !== null
+          ? (entity.brandId as { _id: string })._id
+          : entity.brandId),
+      // Handle categoryId: can be entity.category._id or entity.categoryId (if string)
+      categoryId:
+        entity.category?._id ||
+        (typeof entity.categoryId === 'object' && entity.categoryId !== null
+          ? (entity.categoryId as { _id: string })._id
+          : entity.categoryId),
+    }
+
+    // console.log('📝 Edit dialog normalized data:', {
+    //   brandId: normalizedData.brandId,
+    //   categoryId: normalizedData.categoryId,
+    //   originalBrand: entity.brand,
+    //   originalCategory: entity.category,
+    // })
+
+    // Check if brandId exists in brandsData
+    // const brandExists = brandsData.find((b) => b._id === normalizedData.brandId)
+    // console.log('🔍 Brand lookup:', {
+    //   brandId: normalizedData.brandId,
+    //   brandExists: brandExists,
+    //   totalBrands: brandsData.length,
+    // })
+
+    setFormState({ data: normalizedData, errors: {} })
   }
 
   const openDeleteDialog = (entity: Product) => {
@@ -706,12 +796,25 @@ export function ProductManagementPage() {
                           <DropdownMenuContent align='end' className='bg-white shadow-lg border-2 border-blue-200'>
                             <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => openEditDialog(product)}>
-                              <Edit className='w-4 h-4 mr-2' />
+                            <DropdownMenuItem
+                              className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
+                              onClick={() => openEditDialog(product)}
+                            >
+                              <Edit className='w-4 h-4 mr-2 hover:!text-blue-600' />
                               Chỉnh sửa
                             </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
+                              onClick={() => openStockDialog(product)}
+                            >
+                              <Package className='w-4 h-4 mr-2' />
+                              Nhập/Xuất hàng
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => openDeleteDialog(product)} className='text-red-600'>
+                            <DropdownMenuItem
+                              onClick={() => openDeleteDialog(product)}
+                              className='text-red-600 hover:!bg-red-100 hover:!border-red-100 hover:!text-red-700'
+                            >
                               <Trash2 className='w-4 h-4 mr-2' />
                               Xóa
                             </DropdownMenuItem>
@@ -940,6 +1043,112 @@ export function ProductManagementPage() {
         onConfirm={confirmDelete}
         warningMessage='Sản phẩm sẽ bị xóa khỏi hệ thống và không thể khôi phục.'
       />
+
+      {/* Stock Adjustment Dialog */}
+      <Dialog
+        open={stockDialog.isOpen}
+        onOpenChange={(open) => !open && setStockDialog({ isOpen: false, product: null, quantity: 0, note: '' })}
+      >
+        <DialogContent className='sm:max-w-md'>
+          <DialogHeader>
+            <DialogTitle>Nhập/Xuất hàng</DialogTitle>
+            <DialogDescription>
+              Điều chỉnh tồn kho cho sản phẩm: <span className='font-semibold'>{stockDialog.product?.name}</span>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className='space-y-4 py-4'>
+            {/* Current stock display */}
+            <div className='p-4 bg-blue-50 border border-blue-200 rounded-lg'>
+              <div className='flex items-center justify-between'>
+                <span className='text-sm text-gray-600'>Tồn kho hiện tại:</span>
+                <span className='text-lg font-bold text-blue-600'>
+                  {stockDialog.product?.stockQuantity?.toLocaleString('vi-VN') || 0}{' '}
+                  <span className='text-sm font-normal'>đơn vị</span>
+                </span>
+              </div>
+
+              {/* Show stock by unit if priceVariants exists */}
+              {stockDialog.product?.priceVariants &&
+                (stockDialog.product.priceVariants as PriceVariant[]).length > 0 && (
+                  <div className='mt-3 pt-3 border-t border-blue-200'>
+                    <p className='text-xs text-gray-600 mb-2'>Quy đổi theo đơn vị:</p>
+                    <div className='flex flex-wrap gap-2'>
+                      {(stockDialog.product.priceVariants as PriceVariant[]).map((variant, idx) => {
+                        const stockByUnit = Math.floor(
+                          (stockDialog.product?.stockQuantity || 0) / (variant.quantityPerUnit || 1),
+                        )
+                        return (
+                          <div key={idx} className='text-xs bg-white px-2 py-1 rounded border border-blue-100'>
+                            <span className='text-gray-600'>{variant.unit}: </span>
+                            <span className='font-semibold text-blue-600'>{stockByUnit.toLocaleString('vi-VN')}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+            </div>
+
+            {/* Quantity adjustment */}
+            <div className='space-y-2'>
+              <Label>Số lượng điều chỉnh (đơn vị nhỏ nhất)</Label>
+              <Input
+                type='number'
+                value={stockDialog.quantity || ''}
+                onChange={(e) => setStockDialog({ ...stockDialog, quantity: Number(e.target.value) })}
+                placeholder='Nhập số dương để nhập hàng, số âm để xuất hàng'
+              />
+              <p className='text-xs text-gray-500'>
+                Nhập số <span className='text-green-600 font-medium'>dương</span> để nhập hàng, số{' '}
+                <span className='text-red-600 font-medium'>âm</span> để xuất hàng
+              </p>
+            </div>
+
+            {/* New stock preview */}
+            {stockDialog.quantity !== 0 && (
+              <div className='p-3 bg-gray-50 border border-gray-200 rounded-lg'>
+                <div className='flex items-center justify-between'>
+                  <span className='text-sm text-gray-600'>Tồn kho sau điều chỉnh:</span>
+                  <span
+                    className={`text-lg font-bold ${(stockDialog.product?.stockQuantity || 0) + stockDialog.quantity >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                  >
+                    {((stockDialog.product?.stockQuantity || 0) + stockDialog.quantity).toLocaleString('vi-VN')}{' '}
+                    <span className='text-sm font-normal'>đơn vị</span>
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Note */}
+            <div className='space-y-2'>
+              <Label>Ghi chú (tùy chọn)</Label>
+              <Textarea
+                value={stockDialog.note}
+                onChange={(e) => setStockDialog({ ...stockDialog, note: e.target.value })}
+                placeholder='Lý do nhập/xuất hàng...'
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant='outline'
+              onClick={() => setStockDialog({ isOpen: false, product: null, quantity: 0, note: '' })}
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={handleStockAdjustment}
+              disabled={stockDialog.quantity === 0 || !stockDialog.product}
+              className='bg-blue-600 hover:bg-blue-700 text-white'
+            >
+              Xác nhận
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
