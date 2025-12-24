@@ -3,7 +3,7 @@ import { Grid, List, Search as SearchIcon, Loader2 } from 'lucide-react'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useCart } from '../../contexts/CartContext'
 import { useWishlist } from '../../hooks/product/useWishlist'
-import { useBreadcrumbGeneration } from '../../hooks'
+import { useBreadcrumbGeneration, useDebounce } from '../../hooks'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
 import type { ProductFilter } from '../../types/product'
 import {
@@ -51,9 +51,12 @@ export function ProductsListingPage() {
     isPrescription: undefined as boolean | undefined,
   })
 
+  // Debounce search query to prevent API calls on every keystroke
+  const debouncedSearchQuery = useDebounce(searchQuery, 500)
+
   // Infinite query for products with server-side filtering
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
-    queryKey: ['products', 'infinite', searchQuery, filters, sortBy],
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isFetching } = useInfiniteQuery({
+    queryKey: ['products', 'infinite', debouncedSearchQuery, filters, sortBy],
     queryFn: ({ pageParam = 1 }) => {
       // Build query params for server-side filtering
       const params: Record<string, unknown> = {
@@ -61,9 +64,9 @@ export function ProductsListingPage() {
         limit: 100,
       }
 
-      // Add search
-      if (searchQuery) {
-        params.search = searchQuery
+      // Add search - use debounced value
+      if (debouncedSearchQuery) {
+        params.search = debouncedSearchQuery
       }
 
       // Add sorting
@@ -183,8 +186,11 @@ export function ProductsListingPage() {
     handleSearch(e)
   }
 
-  // Loading state
-  if (isLoading) {
+  // Show full loading screen only on initial load (no data yet)
+  const isInitialLoading = isLoading && !data
+
+  // Loading state - only show full screen on initial load
+  if (isInitialLoading) {
     return (
       <EnhancedPageTransition variant='slide' direction='up'>
         <UniversalBreadcrumb items={breadcrumbItems} />
@@ -216,7 +222,7 @@ export function ProductsListingPage() {
   }
 
   // Empty state (after loading is complete)
-  if (!isLoading && allProducts.length === 0) {
+  if (!isInitialLoading && allProducts.length === 0) {
     return (
       <EnhancedPageTransition variant='slide' direction='up'>
         <UniversalBreadcrumb items={breadcrumbItems} />
@@ -318,6 +324,12 @@ export function ProductsListingPage() {
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className='pl-10 border-blue-200 focus:border-blue-500'
                           />
+                          {/* Small loading indicator when searching */}
+                          {isFetching && !isInitialLoading && (
+                            <div className='absolute right-3 top-1/2 transform -translate-y-1/2'>
+                              <Loader2 className='w-4 h-4 animate-spin text-blue-500' />
+                            </div>
+                          )}
                         </div>
                         <Button
                           type='submit'
