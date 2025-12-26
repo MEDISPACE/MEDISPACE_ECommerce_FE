@@ -10,18 +10,23 @@ import { API_ENDPOINTS } from '../constants'
 
 type ProductsResponse =
   | {
-    message?: string
-    result?: {
+      message?: string
+      result?: {
+        products?: Product[]
+        pagination?: {
+          page: number
+          limit: number
+          totalPages: number
+          totalCount: number
+        }
+      }
       products?: Product[]
-      pagination?: unknown
     }
-    products?: Product[]
-  }
   | Product[]
 
 export const productService = {
   /**
-   * Get all products with optional filtering
+   * Get all products with optional filtering (DEPRECATED - use getProductsPaginated instead)
    */
   async getProducts(
     filters?: Partial<ProductFilter> & { limit?: number; sortBy?: string; sortOrder?: string },
@@ -46,6 +51,57 @@ export const productService = {
   },
 
   /**
+   * Get products with pagination (OPTIMIZED)
+   */
+  async getProductsPaginated(
+    filters?: Partial<ProductFilter> & {
+      page?: number
+      limit?: number
+      sortBy?: string
+      sortOrder?: string
+      categoryId?: string
+    },
+  ): Promise<{
+    products: Product[]
+    pagination: {
+      page: number
+      limit: number
+      totalPages: number
+      totalCount: number
+    }
+  }> {
+    const response = await apiClient.get(API_ENDPOINTS.PRODUCTS.BASE, { params: filters })
+
+    if (response && response.data) {
+      const data = response.data as ProductsResponse
+
+      // Handle new paginated response format
+      if (typeof data === 'object' && data !== null && 'result' in data && data.result) {
+        return {
+          products: (data.result.products || []) as Product[],
+          pagination: data.result.pagination || {
+            page: 1,
+            limit: 20,
+            totalPages: 1,
+            totalCount: 0,
+          },
+        }
+      }
+    }
+
+    // Fallback
+    return {
+      products: [],
+      pagination: {
+        page: 1,
+        limit: 20,
+        totalPages: 0,
+        totalCount: 0,
+      },
+    }
+  },
+
+  /**
    * Get featured products (non-prescription products that can be purchased directly)
    */
   async getFeaturedProducts(limit = 12): Promise<Product[]> {
@@ -54,8 +110,8 @@ export const productService = {
       params: {
         limit,
         requiresPrescription: 'false',
-        isActive: 'true'
-      }
+        isActive: 'true',
+      },
     })
     if (response && response.data) {
       const data = response.data as ProductsResponse

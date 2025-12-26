@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router'
-import { Search, Grid, List, SlidersHorizontal, Pill, Shield, User, Stethoscope, Droplets } from 'lucide-react'
+import { Search, Grid, List, SlidersHorizontal, Pill, Shield, User, Stethoscope, Droplets, Loader2 } from 'lucide-react'
+import { useInView } from 'react-intersection-observer'
 import { EnhancedPageTransition } from '../shared/EnhancedPageTransition'
 import { CategoryQuickActions } from './CategoryNavigation'
 import { ProductCard } from '../products/ProductCard'
-import { PaginationComponent } from '../shared/PaginationComponent'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
@@ -18,10 +18,10 @@ import { Separator } from '../ui/separator'
 import { RatingStars } from '../shared/RatingStars'
 import { type ProductFilter, type Product, type Category } from '../../types/product'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
-import { productService } from '../../services/productService'
 import { categoryService } from '../../services/categoryService'
 import { useCart } from '../../contexts/CartContext'
 import { useWishlist } from '../../hooks/product/useWishlist'
+import { useInfiniteProducts } from '../../hooks/useInfiniteProducts'
 import {
   getProductSalePrice,
   getProductOriginalPrice,
@@ -45,15 +45,15 @@ export function CategoryPage() {
   const { slug } = useParams()
   const { addToCart } = useCart()
   const { toggleWishlist, isInWishlist } = useWishlist()
+  const { ref: loadMoreRef, inView } = useInView()
+
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [sortBy, setSortBy] = useState('newest')
   const [searchQuery, setSearchQuery] = useState('')
-  const [currentPage, setCurrentPage] = useState(1)
-  const [products, setProducts] = useState<Product[]>([])
   const [subcategories, setSubcategories] = useState<Category[]>([])
   const [showAllSubcategories, setShowAllSubcategories] = useState(false)
   const [currentCategory, setCurrentCategory] = useState<Category | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingCategory, setIsLoadingCategory] = useState(true)
   const [notFound, setNotFound] = useState(false)
 
   const [filters, setFilters] = useState<ProductFilter>({
@@ -65,43 +65,61 @@ export function CategoryPage() {
     isPrescription: false,
   })
 
+  // Fetch category info
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true)
+    const fetchCategory = async () => {
+      setIsLoadingCategory(true)
       setNotFound(false)
       try {
         const categoryData = await categoryService.getCategoryBySlug(slug || '')
         if (!categoryData) {
           setNotFound(true)
-          setIsLoading(false)
+          setIsLoadingCategory(false)
           return
         }
 
         // Get subcategories for this category
         const subcategoriesData = await categoryService.getCategoryChildren(categoryData._id)
 
-        // Backend handles category hierarchy - single API call gets products from all descendants
-        const productsData = await productService.getProducts({
-          categoryId: categoryData._id,
-          limit: 1000, // Get all products
-        })
-
-        setProducts(productsData)
         setSubcategories(subcategoriesData)
         setCurrentCategory(categoryData)
       } catch (error) {
         console.error('Error fetching category data:', error)
         setNotFound(true)
       } finally {
-        setIsLoading(false)
+        setIsLoadingCategory(false)
       }
     }
 
-    fetchData()
+    fetchCategory()
   }, [slug])
 
+  // Use infinite query for products
+  const {
+    data: productsData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: isLoadingProducts,
+    isError,
+  } = useInfiniteProducts({
+    categoryId: currentCategory?._id,
+    enabled: !!currentCategory?._id,
+  })
+
+  // Trigger load more when scrolling
+  useEffect(() => {
+    if (inView && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage()
+    }
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage])
+
+  // Flatten all pages into single array
+  const allProducts = productsData?.pages.flatMap((page) => page.products) || []
+  const totalCount = productsData?.pages[0]?.pagination.totalCount || 0
+
   const category = currentCategory
-  const brands = Array.from(new Set(products.map((p: Product) => p.brand?.name).filter(Boolean) as string[]))
+  const brands = Array.from(new Set(allProducts.map((p: Product) => p.brand?.name).filter(Boolean) as string[]))
 
   // Get icon component for this category
   const IconComponent = categoryIcons[slug as keyof typeof categoryIcons] || Pill
@@ -160,8 +178,8 @@ export function CategoryPage() {
 
   const breadcrumbItems = buildCategoryBreadcrumb()
 
-  // Apply filters and search
-  const filteredProducts = products.filter((product: Product) => {
+  // Apply filters and search (client-side for better UX)
+  const filteredProducts = allProducts.filter((product: Product) => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (product.shortDescription?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false)
@@ -218,14 +236,10 @@ export function CategoryPage() {
     priceVariants: product.priceVariants,
   }))
 
-  // Pagination
-  const itemsPerPage = 20
-  const totalPages = Math.ceil(transformedProducts.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const paginatedProducts = transformedProducts.slice(startIndex, startIndex + itemsPerPage)
-
   // Loading state - show skeleton
-  if (isLoading) {
+  const isLoading = isLoadingCategory || isLoadingProducts
+
+  if (isLoading && !productsData) {
     return (
       <div className='max-w-7xl mx-auto px-4 py-6'>
         <div className='animate-pulse'>
@@ -395,7 +409,7 @@ export function CategoryPage() {
                 </CardHeader>
                 <CardContent className='space-y-2'>
                   {brands.slice(0, 6).map((brand: string) => {
-                    const brandProductCount = products.filter((p: Product) => p.brand?.name === brand).length
+                    const brandProductCount = allProducts.filter((p: Product) => p.brand?.name === brand).length
                     return (
                       <label key={brand} className='flex items-center space-x-2 cursor-pointer'>
                         <input
@@ -543,7 +557,9 @@ export function CategoryPage() {
             {/* Toolbar */}
             <div className='flex items-center justify-between mb-6'>
               <div className='flex items-center gap-4'>
-                <h2 className='font-medium text-lg text-blue-600'>{sortedProducts.length} sản phẩm</h2>
+                <h2 className='font-medium text-lg text-blue-600'>
+                  {sortedProducts.length} / {totalCount} sản phẩm
+                </h2>
 
                 {/* Mobile Filter Button */}
                 <Sheet>
@@ -621,14 +637,14 @@ export function CategoryPage() {
             </div>
 
             {/* Products Grid */}
-            {paginatedProducts.length > 0 ? (
+            {transformedProducts.length > 0 ? (
               <>
                 <div
                   className={viewMode === 'grid' ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4' : 'space-y-4'}
                 >
-                  {paginatedProducts.map((product) => {
+                  {transformedProducts.map((product) => {
                     // Find original product for addToCart
-                    const originalProduct = products.find((p: Product) => p._id === product.id)
+                    const originalProduct = allProducts.find((p: Product) => p._id === product.id)
                     return (
                       <ProductCard
                         key={product.id}
@@ -651,14 +667,32 @@ export function CategoryPage() {
                   })}
                 </div>
 
-                {/* Pagination */}
-                <div className='mt-8'>
-                  <PaginationComponent
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={setCurrentPage}
-                  />
-                </div>
+                {/* Infinite Scroll Trigger & Loading Indicator */}
+                {hasNextPage && (
+                  <div ref={loadMoreRef} className='mt-8 flex justify-center py-8'>
+                    {isFetchingNextPage ? (
+                      <div className='flex items-center gap-2 text-blue-600'>
+                        <Loader2 className='w-5 h-5 animate-spin' />
+                        <span>Đang tải thêm sản phẩm...</span>
+                      </div>
+                    ) : (
+                      <Button
+                        variant='outline'
+                        onClick={() => fetchNextPage()}
+                        className='border-blue-200 text-blue-600 hover:bg-blue-50'
+                      >
+                        Xem thêm sản phẩm
+                      </Button>
+                    )}
+                  </div>
+                )}
+
+                {/* Show total loaded */}
+                {!hasNextPage && allProducts.length > 0 && (
+                  <div className='mt-8 text-center text-sm text-gray-500'>
+                    Đã hiển thị tất cả {allProducts.length} sản phẩm
+                  </div>
+                )}
               </>
             ) : (
               <Card className='text-center py-12 border-blue-200 bg-white'>
