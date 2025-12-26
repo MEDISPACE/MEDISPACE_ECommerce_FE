@@ -107,9 +107,9 @@ export interface LowStockProduct {
  */
 export const getDashboardStats = async (): Promise<DashboardStats> => {
   try {
-    console.log('Fetching dashboard stats...')
+    // console.log('Fetching dashboard stats...')
     const response = await apiClient.get<{ result: DashboardStats }>('/admin/dashboard/stats')
-    console.log('Dashboard stats loaded successfully:', response.data.result)
+    // console.log('Dashboard stats loaded successfully:', response.data.result)
     return response.data.result
   } catch (error) {
     console.error('Error fetching dashboard stats:', error)

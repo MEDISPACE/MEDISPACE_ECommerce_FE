@@ -138,7 +138,7 @@ export function SelectField({
         <SelectTrigger className='border-2 border-blue-200'>
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className='max-h-[300px] overflow-y-auto'>
           {options.map((option) => (
             <SelectItem key={option.value} value={option.value}>
               {option.label}

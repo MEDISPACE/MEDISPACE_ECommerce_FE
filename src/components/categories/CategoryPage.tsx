@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router'
-import { Search, Grid, List, SlidersHorizontal, Pill, Shield, User, Stethoscope, Droplets } from 'lucide-react'
+import { Search, Grid, List, SlidersHorizontal, Pill, Shield, User, Stethoscope, Droplets, Loader2 } from 'lucide-react'
+import { useInView } from 'react-intersection-observer'
 import { EnhancedPageTransition } from '../shared/EnhancedPageTransition'
 import { CategoryQuickActions } from './CategoryNavigation'
 import { ProductCard } from '../products/ProductCard'
-import { PaginationComponent } from '../shared/PaginationComponent'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
@@ -18,10 +18,10 @@ import { Separator } from '../ui/separator'
 import { RatingStars } from '../shared/RatingStars'
 import { type ProductFilter, type Product, type Category } from '../../types/product'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
-import { productService } from '../../services/productService'
 import { categoryService } from '../../services/categoryService'
 import { useCart } from '../../contexts/CartContext'
 import { useWishlist } from '../../hooks/product/useWishlist'
+import { useInfiniteProducts } from '../../hooks/useInfiniteProducts'
 import {
   getProductSalePrice,
   getProductOriginalPrice,
@@ -45,15 +45,15 @@ export function CategoryPage() {
   const { slug } = useParams()
   const { addToCart } = useCart()
   const { toggleWishlist, isInWishlist } = useWishlist()
+  const { ref: loadMoreRef, inView } = useInView()
+
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [sortBy, setSortBy] = useState('newest')
   const [searchQuery, setSearchQuery] = useState('')
-  const [currentPage, setCurrentPage] = useState(1)
-  const [products, setProducts] = useState<Product[]>([])
   const [subcategories, setSubcategories] = useState<Category[]>([])
   const [showAllSubcategories, setShowAllSubcategories] = useState(false)
   const [currentCategory, setCurrentCategory] = useState<Category | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingCategory, setIsLoadingCategory] = useState(true)
   const [notFound, setNotFound] = useState(false)
 
   const [filters, setFilters] = useState<ProductFilter>({
@@ -65,44 +65,61 @@ export function CategoryPage() {
     isPrescription: false,
   })
 
+  // Fetch category info
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true)
+    const fetchCategory = async () => {
+      setIsLoadingCategory(true)
       setNotFound(false)
       try {
         const categoryData = await categoryService.getCategoryBySlug(slug || '')
         if (!categoryData) {
           setNotFound(true)
-          setIsLoading(false)
+          setIsLoadingCategory(false)
           return
         }
 
         // Get subcategories for this category
         const subcategoriesData = await categoryService.getCategoryChildren(categoryData._id)
 
-        // Backend handles category hierarchy - single API call gets products from all descendants
-        const productsData = await productService.getProducts({
-          categoryId: categoryData._id,
-          limit: 5000 // Get all products
-        })
-
-        setProducts(productsData)
         setSubcategories(subcategoriesData)
         setCurrentCategory(categoryData)
-
       } catch (error) {
         console.error('Error fetching category data:', error)
         setNotFound(true)
       } finally {
-        setIsLoading(false)
+        setIsLoadingCategory(false)
       }
     }
 
-    fetchData()
+    fetchCategory()
   }, [slug])
 
+  // Use infinite query for products
+  const {
+    data: productsData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: isLoadingProducts,
+    isError,
+  } = useInfiniteProducts({
+    categoryId: currentCategory?._id,
+    enabled: !!currentCategory?._id,
+  })
+
+  // Trigger load more when scrolling
+  useEffect(() => {
+    if (inView && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage()
+    }
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage])
+
+  // Flatten all pages into single array
+  const allProducts = productsData?.pages.flatMap((page) => page.products) || []
+  const totalCount = productsData?.pages[0]?.pagination.totalCount || 0
+
   const category = currentCategory
-  const brands = Array.from(new Set(products.map((p: Product) => p.brand?.name).filter(Boolean) as string[]))
+  const brands = Array.from(new Set(allProducts.map((p: Product) => p.brand?.name).filter(Boolean) as string[]))
 
   // Get icon component for this category
   const IconComponent = categoryIcons[slug as keyof typeof categoryIcons] || Pill
@@ -124,14 +141,14 @@ export function CategoryPage() {
 
   // Lookup category name from slug using fetched categories
   const getCategoryNameBySlug = (slugStr: string): string => {
-    const foundCategory = allCategoriesFlat.find(cat => cat.slug === slugStr)
+    const foundCategory = allCategoriesFlat.find((cat) => cat.slug === slugStr)
     if (foundCategory) {
       return foundCategory.name // Vietnamese name with diacritics
     }
     // Fallback: capitalize slug
     return slugStr
       .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ')
   }
 
@@ -147,7 +164,7 @@ export function CategoryPage() {
     // Parse path into slugs (remove leading slash and split)
     const slugs = categoryPath.split('/').filter(Boolean)
 
-    // Build breadcrumb items from slugs  
+    // Build breadcrumb items from slugs
     const items = slugs.map((slugItem, index) => {
       const isLast = index === slugs.length - 1
       return {
@@ -159,19 +176,16 @@ export function CategoryPage() {
     return items
   }
 
-
   const breadcrumbItems = buildCategoryBreadcrumb()
 
-
-  // Apply filters and search
-  const filteredProducts = products.filter((product: Product) => {
+  // Apply filters and search (client-side for better UX)
+  const filteredProducts = allProducts.filter((product: Product) => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (product.shortDescription?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false)
     const productPrice = getPriceFromVariants(product)
     const matchesPrice =
-      productPrice >= (filters.priceRange?.[0] ?? 0) &&
-      productPrice <= (filters.priceRange?.[1] ?? 5000000)
+      productPrice >= (filters.priceRange?.[0] ?? 0) && productPrice <= (filters.priceRange?.[1] ?? 5000000)
     const matchesRating = (product.rating ?? 0) >= (filters.rating ?? 0)
     const matchesStock = !filters.inStock || product.stockQuantity > 0
     const matchesBrands =
@@ -222,14 +236,10 @@ export function CategoryPage() {
     priceVariants: product.priceVariants,
   }))
 
-  // Pagination
-  const itemsPerPage = 20
-  const totalPages = Math.ceil(transformedProducts.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const paginatedProducts = transformedProducts.slice(startIndex, startIndex + itemsPerPage)
-
   // Loading state - show skeleton
-  if (isLoading) {
+  const isLoading = isLoadingCategory || isLoadingProducts
+
+  if (isLoading && !productsData) {
     return (
       <div className='max-w-7xl mx-auto px-4 py-6'>
         <div className='animate-pulse'>
@@ -251,7 +261,7 @@ export function CategoryPage() {
           <div className='mb-8'>
             <div className='h-6 bg-gray-200 rounded w-40 mb-4'></div>
             <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-              {[1, 2, 3, 4].map(i => (
+              {[1, 2, 3, 4].map((i) => (
                 <div key={i} className='bg-white rounded-lg p-4 border border-gray-100 shadow-sm'>
                   <div className='w-12 h-12 bg-gray-200 rounded-lg mx-auto mb-3'></div>
                   <div className='h-4 bg-gray-200 rounded w-24 mx-auto mb-2'></div>
@@ -263,9 +273,8 @@ export function CategoryPage() {
 
           {/* Products skeleton */}
           <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-            {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
               <div key={i} className='bg-white rounded-lg p-4 border border-gray-100 shadow-sm'>
-
                 <div className='h-40 bg-gray-200 rounded mb-3'></div>
                 <div className='h-4 bg-gray-200 rounded w-full mb-2'></div>
                 <div className='h-4 bg-gray-200 rounded w-3/4'></div>
@@ -296,11 +305,8 @@ export function CategoryPage() {
     <EnhancedPageTransition>
       <UniversalBreadcrumb items={breadcrumbItems} />
       <div className='max-w-7xl mx-auto px-4 py-6'>
-
         {/* Category Header */}
-        <div
-          className='bg-gradient-to-r from-white to-gray-50 rounded-2xl p-6 mb-6 border-l-4 border-blue-500'
-        >
+        <div className='bg-gradient-to-r from-white to-gray-50 rounded-2xl p-6 mb-6 border-l-4 border-blue-500'>
           <div className='flex items-center justify-between'>
             <div className='flex-1'>
               <div className='flex items-center gap-4 mb-2'>
@@ -334,12 +340,8 @@ export function CategoryPage() {
                   key={subCategory._id}
                   className='group bg-white border-blue-100 hover:shadow-md transition-all duration-300 hover:border-blue-200'
                 >
-
-
                   <CardContent className='p-4 text-center'>
-                    <div
-                      className='w-12 h-12 rounded-lg mx-auto mb-3 flex items-center justify-center text-white font-bold bg-blue-500'
-                    >
+                    <div className='w-12 h-12 rounded-lg mx-auto mb-3 flex items-center justify-center text-white font-bold bg-blue-500'>
                       {subCategory.name.charAt(0)}
                     </div>
                     <h3 className='font-medium text-sm group-hover:text-blue-600 transition-colors mb-1'>
@@ -347,22 +349,20 @@ export function CategoryPage() {
                     </h3>
                     <p className='text-xs text-gray-500 mb-3'>{subCategory.productCount} sản phẩm</p>
                     <Link to={`/categories/${subCategory.slug}`}>
-                      <Button size='sm' variant='outline' className='w-full text-xs border-blue-200 text-blue-600 hover:!bg-[#eff6ff] hover:border-blue-400 transition-all duration-300'>
+                      <Button
+                        size='sm'
+                        variant='outline'
+                        className='w-full text-xs border-blue-200 text-blue-600 hover:!bg-[#eff6ff] hover:border-blue-400 transition-all duration-300'
+                      >
                         Xem ngay
                       </Button>
                     </Link>
-
-
-
-
-
                   </CardContent>
                 </Card>
               ))}
             </div>
           </div>
         )}
-
 
         {/* Products Section */}
         <div className='flex gap-6'>
@@ -372,7 +372,6 @@ export function CategoryPage() {
               {/* Sub-categories - Only show if has subcategories */}
               {subcategories.length > 0 && (
                 <Card className='bg-white border-blue-200 shadow-sm'>
-
                   <CardHeader>
                     <CardTitle className='text-lg'>Danh mục con</CardTitle>
                   </CardHeader>
@@ -396,25 +395,21 @@ export function CategoryPage() {
                         onClick={() => setShowAllSubcategories(!showAllSubcategories)}
                         className='w-full text-blue-600 hover:text-blue-700 hover:bg-blue-50 mt-2'
                       >
-                        {showAllSubcategories
-                          ? 'Thu gọn'
-                          : `+ Xem thêm ${subcategories.length - 6} danh mục`}
+                        {showAllSubcategories ? 'Thu gọn' : `+ Xem thêm ${subcategories.length - 6} danh mục`}
                       </Button>
                     )}
                   </CardContent>
                 </Card>
               )}
 
-
               {/* Brands Filter */}
               <Card className='bg-white border-blue-200 shadow-sm'>
-
                 <CardHeader>
                   <CardTitle className='text-lg'>Thương hiệu</CardTitle>
                 </CardHeader>
                 <CardContent className='space-y-2'>
                   {brands.slice(0, 6).map((brand: string) => {
-                    const brandProductCount = products.filter((p: Product) => p.brand?.name === brand).length
+                    const brandProductCount = allProducts.filter((p: Product) => p.brand?.name === brand).length
                     return (
                       <label key={brand} className='flex items-center space-x-2 cursor-pointer'>
                         <input
@@ -451,7 +446,7 @@ export function CategoryPage() {
                 <CardContent className='space-y-3'>
                   <Slider
                     value={filters.priceRange}
-                    onValueChange={(value) => setFilters(prev => ({ ...prev, priceRange: [value[0], value[1]] }))}
+                    onValueChange={(value) => setFilters((prev) => ({ ...prev, priceRange: [value[0], value[1]] }))}
                     max={5000000}
                     min={0}
                     step={50000}
@@ -463,7 +458,7 @@ export function CategoryPage() {
                       value={new Intl.NumberFormat('vi-VN').format(filters.priceRange?.[0] || 0)}
                       onChange={(e) => {
                         const value = parseInt(e.target.value.replace(/\./g, '')) || 0
-                        setFilters(prev => ({ ...prev, priceRange: [value, prev.priceRange?.[1] || 5000000] }))
+                        setFilters((prev) => ({ ...prev, priceRange: [value, prev.priceRange?.[1] || 5000000] }))
                       }}
                       placeholder='Từ'
                       className='h-8 text-xs border-blue-200'
@@ -473,7 +468,7 @@ export function CategoryPage() {
                       value={new Intl.NumberFormat('vi-VN').format(filters.priceRange?.[1] || 5000000)}
                       onChange={(e) => {
                         const value = parseInt(e.target.value.replace(/\./g, '')) || 0
-                        setFilters(prev => ({ ...prev, priceRange: [prev.priceRange?.[0] || 0, value] }))
+                        setFilters((prev) => ({ ...prev, priceRange: [prev.priceRange?.[0] || 0, value] }))
                       }}
                       placeholder='Đến'
                       className='h-8 text-xs border-blue-200'
@@ -493,7 +488,7 @@ export function CategoryPage() {
                       <Checkbox
                         id={`rating-${rating}`}
                         checked={filters.rating === rating}
-                        onCheckedChange={(checked) => setFilters(prev => ({ ...prev, rating: checked ? rating : 0 }))}
+                        onCheckedChange={(checked) => setFilters((prev) => ({ ...prev, rating: checked ? rating : 0 }))}
                       />
                       <Label htmlFor={`rating-${rating}`} className='text-sm cursor-pointer flex items-center gap-1'>
                         <RatingStars rating={rating} size='sm' showRating={false} />
@@ -514,17 +509,25 @@ export function CategoryPage() {
                     <Checkbox
                       id='in-stock'
                       checked={filters.inStock === true}
-                      onCheckedChange={(checked) => setFilters(prev => ({ ...prev, inStock: checked ? true : false }))}
+                      onCheckedChange={(checked) =>
+                        setFilters((prev) => ({ ...prev, inStock: checked ? true : false }))
+                      }
                     />
-                    <Label htmlFor='in-stock' className='text-sm cursor-pointer'>Còn hàng</Label>
+                    <Label htmlFor='in-stock' className='text-sm cursor-pointer'>
+                      Còn hàng
+                    </Label>
                   </div>
                   <div className='flex items-center space-x-2'>
                     <Checkbox
                       id='prescription'
                       checked={filters.isPrescription === true}
-                      onCheckedChange={(checked) => setFilters(prev => ({ ...prev, isPrescription: checked ? true : false }))}
+                      onCheckedChange={(checked) =>
+                        setFilters((prev) => ({ ...prev, isPrescription: checked ? true : false }))
+                      }
                     />
-                    <Label htmlFor='prescription' className='text-sm cursor-pointer'>Thuốc kê đơn</Label>
+                    <Label htmlFor='prescription' className='text-sm cursor-pointer'>
+                      Thuốc kê đơn
+                    </Label>
                   </div>
                 </CardContent>
               </Card>
@@ -533,14 +536,16 @@ export function CategoryPage() {
               <Button
                 variant='outline'
                 className='w-full border-blue-200 text-blue-600 hover:bg-blue-50'
-                onClick={() => setFilters({
-                  categories: [],
-                  priceRange: [0, 5000000],
-                  brands: [],
-                  rating: 0,
-                  inStock: false,
-                  isPrescription: false,
-                })}
+                onClick={() =>
+                  setFilters({
+                    categories: [],
+                    priceRange: [0, 5000000],
+                    brands: [],
+                    rating: 0,
+                    inStock: false,
+                    isPrescription: false,
+                  })
+                }
               >
                 Xóa tất cả bộ lọc
               </Button>
@@ -552,7 +557,9 @@ export function CategoryPage() {
             {/* Toolbar */}
             <div className='flex items-center justify-between mb-6'>
               <div className='flex items-center gap-4'>
-                <h2 className='font-medium text-lg text-blue-600'>{sortedProducts.length} sản phẩm</h2>
+                <h2 className='font-medium text-lg text-blue-600'>
+                  {sortedProducts.length} / {totalCount} sản phẩm
+                </h2>
 
                 {/* Mobile Filter Button */}
                 <Sheet>
@@ -605,7 +612,11 @@ export function CategoryPage() {
                     variant={viewMode === 'grid' ? 'default' : 'ghost'}
                     size='sm'
                     onClick={() => setViewMode('grid')}
-                    className={viewMode === 'grid' ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white rounded-r-none' : 'text-gray-600 rounded-r-none'}
+                    className={
+                      viewMode === 'grid'
+                        ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white rounded-r-none'
+                        : 'text-gray-600 rounded-r-none'
+                    }
                   >
                     <Grid className='w-4 h-4' />
                   </Button>
@@ -613,24 +624,27 @@ export function CategoryPage() {
                     variant={viewMode === 'list' ? 'default' : 'ghost'}
                     size='sm'
                     onClick={() => setViewMode('list')}
-                    className={viewMode === 'list' ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white rounded-l-none' : 'text-gray-600 rounded-l-none'}
+                    className={
+                      viewMode === 'list'
+                        ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white rounded-l-none'
+                        : 'text-gray-600 rounded-l-none'
+                    }
                   >
                     <List className='w-4 h-4' />
                   </Button>
                 </div>
-
               </div>
             </div>
 
             {/* Products Grid */}
-            {paginatedProducts.length > 0 ? (
+            {transformedProducts.length > 0 ? (
               <>
                 <div
                   className={viewMode === 'grid' ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4' : 'space-y-4'}
                 >
-                  {paginatedProducts.map((product) => {
+                  {transformedProducts.map((product) => {
                     // Find original product for addToCart
-                    const originalProduct = products.find((p: Product) => p._id === product.id)
+                    const originalProduct = allProducts.find((p: Product) => p._id === product.id)
                     return (
                       <ProductCard
                         key={product.id}
@@ -639,7 +653,7 @@ export function CategoryPage() {
                         onAddToCart={(selectedUnit) => {
                           if (originalProduct) {
                             // Find the price for the selected unit from priceVariants
-                            const variant = originalProduct.priceVariants?.find(v => v.unit === selectedUnit)
+                            const variant = originalProduct.priceVariants?.find((v) => v.unit === selectedUnit)
                             const price = variant?.price || originalProduct.priceVariants?.[0]?.price
                             addToCart(originalProduct, 1, selectedUnit, price)
                           }
@@ -653,14 +667,32 @@ export function CategoryPage() {
                   })}
                 </div>
 
-                {/* Pagination */}
-                <div className='mt-8'>
-                  <PaginationComponent
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={setCurrentPage}
-                  />
-                </div>
+                {/* Infinite Scroll Trigger & Loading Indicator */}
+                {hasNextPage && (
+                  <div ref={loadMoreRef} className='mt-8 flex justify-center py-8'>
+                    {isFetchingNextPage ? (
+                      <div className='flex items-center gap-2 text-blue-600'>
+                        <Loader2 className='w-5 h-5 animate-spin' />
+                        <span>Đang tải thêm sản phẩm...</span>
+                      </div>
+                    ) : (
+                      <Button
+                        variant='outline'
+                        onClick={() => fetchNextPage()}
+                        className='border-blue-200 text-blue-600 hover:bg-blue-50'
+                      >
+                        Xem thêm sản phẩm
+                      </Button>
+                    )}
+                  </div>
+                )}
+
+                {/* Show total loaded */}
+                {!hasNextPage && allProducts.length > 0 && (
+                  <div className='mt-8 text-center text-sm text-gray-500'>
+                    Đã hiển thị tất cả {allProducts.length} sản phẩm
+                  </div>
+                )}
               </>
             ) : (
               <Card className='text-center py-12 border-blue-200 bg-white'>
@@ -692,6 +724,6 @@ export function CategoryPage() {
           </div>
         </div>
       </div>
-    </EnhancedPageTransition >
+    </EnhancedPageTransition>
   )
 }

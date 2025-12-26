@@ -6,18 +6,8 @@ import { Card, CardContent } from '../ui/card'
 import { Badge } from '../ui/badge'
 import { Separator } from '../ui/separator'
 import { useNavigate } from 'react-router'
-import { productService } from '../../services/productService'
-import { categoryService } from '../../services/categoryService'
 import { useSearchHistory } from '../../utils/useSearchHistory'
-import type { Product, Category } from '../../types/product'
-
-interface SearchSuggestion {
-  id: string
-  text: string
-  type: 'product' | 'category' | 'brand' | 'recent' | 'trending'
-  icon?: string
-  slug?: string
-}
+import { useSearchSuggestions, type SearchSuggestion } from '../../hooks/useSearchSuggestions'
 
 interface EnhancedSearchBarProps {
   placeholder?: string
@@ -31,13 +21,8 @@ export function EnhancedSearchBar({
   onSearch,
 }: EnhancedSearchBarProps) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
-  const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([])
   const [selectedIndex, setSelectedIndex] = useState(-1)
-
-  const [products, setProducts] = useState<Product[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
 
   const searchRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -45,101 +30,11 @@ export function EnhancedSearchBar({
   const navigate = useNavigate()
   const { recentSearches, addToHistory, removeFromHistory } = useSearchHistory()
 
-  // Load data on mount
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [productsData, categoriesData] = await Promise.all([
-          productService.getProducts(), // Get products for search
-          categoryService.getCategories()
-        ])
-        setProducts(productsData)
-        setCategories(categoriesData)
-      } catch {
-        // Error loading search data
-      }
-    }
-    loadData()
-  }, [])
+  // Use optimized search hook
+  const { suggestions, isLoading } = useSearchSuggestions(searchQuery)
 
   // Trending searches
   const trendingSearches = ['Paracetamol', 'Vitamin D3', 'Kem dưỡng da', 'Thuốc ho', 'Canxi']
-
-  // Generate suggestions based on search query with debouncing
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setSuggestions([])
-      setIsLoading(false)
-      return
-    }
-
-    setIsLoading(true)
-
-    // Debounced search with 300ms delay
-    const timer = setTimeout(() => {
-      const query = searchQuery.toLowerCase().trim()
-
-      // Product suggestions
-      const productMatches = products
-        .filter(
-          (product) =>
-            product.name.toLowerCase().includes(query) ||
-            product.brand?.name?.toLowerCase().includes(query) ||
-            product.category?.name?.toLowerCase().includes(query),
-        )
-        .slice(0, 4)
-        .map((product) => ({
-          id: `product-${product._id}`,
-          text: product.name,
-          type: 'product' as const,
-          slug: product.slug,
-          icon: product.requiresPrescription ? '🔴' : '💊',
-        }))
-
-      // Category suggestions
-      const categoryMatches = categories
-        .filter(
-          (category) =>
-            category.name.toLowerCase().includes(query) ||
-            category.subcategories?.some((sub) => sub.name.toLowerCase().includes(query)),
-        )
-        .slice(0, 3)
-        .map((category) => ({
-          id: `category-${category._id}`,
-          text: category.name,
-          type: 'category' as const,
-          slug: category.slug,
-          icon: '📁',
-        }))
-
-      // Brand suggestions
-      const brands = Array.from(new Set(products.map((p) => p.brand?.name).filter(Boolean) as string[]))
-        .filter((brand) => brand.toLowerCase().includes(query))
-        .slice(0, 3)
-        .map((brand) => ({
-          id: `brand-${brand}`,
-          text: brand,
-          type: 'brand' as const,
-          icon: '🏢',
-        }))
-
-      // Prioritize exact matches and sort by relevance
-      const sortedSuggestions = [
-        ...productMatches.sort((a, b) => {
-          const aExact = a.text.toLowerCase().startsWith(query) ? 1 : 0
-          const bExact = b.text.toLowerCase().startsWith(query) ? 1 : 0
-          return bExact - aExact
-        }),
-        ...categoryMatches,
-        ...brands,
-      ]
-
-      setSuggestions(sortedSuggestions)
-      setIsLoading(false)
-    }, 300)
-
-    return () => clearTimeout(timer)
-  }, [searchQuery, products, categories])
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -194,7 +89,6 @@ export function EnhancedSearchBar({
 
   const clearSearch = () => {
     setSearchQuery('')
-    setSuggestions([])
     setSelectedIndex(-1)
     inputRef.current?.focus()
   }
@@ -334,10 +228,19 @@ export function EnhancedSearchBar({
                     <button
                       key={suggestion.id}
                       onClick={() => handleSuggestionClick(suggestion)}
-                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${selectedIndex === index ? 'bg-blue-100 border border-blue-300' : 'hover:bg-blue-50'
-                        }`}
+                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${
+                        selectedIndex === index ? 'bg-blue-100 border border-blue-300' : 'hover:bg-blue-50'
+                      }`}
                     >
-                      <span className='text-lg'>{suggestion.icon}</span>
+                      {suggestion.type === 'product' && suggestion.image ? (
+                        <img
+                          src={suggestion.image}
+                          alt={suggestion.text}
+                          className='w-12 h-12 object-cover rounded-lg border border-gray-200'
+                        />
+                      ) : (
+                        <span className='text-lg'>{suggestion.icon}</span>
+                      )}
                       <div className='flex-1'>
                         <div className='font-medium'>{suggestion.text}</div>
                         <div className='text-xs text-gray-500 capitalize'>
@@ -377,10 +280,11 @@ export function EnhancedSearchBar({
                           <div key={recent} className='flex items-center gap-1'>
                             <button
                               onClick={() => handleSearch(recent)}
-                              className={`flex-1 flex items-center gap-3 p-2 rounded-lg transition-colors text-left text-sm ${selectedIndex === recentIndex
-                                ? 'bg-blue-100 border border-blue-300'
-                                : 'hover:bg-gray-50'
-                                }`}
+                              className={`flex-1 flex items-center gap-3 p-2 rounded-lg transition-colors text-left text-sm ${
+                                selectedIndex === recentIndex
+                                  ? 'bg-blue-100 border border-blue-300'
+                                  : 'hover:bg-gray-50'
+                              }`}
                             >
                               <History className='w-4 h-4 text-gray-400' />
                               {recent}
