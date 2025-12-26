@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useSearchParams } from 'react-router'
-import { Search, Filter, Grid, List, SlidersHorizontal, Loader2 } from 'lucide-react'
+import { Search, Filter, Grid, List, SlidersHorizontal, Loader2, ChevronDown, ChevronUp } from 'lucide-react'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { Button } from '../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
@@ -42,6 +42,10 @@ export function SearchResultsPage() {
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [isFilterOpen, setIsFilterOpen] = useState(false)
+
+  // Collapse states for filters
+  const [isCategoriesExpanded, setIsCategoriesExpanded] = useState(true)
+  const [isBrandsExpanded, setIsBrandsExpanded] = useState(true)
 
   // Search filters state
   const searchQuery = searchParams.get('q') || ''
@@ -200,54 +204,78 @@ export function SearchResultsPage() {
 
   const FilterContent = () => (
     <div className='space-y-6'>
-      {/* Categories */}
+      {/* Categories - Scrollable checkbox list */}
       <div>
-        <Label className='font-medium mb-3 block'>Danh mục</Label>
-        <div className='space-y-2'>
-          {categories.map((category) => (
-            <div key={category._id} className='flex items-center space-x-2'>
-              <Checkbox
-                id={`category-${category._id}`}
-                checked={selectedCategories.includes(category.slug)}
-                onCheckedChange={(checked) => {
-                  if (checked) {
-                    setSelectedCategories([...selectedCategories, category.slug])
-                  } else {
-                    setSelectedCategories(selectedCategories.filter((c) => c !== category.slug))
-                  }
-                }}
-              />
-              <Label htmlFor={`category-${category._id}`} className='text-sm'>
-                {category.name} ({category.productCount})
-              </Label>
-            </div>
-          ))}
-        </div>
+        <button
+          onClick={() => setIsCategoriesExpanded(!isCategoriesExpanded)}
+          className='flex items-center justify-between w-full mb-3 hover:opacity-70 transition-opacity'
+        >
+          <Label className='font-medium cursor-pointer'>Danh mục</Label>
+          {isCategoriesExpanded ? (
+            <ChevronUp className='w-4 h-4 text-gray-500' />
+          ) : (
+            <ChevronDown className='w-4 h-4 text-gray-500' />
+          )}
+        </button>
+        {isCategoriesExpanded && (
+          <div className='space-y-2 max-h-60 overflow-y-auto pr-2'>
+            {categories.map((category) => (
+              <div key={category._id} className='flex items-center space-x-2'>
+                <Checkbox
+                  id={`category-${category._id}`}
+                  checked={selectedCategories.includes(category.slug)}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSelectedCategories([...selectedCategories, category.slug])
+                    } else {
+                      setSelectedCategories(selectedCategories.filter((c) => c !== category.slug))
+                    }
+                  }}
+                />
+                <Label htmlFor={`category-${category._id}`} className='text-sm cursor-pointer'>
+                  {category.name} ({category.productCount || 0})
+                </Label>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Brands */}
       <div>
-        <Label className='font-medium mb-3 block'>Thương hiệu</Label>
-        <div className='space-y-2 max-h-40 overflow-y-auto'>
-          {brands.map((brand) => (
-            <div key={brand._id} className='flex items-center space-x-2'>
-              <Checkbox
-                id={`brand-${brand._id}`}
-                checked={selectedBrands.includes(brand._id)}
-                onCheckedChange={(checked) => {
-                  if (checked) {
-                    setSelectedBrands([...selectedBrands, brand._id])
-                  } else {
-                    setSelectedBrands(selectedBrands.filter((b) => b !== brand._id))
-                  }
-                }}
-              />
-              <Label htmlFor={`brand-${brand._id}`} className='text-sm'>
-                {brand.name}
-              </Label>
-            </div>
-          ))}
-        </div>
+        <button
+          onClick={() => setIsBrandsExpanded(!isBrandsExpanded)}
+          className='flex items-center justify-between w-full mb-3 hover:opacity-70 transition-opacity'
+        >
+          <Label className='font-medium cursor-pointer'>Thương hiệu</Label>
+          {isBrandsExpanded ? (
+            <ChevronUp className='w-4 h-4 text-gray-500' />
+          ) : (
+            <ChevronDown className='w-4 h-4 text-gray-500' />
+          )}
+        </button>
+        {isBrandsExpanded && (
+          <div className='space-y-2 max-h-60 overflow-y-auto pr-2'>
+            {brands.map((brand) => (
+              <div key={brand._id} className='flex items-center space-x-2'>
+                <Checkbox
+                  id={`brand-${brand._id}`}
+                  checked={selectedBrands.includes(brand._id)}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSelectedBrands([...selectedBrands, brand._id])
+                    } else {
+                      setSelectedBrands(selectedBrands.filter((b) => b !== brand._id))
+                    }
+                  }}
+                />
+                <Label htmlFor={`brand-${brand._id}`} className='text-sm cursor-pointer'>
+                  {brand.name}
+                </Label>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Price Range */}
@@ -319,7 +347,7 @@ export function SearchResultsPage() {
 
       <div className='flex items-center justify-between mb-6'>
         <div>
-          <h1 className='text-xl font-medium text-gray-900'>
+          <h1 className='text-xl font-bold text-gray-900'>
             {searchQuery ? `Kết quả cho "${searchQuery}"` : 'Tất cả sản phẩm'}
           </h1>
           <p className='text-gray-600'>Tìm thấy {totalResults} sản phẩm</p>
@@ -400,7 +428,7 @@ export function SearchResultsPage() {
             <div className='flex items-center gap-3'>
               {/* Sort */}
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className='w-[180px] border-blue-200'>
+                <SelectTrigger className='w-[180px] border-blue-200 border rounded-lg border-blue-300'>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -414,12 +442,16 @@ export function SearchResultsPage() {
               </Select>
 
               {/* View Mode */}
-              <div className='flex items-center border border-blue-200 rounded-lg'>
+              <div className='flex items-center border border-blue-200 rounded-lg overflow-hidden'>
                 <Button
                   variant={viewMode === 'grid' ? 'default' : 'ghost'}
                   size='sm'
                   onClick={() => setViewMode('grid')}
-                  className='rounded-r-none'
+                  className={
+                    viewMode === 'grid'
+                      ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white'
+                      : 'text-gray-600'
+                  }
                 >
                   <Grid className='w-4 h-4' />
                 </Button>
@@ -427,7 +459,11 @@ export function SearchResultsPage() {
                   variant={viewMode === 'list' ? 'default' : 'ghost'}
                   size='sm'
                   onClick={() => setViewMode('list')}
-                  className='rounded-l-none'
+                  className={
+                    viewMode === 'list'
+                      ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white'
+                      : 'text-gray-600'
+                  }
                 >
                   <List className='w-4 h-4' />
                 </Button>

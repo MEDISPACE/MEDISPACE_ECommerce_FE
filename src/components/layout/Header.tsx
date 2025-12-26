@@ -134,10 +134,12 @@ export function Header() {
                 <DropdownMenuContent align='end' className='w-56 bg-white/95 backdrop-blur-lg border-blue-100'>
                   <DropdownMenuLabel className='text-blue-900'>
                     <div className='flex flex-col space-y-1'>
-                      <p className='text-sm font-medium'>
+                      <p className='text-sm font-medium truncate'>
                         {user?.firstName} {user?.lastName}
                       </p>
-                      <p className='text-xs text-blue-600'>{user?.email}</p>
+                      <p className='text-xs text-blue-600 truncate overflow-hidden text-ellipsis' title={user?.email}>
+                        {user?.email}
+                      </p>
                       <div className='text-xs text-gray-500 capitalize font-normal mt-1'>
                         {user?.role === UserRole.Admin
                           ? 'Quản trị viên'
