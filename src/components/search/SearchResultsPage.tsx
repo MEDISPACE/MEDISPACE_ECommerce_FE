@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useSearchParams } from 'react-router'
-import { Search, Filter, Grid, List, SlidersHorizontal } from 'lucide-react'
+import { Search, Filter, Grid, List, SlidersHorizontal, Loader2, ChevronDown, ChevronUp } from 'lucide-react'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import { Button } from '../ui/button'
-import { Input } from '../ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { Checkbox } from '../ui/checkbox'
@@ -12,171 +12,184 @@ import { Badge } from '../ui/badge'
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet'
 import { ProductCard } from '../products/ProductCard'
 import { EmptyState } from '../shared/EmptyState'
-import { PaginationComponent } from '../shared/PaginationComponent'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
 import { productService } from '../../services/productService'
 import { categoryService } from '../../services/categoryService'
 import { brandService } from '../../services/brandService'
 import { useCart } from '../../contexts/CartContext'
 import { useWishlist } from '../../hooks/product/useWishlist'
-import type { Product, Category, Brand } from '../../types/product'
+import type { Category, Brand } from '../../types/product'
 import {
+  getProductId,
+  getProductImage,
+  getProductRating,
+  getProductReviewCount,
+  isProductInStock,
+  isProductPrescription,
   getProductSalePrice,
   getProductOriginalPrice,
   getProductUnit,
   getDiscountPercentage,
   isProductOnSale,
+  getBrandName,
 } from '../../utils/productHelpers'
 
 export function SearchResultsPage() {
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [searchParams] = useSearchParams()
   const { addToCart } = useCart()
   const { toggleWishlist, isInWishlist } = useWishlist()
+  const observerTarget = useRef<HTMLDivElement>(null)
+
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [isFilterOpen, setIsFilterOpen] = useState(false)
 
+  // Collapse states for filters
+  const [isCategoriesExpanded, setIsCategoriesExpanded] = useState(true)
+  const [isBrandsExpanded, setIsBrandsExpanded] = useState(true)
+
   // Search filters state
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '')
+  const searchQuery = searchParams.get('q') || ''
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [selectedBrands, setSelectedBrands] = useState<string[]>([])
-  const [priceRange, setPriceRange] = useState([0, 1000000])
+  const [priceRange, setPriceRange] = useState([0, 10000000])
   const [prescriptionType, setPrescriptionType] = useState('all')
-  const [minRating, setMinRating] = useState(0)
   const [inStockOnly, setInStockOnly] = useState(false)
-  const [onSaleOnly, setOnSaleOnly] = useState(false)
   const [sortBy, setSortBy] = useState('relevance')
-  const [currentPage, setCurrentPage] = useState(1)
-  const [resultsPerPage, setResultsPerPage] = useState(12)
 
-  // Data state
-  const [products, setProducts] = useState<Product[]>([])
+  // Fetch categories and brands for filters
   const [categories, setCategories] = useState<Category[]>([])
   const [brands, setBrands] = useState<Brand[]>([])
 
-  // Fetch data on component mount
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchFilters = async () => {
       try {
-        const [productsData, categoriesData, brandsData] = await Promise.all([
-          productService.searchProducts(searchQuery),
+        const [categoriesData, brandsData] = await Promise.all([
           categoryService.getCategories(),
           brandService.getBrands(),
         ])
-        setProducts(productsData)
         setCategories(categoriesData)
         setBrands(brandsData)
-      } catch (error) {
+      } catch {
         // Handle error
       }
     }
+    fetchFilters()
+  }, [])
 
-    fetchData()
-  }, [searchQuery])
+  // Infinite query for products with server-side filtering
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
+    queryKey: [
+      'search',
+      searchQuery,
+      selectedCategories,
+      selectedBrands,
+      priceRange,
+      prescriptionType,
+      inStockOnly,
+      sortBy,
+    ],
+    queryFn: ({ pageParam = 1 }) => {
+      const params: Record<string, unknown> = {
+        page: pageParam,
+        limit: 100,
+      }
 
-  // Filter products based on search criteria
-  const filterProducts = () => {
-    let filtered = products
+      // Add search query
+      if (searchQuery) {
+        params.search = searchQuery
+      }
 
-    // Search query filter
-    if (searchQuery) {
-      filtered = filtered.filter(
-        (product) =>
-          product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (product.shortDescription && product.shortDescription.toLowerCase().includes(searchQuery.toLowerCase())) ||
-          product.brand?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          product.tags?.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase())),
-      )
-    }
+      // Add sorting
+      switch (sortBy) {
+        case 'price_asc':
+          params.sortBy = 'price'
+          params.sortOrder = 'asc'
+          break
+        case 'price_desc':
+          params.sortBy = 'price'
+          params.sortOrder = 'desc'
+          break
+        case 'rating':
+          params.sortBy = 'rating'
+          params.sortOrder = 'desc'
+          break
+        case 'newest':
+          params.sortBy = 'createdAt'
+          params.sortOrder = 'desc'
+          break
+        case 'bestseller':
+          params.sortBy = 'reviewCount'
+          params.sortOrder = 'desc'
+          break
+        default: // relevance
+          params.sortBy = 'createdAt'
+          params.sortOrder = 'desc'
+      }
 
-    // Category filter
-    if (selectedCategories.length > 0) {
-      filtered = filtered.filter((product) => {
-        const productCategory = categories.find(cat => cat._id === product.categoryId)
-        return productCategory && selectedCategories.includes(productCategory.slug)
-      })
-    }
+      // Add filters
+      if (selectedCategories.length > 0) {
+        const category = categories.find((c) => c.slug === selectedCategories[0])
+        if (category) params.categoryId = category._id
+      }
+      if (selectedBrands.length > 0) {
+        params.brandId = selectedBrands[0]
+      }
+      if (prescriptionType !== 'all') {
+        params.requiresPrescription = prescriptionType === 'prescription'
+      }
+      if (inStockOnly) {
+        params.inStock = true
+      }
+      if (priceRange[0] > 0 || priceRange[1] < 10000000) {
+        params.minPrice = priceRange[0]
+        params.maxPrice = priceRange[1]
+      }
 
-    // Brand filter
-    if (selectedBrands.length > 0) {
-      filtered = filtered.filter((product) => product.brandId && selectedBrands.includes(product.brandId))
-    }
+      return productService.getProducts(params)
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      return lastPage.length === 100 ? allPages.length + 1 : undefined
+    },
+    initialPageParam: 1,
+    staleTime: 2 * 60 * 1000,
+  })
 
-    // Price range filter
-    filtered = filtered.filter((product) => {
-      const price = getProductSalePrice(product) || 0
-      return price >= priceRange[0] && price <= priceRange[1]
-    })
-
-    // Prescription type filter
-    if (prescriptionType !== 'all') {
-      const isPrescription = prescriptionType === 'prescription'
-      filtered = filtered.filter((product) => product.isPrescription === isPrescription)
-    }
-
-    // Rating filter
-    if (minRating > 0) {
-      filtered = filtered.filter((product) => (product.rating || 0) >= minRating)
-    }
-
-    // Stock filter
-    if (inStockOnly) {
-      filtered = filtered.filter((product) => product.inStock)
-    }
-
-    // Sale filter
-    if (onSaleOnly) {
-      filtered = filtered.filter((product) => product.isOnSale)
-    }
-
-    // Sort products
-    switch (sortBy) {
-      case 'price_asc':
-        filtered.sort((a, b) => (getProductSalePrice(a) || 0) - (getProductSalePrice(b) || 0))
-        break
-      case 'price_desc':
-        filtered.sort((a, b) => (getProductSalePrice(b) || 0) - (getProductSalePrice(a) || 0))
-        break
-      case 'rating':
-        filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0))
-        break
-      case 'newest':
-        // Sort by createdAt date (newest first)
-        filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        break
-      case 'bestseller':
-        filtered.sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0))
-        break
-      default: // relevance
-        // Keep original order for relevance
-        break
-    }
-
-    return filtered
-  }
-
-  const filteredProducts = filterProducts()
-  const totalResults = filteredProducts.length
-  const totalPages = Math.ceil(totalResults / resultsPerPage)
-  const startIndex = (currentPage - 1) * resultsPerPage
-  const endIndex = startIndex + resultsPerPage
-  const currentProducts = filteredProducts.slice(startIndex, endIndex)
-
-  // Update URL when search query changes
+  // Intersection Observer for infinite scroll
   useEffect(() => {
-    if (searchQuery) {
-      setSearchParams({ q: searchQuery })
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage()
+        }
+      },
+      { threshold: 0.1 },
+    )
+
+    const currentTarget = observerTarget.current
+    if (currentTarget) {
+      observer.observe(currentTarget)
     }
-  }, [searchQuery, setSearchParams])
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget)
+      }
+    }
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage])
+
+  // All products from server
+  const allProducts = useMemo(() => {
+    return data?.pages.flatMap((page) => page) ?? []
+  }, [data])
+
+  const totalResults = allProducts.length
 
   const clearFilters = () => {
     setSelectedCategories([])
     setSelectedBrands([])
-    setPriceRange([0, 1000000])
+    setPriceRange([0, 10000000])
     setPrescriptionType('all')
-    setMinRating(0)
     setInStockOnly(false)
-    setOnSaleOnly(false)
-    setCurrentPage(1)
   }
 
   const formatPrice = (price: number) => {
@@ -191,77 +204,85 @@ export function SearchResultsPage() {
 
   const FilterContent = () => (
     <div className='space-y-6'>
-      {/* Search within results */}
+      {/* Categories - Scrollable checkbox list */}
       <div>
-        <Label className='font-medium mb-2 block'>Tìm trong kết quả</Label>
-        <div className='relative'>
-          <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4' />
-          <Input
-            placeholder='Lọc kết quả...'
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className='pl-10 border-blue-200'
-          />
-        </div>
-      </div>
-
-      {/* Categories */}
-      <div>
-        <Label className='font-medium mb-3 block'>Danh mục</Label>
-        <div className='space-y-2'>
-          {categories.map((category) => (
-            <div key={category._id} className='flex items-center space-x-2'>
-              <Checkbox
-                id={`category-${category._id}`}
-                checked={selectedCategories.includes(category.slug)}
-                onCheckedChange={(checked) => {
-                  if (checked) {
-                    setSelectedCategories([...selectedCategories, category.slug])
-                  } else {
-                    setSelectedCategories(selectedCategories.filter((c) => c !== category.slug))
-                  }
-                  setCurrentPage(1)
-                }}
-              />
-              <Label htmlFor={`category-${category._id}`} className='text-sm'>
-                {category.name} ({category.productCount})
-              </Label>
-            </div>
-          ))}
-        </div>
+        <button
+          onClick={() => setIsCategoriesExpanded(!isCategoriesExpanded)}
+          className='flex items-center justify-between w-full mb-3 hover:opacity-70 transition-opacity'
+        >
+          <Label className='font-medium cursor-pointer'>Danh mục</Label>
+          {isCategoriesExpanded ? (
+            <ChevronUp className='w-4 h-4 text-gray-500' />
+          ) : (
+            <ChevronDown className='w-4 h-4 text-gray-500' />
+          )}
+        </button>
+        {isCategoriesExpanded && (
+          <div className='space-y-2 max-h-60 overflow-y-auto pr-2'>
+            {categories.map((category) => (
+              <div key={category._id} className='flex items-center space-x-2'>
+                <Checkbox
+                  id={`category-${category._id}`}
+                  checked={selectedCategories.includes(category.slug)}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSelectedCategories([...selectedCategories, category.slug])
+                    } else {
+                      setSelectedCategories(selectedCategories.filter((c) => c !== category.slug))
+                    }
+                  }}
+                />
+                <Label htmlFor={`category-${category._id}`} className='text-sm cursor-pointer'>
+                  {category.name} ({category.productCount || 0})
+                </Label>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Brands */}
       <div>
-        <Label className='font-medium mb-3 block'>Thương hiệu</Label>
-        <div className='space-y-2 max-h-40 overflow-y-auto'>
-          {brands.map((brand) => (
-            <div key={brand._id} className='flex items-center space-x-2'>
-              <Checkbox
-                id={`brand-${brand._id}`}
-                checked={selectedBrands.includes(brand._id)}
-                onCheckedChange={(checked) => {
-                  if (checked) {
-                    setSelectedBrands([...selectedBrands, brand._id])
-                  } else {
-                    setSelectedBrands(selectedBrands.filter((b) => b !== brand._id))
-                  }
-                  setCurrentPage(1)
-                }}
-              />
-              <Label htmlFor={`brand-${brand._id}`} className='text-sm'>
-                {brand.name}
-              </Label>
-            </div>
-          ))}
-        </div>
+        <button
+          onClick={() => setIsBrandsExpanded(!isBrandsExpanded)}
+          className='flex items-center justify-between w-full mb-3 hover:opacity-70 transition-opacity'
+        >
+          <Label className='font-medium cursor-pointer'>Thương hiệu</Label>
+          {isBrandsExpanded ? (
+            <ChevronUp className='w-4 h-4 text-gray-500' />
+          ) : (
+            <ChevronDown className='w-4 h-4 text-gray-500' />
+          )}
+        </button>
+        {isBrandsExpanded && (
+          <div className='space-y-2 max-h-60 overflow-y-auto pr-2'>
+            {brands.map((brand) => (
+              <div key={brand._id} className='flex items-center space-x-2'>
+                <Checkbox
+                  id={`brand-${brand._id}`}
+                  checked={selectedBrands.includes(brand._id)}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSelectedBrands([...selectedBrands, brand._id])
+                    } else {
+                      setSelectedBrands(selectedBrands.filter((b) => b !== brand._id))
+                    }
+                  }}
+                />
+                <Label htmlFor={`brand-${brand._id}`} className='text-sm cursor-pointer'>
+                  {brand.name}
+                </Label>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Price Range */}
       <div>
         <Label className='font-medium mb-3 block'>Khoảng giá</Label>
         <div className='space-y-3'>
-          <Slider value={priceRange} onValueChange={setPriceRange} max={1000000} step={10000} className='w-full' />
+          <Slider value={priceRange} onValueChange={setPriceRange} max={10000000} step={50000} className='w-full' />
           <div className='flex items-center justify-between text-sm text-gray-600'>
             <span>{formatPrice(priceRange[0])}</span>
             <span>{formatPrice(priceRange[1])}</span>
@@ -284,33 +305,10 @@ export function SearchResultsPage() {
                 checked={prescriptionType === option.value}
                 onCheckedChange={() => {
                   setPrescriptionType(option.value)
-                  setCurrentPage(1)
                 }}
               />
               <Label htmlFor={`prescription-${option.value}`} className='text-sm'>
                 {option.label}
-              </Label>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Rating */}
-      <div>
-        <Label className='font-medium mb-3 block'>Đánh giá</Label>
-        <div className='space-y-2'>
-          {[4, 3, 2, 1].map((rating) => (
-            <div key={rating} className='flex items-center space-x-2'>
-              <Checkbox
-                id={`rating-${rating}`}
-                checked={minRating === rating}
-                onCheckedChange={() => {
-                  setMinRating(minRating === rating ? 0 : rating)
-                  setCurrentPage(1)
-                }}
-              />
-              <Label htmlFor={`rating-${rating}`} className='text-sm'>
-                {rating}+ sao
               </Label>
             </div>
           ))}
@@ -327,25 +325,10 @@ export function SearchResultsPage() {
               checked={inStockOnly}
               onCheckedChange={(checked) => {
                 setInStockOnly(checked as boolean)
-                setCurrentPage(1)
               }}
             />
             <Label htmlFor='in-stock' className='text-sm'>
               Còn hàng
-            </Label>
-          </div>
-
-          <div className='flex items-center space-x-2'>
-            <Checkbox
-              id='on-sale'
-              checked={onSaleOnly}
-              onCheckedChange={(checked) => {
-                setOnSaleOnly(checked as boolean)
-                setCurrentPage(1)
-              }}
-            />
-            <Label htmlFor='on-sale' className='text-sm'>
-              Có khuyến mãi
             </Label>
           </div>
         </div>
@@ -364,7 +347,7 @@ export function SearchResultsPage() {
 
       <div className='flex items-center justify-between mb-6'>
         <div>
-          <h1 className='text-xl font-medium text-gray-900'>
+          <h1 className='text-xl font-bold text-gray-900'>
             {searchQuery ? `Kết quả cho "${searchQuery}"` : 'Tất cả sản phẩm'}
           </h1>
           <p className='text-gray-600'>Tìm thấy {totalResults} sản phẩm</p>
@@ -374,7 +357,7 @@ export function SearchResultsPage() {
       <div className='grid grid-cols-1 lg:grid-cols-4 gap-6'>
         {/* Desktop Filters */}
         <div className='hidden lg:block'>
-          <Card className='border-blue-100 sticky top-6'>
+          <Card className='border-blue-100 sticky top-6 bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl'>
             <CardHeader>
               <CardTitle className='text-blue-800 flex items-center gap-2'>
                 <Filter className='w-5 h-5' />
@@ -445,7 +428,7 @@ export function SearchResultsPage() {
             <div className='flex items-center gap-3'>
               {/* Sort */}
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className='w-[180px] border-blue-200'>
+                <SelectTrigger className='w-[180px] border-blue-200 border rounded-lg border-blue-300'>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -459,12 +442,16 @@ export function SearchResultsPage() {
               </Select>
 
               {/* View Mode */}
-              <div className='flex items-center border border-blue-200 rounded-lg'>
+              <div className='flex items-center border border-blue-200 rounded-lg overflow-hidden'>
                 <Button
                   variant={viewMode === 'grid' ? 'default' : 'ghost'}
                   size='sm'
                   onClick={() => setViewMode('grid')}
-                  className='rounded-r-none'
+                  className={
+                    viewMode === 'grid'
+                      ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white'
+                      : 'text-gray-600'
+                  }
                 >
                   <Grid className='w-4 h-4' />
                 </Button>
@@ -472,77 +459,80 @@ export function SearchResultsPage() {
                   variant={viewMode === 'list' ? 'default' : 'ghost'}
                   size='sm'
                   onClick={() => setViewMode('list')}
-                  className='rounded-l-none'
+                  className={
+                    viewMode === 'list'
+                      ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white'
+                      : 'text-gray-600'
+                  }
                 >
                   <List className='w-4 h-4' />
                 </Button>
               </div>
-
-              {/* Results per page */}
-              <Select value={resultsPerPage.toString()} onValueChange={(value) => setResultsPerPage(parseInt(value))}>
-                <SelectTrigger className='w-[100px] border-blue-200'>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='12'>12</SelectItem>
-                  <SelectItem value='24'>24</SelectItem>
-                  <SelectItem value='48'>48</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
 
           {/* Results */}
-          {currentProducts.length > 0 ? (
+          {isLoading ? (
+            <div className='flex flex-col items-center justify-center py-12'>
+              <Loader2 className='w-12 h-12 animate-spin text-blue-600 mb-4' />
+              <p className='text-gray-600'>Đang tìm kiếm sản phẩm...</p>
+            </div>
+          ) : allProducts.length > 0 ? (
             <>
               <div
-                className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'
-                  }`}
+                className={`grid gap-6 ${
+                  viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'
+                }`}
               >
-                {currentProducts.map((product) => (
+                {allProducts.map((product) => (
                   <ProductCard
-                    key={product._id}
+                    key={getProductId(product)}
                     product={{
-                      id: product._id,
+                      id: getProductId(product),
                       name: product.name,
                       slug: product.slug,
-                      brand: product.brand?.name || '',
-                      image: product.featuredImage || '',
+                      brand: getBrandName(product),
+                      image: getProductImage(product),
                       originalPrice: getProductOriginalPrice(product),
                       salePrice: getProductSalePrice(product) || 0,
-                      rating: product.rating || 0,
-                      reviewCount: product.reviewCount || 0,
-                      inStock: product.stockQuantity > 0,
-                      isPrescription: product.requiresPrescription,
-                      isOnSale: isProductOnSale(product),
                       discountPercentage: getDiscountPercentage(product),
+                      rating: getProductRating(product),
+                      reviewCount: getProductReviewCount(product),
+                      inStock: isProductInStock(product),
+                      isPrescription: isProductPrescription(product),
+                      isOnSale: isProductOnSale(product),
                       unit: getProductUnit(product),
                       priceVariants: product.priceVariants,
                     }}
                     variant={viewMode}
                     onAddToCart={(selectedUnit) => {
-                      const variant = product.priceVariants?.find(v => v.unit === selectedUnit)
+                      const variant = product.priceVariants?.find((v) => v.unit === selectedUnit)
                       const price = variant?.price || product.priceVariants?.[0]?.price
                       addToCart(product, 1, selectedUnit, price)
                     }}
                     onToggleWishlist={() => {
-                      toggleWishlist(product._id)
+                      toggleWishlist(getProductId(product))
                     }}
-                    isInWishlist={isInWishlist(product._id)}
+                    isInWishlist={isInWishlist(getProductId(product))}
                   />
                 ))}
               </div>
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className='flex justify-center pt-6'>
-                  <PaginationComponent
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={setCurrentPage}
-                  />
-                </div>
-              )}
+              {/* Infinite scroll trigger + loading indicator */}
+              <div ref={observerTarget} className='py-8 flex justify-center'>
+                {isFetchingNextPage && (
+                  <div className='flex items-center gap-3 text-blue-600'>
+                    <Loader2 className='w-6 h-6 animate-spin' />
+                    <span className='text-sm font-medium'>Đang tải thêm sản phẩm...</span>
+                  </div>
+                )}
+                {!hasNextPage && allProducts.length > 0 && (
+                  <div className='text-center text-gray-500 text-sm'>
+                    <p className='font-medium'>Đã hiển thị tất cả {allProducts.length} sản phẩm</p>
+                    <p className='text-xs mt-1'>Không còn sản phẩm nào để tải</p>
+                  </div>
+                )}
+              </div>
             </>
           ) : (
             <EmptyState
