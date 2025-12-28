@@ -13,6 +13,7 @@ import {
   Clock,
   X,
   AlertTriangle,
+  RefreshCw,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -475,6 +476,18 @@ export function OrderDetailPage() {
                 <RotateCcw className='w-4 h-4 mr-2' />
                 Mua lại đơn hàng
               </Button>
+
+              {/* Return Request Button - Only for delivered orders */}
+              {order.status === 'delivered' && (
+                <Button
+                  variant='outline'
+                  className='w-full !border-orange-300 !text-orange-600 hover:!bg-orange-50 hover:!text-orange-700'
+                  onClick={() => navigate(`/account/orders/${order.id}/return`)}
+                >
+                  <RefreshCw className='w-4 h-4 mr-2' />
+                  Yêu cầu đổi/trả hàng
+                </Button>
+              )}
             </CardContent>
           </Card>
         </div>
