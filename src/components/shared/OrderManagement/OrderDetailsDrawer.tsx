@@ -12,7 +12,7 @@ interface OrderDetailsDrawerProps {
   order: Order | null
 }
 
-type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'shipping' | 'shipped' | 'delivered' | 'cancelled'
+type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'shipping' | 'shipped' | 'delivered' | 'cancelled' | 'returned'
 type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded'
 
 export function OrderDetailsDrawer({ isOpen, onClose, order }: OrderDetailsDrawerProps) {
@@ -33,6 +33,7 @@ export function OrderDetailsDrawer({ isOpen, onClose, order }: OrderDetailsDrawe
       shipped: { label: 'Đang giao', className: 'bg-indigo-100 text-indigo-700' },
       delivered: { label: 'Đã giao', className: 'bg-green-100 text-green-700' },
       cancelled: { label: 'Đã hủy', className: 'bg-red-100 text-red-700' },
+      returned: { label: 'Đã trả hàng', className: 'bg-orange-100 text-orange-700' },
     }
 
     const config = statusConfig[status] || statusConfig.pending
