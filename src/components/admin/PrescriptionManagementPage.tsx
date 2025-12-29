@@ -439,7 +439,7 @@ export function PrescriptionManagementPage() {
                 size='sm'
                 variant='outline'
                 onClick={() => handleBulkAction('approve')}
-                className='bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
+                className='!bg-green-50 !text-green-700 !border-green-200 hover:!bg-green-100 hover:!text-green-800 hover:!border-green-100'
               >
                 <CheckCircle className='w-4 h-4 mr-1' />
                 Phê duyệt
@@ -448,12 +448,12 @@ export function PrescriptionManagementPage() {
                 size='sm'
                 variant='outline'
                 onClick={() => handleBulkAction('reject')}
-                className='bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+                className='!bg-red-50 !text-red-700 !border-red-200 hover:!bg-red-100 hover:!text-red-800 hover:!border-red-100'
               >
                 <XCircle className='w-4 h-4 mr-1' />
                 Từ chối
               </Button>
-              <Button size='sm' variant='outline' onClick={() => handleBulkAction('export')}>
+              <Button size='sm' variant='outline' onClick={() => handleBulkAction('export')} className="!bg-blue-50 !text-blue-700 !border-blue-200 hover:!bg-blue-100 hover:!text-blue-800 hover:!border-blue-100">
                 <Download className='w-4 h-4 mr-1' />
                 Xuất
               </Button>

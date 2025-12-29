@@ -94,7 +94,7 @@ export function OrderFilters({
                 onClick={onClearFilters}
                 variant='outline'
                 size='sm'
-                className='h-11 px-4 border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 rounded-xl transition-all flex items-center gap-2'
+                className='h-9 px-4 border-2 border-red-200 !text-red-600 hover:!bg-red-50 hover:!border-red-300 rounded-xl transition-all flex items-center gap-2'
               >
                 <X className='w-4 h-4' />
                 Xóa bộ lọc

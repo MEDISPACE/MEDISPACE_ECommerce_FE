@@ -21,6 +21,7 @@ import {
   ShoppingCart,
   UserRoundCheck,
   UserRoundX,
+  RotateCcw,
 } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
@@ -80,15 +81,20 @@ const navigationItems: NavItem[] = [
     icon: ShoppingCart,
   },
   {
+    label: 'Quản lý đổi/trả',
+    href: '/pharmacist/returns',
+    icon: RotateCcw,
+  },
+  {
     label: 'Chat với khách hàng',
     href: '/pharmacist/chat',
     icon: MessageSquare,
   },
-  {
-    label: 'Lịch sử bệnh nhân',
-    href: '/pharmacist/patients',
-    icon: Users,
-  },
+  // {
+  //   label: 'Lịch sử bệnh nhân',
+  //   href: '/pharmacist/patients',
+  //   icon: Users,
+  // },
   {
     label: 'Cơ sở dữ liệu thuốc',
     href: '/pharmacist/drug-database',

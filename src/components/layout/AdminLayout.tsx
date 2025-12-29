@@ -23,6 +23,7 @@ import {
   MessageSquare,
   Star,
   Building2,
+  RotateCcw,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { Button } from '../ui/button'
@@ -91,6 +92,11 @@ const navigationItems: NavItem[] = [
     label: 'Quản lý đơn hàng',
     href: '/admin/orders',
     icon: ShoppingCart,
+  },
+  {
+    label: 'Quản lý đổi/trả',
+    href: '/admin/returns',
+    icon: RotateCcw,
   },
   {
     label: 'Quản lý đơn thuốc',
