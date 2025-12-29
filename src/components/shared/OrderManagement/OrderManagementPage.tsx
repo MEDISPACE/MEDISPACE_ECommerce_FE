@@ -291,6 +291,7 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
           shipped: OrderStatusEnum.Shipped,
           delivered: OrderStatusEnum.Delivered,
           cancelled: OrderStatusEnum.Cancelled,
+          returned: OrderStatusEnum.Returned,
         }
         await generalOrderService.updateOrderStatus(currentOrder.id, statusMap[newStatus])
       }

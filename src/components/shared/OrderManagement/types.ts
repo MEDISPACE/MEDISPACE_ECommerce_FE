@@ -1,4 +1,4 @@
-export type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'shipping' | 'shipped' | 'delivered' | 'cancelled'
+export type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'shipping' | 'shipped' | 'delivered' | 'cancelled' | 'returned'
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded'
 export type UserRole = 'admin' | 'pharmacist'
 
