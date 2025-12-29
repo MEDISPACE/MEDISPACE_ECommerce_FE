@@ -38,6 +38,7 @@ export enum RefundMethod {
 export interface ReturnRequestItem {
     productId: string
     productName: string
+    productImage?: string  // Product image URL
     sku: string
     unit: string
     quantity: number
@@ -70,6 +71,9 @@ export interface ReturnRequest {
     orderId: string
     orderNumber: string
     userId: string
+    customerName?: string
+    customerEmail?: string
+    customerPhone?: string
     items: ReturnRequestItem[]
     reason: ReturnReason
     reasonDetail: string

@@ -4,6 +4,7 @@ export type UserRole = 'admin' | 'pharmacist'
 
 export interface Order {
   id: string
+  orderNumber?: string
   customerName: string
   customerPhone: string
   products: number

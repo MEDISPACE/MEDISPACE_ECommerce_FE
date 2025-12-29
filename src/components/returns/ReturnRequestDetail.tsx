@@ -137,7 +137,7 @@ export default function ReturnRequestDetail() {
                     <ArrowLeft className="h-5 w-5" />
                 </Button>
                 <div className="flex-1">
-                    <h1 className="text-2xl font-bold">Chi tiết yêu cầu #{request.requestNumber}</h1>
+                    <h1 className="text-2xl font-bold text-blue-900">Chi tiết yêu cầu #{request.requestNumber}</h1>
                     <p className="text-muted-foreground">Đơn hàng: #{request.orderNumber}</p>
                 </div>
                 <Badge className={returnStatusColors[request.status]}>
@@ -147,47 +147,57 @@ export default function ReturnRequestDetail() {
 
             {/* Status Timeline */}
             {currentStatusIndex >= 0 && (
-                <Card>
+                <Card className="border-blue-100">
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
+                        <CardTitle className="flex items-center gap-2 text-blue-800">
                             <Clock className="h-5 w-5" />
                             Tiến trình xử lý
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="flex items-center justify-between">
-                            {statusOrder.map((status, index) => {
-                                const isActive = index <= currentStatusIndex
-                                const isCurrent = index === currentStatusIndex
+                        {/* Progress Timeline */}
+                        <div className="relative">
+                            {/* Connecting line */}
+                            <div className="absolute top-5 left-0 right-0 h-0.5 bg-gray-200" style={{ marginLeft: '7%', marginRight: '7%' }} />
+                            <div
+                                className="absolute top-5 left-0 h-0.5 bg-blue-500 transition-all duration-500"
+                                style={{
+                                    marginLeft: '7%',
+                                    width: `${Math.min(currentStatusIndex, statusOrder.length - 1) * (86 / (statusOrder.length - 1))}%`
+                                }}
+                            />
 
-                                return (
-                                    <div key={status} className="flex flex-col items-center flex-1">
-                                        <div
-                                            className={`w-8 h-8 rounded-full flex items-center justify-center ${isActive
-                                                    ? isCurrent
-                                                        ? 'bg-primary text-primary-foreground'
-                                                        : 'bg-green-500 text-white'
-                                                    : 'bg-muted text-muted-foreground'
-                                                }`}
-                                        >
-                                            {isActive && !isCurrent ? (
-                                                <CheckCircle2 className="h-5 w-5" />
-                                            ) : (
-                                                <span className="text-xs font-medium">{index + 1}</span>
-                                            )}
-                                        </div>
-                                        <span className={`text-xs mt-2 text-center ${isActive ? 'font-medium' : 'text-muted-foreground'}`}>
-                                            {returnStatusLabels[status]}
-                                        </span>
-                                        {index < statusOrder.length - 1 && (
+                            {/* Steps */}
+                            <div className="flex items-start justify-between relative">
+                                {statusOrder.map((status, index) => {
+                                    const isCompleted = index < currentStatusIndex
+                                    const isCurrent = index === currentStatusIndex
+                                    const isActive = index <= currentStatusIndex
+
+                                    return (
+                                        <div key={status} className="flex flex-col items-center flex-1 z-10">
                                             <div
-                                                className={`absolute h-0.5 w-full top-4 left-1/2 -z-10 ${index < currentStatusIndex ? 'bg-green-500' : 'bg-muted'
+                                                className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${isCompleted
+                                                        ? 'bg-blue-500 border-blue-500 text-white'
+                                                        : isCurrent
+                                                            ? 'bg-blue-500 border-blue-500 text-white ring-4 ring-blue-100'
+                                                            : 'bg-white border-gray-300 text-gray-400'
                                                     }`}
-                                            />
-                                        )}
-                                    </div>
-                                )
-                            })}
+                                            >
+                                                {isCompleted ? (
+                                                    <CheckCircle2 className="h-5 w-5" />
+                                                ) : (
+                                                    <span className="text-sm font-semibold">{index + 1}</span>
+                                                )}
+                                            </div>
+                                            <span className={`text-xs mt-2 text-center max-w-[80px] leading-tight ${isActive ? 'font-medium text-blue-700' : 'text-gray-500'
+                                                }`}>
+                                                {returnStatusLabels[status]}
+                                            </span>
+                                        </div>
+                                    )
+                                })}
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
@@ -214,7 +224,7 @@ export default function ReturnRequestDetail() {
 
             {/* Action buttons */}
             {(canCancel || canAddShipping) && (
-                <Card>
+                <Card className="border-blue-100">
                     <CardContent className="pt-6">
                         <div className="flex gap-3">
                             {canCancel && (
@@ -240,9 +250,9 @@ export default function ReturnRequestDetail() {
             )}
 
             {/* Items */}
-            <Card>
+            <Card className="border-blue-100">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-blue-800">
                         <Package className="h-5 w-5" />
                         Sản phẩm đổi/trả ({request.items.length})
                     </CardTitle>
@@ -250,15 +260,27 @@ export default function ReturnRequestDetail() {
                 <CardContent>
                     <div className="space-y-4">
                         {request.items.map((item, index) => (
-                            <div key={index} className="flex gap-4 p-4 border rounded-lg">
+                            <div key={index} className="flex gap-4 p-4 border border-blue-100 rounded-lg bg-blue-50/30">
+                                {/* Product Image */}
+                                <div className="w-20 h-20 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                    {item.productImage ? (
+                                        <img
+                                            src={item.productImage}
+                                            alt={item.productName}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <Package className="h-8 w-8 text-blue-400" />
+                                    )}
+                                </div>
                                 <div className="flex-1">
-                                    <h4 className="font-medium">{item.productName}</h4>
+                                    <h4 className="font-medium text-blue-800">{item.productName}</h4>
                                     <p className="text-sm text-muted-foreground">
                                         SKU: {item.sku} | Đơn vị: {item.unit} | Số lượng: {item.quantity}
                                     </p>
                                     <p className="text-sm">
-                                        Giá: {item.unitPrice.toLocaleString()}đ × {item.quantity} ={' '}
-                                        <span className="font-medium">{item.totalPrice.toLocaleString()}đ</span>
+                                        Giá: <span className="text-blue-600">{(item.unitPrice ?? 0).toLocaleString()}đ</span> × {item.quantity} ={' '}
+                                        <span className="font-medium text-blue-600">{(item.totalPrice ?? 0).toLocaleString()}đ</span>
                                     </p>
                                     <p className="text-sm mt-1">
                                         <span className="text-muted-foreground">Lý do: </span>
@@ -277,9 +299,9 @@ export default function ReturnRequestDetail() {
             </Card>
 
             {/* Request details */}
-            <Card>
+            <Card className="border-blue-100">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-blue-800">
                         <FileText className="h-5 w-5" />
                         Chi tiết yêu cầu
                     </CardTitle>
@@ -339,9 +361,9 @@ export default function ReturnRequestDetail() {
 
             {/* Shipping info */}
             {request.returnShippingInfo && (
-                <Card>
+                <Card className="border-blue-100">
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
+                        <CardTitle className="flex items-center gap-2 text-blue-800">
                             <Truck className="h-5 w-5" />
                             Thông tin gửi hàng trả
                         </CardTitle>
@@ -398,9 +420,9 @@ export default function ReturnRequestDetail() {
             )}
 
             {/* Refund summary */}
-            <Card>
+            <Card className="border-blue-100">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-blue-800">
                         <CreditCard className="h-5 w-5" />
                         Thông tin hoàn tiền
                     </CardTitle>
@@ -409,18 +431,18 @@ export default function ReturnRequestDetail() {
                     <div className="space-y-3">
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Số tiền yêu cầu hoàn</span>
-                            <span className="font-medium">{request.requestedAmount.toLocaleString()}đ</span>
+                            <span className="font-medium">{(request.requestedAmount ?? 0).toLocaleString()}đ</span>
                         </div>
                         {request.approvedAmount !== undefined && (
                             <div className="flex justify-between">
                                 <span className="text-muted-foreground">Số tiền được duyệt</span>
-                                <span className="font-medium text-blue-600">{request.approvedAmount.toLocaleString()}đ</span>
+                                <span className="font-medium text-blue-600">{(request.approvedAmount ?? 0).toLocaleString()}đ</span>
                             </div>
                         )}
                         {request.refundedAmount !== undefined && (
-                            <div className="flex justify-between pt-2 border-t">
+                            <div className="flex justify-between pt-2 border-t border-blue-200">
                                 <span className="font-medium">Đã hoàn tiền</span>
-                                <span className="font-bold text-green-600">{request.refundedAmount.toLocaleString()}đ</span>
+                                <span className="font-bold text-green-600">{(request.refundedAmount ?? 0).toLocaleString()}đ</span>
                             </div>
                         )}
                         {request.refundTransactionId && (

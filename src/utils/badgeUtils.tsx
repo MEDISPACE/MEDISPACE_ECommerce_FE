@@ -182,6 +182,11 @@ export const ORDER_STATUS_BADGES: Record<string, BadgeConfig> = {
     className: 'bg-gray-100 text-gray-800 border-gray-200',
     icon: XCircle,
   },
+  returned: {
+    label: 'Đã hoàn trả',
+    className: 'bg-orange-100 text-orange-800 border-orange-200',
+    icon: Package,
+  },
 } as const
 
 /**

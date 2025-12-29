@@ -192,11 +192,11 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
         <div className="max-w-4xl mx-auto p-6 space-y-6">
             {/* Header */}
             <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-                    <ArrowLeft className="h-5 w-5" />
+                <Button className="text-blue-600 hover:!text-blue-700 hover:!bg-blue-50 rounded-full p-2.5 h-10 w-10" variant="ghost" size="icon" onClick={() => navigate(-1)}>
+                    <ArrowLeft className="h-7 w-7" />
                 </Button>
                 <div>
-                    <h1 className="text-2xl font-bold">Yêu cầu đổi/trả hàng</h1>
+                    <h1 className="text-2xl font-bold text-blue-800">Yêu cầu đổi/trả hàng</h1>
                     <p className="text-muted-foreground">Đơn hàng #{order.orderNumber}</p>
                 </div>
             </div>
@@ -237,9 +237,9 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
             )}
 
             {/* Select items */}
-            <Card>
+            <Card className="border-blue-100">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-blue-800">
                         <Package className="h-5 w-5" />
                         Chọn sản phẩm cần đổi/trả
                     </CardTitle>
@@ -254,7 +254,7 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
                         return (
                             <div
                                 key={item.productId}
-                                className={`border rounded-lg p-4 transition-colors ${isSelected ? 'border-primary bg-primary/5' : 'border-border'
+                                className={`border rounded-lg p-4 transition-colors ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-blue-100'
                                     }`}
                             >
                                 <div className="flex items-start gap-4">
@@ -288,7 +288,7 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
                                     <div className="mt-4 pt-4 border-t space-y-3">
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <Label>Số lượng trả</Label>
+                                                <Label className="mb-2 block">Số lượng trả</Label>
                                                 <Select
                                                     value={String(selectedData.quantity)}
                                                     onValueChange={(v) => updateItemQuantity(item.productId, Number(v))}
@@ -306,7 +306,7 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
                                                 </Select>
                                             </div>
                                             <div>
-                                                <Label>Lý do trả</Label>
+                                                <Label className="mb-2 block">Lý do trả</Label>
                                                 <Select
                                                     value={selectedData.reason}
                                                     onValueChange={(v) => updateItemReason(item.productId, v as ReturnReason)}
@@ -333,15 +333,15 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
             </Card>
 
             {/* Main reason and details */}
-            <Card>
+            <Card className="border-blue-100">
                 <CardHeader>
-                    <CardTitle>Chi tiết yêu cầu</CardTitle>
+                    <CardTitle className="text-blue-800">Chi tiết yêu cầu</CardTitle>
                     <CardDescription>Vui lòng cung cấp thông tin chi tiết về yêu cầu đổi/trả</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <Label>Lý do chính</Label>
+                            <Label className="mb-2 block">Lý do chính</Label>
                             <Select value={mainReason} onValueChange={(v) => setMainReason(v as ReturnReason)}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Chọn lý do" />
@@ -356,7 +356,7 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
                             </Select>
                         </div>
                         <div>
-                            <Label>Loại yêu cầu</Label>
+                            <Label className="mb-2 block">Loại yêu cầu</Label>
                             <Select value={returnType} onValueChange={(v) => setReturnType(v as ReturnType)}>
                                 <SelectTrigger>
                                     <SelectValue />
@@ -370,7 +370,7 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
                     </div>
 
                     <div>
-                        <Label>Mô tả chi tiết (tối thiểu 10 ký tự)</Label>
+                        <Label className="mb-2 block">Mô tả chi tiết (tối thiểu 10 ký tự)</Label>
                         <Textarea
                             value={reasonDetail}
                             onChange={(e) => setReasonDetail(e.target.value)}
@@ -382,8 +382,8 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
 
                     {/* Evidence upload */}
                     <div>
-                        <Label>Hình ảnh/Video chứng minh (bắt buộc, tối thiểu 1 ảnh)</Label>
-                        <div className="mt-2 border-2 border-dashed rounded-lg p-6 text-center">
+                        <Label className="mb-2 block">Hình ảnh/Video chứng minh (bắt buộc, tối thiểu 1 ảnh)</Label>
+                        <div className="border-2 border-dashed border-blue-200 rounded-lg p-6 text-center hover:border-blue-300 transition-colors">
                             <input
                                 type="file"
                                 multiple
@@ -421,7 +421,7 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
                     {returnType === ReturnType.REFUND && (
                         <>
                             <div>
-                                <Label>Phương thức hoàn tiền</Label>
+                                <Label className="mb-2 block">Phương thức hoàn tiền</Label>
                                 <Select value={refundMethod} onValueChange={(v) => setRefundMethod(v as RefundMethod)}>
                                     <SelectTrigger>
                                         <SelectValue />
@@ -436,7 +436,7 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
                             {refundMethod === RefundMethod.BANK_TRANSFER && (
                                 <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
                                     <div>
-                                        <Label>Tên ngân hàng</Label>
+                                        <Label className="mb-2 block">Tên ngân hàng</Label>
                                         <Input
                                             value={bankInfo.bankName}
                                             onChange={(e) => setBankInfo({ ...bankInfo, bankName: e.target.value })}
@@ -444,7 +444,7 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
                                         />
                                     </div>
                                     <div>
-                                        <Label>Số tài khoản</Label>
+                                        <Label className="mb-2 block">Số tài khoản</Label>
                                         <Input
                                             value={bankInfo.accountNumber}
                                             onChange={(e) => setBankInfo({ ...bankInfo, accountNumber: e.target.value })}
@@ -452,7 +452,7 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
                                         />
                                     </div>
                                     <div>
-                                        <Label>Chủ tài khoản</Label>
+                                        <Label className="mb-2 block">Chủ tài khoản</Label>
                                         <Input
                                             value={bankInfo.accountHolder}
                                             onChange={(e) => setBankInfo({ ...bankInfo, accountHolder: e.target.value })}
@@ -460,7 +460,7 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
                                         />
                                     </div>
                                     <div>
-                                        <Label>Chi nhánh (tùy chọn)</Label>
+                                        <Label className="mb-2 block">Chi nhánh (tùy chọn)</Label>
                                         <Input
                                             value={bankInfo.branch}
                                             onChange={(e) => setBankInfo({ ...bankInfo, branch: e.target.value })}
@@ -475,20 +475,21 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
             </Card>
 
             {/* Summary and submit */}
-            <Card>
+            <Card className="border-blue-100">
                 <CardContent className="pt-6">
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm text-muted-foreground">Số sản phẩm: {selectedItems.size}</p>
                             <p className="text-lg font-semibold">
-                                Tổng tiền hoàn: <span className="text-primary">{totalRefundAmount.toLocaleString()}đ</span>
+                                Tổng tiền hoàn: <span className="text-blue-600">{totalRefundAmount.toLocaleString()}đ</span>
                             </p>
                         </div>
                         <div className="flex gap-3">
-                            <Button variant="outline" onClick={onCancel || (() => navigate(-1))}>
+                            <Button variant="outline" className="!border-blue-200 !text-blue-600 hover:!bg-blue-50" onClick={onCancel || (() => navigate(-1))}>
                                 Hủy
                             </Button>
                             <Button
+                                className="bg-blue-600 text-white hover:bg-blue-700"
                                 onClick={() => submitMutation.mutate()}
                                 disabled={!isValid || submitMutation.isPending}
                             >

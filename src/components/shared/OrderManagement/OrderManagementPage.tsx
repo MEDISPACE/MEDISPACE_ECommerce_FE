@@ -24,6 +24,7 @@ import { OrderStatsCards } from './OrderStatsCards'
 import { OrderTable } from './OrderTable'
 import { OrderDetailsDrawer } from './OrderDetailsDrawer'
 import type { Order, OrderStatus, PaymentStatus, UserRole } from './types'
+import { PaginationComponent } from '../PaginationComponent'
 import { orderService as pharmacistOrderService } from '../../../services/pharmacist/order.service'
 import { orderService as generalOrderService } from '../../../services/orderService'
 import adminService from '../../../services/adminService'
@@ -53,6 +54,7 @@ const formatDate = (dateValue: string | Date | undefined): string => {
 const mapApiOrderToOrder = (apiOrder: ApiOrder): Order => {
   return {
     id: apiOrder._id,
+    orderNumber: apiOrder.orderNumber,
     customerName: `${apiOrder.shippingAddress.firstName} ${apiOrder.shippingAddress.lastName}`,
     customerPhone: apiOrder.shippingAddress.phone,
     products: apiOrder.itemCount,
@@ -118,13 +120,13 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [filterPayment, setFilterPayment] = useState<string>('all')
   const [filterDate, setFilterDate] = useState<string>('all')
-  const [selectedOrders, setSelectedOrders] = useState<string[]>([])
   const [showUpdateDialog, setShowUpdateDialog] = useState(false)
   const [showCancelConfirmDialog, setShowCancelConfirmDialog] = useState(false)
   const [showDetailsDrawer, setShowDetailsDrawer] = useState(false)
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null)
   const [detailsOrder, setDetailsOrder] = useState<ApiOrder | null>(null)
   const [newStatus, setNewStatus] = useState<OrderStatus>('pending')
+  const [newPaymentStatus, setNewPaymentStatus] = useState<string>('')
   const [notes, setNotes] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const ordersPerPage = 10
@@ -203,6 +205,7 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
       order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (order.orderNumber && order.orderNumber.toLowerCase().includes(searchQuery.toLowerCase())) ||
       order.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.customerPhone.includes(searchQuery)
     const matchesStatus = filterStatus === 'all' || order.status === filterStatus
@@ -251,6 +254,7 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
   const handleUpdateStatus = (order: Order) => {
     setCurrentOrder(order)
     setNewStatus(order.status)
+    setNewPaymentStatus(order.paymentStatus || 'pending')
     setNotes('')
     setShowUpdateDialog(true)
   }
@@ -259,16 +263,21 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
     if (!currentOrder || !newStatus) return
 
     try {
+      // Send payment status (only if different from current)
+      const paymentStatusToSend = newPaymentStatus !== currentOrder.paymentStatus ? newPaymentStatus : undefined
+
       if (role === 'pharmacist') {
         // Use pharmacist-specific API - backend expects 'status' not 'orderStatus'
         await pharmacistOrderService.updateStatus(currentOrder.id, {
           status: newStatus,
+          paymentStatus: paymentStatusToSend,
           notes: notes || undefined,
         })
       } else if (role === 'admin') {
         // Use admin-specific API
         await adminService.updateOrderStatus(currentOrder.id, {
           status: newStatus,
+          paymentStatus: paymentStatusToSend,
           notes: notes || undefined,
         })
       } else {
@@ -286,8 +295,11 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
         await generalOrderService.updateOrderStatus(currentOrder.id, statusMap[newStatus])
       }
 
+
+
       // Update local state
-      setOrders(orders.map((o) => (o.id === currentOrder.id ? { ...o, status: newStatus } : o)))
+      const updatedPaymentStatus = newPaymentStatus as PaymentStatus
+      setOrders(orders.map((o) => (o.id === currentOrder.id ? { ...o, status: newStatus, paymentStatus: updatedPaymentStatus } : o)))
 
       // Show specific message for paid orders cancellation
       if (newStatus === 'cancelled' && currentOrder.paymentStatus === 'paid') {
@@ -304,6 +316,7 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
       setShowCancelConfirmDialog(false)
       setCurrentOrder(null)
       setNotes('')
+      setNewPaymentStatus('')
     } catch (error) {
 
       toast.error('Cập nhật thất bại', {
@@ -325,21 +338,7 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
     executeStatusUpdate()
   }
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedOrders(filteredOrders.map((o) => o.id))
-    } else {
-      setSelectedOrders([])
-    }
-  }
 
-  const handleSelectOrder = (orderId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedOrders([...selectedOrders, orderId])
-    } else {
-      setSelectedOrders(selectedOrders.filter((id) => id !== orderId))
-    }
-  }
 
   if (loading) {
     return (
@@ -384,12 +383,12 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
           </Link>
 
           {/* Export Button */}
-          {config.showExportButton && (
+          {/* {config.showExportButton && (
             <Button variant='outline' className='gap-2'>
               <Download className='w-4 h-4' />
               Xuất báo cáo
             </Button>
-          )}
+          )} */}
         </div>
       </div>
 
@@ -425,9 +424,6 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
         <CardContent>
           <OrderTable
             orders={paginatedOrders}
-            selectedOrders={selectedOrders}
-            onSelectAll={handleSelectAll}
-            onSelectOrder={handleSelectOrder}
             onUpdateStatus={handleUpdateStatus}
             onViewDetails={handleViewDetails}
             config={config}
@@ -435,42 +431,12 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
 
           {/* Pagination Controls */}
           {totalPages > 1 && (
-            <div className='flex items-center justify-between mt-4 pt-4 border-t'>
+            <div className='flex items-center justify-between mt-4 pt-4 border-t border-blue-300'>
               <div className='text-sm text-gray-600'>
                 Hiển thị {startIndex + 1} - {Math.min(endIndex, filteredOrders.length)} / {filteredOrders.length} đơn
                 hàng
               </div>
-              <div className='flex items-center gap-2'>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
-                >
-                  Trước
-                </Button>
-                <div className='flex gap-1'>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                    <Button
-                      key={page}
-                      variant={currentPage === page ? 'default' : 'outline'}
-                      size='sm'
-                      onClick={() => setCurrentPage(page)}
-                      className={currentPage === page ? 'bg-blue-600 hover:bg-blue-700 text-white' : ''}
-                    >
-                      {page}
-                    </Button>
-                  ))}
-                </div>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-                  disabled={currentPage === totalPages}
-                >
-                  Sau
-                </Button>
-              </div>
+              <PaginationComponent currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
             </div>
           )}
         </CardContent>
@@ -485,12 +451,12 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
           <DialogHeader>
             <DialogTitle>Cập nhật trạng thái đơn hàng</DialogTitle>
             <DialogDescription>
-              Cập nhật trạng thái cho đơn hàng <strong>{currentOrder?.id}</strong>
+              Cập nhật trạng thái cho đơn hàng <strong>{currentOrder?.orderNumber || currentOrder?.id}</strong>
             </DialogDescription>
           </DialogHeader>
           <div className='space-y-4 py-4'>
             <div className='space-y-2'>
-              <Label>Trạng thái mới</Label>
+              <Label>Trạng thái đơn hàng</Label>
               <Select value={newStatus} onValueChange={(value) => setNewStatus(value as OrderStatus)}>
                 <SelectTrigger className='border-2 border-blue-200'>
                   <SelectValue />
@@ -502,6 +468,28 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
                   <SelectItem value='shipping'>Đang giao</SelectItem>
                   <SelectItem value='delivered'>Đã giao</SelectItem>
                   <SelectItem value='cancelled'>Đã hủy</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className='space-y-2'>
+              <Label>Trạng thái thanh toán</Label>
+              <Select value={newPaymentStatus} onValueChange={setNewPaymentStatus}>
+                <SelectTrigger className='border-2 border-blue-200'>
+                  <SelectValue placeholder='Giữ nguyên' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='pending'>
+                    Chờ thanh toán {currentOrder?.paymentStatus === 'pending' && <span className='ml-2 text-xs text-blue-600'>(Hiện tại)</span>}
+                  </SelectItem>
+                  <SelectItem value='paid'>
+                    Đã thanh toán {currentOrder?.paymentStatus === 'paid' && <span className='ml-2 text-xs text-blue-600'>(Hiện tại)</span>}
+                  </SelectItem>
+                  <SelectItem value='failed'>
+                    Thanh toán thất bại {currentOrder?.paymentStatus === 'failed' && <span className='ml-2 text-xs text-blue-600'>(Hiện tại)</span>}
+                  </SelectItem>
+                  <SelectItem value='refunded'>
+                    Đã hoàn tiền {currentOrder?.paymentStatus === 'refunded' && <span className='ml-2 text-xs text-blue-600'>(Hiện tại)</span>}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -524,6 +512,7 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
               style={{
                 backgroundImage: `linear-gradient(to right, ${config.gradientFrom}, ${config.gradientTo})`,
               }}
+              className='!text-white hover:!bg-blue-700'
             >
               Cập nhật
             </Button>
