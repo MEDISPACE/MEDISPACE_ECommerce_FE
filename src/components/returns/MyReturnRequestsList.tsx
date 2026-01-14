@@ -40,7 +40,7 @@ export default function MyReturnRequestsList() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold">Yêu cầu đổi/trả hàng</h2>
+                    <h2 className="text-2xl font-bold text-blue-900">Yêu cầu đổi/trả hàng</h2>
                     <p className="text-muted-foreground">Theo dõi các yêu cầu đổi trả của bạn</p>
                 </div>
                 <Button variant="outline" size="sm" onClick={() => refetch()}>
@@ -103,13 +103,13 @@ export default function MyReturnRequestsList() {
             {!isLoading && requests.length > 0 && (
                 <div className="space-y-4">
                     {requests.map((request: ReturnRequest) => (
-                        <Card key={request._id} className="hover:shadow-md transition-shadow">
+                        <Card key={request._id} className="hover:shadow-md transition-shadow border-blue-100">
                             <CardContent className="pt-6">
                                 <Link to={`/account/returns/${request._id}`} className="block">
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-3 mb-2">
-                                                <span className="font-medium">#{request.requestNumber}</span>
+                                                <span className="font-medium text-blue-800">#{request.requestNumber}</span>
                                                 <Badge className={returnStatusColors[request.status]}>
                                                     {returnStatusLabels[request.status]}
                                                 </Badge>
@@ -140,10 +140,10 @@ export default function MyReturnRequestsList() {
                                                 </div>
                                             </div>
 
-                                            <div className="mt-3 pt-3 border-t">
+                                            <div className="mt-3 pt-3 border-t border-blue-200">
                                                 <p className="font-medium">
                                                     Số tiền yêu cầu hoàn:{' '}
-                                                    <span className="text-primary">{request.requestedAmount.toLocaleString()}đ</span>
+                                                    <span className="text-blue-600">{request.requestedAmount.toLocaleString()}đ</span>
                                                 </p>
                                                 {request.approvedAmount && (
                                                     <p className="text-sm text-muted-foreground">

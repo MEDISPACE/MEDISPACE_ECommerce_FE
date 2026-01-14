@@ -219,15 +219,15 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
                         </div>
                     </div>
 
-                    <div className='rounded-md border-2 border-blue-100 bg-white'>
-                        <Table>
+                    <div className='rounded-md border-2 border-blue-100 bg-white overflow-hidden'>
+                        <Table className='px-4'>
                             <TableHeader>
-                                <TableRow className="bg-gray-50 hover:bg-gray-50">
+                                <TableRow className="text-bold !bg-blue-50 hover:!bg-blue-50 !border-b-2 !border-blue-300">
                                     <TableHead>Tiêu đề</TableHead>
                                     <TableHead>Danh mục</TableHead>
                                     <TableHead>Tác giả</TableHead>
                                     <TableHead>Trạng thái</TableHead>
-                                    <TableHead className="text-right">Thao tác</TableHead>
+                                    <TableHead className="text-right !pr-6">Thao tác </TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -245,7 +245,7 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
                                     </TableRow>
                                 ) : (
                                     articles.map((article) => (
-                                        <TableRow key={article._id} className="hover:bg-blue-50/50 transition-colors">
+                                        <TableRow key={article._id} className="border-b border-blue-200 hover:bg-blue-50/50 transition-colors">
                                             <TableCell className="font-medium max-w-[300px]">
                                                 <div className="flex flex-col gap-1">
                                                     <div className="flex items-center gap-2">

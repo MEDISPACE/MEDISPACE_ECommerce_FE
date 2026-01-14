@@ -64,6 +64,7 @@ export interface CreateReturnRequestPayload {
 export interface ReturnRequestItem {
     productId: string
     productName: string
+    productImage?: string  // Ảnh sản phẩm
     sku: string
     unit: string
     quantity: number
