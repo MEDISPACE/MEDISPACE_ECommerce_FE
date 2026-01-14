@@ -47,7 +47,7 @@ export function OrdersPage() {
             id: item.id,
             productId: item.productId,
             productName: item.product.name,
-            productImage: item.product.images?.[0] || '',
+            productImage: item.product.featuredImage || item.product.image || item.product.images?.[0] || '',
             brand: item.product.brand?.name || '',
             unit: (item as any).unit || item.product.unit || 'viên',
             quantity: item.quantity,
@@ -138,6 +138,7 @@ export function OrdersPage() {
       processing: orders.filter((o) => o.status === 'processing').length,
       shipping: orders.filter((o) => o.status === 'shipping').length,
       delivered: orders.filter((o) => o.status === 'delivered').length,
+      returned: orders.filter((o) => o.status === 'returned').length,
       cancelled: orders.filter((o) => o.status === 'cancelled').length,
     }
   }
@@ -152,6 +153,7 @@ export function OrdersPage() {
     { value: 'processing', label: 'Đang xử lý', count: tabCounts.processing },
     { value: 'shipping', label: 'Đang giao', count: tabCounts.shipping },
     { value: 'delivered', label: 'Hoàn thành', count: tabCounts.delivered },
+    { value: 'returned', label: 'Đã trả hàng', count: tabCounts.returned },
     { value: 'cancelled', label: 'Đã hủy', count: tabCounts.cancelled },
   ]
 
@@ -202,14 +204,14 @@ export function OrdersPage() {
 
       {/* Status Tabs */}
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className='w-full'>
-        <TabsList className='inline-flex w-full overflow-x-auto bg-blue-100 p-1 rounded-lg shadow-sm scrollbar-hide'>
+        <TabsList className='!inline-flex !overflow-x-auto !gap-1.5 !h-auto !w-full !bg-blue-50 !p-2 !pb-3 !rounded-lg !justify-start scrollbar-thin'>
           {tabs.map((tab) => (
-            <TabsTrigger key={tab.value} value={tab.value} className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 !text-gray-700 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+            <TabsTrigger key={tab.value} value={tab.value} className='flex-shrink-0 text-sm px-3 py-2 !bg-white !text-gray-700 border border-blue-200 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:!border-blue-600 transition-all duration-200 rounded-md hover:!bg-blue-100'>
               <span className='whitespace-nowrap'>{tab.label}</span>
               {tab.count > 0 && (
-                <span className={`ml-2 rounded-full px-2 py-0.5 text-xs font-medium ${selectedTab === tab.value
-                  ? 'bg-white text-blue-500'
-                  : 'bg-blue-400 text-white'
+                <span className={`ml-1.5 rounded-full px-1.5 py-0.5 text-xs font-medium ${selectedTab === tab.value
+                  ? 'bg-white/90 text-blue-600'
+                  : 'bg-blue-500 text-white'
                   }`}>
                   {tab.count}
                 </span>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { MessageCircle, Search, Loader2 } from 'lucide-react'
+import { MessageCircle, Search, Loader2, RotateCcw } from 'lucide-react'
 import { Input } from '../ui/input'
 import { ChatWindow } from '../chat/ChatWindow'
 import { ConversationList } from '../chat/ConversationList'
@@ -137,7 +137,7 @@ export function PharmacistChatPage() {
                                 className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
                                 title="Làm mới"
                             >
-                                <Loader2 className={`w-4 h-4 text-white ${isLoading ? 'animate-spin' : ''}`} />
+                                <RotateCcw className={`w-4 h-4 text-white ${isLoading ? 'animate-spin' : ''}`} />
                             </button>
                         </div>
 
