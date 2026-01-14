@@ -118,7 +118,7 @@ export function CheckoutPage() {
             unitPrice: price || 0,
             totalPrice: (price || 0) * (quantity || 1),
             prescriptionRequired: product.requiresPrescription || false,
-            image: product.images?.[0] || '',
+            image: product.featuredImage || product.image || product.images?.[0] || '',
             priceVariants: product.priceVariants
           })
         }

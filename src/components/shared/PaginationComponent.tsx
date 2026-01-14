@@ -8,34 +8,34 @@ interface PaginationComponentProps {
   className?: string;
 }
 
-export function PaginationComponent({ 
-  currentPage, 
-  totalPages, 
-  onPageChange, 
-  className = "" 
+export function PaginationComponent({
+  currentPage,
+  totalPages,
+  onPageChange,
+  className = ""
 }: PaginationComponentProps) {
   // Scroll to top when page changes
   const handlePageChange = (page: number) => {
     // Temporarily disable smooth scroll for instant navigation
     const htmlElement = document.documentElement;
     const originalScrollBehavior = htmlElement.style.scrollBehavior;
-    
+
     // Force instant scroll
     htmlElement.style.scrollBehavior = 'auto';
-    
+
     // Scroll to top
     window.scrollTo({
       top: 0,
       left: 0,
       behavior: 'auto'
     });
-    
+
     // Fallback
     window.scrollTo(0, 0);
-    
+
     // Call original onPageChange
     onPageChange(page);
-    
+
     // Restore smooth scroll
     setTimeout(() => {
       htmlElement.style.scrollBehavior = originalScrollBehavior;
@@ -76,7 +76,7 @@ export function PaginationComponent({
       <div className="text-sm text-gray-600">
         Trang {currentPage} trong {totalPages}
       </div>
-      
+
       {/* Pagination controls */}
       <div className="flex items-center gap-1">
         {/* Previous button */}
@@ -85,12 +85,12 @@ export function PaginationComponent({
           size="sm"
           onClick={() => handlePageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="border-blue-200 hover:border-blue-300 hover:bg-blue-50"
+          className="!border-blue-200 hover:!border-blue-300 hover:!bg-blue-50"
         >
           <ChevronLeft className="w-4 h-4 mr-1" />
           Trước
         </Button>
-        
+
         {/* Page numbers */}
         <div className="flex items-center gap-1">
           {visiblePages.map((page, index) => {
@@ -101,10 +101,10 @@ export function PaginationComponent({
                 </span>
               );
             }
-            
+
             const pageNum = page as number;
             const isActive = pageNum === currentPage;
-            
+
             return (
               <Button
                 key={pageNum}
@@ -112,9 +112,9 @@ export function PaginationComponent({
                 size="sm"
                 onClick={() => handlePageChange(pageNum)}
                 className={
-                  isActive 
-                    ? "bg-blue-600 text-white hover:bg-blue-700" 
-                    : "border-blue-200 hover:border-blue-300 hover:bg-blue-50 text-blue-600"
+                  isActive
+                    ? "bg-blue-600 text-white hover:bg-blue-700"
+                    : "!border-blue-200 hover:!border-blue-300 hover:!bg-blue-50 !text-blue-600"
                 }
               >
                 {pageNum}
@@ -122,14 +122,14 @@ export function PaginationComponent({
             );
           })}
         </div>
-        
+
         {/* Next button */}
         <Button
           variant="outline"
           size="sm"
           onClick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="border-blue-200 hover:border-blue-300 hover:bg-blue-50"
+          className="!border-blue-200 hover:!border-blue-300 hover:!bg-blue-50"
         >
           Sau
           <ChevronRight className="w-4 h-4 ml-1" />

@@ -15,6 +15,7 @@ import {
   Settings,
   Menu,
   BarChart3,
+  RotateCcw,
 } from 'lucide-react'
 import type { BreadcrumbItem } from '../shared/UniversalBreadcrumb'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
@@ -46,6 +47,11 @@ const navigationItems = [
     label: 'Đơn hàng của tôi',
     href: '/account/orders',
     icon: Package,
+  },
+  {
+    label: 'Yêu cầu đổi/trả',
+    href: '/account/returns',
+    icon: RotateCcw,
   },
   {
     label: 'Đánh giá của tôi',

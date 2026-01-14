@@ -497,7 +497,7 @@ export function BrandManagementPage() {
                     <div className='overflow-x-auto'>
                         <Table>
                             <TableHeader>
-                                <TableRow>
+                                <TableRow className='!border-b-2 !border-blue-300'>
                                     <TableHead className='w-16'>Logo</TableHead>
                                     <TableHead className='w-56'>Tên thương hiệu</TableHead>
                                     <TableHead className='hidden md:table-cell'>Mô tả</TableHead>
@@ -509,20 +509,20 @@ export function BrandManagementPage() {
                             </TableHeader>
                             <TableBody>
                                 {isLoading ? (
-                                    <TableRow>
+                                    <TableRow className='border-b-2 border-blue-200'>
                                         <TableCell colSpan={7} className='text-center py-8'>
                                             <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto'></div>
                                         </TableCell>
                                     </TableRow>
                                 ) : paginatedBrands.length === 0 ? (
-                                    <TableRow>
+                                    <TableRow className='border-b-2 border-blue-200'>
                                         <TableCell colSpan={7} className='text-center py-8 text-gray-500'>
                                             Không tìm thấy thương hiệu nào
                                         </TableCell>
                                     </TableRow>
                                 ) : (
                                     paginatedBrands.map((brand) => (
-                                        <TableRow key={brand._id} className='hover:bg-blue-50/50'>
+                                        <TableRow key={brand._id} className='border-b-2 border-blue-200 hover:bg-blue-50/30'>
                                             <TableCell>
                                                 {brand.logo ? (
                                                     <img
@@ -606,16 +606,18 @@ export function BrandManagementPage() {
                                                         align='end'
                                                         className='bg-white shadow-lg border-2 border-blue-200'
                                                     >
-                                                        <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
+                                                        <DropdownMenuLabel className='text-blue-700'>Thao tác</DropdownMenuLabel>
                                                         <DropdownMenuSeparator />
-                                                        <DropdownMenuItem onClick={() => openEditDialog(brand)}>
+                                                        <DropdownMenuItem
+                                                            className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
+                                                            onClick={() => openEditDialog(brand)}>
                                                             <Edit className='w-4 h-4 mr-2' />
                                                             Chỉnh sửa
                                                         </DropdownMenuItem>
                                                         <DropdownMenuSeparator />
                                                         <DropdownMenuItem
                                                             onClick={() => openDeleteDialog(brand)}
-                                                            className='text-red-600'
+                                                            className='text-red-600 hover:!bg-red-100 hover:!border-red-100 hover:!text-red-700'
                                                             disabled={brand.productCount > 0}
                                                         >
                                                             <Trash2 className='w-4 h-4 mr-2' />
@@ -633,7 +635,7 @@ export function BrandManagementPage() {
 
                     {/* Pagination */}
                     {filteredBrands.length > 0 && totalPages > 1 && (
-                        <div className='mt-6 flex items-center justify-between border-t pt-4'>
+                        <div className='mt-6 flex items-center justify-between border-t border-blue-400 pt-4'>
                             <div className='text-sm text-gray-600'>
                                 Hiển thị {(currentPage - 1) * itemsPerPage + 1} -{' '}
                                 {Math.min(currentPage * itemsPerPage, filteredBrands.length)} trong tổng số{' '}
