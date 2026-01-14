@@ -32,7 +32,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '../ui/dialog'
-import { Star, CheckCircle, XCircle, Clock, RefreshCw, TrendingUp, ChevronLeft, ChevronRight, X, MoreVertical, Eye, Image as ImageIcon } from 'lucide-react'
+import { Star, CheckCircle, XCircle, Clock, RefreshCw, TrendingUp, ChevronLeft, ChevronRight, X, MoreVertical, Eye, Image as ImageIcon, Package, User } from 'lucide-react'
 import reviewService from '~/services/reviewService'
 import { toast } from 'sonner'
 import { ReviewStatus, type Review } from '~/types/review'
@@ -266,10 +266,10 @@ export function ReviewManagementPage() {
                         </div>
                     ) : (
                         <>
-                            <div className="overflow-x-auto">
+                            <div className="overflow-x-auto px-6">
                                 <Table>
                                     <TableHeader>
-                                        <TableRow className="hover:bg-gray-50/50">
+                                        <TableRow className="!border-b-2 !border-blue-300 hover:!bg-gray-50">
                                             <TableHead className="w-[300px]">Sản phẩm</TableHead>
                                             <TableHead>Người dùng</TableHead>
                                             <TableHead className="w-[120px]">Đánh giá</TableHead>
@@ -288,7 +288,7 @@ export function ReviewManagementPage() {
                                             </TableRow>
                                         ) : (
                                             reviews.map((review: Review) => (
-                                                <TableRow key={review._id} className="group hover:bg-blue-50/30 transition-colors">
+                                                <TableRow key={review._id} className="group border-b border-blue-200 hover:bg-blue-50/30 transition-colors">
                                                     <TableCell>
                                                         <div className="flex gap-3 items-start">
                                                             <div className="w-10 h-10 flex-shrink-0 rounded bg-gray-100 overflow-hidden border border-gray-200">
@@ -410,7 +410,7 @@ export function ReviewManagementPage() {
 
                             {/* Pagination */}
                             {pagination.totalPages > 1 && (
-                                <div className="flex items-center justify-between border-t border-gray-100 p-4 sticky bottom-0 bg-white">
+                                <div className="flex items-center justify-between border-t border-blue-300 p-4 sticky bottom-0 bg-white">
                                     <p className="text-sm text-gray-500">
                                         Hiển thị {(page - 1) * limit + 1} - {Math.min(page * limit, pagination.total)} của{' '}
                                         <span className="font-medium text-gray-900">{pagination.total}</span> đánh giá
@@ -421,7 +421,7 @@ export function ReviewManagementPage() {
                                             size="sm"
                                             onClick={() => setPage(p => Math.max(1, p - 1))}
                                             disabled={page === 1}
-                                            className="h-8 w-8 p-0"
+                                            className="h-8 w-8 p-0 hover:!bg-blue-100"
                                         >
                                             <ChevronLeft className="w-4 h-4" />
                                         </Button>
@@ -432,7 +432,7 @@ export function ReviewManagementPage() {
                                                     variant={page === i + 1 ? "default" : "ghost"}
                                                     size="sm"
                                                     onClick={() => setPage(i + 1)}
-                                                    className={`h-8 w-8 p-0 text-xs ${page === i + 1 ? 'bg-blue-600 hover:bg-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}
+                                                    className={`h-8 w-8 p-0 text-xs ${page === i + 1 ? 'bg-blue-600 hover:!bg-blue-700 !text-white' : 'text-gray-600 hover:!bg-blue-100'}`}
                                                 >
                                                     {i + 1}
                                                 </Button>
@@ -443,7 +443,7 @@ export function ReviewManagementPage() {
                                             size="sm"
                                             onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))}
                                             disabled={page >= pagination.totalPages}
-                                            className="h-8 w-8 p-0"
+                                            className="h-8 w-8 p-0 hover:!bg-blue-100"
                                         >
                                             <ChevronRight className="w-4 h-4" />
                                         </Button>
@@ -457,41 +457,47 @@ export function ReviewManagementPage() {
 
             {/* Review Detail Modal */}
             <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-                <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle className="text-2xl font-semibold text-blue-800">Chi tiết đánh giá</DialogTitle>
-                        <DialogDescription>
-                            ID: <span className="font-mono bg-gray-100 px-1 py-0.5 rounded text-gray-700">{selectedReview?._id}</span>
+                <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto border-2 border-blue-200">
+                    <DialogHeader className="pb-4 border-b border-blue-100">
+                        <DialogTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#0066CC] to-[#4A90E2]">Chi tiết đánh giá</DialogTitle>
+                        <DialogDescription className="text-gray-600">
+                            ID: <span className="font-mono bg-blue-50 px-2 py-0.5 rounded text-blue-700 border border-blue-100">{selectedReview?._id}</span>
                         </DialogDescription>
                     </DialogHeader>
 
                     {selectedReview && (
-                        <div className="space-y-6">
+                        <div className="space-y-6 pt-4">
                             {/* Product & User Info - Grid */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gradient-to-br from-blue-50 to-white p-5 rounded-xl border-2 border-blue-100 shadow-sm">
                                 {/* Product */}
                                 <div className="space-y-3">
-                                    <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Sản phẩm</h4>
+                                    <h4 className="text-xs font-bold text-blue-600 uppercase tracking-wider flex items-center gap-2">
+                                        <Package className="w-4 h-4" />
+                                        Sản phẩm
+                                    </h4>
                                     <div className="flex gap-4">
-                                        <div className="w-16 h-16 rounded-lg bg-white border border-gray-200 overflow-hidden shadow-sm flex-shrink-0">
+                                        <div className="w-16 h-16 rounded-lg bg-white border-2 border-blue-100 overflow-hidden shadow-sm flex-shrink-0">
                                             <ImageWithFallback
                                                 src={selectedReview.productImage || ''}
                                                 alt=""
                                                 className="w-full h-full object-cover"
                                             />
                                         </div>
-                                        <div>
-                                            <p className="font-semibold text-gray-900 line-clamp-2">{selectedReview.productName}</p>
-                                            <p className="text-xs text-gray-500 mt-1 font-mono">SKU: {selectedReview.productId.slice(-8)}</p>
+                                        <div className="flex-1">
+                                            <p className="font-semibold text-gray-900 line-clamp-2 hover:text-blue-600 transition-colors">{selectedReview.productName}</p>
+                                            <p className="text-xs text-gray-500 mt-1 font-mono bg-gray-100 px-2 py-0.5 rounded inline-block">SKU: {selectedReview.productId.slice(-8)}</p>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* User */}
-                                <div className="space-y-3 md:border-l md:border-gray-200 md:pl-6">
-                                    <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Người dùng</h4>
+                                <div className="space-y-3 md:border-l-2 md:border-blue-100 md:pl-6">
+                                    <h4 className="text-xs font-bold text-blue-600 uppercase tracking-wider flex items-center gap-2">
+                                        <User className="w-4 h-4" />
+                                        Người dùng
+                                    </h4>
                                     <div className="flex gap-3 items-center">
-                                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-lg">
+                                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-md">
                                             {selectedReview.userName?.charAt(0) || 'A'}
                                         </div>
                                         <div>
@@ -512,24 +518,24 @@ export function ReviewManagementPage() {
 
                             {/* Review Content */}
                             <div className="space-y-4">
-                                <div>
-                                    <div className="flex items-center justify-between mb-2">
+                                <div className="bg-white p-4 rounded-xl border-2 border-gray-100 shadow-sm">
+                                    <div className="flex items-center justify-between mb-3">
                                         <div className="flex items-center gap-1">
                                             {[...Array(5)].map((_, i) => (
                                                 <Star
                                                     key={i}
                                                     fill={i < selectedReview.rating ? 'currentColor' : 'none'}
-                                                    className={`w-5 h-5 ${i < selectedReview.rating ? 'text-yellow-400' : 'text-gray-300'}`}
+                                                    className={`w-6 h-6 ${i < selectedReview.rating ? 'text-yellow-400 drop-shadow-sm' : 'text-gray-300'}`}
                                                 />
                                             ))}
-                                            <span className="font-bold text-lg ml-2">{selectedReview.rating}.0</span>
+                                            <span className="font-bold text-xl ml-2 text-gray-800">{selectedReview.rating}.0</span>
                                         </div>
-                                        <span className="text-sm text-gray-500">
+                                        <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
                                             {new Date(selectedReview.createdAt).toLocaleString('vi-VN')}
                                         </span>
                                     </div>
-                                    <h3 className="text-lg font-bold text-gray-900 mb-2">{selectedReview.title}</h3>
-                                    <p className="text-gray-700 leading-relaxed bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+                                    <h3 className="text-lg font-bold text-gray-900 mb-3">{selectedReview.title}</h3>
+                                    <p className="text-gray-700 leading-relaxed bg-gray-50 p-4 rounded-lg border border-gray-100">
                                         {selectedReview.comment}
                                     </p>
                                 </div>
@@ -573,14 +579,14 @@ export function ReviewManagementPage() {
                         </div>
                     )}
 
-                    <DialogFooter className="gap-2 sm:gap-0 mt-6 pt-4 border-t border-gray-100">
-                        <Button variant="outline" onClick={() => setIsDetailOpen(false)}>
+                    <DialogFooter className="flex flex-row justify-end gap-3 mt-6 pt-4 border-t-2 border-blue-100">
+                        <Button variant="outline" onClick={() => setIsDetailOpen(false)} className="!border-gray-300 hover:!bg-gray-100">
                             Đóng
                         </Button>
                         {selectedReview?.status !== ReviewStatus.Approved && (
                             <Button
                                 onClick={() => handleApprove(selectedReview!._id)}
-                                className="bg-green-600 hover:bg-green-700 text-white"
+                                className="!bg-green-600 hover:!bg-green-700 !text-white shadow-md"
                                 disabled={moderateMutation.isPending}
                             >
                                 <CheckCircle className="w-4 h-4 mr-2" />
@@ -592,6 +598,7 @@ export function ReviewManagementPage() {
                                 variant="destructive"
                                 onClick={() => handleReject(selectedReview!._id)}
                                 disabled={moderateMutation.isPending}
+                                className="!bg-red-600 hover:!bg-red-700 !text-white shadow-md"
                             >
                                 <XCircle className="w-4 h-4 mr-2" />
                                 Từ chối

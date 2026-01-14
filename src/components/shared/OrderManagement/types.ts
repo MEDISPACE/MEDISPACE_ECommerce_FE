@@ -1,9 +1,10 @@
-export type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'shipping' | 'shipped' | 'delivered' | 'cancelled'
+export type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'shipping' | 'shipped' | 'delivered' | 'cancelled' | 'returned'
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded'
 export type UserRole = 'admin' | 'pharmacist'
 
 export interface Order {
   id: string
+  orderNumber?: string
   customerName: string
   customerPhone: string
   products: number

@@ -12,7 +12,7 @@ interface OrderDetailsDrawerProps {
   order: Order | null
 }
 
-type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'shipping' | 'shipped' | 'delivered' | 'cancelled'
+type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'shipping' | 'shipped' | 'delivered' | 'cancelled' | 'returned'
 type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded'
 
 export function OrderDetailsDrawer({ isOpen, onClose, order }: OrderDetailsDrawerProps) {
@@ -33,6 +33,7 @@ export function OrderDetailsDrawer({ isOpen, onClose, order }: OrderDetailsDrawe
       shipped: { label: 'Đang giao', className: 'bg-indigo-100 text-indigo-700' },
       delivered: { label: 'Đã giao', className: 'bg-green-100 text-green-700' },
       cancelled: { label: 'Đã hủy', className: 'bg-red-100 text-red-700' },
+      returned: { label: 'Đã trả hàng', className: 'bg-orange-100 text-orange-700' },
     }
 
     const config = statusConfig[status] || statusConfig.pending
@@ -63,7 +64,7 @@ export function OrderDetailsDrawer({ isOpen, onClose, order }: OrderDetailsDrawe
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className='w-full sm:max-w-2xl overflow-y-auto !bg-gradient-to-br from-blue-50/50 to-white'>
+      <SheetContent className='w-full sm:max-w-2xl overflow-y-auto !bg-gradient-to-br !from-blue-50 !to-white border border-blue-100'>
         <SheetHeader className='pb-4 border-b border-blue-100'>
           <SheetTitle className='text-2xl font-bold text-blue-900 flex items-center gap-2'>
             <Package className='w-6 h-6 text-blue-600' />
@@ -71,7 +72,7 @@ export function OrderDetailsDrawer({ isOpen, onClose, order }: OrderDetailsDrawe
           </SheetTitle>
         </SheetHeader>
 
-        <div className='mt-6 space-y-5'>
+        <div className='mt-6 space-y-5 pr-2 pl-2 pb-2'>
           {/* Order Info Card */}
           <Card className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
             <CardHeader className='pb-3'>

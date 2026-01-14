@@ -255,6 +255,7 @@ export const updateOrderStatus = async (
   orderId: string,
   data: {
     status: string
+    paymentStatus?: string
     notes?: string
     trackingNumber?: string
   },

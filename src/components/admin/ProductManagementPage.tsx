@@ -14,6 +14,7 @@ import {
   Tag,
   Box,
   Barcode,
+  X,
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Button } from '../ui/button'
@@ -505,14 +506,14 @@ export function ProductManagementPage() {
           </p>
         </div>
         <div className='flex gap-2'>
-          <Button variant='outline' className='gap-2'>
+          {/* <Button variant='outline' className='gap-2'>
             <Download className='w-4 h-4' />
             Export
-          </Button>
-          <Button variant='outline' className='gap-2'>
+          </Button> */}
+          {/* <Button variant='outline' className='gap-2'>
             <Upload className='w-4 h-4' />
             Import
-          </Button>
+          </Button> */}
           <Button
             onClick={openAddDialog}
             className='bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8] gap-2 text-white'
@@ -627,7 +628,7 @@ export function ProductManagementPage() {
               <SelectTrigger className='w-48 border-2 border-blue-200'>
                 <SelectValue placeholder='Danh mục' />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className='max-h-64 overflow-y-auto'>
                 <SelectItem value='all'>Tất cả danh mục</SelectItem>
                 {categories.map((cat) => (
                   <SelectItem key={cat._id} value={cat._id}>
@@ -674,6 +675,24 @@ export function ProductManagementPage() {
                 <SelectItem value='50'>50 / trang</SelectItem>
               </SelectContent>
             </Select>
+            {/* Clear filters button */}
+            {(searchQuery || filterCategory !== 'all' || filterStatus !== 'all' || filterPrescription !== 'all') && (
+              <Button
+                variant='outline'
+                size='default'
+                className='!h-9 !px-4 !border-2 !border-red-200 !text-red-600 hover:!bg-red-50 hover:!border-red-300 transition-all flex items-center gap-2'
+                onClick={() => {
+                  setSearchQuery('')
+                  setFilterCategory('all')
+                  setFilterStatus('all')
+                  setFilterPrescription('all')
+                  setCurrentPage(1)
+                }}
+              >
+                <X className='w-4 h-4' />
+                Xóa bộ lọc
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -690,7 +709,7 @@ export function ProductManagementPage() {
           <div className='overflow-x-auto'>
             <Table>
               <TableHeader>
-                <TableRow>
+                <TableRow className='!border-b-2 !border-blue-300'>
                   <TableHead className='w-48 sm:w-56 md:w-64 lg:w-72 xl:w-80'>Sản phẩm</TableHead>
                   <TableHead className='hidden sm:table-cell w-24 sm:w-28 lg:w-32'>SKU</TableHead>
                   <TableHead className='hidden md:table-cell'>Danh mục</TableHead>
@@ -717,7 +736,7 @@ export function ProductManagementPage() {
                   </TableRow>
                 ) : (
                   paginatedProducts.map((product) => (
-                    <TableRow key={product._id} className='hover:bg-blue-50/50'>
+                    <TableRow key={product._id} className='border-b-2 border-blue-200 hover:bg-blue-50/30'>
                       <TableCell>
                         <div className='w-48 sm:w-56 md:w-64 lg:w-72 xl:w-80'>
                           <p className='font-medium text-gray-900 truncate' title={product.name}>
@@ -794,7 +813,7 @@ export function ProductManagementPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align='end' className='bg-white shadow-lg border-2 border-blue-200'>
-                            <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
+                            <DropdownMenuLabel className='text-blue-700'>Thao tác</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
@@ -830,7 +849,7 @@ export function ProductManagementPage() {
 
           {/* Pagination */}
           {allProducts.length > 0 && totalPages > 1 && (
-            <div className='mt-6 flex items-center justify-between border-t pt-4'>
+            <div className='mt-6 flex items-center justify-between border-t border-blue-400 pt-4'>
               <div className='text-sm text-gray-600'>
                 Trang {currentPage}/{totalPages} - Hiển thị {allProducts.length} sản phẩm
                 {dashboardStats && <span> (Tổng: {dashboardStats.total} sản phẩm)</span>}

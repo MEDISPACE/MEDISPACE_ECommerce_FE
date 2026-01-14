@@ -13,6 +13,8 @@ import {
   Clock,
   X,
   AlertTriangle,
+  RefreshCw,
+  ArrowLeft,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -37,6 +39,72 @@ import { useCart } from '../../contexts/CartContext'
 import { WriteReviewDialog } from '../reviews/WriteReviewDialog'
 import type { Order, OrderItem } from '../../types/account'
 import { useState, useEffect, useCallback } from 'react'
+
+// Order status steps for timeline
+const ORDER_STEPS = [
+  { status: 'pending', statusText: 'Đặt hàng', description: 'Đơn hàng đã được tạo' },
+  { status: 'confirmed', statusText: 'Xác nhận', description: 'Đơn hàng đã được xác nhận' },
+  { status: 'preparing', statusText: 'Đang chuẩn bị', description: 'Đơn hàng đang được chuẩn bị' },
+  { status: 'shipping', statusText: 'Đang giao', description: 'Đơn hàng đang được vận chuyển' },
+  { status: 'delivered', statusText: 'Đã giao', description: 'Đơn hàng đã được giao thành công' }
+]
+
+// Generate timeline based on current order status
+const generateOrderTimeline = (currentStatus: string, createdAt: string, updatedAt: string) => {
+  const statusOrder = ['pending', 'pending_payment', 'confirmed', 'processing', 'preparing', 'shipping', 'delivered']
+  const currentIndex = statusOrder.indexOf(currentStatus)
+
+  // Handle cancelled status
+  if (currentStatus === 'cancelled') {
+    return [{
+      id: 'cancelled',
+      status: 'cancelled',
+      statusText: 'Đã hủy',
+      description: 'Đơn hàng đã bị hủy',
+      isCompleted: true,
+      timestamp: updatedAt
+    }]
+  }
+
+  // Handle returned status
+  if (currentStatus === 'returned') {
+    return [
+      ...ORDER_STEPS.map((step, index) => ({
+        id: step.status,
+        status: step.status,
+        statusText: step.statusText,
+        description: step.description,
+        isCompleted: true,
+        timestamp: index === 0 ? createdAt : updatedAt
+      })),
+      {
+        id: 'returned',
+        status: 'returned',
+        statusText: 'Đã hoàn trả',
+        description: 'Đơn hàng đã được hoàn trả',
+        isCompleted: true,
+        timestamp: updatedAt
+      }
+    ]
+  }
+
+  return ORDER_STEPS.map((step, index) => {
+    const stepIndex = statusOrder.indexOf(step.status)
+    const isCompleted = currentIndex >= stepIndex
+    const isCurrent = currentStatus === step.status ||
+      (step.status === 'pending' && currentStatus === 'pending_payment') ||
+      (step.status === 'preparing' && currentStatus === 'processing')
+
+    return {
+      id: step.status,
+      status: step.status,
+      statusText: step.statusText,
+      description: step.description,
+      isCompleted,
+      timestamp: isCompleted ? (index === 0 ? createdAt : updatedAt) : ''
+    }
+  })
+}
 
 export function OrderDetailPage() {
   const { orderId } = useParams()
@@ -95,8 +163,8 @@ export function OrderDetailPage() {
           updatedAt: fetchedOrder.updatedAt,
           deliveryMethod: fetchedOrder.shippingMethod,
           notes: fetchedOrder.notes,
-          estimatedDelivery: fetchedOrder.estimatedDeliveryDate, // Add this line
-          timeline: [], // TODO: Add timeline if available
+          estimatedDelivery: fetchedOrder.estimatedDeliveryDate,
+          timeline: generateOrderTimeline(fetchedOrder.status, fetchedOrder.createdAt, fetchedOrder.updatedAt),
         }
         setOrder(transformedOrder)
       }
@@ -160,19 +228,31 @@ export function OrderDetailPage() {
     <div className='space-y-6'>
       {/* Header */}
       <div className='flex flex-col md:flex-row md:items-center justify-between gap-4'>
-        <div>
-          <h1 className='text-2xl font-bold text-blue-800'>Đơn hàng #{order.orderNumber}</h1>
-          <p className='text-gray-600'>Đặt ngày {formatDate(order.createdAt)}</p>
+        <div className='flex items-center gap-4'>
+          <Button
+            className='text-blue-600 hover:!text-blue-700 hover:!bg-blue-50 rounded-full p-2.5 h-10 w-10'
+            variant='ghost'
+            size='icon'
+            onClick={() => navigate('/account/orders')}
+          >
+            <ArrowLeft className='h-7 w-7' />
+          </Button>
+          <div>
+            <h1 className='text-2xl font-bold text-blue-800'>Đơn hàng #{order.orderNumber}</h1>
+            <p className='text-gray-600'>Đặt ngày {formatDate(order.createdAt)}</p>
+          </div>
         </div>
 
         <div className='flex flex-wrap items-center gap-3'>
           {getOrderStatusBadge(order.status)}
-          <Button variant='outline' size='sm'>
+          {/* <Button variant='outline' size='sm'>
             <Download className='w-4 h-4 mr-2' />
             Tải PDF
-          </Button>
+          </Button> */}
           <Button
+            // className='!border-blue-100 !bg-blue-100 !text-blue-600 !hover:border-blue-200 !hover:bg-blue-200 !hover:text-blue-600'
             variant='outline'
+            className='!border-blue-200 !text-blue-600 hover:!bg-blue-100 hover:!text-blue-700'
             size='sm'
             onClick={() => {
               const chatBtn = document.querySelector('button[aria-label="Chat với dược sĩ"]') as HTMLButtonElement | null
@@ -475,6 +555,18 @@ export function OrderDetailPage() {
                 <RotateCcw className='w-4 h-4 mr-2' />
                 Mua lại đơn hàng
               </Button>
+
+              {/* Return Request Button - Only for delivered orders */}
+              {order.status === 'delivered' && (
+                <Button
+                  variant='outline'
+                  className='w-full !border-orange-300 !text-orange-600 hover:!bg-orange-50 hover:!text-orange-700'
+                  onClick={() => navigate(`/account/orders/${order.id}/return`)}
+                >
+                  <RefreshCw className='w-4 h-4 mr-2' />
+                  Yêu cầu đổi/trả hàng
+                </Button>
+              )}
             </CardContent>
           </Card>
         </div>
