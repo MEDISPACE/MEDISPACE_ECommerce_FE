@@ -113,7 +113,9 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, className = '' }: Pres
 
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
             <div className='md:col-span-2'>
-              <Label htmlFor='patientName'>Tên bệnh nhân *</Label>
+              <Label htmlFor='patientName' className='mb-2 block'>
+                Tên bệnh nhân *
+              </Label>
               <Input
                 id='patientName'
                 placeholder='Nhập tên bệnh nhân'
@@ -126,7 +128,9 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, className = '' }: Pres
             </div>
 
             <div>
-              <Label htmlFor='patientAge'>Tuổi</Label>
+              <Label htmlFor='patientAge' className='mb-2 block'>
+                Tuổi
+              </Label>
               <Input
                 id='patientAge'
                 placeholder='Nhập tuổi'
@@ -137,7 +141,9 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, className = '' }: Pres
             </div>
 
             <div>
-              <Label htmlFor='patientGender'>Giới tính</Label>
+              <Label htmlFor='patientGender' className='mb-2 block'>
+                Giới tính
+              </Label>
               <Select onValueChange={(value) => handleInputChange('patientGender', value)}>
                 <SelectTrigger className='border-2 border-blue-200 focus:border-blue-500'>
                   <SelectValue placeholder='Chọn giới tính' />
@@ -151,7 +157,9 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, className = '' }: Pres
             </div>
 
             <div className='md:col-span-2'>
-              <Label htmlFor='phoneNumber'>Số điện thoại liên hệ *</Label>
+              <Label htmlFor='phoneNumber' className='mb-2 block'>
+                Số điện thoại liên hệ *
+              </Label>
               <Input
                 id='phoneNumber'
                 placeholder='Nhập số điện thoại'
@@ -163,7 +171,7 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, className = '' }: Pres
             </div>
 
             <div className='md:col-span-2'>
-              <Label>Mối quan hệ với bệnh nhân</Label>
+              <Label className='mb-2 block'>Mối quan hệ với bệnh nhân</Label>
               <RadioGroup
                 value={formData.relationship}
                 onValueChange={(value) => handleInputChange('relationship', value)}
@@ -202,7 +210,9 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, className = '' }: Pres
 
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
             <div>
-              <Label htmlFor='doctorName'>Bác sĩ khám *</Label>
+              <Label htmlFor='doctorName' className='mb-2 block'>
+                Bác sĩ khám *
+              </Label>
               <Input
                 id='doctorName'
                 placeholder='Nhập tên bác sĩ'
@@ -214,7 +224,9 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, className = '' }: Pres
             </div>
 
             <div>
-              <Label htmlFor='hospitalName'>Bệnh viện/Phòng khám *</Label>
+              <Label htmlFor='hospitalName' className='mb-2 block'>
+                Bệnh viện/Phòng khám *
+              </Label>
               <Input
                 id='hospitalName'
                 placeholder='Nhập tên bệnh viện/phòng khám'
@@ -226,12 +238,12 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, className = '' }: Pres
             </div>
 
             <div className='md:col-span-2'>
-              <Label>Ngày khám</Label>
+              <Label className='mb-2 block'>Ngày khám</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant='outline'
-                    className='w-full justify-start text-left font-normal border-2 border-blue-200 focus:border-blue-500'
+                    className='w-full justify-start text-left font-normal border-2 !border-blue-200 focus:!border-blue-500'
                   >
                     <CalendarIcon className='mr-2 h-4 w-4' />
                     {formData.examinationDate ? (
@@ -253,7 +265,9 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, className = '' }: Pres
             </div>
 
             <div className='md:col-span-2'>
-              <Label htmlFor='diagnosis'>Chẩn đoán</Label>
+              <Label htmlFor='diagnosis' className='mb-2 block'>
+                Chẩn đoán
+              </Label>
               <Textarea
                 id='diagnosis'
                 placeholder='Nhập chẩn đoán (tùy chọn)'
