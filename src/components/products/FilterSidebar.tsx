@@ -12,6 +12,7 @@ import { RatingStars } from '../shared/RatingStars'
 import type { ProductFilter, Category, Brand } from '../../types/product'
 import { categoryService } from '../../services/categoryService'
 import { brandService } from '../../services/brandService'
+import { searchService } from '../../services/searchService'
 import { useDebounce } from '../../hooks/useDebounce'
 
 interface FilterSidebarProps {
@@ -26,6 +27,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
   const [categorySearch, setCategorySearch] = useState('')
   const [categories, setCategories] = useState<Category[]>([])
   const [brands, setBrands] = useState<Brand[]>([])
+  const [facetCounts, setFacetCounts] = useState<Record<string, number>>({}) // categoryId/brandId → count
 
   // Local state for price range to allow smooth slider movement
   const [localPriceRange, setLocalPriceRange] = useState<number[]>(filters.priceRange || [0, 1000000])
@@ -65,6 +67,24 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
         )
         setCategories(uniqueCategories)
         setBrands(brandsData)
+        
+        // Fetch Typesense facet counts
+        try {
+          const result = await searchService.searchProducts({ q: '*', limit: 1 })
+          if (result?.facet_counts) {
+            const counts: Record<string, number> = {}
+            for (const facet of result.facet_counts) {
+              if (facet.fieldName === 'categoryId' || facet.fieldName === 'brandId') {
+                for (const item of facet.counts) {
+                  counts[item.value] = item.count
+                }
+              }
+            }
+            setFacetCounts(counts)
+          }
+        } catch {
+          // Facets unavailable — show without counts
+        }
       } catch (error) {}
     }
 
@@ -203,10 +223,15 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
                       />
                       <Label
                         htmlFor={`category-${category.slug}`}
-                        className='text-xs cursor-pointer flex-1 min-w-0 truncate'
+                        className='text-xs cursor-pointer flex-1 min-w-0 flex items-center justify-between gap-1'
                         title={category.name}
                       >
-                        {category.name}
+                        <span className='truncate'>{category.name}</span>
+                        {facetCounts[category._id] !== undefined && (
+                          <span className='text-[10px] bg-blue-50 text-blue-500 rounded px-1 shrink-0'>
+                            {facetCounts[category._id]}
+                          </span>
+                        )}
                       </Label>
                     </div>
                   ))}
@@ -255,10 +280,15 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
                       />
                       <Label
                         htmlFor={`brand-${brand._id}`}
-                        className='text-xs cursor-pointer flex-1 min-w-0 truncate'
+                        className='text-xs cursor-pointer flex-1 min-w-0 flex items-center justify-between gap-1'
                         title={brand.name}
                       >
-                        {brand.name}
+                        <span className='truncate'>{brand.name}</span>
+                        {facetCounts[brand._id] !== undefined && (
+                          <span className='text-[10px] bg-blue-50 text-blue-500 rounded px-1 shrink-0'>
+                            {facetCounts[brand._id]}
+                          </span>
+                        )}
                       </Label>
                     </div>
                   ))}
