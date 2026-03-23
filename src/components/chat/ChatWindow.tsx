@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useId } from 'react'
 import { MessageList } from './MessageList'
 import { ChatInput } from './ChatInput'
 import type { Conversation, Message } from '../../types/chat'
 import { chatService } from '../../services/chatService'
-import { useSocket } from '../../hooks/useSocket'
+import { useSocketContext } from '../../contexts/SocketContext'
 import { toast } from 'sonner'
 
 interface ChatWindowProps {
@@ -21,67 +21,61 @@ export function ChatWindow({
     onClose,
     showHeader = true
 }: ChatWindowProps) {
+    const id = useId() // unique subscriber id
     const [messages, setMessages] = useState<Message[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [page, setPage] = useState(1)
     const [hasMore, setHasMore] = useState(false)
     const [typingUserId, setTypingUserId] = useState<string | null>(null)
-    const typingTimeoutRef = useState<NodeJS.Timeout | null>(null)[0]
+    // FIX: dùng useRef thay useState cho timeout
+    const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-    // Get other user info
-    const otherUser = currentUserRole === 'customer' ? conversation.pharmacist : conversation.customer
-    const otherUserName = otherUser ? `${otherUser.firstName} ${otherUser.lastName}` : 'Người dùng'
-    const isOnline = otherUser?.isOnline || false
-
-    // Socket.IO integration
     const {
         isConnected,
         joinConversation,
         leaveConversation,
         sendMessage: sendSocketMessage,
         startTyping,
-        stopTyping
-    } = useSocket({
-        onNewMessage: (message: Message) => {
+        stopTyping,
+        subscribe,
+        unsubscribe
+    } = useSocketContext()
 
-            if (message.conversationId === conversation._id) {
-                // Check if message already exists to prevent duplicates
+    // Get other user info
+    const otherUser = currentUserRole === 'customer' ? conversation.pharmacist : conversation.customer
+    const otherUserName = otherUser ? `${otherUser.firstName} ${otherUser.lastName}` : 'Người dùng'
+
+    // Subscribe to socket events – chỉ xử lý message của conversation này
+    useEffect(() => {
+        subscribe(id, {
+            onNewMessage: (message: Message) => {
+                if (message.conversationId !== conversation._id) return
                 setMessages((prev) => {
-                    const exists = prev.some(m => m._id === message._id)
-                    if (exists) {
-                        return prev // Don't add duplicate
-                    }
+                    if (prev.some(m => m._id === message._id)) return prev
                     return [...prev, message]
                 })
-            }
-        },
-        onUserTyping: (data: { userId: string, conversationId: string }) => {
-            if (data.conversationId === conversation._id && data.userId !== currentUserId) {
+            },
+            onUserTyping: (data) => {
+                if (data.conversationId !== conversation._id || data.userId === currentUserId) return
                 setTypingUserId(data.userId)
-
-                // Clear existing timeout
-                if (typingTimeoutRef) {
-                    clearTimeout(typingTimeoutRef)
-                }
-
-                // Auto-clear typing after 3 seconds
-                setTimeout(() => {
+                if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+                typingTimeoutRef.current = setTimeout(() => setTypingUserId(null), 3000)
+            },
+            onUserStopTyping: (data) => {
+                if (data.conversationId === conversation._id) {
                     setTypingUserId(null)
-                }, 3000)
+                    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+                }
+            },
+            onError: (error) => {
+                if (!error.message.includes('connect')) toast.error(error.message)
             }
-        },
-        onUserStopTyping: (data: { userId: string, conversationId: string }) => {
-            if (data.conversationId === conversation._id) {
-                setTypingUserId(null)
-            }
-        },
-        onError: (error: { message: string }) => {
-            // Only show toast for critical errors, ignore initial connection failures as they might be due to race conditions
-            if (!error.message.includes('connect')) {
-                toast.error(error.message)
-            }
+        })
+        return () => {
+            unsubscribe(id)
+            if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
         }
-    })
+    }, [id, conversation._id, currentUserId, subscribe, unsubscribe])
 
     // Load messages
     const loadMessages = useCallback(async (pageNum = 1) => {
@@ -92,34 +86,27 @@ export function ChatWindow({
                 page: pageNum,
                 limit: 50
             })
-
             if (pageNum === 1) {
                 setMessages(response.messages)
             } else {
                 setMessages((prev) => [...response.messages, ...prev])
             }
-
             setHasMore(response.pagination.page < response.pagination.totalPages)
             setPage(pageNum)
-        } catch (error) {
-
+        } catch {
             toast.error('Không thể tải tin nhắn')
         } finally {
             setIsLoading(false)
         }
     }, [conversation._id])
 
-    // Load more messages
     const handleLoadMore = () => {
-        if (!isLoading && hasMore) {
-            loadMessages(page + 1)
-        }
+        if (!isLoading && hasMore) loadMessages(page + 1)
     }
 
     // Send message
     const handleSendMessage = async (content: string, imageUrl?: string) => {
         try {
-            // Send via Socket.IO for real-time
             if (isConnected) {
                 sendSocketMessage({
                     conversationId: conversation._id,
@@ -128,94 +115,71 @@ export function ChatWindow({
                     imageUrl
                 })
             } else {
-                // Fallback to HTTP if socket not connected
+                // Fallback HTTP khi socket mất
                 const message = await chatService.sendMessage({
                     conversationId: conversation._id,
                     content,
                     type: imageUrl ? 'image' : 'text',
                     imageUrl
                 })
-
-                // Add message to UI if socket not connected
                 setMessages((prev) => [...prev, message])
             }
-        } catch (error) {
-
+        } catch {
             toast.error('Không thể gửi tin nhắn')
         }
     }
 
-    // Handle typing
-    const handleTyping = () => {
-        if (isConnected) {
-            startTyping(conversation._id)
-        }
-    }
+    const handleTyping = () => isConnected && startTyping(conversation._id)
+    const handleStopTyping = () => isConnected && stopTyping(conversation._id)
 
-    const handleStopTyping = () => {
-        if (isConnected) {
-            stopTyping(conversation._id)
-        }
-    }
-
-    // Join conversation room on mount
+    // Join/leave conversation room
     useEffect(() => {
-        if (isConnected) {
-            joinConversation(conversation._id)
-        }
-
-        return () => {
-            if (isConnected) {
-                leaveConversation(conversation._id)
-            }
-        }
+        if (isConnected) joinConversation(conversation._id)
+        return () => { if (isConnected) leaveConversation(conversation._id) }
     }, [isConnected, conversation._id, joinConversation, leaveConversation])
 
     // Load initial messages
-    useEffect(() => {
-        loadMessages(1)
-    }, [loadMessages])
+    useEffect(() => { loadMessages(1) }, [loadMessages])
 
-    // Fail-safe: Polling for new messages every 3 seconds
-    // Deduplicated by _id to prevent double messages
+    // FIX 3.6: markAsRead khi component mount (user đang xem)
     useEffect(() => {
+        if (isConnected) {
+            import('~/services/chatService').then(m =>
+                m.chatService.markAsRead(conversation._id).catch(() => {})
+            )
+        }
+    }, [conversation._id, isConnected])
+
+    // FIX: Polling CHỈ chạy khi socket không kết nối được
+    useEffect(() => {
+        if (isConnected) return // Không cần poll khi socket đang live
+
         const interval = setInterval(async () => {
-            // Only poll first page
             try {
                 const response = await chatService.getMessages({
                     conversationId: conversation._id,
                     page: 1,
                     limit: 20
                 })
-
-                if (response.messages && response.messages.length > 0) {
+                if (response.messages?.length > 0) {
                     setMessages(prev => {
-                        // Find messages that don't exist in current state
-                        const newMessages = response.messages.filter(
-                            remoteMsg => !prev.some(localMsg => localMsg._id === remoteMsg._id)
+                        const newMsgs = response.messages.filter(
+                            r => !prev.some(l => l._id === r._id)
                         )
-
-                        if (newMessages.length > 0) {
-                            // Merge and sort by creation time
-                            const merged = [...prev, ...newMessages].sort(
-                                (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-                            )
-                            return merged
-                        }
-                        return prev
+                        if (newMsgs.length === 0) return prev
+                        return [...prev, ...newMsgs].sort(
+                            (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+                        )
                     })
                 }
-            } catch (err) {
-                // Silent fail
-            }
-        }, 3000)
+            } catch { /* silent */ }
+        }, 5000)
 
         return () => clearInterval(interval)
-    }, [conversation._id])
+    }, [isConnected, conversation._id])
 
     return (
         <div className="flex flex-col h-full bg-white">
-            {/* Messages */}
             <MessageList
                 messages={messages}
                 currentUserId={currentUserId}
@@ -225,8 +189,6 @@ export function ChatWindow({
                 onLoadMore={handleLoadMore}
                 hasMore={hasMore}
             />
-
-            {/* Input */}
             <ChatInput
                 onSendMessage={handleSendMessage}
                 onTyping={handleTyping}

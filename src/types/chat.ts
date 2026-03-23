@@ -9,7 +9,7 @@ export interface User {
 export interface Conversation {
     _id: string
     customerId: string
-    pharmacistId: string
+    pharmacistId?: string  // optional – chưa assign khi shared inbox
     lastMessage?: string
     lastMessageAt?: string
     unreadCount: {
