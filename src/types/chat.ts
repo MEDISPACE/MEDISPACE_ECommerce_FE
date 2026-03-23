@@ -50,9 +50,10 @@ export interface Message {
 export interface SendMessagePayload {
     conversationId?: string
     pharmacistId?: string
-    content: string
-    type?: 'text' | 'image'
+    content?: string
+    type?: 'text' | 'image' | 'product'
     imageUrl?: string
+    productRef?: ProductRef
 }
 
 export interface GetConversationsParams {
