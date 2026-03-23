@@ -31,10 +31,19 @@ export function ProductPicker({ onSelect, onClose }: ProductPickerProps) {
         if (!q.trim()) { setResults([]); return }
         try {
             setIsLoading(true)
-            const res = await apiClient.get('/products', {
+            const res = await apiClient.get<{
+                result?: { products: ProductSearchResult[] }
+                data?: { products: ProductSearchResult[] }
+                products?: ProductSearchResult[]
+            }>('/products', {
                 params: { search: q, limit: 8, page: 1, status: 'active' }
             })
-            setResults(res.data?.result?.products || res.data?.data?.products || [])
+            setResults(
+                res.data?.result?.products ||
+                res.data?.data?.products ||
+                res.data?.products ||
+                []
+            )
         } catch {
             setResults([])
         } finally {

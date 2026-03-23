@@ -23,7 +23,7 @@ interface SocketContextType {
     isConnecting: boolean
     joinConversation: (conversationId: string) => void
     leaveConversation: (conversationId: string) => void
-    sendMessage: (data: { conversationId?: string; pharmacistId?: string; content: string; type?: 'text' | 'image'; imageUrl?: string }) => void
+    sendMessage: (data: { conversationId?: string; pharmacistId?: string; content?: string; type?: 'text' | 'image' | 'product'; imageUrl?: string; productRef?: Record<string, unknown> }) => void
     startTyping: (conversationId: string) => void
     stopTyping: (conversationId: string) => void
     markAsRead: (conversationId: string) => void
@@ -159,9 +159,10 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     const sendMessage = useCallback((data: {
         conversationId?: string
         pharmacistId?: string
-        content: string
-        type?: 'text' | 'image'
+        content?: string
+        type?: 'text' | 'image' | 'product'
         imageUrl?: string
+        productRef?: Record<string, unknown>
     }) => {
         socketRef.current?.connected && socketRef.current.emit('message:send', data)
     }, [])
