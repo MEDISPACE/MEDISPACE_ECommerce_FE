@@ -3,7 +3,7 @@ import { io, type Socket } from 'socket.io-client'
 import { authService } from '../services/authService'
 import apiClient from '../services/apiClient'
 import { useAuth } from './AuthContext'
-import type { Message } from '../types/chat'
+import type { Message, ProductRef } from '../types/chat'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -23,7 +23,7 @@ interface SocketContextType {
     isConnecting: boolean
     joinConversation: (conversationId: string) => void
     leaveConversation: (conversationId: string) => void
-    sendMessage: (data: { conversationId?: string; pharmacistId?: string; content?: string; type?: 'text' | 'image' | 'product'; imageUrl?: string; productRef?: Record<string, unknown> }) => void
+    sendMessage: (data: { conversationId?: string; pharmacistId?: string; content?: string; type?: 'text' | 'image' | 'product'; imageUrl?: string; productRef?: ProductRef }) => void
     startTyping: (conversationId: string) => void
     stopTyping: (conversationId: string) => void
     markAsRead: (conversationId: string) => void
@@ -162,7 +162,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         content?: string
         type?: 'text' | 'image' | 'product'
         imageUrl?: string
-        productRef?: Record<string, unknown>
+        productRef?: ProductRef
     }) => {
         socketRef.current?.connected && socketRef.current.emit('message:send', data)
     }, [])
