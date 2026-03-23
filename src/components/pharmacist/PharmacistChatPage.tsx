@@ -117,7 +117,10 @@ export function PharmacistChatPage() {
     }
 
     // Filter theo tab và search
-    const pendingConversations = conversations.filter(c => !c.pharmacistId)
+    // Option A: "Chờ xử lý" = chưa assign + đã assign nhưng pharmacist offline
+    const pendingConversations = conversations.filter(c =>
+        !c.pharmacistId || (c.pharmacist && !c.pharmacist.isOnline && c.pharmacistId !== user?._id)
+    )
     const myConversations = conversations.filter(c => c.pharmacistId === user?._id)
 
     const getFilteredList = () => {
@@ -232,7 +235,7 @@ export function PharmacistChatPage() {
                                                 selectedConversation?._id === conv._id ? 'bg-blue-50 border-l-4 border-blue-600' : ''
                                             }`}
                                         >
-                                            <div className="flex items-center gap-2 mb-2">
+                                            <div className="flex items-center gap-2 mb-1">
                                                 <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                                                     {conv.customer?.firstName?.charAt(0) || 'K'}
                                                 </div>
@@ -243,6 +246,12 @@ export function PharmacistChatPage() {
                                                     <p className="text-xs text-gray-500 truncate">{conv.lastMessage || 'Chưa có tin nhắn'}</p>
                                                 </div>
                                             </div>
+                                            {/* Option A: cảnh báo nếu đã assign nhưng pharmacist offline */}
+                                            {conv.pharmacistId && conv.pharmacist && !conv.pharmacist.isOnline && (
+                                                <p className="text-xs text-amber-600 bg-amber-50 rounded px-2 py-0.5 mb-2 flex items-center gap-1">
+                                                    ⚠️ Dược sĩ phụ trách đang offline – có thể tiếp nhận
+                                                </p>
+                                            )}
                                             <div className="flex gap-2">
                                                 <Button
                                                     size="sm"
