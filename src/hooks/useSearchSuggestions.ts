@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { productService } from '../services/productService'
+import { searchService } from '../services/searchService'
 import { categoryService } from '../services/categoryService'
-import type { Product, Category } from '../types/product'
+import type { Category } from '../types/product'
 
 export interface SearchSuggestion {
   id: string
@@ -24,52 +24,53 @@ export function useSearchSuggestions(query: string) {
     return () => clearTimeout(timer)
   }, [query])
 
-  // Fetch product suggestions from API
+  // ── Typesense suggest (fast, typo-tolerant) ──────────────────────────────
   const { data: productSuggestions = [], isLoading: isLoadingProducts } = useQuery({
-    queryKey: ['product-suggestions', debouncedQuery],
+    queryKey: ['ts-suggest', debouncedQuery],
     queryFn: async () => {
       if (!debouncedQuery.trim()) return []
 
-      const products = await productService.getProducts({
-        search: debouncedQuery,
-        limit: 4, // Only 4 suggestions
-      })
+      const hits = await searchService.suggest(debouncedQuery)
 
-      return products.map((product: Product) => ({
-        id: `product-${product._id}`,
-        text: product.name,
+      return hits.map((hit) => ({
+        id: `product-${hit.document.mongoId}`,
+        text: hit.document.name,
         type: 'product' as const,
-        slug: product.slug,
-        image: product.featuredImage || product.images?.[0] || '',
+        slug: hit.document.slug,
+        image: hit.document.featuredImage || '',
       }))
     },
-    enabled: debouncedQuery.length >= 2, // Only search if 2+ characters
-    staleTime: 5 * 60 * 1000, // Cache 5 minutes
+    enabled: debouncedQuery.length >= 2,
+    staleTime: 30 * 1000, // 30s cache
   })
 
-  // Fetch category suggestions (cached permanently)
+  // ── Category suggestions (cached client-side) ────────────────────────────
   const { data: allCategories = [] } = useQuery({
     queryKey: ['categories-all'],
     queryFn: () => categoryService.getCategories(),
-    staleTime: Infinity, // Never refetch - categories rarely change
+    staleTime: Infinity,
   })
 
-  // Filter categories client-side (fast with small dataset)
   const categorySuggestions: SearchSuggestion[] = debouncedQuery.trim()
     ? allCategories
-        .filter((category: Category) => category.name.toLowerCase().includes(debouncedQuery.toLowerCase()))
-        .slice(0, 3)
-        .map((category: Category) => ({
-          id: `category-${category._id}`,
-          text: category.name,
-          type: 'category' as const,
-          slug: category.slug,
-          icon: '📁',
-        }))
+      .filter((category: Category) => category.name.toLowerCase().includes(debouncedQuery.toLowerCase()))
+      .slice(0, 3)
+      .map((category: Category) => ({
+        id: `category-${category._id}`,
+        text: category.name,
+        type: 'category' as const,
+        slug: category.slug,
+        icon: '📁',
+      }))
     : []
 
-  // Combine all suggestions
-  const suggestions = [...productSuggestions, ...categorySuggestions]
+  // Deduplicate by id to prevent React "duplicate key" warnings
+  const seen = new Set<string>()
+  const suggestions = [...productSuggestions, ...categorySuggestions].filter((s) => {
+    if (seen.has(s.id)) return false
+    seen.add(s.id)
+    return true
+  })
 
   return {
     suggestions,
