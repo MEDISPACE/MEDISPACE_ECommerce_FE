@@ -4,6 +4,7 @@ import { vi } from 'date-fns/locale'
 import type { Message } from '../../types/chat'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Loader2 } from 'lucide-react'
+import { ProductCard } from './ProductCard'
 
 interface MessageListProps {
     messages: Message[]
@@ -151,6 +152,14 @@ export function MessageList({
                                         : 'bg-white border border-gray-200 text-gray-900'
                                         } shadow-sm`}
                                 >
+                                    {/* Product card message */}
+                                    {message.type === 'product' && message.productRef && (
+                                        <ProductCard
+                                            product={message.productRef}
+                                            isOwnMessage={isOwnMessage}
+                                        />
+                                    )}
+
                                     {/* Image message */}
                                     {message.type === 'image' && message.imageUrl && (
                                         <div
@@ -170,8 +179,8 @@ export function MessageList({
                                         </div>
                                     )}
 
-                                    {/* Text content */}
-                                    {message.content && (
+                                    {/* Text content – ẩn nếu là product card (đã hiển thị trong card) */}
+                                    {message.content && message.type !== 'product' && (
                                         <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
                                     )}
                                 </div>

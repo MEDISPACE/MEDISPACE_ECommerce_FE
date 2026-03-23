@@ -105,22 +105,32 @@ export function ChatWindow({
     }
 
     // Send message
-    const handleSendMessage = async (content: string, imageUrl?: string) => {
+    const handleSendMessage = async (content: string, imageUrl?: string, productRef?: import('~/types/chat').ProductRef) => {
         try {
             if (isConnected) {
-                sendSocketMessage({
-                    conversationId: conversation._id,
-                    content,
-                    type: imageUrl ? 'image' : 'text',
-                    imageUrl
-                })
+                if (productRef) {
+                    sendSocketMessage({
+                        conversationId: conversation._id,
+                        content: content || `Dược sĩ giới thiệu: ${productRef.name}`,
+                        type: 'product',
+                        productRef
+                    })
+                } else {
+                    sendSocketMessage({
+                        conversationId: conversation._id,
+                        content,
+                        type: imageUrl ? 'image' : 'text',
+                        imageUrl
+                    })
+                }
             } else {
                 // Fallback HTTP khi socket mất
                 const message = await chatService.sendMessage({
                     conversationId: conversation._id,
                     content,
-                    type: imageUrl ? 'image' : 'text',
-                    imageUrl
+                    type: productRef ? 'product' : imageUrl ? 'image' : 'text',
+                    imageUrl,
+                    productRef
                 })
                 setMessages((prev) => [...prev, message])
             }
@@ -195,6 +205,7 @@ export function ChatWindow({
                 onStopTyping={handleStopTyping}
                 disabled={!isConnected}
                 placeholder={isConnected ? 'Nhập tin nhắn...' : 'Đang kết nối...'}
+                currentUserRole={currentUserRole}
             />
         </div>
     )
