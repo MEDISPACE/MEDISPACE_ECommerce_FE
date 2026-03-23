@@ -23,7 +23,7 @@ export function PharmacistChatPage() {
     const [activeTab, setActiveTab] = useState<TabType>('pending')
     const [isAssigning, setIsAssigning] = useState(false)
 
-    const { subscribe, unsubscribe } = useSocketContext()
+    const { subscribe, unsubscribe, isConnected } = useSocketContext()
 
     // Load conversations
     const loadConversations = useCallback(async () => {
@@ -79,9 +79,11 @@ export function PharmacistChatPage() {
 
     useEffect(() => {
         loadConversations()
+        // Poll 30s chỉ khi socket mất kết nối
+        if (isConnected) return
         const iv = setInterval(loadConversations, 30000)
         return () => clearInterval(iv)
-    }, [loadConversations])
+    }, [loadConversations, isConnected])
 
     // (3.5) Dược sĩ tự nhận conversation
     const handleAssign = async (conversationId: string) => {

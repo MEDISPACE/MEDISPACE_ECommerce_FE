@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Search, Loader2, X, Pill, Package } from 'lucide-react'
 import { Input } from '../ui/input'
 import { Button } from '../ui/button'
@@ -25,7 +25,7 @@ export function ProductPicker({ onSelect, onClose }: ProductPickerProps) {
     const [query, setQuery] = useState('')
     const [results, setResults] = useState<ProductSearchResult[]>([])
     const [isLoading, setIsLoading] = useState(false)
-    const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null)
+    const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
 
     const search = useCallback(async (q: string) => {
         if (!q.trim()) { setResults([]); return }
@@ -52,10 +52,9 @@ export function ProductPicker({ onSelect, onClose }: ProductPickerProps) {
     }, [])
 
     useEffect(() => {
-        if (debounceTimer) clearTimeout(debounceTimer)
-        const timer = setTimeout(() => search(query), 350)
-        setDebounceTimer(timer)
-        return () => clearTimeout(timer)
+        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
+        debounceTimerRef.current = setTimeout(() => search(query), 350)
+        return () => { if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current) }
     }, [query]) // eslint-disable-line
 
     const getDefaultVariant = (product: ProductSearchResult) => {
