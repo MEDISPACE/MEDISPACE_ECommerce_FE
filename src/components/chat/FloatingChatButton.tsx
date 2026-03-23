@@ -66,22 +66,7 @@ export function FloatingChatWidget() {
         load()
     }, [isAuthenticated, isCustomer, isOpen, conversation])
 
-    // Khi widget đóng – poll unread count mỗi 60s
-    useEffect(() => {
-        if (!isAuthenticated || !isCustomer || isOpen) return
-
-        const loadUnread = async () => {
-            try {
-                const r = await chatService.getConversations({ page: 1, limit: 1 })
-                if (r.conversations.length > 0) {
-                    setUnreadCount(r.conversations[0].unreadCount.customer || 0)
-                }
-            } catch { /* silent */ }
-        }
-        loadUnread()
-        const iv = setInterval(loadUnread, 60000)
-        return () => clearInterval(iv)
-    }, [isAuthenticated, isCustomer, isOpen])
+    // unread count được cập nhật realtime qua subscribe onNewMessage ở trên
 
     if (!canShow) return null
 

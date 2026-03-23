@@ -154,9 +154,7 @@ export function ChatWindow({
     // FIX 3.6: markAsRead khi component mount (user đang xem)
     useEffect(() => {
         if (isConnected) {
-            import('~/services/chatService').then(m =>
-                m.chatService.markAsRead(conversation._id).catch(() => {})
-            )
+            chatService.markAsRead(conversation._id).catch(() => {})
         }
     }, [conversation._id, isConnected])
 
