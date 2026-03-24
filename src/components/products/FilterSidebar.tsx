@@ -124,7 +124,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
   }
 
   const clearFilters = () => {
-    const defaultPriceRange = [0, 1000000]
+    const defaultPriceRange: [number, number] = [0, 1000000]
     setLocalPriceRange(defaultPriceRange)
     onFiltersChange({
       categories: [],
