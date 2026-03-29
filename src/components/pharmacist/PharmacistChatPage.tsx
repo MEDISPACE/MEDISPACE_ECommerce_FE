@@ -29,7 +29,7 @@ export function PharmacistChatPage() {
     const loadConversations = useCallback(async () => {
         try {
             setIsLoading(true)
-            const response = await chatService.getConversations({ page: 1, limit: 100 })
+            const response = await chatService.getConversations({ page: 1, limit: 100, status: 'active' })
             setConversations(response.conversations)
         } catch {
             toast.error('Không thể tải danh sách trò chuyện')
@@ -71,6 +71,39 @@ export function PharmacistChatPage() {
                 if (pharmacistId === user?._id) {
                     setActiveTab('mine')
                     toast.success('Bạn đã được phân công một cuộc tư vấn mới!')
+                }
+            },
+            // Admin đóng conversation → xóa khỏi danh sách
+            onConversationClosed: ({ conversationId }) => {
+                setConversations(prev => prev.filter(c => c._id !== conversationId))
+                setSelectedConversation(prev => {
+                    if (prev?._id === conversationId) {
+                        toast.info('Cuộc hội thoại đang xem đã bị admin đóng.')
+                        return null
+                    }
+                    return prev
+                })
+            },
+            // Admin chuyển conversation sang dược sĩ khác
+            onConversationTransferred: ({ conversationId, newPharmacistId, oldPharmacistId }) => {
+                const isOldPharmacist = oldPharmacistId === user?._id
+                const isNewPharmacist = newPharmacistId === user?._id
+
+                if (isOldPharmacist) {
+                    // Mình bị transfer ra → xóa khỏi inbox ngay lập tức
+                    setConversations(prev => prev.filter(c => c._id !== conversationId))
+                    setSelectedConversation(prev => {
+                        if (prev?._id === conversationId) {
+                            toast.info('Cuộc hội thoại đã được chuyển sang dược sĩ khác.')
+                            return null
+                        }
+                        return prev
+                    })
+                } else if (isNewPharmacist) {
+                    // Mình được nhận conversation mới → reload để lấy thông tin đầy đủ
+                    loadConversations()
+                    toast.success('Bạn được chuyển giao một cuộc tư vấn mới!')
+                    setActiveTab('mine')
                 }
             }
         })
@@ -119,11 +152,13 @@ export function PharmacistChatPage() {
     }
 
     // Filter theo tab và search
+    // Ẩn conversation rỗng (chưa có tin nhắn) từ mọi tab
+    const hasMessages = (c: Conversation) => !!(c.lastMessage || c.lastMessageAt)
     // Option A: "Chờ xử lý" = chưa assign + đã assign nhưng pharmacist offline
     const pendingConversations = conversations.filter(c =>
-        !c.pharmacistId || (c.pharmacist && !c.pharmacist.isOnline && c.pharmacistId !== user?._id)
+        hasMessages(c) && c.status === 'active' && (!c.pharmacistId || (c.pharmacist && !c.pharmacist.isOnline && c.pharmacistId !== user?._id))
     )
-    const myConversations = conversations.filter(c => c.pharmacistId === user?._id)
+    const myConversations = conversations.filter(c => hasMessages(c) && c.status === 'active' && c.pharmacistId === user?._id)
 
     const getFilteredList = () => {
         const list = activeTab === 'pending' ? pendingConversations : myConversations

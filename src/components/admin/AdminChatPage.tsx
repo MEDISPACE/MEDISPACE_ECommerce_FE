@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useId } from 'react'
 import {
     MessageCircle, BarChart3, List, Search, Filter,
     X, Loader2, RefreshCw, CheckCircle, AlertCircle,
@@ -14,6 +14,7 @@ import { format, isToday, isYesterday } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { toast } from 'sonner'
 import type { Message } from '~/types/chat'
+import { useSocketContext } from '~/contexts/SocketContext'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -93,12 +94,18 @@ function TransferModal({ conversation, onClose, onTransferred }: {
     const [isTransferring, setIsTransferring] = useState(false)
     const [selectedId, setSelectedId] = useState('')
 
+    const [loadError, setLoadError] = useState(false)
+
     useEffect(() => {
         apiClient.get<{ result: { users: Pharmacist[] } }>('/admin/users', {
             params: { role: '1', limit: 50, page: 1 }
         }).then(r => {
-            setPharmacists(r.data.result.users || [])
-        }).catch(() => {}).finally(() => setIsLoading(false))
+            setPharmacists(r.data.result?.users || [])
+        }).catch((err) => {
+            console.error('[TransferModal]', err)
+            setLoadError(true)
+            toast.error('Không thể tải danh sách dược sĩ')
+        }).finally(() => setIsLoading(false))
     }, [])
 
     const handleTransfer = async () => {
@@ -136,6 +143,10 @@ function TransferModal({ conversation, onClose, onTransferred }: {
                     </p>
                     {isLoading ? (
                         <div className="flex justify-center py-6"><Loader2 className="w-6 h-6 animate-spin text-blue-600" /></div>
+                    ) : loadError ? (
+                        <p className="text-sm text-red-500 text-center py-4">Không thể tải danh sách dược sĩ</p>
+                    ) : pharmacists.filter(p => p._id !== conversation.pharmacistId).length === 0 ? (
+                        <p className="text-sm text-gray-400 text-center py-4">Không có dược sĩ khác để chuyển</p>
                     ) : (
                         <div className="space-y-2 max-h-60 overflow-y-auto">
                             {pharmacists.filter(p => p._id !== conversation.pharmacistId).map(p => (
@@ -150,7 +161,7 @@ function TransferModal({ conversation, onClose, onTransferred }: {
                                         className="sr-only"
                                     />
                                     <Avatar className="w-8 h-8">
-                                        <AvatarImage src={p.avatar} />
+                                        <AvatarImage src={p.avatar || undefined} />
                                         <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
                                             {p.firstName[0]}
                                         </AvatarFallback>
@@ -200,7 +211,7 @@ function ConversationDetailPanel({ conversation, onClose, onAction }: {
         ).then(r => {
             setMessages(r.data.result?.messages || [])
         }).catch(() => toast.error('Không thể tải tin nhắn'))
-        .finally(() => setIsLoading(false))
+            .finally(() => setIsLoading(false))
     }, [conversation._id])
 
     const handleClose = async () => {
@@ -224,7 +235,7 @@ function ConversationDetailPanel({ conversation, onClose, onAction }: {
             <div className="p-4 border-b bg-gray-50 flex items-center justify-between flex-shrink-0">
                 <div className="flex items-center gap-3">
                     <Avatar className="w-9 h-9">
-                        <AvatarImage src={conversation.customer.avatar} />
+                        <AvatarImage src={conversation.customer.avatar || undefined} />
                         <AvatarFallback className="bg-blue-100 text-blue-600 text-sm">
                             {conversation.customer.firstName[0]}
                         </AvatarFallback>
@@ -263,12 +274,25 @@ function ConversationDetailPanel({ conversation, onClose, onAction }: {
                         <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
                     </div>
                 ) : (
-                    <MessageList
-                        messages={messages}
-                        currentUserId="admin-view"
-                        currentUserRole="pharmacist"
-                        isLoading={false}
-                    />
+                    <>
+                        {/* Legend cho admin */}
+                        <div className="flex items-center justify-between px-4 py-1.5 bg-gray-50 border-b text-xs text-gray-500 flex-shrink-0">
+                            <span className="flex items-center gap-1.5">
+                                <span className="w-2.5 h-2.5 rounded-full bg-gray-400 inline-block" />
+                                Khách: {conversation.customer.firstName} {conversation.customer.lastName}
+                            </span>
+                            <span className="flex items-center gap-1.5">
+                                Dược sĩ: {conversation.pharmacist ? `${conversation.pharmacist.firstName} ${conversation.pharmacist.lastName}` : 'Chưa phân công'}
+                                <span className="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block" />
+                            </span>
+                        </div>
+                        <MessageList
+                            messages={messages}
+                            currentUserId={conversation.pharmacistId || ''}
+                            currentUserRole="pharmacist"
+                            isLoading={false}
+                        />
+                    </>
                 )}
             </div>
 
@@ -363,6 +387,28 @@ export function AdminChatPage() {
         if (activeTab === 'conversations') loadConversations(1)
     }, [activeTab, loadConversations])
 
+    // Socket realtime: admin nhận conversation mới, đóng, chuyển → reload
+    const socketId = useId()
+    const { subscribe, unsubscribe } = useSocketContext()
+    useEffect(() => {
+        subscribe(socketId, {
+            onConversationNew: () => {
+                // Conversation mới có tin nhắn đầu tiên → reload và refresh stats
+                if (activeTab === 'conversations') loadConversations(1)
+                loadStats()
+            },
+            onConversationClosed: () => {
+                if (activeTab === 'conversations') loadConversations(page)
+                loadStats()
+            },
+            onConversationTransferred: () => {
+                if (activeTab === 'conversations') loadConversations(page)
+                loadStats()
+            }
+        })
+        return () => unsubscribe(socketId)
+    }, [socketId, subscribe, unsubscribe, activeTab, loadConversations, loadStats, page])
+
     return (
         <div className="space-y-6">
             {/* Page Header */}
@@ -431,7 +477,7 @@ export function AdminChatPage() {
                                             <div key={item.pharmacistId} className="flex items-center gap-3">
                                                 <span className="text-sm font-bold text-gray-400 w-5">{idx + 1}</span>
                                                 <Avatar className="w-8 h-8">
-                                                    <AvatarImage src={item.pharmacist.avatar} />
+                                                    <AvatarImage src={item.pharmacist.avatar || undefined} />
                                                     <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
                                                         {item.pharmacist.firstName[0]}
                                                     </AvatarFallback>
@@ -513,7 +559,7 @@ export function AdminChatPage() {
                                         >
                                             <div className="flex items-start gap-3">
                                                 <Avatar className="w-9 h-9 flex-shrink-0">
-                                                    <AvatarImage src={conv.customer.avatar} />
+                                                    <AvatarImage src={conv.customer.avatar || undefined} />
                                                     <AvatarFallback className="bg-gradient-to-r from-blue-500 to-cyan-400 text-white text-xs">
                                                         {conv.customer.firstName[0]}
                                                     </AvatarFallback>

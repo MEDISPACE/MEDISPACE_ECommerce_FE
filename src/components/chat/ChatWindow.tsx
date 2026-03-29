@@ -11,6 +11,7 @@ interface ChatWindowProps {
     currentUserId: string
     currentUserRole: 'customer' | 'pharmacist'
     onClose?: () => void
+    onNewConversation?: () => void
     showHeader?: boolean
 }
 
@@ -19,6 +20,7 @@ export function ChatWindow({
     currentUserId,
     currentUserRole,
     onClose,
+    onNewConversation,
     showHeader = true
 }: ChatWindowProps) {
     const id = useId() // unique subscriber id
@@ -27,6 +29,7 @@ export function ChatWindow({
     const [page, setPage] = useState(1)
     const [hasMore, setHasMore] = useState(false)
     const [typingUserId, setTypingUserId] = useState<string | null>(null)
+    const [isClosed, setIsClosed] = useState(conversation.status === 'closed')
     // FIX: dùng useRef thay useState cho timeout
     const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -65,6 +68,11 @@ export function ChatWindow({
                 if (data.conversationId === conversation._id) {
                     setTypingUserId(null)
                     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+                }
+            },
+            onConversationClosed: (data) => {
+                if (data.conversationId === conversation._id) {
+                    setIsClosed(true)
                 }
             },
             onError: (error) => {
@@ -197,14 +205,31 @@ export function ChatWindow({
                 onLoadMore={handleLoadMore}
                 hasMore={hasMore}
             />
-            <ChatInput
-                onSendMessage={handleSendMessage}
-                onTyping={handleTyping}
-                onStopTyping={handleStopTyping}
-                disabled={!isConnected}
-                placeholder={isConnected ? 'Nhập tin nhắn...' : 'Đang kết nối...'}
-                currentUserRole={currentUserRole}
-            />
+            {isClosed ? (
+                <div className="flex-shrink-0 px-4 py-3 bg-gray-100 border-t border-gray-200 flex items-center gap-2 text-sm text-gray-500">
+                    <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    <span>Cuộc hội thoại đã được đóng.</span>
+                    {currentUserRole === 'customer' && (
+                        <button
+                            onClick={onNewConversation || (() => setIsClosed(false))}
+                            className="ml-auto text-blue-600 hover:underline text-xs font-medium"
+                        >
+                            Tư vấn mới
+                        </button>
+                    )}
+                </div>
+            ) : (
+                <ChatInput
+                    onSendMessage={handleSendMessage}
+                    onTyping={handleTyping}
+                    onStopTyping={handleStopTyping}
+                    disabled={!isConnected}
+                    placeholder={isConnected ? 'Nhập tin nhắn...' : 'Đang kết nối...'}
+                    currentUserRole={currentUserRole}
+                />
+            )}
         </div>
     )
 }

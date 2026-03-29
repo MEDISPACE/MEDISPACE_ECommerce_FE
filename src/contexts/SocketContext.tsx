@@ -15,6 +15,9 @@ interface SocketCallbacks {
     onUserOnline?: (data: { userId: string }) => void
     onUserOffline?: (data: { userId: string }) => void
     onConversationAssigned?: (data: { conversationId: string; pharmacistId: string }) => void
+    onConversationClosed?: (data: { conversationId: string; closedBy: string; closedAt: string }) => void
+    onConversationTransferred?: (data: { conversationId: string; newPharmacistId: string; oldPharmacistId?: string; transferredAt: string }) => void
+    onConversationNew?: (data: { conversationId: string }) => void
     onError?: (error: { message: string }) => void
 }
 
@@ -134,6 +137,9 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         s.on('user:online', (data: { userId: string }) => broadcast('onUserOnline', data))
         s.on('user:offline', (data: { userId: string }) => broadcast('onUserOffline', data))
         s.on('conversation:assigned', (data: { conversationId: string; pharmacistId: string }) => broadcast('onConversationAssigned', data))
+        s.on('conversation:closed', (data: { conversationId: string; closedBy: string; closedAt: string }) => broadcast('onConversationClosed', data))
+        s.on('conversation:transferred', (data: { conversationId: string; newPharmacistId: string; oldPharmacistId?: string; transferredAt: string }) => broadcast('onConversationTransferred', data))
+        s.on('conversation:new', (data: { conversationId: string }) => broadcast('onConversationNew', data))
         s.on('error', (err: { message: string }) => broadcast('onError', err))
     }, [])
 
