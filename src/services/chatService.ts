@@ -91,6 +91,16 @@ class ChatService {
             throw axiosError.response?.data || { message: 'Failed to delete conversation' }
         }
     }
+
+    // (3.5) Dược sĩ tự nhận conversation
+    async assignConversation(conversationId: string): Promise<void> {
+        try {
+            await apiClient.post(`/chats/conversations/${conversationId}/assign`)
+        } catch (error) {
+            const axiosError = error as AxiosError<{ message: string }>
+            throw axiosError.response?.data || { message: 'Failed to assign conversation' }
+        }
+    }
 }
 
 export const chatService = new ChatService()
