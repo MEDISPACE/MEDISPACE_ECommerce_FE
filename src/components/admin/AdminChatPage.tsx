@@ -268,7 +268,7 @@ function ConversationDetailPanel({ conversation, onClose, onAction }: {
             )}
 
             {/* Messages (read-only) */}
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 flex flex-col min-h-0">
                 {isLoading ? (
                     <div className="flex items-center justify-center h-full">
                         <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
@@ -605,7 +605,7 @@ export function AdminChatPage() {
 
                     {/* Detail Panel */}
                     {selectedConversation && (
-                        <div className="bg-white rounded-xl shadow-sm border border-blue-200 overflow-hidden">
+                        <div className="bg-white rounded-xl shadow-sm border border-blue-200 overflow-hidden flex flex-col h-full">
                             <ConversationDetailPanel
                                 conversation={selectedConversation}
                                 onClose={() => setSelectedConversation(null)}

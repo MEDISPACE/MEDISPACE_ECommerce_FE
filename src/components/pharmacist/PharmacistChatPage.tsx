@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useId } from 'react'
+import { useState, useEffect, useCallback, useId, useRef } from 'react'
 import { MessageCircle, Search, Loader2, RotateCcw, Inbox, User, CheckCircle } from 'lucide-react'
 import { Input } from '../ui/input'
 import { Button } from '../ui/button'
@@ -23,6 +23,21 @@ export function PharmacistChatPage() {
     const [activeTab, setActiveTab] = useState<TabType>('pending')
     const [isAssigning, setIsAssigning] = useState(false)
 
+    // Dùng ref để onNewMessage không bị stale closure với selectedConversation
+    const selectedConversationRef = useRef<Conversation | null>(null)
+    const handleSelectConversation = useCallback((conv: Conversation | null) => {
+        setSelectedConversation(conv)
+        selectedConversationRef.current = conv
+        // Clear badge ngay khi dược sĩ chọn conversation
+        if (conv) {
+            setConversations(prev => prev.map(c =>
+                c._id === conv._id
+                    ? { ...c, unreadCount: { ...c.unreadCount, pharmacist: 0 } }
+                    : c
+            ))
+        }
+    }, [])
+
     const { subscribe, unsubscribe, isConnected } = useSocketContext()
 
     // Load conversations
@@ -46,13 +61,17 @@ export function PharmacistChatPage() {
                     const idx = prev.findIndex(c => c._id === message.conversationId)
                     if (idx === -1) { loadConversations(); return prev }
                     const updated = [...prev]
+                    const isViewing = selectedConversationRef.current?._id === message.conversationId
                     const conv = { ...updated[idx], lastMessage: message.content, lastMessageAt: message.createdAt }
-                    // Tăng unread nếu đang không xem conversation này
-                    if (selectedConversation?._id !== message.conversationId && message.senderRole === 'customer') {
+                    // Tăng unread chỉ khi không xem conversation này VÀ tin nhắn từ khách hàng
+                    if (!isViewing && message.senderRole === 'customer') {
                         conv.unreadCount = {
                             ...conv.unreadCount,
                             pharmacist: (conv.unreadCount?.pharmacist || 0) + 1
                         }
+                    } else if (isViewing) {
+                        // Đang xem → clear badge ngay
+                        conv.unreadCount = { ...conv.unreadCount, pharmacist: 0 }
                     }
                     updated.splice(idx, 1)
                     return [conv, ...updated]
@@ -293,7 +312,7 @@ export function PharmacistChatPage() {
                                                 <Button
                                                     size="sm"
                                                     variant="outline"
-                                                    onClick={() => setSelectedConversation(conv)}
+                                                    onClick={() => handleSelectConversation(conv)}
                                                     className="flex-1 h-7 text-xs border-blue-200 text-blue-600"
                                                 >
                                                     Xem
@@ -316,7 +335,7 @@ export function PharmacistChatPage() {
                                     currentUserId={user?._id || ''}
                                     currentUserRole="pharmacist"
                                     selectedConversationId={selectedConversation?._id}
-                                    onSelectConversation={setSelectedConversation}
+                                    onSelectConversation={handleSelectConversation}
                                     onDeleteConversation={handleDeleteConversation}
                                 />
                             )

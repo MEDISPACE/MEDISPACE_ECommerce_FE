@@ -114,12 +114,12 @@ export function MessageList({
 
             {/* Messages */}
             {messages.map((message, index) => {
-                const isOwnMessage = message.senderId === currentUserId
+                const isOwnMessage = message.senderRole === currentUserRole
                 const prevMessage = index > 0 ? messages[index - 1] : null
                 const nextMessage = index < messages.length - 1 ? messages[index + 1] : null
 
                 // Check if this is the last message in a consecutive group from same sender
-                const isLastInGroup = !nextMessage || nextMessage.senderId !== message.senderId
+                const isLastInGroup = !nextMessage || nextMessage.senderRole !== message.senderRole
 
                 // Check if we need a date separator
                 const showDateSeparator = !prevMessage ||
