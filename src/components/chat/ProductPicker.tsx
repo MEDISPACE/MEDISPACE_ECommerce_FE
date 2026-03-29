@@ -12,11 +12,13 @@ interface ProductPickerProps {
 }
 
 interface ProductSearchResult {
-    _id: string
+    _id?: string
+    mongoId?: string
     name: string
     slug: string
     featuredImage?: string
-    priceVariants: Array<{ price: number; unit: string; isDefault: boolean }>
+    priceVariants?: Array<{ price: number; unit: string; isDefault: boolean }> // From MongoDB
+    price?: number // From Typesense
     requiresPrescription: boolean
     stockQuantity: number
 }
@@ -31,19 +33,13 @@ export function ProductPicker({ onSelect, onClose }: ProductPickerProps) {
         if (!q.trim()) { setResults([]); return }
         try {
             setIsLoading(true)
+            // Dùng Typesense: tìm nhanh + hỗ trợ typo (ví dụ: "pracetamol" → Paracetamol)
             const res = await apiClient.get<{
-                result?: { products: ProductSearchResult[] }
-                data?: { products: ProductSearchResult[] }
-                products?: ProductSearchResult[]
-            }>('/products', {
-                params: { search: q, limit: 8, page: 1, status: 'active' }
+                hits: Array<{ document: ProductSearchResult }>
+            }>('/search/products', {
+                params: { q, limit: 8, page: 1 }
             })
-            setResults(
-                res.data?.result?.products ||
-                res.data?.data?.products ||
-                res.data?.products ||
-                []
-            )
+            setResults((res.data?.hits || []).map(h => h.document))
         } catch {
             setResults([])
         } finally {
@@ -58,13 +54,17 @@ export function ProductPicker({ onSelect, onClose }: ProductPickerProps) {
     }, [query]) // eslint-disable-line
 
     const getDefaultVariant = (product: ProductSearchResult) => {
-        return product.priceVariants.find(v => v.isDefault) || product.priceVariants[0]
+        if (product.priceVariants && product.priceVariants.length > 0) {
+            return product.priceVariants.find(v => v.isDefault) || product.priceVariants[0]
+        }
+        return { price: product.price || 0, unit: 'Sản phẩm' }
     }
 
     const handleSelect = (product: ProductSearchResult) => {
         const variant = getDefaultVariant(product)
+        const productId = product._id || product.mongoId || ''
         onSelect({
-            productId: product._id,
+            productId,
             name: product.name,
             slug: product.slug,
             price: variant?.price || 0,
@@ -133,7 +133,7 @@ export function ProductPicker({ onSelect, onClose }: ProductPickerProps) {
                             const variant = getDefaultVariant(product)
                             return (
                                 <button
-                                    key={product._id}
+                                    key={product._id || product.mongoId}
                                     onClick={() => handleSelect(product)}
                                     className="w-full flex items-center gap-3 p-3 hover:bg-blue-50 transition-colors text-left group"
                                 >
