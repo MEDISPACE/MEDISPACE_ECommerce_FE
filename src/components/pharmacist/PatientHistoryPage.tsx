@@ -127,7 +127,7 @@ export function PatientHistoryPage() {
         patientService.getNotes(patient.customerId),
       ])
 
-      setMedicalInfo(medicalData)
+      setMedicalInfo(medicalData as unknown as MedicalInfo)
       setPatientNotes(notesData)
     } catch (error) {
 
