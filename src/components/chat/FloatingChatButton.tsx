@@ -4,9 +4,9 @@ import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
 import { ChatWindow } from './ChatWindow'
 import { chatService } from '~/services/chatService'
-import { useAuth } from '~/contexts/AuthContext'
-import { useSocketContext } from '~/contexts/SocketContext'
-import type { Conversation } from '~/types/chat'
+import { useAuth } from '../../contexts/AuthContext'
+import { useSocketContext } from '../../contexts/SocketContext'
+import type { Conversation } from '../../types/chat'
 import { toast } from 'sonner'
 
 export function FloatingChatWidget() {
@@ -44,7 +44,7 @@ export function FloatingChatWidget() {
         return () => unsubscribe(id)
     }, [id, conversation, isOpen, isMinimized, subscribe, unsubscribe])
 
-    // Load conversation khi mở widget
+    // Load conversation khi mở widget — chỉ lấy active conversation
     useEffect(() => {
         if (!isAuthenticated || !isCustomer || !isOpen) return
         if (conversation) return
@@ -52,11 +52,13 @@ export function FloatingChatWidget() {
         const load = async () => {
             try {
                 setIsLoading(true)
-                const response = await chatService.getConversations({ page: 1, limit: 1 })
+                // Chỉ load active conversation — tránh pick up conversation đã closed
+                const response = await chatService.getConversations({ page: 1, limit: 1, status: 'active' })
                 if (response.conversations.length > 0) {
                     setConversation(response.conversations[0])
                     setUnreadCount(response.conversations[0].unreadCount.customer || 0)
                 }
+                // Nếu không có active → customer thấy màn "Bắt đầu chat" → tạo conversation mới
             } catch {
                 setConversation(null)
             } finally {
@@ -151,6 +153,7 @@ export function FloatingChatWidget() {
                                 currentUserId={user?._id || ''}
                                 currentUserRole="customer"
                                 showHeader={false}
+                                onNewConversation={() => setConversation(null)}
                             />
                         ) : (
                             <div className="flex flex-col items-center justify-center h-full p-6 text-center">
