@@ -22,6 +22,8 @@ import type { CartItem } from '../../types/cart'
 import { productService } from '../../services/productService'
 import { ghnService } from '../../services/ghnService'
 import { CouponInput } from '../discount/CouponInput'
+import { PointsRedeemInput } from '../discount/PointsRedeemInput'
+import { Sparkles } from 'lucide-react'
 
 const GLOBAL_DEFAULT_SHIPPING_METHODS: ShippingMethod[] = [
   {
@@ -93,6 +95,10 @@ export function CheckoutPage() {
   const [appliedCoupons, setAppliedCoupons] = useState<any[]>([])
   const [couponDiscount, setCouponDiscount] = useState(0)
   const [freeShippingFromCoupon, setFreeShippingFromCoupon] = useState(false)
+
+  // Loyalty points states
+  const [pointsToRedeem, setPointsToRedeem] = useState(0)
+  const [pointsDiscount, setPointsDiscount] = useState(0)
 
   // Sync cart coupons on initial load for normal cart flow
   useEffect(() => {
@@ -224,7 +230,6 @@ export function CheckoutPage() {
   const subtotal = isBuyNow
     ? (buyNowItem ? buyNowItem.totalPrice : 0)
     : getSelectedItemsTotal()
-  const discount = 0
   const selectedShipping = shippingMethods.find((method) => method.id === shippingMethod)
   let bgShippingFee = selectedShipping?.price || 0
 
@@ -234,7 +239,7 @@ export function CheckoutPage() {
   }
 
   const shippingFee = bgShippingFee
-  const total = Math.max(0, subtotal - couponDiscount + shippingFee)
+  const total = Math.max(0, subtotal - couponDiscount - pointsDiscount + shippingFee)
 
   const handlePlaceOrder = async () => {
 
@@ -332,7 +337,8 @@ export function CheckoutPage() {
         shippingFee: shippingFee, // Pass calculated shipping fee to backend
         estimatedDeliveryDate,
         notes: orderNotes,
-        couponCodes: appliedCoupons.map(c => c.code)
+        couponCodes: appliedCoupons.map(c => c.code),
+        pointsToRedeem: pointsToRedeem > 0 ? pointsToRedeem : undefined
       }
 
       const { order, paymentUrl } = await orderService.createOrder(orderData)
@@ -658,12 +664,22 @@ export function CheckoutPage() {
                           <span className='text-green-600'>-{new Intl.NumberFormat('vi-VN').format(couponDiscount)}đ</span>
                         </div>
                     )}
+
+                    {pointsDiscount > 0 && (
+                      <div className='flex justify-between'>
+                        <span className='text-gray-600 flex items-center gap-1'>
+                          <Sparkles className='w-3.5 h-3.5 text-purple-500' />
+                          Điểm thưởng
+                        </span>
+                        <span className='text-purple-600'>-{new Intl.NumberFormat('vi-VN').format(pointsDiscount)}đ</span>
+                      </div>
+                    )}
                   </div>
 
                   <Separator />
 
                   {/* Coupon Input Section */}
-                  <div className='py-2'>
+                  <div className='py-2 space-y-3'>
                     <CouponInput
                       subtotal={subtotal}
                       hasPrescriptionItems={cartItems.some(i => i.prescriptionRequired)}
@@ -673,6 +689,13 @@ export function CheckoutPage() {
                         setAppliedCoupons(coupons)
                         setCouponDiscount(discount)
                         setFreeShippingFromCoupon(hasFreeship)
+                      }}
+                    />
+                    <PointsRedeemInput
+                      subtotal={subtotal}
+                      onRedeemChange={(pts, amount) => {
+                        setPointsToRedeem(pts)
+                        setPointsDiscount(amount)
                       }}
                     />
                   </div>

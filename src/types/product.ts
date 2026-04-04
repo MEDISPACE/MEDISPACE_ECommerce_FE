@@ -19,6 +19,8 @@ export interface PriceVariant {
   unit: string // Đơn vị: "Viên", "Vỉ", "Hộp"...
   price: number // Giá bán
   originalPrice?: number // Giá niêm yết (trước giảm)
+  salePrice?: number // Giá sau campaign (từ backend)
+  discountPercent?: number // % giảm từ campaign
   costPrice?: number // Giá vốn (chỉ admin/pharmacist thấy)
   isDefault: boolean // Đơn vị mặc định
   quantityPerUnit: number // Số lượng đơn vị nhỏ nhất trong 1 đơn vị này
@@ -106,6 +108,15 @@ export interface Product {
   instructions?: string
   warnings?: string[]
   tags?: string[]
+
+  // Campaign info (populated by backend when active campaign applies)
+  campaign?: {
+    _id: string
+    name: string
+    badgeText: string
+    badgeColor: string
+    endDate: string
+  }
 }
 
 // Brand interface matching backend schema
