@@ -13,4 +13,8 @@ export { ReportsAnalyticsPage } from './ReportsAnalyticsPage';
 export { SystemSettingsPage } from './SystemSettingsPage';
 export { ReviewManagementPage } from './ReviewManagementPage';
 export { AdminChatPage } from './AdminChatPage';
+export { CouponManagementPage } from './CouponManagementPage';
+export { AdminCampaignPage } from './CampaignManagementPage';
+export { AdminLoyaltyPage } from './LoyaltyManagementPage';
+
 
