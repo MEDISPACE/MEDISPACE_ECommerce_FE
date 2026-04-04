@@ -3,7 +3,7 @@ import { Tag, X, CheckCircle, Loader2, Ticket } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Badge } from '../ui/badge'
-import { apiClient } from '../../lib/apiClient'
+import { apiClient } from '../../services/apiClient'
 
 interface AppliedCoupon {
   code: string
@@ -48,7 +48,7 @@ export function CouponInput({ subtotal, hasPrescriptionItems = false, initialCou
     try {
       if (isDirectBuy) {
         // Direct buy just previews the coupon without saving to cart
-        const res = await apiClient.post('/coupons/validate', { code, cartSubtotal: subtotal, hasPrescriptionItems })
+        const res = await apiClient.post<any>('/coupons/validate', { code, cartSubtotal: subtotal, hasPrescriptionItems })
         const data = res.data.result
 
         if (!data.isValid) {
@@ -93,7 +93,7 @@ export function CouponInput({ subtotal, hasPrescriptionItems = false, initialCou
 
       } else {
         // Normal cart flow
-        const res = await apiClient.post('/coupons/apply', { code })
+        const res = await apiClient.post<any>('/coupons/apply', { code })
         const data = res.data.result
 
         const newCoupon: AppliedCoupon = data.addedCoupon
