@@ -34,9 +34,9 @@ interface Coupon {
   value: number
   minOrderAmount: number
   maxDiscountAmount?: number
-  maxUsage: number
-  currentUsage: number
-  maxUsagePerUser: number
+  totalUsageLimit: number
+  currentUsageCount: number
+  perUserLimit: number
   startDate: string
   endDate: string
   isActive: boolean
@@ -52,8 +52,8 @@ interface CouponFormData {
   value: number
   minOrderAmount: number
   maxDiscountAmount: string
-  maxUsage: number
-  maxUsagePerUser: number
+  totalUsageLimit: number
+  perUserLimit: number
   startDate: string
   endDate: string
   isActive: boolean
@@ -63,7 +63,7 @@ const EMPTY_FORM: CouponFormData = {
   code: '', name: '', description: '',
   type: 'percentage', value: 10,
   minOrderAmount: 0, maxDiscountAmount: '',
-  maxUsage: 100, maxUsagePerUser: 1,
+  totalUsageLimit: 100, perUserLimit: 1,
   startDate: new Date().toISOString().substring(0, 16),
   endDate: new Date(Date.now() + 30 * 86400000).toISOString().substring(0, 16),
   isActive: true
@@ -132,7 +132,7 @@ export function AdminCouponPage() {
       type: c.type, value: c.value,
       minOrderAmount: c.minOrderAmount,
       maxDiscountAmount: c.maxDiscountAmount?.toString() || '',
-      maxUsage: c.maxUsage, maxUsagePerUser: c.maxUsagePerUser,
+      totalUsageLimit: c.totalUsageLimit || 100, perUserLimit: c.perUserLimit || 1,
       startDate: c.startDate.substring(0, 16),
       endDate: c.endDate.substring(0, 16),
       isActive: c.isActive
@@ -235,7 +235,7 @@ export function AdminCouponPage() {
         {[
           { label: 'Tổng coupon', value: total, icon: <Tag className='w-5 h-5' />, color: 'text-blue-600 bg-blue-100' },
           { label: 'Đang hoạt động', value: coupons.filter(c => c.isActive && !isExpired(c.endDate)).length, icon: <CheckCircle className='w-5 h-5' />, color: 'text-green-600 bg-green-100' },
-          { label: 'Đã dùng', value: coupons.reduce((s, c) => s + c.currentUsage, 0), icon: <Users className='w-5 h-5' />, color: 'text-purple-600 bg-purple-100' },
+          { label: 'Đã dùng', value: coupons.reduce((s, c) => s + (c.currentUsageCount || 0), 0), icon: <Users className='w-5 h-5' />, color: 'text-purple-600 bg-purple-100' },
           { label: 'Hết hạn', value: coupons.filter(c => isExpired(c.endDate)).length, icon: <Calendar className='w-5 h-5' />, color: 'text-red-600 bg-red-100' },
         ].map((stat, i) => (
           <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
@@ -355,13 +355,13 @@ export function AdminCouponPage() {
                       </td>
                       <td className='p-3'>
                         <div className='text-xs'>
-                          <span className='font-semibold'>{c.currentUsage}</span>
-                          <span className='text-gray-400'>/{c.maxUsage}</span>
+                          <span className='font-semibold'>{c.currentUsageCount || 0}</span>
+                          <span className='text-gray-400'>/{c.totalUsageLimit || '∞'}</span>
                         </div>
                         <div className='h-1.5 bg-gray-100 rounded-full mt-1 w-20'>
                           <div
                             className='h-full bg-blue-500 rounded-full'
-                            style={{ width: `${Math.min(100, (c.currentUsage / c.maxUsage) * 100)}%` }}
+                            style={{ width: `${Math.min(100, ((c.currentUsageCount || 0) / Math.max(c.totalUsageLimit || 1, 1)) * 100)}%` }}
                           />
                         </div>
                       </td>
@@ -528,8 +528,8 @@ export function AdminCouponPage() {
                 <Label>Tổng lượt dùng tối đa</Label>
                 <Input
                   type='number'
-                  value={formData.maxUsage}
-                  onChange={e => setFormData(f => ({ ...f, maxUsage: Number(e.target.value) }))}
+                  value={formData.totalUsageLimit}
+                  onChange={e => setFormData(f => ({ ...f, totalUsageLimit: Number(e.target.value) }))}
                   min={1}
                 />
               </div>
@@ -537,8 +537,8 @@ export function AdminCouponPage() {
                 <Label>Lượt dùng tối đa / người</Label>
                 <Input
                   type='number'
-                  value={formData.maxUsagePerUser}
-                  onChange={e => setFormData(f => ({ ...f, maxUsagePerUser: Number(e.target.value) }))}
+                  value={formData.perUserLimit}
+                  onChange={e => setFormData(f => ({ ...f, perUserLimit: Number(e.target.value) }))}
                   min={1}
                 />
               </div>

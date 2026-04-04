@@ -34,7 +34,7 @@ export function PointsRedeemInput({ subtotal, onRedeemChange, className }: Point
       if (subtotal <= 0) return
       setIsLoading(true)
       try {
-        const res = await apiClient.post('/loyalty/preview-redeem', { orderSubtotal: subtotal })
+        const res = await apiClient.post<{ result: PointsPreview }>('/loyalty/preview-redeem', { orderSubtotal: subtotal })
         setPreview(res.data.result)
       } catch {
         // Not authenticated or no points — silently hide

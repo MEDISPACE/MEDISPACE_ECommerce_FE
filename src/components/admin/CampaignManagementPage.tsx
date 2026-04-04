@@ -41,7 +41,7 @@ interface Campaign {
   isPublic: boolean
   applicableProducts?: string[]
   applicableCategories?: string[]
-  badgeLabel?: string
+  badgeText?: string
   badgeColor?: string
   conditionType?: string
   conditionValue?: number
@@ -59,7 +59,7 @@ interface CampaignFormData {
   endDate: string
   status: 'active' | 'inactive'
   isPublic: boolean
-  badgeLabel: string
+  badgeText: string
   badgeColor: string
 }
 
@@ -71,7 +71,7 @@ const EMPTY_FORM: CampaignFormData = {
   startDate: new Date().toISOString().substring(0, 16),
   endDate: new Date(Date.now() + 7 * 86400000).toISOString().substring(0, 16),
   status: 'active', isPublic: true,
-  badgeLabel: '', badgeColor: '#EF4444'
+  badgeText: '', badgeColor: '#EF4444'
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -138,7 +138,7 @@ export function AdminCampaignPage() {
       endDate: c.endDate.substring(0, 16),
       status: (c.status === 'active' ? 'active' : 'inactive') as any,
       isPublic: c.isPublic,
-      badgeLabel: c.badgeLabel || '',
+      badgeText: c.badgeText || '',
       badgeColor: c.badgeColor || '#EF4444'
     })
     setFormError('')
@@ -156,8 +156,8 @@ export function AdminCampaignPage() {
       const payload = {
         ...formData,
         maxDiscountAmount: formData.maxDiscountAmount ? Number(formData.maxDiscountAmount) : undefined,
-        badgeLabel: formData.badgeLabel || undefined,
-        badgeColor: formData.badgeLabel ? formData.badgeColor : undefined
+        badgeText: formData.badgeText || undefined,
+        badgeColor: formData.badgeText ? formData.badgeColor : undefined
       }
       if (editCampaign) {
         await apiClient.put(`/campaigns/${editCampaign._id}`, payload)
@@ -320,12 +320,12 @@ export function AdminCampaignPage() {
                             <Lock className='w-3.5 h-3.5 text-gray-400' />
                           )}
                         </div>
-                        {c.badgeLabel && (
+                        {c.badgeText && (
                           <span
                             className='text-white text-xs px-1.5 py-0.5 rounded'
                             style={{ backgroundColor: c.badgeColor || '#EF4444' }}
                           >
-                            {c.badgeLabel}
+                            {c.badgeText}
                           </span>
                         )}
                         {c.description && (
@@ -490,8 +490,8 @@ export function AdminCampaignPage() {
               <Label>Badge hiển thị (tùy chọn)</Label>
               <div className='flex gap-3'>
                 <Input
-                  value={formData.badgeLabel}
-                  onChange={e => setFormData(f => ({ ...f, badgeLabel: e.target.value }))}
+                  value={formData.badgeText}
+                  onChange={e => setFormData(f => ({ ...f, badgeText: e.target.value }))}
                   placeholder='VD: Flash Sale, -20%, Mới'
                   className='flex-1'
                 />
@@ -506,12 +506,12 @@ export function AdminCampaignPage() {
                   ))}
                 </div>
               </div>
-              {formData.badgeLabel && (
+              {formData.badgeText && (
                 <span
                   className='text-white text-xs px-2 py-1 rounded inline-block'
                   style={{ backgroundColor: formData.badgeColor }}
                 >
-                  {formData.badgeLabel}
+                  {formData.badgeText}
                 </span>
               )}
             </div>
