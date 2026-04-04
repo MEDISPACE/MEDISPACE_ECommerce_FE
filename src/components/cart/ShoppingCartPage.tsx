@@ -14,6 +14,7 @@ import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
 import { addressService } from '../../services/addressService'
 import wishlistService from '../../services/wishlistService'
 import type { Address } from '../../types/user'
+import { CouponInput } from '../discount/CouponInput'
 
 import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
@@ -35,13 +36,27 @@ export function ShoppingCartPage() {
   const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
 
-  const [couponCode, setCouponCode] = useState('')
-  const [appliedCoupons, setAppliedCoupons] = useState<string[]>([])
   const [addresses, setAddresses] = useState<Address[]>([])
   const [defaultAddress, setDefaultAddress] = useState<Address | null>(null)
   const [loadingAddress, setLoadingAddress] = useState(true)
 
+  const [appliedCoupons, setAppliedCoupons] = useState<any[]>([])
+  const [couponDiscount, setCouponDiscount] = useState(0)
+  const [freeShippingFromCoupon, setFreeShippingFromCoupon] = useState(false)
+
   const breadcrumbItems = [{ label: 'Giỏ hàng' }]
+
+  // Initialize coupons from cart state
+  useEffect(() => {
+    if (cart?.appliedCoupons) {
+      setAppliedCoupons(cart.appliedCoupons)
+      const totalDisc = cart.appliedCoupons
+        .filter((c: any) => c.type !== 'free_shipping')
+        .reduce((sum: number, c: any) => sum + (c.discountAmount || 0), 0)
+      setCouponDiscount(totalDisc)
+      setFreeShippingFromCoupon(cart.appliedCoupons.some((c: any) => c.type === 'free_shipping'))
+    }
+  }, [cart])
 
   // Fetch addresses on mount
   useEffect(() => {
@@ -112,9 +127,9 @@ export function ShoppingCartPage() {
 
   // Calculate totals
   const subtotal = getSelectedItemsTotal()
-  const discount = 0 // No discount
-  const shippingFee = getSelectedItemsCount() === 0 ? 0 : (subtotal >= 300000 ? 0 : 30000)
-  const total = subtotal - discount + shippingFee
+  const discount = couponDiscount
+  const shippingFee = getSelectedItemsCount() === 0 ? 0 : (subtotal >= 300000 || freeShippingFromCoupon ? 0 : 30000)
+  const total = Math.max(0, subtotal - discount + shippingFee)
 
   // Handle select all
   const handleSelectAll = (selected: boolean) => {
@@ -144,19 +159,6 @@ export function ShoppingCartPage() {
     } catch (error) {
       toast.error('Không thể thêm sản phẩm vào danh sách yêu thích')
     }
-  }
-
-  // Handle apply coupon
-  const handleApplyCoupon = () => {
-    if (couponCode && !appliedCoupons.includes(couponCode)) {
-      setAppliedCoupons((prev) => [...prev, couponCode])
-      setCouponCode('')
-    }
-  }
-
-  // Handle remove coupon
-  const handleRemoveCoupon = (coupon: string) => {
-    setAppliedCoupons((prev) => prev.filter((c) => c !== coupon))
   }
 
   // Check if cart is empty
@@ -390,56 +392,17 @@ export function ShoppingCartPage() {
                 Mã giảm giá
               </CardTitle>
             </CardHeader>
-            <CardContent className='space-y-4'>
-              <div className='flex gap-2'>
-                <Input
-                  placeholder='Nhập mã giảm giá'
-                  value={couponCode}
-                  onChange={(e) => setCouponCode(e.target.value)}
-                  className='border-blue-200 focus:border-blue-500'
-                />
-                <Button
-                  onClick={handleApplyCoupon}
-                  disabled={!couponCode}
-                  className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'
-                >
-                  Áp dụng
-                </Button>
-              </div>
-
-              {appliedCoupons.length > 0 && (
-                <div className='space-y-2'>
-                  <p className='text-sm font-medium'>Mã đã áp dụng:</p>
-                  {appliedCoupons.map((coupon) => (
-                    <div
-                      key={coupon}
-                      className='flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded'
-                    >
-                      <span className='text-sm font-medium text-green-700'>{coupon}</span>
-                      <Button
-                        variant='ghost'
-                        size='sm'
-                        onClick={() => handleRemoveCoupon(coupon)}
-                        className='text-green-700 hover:text-red-500'
-                      >
-                        <Trash2 className='w-4 h-4' />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className='space-y-2'>
-                <p className='text-sm font-medium'>Khuyến mãi có sẵn:</p>
-                <div className='space-y-1'>
-                  <div className='text-sm text-blue-600 cursor-pointer hover:underline'>
-                    • WELCOME10 - Giảm 10% cho đơn hàng đầu tiên
-                  </div>
-                  <div className='text-sm text-blue-600 cursor-pointer hover:underline'>
-                    • FREESHIP - Miễn phí vận chuyển Tiêu chuẩn cho đơn từ 300k
-                  </div>
-                </div>
-              </div>
+            <CardContent>
+              <CouponInput
+                subtotal={subtotal}
+                hasPrescriptionItems={cart?.items.some(i => i.prescriptionRequired)}
+                initialCoupons={appliedCoupons}
+                onCouponsChange={(coupons, discount, hasFreeship) => {
+                  setAppliedCoupons([...coupons])
+                  setCouponDiscount(discount)
+                  setFreeShippingFromCoupon(hasFreeship)
+                }}
+              />
             </CardContent>
           </Card>
         </div>
