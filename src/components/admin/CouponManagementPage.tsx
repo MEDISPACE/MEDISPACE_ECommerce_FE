@@ -218,12 +218,17 @@ export function CouponManagementPage() {
       {/* Header */}
       <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4'>
         <div>
-          <h1 className='text-2xl font-bold text-gray-900'>Quản lý Coupon</h1>
-          <p className='text-gray-500 text-sm mt-1'>Tạo và quản lý các mã giảm giá cho khách hàng</p>
+          <h1
+            className='text-3xl font-bold bg-clip-text text-transparent'
+            style={{ backgroundImage: `linear-gradient(to right, #0066CC, #4A90E2)` }}
+          >
+            Quản lý Coupon
+          </h1>
+          <p className='text-gray-600 mt-2 text-sm'>Tạo và quản lý các mã giảm giá cho khách hàng</p>
         </div>
         <Button
           onClick={openCreate}
-          className='bg-gradient-to-r from-blue-600 to-cyan-500 text-white gap-2 self-start sm:self-auto'
+          className='bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8] gap-2 text-white self-start sm:self-auto'
         >
           <Plus className='w-4 h-4' />
           Tạo coupon
@@ -239,7 +244,7 @@ export function CouponManagementPage() {
           { label: 'Hết hạn', value: coupons.filter(c => isExpired(c.endDate)).length, icon: <Calendar className='w-5 h-5' />, color: 'text-red-600 bg-red-100' },
         ].map((stat, i) => (
           <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-            <Card>
+            <Card className='bg-white backdrop-blur-lg border-blue-100'>
               <CardContent className='p-4 flex items-center gap-3'>
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${stat.color}`}>
                   {stat.icon}
@@ -255,7 +260,7 @@ export function CouponManagementPage() {
       </div>
 
       {/* Filters */}
-      <Card>
+      <Card className='bg-white backdrop-blur-lg border-blue-100'>
         <CardContent className='p-4 flex flex-col sm:flex-row gap-3'>
           <div className='relative flex-1'>
             <Search className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400' />
@@ -263,11 +268,11 @@ export function CouponManagementPage() {
               placeholder='Tìm mã coupon, tên...'
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className='pl-10'
+              className='pl-10 border-2 border-blue-200 focus:border-blue-500'
             />
           </div>
           <Select value={filterStatus} onValueChange={(v: any) => { setFilterStatus(v); setPage(1) }}>
-            <SelectTrigger className='w-40'>
+            <SelectTrigger className='w-40 border-2 border-blue-200'>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -283,7 +288,7 @@ export function CouponManagementPage() {
       </Card>
 
       {/* Table */}
-      <Card>
+      <Card className='bg-white backdrop-blur-lg border-blue-100'>
         <CardHeader>
           <CardTitle className='text-base'>Danh sách coupon ({total})</CardTitle>
         </CardHeader>
@@ -307,7 +312,7 @@ export function CouponManagementPage() {
             <div className='overflow-x-auto'>
               <table className='w-full text-sm'>
                 <thead>
-                  <tr className='border-b bg-gray-50 text-gray-600'>
+                  <tr className='!border-b-2 !border-blue-300 bg-gray-50 text-gray-600'>
                     <th className='text-left p-3 pl-6'>Mã / Tên</th>
                     <th className='text-left p-3'>Loại / Giá trị</th>
                     <th className='text-left p-3'>Thời hạn</th>
@@ -323,7 +328,7 @@ export function CouponManagementPage() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: idx * 0.03 }}
-                      className='border-b hover:bg-gray-50 transition-colors'
+                      className='border-b-2 border-blue-200 hover:bg-blue-50/30 transition-colors'
                     >
                       <td className='p-3 pl-6'>
                         <div className='flex items-center gap-2'>
@@ -599,7 +604,7 @@ export function CouponManagementPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Xóa coupon?</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn chắc chắn muốn xóa coupon <strong>{deleteTarget?.code}</strong>? Hành động này không thể hoàn tác.
+              Bạn chắc chắn muốn xóa coupon <strong className='text-blue-600'>{deleteTarget?.code}</strong>? Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

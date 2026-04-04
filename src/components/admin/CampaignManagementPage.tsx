@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
+import { useQuery } from '@tanstack/react-query'
 import {
   Plus, Search, Edit2, Trash2, ToggleLeft, ToggleRight,
   Zap, Calendar, Percent, DollarSign, Tag, Globe, Lock,
   ChevronLeft, ChevronRight, Loader2, AlertCircle, RefreshCw,
-  ArrowUp, ArrowDown
+  ArrowUp, ArrowDown, Check, ChevronsUpDown
 } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
@@ -20,9 +21,26 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from '../ui/alert-dialog'
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '../ui/command'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '../ui/popover'
 import { Switch } from '../ui/switch'
 import { Separator } from '../ui/separator'
 import { apiClient } from '../../services/apiClient'
+import adminService from '../../services/adminService'
+import brandService from '../../services/brandService'
+import productService from '../../services/productService'
+import { cn } from '../../lib/utils'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -39,8 +57,11 @@ interface Campaign {
   endDate: string
   status: 'active' | 'inactive' | 'scheduled' | 'expired'
   isPublic: boolean
-  applicableProducts?: string[]
-  applicableCategories?: string[]
+  scope: 'all' | 'products' | 'categories' | 'brands'
+  productIds?: string[]
+  categoryIds?: string[]
+  brandIds?: string[]
+  excludePrescription?: boolean
   badgeText?: string
   badgeColor?: string
   conditionType?: string
@@ -59,6 +80,11 @@ interface CampaignFormData {
   endDate: string
   status: 'active' | 'inactive'
   isPublic: boolean
+  scope: 'all' | 'products' | 'categories' | 'brands'
+  productIds: string[]
+  categoryIds: string[]
+  brandIds: string[]
+  excludePrescription: boolean
   badgeText: string
   badgeColor: string
 }
@@ -71,6 +97,7 @@ const EMPTY_FORM: CampaignFormData = {
   startDate: new Date().toISOString().substring(0, 16),
   endDate: new Date(Date.now() + 7 * 86400000).toISOString().substring(0, 16),
   status: 'active', isPublic: true,
+  scope: 'all', productIds: [], categoryIds: [], brandIds: [], excludePrescription: false,
   badgeText: '', badgeColor: '#EF4444'
 }
 
@@ -85,6 +112,33 @@ export function AdminCampaignPage() {
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
   const LIMIT = 15
+
+  const [openCat, setOpenCat] = useState(false)
+  const [openBrand, setOpenBrand] = useState(false)
+  const [openProduct, setOpenProduct] = useState(false)
+  const [searchProductTerm, setSearchProductTerm] = useState('')
+  const [searchedProducts, setSearchedProducts] = useState<any[]>([])
+
+  useEffect(() => {
+    if (!searchProductTerm) {
+      productService.getProductsPaginated({ limit: 10 }).then(res => setSearchedProducts(res.products))
+      return
+    }
+    const timer = setTimeout(() => {
+      productService.searchProducts(searchProductTerm).then(res => setSearchedProducts(res))
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [searchProductTerm])
+
+  const { data: categoriesData = [] } = useQuery({ queryKey: ['admin', 'categories', 'tree'], queryFn: adminService.getCategoryTree })
+  const { data: brandsData = [] } = useQuery({ queryKey: ['brands'], queryFn: () => brandService.getBrands({ limit: 450 }) })
+  const categories = useMemo(() => {
+    const flatten = (cats: any[], result: any[] = []): any[] => {
+      cats.forEach((cat) => { result.push(cat); if (cat.children?.length) flatten(cat.children, result) })
+      return result
+    }
+    return flatten(categoriesData)
+  }, [categoriesData])
 
   const [showForm, setShowForm] = useState(false)
   const [editCampaign, setEditCampaign] = useState<Campaign | null>(null)
@@ -138,6 +192,11 @@ export function AdminCampaignPage() {
       endDate: c.endDate.substring(0, 16),
       status: (c.status === 'active' ? 'active' : 'inactive') as any,
       isPublic: c.isPublic,
+      scope: c.scope || 'all',
+      productIds: c.productIds || [],
+      categoryIds: c.categoryIds || [],
+      brandIds: c.brandIds || [],
+      excludePrescription: c.excludePrescription || false,
       badgeText: c.badgeText || '',
       badgeColor: c.badgeColor || '#EF4444'
     })
@@ -153,12 +212,15 @@ export function AdminCampaignPage() {
     setIsSubmitting(true)
     setFormError('')
     try {
-      const payload = {
+      const payload: any = {
         ...formData,
         maxDiscountAmount: formData.maxDiscountAmount ? Number(formData.maxDiscountAmount) : undefined,
         badgeText: formData.badgeText || undefined,
         badgeColor: formData.badgeText ? formData.badgeColor : undefined
       }
+      if (payload.scope !== 'products') payload.productIds = []
+      if (payload.scope !== 'categories') payload.categoryIds = []
+      if (payload.scope !== 'brands') payload.brandIds = []
       if (editCampaign) {
         await apiClient.put(`/campaigns/${editCampaign._id}`, payload)
       } else {
@@ -209,12 +271,17 @@ export function AdminCampaignPage() {
       {/* Header */}
       <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4'>
         <div>
-          <h1 className='text-2xl font-bold text-gray-900'>Quản lý Chiến dịch</h1>
-          <p className='text-gray-500 text-sm mt-1'>Tạo chiến dịch giảm giá tự động áp dụng cho sản phẩm</p>
+          <h1
+            className='text-3xl font-bold bg-clip-text text-transparent'
+            style={{ backgroundImage: `linear-gradient(to right, #0066CC, #4A90E2)` }}
+          >
+            Quản lý Chiến dịch
+          </h1>
+          <p className='text-gray-600 mt-2 text-sm'>Tạo chiến dịch giảm giá tự động áp dụng cho sản phẩm</p>
         </div>
         <Button
           onClick={openCreate}
-          className='bg-gradient-to-r from-purple-600 to-pink-500 text-white gap-2 self-start'
+          className='bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8] gap-2 text-white self-start sm:self-auto'
         >
           <Plus className='w-4 h-4' />
           Tạo chiến dịch
@@ -230,7 +297,7 @@ export function AdminCampaignPage() {
           { label: 'Hết hạn', value: campaigns.filter(c => isExpired(c.endDate)).length, icon: <Calendar className='w-5 h-5' />, color: 'text-red-600 bg-red-100' },
         ].map((s, i) => (
           <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-            <Card>
+            <Card className='bg-white backdrop-blur-lg border-blue-100'>
               <CardContent className='p-4 flex items-center gap-3'>
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${s.color}`}>{s.icon}</div>
                 <div>
@@ -244,7 +311,7 @@ export function AdminCampaignPage() {
       </div>
 
       {/* Filters */}
-      <Card>
+      <Card className='bg-white backdrop-blur-lg border-blue-100'>
         <CardContent className='p-4 flex flex-col sm:flex-row gap-3'>
           <div className='relative flex-1'>
             <Search className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400' />
@@ -252,11 +319,11 @@ export function AdminCampaignPage() {
               placeholder='Tìm tên chiến dịch...'
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className='pl-10'
+              className='pl-10 border-2 border-blue-200 focus:border-blue-500'
             />
           </div>
           <Select value={filterStatus} onValueChange={(v) => { setFilterStatus(v); setPage(1) }}>
-            <SelectTrigger className='w-44'>
+            <SelectTrigger className='w-44 border-2 border-blue-200'>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -270,7 +337,7 @@ export function AdminCampaignPage() {
       </Card>
 
       {/* Table */}
-      <Card>
+      <Card className='bg-white backdrop-blur-lg border-blue-100'>
         <CardHeader>
           <CardTitle className='text-base'>Danh sách chiến dịch ({total})</CardTitle>
         </CardHeader>
@@ -293,11 +360,11 @@ export function AdminCampaignPage() {
             <div className='overflow-x-auto'>
               <table className='w-full text-sm'>
                 <thead>
-                  <tr className='border-b bg-gray-50 text-gray-600'>
+                  <tr className='!border-b-2 !border-blue-300 bg-gray-50 text-gray-600'>
                     <th className='text-left p-3 pl-6'>Tên chiến dịch</th>
                     <th className='text-left p-3'>Giảm giá</th>
                     <th className='text-left p-3'>Thời gian</th>
-                    <th className='text-left p-3'>Độ ưu tiên</th>
+                    <th className='text-left p-3'>Phạm vi & Ưu tiên</th>
                     <th className='text-left p-3'>Trạng thái</th>
                     <th className='text-right p-3 pr-6'>Thao tác</th>
                   </tr>
@@ -309,7 +376,7 @@ export function AdminCampaignPage() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: idx * 0.03 }}
-                      className='border-b hover:bg-gray-50 transition-colors'
+                      className='border-b-2 border-blue-200 hover:bg-blue-50/30 transition-colors'
                     >
                       <td className='p-3 pl-6'>
                         <div className='flex items-center gap-2'>
@@ -351,11 +418,23 @@ export function AdminCampaignPage() {
                         <p className='text-gray-400'>→ {formatDate(c.endDate)}</p>
                       </td>
                       <td className='p-3'>
-                        <div className='flex items-center gap-1'>
-                          <ArrowUp className='w-3 h-3 text-gray-400' />
-                          <span className='font-semibold'>{c.priority}</span>
+                        <div className='flex flex-col gap-1'>
+                          <span className='text-sm text-gray-800 font-medium'>
+                            {c.scope === 'all' && 'Toàn sàn'}
+                            {c.scope === 'categories' && 'Danh mục chỉ định'}
+                            {c.scope === 'brands' && 'Thương hiệu chỉ định'}
+                            {c.scope === 'products' && 'Sản phẩm chỉ định'}
+                          </span>
+                          {c.excludePrescription && (
+                            <span className='text-[10px] text-red-600 font-medium bg-red-100 px-1.5 py-0.5 rounded w-fit'>
+                              Cấm Thuốc Rx
+                            </span>
+                          )}
+                          <div className='flex items-center gap-1 mt-1'>
+                            <ArrowUp className='w-3 h-3 text-gray-400' />
+                            <span className='text-xs font-semibold text-gray-500'>Mức ưu tiên: {c.priority}</span>
+                          </div>
                         </div>
-                        <p className='text-xs text-gray-400'>Cao = ưu tiên trước</p>
                       </td>
                       <td className='p-3'>{getStatusBadge(c)}</td>
                       <td className='p-3 pr-6'>
@@ -399,19 +478,29 @@ export function AdminCampaignPage() {
 
       {/* Create/Edit Dialog */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className='max-w-xl max-h-[90vh] overflow-y-auto'>
+        <DialogContent className='max-w-2xl max-h-[90vh] overflow-y-auto'>
           <DialogHeader>
             <DialogTitle>{editCampaign ? 'Chỉnh sửa chiến dịch' : 'Tạo chiến dịch mới'}</DialogTitle>
           </DialogHeader>
 
-          <div className='space-y-4 py-2'>
-            <div className='space-y-1.5'>
-              <Label>Tên chiến dịch *</Label>
-              <Input
-                value={formData.name}
-                onChange={e => setFormData(f => ({ ...f, name: e.target.value }))}
-                placeholder='VD: Flash Sale Cuối Tuần'
-              />
+          <div className='space-y-5 py-2'>
+            <div className='grid grid-cols-2 gap-4'>
+              <div className='space-y-1.5'>
+                <Label>Tên chiến dịch *</Label>
+                <Input
+                  value={formData.name}
+                  onChange={e => setFormData(f => ({ ...f, name: e.target.value }))}
+                  placeholder='VD: Flash Sale Cuối Tuần'
+                />
+              </div>
+              <div className='space-y-1.5'>
+                <Label>Độ ưu tiên (số cao = ưu tiên cao hơn)</Label>
+                <Input
+                  type='number' min={0}
+                  value={formData.priority}
+                  onChange={e => setFormData(f => ({ ...f, priority: Number(e.target.value) }))}
+                />
+              </div>
             </div>
 
             <div className='space-y-1.5'>
@@ -459,15 +548,6 @@ export function AdminCampaignPage() {
               </div>
             )}
 
-            <div className='space-y-1.5'>
-              <Label>Độ ưu tiên (số cao = ưu tiên cao hơn)</Label>
-              <Input
-                type='number' min={0}
-                value={formData.priority}
-                onChange={e => setFormData(f => ({ ...f, priority: Number(e.target.value) }))}
-              />
-            </div>
-
             <Separator />
 
             <div className='grid grid-cols-2 gap-4'>
@@ -481,6 +561,186 @@ export function AdminCampaignPage() {
                 <Input type='datetime-local' value={formData.endDate}
                   onChange={e => setFormData(f => ({ ...f, endDate: e.target.value }))} />
               </div>
+            </div>
+
+            <Separator />
+
+            {/* Phạm vi áp dụng */}
+            <div className='space-y-4'>
+              <div className='space-y-1.5'>
+                <Label>Phạm vi áp dụng</Label>
+                <Select
+                  value={formData.scope}
+                  onValueChange={(v: any) => setFormData(f => ({ ...f, scope: v, categoryIds: [], brandIds: [] }))}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='all'>Toàn sàn (Tất cả sản phẩm)</SelectItem>
+                    <SelectItem value='categories'>Theo Danh mục</SelectItem>
+                    <SelectItem value='brands'>Theo Thương hiệu</SelectItem>
+                    <SelectItem value='products'>Sản phẩm cụ thể</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {formData.scope === 'products' && (
+                <div className='space-y-1.5 p-3 bg-gray-50 rounded-md border'>
+                  <Label>Chọn Sản phẩm áp dụng</Label>
+                  <Popover open={openProduct} onOpenChange={setOpenProduct}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={openProduct}
+                        className="w-full justify-between font-normal bg-white"
+                      >
+                        {formData.productIds && formData.productIds[0]
+                          ? searchedProducts.find((p: any) => p._id === formData.productIds[0])?.name || "1 Sản phẩm đã chọn"
+                          : "Tìm tên sản phẩm..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[450px] p-0 border shadow-md rounded-md bg-white overflow-hidden" align="start">
+                      <Command shouldFilter={false} className="bg-white">
+                        <CommandInput 
+                          placeholder="Gõ tên sản phẩm..." 
+                          value={searchProductTerm} 
+                          onValueChange={setSearchProductTerm} 
+                          className="focus:ring-0 outline-none border-none py-3 px-1"
+                        />
+                        <CommandList className="max-h-[250px] overflow-y-auto border-t border-gray-100">
+                          <CommandEmpty className="p-4 text-sm text-center text-gray-500">Không tìm thấy sản phẩm phù hợp.</CommandEmpty>
+                          <CommandGroup className="p-1">
+                            {searchedProducts.map((p: any) => (
+                              <CommandItem
+                                key={p._id}
+                                value={p._id}
+                                className="cursor-pointer py-2 px-3 hover:bg-gray-100 data-[selected=true]:bg-gray-100 rounded-sm"
+                                onSelect={() => {
+                                  setFormData(f => ({ ...f, productIds: [p._id] }))
+                                  setOpenProduct(false)
+                                  setSearchProductTerm('')
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    (formData.productIds && formData.productIds[0] === p._id) ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {p.name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <p className='text-xs text-gray-500'>Tính năng hiện hỗ trợ áp dụng cho 1 sản phẩm chỉ định.</p>
+                </div>
+              )}
+
+              {formData.scope === 'categories' && (
+                <div className='space-y-1.5 p-3 bg-gray-50 rounded-md border'>
+                  <Label>Chọn Danh mục áp dụng</Label>
+                  <Popover open={openCat} onOpenChange={setOpenCat}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={openCat}
+                        className="w-full justify-between font-normal bg-white"
+                      >
+                        {formData.categoryIds[0]
+                          ? categories.find((c: any) => c._id === formData.categoryIds[0])?.name
+                          : "Chọn 1 danh mục..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[450px] p-0 border shadow-md rounded-md bg-white overflow-hidden" align="start">
+                      <Command className="bg-white">
+                        <CommandInput placeholder="Tìm kiếm danh mục..." className="focus:ring-0 outline-none border-none py-3 px-1" />
+                        <CommandList className="max-h-[250px] overflow-y-auto border-t border-gray-100">
+                          <CommandEmpty className="p-4 text-sm text-center text-gray-500">Không tìm thấy danh mục phù hợp.</CommandEmpty>
+                          <CommandGroup className="p-1">
+                            {categories.map((c: any) => (
+                              <CommandItem
+                                key={c._id}
+                                value={c.name}
+                                className="cursor-pointer py-2 px-3 hover:bg-gray-100 data-[selected=true]:bg-gray-100 rounded-sm"
+                                onSelect={() => {
+                                  setFormData(f => ({ ...f, categoryIds: [c._id] }))
+                                  setOpenCat(false)
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    formData.categoryIds[0] === c._id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {c.name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <p className='text-xs text-gray-500'>Hiện tại giao diện chỉ hỗ trợ chọn 1 danh mục chính. Các sản phẩm thuộc danh mục này sẽ được giảm giá.</p>
+                </div>
+              )}
+
+              {formData.scope === 'brands' && (
+                <div className='space-y-1.5 p-3 bg-gray-50 rounded-md border'>
+                  <Label>Chọn Thương hiệu áp dụng</Label>
+                  <Popover open={openBrand} onOpenChange={setOpenBrand}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={openBrand}
+                        className="w-full justify-between font-normal bg-white"
+                      >
+                        {formData.brandIds[0]
+                          ? brandsData.find((b: any) => b._id === formData.brandIds[0])?.name
+                          : "Chọn 1 thương  hiệu..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[450px] p-0 border shadow-md rounded-md bg-white overflow-hidden" align="start">
+                      <Command className="bg-white">
+                        <CommandInput placeholder="Tìm kiếm thương hiệu..." className="focus:ring-0 outline-none border-none py-3 px-1" />
+                        <CommandList className="max-h-[250px] overflow-y-auto border-t border-gray-100">
+                          <CommandEmpty className="p-4 text-sm text-center text-gray-500">Không tìm thấy thương hiệu phù hợp.</CommandEmpty>
+                          <CommandGroup className="p-1">
+                            {brandsData.map((b: any) => (
+                              <CommandItem
+                                key={b._id}
+                                value={b.name}
+                                className="cursor-pointer py-2 px-3 hover:bg-gray-100 data-[selected=true]:bg-gray-100 rounded-sm"
+                                onSelect={() => {
+                                  setFormData(f => ({ ...f, brandIds: [b._id] }))
+                                  setOpenBrand(false)
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    formData.brandIds[0] === b._id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {b.name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <p className='text-xs text-gray-500'>Sản phẩm thuộc thương hiệu này sẽ được giảm giá.</p>
+                </div>
+              )}
             </div>
 
             <Separator />
@@ -516,7 +776,7 @@ export function AdminCampaignPage() {
               )}
             </div>
 
-            <div className='flex gap-6'>
+            <div className='grid grid-cols-1 sm:grid-cols-3 gap-4'>
               <div className='flex items-center gap-2'>
                 <Switch checked={formData.isPublic} onCheckedChange={v => setFormData(f => ({ ...f, isPublic: v }))} />
                 <Label>Công khai</Label>
@@ -527,6 +787,13 @@ export function AdminCampaignPage() {
                   onCheckedChange={v => setFormData(f => ({ ...f, status: v ? 'active' : 'inactive' }))}
                 />
                 <Label>Kích hoạt</Label>
+              </div>
+              <div className='flex items-center gap-2'>
+                <Switch
+                  checked={formData.excludePrescription}
+                  onCheckedChange={v => setFormData(f => ({ ...f, excludePrescription: v }))}
+                />
+                <Label className='text-red-600'>Cấm thuốc Rx</Label>
               </div>
             </div>
 
@@ -557,7 +824,7 @@ export function AdminCampaignPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Xóa chiến dịch?</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn chắc chắn muốn xóa chiến dịch <strong>{deleteTarget?.name}</strong>?
+              Bạn chắc chắn muốn xóa chiến dịch <strong className='text-blue-600'>{deleteTarget?.name}</strong>?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
