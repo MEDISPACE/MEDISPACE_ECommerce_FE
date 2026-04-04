@@ -71,7 +71,7 @@ const EMPTY_FORM: CouponFormData = {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function AdminCouponPage() {
+export function CouponManagementPage() {
   const [coupons, setCoupons] = useState<Coupon[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
