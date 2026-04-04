@@ -21,6 +21,7 @@ import type { User, Address } from '../../types/user'
 import type { CartItem } from '../../types/cart'
 import { productService } from '../../services/productService'
 import { ghnService } from '../../services/ghnService'
+import { CouponInput } from '../discount/CouponInput'
 
 const GLOBAL_DEFAULT_SHIPPING_METHODS: ShippingMethod[] = [
   {
@@ -87,6 +88,23 @@ export function CheckoutPage() {
   const [agreeToTerms, setAgreeToTerms] = useState(false)
   const [orderNotes, setOrderNotes] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
+
+  // Coupon states
+  const [appliedCoupons, setAppliedCoupons] = useState<any[]>([])
+  const [couponDiscount, setCouponDiscount] = useState(0)
+  const [freeShippingFromCoupon, setFreeShippingFromCoupon] = useState(false)
+
+  // Sync cart coupons on initial load for normal cart flow
+  useEffect(() => {
+    if (!isBuyNow && state.cart?.appliedCoupons) {
+      setAppliedCoupons(state.cart.appliedCoupons)
+      const totalDisc = state.cart.appliedCoupons
+        .filter((c: any) => c.type !== 'free_shipping')
+        .reduce((sum: number, c: any) => sum + (c.discountAmount || 0), 0)
+      setCouponDiscount(totalDisc)
+      setFreeShippingFromCoupon(state.cart.appliedCoupons.some((c: any) => c.type === 'free_shipping'))
+    }
+  }, [state.cart, isBuyNow])
 
   // Load Buy Now Item
   useEffect(() => {
@@ -210,13 +228,13 @@ export function CheckoutPage() {
   const selectedShipping = shippingMethods.find((method) => method.id === shippingMethod)
   let bgShippingFee = selectedShipping?.price || 0
 
-  // Apply logic Freeship Frontend: Free shipping for orders >= 300k
-  if (subtotal >= 300000) {
+  // Apply logic Freeship Frontend: Free shipping for orders >= 300k or via Coupon
+  if (subtotal >= 300000 || freeShippingFromCoupon) {
     bgShippingFee = 0
   }
 
   const shippingFee = bgShippingFee
-  const total = subtotal - discount + shippingFee
+  const total = Math.max(0, subtotal - couponDiscount + shippingFee)
 
   const handlePlaceOrder = async () => {
 
@@ -314,6 +332,7 @@ export function CheckoutPage() {
         shippingFee: shippingFee, // Pass calculated shipping fee to backend
         estimatedDeliveryDate,
         notes: orderNotes,
+        couponCodes: appliedCoupons.map(c => c.code)
       }
 
       const { order, paymentUrl } = await orderService.createOrder(orderData)
@@ -633,12 +652,29 @@ export function CheckoutPage() {
                       </span>
                     </div>
 
-                    {/* {discount > 0 && (
+                    {couponDiscount > 0 && (
                         <div className='flex justify-between'>
-                          <span className='text-gray-600'>Giảm giá</span>
-                          <span className='text-green-600'>-{new Intl.NumberFormat('vi-VN').format(discount)}đ</span>
+                          <span className='text-gray-600'>Giảm giá Coupon</span>
+                          <span className='text-green-600'>-{new Intl.NumberFormat('vi-VN').format(couponDiscount)}đ</span>
                         </div>
-                      )} */}
+                    )}
+                  </div>
+
+                  <Separator />
+
+                  {/* Coupon Input Section */}
+                  <div className='py-2'>
+                    <CouponInput
+                      subtotal={subtotal}
+                      hasPrescriptionItems={cartItems.some(i => i.prescriptionRequired)}
+                      isDirectBuy={isBuyNow}
+                      initialCoupons={appliedCoupons}
+                      onCouponsChange={(coupons, discount, hasFreeship) => {
+                        setAppliedCoupons(coupons)
+                        setCouponDiscount(discount)
+                        setFreeShippingFromCoupon(hasFreeship)
+                      }}
+                    />
                   </div>
 
                   <Separator />
