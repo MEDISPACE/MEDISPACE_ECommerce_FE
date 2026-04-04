@@ -121,10 +121,18 @@ export function AdminLoyaltyPage() {
       {/* Header */}
       <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4'>
         <div>
-          <h1 className='text-2xl font-bold text-gray-900'>Loyalty & Điểm thưởng</h1>
-          <p className='text-gray-500 text-sm mt-1'>Quản lý tài khoản điểm thưởng và hạng thành viên</p>
+          <h1
+            className='text-3xl font-bold bg-clip-text text-transparent'
+            style={{ backgroundImage: `linear-gradient(to right, #0066CC, #4A90E2)` }}
+          >
+            Loyalty & Điểm thưởng
+          </h1>
+          <p className='text-gray-600 mt-2 text-sm'>Quản lý tài khoản điểm thưởng và hạng thành viên</p>
         </div>
-        <Button variant='outline' onClick={() => { fetchStats(); fetchAccounts() }} className='gap-2 self-start'>
+        <Button
+          onClick={() => { fetchStats(); fetchAccounts() }}
+          className='bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8] gap-2 text-white self-start sm:self-auto'
+        >
           <RefreshCw className='w-4 h-4' />
           Cập nhật
         </Button>
@@ -167,7 +175,7 @@ export function AdminLoyaltyPage() {
               },
             ].map((s, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}>
-                <Card>
+                <Card className='bg-white backdrop-blur-lg border-blue-100'>
                   <CardContent className='p-4 flex items-center gap-3'>
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${s.color}`}>{s.icon}</div>
                     <div>
@@ -181,7 +189,7 @@ export function AdminLoyaltyPage() {
           </div>
 
           {/* Tier Distribution */}
-          <Card>
+          <Card className='bg-white backdrop-blur-lg border-blue-100'>
             <CardHeader>
               <CardTitle className='text-base flex items-center gap-2'>
                 <Crown className='w-5 h-5 text-purple-500' />
@@ -218,7 +226,7 @@ export function AdminLoyaltyPage() {
       ) : null}
 
       {/* Filters */}
-      <Card>
+      <Card className='bg-white backdrop-blur-lg border-blue-100'>
         <CardContent className='p-4 flex flex-col sm:flex-row gap-3'>
           <div className='relative flex-1'>
             <Search className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400' />
@@ -226,11 +234,11 @@ export function AdminLoyaltyPage() {
               placeholder='Tìm theo tên, email...'
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className='pl-10'
+              className='pl-10 border-2 border-blue-200 focus:border-blue-500'
             />
           </div>
           <Select value={filterTier} onValueChange={v => { setFilterTier(v); setPage(1) }}>
-            <SelectTrigger className='w-44'>
+            <SelectTrigger className='w-44 border-2 border-blue-200'>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -244,7 +252,7 @@ export function AdminLoyaltyPage() {
       </Card>
 
       {/* Accounts Table */}
-      <Card>
+      <Card className='bg-white backdrop-blur-lg border-blue-100'>
         <CardHeader>
           <CardTitle className='text-base'>Tài khoản điểm thưởng ({total})</CardTitle>
         </CardHeader>
@@ -267,7 +275,7 @@ export function AdminLoyaltyPage() {
             <div className='overflow-x-auto'>
               <table className='w-full text-sm'>
                 <thead>
-                  <tr className='border-b bg-gray-50 text-gray-600'>
+                  <tr className='!border-b-2 !border-blue-300 bg-gray-50 text-gray-600'>
                     <th className='text-left p-3 pl-6'>Khách hàng</th>
                     <th className='text-left p-3'>Hạng</th>
                     <th className='text-left p-3'>Số dư điểm</th>
@@ -285,7 +293,7 @@ export function AdminLoyaltyPage() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: idx * 0.02 }}
-                        className='border-b hover:bg-gray-50 transition-colors'
+                        className='border-b-2 border-blue-200 hover:bg-blue-50/30 transition-colors'
                       >
                         <td className='p-3 pl-6'>
                           <div>
