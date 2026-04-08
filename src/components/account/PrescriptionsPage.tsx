@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import {
   FileText,
   Upload,
   Eye,
+  ExternalLink,
   MessageCircle,
   ShoppingCart,
   Calendar,
@@ -92,6 +93,7 @@ const mapPrescription = (bp: BackendPrescription): Prescription => ({
 })
 
 export function PrescriptionsPage() {
+  const navigate = useNavigate()
   const [selectedTab, setSelectedTab] = useState('all')
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([])
   const [loading, setLoading] = useState(true)
@@ -257,7 +259,14 @@ export function PrescriptionsPage() {
         </div>
 
         {/* Actions */}
-        <div className='flex items-center gap-2 pt-3 border-t border-gray-100'>
+        <div className='flex items-center flex-wrap gap-2 pt-3 border-t border-gray-100'>
+          <Link to={`/account/prescriptions/${prescription.id}`}>
+            <Button size='sm' variant='outline' className='border-blue-200 text-blue-700 hover:bg-blue-50'>
+              <ExternalLink className='w-4 h-4 mr-1' />
+              Xem chi tiết
+            </Button>
+          </Link>
+
           <Dialog>
             <DialogTrigger asChild>
               <Button variant='outline' size='sm'>

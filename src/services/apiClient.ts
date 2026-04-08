@@ -13,7 +13,7 @@ class ApiClient {
   constructor() {
     this.client = axios.create({
       baseURL: API_BASE_URL,
-      timeout: 30000, // Increased to 30 seconds for admin operations
+      timeout: 90000, // 90 giây — đủ cho OCR LLM fallback (~47s)
       headers: {
         'Content-Type': 'application/json',
       },
