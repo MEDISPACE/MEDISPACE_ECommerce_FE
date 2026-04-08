@@ -12,4 +12,5 @@ export { ContentManagementPage } from './ContentManagementPage';
 export { ReportsAnalyticsPage } from './ReportsAnalyticsPage';
 export { SystemSettingsPage } from './SystemSettingsPage';
 export { ReviewManagementPage } from './ReviewManagementPage';
+export { AdminChatPage } from './AdminChatPage';
 

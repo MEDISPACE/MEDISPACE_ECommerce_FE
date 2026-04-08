@@ -10,3 +10,11 @@
 # Custom ignore
 README.txt
 
+# Test
+src/tests/
+vitest.config.ts
+coverage/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
