@@ -1,13 +1,15 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router'
-import { CheckCircle, ArrowLeft, Clock, UserCheck, Package, Upload, AlertCircle } from 'lucide-react'
+import { CheckCircle, ArrowLeft, Clock, UserCheck, Package, Upload, AlertCircle, Sparkles, Loader2, ScanLine, Brain, FileSearch } from 'lucide-react'
 
 import { Button } from '../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Alert, AlertDescription } from '../ui/alert'
 import { Badge } from '../ui/badge'
+import { Progress } from '../ui/progress'
 import { ImageUploader, type UploadedImage } from '../forms/ImageUploader'
 import { PrescriptionForm } from '../forms/PrescriptionForm'
+import type { OCRInitialData, MedicationItem } from '../forms/PrescriptionForm'
 import { ProgressStepper } from '../forms/ProgressStepper'
 import { toast } from 'sonner'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
@@ -31,6 +33,44 @@ export function UploadPrescriptionPage() {
   const [prescriptionNumber, setPrescriptionNumber] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  // OCR state
+  const [isScanning, setIsScanning] = useState(false)
+  const [ocrData, setOcrData] = useState<OCRInitialData | null>(null)
+  const [scanProgress, setScanProgress] = useState(0)
+  const [scanStage, setScanStage] = useState(0) // 0=idle, 1=detect, 2=recognize, 3=extract
+  const scanTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  // Mô phỏng tiến trình pipeline: Stage1(0-5s→0-30%), Stage2(5-17s→30-80%), Stage3(17-18s→80-99%)
+  const startScanProgress = () => {
+    setScanProgress(0)
+    setScanStage(1)
+    const startTime = Date.now()
+    scanTimerRef.current = setInterval(() => {
+      const elapsed = (Date.now() - startTime) / 1000
+      if (elapsed < 5) {
+        setScanStage(1)
+        setScanProgress(Math.min(30, (elapsed / 5) * 30))
+      } else if (elapsed < 17) {
+        setScanStage(2)
+        setScanProgress(Math.min(80, 30 + ((elapsed - 5) / 12) * 50))
+      } else {
+        setScanStage(3)
+        setScanProgress(Math.min(99, 80 + ((elapsed - 17) / 1) * 19))
+      }
+    }, 100)
+  }
+
+  const stopScanProgress = () => {
+    if (scanTimerRef.current) clearInterval(scanTimerRef.current)
+    setScanProgress(100)
+    setScanStage(0)
+  }
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => { if (scanTimerRef.current) clearInterval(scanTimerRef.current) }
+  }, [])
+
   // Find product if specified - TODO: Replace with real API call
   const product: Product | null = null
 
@@ -48,19 +88,46 @@ export function UploadPrescriptionPage() {
     setUploadedImages(images)
   }
 
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
     if (currentStep === 1) {
       const uploadedUrls = getUploadedImageUrls()
       if (uploadedUrls.length === 0) {
         toast.error('Vui lòng tải lên ít nhất một ảnh đơn thuốc')
         return
       }
-
-      // Check if any images are still uploading
       const stillUploading = uploadedImages.some((img) => img.isUploading)
       if (stillUploading) {
         toast.error('Vui lòng đợi ảnh tải lên hoàn tất')
         return
+      }
+
+      // ★ Tự động quét OCR sau khi upload ảnh
+      setIsScanning(true)
+      startScanProgress()
+      try {
+        const firstImageUrl = uploadedUrls[0]
+        const scanResult = await prescriptionsAPI.scanPrescription(firstImageUrl)
+        if (scanResult?.data) {
+          setOcrData({
+            ...scanResult.data,
+            rawText: scanResult.rawText,
+            confidence: scanResult.data.confidence,
+            // Chuẩn hóa null → string cho MedicationItem
+            medications: (scanResult.data.medications || []).map(m => ({
+              productName: m.productName || '',
+              dosage: m.dosage || '',
+              quantity: m.quantity,
+              unit: m.unit,
+              instructions: m.instructions || '',
+            })),
+          })
+        }
+      } catch (err) {
+        console.warn('OCR scan failed, user will fill manually:', err)
+        toast.warning('Không thể quét tự động. Vui lòng nhập thông tin thủ công.')
+      } finally {
+        stopScanProgress()
+        setIsScanning(false)
       }
     }
 
@@ -75,24 +142,26 @@ export function UploadPrescriptionPage() {
     }
   }
 
-  const handleFormSubmit = async (formData: {
-    patientName: string
-    patientAge: string
-    patientGender: string
-    phoneNumber: string
-    relationship: string
-    doctorName: string
-    hospitalName: string
-    examinationDate: Date | undefined
-    diagnosis: string
-    specialNotes: string
-    agreements: {
-      authentic: boolean
-      contactPermission: boolean
-      legalUnderstanding: boolean
-    }
-  }) => {
-    // Check authentication
+  const handleFormSubmit = async (
+    formData: {
+      patientName: string
+      patientAge: string
+      patientGender: string
+      phoneNumber: string
+      relationship: string
+      doctorName: string
+      hospitalName: string
+      examinationDate: Date | undefined
+      diagnosis: string
+      specialNotes: string
+      agreements: {
+        authentic: boolean
+        contactPermission: boolean
+        legalUnderstanding: boolean
+      }
+    },
+    medications: MedicationItem[]
+  ) => {
     if (!isAuthenticated) {
       toast.error('Vui lòng đăng nhập để gửi đơn thuốc')
       navigate('/login', { state: { from: '/upload-prescription' } })
@@ -109,23 +178,34 @@ export function UploadPrescriptionPage() {
     setIsSubmitting(true)
 
     try {
-      // Prepare data for API - matching backend UploadPrescriptionReqBody
+      // Chuẩn bị data gửi lên BE — đầy đủ các trường mới
       const prescriptionData = {
+        // Thông tin bệnh nhân (từ form / từ OCR)
+        patientName: formData.patientName || undefined,
+        patientAge: formData.patientAge || undefined,
+        patientGender: formData.patientGender || undefined,
+        diagnosis: formData.diagnosis || undefined,
+        specialNotes: formData.specialNotes || undefined,
+        // Thông tin khám
         doctorName: formData.doctorName,
         hospitalName: formData.hospitalName,
         prescriptionDate: formData.examinationDate ? formData.examinationDate.toISOString() : new Date().toISOString(),
         images: imageUrls,
-        medications: [
-          {
-            productName: formData.diagnosis || 'Theo đơn thuốc',
-            dosage: 'Theo chỉ định bác sĩ',
-            quantity: 1,
-            instructions: formData.specialNotes || 'Theo hướng dẫn của bác sĩ',
-          },
-        ],
+        // Thuốc từ OCR (hoặc mặc định nếu không quét được)
+        medications: medications.length > 0
+          ? medications.map(m => ({
+            productName: m.productName,
+            dosage: m.dosage || 'Theo chỉ định bác sĩ',
+            quantity: m.quantity ?? 1,
+            unit: m.unit || undefined,
+            instructions: m.instructions || 'Theo hướng dẫn của bác sĩ',
+          }))
+          : [{ productName: 'Theo đơn thuốc', dosage: 'Theo chỉ định bác sĩ', quantity: 1, instructions: 'Theo hướng dẫn của bác sĩ' }],
+        // OCR metadata
+        ocrRawText: ocrData?.rawText || undefined,
+        ocrConfidence: ocrData?.confidence || undefined,
       }
 
-      // Call the actual API
       const response = await prescriptionsAPI.submitPrescription(prescriptionData)
 
       if (response?.result) {
@@ -166,6 +246,110 @@ export function UploadPrescriptionPage() {
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
+        // Đang quét OCR → thay Step 1 bằng màn hình scanning
+        if (isScanning) {
+          const firstUrl = getUploadedImageUrls()[0]
+          const stageLabels = ['', 'Phát hiện vùng chữ...', 'Đọc text Tiếng Việt...', 'Trích xuất thông tin...']
+          const stageIcons = [null,
+            <ScanLine key='1' className='w-5 h-5' />,
+            <FileSearch key='2' className='w-5 h-5' />,
+            <Brain key='3' className='w-5 h-5' />
+          ]
+          const tips = [
+            'Chụp ảnh rõ ràng, đủ ánh sáng để tăng độ chính xác.',
+            'Hệ thống nhận diện đơn thuốc có thể có sai sót, vui lòng kiểm tra thông tin sau khi quét.',
+            'Thông tin có thể không chính xác 100%, vui lòng kiểm tra lại trước khi gửi.',
+          ]
+          return (
+            <div className='space-y-6'>
+              {/* Header */}
+              <div className='text-center'>
+                <div className='inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-full mb-4'>
+                  <Loader2 className='w-4 h-4 text-blue-600 animate-spin' />
+                  <span className='text-sm font-medium text-blue-700'>Đang phân tích đơn thuốc</span>
+                </div>
+                <h2 className='text-xl font-bold text-gray-800 mb-1'>Hệ thống nhận diện đơn thuốc đang làm việc...</h2>
+                <p className='text-sm text-gray-500'>Vui lòng không đóng trang. Thường mất khoảng 15-20 giây.</p>
+              </div>
+
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                {/* Image preview with scan line */}
+                <div className='relative rounded-2xl overflow-hidden border-2 border-blue-200 bg-gray-100' style={{ minHeight: '200px' }}>
+                  {firstUrl && (
+                    <img src={firstUrl} alt='Đơn thuốc' className='w-full h-full object-contain' />
+                  )}
+                  {/* Animated scan line */}
+                  <div
+                    className='absolute left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-blue-500 to-transparent'
+                    style={{
+                      top: `${(scanProgress / 100) * 100}%`,
+                      transition: 'top 0.1s linear',
+                      boxShadow: '0 0 12px 3px rgba(59,130,246,0.6)',
+                    }}
+                  />
+                  {/* Blue tint overlay */}
+                  <div className='absolute inset-0 bg-blue-500/5 pointer-events-none' />
+                </div>
+
+                {/* Pipeline & progress */}
+                <div className='space-y-4'>
+                  {/* Overall progress bar */}
+                  <div>
+                    <div className='flex justify-between text-xs text-gray-500 mb-1'>
+                      <span>Tiến trình phân tích</span>
+                      <span>{Math.round(scanProgress)}%</span>
+                    </div>
+                    <Progress value={scanProgress} className='h-2' />
+                  </div>
+
+                  {/* Pipeline stages */}
+                  <div className='space-y-2'>
+                    {[1, 2, 3].map((stage) => {
+                      const isDone = scanStage > stage
+                      const isActive = scanStage === stage
+                      return (
+                        <div
+                          key={stage}
+                          className={`flex items-center gap-3 p-3 rounded-xl border transition-all duration-500 ${isDone ? 'bg-emerald-50 border-emerald-200' :
+                            isActive ? 'bg-blue-50 border-blue-200 shadow-sm' :
+                              'bg-gray-50 border-gray-200 opacity-40'
+                            }`}
+                        >
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isDone ? 'bg-emerald-100 text-emerald-600' :
+                            isActive ? 'bg-blue-100 text-blue-600' :
+                              'bg-gray-100 text-gray-400'
+                            }`}>
+                            {isDone
+                              ? <CheckCircle className='w-5 h-5' />
+                              : isActive
+                                ? <Loader2 className='w-5 h-5 animate-spin' />
+                                : stageIcons[stage]
+                            }
+                          </div>
+                          <div className='flex-1 min-w-0'>
+                            <p className={`text-xs font-medium ${isDone ? 'text-emerald-700' : isActive ? 'text-blue-700' : 'text-gray-400'
+                              }`}>
+                              Trạm {stage}: {isDone ? '✓ Hoàn thành' : isActive ? stageLabels[stage] : stageLabels[stage]}
+                            </p>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {/* Tip box */}
+                  <div className='bg-amber-50 border border-amber-200 rounded-xl p-3'>
+                    <p className='text-xs text-amber-700'>
+                      💡 <strong>Mẹo:</strong> {tips[(scanStage - 1) % tips.length] || tips[0]}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        }
+
+        // Bình thường — hiện ImageUploader
         return (
           <div className='space-y-6'>
             <UniversalBreadcrumb items={breadcrumbItems} />
@@ -205,7 +389,7 @@ export function UploadPrescriptionPage() {
       case 2:
         return (
           <div className='space-y-6'>
-            {/* Show uploaded images summary */}
+            {/* Uploaded images summary */}
             <Card className='bg-emerald-50 border-emerald-200'>
               <CardContent className='p-4'>
                 <div className='flex items-center gap-2'>
@@ -215,11 +399,21 @@ export function UploadPrescriptionPage() {
               </CardContent>
             </Card>
 
+            {/* OCR scanning spinner */}
+            {isScanning && (
+              <div className='flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl'>
+                <Loader2 className='w-5 h-5 text-blue-600 animate-spin shrink-0' />
+                <div>
+                  <p className='text-sm font-medium text-blue-800'>Đang quét đơn thuốc bằng AI...</p>
+                  <p className='text-xs text-blue-600'>Hệ thống sẽ tự điền thông tin sau vài giây</p>
+                </div>
+              </div>
+            )}
+
             <PrescriptionForm
               onSubmit={handleFormSubmit}
               onSaveDraft={handleSaveDraft}
-              // @ts-expect-error - PrescriptionForm needs to be updated to accept isSubmitting
-              isSubmitting={isSubmitting}
+              initialData={ocrData || undefined}
             />
 
             <div className='flex justify-between'>
@@ -227,7 +421,7 @@ export function UploadPrescriptionPage() {
                 variant='outline'
                 onClick={handlePrevStep}
                 className='border-gray-300 text-gray-700 hover:bg-gray-50'
-                disabled={isSubmitting}
+                disabled={isSubmitting || isScanning}
               >
                 <ArrowLeft className='w-4 h-4 mr-2' />
                 Quay lại
@@ -385,9 +579,8 @@ export function UploadPrescriptionPage() {
                 <div className='space-y-3'>
                   <div className='flex items-start gap-3'>
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
-                        currentStep >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
-                      }`}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${currentStep >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
+                        }`}
                     >
                       <Upload className='w-4 h-4' />
                     </div>
@@ -399,9 +592,8 @@ export function UploadPrescriptionPage() {
 
                   <div className='flex items-start gap-3'>
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
-                        currentStep >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
-                      }`}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${currentStep >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
+                        }`}
                     >
                       <UserCheck className='w-4 h-4' />
                     </div>
@@ -413,9 +605,8 @@ export function UploadPrescriptionPage() {
 
                   <div className='flex items-start gap-3'>
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
-                        currentStep >= 3 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
-                      }`}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${currentStep >= 3 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
+                        }`}
                     >
                       <Package className='w-4 h-4' />
                     </div>
@@ -427,9 +618,8 @@ export function UploadPrescriptionPage() {
 
                   <div className='flex items-start gap-3'>
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
-                        currentStep >= 3 ? 'bg-emerald-600 text-white' : 'bg-gray-300 text-gray-600'
-                      }`}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${currentStep >= 3 ? 'bg-emerald-600 text-white' : 'bg-gray-300 text-gray-600'
+                        }`}
                     >
                       <CheckCircle className='w-4 h-4' />
                     </div>

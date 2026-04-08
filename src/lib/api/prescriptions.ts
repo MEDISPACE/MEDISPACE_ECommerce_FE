@@ -1,6 +1,37 @@
 // API services for prescriptions (Medical specific)
 import { apiClient } from '~/services/apiClient'
-import type { PrescriptionUpload } from '~/types/prescription'
+
+// OCR Scan response type
+export interface OCRScanResult {
+  success: boolean
+  message: string
+  rawText: string
+  data: {
+    patientName: string | null
+    patientAge: string | null
+    patientGender: string | null
+    doctorName: string | null
+    hospitalName: string | null
+    prescriptionDate: string | null
+    diagnosis: string | null
+    medications: Array<{
+      productName: string
+      dosage: string | null
+      quantity: number | null
+      unit: string | null
+      instructions: string | null
+    }>
+    specialNotes: string | null
+    confidence: string
+    _extraction_method?: string
+  }
+  timing?: {
+    station1_PaddleOCR_seconds: number
+    station2_VietOCR_seconds: number
+    station3_Extractor_seconds: number
+    total_pipeline_seconds: number
+  }
+}
 
 class PrescriptionsAPI {
   // Get user prescriptions
@@ -15,18 +46,26 @@ class PrescriptionsAPI {
     return response.data
   }
 
-  // Upload prescription image
-  async uploadPrescription(formData: FormData) {
-    const response = await apiClient.post('/prescriptions/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    })
-    return response.data
+  // ★ SCAN prescription image via OCR Service (qua proxy BE)
+  async scanPrescription(imageUrl: string): Promise<OCRScanResult> {
+    // Override timeout: OCR + LLM fallback có thể mất tới ~50s
+    const response = await apiClient.post<{ message: string; result: OCRScanResult }>(
+      '/prescriptions/scan',
+      { imageUrl },
+      { timeout: 150000 }
+    )
+    return response.data.result
   }
 
-  // Submit prescription for approval (matching backend UploadPrescriptionReqBody)
+  // Submit prescription for approval
   async submitPrescription(data: {
+    // Thông tin bệnh nhân
+    patientName?: string
+    patientAge?: string
+    patientGender?: string
+    diagnosis?: string
+    specialNotes?: string
+    // Thông tin khám
     doctorName: string
     hospitalName: string
     prescriptionDate: string
@@ -34,9 +73,13 @@ class PrescriptionsAPI {
       productName: string
       dosage: string
       quantity: number
+      unit?: string
       instructions: string
     }[]
     images?: string[]
+    // OCR metadata
+    ocrRawText?: string
+    ocrConfidence?: string
   }): Promise<{
     message: string
     result: {

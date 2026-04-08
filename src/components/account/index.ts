@@ -9,6 +9,7 @@ export { NotificationItem } from './NotificationItem';
 export { PaymentMethodsPage } from './PaymentMethodsPage';
 export { PaymentMethodCard } from './PaymentMethodCard';
 export { PrescriptionsPage } from './PrescriptionsPage';
+export { PrescriptionDetailPage } from './PrescriptionDetailPage';
 export { ProfileForm } from './ProfileForm';
 export { RewardsPage } from './RewardsPage';
 export { SettingsForm } from './SettingsForm';

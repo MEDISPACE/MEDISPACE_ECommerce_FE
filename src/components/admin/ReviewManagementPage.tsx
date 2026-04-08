@@ -457,8 +457,8 @@ export function ReviewManagementPage() {
 
             {/* Review Detail Modal */}
             <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-                <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto border-2 border-blue-200">
-                    <DialogHeader className="pb-4 border-b border-blue-100">
+                <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col overflow-hidden border-2 border-blue-200">
+                    <DialogHeader className="pb-4 border-b border-blue-100 shrink-0">
                         <DialogTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#0066CC] to-[#4A90E2]">Chi tiết đánh giá</DialogTitle>
                         <DialogDescription className="text-gray-600">
                             ID: <span className="font-mono bg-blue-50 px-2 py-0.5 rounded text-blue-700 border border-blue-100">{selectedReview?._id}</span>
@@ -466,7 +466,7 @@ export function ReviewManagementPage() {
                     </DialogHeader>
 
                     {selectedReview && (
-                        <div className="space-y-6 pt-4">
+                        <div className="space-y-6 pt-4 overflow-y-auto flex-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-blue-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-blue-400">
                             {/* Product & User Info - Grid */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gradient-to-br from-blue-50 to-white p-5 rounded-xl border-2 border-blue-100 shadow-sm">
                                 {/* Product */}
@@ -579,7 +579,7 @@ export function ReviewManagementPage() {
                         </div>
                     )}
 
-                    <DialogFooter className="flex flex-row justify-end gap-3 mt-6 pt-4 border-t-2 border-blue-100">
+                    <DialogFooter className="flex flex-row justify-end gap-3 pt-4 border-t-2 border-blue-100 shrink-0 bg-white">
                         <Button variant="outline" onClick={() => setIsDetailOpen(false)} className="!border-gray-300 hover:!bg-gray-100">
                             Đóng
                         </Button>
