@@ -239,7 +239,7 @@ export function EnhancedSearchBar({
                           className='w-12 h-12 object-cover rounded-lg border border-gray-200'
                         />
                       ) : (
-                        <span className='text-lg'>{suggestion.icon}</span>
+                        <span className='text-lg'>{(suggestion as any).icon}</span>
                       )}
                       <div className='flex-1'>
                         <div className='font-medium'>{suggestion.text}</div>

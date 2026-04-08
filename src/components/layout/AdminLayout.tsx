@@ -21,6 +21,7 @@ import {
   TrendingUp,
   Tag,
   MessageSquare,
+  MessageCircle,
   Star,
   Building2,
   RotateCcw,
@@ -107,6 +108,11 @@ const navigationItems: NavItem[] = [
     label: 'Quản lý dược sĩ',
     href: '/admin/pharmacists',
     icon: Stethoscope,
+  },
+  {
+    label: 'Quản lý Chat',
+    href: '/admin/chat',
+    icon: MessageCircle,
   },
   {
     label: 'Quản lý nội dung',

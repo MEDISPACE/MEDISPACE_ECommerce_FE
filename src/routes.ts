@@ -131,5 +131,6 @@ export default [
     route('settings', 'routes/admin/settings.tsx'),
     route('settings/general', 'routes/admin/settings/index.tsx'),
     route('users', 'routes/admin/users.tsx'),
+    route('chat', 'routes/admin/chat.tsx'),
   ]),
 ] satisfies RouteConfig

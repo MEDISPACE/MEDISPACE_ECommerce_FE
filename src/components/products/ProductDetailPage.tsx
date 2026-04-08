@@ -890,7 +890,7 @@ export function ProductDetailPage() {
                 totalPages={totalPages}
                 sortBy={sortBy}
                 onPageChange={setPage}
-                onSortChange={setSortBy}
+                onSortChange={(sort) => setSortBy(sort as typeof sortBy)}
                 onHelpful={async (reviewId) => {
                   await markHelpful(reviewId)
                   refetchReviews()

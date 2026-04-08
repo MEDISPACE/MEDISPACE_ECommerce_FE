@@ -9,7 +9,7 @@ export interface User {
 export interface Conversation {
     _id: string
     customerId: string
-    pharmacistId: string
+    pharmacistId?: string  // optional – chưa assign khi shared inbox
     lastMessage?: string
     lastMessageAt?: string
     unreadCount: {
@@ -23,14 +23,25 @@ export interface Conversation {
     pharmacist?: User
 }
 
+export interface ProductRef {
+    productId: string
+    name: string
+    slug: string
+    price: number
+    unit: string
+    imageUrl?: string
+    requiresPrescription?: boolean
+}
+
 export interface Message {
     _id: string
     conversationId: string
     senderId: string
     senderRole: 'customer' | 'pharmacist'
     content: string
-    type: 'text' | 'image'
+    type: 'text' | 'image' | 'product'
     imageUrl?: string
+    productRef?: ProductRef
     isRead: boolean
     createdAt: string
     updatedAt: string
@@ -39,9 +50,10 @@ export interface Message {
 export interface SendMessagePayload {
     conversationId?: string
     pharmacistId?: string
-    content: string
-    type?: 'text' | 'image'
+    content?: string
+    type?: 'text' | 'image' | 'product'
     imageUrl?: string
+    productRef?: ProductRef
 }
 
 export interface GetConversationsParams {
