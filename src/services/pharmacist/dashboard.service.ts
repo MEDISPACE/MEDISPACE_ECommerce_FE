@@ -25,6 +25,14 @@ export interface Prescription {
   _id: string
   prescriptionNumber: string
   customerId: string
+
+  // Thông tin bệnh nhân (từ OCR)
+  patientName?: string
+  patientAge?: string
+  patientGender?: string
+  diagnosis?: string
+  specialNotes?: string
+
   doctorName: string
   hospitalName?: string
   prescriptionDate: string
@@ -33,16 +41,27 @@ export interface Prescription {
     productName: string
     dosage: string
     quantity: number
+    unit?: string
     instructions: string
   }>
-  status: 'pending' | 'verified' | 'rejected' | 'expired' // lowercase for consistency
+  status: 'pending' | 'verified' | 'rejected' | 'expired'
   verifiedBy?: string
   verifiedAt?: string
   notes?: string
   validUntil?: string
   createdAt: string
   updatedAt: string
-  pharmacistNotes?: string // Notes added by the pharmacist
+  pharmacistNotes?: string
+  ocrConfidence?: string
+  // Customer info (populated from lookup)
+  customer?: {
+    _id: string
+    firstName: string
+    lastName: string
+    email: string
+    phoneNumber?: string
+    avatar?: string
+  }
 }
 
 export interface Order {

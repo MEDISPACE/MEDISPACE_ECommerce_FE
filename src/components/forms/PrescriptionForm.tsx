@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card } from '../ui/card'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
@@ -7,11 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group'
 import { Checkbox } from '../ui/checkbox'
 import { Button } from '../ui/button'
-import { CalendarIcon } from 'lucide-react'
+import { CalendarIcon, Sparkles, X } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { Calendar as CalendarComponent } from '../ui/calendar'
-import { format } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import { vi } from 'date-fns/locale'
+import { Badge } from '../ui/badge'
 
 interface PrescriptionFormData {
   patientName: string
@@ -31,30 +32,88 @@ interface PrescriptionFormData {
   }
 }
 
+// Thông tin thuốc từ OCR
+export interface MedicationItem {
+  productName: string
+  dosage: string
+  quantity: number | null
+  unit: string | null
+  instructions: string
+}
+
+// Dữ liệu OCR để auto-fill
+export interface OCRInitialData {
+  patientName?: string | null
+  patientAge?: string | null
+  patientGender?: string | null
+  phoneNumber?: string | null
+  doctorName?: string | null
+  hospitalName?: string | null
+  prescriptionDate?: string | null
+  diagnosis?: string | null
+  specialNotes?: string | null
+  medications?: MedicationItem[]
+  confidence?: string
+  rawText?: string
+}
+
 interface PrescriptionFormProps {
-  onSubmit: (data: PrescriptionFormData) => void
+  onSubmit: (data: PrescriptionFormData, medications: MedicationItem[]) => void
   onSaveDraft: (data: PrescriptionFormData) => void
+  initialData?: OCRInitialData   // ← Dữ liệu auto-fill từ OCR
   className?: string
 }
 
-export function PrescriptionForm({ onSubmit, onSaveDraft, className = '' }: PrescriptionFormProps) {
-  const [formData, setFormData] = useState<PrescriptionFormData>({
-    patientName: '',
-    patientAge: '',
-    patientGender: '',
-    phoneNumber: '',
+export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className = '' }: PrescriptionFormProps) {
+  const [formData, setFormData] = useState<PrescriptionFormData>(() => ({
+    patientName: initialData?.patientName || '',
+    patientAge: initialData?.patientAge || '',
+    patientGender: initialData?.patientGender || '',
+    phoneNumber: initialData?.phoneNumber || '',
     relationship: 'myself',
-    doctorName: '',
-    hospitalName: '',
-    examinationDate: undefined,
-    diagnosis: '',
-    specialNotes: '',
+    doctorName: initialData?.doctorName || '',
+    hospitalName: initialData?.hospitalName || '',
+    examinationDate: initialData?.prescriptionDate
+      ? (() => { try { const d = parseISO(initialData.prescriptionDate!); return isNaN(d.getTime()) ? undefined : d } catch { return undefined } })()
+      : undefined,
+    diagnosis: initialData?.diagnosis || '',
+    specialNotes: initialData?.specialNotes || '',
     agreements: {
       authentic: false,
       contactPermission: false,
       legalUnderstanding: false,
     },
-  })
+  }))
+
+  // Medications từ OCR — có thể edit
+  const [medications, setMedications] = useState<MedicationItem[]>(
+    initialData?.medications || []
+  )
+
+  const isOCRFilled = !!(initialData?.patientName || initialData?.doctorName || (initialData?.medications && initialData.medications.length > 0))
+
+  // Nếu initialData thay đổi (re-scan), sync lại form
+  useEffect(() => {
+    if (!initialData) return
+    setFormData(prev => ({
+      ...prev,
+      patientName: initialData.patientName || prev.patientName,
+      patientAge: initialData.patientAge || prev.patientAge,
+      patientGender: initialData.patientGender || prev.patientGender,
+      phoneNumber: initialData.phoneNumber || prev.phoneNumber,
+      doctorName: initialData.doctorName || prev.doctorName,
+      hospitalName: initialData.hospitalName || prev.hospitalName,
+      diagnosis: initialData.diagnosis || prev.diagnosis,
+      specialNotes: initialData.specialNotes || prev.specialNotes,
+      examinationDate: initialData.prescriptionDate
+        ? (() => { try { const d = parseISO(initialData.prescriptionDate!); return isNaN(d.getTime()) ? prev.examinationDate : d } catch { return prev.examinationDate } })()
+        : prev.examinationDate,
+    }))
+    if (initialData.medications && initialData.medications.length > 0) {
+      setMedications(initialData.medications)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialData])
 
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -94,7 +153,7 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, className = '' }: Pres
 
     setIsSubmitting(true)
     try {
-      await onSubmit(formData)
+      await onSubmit(formData, medications)
     } finally {
       setIsSubmitting(false)
     }
@@ -106,6 +165,20 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, className = '' }: Pres
 
   return (
     <form onSubmit={handleSubmit} className={`space-y-6 ${className}`}>
+
+      {/* OCR Auto-fill badge */}
+      {isOCRFilled && (
+        <div className='flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl'>
+          <Sparkles className='w-5 h-5 text-emerald-600 shrink-0' />
+          <span className='text-sm text-emerald-800 font-medium'>Form đã được điền tự động từ OCR</span>
+          {initialData?.confidence && (
+            <Badge variant='outline' className='ml-auto text-emerald-700 border-emerald-300 text-xs'>
+              Độ tin cậy: {initialData.confidence}
+            </Badge>
+          )}
+        </div>
+      )}
+
       {/* Patient Information */}
       <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
         <div className='p-6'>
@@ -144,7 +217,10 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, className = '' }: Pres
               <Label htmlFor='patientGender' className='mb-2 block'>
                 Giới tính
               </Label>
-              <Select onValueChange={(value) => handleInputChange('patientGender', value)}>
+              <Select
+                value={formData.patientGender || ''}
+                onValueChange={(value) => handleInputChange('patientGender', value)}
+              >
                 <SelectTrigger className='border-2 border-blue-200 focus:border-blue-500'>
                   <SelectValue placeholder='Chọn giới tính' />
                 </SelectTrigger>
@@ -280,6 +356,41 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, className = '' }: Pres
           </div>
         </div>
       </Card>
+
+      {/* Medications từ OCR */}
+      {medications.length > 0 && (
+        <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-emerald-100'>
+          <div className='p-6'>
+            <h3 className='mb-4 text-emerald-800 flex items-center gap-2'>
+              <Sparkles className='w-5 h-5' />
+              💊 DANH SÁCH THUỐC (từ OCR)
+            </h3>
+            <div className='space-y-2'>
+              {medications.map((med, idx) => (
+                <div key={idx} className='flex items-start justify-between p-3 bg-emerald-50 rounded-lg border border-emerald-100'>
+                  <div className='flex-1'>
+                    <p className='font-medium text-emerald-900 text-sm'>{med.productName}</p>
+                    {med.dosage && <p className='text-xs text-gray-600 mt-0.5'>Liều: {med.dosage}</p>}
+                    <div className='flex gap-3 mt-0.5'>
+                      {med.quantity != null && (
+                        <span className='text-xs text-gray-500'>SL: {med.quantity} {med.unit || ''}</span>
+                      )}
+                      {med.instructions && <span className='text-xs text-gray-500'>{med.instructions}</span>}
+                    </div>
+                  </div>
+                  <button
+                    type='button'
+                    onClick={() => setMedications(prev => prev.filter((_, i) => i !== idx))}
+                    className='text-gray-400 hover:text-red-500 ml-2 shrink-0'
+                  >
+                    <X className='w-4 h-4' />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Special Notes */}
       <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>

@@ -7,12 +7,10 @@ import {
   CheckCircle,
   XCircle,
   Eye,
-  MessageSquare, // TODO: Will be used for chat button when API is ready
   Package,
   User,
-  Phone, // TODO: Will be used to display customer phone
   FileText,
-  Pill,
+  Stethoscope,
   Loader2,
 } from 'lucide-react'
 /* eslint-enable @typescript-eslint/no-unused-vars */
@@ -21,7 +19,6 @@ import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { Card, CardContent } from '../ui/card'
-import { Avatar, AvatarFallback } from '../ui/avatar'
 import { toast } from 'sonner'
 import { useStatsCards } from '~/components/shared/useStatsCards'
 import { StatsCardGrid, type StatCardConfig } from '~/components/shared/StatsCard'
@@ -287,66 +284,74 @@ export function PrescriptionManagementPage() {
               key={prescription._id}
               className='bg-white/80 backdrop-blur-lg shadow-lg border border-blue-100 hover:shadow-xl transition-all duration-200'
             >
-              <CardContent className='p-6'>
-                <div className='flex items-start justify-between mb-4'>
-                  <div className='flex items-center gap-4'>
-                    <Avatar>
-                      <AvatarFallback>Rx</AvatarFallback>
-                    </Avatar>
-
-                    <div>
-                      <div className='flex items-center gap-3 mb-1'>
-                        <h3 className='font-medium text-gray-900'>{prescription.prescriptionNumber}</h3>
+              <CardContent className='p-5'>
+                <div className='flex items-start justify-between gap-3 mb-3'>
+                  {/* Left: identity */}
+                  <div className='flex items-start gap-3 min-w-0'>
+                    <div className='w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0'>
+                      <FileText className='w-5 h-5 text-blue-600' />
+                    </div>
+                    <div className='min-w-0'>
+                      <div className='flex items-center gap-2 flex-wrap mb-0.5'>
+                        <span className='font-semibold text-sm text-gray-900'>{prescription.prescriptionNumber}</span>
                         {getPrescriptionStatusBadge(prescription.status)}
+                        {/* Urgency: how long waiting? */}
+                        {prescription.status === 'pending' && (() => {
+                          const diffHours = (Date.now() - new Date(prescription.createdAt).getTime()) / 3600000
+                          return diffHours > 8 ? (
+                            <span className='flex items-center gap-1 text-xs text-red-600 bg-red-50 px-1.5 py-0.5 rounded-full border border-red-200'>
+                              <AlertTriangle className='w-3 h-3' />
+                              Chờ {Math.floor(diffHours)}h
+                            </span>
+                          ) : null
+                        })()}
                       </div>
-
-                      <div className='flex items-center gap-4 text-sm text-gray-600'>
-                        <div className='flex items-center gap-1'>
-                          <User className='w-4 h-4' />
-                          BS. {prescription.doctorName}
-                        </div>
-                        {prescription.hospitalName && (
-                          <div className='flex items-center gap-1'>
-                            <FileText className='w-4 h-4' />
-                            {prescription.hospitalName}
-                          </div>
-                        )}
-                        <div className='flex items-center gap-1'>
-                          <Clock className='w-4 h-4' />
-                          {formatDateTime(prescription.createdAt)}
-                        </div>
-                      </div>
+                      {/* Patient name prominently */}
+                      <p className='text-sm font-medium text-blue-800'>
+                        {prescription.patientName
+                          ? <span className='flex items-center gap-1'>
+                              <User className='w-3.5 h-3.5' />
+                              {prescription.patientName}{prescription.patientAge ? `, ${prescription.patientAge} tuổi` : ''}
+                            </span>
+                          : <span className='text-gray-400 italic text-xs'>Chưa có tên bệnh nhân</span>
+                        }
+                      </p>
+                      <p className='text-xs text-gray-500 mt-0.5'>
+                        BS. {prescription.doctorName}
+                        {prescription.hospitalName ? ` · ${prescription.hospitalName}` : ''}
+                      </p>
                     </div>
                   </div>
 
-                  <div className='flex items-center gap-3'>
-                    <Button variant='outline' size='sm' onClick={() => handleViewPrescription(prescription)}>
+                  {/* Right: actions */}
+                  <div className='flex items-center gap-2 shrink-0'>
+                    <span className='text-xs text-gray-400 hidden sm:block'>
+                      <Clock className='w-3 h-3 inline mr-0.5' />
+                      {formatDateTime(prescription.createdAt)}
+                    </span>
+                    <Button variant='outline' size='sm' onClick={() => handleViewPrescription(prescription)} className='border-blue-200 text-blue-700 hover:bg-blue-50'>
                       <Eye className='w-4 h-4 mr-1' />
-                      Xem chi tiết
+                      Xem &amp; Xét duyệt
                     </Button>
                   </div>
                 </div>
 
-                <div className='grid grid-cols-3 gap-4 text-sm'>
-                  <div>
-                    <span className='text-gray-500'>Bác sĩ:</span>
-                    <p className='font-medium'>{prescription.doctorName}</p>
-                  </div>
-                  <div>
-                    <span className='text-gray-500'>Bệnh viện:</span>
-                    <p className='font-medium'>{prescription.hospitalName || 'Không có'}</p>
-                  </div>
-                  <div>
-                    <span className='text-gray-500'>Số thuốc:</span>
-                    <p className='font-medium'>{prescription.medications.length} loại</p>
-                  </div>
+                {/* Info chips */}
+                <div className='flex flex-wrap gap-2 text-xs text-gray-600'>
+                  <span className='bg-gray-100 px-2 py-0.5 rounded-full'>
+                    💊 {prescription.medications.length} thuốc
+                  </span>
+                  {prescription.diagnosis && (
+                    <span className='bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full max-w-xs truncate'>
+                      <Stethoscope className='w-3 h-3 inline mr-0.5' />
+                      {prescription.diagnosis}
+                    </span>
+                  )}
                 </div>
 
                 {prescription.notes && (
-                  <div className='mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg'>
-                    <p className='text-sm text-blue-800'>
-                      <strong>Ghi chú:</strong> {prescription.notes}
-                    </p>
+                  <div className='mt-3 p-2 bg-blue-50 border border-blue-200 rounded-lg'>
+                    <p className='text-xs text-blue-800'><strong>Ghi chú:</strong> {prescription.notes}</p>
                   </div>
                 )}
               </CardContent>

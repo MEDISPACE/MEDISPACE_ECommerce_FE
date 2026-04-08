@@ -623,7 +623,7 @@ export function PrescriptionManagementPage() {
       {/* Prescription Detail Dialog */}
       {selectedPrescription && (
         <Dialog open={!!selectedPrescription} onOpenChange={() => setSelectedPrescription(null)}>
-          <DialogContent className='!w-[900px] max-w-[95vw] max-h-[90vh] overflow-y-auto'>
+          <DialogContent className='!w-[900px] max-w-[95vw] max-h-[90vh] flex flex-col overflow-hidden'>
             <DialogHeader>
               <DialogTitle className='flex items-center gap-3'>
                 <span>Chi tiết đơn thuốc #{selectedPrescription.id}</span>
@@ -634,7 +634,7 @@ export function PrescriptionManagementPage() {
               <DialogDescription>Xem đầy đủ thông tin đơn thuốc, dược sĩ phụ trách và lịch sử xử lý</DialogDescription>
             </DialogHeader>
 
-            <div className='space-y-6'>
+            <div className='space-y-6 overflow-y-auto flex-1 px-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-blue-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-blue-400'>
               {/* Customer & Pharmacist Info */}
               <div className='grid grid-cols-2 gap-4'>
                 <div className='p-4 bg-blue-50 rounded-lg border border-blue-200'>
@@ -779,9 +779,10 @@ export function PrescriptionManagementPage() {
                 </div>
               )}
 
-              {/* Action Buttons */}
-              {/* Admin can approve/reject any prescription */}
-              <div className='flex gap-3 pt-6 border-t'>
+            </div>
+
+            {/* ── FOOTER: fixed actions ── */}
+            <div className='flex gap-3 pt-3 border-t border-gray-100 shrink-0 bg-white'>
                 <Button
                   variant='outline'
                   onClick={() => setSelectedPrescription(null)}
@@ -815,7 +816,6 @@ export function PrescriptionManagementPage() {
                   <CheckCircle className='w-4 h-4 mr-2 text-white' />
                   Phê duyệt
                 </Button>
-              </div>
             </div>
           </DialogContent>
         </Dialog>
