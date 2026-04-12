@@ -5,11 +5,13 @@ export interface CartItem {
   name: string
   sku: string
   quantity: number
-  unitPrice: number
+  unitPrice: number       // Giá sau campaign (salePrice) hoặc giá gốc
+  originalUnitPrice?: number // Giá gốc trước campaign (để gạch ngang)
   totalPrice: number
+  campaignId?: string
   prescriptionRequired: boolean
   image?: string
-  unit?: string // Selected unit from priceVariants (e.g., "Hộp", "Viên")
+  unit?: string
   priceVariants?: Array<{
     unit: string
     price: number
@@ -52,7 +54,7 @@ export interface AddToCartRequest {
   productId: string
   quantity: number
   unit?: string // Selected unit from priceVariants
-  price?: number // Unit price for the selected variant
+  // price removed: backend now calculates the authoritative price
 }
 
 export interface UpdateCartItemRequest {

@@ -766,6 +766,26 @@ export function AdminCampaignPage() {
                   ))}
                 </div>
               </div>
+              {/* Warning: khi có maxDiscountAmount mà không đặt badgeText */}
+              {formData.discountType === 'percentage' && formData.maxDiscountAmount && !formData.badgeText && (
+                <div className='flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800'>
+                  <span>⚠️</span>
+                  <div>
+                    <p className='font-medium'>Nên đặt badge text khi có giảm tối đa</p>
+                    <p className='text-amber-600 mt-0.5'>
+                      Campaign giảm <strong>{formData.discountValue}%</strong> tối đa <strong>{Number(formData.maxDiscountAmount).toLocaleString('vi-VN')}đ</strong> — 
+                      với sản phẩm giá cao, badge % thực tế sẽ khác {formData.discountValue}%.
+                    </p>
+                    <button
+                      type='button'
+                      onClick={() => setFormData(f => ({ ...f, badgeText: `Giảm ${f.discountValue}% tối đa ${Number(f.maxDiscountAmount).toLocaleString('vi-VN')}đ` }))}
+                      className='mt-1.5 text-amber-700 underline font-medium hover:text-amber-900'
+                    >
+                      Tự động điền: "Giảm {formData.discountValue}% tối đa {Number(formData.maxDiscountAmount).toLocaleString('vi-VN')}đ"
+                    </button>
+                  </div>
+                </div>
+              )}
               {formData.badgeText && (
                 <span
                   className='text-white text-xs px-2 py-1 rounded inline-block'
