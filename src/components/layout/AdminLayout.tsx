@@ -25,6 +25,9 @@ import {
   Star,
   Building2,
   RotateCcw,
+  Gift,
+  Zap,
+  Sparkles,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { Button } from '../ui/button'
@@ -128,6 +131,21 @@ const navigationItems: NavItem[] = [
     label: 'Quản lý đánh giá',
     href: '/admin/reviews',
     icon: Star,
+  },
+  {
+    label: 'Coupon & Khuyến mãi',
+    href: '/admin/coupons',
+    icon: Gift,
+  },
+  {
+    label: 'Chiến dịch giảm giá',
+    href: '/admin/campaigns',
+    icon: Zap,
+  },
+  {
+    label: 'Loyalty & Điểm thưởng',
+    href: '/admin/loyalty',
+    icon: Sparkles,
   },
   {
     label: 'Báo cáo & Phân tích',
