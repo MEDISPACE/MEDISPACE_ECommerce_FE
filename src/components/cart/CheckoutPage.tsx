@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { Shield, ChevronRight, MapPin, CreditCard, Truck, Clock, Smartphone, Plus, RotateCcw } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
@@ -76,6 +76,7 @@ const paymentMethods: PaymentMethod[] = [
 export function CheckoutPage() {
   const { state, getSelectedItemsTotal, getSelectedItemsCount, clearCart, refreshCart, selectAllItems } = useCart()
   const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
   const isBuyNow = searchParams.get('mode') === 'buy_now'
   const [buyNowItem, setBuyNowItem] = useState<CartItem | null>(null)
 
@@ -125,22 +126,25 @@ export function CheckoutPage() {
         if (product) {
           const quantity = parseInt(searchParams.get('quantity') || '1')
           const unit = searchParams.get('unit')
-          let price = product.price
 
-          // Check for unit price variant
-          if (unit && product.priceVariants) {
-            const variant = product.priceVariants.find(v => v.unit === unit)
-            if (variant) price = variant.price
-          }
+          // Check for unit price variant (enriched by campaign from backend)
+          const selectedVariant = unit && product.priceVariants
+            ? product.priceVariants.find((v: any) => v.unit === unit)
+            : (product.priceVariants?.find((v: any) => v.isDefault) || product.priceVariants?.[0])
+
+          // Use campaign salePrice if available, fallback to original price
+          const originalPrice = selectedVariant?.price || product.price || 0
+          const unitPrice = selectedVariant?.salePrice || originalPrice
 
           setBuyNowItem({
             productId: product._id,
             name: product.name,
             sku: product.sku || '',
-            unit: unit || product.unit,
+            unit: unit || selectedVariant?.unit || product.unit,
             quantity: quantity || 1,
-            unitPrice: price || 0,
-            totalPrice: (price || 0) * (quantity || 1),
+            unitPrice,
+            originalUnitPrice: originalPrice !== unitPrice ? originalPrice : undefined,
+            totalPrice: unitPrice * (quantity || 1),
             prescriptionRequired: product.requiresPrescription || false,
             image: product.featuredImage || product.image || product.images?.[0] || '',
             priceVariants: product.priceVariants
@@ -176,6 +180,18 @@ export function CheckoutPage() {
 
     fetchData()
   }, [])
+
+  // Guard: nếu không phải buy_now và không có item nào được chọn sau khi load xong
+  // thì redirect về /cart thành thay vì hiển thị trang checkout rỗng
+  useEffect(() => {
+    if (!loading && !isBuyNow && state.cart !== undefined) {
+      const selectedCount = state.selectedItems.size
+      const cartHasItems = (state.cart?.items?.length ?? 0) > 0
+      if (!cartHasItems || selectedCount === 0) {
+        navigate('/cart', { replace: true })
+      }
+    }
+  }, [loading, isBuyNow, state.cart, state.selectedItems])
 
   const cartItems = isBuyNow
     ? (buyNowItem ? [buyNowItem] : [])
@@ -629,8 +645,15 @@ export function CheckoutPage() {
                             SL: {item.quantity}{item.unit ? ` x ${item.unit}` : ''}
                           </div>
                         </div>
-                        <div className='text-sm font-medium text-blue-600'>
-                          {new Intl.NumberFormat('vi-VN').format(item.totalPrice)}đ
+                        <div className='text-right'>
+                          <div className='text-sm font-medium text-blue-600'>
+                            {new Intl.NumberFormat('vi-VN').format(item.totalPrice)}đ
+                          </div>
+                          {(item as any).originalUnitPrice && (item as any).originalUnitPrice > item.unitPrice && (
+                            <div className='text-xs text-gray-400 line-through'>
+                              {new Intl.NumberFormat('vi-VN').format((item as any).originalUnitPrice * item.quantity)}đ
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}

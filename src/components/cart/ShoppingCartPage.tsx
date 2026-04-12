@@ -50,9 +50,12 @@ export function ShoppingCartPage() {
   useEffect(() => {
     if (cart?.appliedCoupons) {
       setAppliedCoupons(cart.appliedCoupons)
-      const totalDisc = cart.appliedCoupons
-        .filter((c: any) => c.type !== 'free_shipping')
-        .reduce((sum: number, c: any) => sum + (c.discountAmount || 0), 0)
+      // Dùng cart.discountAmount từ DB làm nguồn chính xác nhất
+      const totalDisc = (cart as any).discountAmount > 0
+        ? (cart as any).discountAmount
+        : cart.appliedCoupons
+            .filter((c: any) => c.type !== 'free_shipping')
+            .reduce((sum: number, c: any) => sum + (c.discountAmount || 0), 0)
       setCouponDiscount(totalDisc)
       setFreeShippingFromCoupon(cart.appliedCoupons.some((c: any) => c.type === 'free_shipping'))
     }
@@ -315,9 +318,17 @@ export function ShoppingCartPage() {
                       )}
 
                       <div className='flex items-center justify-between'>
-                        <div className='text-lg font-bold text-blue-600'>
-                          {new Intl.NumberFormat('vi-VN').format(item.unitPrice)}đ
-                          {item.unit && <span className='text-sm font-normal text-gray-500 ml-1'>/ {item.unit}</span>}
+                        <div>
+                          <div className='text-lg font-bold text-blue-600'>
+                            {new Intl.NumberFormat('vi-VN').format(item.unitPrice)}đ
+                            {item.unit && <span className='text-sm font-normal text-gray-500 ml-1'>/ {item.unit}</span>}
+                          </div>
+                          {/* Giá gốc nếu có campaign */}
+                          {(item as any).originalUnitPrice && (item as any).originalUnitPrice > item.unitPrice && (
+                            <div className='text-xs text-gray-400 line-through'>
+                              {new Intl.NumberFormat('vi-VN').format((item as any).originalUnitPrice)}đ
+                            </div>
+                          )}
                         </div>
 
                         <div className='flex items-center gap-4'>
@@ -385,7 +396,7 @@ export function ShoppingCartPage() {
           </div>
 
           {/* Promotion Section */}
-          <Card className='bg-white border-blue-100 hover:shadow-md transition-shadow'>
+          <Card className={`bg-white border-blue-100 hover:shadow-md transition-shadow ${getSelectedItemsCount() === 0 ? 'opacity-60' : ''}`}>
             <CardHeader>
               <CardTitle className='text-blue-800 flex items-center gap-2'>
                 <Gift className='w-5 h-5' />
@@ -393,16 +404,20 @@ export function ShoppingCartPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <CouponInput
-                subtotal={subtotal}
-                hasPrescriptionItems={cart?.items.some(i => i.prescriptionRequired)}
-                initialCoupons={appliedCoupons}
-                onCouponsChange={(coupons, discount, hasFreeship) => {
-                  setAppliedCoupons([...coupons])
-                  setCouponDiscount(discount)
-                  setFreeShippingFromCoupon(hasFreeship)
-                }}
-              />
+              {getSelectedItemsCount() === 0 ? (
+                <p className='text-sm text-gray-400 italic'>Vui lòng chọn ít nhất 1 sản phẩm để áp dụng mã giảm giá.</p>
+              ) : (
+                <CouponInput
+                  subtotal={subtotal}
+                  hasPrescriptionItems={cart?.items.some(i => i.prescriptionRequired)}
+                  initialCoupons={appliedCoupons}
+                  onCouponsChange={(coupons, discount, hasFreeship) => {
+                    setAppliedCoupons([...coupons])
+                    setCouponDiscount(discount)
+                    setFreeShippingFromCoupon(hasFreeship)
+                  }}
+                />
+              )}
             </CardContent>
           </Card>
         </div>

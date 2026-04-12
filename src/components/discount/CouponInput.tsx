@@ -1,15 +1,16 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Tag, X, CheckCircle, Loader2, Ticket } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Badge } from '../ui/badge'
 import { apiClient } from '../../services/apiClient'
+import { useCart } from '../../contexts/CartContext'
 
 interface AppliedCoupon {
   code: string
   name: string
   discountAmount: number
-  type: 'percentage' | 'fixed_amount' | 'free_shipping'
+  type: 'percentage' | 'fixed_amount' | 'fixed' | 'free_shipping'
 }
 
 interface CouponInputProps {
@@ -22,11 +23,22 @@ interface CouponInputProps {
 }
 
 export function CouponInput({ subtotal, hasPrescriptionItems = false, initialCoupons = [], isDirectBuy = false, onCouponsChange, className }: CouponInputProps) {
+  const { refreshCart } = useCart()
   const [inputCode, setInputCode] = useState('')
   const [appliedCoupons, setAppliedCoupons] = useState<AppliedCoupon[]>(initialCoupons)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+
+  // Sync khi initialCoupons thay đổi (do cart load async từ API)
+  const prevInitialRef = useRef<string>('')
+  useEffect(() => {
+    const key = initialCoupons.map(c => c.code).join(',')
+    if (key !== prevInitialRef.current) {
+      prevInitialRef.current = key
+      setAppliedCoupons(initialCoupons)
+    }
+  }, [initialCoupons])
 
   const handleApply = async () => {
     const code = inputCode.trim().toUpperCase()
@@ -92,8 +104,8 @@ export function CouponInput({ subtotal, hasPrescriptionItems = false, initialCou
         onCouponsChange?.(updated, totalDiscount, hasFreeShip)
 
       } else {
-        // Normal cart flow
-        const res = await apiClient.post<any>('/coupons/apply', { code })
+        // Normal cart flow — truyền subtotal của items đang được chọn
+        const res = await apiClient.post<any>('/coupons/apply', { code, selectedSubtotal: subtotal })
         const data = res.data.result
 
         const newCoupon: AppliedCoupon = data.addedCoupon
@@ -107,6 +119,9 @@ export function CouponInput({ subtotal, hasPrescriptionItems = false, initialCou
           .reduce((sum, c) => sum + c.discountAmount, 0)
         const hasFreeShip = updated.some(c => c.type === 'free_shipping')
         onCouponsChange?.(updated, totalDiscount, hasFreeShip)
+
+        // Sync lại CartContext để checkout và các trang khác thấy mã
+        await refreshCart()
       }
 
       // Clear success message after 3s
@@ -122,6 +137,8 @@ export function CouponInput({ subtotal, hasPrescriptionItems = false, initialCou
     try {
       if (!isDirectBuy) {
         await apiClient.delete('/coupons/remove', { data: { code } })
+        // Sync cart context sau khi xóa mã
+        await refreshCart()
       }
       
       const updated = appliedCoupons.filter(c => c.code !== code)
