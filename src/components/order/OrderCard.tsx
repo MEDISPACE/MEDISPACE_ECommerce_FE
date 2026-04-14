@@ -26,11 +26,9 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
     const checkReviewedProducts = async () => {
       try {
         const userReviews = await reviewService.getUserReviews()
-        const reviewedIds = new Set(userReviews.map(review => review.productId))
+        const reviewedIds = new Set(userReviews.map((review) => review.productId))
         setReviewedProductIds(reviewedIds)
-      } catch (error) {
-
-      }
+      } catch (error) {}
     }
 
     if (order.status === 'delivered') {
@@ -65,8 +63,8 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
   }
 
   // Check if all products in order have been reviewed
-  const allProductsReviewed = order.items && order.items.length > 0 &&
-    order.items.every(item => reviewedProductIds.has(item.productId))
+  const allProductsReviewed =
+    order.items && order.items.length > 0 && order.items.every((item) => reviewedProductIds.has(item.productId))
 
   if (variant === 'compact') {
     return (
@@ -128,7 +126,10 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
             <div className='space-y-3'>
               {order.items.slice(0, 2).map((item: OrderItem) => (
                 <div key={item.id} className='flex gap-3'>
-                  <Link to={`/products/${item.productId}`} className='w-16 h-16 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden'>
+                  <Link
+                    to={`/products/${item.productId}`}
+                    className='w-16 h-16 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden'
+                  >
                     {item.productImage ? (
                       <img src={item.productImage} alt={item.productName} className='w-full h-full object-cover' />
                     ) : (
@@ -138,7 +139,10 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
                     )}
                   </Link>
                   <div className='flex-1 min-w-0'>
-                    <Link to={`/products/${item.productId}`} className='font-medium text-sm line-clamp-1 hover:text-blue-600 transition-colors'>
+                    <Link
+                      to={`/products/${item.productId}`}
+                      className='font-medium text-sm line-clamp-1 hover:text-blue-600 transition-colors'
+                    >
                       {item.productName}
                     </Link>
                     <p className='text-sm text-gray-500'>
@@ -146,7 +150,9 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
                     </p>
                   </div>
                   <div className='text-right'>
-                    <p className='font-medium text-blue-600'>{formatPrice(item.subtotal || item.unitPrice * item.quantity)}</p>
+                    <p className='font-medium text-blue-600'>
+                      {formatPrice(item.subtotal || item.unitPrice * item.quantity)}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -174,7 +180,10 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
 
         <div className='flex gap-2'>
           <Link to={`/account/orders/${order.id}`} className='flex-1'>
-            <Button variant='outline' className='w-full text-blue-600 !border-blue-200 hover:!bg-blue-50 hover:!text-blue-700'>
+            <Button
+              variant='outline'
+              className='w-full text-blue-600 !border-blue-200 hover:!bg-blue-50 hover:!text-blue-700'
+            >
               <Eye className='w-4 h-4 mr-2' />
               Xem chi tiết
             </Button>
@@ -214,9 +223,7 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
           <DialogContent className='max-w-2xl'>
             <DialogHeader>
               <DialogTitle>Chọn sản phẩm để đánh giá</DialogTitle>
-              <DialogDescription>
-                Chọn sản phẩm bạn muốn đánh giá từ đơn hàng #{order.orderNumber}
-              </DialogDescription>
+              <DialogDescription>Chọn sản phẩm bạn muốn đánh giá từ đơn hàng #{order.orderNumber}</DialogDescription>
             </DialogHeader>
 
             <div className='space-y-3 max-h-[400px] overflow-y-auto'>
@@ -225,10 +232,11 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
                 return (
                   <div
                     key={item.id}
-                    className={`flex items-center gap-4 p-4 border rounded-lg transition-colors ${isReviewed
-                      ? 'border-green-200 bg-green-50 cursor-not-allowed opacity-60'
-                      : 'border-blue-200 hover:bg-blue-50 cursor-pointer'
-                      }`}
+                    className={`flex items-center gap-4 p-4 border rounded-lg transition-colors ${
+                      isReviewed
+                        ? 'border-green-200 bg-green-50 cursor-not-allowed opacity-60'
+                        : 'border-blue-200 hover:bg-blue-50 cursor-pointer'
+                    }`}
                     onClick={() => {
                       if (isReviewed) {
                         toast.info('Bạn đã đánh giá sản phẩm này rồi!')
@@ -241,7 +249,11 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
                   >
                     <div className='w-16 h-16 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center'>
                       {item.productImage ? (
-                        <img src={item.productImage} alt={item.productName} className='w-full h-full object-cover rounded-lg' />
+                        <img
+                          src={item.productImage}
+                          alt={item.productName}
+                          className='w-full h-full object-cover rounded-lg'
+                        />
                       ) : (
                         <Package className='w-8 h-8 text-gray-400' />
                       )}
@@ -249,9 +261,7 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
                     <div className='flex-1'>
                       <h4 className='font-medium'>{item.productName}</h4>
                       <p className='text-sm text-gray-500'>x{item.quantity}</p>
-                      {isReviewed && (
-                        <p className='text-xs text-green-600 mt-1'>✓ Đã đánh giá</p>
-                      )}
+                      {isReviewed && <p className='text-xs text-green-600 mt-1'>✓ Đã đánh giá</p>}
                     </div>
                     {isReviewed ? (
                       <div className='w-5 h-5 rounded-full bg-green-500 flex items-center justify-center'>
@@ -275,7 +285,7 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
             product={{
               id: selectedProduct.productId,
               name: selectedProduct.productName,
-              image: selectedProduct.productImage || ''
+              image: selectedProduct.productImage || '',
             }}
             orderId={order.id}
             onSubmit={async (data) => {
@@ -286,7 +296,7 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
                 setSelectedProduct(null)
                 // Refresh reviewed products list
                 const userReviews = await reviewService.getUserReviews()
-                const reviewedIds = new Set(userReviews.map(review => review.productId))
+                const reviewedIds = new Set(userReviews.map((review) => review.productId))
                 setReviewedProductIds(reviewedIds)
               } catch (error: any) {
                 if (error.response?.status === 409) {
@@ -294,7 +304,6 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
                 } else {
                   toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi gửi đánh giá. Vui lòng thử lại.')
                 }
-
               }
             }}
           />

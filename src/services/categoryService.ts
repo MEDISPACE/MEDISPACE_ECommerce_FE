@@ -4,13 +4,13 @@ import { API_ENDPOINTS } from '../constants'
 
 type CategoriesResponse =
   | {
-    message?: string
-    result?: {
+      message?: string
+      result?: {
+        categories?: Category[]
+        pagination?: unknown
+      }
       categories?: Category[]
-      pagination?: unknown
     }
-    categories?: Category[]
-  }
   | Category[]
 
 export const categoryService = {

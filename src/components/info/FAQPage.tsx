@@ -313,7 +313,9 @@ export function FAQPage() {
             </Button>
             <Button
               onClick={() => {
-                const chatBtn = document.querySelector('button[aria-label="Chat với dược sĩ"]') as HTMLButtonElement | null
+                const chatBtn = document.querySelector(
+                  'button[aria-label="Chat với dược sĩ"]',
+                ) as HTMLButtonElement | null
                 if (chatBtn) {
                   chatBtn.click()
                 } else {

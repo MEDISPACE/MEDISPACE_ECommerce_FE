@@ -80,8 +80,11 @@ export function PaymentMethodCard({ paymentMethod, onEdit, onDelete, onSetDefaul
 
   return (
     <Card
-      className={`relative transition-all duration-200 hover:shadow-lg ${paymentMethod.isDefault ? 'ring-2 ring-blue-500 bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200' : 'hover:shadow-md border-blue-200'
-        }`}
+      className={`relative transition-all duration-200 hover:shadow-lg ${
+        paymentMethod.isDefault
+          ? 'ring-2 ring-blue-500 bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200'
+          : 'hover:shadow-md border-blue-200'
+      }`}
     >
       {paymentMethod.isDefault && (
         <div className='absolute -top-2 -right-2'>

@@ -147,9 +147,7 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
       try {
         const data = await dashboardService.getStats()
         setStats(data)
-      } catch (error) {
-
-      }
+      } catch (error) {}
     }
     loadStats()
   }, [])
@@ -190,7 +188,6 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
       // Rollback on error
       setIsOnline(previousStatus)
       toast.error('Không thể cập nhật trạng thái. Vui lòng thử lại.')
-
     }
   }
 
@@ -226,10 +223,11 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
           <Switch
             checked={isOnline}
             onCheckedChange={handleStatusToggle}
-            className={`${isOnline
-              ? 'data-[state=checked]:bg-green-600'
-              : 'data-[state=unchecked]:bg-gray-300 data-[state=unchecked]:border-gray-300'
-              }`}
+            className={`${
+              isOnline
+                ? 'data-[state=checked]:bg-green-600'
+                : 'data-[state=unchecked]:bg-gray-300 data-[state=unchecked]:border-gray-300'
+            }`}
           />
         </div>
       </div>
@@ -247,23 +245,25 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
                   key={item.href}
                   to={item.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative ${isActive
-                    ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/30'
-                    : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700'
-                    }`}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative ${
+                    isActive
+                      ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/30'
+                      : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700'
+                  }`}
                 >
                   <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'}`} />
                   <span className='flex-1 text-sm font-medium'>{item.label}</span>
                   {item.badge && (
                     <Badge
-                      className={`text-xs ${item.badgeVariant === 'destructive'
-                        ? 'bg-red-500'
-                        : item.badgeVariant === 'warning'
-                          ? 'bg-yellow-500'
-                          : item.badgeVariant === 'success'
-                            ? 'bg-green-500'
-                            : 'bg-blue-500'
-                        } text-white`}
+                      className={`text-xs ${
+                        item.badgeVariant === 'destructive'
+                          ? 'bg-red-500'
+                          : item.badgeVariant === 'warning'
+                            ? 'bg-yellow-500'
+                            : item.badgeVariant === 'success'
+                              ? 'bg-green-500'
+                              : 'bg-blue-500'
+                      } text-white`}
                     >
                       {item.badge}
                     </Badge>

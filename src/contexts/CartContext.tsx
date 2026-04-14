@@ -165,8 +165,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
           try {
             const selections = JSON.parse(savedSelections) as string[]
             // Filter to only include items that still exist in cart
-            const validSelections = selections.filter(key =>
-              cart.items.some(item => createSelectionKey(item.productId, item.unit) === key)
+            const validSelections = selections.filter((key) =>
+              cart.items.some((item) => createSelectionKey(item.productId, item.unit) === key),
             )
             if (validSelections.length > 0) {
               dispatch({ type: 'SET_SELECTED_ITEMS', payload: validSelections })
@@ -207,7 +207,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
             dispatch({ type: 'SET_CART', payload: cart })
             // Don't auto-select items
           } catch (error) {
-
             dispatch({ type: 'SET_CART', payload: null })
           } finally {
             dispatch({ type: 'SET_LOADING', payload: false })
@@ -237,7 +236,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
           dispatch({ type: 'SET_CART', payload: cart })
           // Don't auto-select items
         } catch (error) {
-
           dispatch({ type: 'SET_CART', payload: null })
         } finally {
           dispatch({ type: 'SET_LOADING', payload: false })
@@ -261,9 +259,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       try {
         const wishlistData = JSON.parse(savedWishlist)
         dispatch({ type: 'LOAD_WISHLIST_FROM_STORAGE', payload: wishlistData })
-      } catch (error) {
-
-      }
+      } catch (error) {}
     }
   }, [])
 
@@ -305,7 +301,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       let title = 'Không thể thêm vào giỏ hàng'
       let description = 'Vui lòng thử lại sau.'
 
-      if (errorMessage.toLowerCase().includes('insufficient stock') || errorMessage.toLowerCase().includes('không đủ')) {
+      if (
+        errorMessage.toLowerCase().includes('insufficient stock') ||
+        errorMessage.toLowerCase().includes('không đủ')
+      ) {
         title = 'Không đủ số lượng trong kho'
         description = `Sản phẩm "${product.name}" không đủ số lượng bạn yêu cầu. Vui lòng giảm số lượng.`
       } else if (errorMessage) {
@@ -335,7 +334,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       let title = 'Không thể cập nhật số lượng'
       let description = 'Vui lòng thử lại sau.'
 
-      if (errorMessage.toLowerCase().includes('insufficient stock') || errorMessage.toLowerCase().includes('không đủ')) {
+      if (
+        errorMessage.toLowerCase().includes('insufficient stock') ||
+        errorMessage.toLowerCase().includes('không đủ')
+      ) {
         title = 'Không đủ số lượng trong kho'
         description = 'Số lượng bạn yêu cầu vượt quá tồn kho. Vui lòng giảm số lượng.'
       } else if (errorMessage) {
@@ -381,7 +383,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
       // Better: check if selected, then toggle. But toggle logic is simple.
       // If the item is gone from cart, validation effect in ShoppingCartPage will clean it up anyway.
     } catch (error) {
-
       toast.error('Không thể xóa sản phẩm', {
         description: 'Vui lòng thử lại sau.',
         duration: 3000,

@@ -1,14 +1,14 @@
-import { Minus, Plus } from "lucide-react";
-import { Button } from "../ui/button";
-import { Input } from "../ui/input";
+import { Minus, Plus } from 'lucide-react'
+import { Button } from '../ui/button'
+import { Input } from '../ui/input'
 
 interface QuantityInputProps {
-  value: number;
-  onChange: (value: number) => void;
-  min?: number;
-  max?: number;
-  size?: "sm" | "md" | "lg";
-  disabled?: boolean;
+  value: number
+  onChange: (value: number) => void
+  min?: number
+  max?: number
+  size?: 'sm' | 'md' | 'lg'
+  disabled?: boolean
 }
 
 export function QuantityInput({
@@ -16,57 +16,57 @@ export function QuantityInput({
   onChange,
   min = 1,
   max = 999,
-  size = "md",
-  disabled = false
+  size = 'md',
+  disabled = false,
 }: QuantityInputProps) {
   const sizeClasses = {
     sm: {
-      button: "h-8 w-8",
-      input: "h-8 w-12 text-sm"
+      button: 'h-8 w-8',
+      input: 'h-8 w-12 text-sm',
     },
     md: {
-      button: "h-9 w-9",
-      input: "h-9 w-14 text-base"
+      button: 'h-9 w-9',
+      input: 'h-9 w-14 text-base',
     },
     lg: {
-      button: "h-10 w-10",
-      input: "h-10 w-16 text-base"
-    }
-  };
+      button: 'h-10 w-10',
+      input: 'h-10 w-16 text-base',
+    },
+  }
 
   const handleDecrease = () => {
     if (value > min) {
-      onChange(value - 1);
+      onChange(value - 1)
     }
-  };
+  }
 
   const handleIncrease = () => {
     if (value < max) {
-      onChange(value + 1);
+      onChange(value + 1)
     }
-  };
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = parseInt(e.target.value) || min;
+    const newValue = parseInt(e.target.value) || min
     if (newValue >= min && newValue <= max) {
-      onChange(newValue);
+      onChange(newValue)
     }
-  };
+  }
 
   return (
-    <div className="flex items-center border-2 border-blue-200 rounded-lg overflow-hidden bg-white">
+    <div className='flex items-center border-2 border-blue-200 rounded-lg overflow-hidden bg-white'>
       <Button
-        variant="ghost"
-        size="sm"
+        variant='ghost'
+        size='sm'
         onClick={handleDecrease}
         disabled={disabled || value <= min}
         className={`${sizeClasses[size].button} rounded-none hover:bg-blue-50 border-0`}
       >
-        <Minus className="w-3 h-3" />
+        <Minus className='w-3 h-3' />
       </Button>
 
       <Input
-        type="number"
+        type='number'
         value={value}
         onChange={handleInputChange}
         min={min}
@@ -76,14 +76,14 @@ export function QuantityInput({
       />
 
       <Button
-        variant="ghost"
-        size="sm"
+        variant='ghost'
+        size='sm'
         onClick={handleIncrease}
         disabled={disabled || value >= max}
         className={`${sizeClasses[size].button} rounded-none hover:bg-blue-50 border-0`}
       >
-        <Plus className="w-3 h-3" />
+        <Plus className='w-3 h-3' />
       </Button>
     </div>
-  );
+  )
 }

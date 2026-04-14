@@ -39,9 +39,9 @@ export function SettingsForm({ onSuccess }: SettingsFormProps) {
   })
 
   const handleSettingChange = (key: keyof typeof settings, value: boolean | string | number) => {
-    setSettings(prev => ({
+    setSettings((prev) => ({
       ...prev,
-      [key]: value
+      [key]: value,
     }))
   }
 
@@ -50,7 +50,7 @@ export function SettingsForm({ onSuccess }: SettingsFormProps) {
 
     try {
       // TODO: Implement API call to save settings
-      await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000)) // Simulate API call
 
       toast.success('Cài đặt đã được lưu', {
         description: 'Các thay đổi của bạn đã được cập nhật thành công.',
@@ -58,7 +58,6 @@ export function SettingsForm({ onSuccess }: SettingsFormProps) {
 
       onSuccess?.()
     } catch (error) {
-
       toast.error('Lưu cài đặt thất bại', {
         description: 'Có lỗi xảy ra khi lưu cài đặt. Vui lòng thử lại.',
       })
@@ -172,9 +171,7 @@ export function SettingsForm({ onSuccess }: SettingsFormProps) {
               <option value={120}>2 giờ</option>
               <option value={480}>8 giờ</option>
             </select>
-            <p className='text-xs text-gray-500'>
-              Thời gian tự động đăng xuất khi không hoạt động
-            </p>
+            <p className='text-xs text-gray-500'>Thời gian tự động đăng xuất khi không hoạt động</p>
           </div>
         </CardContent>
       </Card>
@@ -272,9 +269,7 @@ export function SettingsForm({ onSuccess }: SettingsFormProps) {
               <option value='private'>Riêng tư - Chỉ mình tôi</option>
               <option value='public'>Công khai - Dược sĩ có thể xem</option>
             </select>
-            <p className='text-xs text-gray-500'>
-              Kiểm soát ai có thể xem thông tin hồ sơ của bạn
-            </p>
+            <p className='text-xs text-gray-500'>Kiểm soát ai có thể xem thông tin hồ sơ của bạn</p>
           </div>
 
           {/* Online Status */}

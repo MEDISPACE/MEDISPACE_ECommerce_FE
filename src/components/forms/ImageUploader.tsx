@@ -10,7 +10,7 @@ import { toast } from 'sonner'
 interface UploadedImage {
   id: string
   file: File
-  url: string  // S3 URL after upload, or local blob URL before upload
+  url: string // S3 URL after upload, or local blob URL before upload
   name: string
   quality: 'good' | 'fair' | 'poor'
   isUploading?: boolean
@@ -43,7 +43,7 @@ export function ImageUploader({
   const analyzeImageQuality = useCallback((file: File): 'good' | 'fair' | 'poor' => {
     // Simple quality check based on file size
     if (file.size > 1024 * 1024) return 'good' // > 1MB
-    if (file.size > 500 * 1024) return 'fair' // > 500KB  
+    if (file.size > 500 * 1024) return 'fair' // > 500KB
     return 'poor'
   }, [])
 
@@ -136,8 +136,8 @@ export function ImageUploader({
         onImagesChange?.(finalImages)
 
         // Show toast for results
-        const successCount = newImages.filter(img => img.isUploaded).length
-        const failCount = newImages.filter(img => img.uploadError).length
+        const successCount = newImages.filter((img) => img.isUploaded).length
+        const failCount = newImages.filter((img) => img.uploadError).length
 
         if (successCount > 0) {
           toast.success(`Đã tải lên ${successCount} ảnh thành công`)
@@ -181,46 +181,49 @@ export function ImageUploader({
   )
 
   // Retry failed upload
-  const retryUpload = useCallback(async (imageId: string) => {
-    const imageIndex = images.findIndex(img => img.id === imageId)
-    if (imageIndex === -1) return
+  const retryUpload = useCallback(
+    async (imageId: string) => {
+      const imageIndex = images.findIndex((img) => img.id === imageId)
+      if (imageIndex === -1) return
 
-    const image = images[imageIndex]
+      const image = images[imageIndex]
 
-    // Update state to show uploading
-    const updatingImages = [...images]
-    updatingImages[imageIndex] = {
-      ...image,
-      isUploading: true,
-      uploadError: undefined,
-    }
-    setImages(updatingImages)
-
-    // Try upload again
-    const s3Url = await uploadImageToServer(image.file)
-
-    const finalImages = [...images]
-    if (s3Url) {
-      finalImages[imageIndex] = {
+      // Update state to show uploading
+      const updatingImages = [...images]
+      updatingImages[imageIndex] = {
         ...image,
-        url: s3Url,
-        isUploading: false,
-        isUploaded: true,
+        isUploading: true,
         uploadError: undefined,
       }
-      toast.success('Tải lên thành công')
-    } else {
-      finalImages[imageIndex] = {
-        ...image,
-        isUploading: false,
-        uploadError: 'Upload thất bại',
-      }
-      toast.error('Tải lên thất bại')
-    }
+      setImages(updatingImages)
 
-    setImages(finalImages)
-    onImagesChange?.(finalImages)
-  }, [images, onImagesChange])
+      // Try upload again
+      const s3Url = await uploadImageToServer(image.file)
+
+      const finalImages = [...images]
+      if (s3Url) {
+        finalImages[imageIndex] = {
+          ...image,
+          url: s3Url,
+          isUploading: false,
+          isUploaded: true,
+          uploadError: undefined,
+        }
+        toast.success('Tải lên thành công')
+      } else {
+        finalImages[imageIndex] = {
+          ...image,
+          isUploading: false,
+          uploadError: 'Upload thất bại',
+        }
+        toast.error('Tải lên thất bại')
+      }
+
+      setImages(finalImages)
+      onImagesChange?.(finalImages)
+    },
+    [images, onImagesChange],
+  )
 
   const getQualityIcon = (quality: string) => {
     switch (quality) {
@@ -250,7 +253,7 @@ export function ImageUploader({
 
   // Get only successfully uploaded images (for form submission)
   const getUploadedImages = useCallback(() => {
-    return images.filter(img => img.isUploaded).map(img => img.url)
+    return images.filter((img) => img.isUploaded).map((img) => img.url)
   }, [images])
 
   // Expose getUploadedImages through a ref or callback
@@ -372,13 +375,15 @@ export function ImageUploader({
         <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
           <div className='p-6'>
             <h3 className='mb-4 text-blue-900 flex items-center'>
-              🖼️ ẢNH ĐÃ TẢI LÊN ({images.filter(img => img.isUploaded).length}/{images.length})
+              🖼️ ẢNH ĐÃ TẢI LÊN ({images.filter((img) => img.isUploaded).length}/{images.length})
             </h3>
 
             <div className='grid grid-cols-1 md:grid-cols-3 gap-4 mb-4'>
               {images.map((image) => (
                 <div key={image.id} className='relative'>
-                  <div className={`aspect-square rounded-lg overflow-hidden bg-gray-100 ${image.isUploading ? 'opacity-50' : ''}`}>
+                  <div
+                    className={`aspect-square rounded-lg overflow-hidden bg-gray-100 ${image.isUploading ? 'opacity-50' : ''}`}
+                  >
                     <ImageWithFallback src={image.url} alt={image.name} className='w-full h-full object-cover' />
 
                     {/* Upload overlay */}

@@ -36,7 +36,9 @@ const Slider = React.forwardRef<
       >
         <SliderPrimitive.Range
           data-slot='slider-range'
-          className={cn('bg-gradient-to-r from-blue-500 to-blue-600 absolute data-[orientation=horizontal]:h-full data-[orientation=vertical]:w-full')}
+          className={cn(
+            'bg-gradient-to-r from-blue-500 to-blue-600 absolute data-[orientation=horizontal]:h-full data-[orientation=vertical]:w-full',
+          )}
         />
       </SliderPrimitive.Track>
       {Array.from({ length: _values.length }, (_, index) => (

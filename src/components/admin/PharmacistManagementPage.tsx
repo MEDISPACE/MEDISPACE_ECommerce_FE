@@ -29,13 +29,7 @@ import {
 } from '../ui/dropdown-menu'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { Avatar, AvatarFallback } from '../ui/avatar'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '../ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog'
 import adminService, { type PharmacistStats } from '~/services/adminService'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
@@ -107,7 +101,7 @@ export function PharmacistManagementPage() {
     description: string
     onConfirm: () => void
     variant?: 'default' | 'destructive'
-  }>({ open: false, title: '', description: '', onConfirm: () => { }, variant: 'default' })
+  }>({ open: false, title: '', description: '', onConfirm: () => {}, variant: 'default' })
 
   // Debounce search
   useEffect(() => {
@@ -119,7 +113,12 @@ export function PharmacistManagementPage() {
   }, [searchQuery])
 
   // Fetch pharmacists (users with role=1)
-  const { data: pharmacistsData, isLoading, error, refetch } = useQuery<UsersResponse>({
+  const {
+    data: pharmacistsData,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery<UsersResponse>({
     queryKey: ['admin', 'pharmacists', page, limit, filterStatus, debouncedSearch],
     queryFn: async () => {
       const response = await adminService.getAllUsers({
@@ -177,8 +176,7 @@ export function PharmacistManagementPage() {
 
   // Update user mutation (for ban/unban)
   const updateMutation = useMutation({
-    mutationFn: ({ userId, data }: { userId: string; data: any }) =>
-      adminService.updateUser(userId, data),
+    mutationFn: ({ userId, data }: { userId: string; data: any }) => adminService.updateUser(userId, data),
     onSuccess: () => {
       toast.success('Đã cập nhật thông tin dược sĩ')
       queryClient.invalidateQueries({ queryKey: ['admin', 'pharmacists'] })
@@ -246,7 +244,7 @@ export function PharmacistManagementPage() {
           setIsEditDialogOpen(false)
           setSelectedPharmacist(null)
         },
-      }
+      },
     )
   }
 
@@ -258,10 +256,11 @@ export function PharmacistManagementPage() {
       open: true,
       title: newStatus === 2 ? 'Khóa tài khoản' : 'Mở khóa tài khoản',
       description: `Bạn có chắc chắn muốn ${action} tài khoản dược sĩ này?`,
-      onConfirm: () => updateMutation.mutate({
-        userId: pharmacist._id,
-        data: { status: newStatus },
-      }),
+      onConfirm: () =>
+        updateMutation.mutate({
+          userId: pharmacist._id,
+          data: { status: newStatus },
+        }),
       variant: newStatus === 2 ? 'destructive' : 'default',
     })
   }
@@ -284,11 +283,7 @@ export function PharmacistManagementPage() {
       unverified: 'Chưa xác thực',
       banned: 'Đã khóa',
     }
-    return (
-      <Badge className={colors[statusStr] || 'bg-gray-100 text-gray-700'}>
-        {labels[statusStr] || statusStr}
-      </Badge>
-    )
+    return <Badge className={colors[statusStr] || 'bg-gray-100 text-gray-700'}>{labels[statusStr] || statusStr}</Badge>
   }
 
   const pharmacists = pharmacistsData?.result?.users || []
@@ -443,9 +438,7 @@ export function PharmacistManagementPage() {
               <RefreshCw className='w-8 h-8 animate-spin text-blue-600' />
             </div>
           ) : error ? (
-            <div className='text-center text-red-600 py-8'>
-              Không thể tải danh sách dược sĩ. Vui lòng thử lại.
-            </div>
+            <div className='text-center text-red-600 py-8'>Không thể tải danh sách dược sĩ. Vui lòng thử lại.</div>
           ) : (
             <>
               <div className='overflow-x-auto'>
@@ -503,32 +496,37 @@ export function PharmacistManagementPage() {
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
-                                onClick={() => handleViewDetails(pharmacist)}>
+                                onClick={() => handleViewDetails(pharmacist)}
+                              >
                                 <Eye className='w-4 h-4 mr-2' />
                                 Xem chi tiết
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
-                                onClick={() => handleEdit(pharmacist)}>
+                                onClick={() => handleEdit(pharmacist)}
+                              >
                                 <Edit className='w-4 h-4 mr-2' />
                                 Chỉnh sửa
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
-                                onClick={() => handleVerifyEmail(pharmacist._id)}>
+                                onClick={() => handleVerifyEmail(pharmacist._id)}
+                              >
                                 <CheckCircle className='w-4 h-4 mr-2' />
                                 Xác thực email
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
-                                onClick={() => handleResetPassword(pharmacist._id)}>
+                                onClick={() => handleResetPassword(pharmacist._id)}
+                              >
                                 <RefreshCw className='w-4 h-4 mr-2' />
                                 Reset mật khẩu
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
-                                onClick={() => handleToggleBan(pharmacist)}>
+                                onClick={() => handleToggleBan(pharmacist)}
+                              >
                                 <Ban className='w-4 h-4 mr-2' />
                                 {pharmacist.status === 2 ? 'Mở khóa' : 'Khóa tài khoản'}
                               </DropdownMenuItem>
@@ -597,8 +595,8 @@ export function PharmacistManagementPage() {
                   <p className='text-base'>
                     {selectedPharmacist.createdAt
                       ? format(new Date(selectedPharmacist.createdAt), 'dd/MM/yyyy HH:mm', {
-                        locale: vi,
-                      })
+                          locale: vi,
+                        })
                       : 'N/A'}
                   </p>
                 </div>

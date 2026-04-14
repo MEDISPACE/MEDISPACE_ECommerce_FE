@@ -147,11 +147,10 @@ export function CheckoutPage() {
             totalPrice: unitPrice * (quantity || 1),
             prescriptionRequired: product.requiresPrescription || false,
             image: product.featuredImage || product.image || product.images?.[0] || '',
-            priceVariants: product.priceVariants
+            priceVariants: product.priceVariants,
           })
         }
-      } catch (error) {
-      }
+      } catch (error) {}
     }
 
     loadBuyNowItem()
@@ -160,15 +159,12 @@ export function CheckoutPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [userData, userAddresses] = await Promise.all([
-          authService.getMe(),
-          addressService.getAddresses()
-        ])
+        const [userData, userAddresses] = await Promise.all([authService.getMe(), addressService.getAddresses()])
         setUser(userData)
         setAddresses(userAddresses)
         // Set default address selection
         if (userAddresses && userAddresses.length > 0) {
-          const defaultAddr = userAddresses.find(addr => addr.isDefault) || userAddresses[0]
+          const defaultAddr = userAddresses.find((addr) => addr.isDefault) || userAddresses[0]
           setSelectedAddress(defaultAddr.id || '')
         }
       } catch (error) {
@@ -194,8 +190,10 @@ export function CheckoutPage() {
   }, [loading, isBuyNow, state.cart, state.selectedItems])
 
   const cartItems = isBuyNow
-    ? (buyNowItem ? [buyNowItem] : [])
-    : (state.cart?.items.filter(item => state.selectedItems.has(createSelectionKey(item.productId, item.unit))) || [])
+    ? buyNowItem
+      ? [buyNowItem]
+      : []
+    : state.cart?.items.filter((item) => state.selectedItems.has(createSelectionKey(item.productId, item.unit))) || []
 
   const addressObj = addresses.find((a) => a.id === selectedAddress)
 
@@ -212,16 +210,16 @@ export function CheckoutPage() {
         const options = await ghnService.getShippingOptions({
           to_district_id: addressObj.districtId,
           to_ward_code: addressObj.wardCode,
-          weight: 500 // Estimated 500g
+          weight: 500, // Estimated 500g
         })
 
         if (options && options.length > 0) {
-          const mappedOptions: ShippingMethod[] = options.map(opt => ({
+          const mappedOptions: ShippingMethod[] = options.map((opt) => ({
             id: opt.id.toString(),
             name: opt.name,
             description: `Giao hàng bởi GHN`,
             price: opt.price,
-            estimatedDays: opt.estimatedDays
+            estimatedDays: opt.estimatedDays,
           }))
           setShippingMethods(mappedOptions)
           // Auto-select cheapest/first optio
@@ -240,8 +238,6 @@ export function CheckoutPage() {
     fetchOptions()
   }, [addressObj])
 
-
-
   // Calculate totals
   const subtotal = isBuyNow
     ? (buyNowItem ? buyNowItem.totalPrice : 0)
@@ -258,7 +254,6 @@ export function CheckoutPage() {
   const total = Math.max(0, subtotal - couponDiscount - pointsDiscount + shippingFee)
 
   const handlePlaceOrder = async () => {
-
     if (!user) {
       alert('Không thể lấy thông tin người dùng. Vui lòng đăng nhập lại.')
       return
@@ -283,7 +278,7 @@ export function CheckoutPage() {
 
     // Ensure selectedAddress is valid, fallback to first address if not
     let validSelectedAddress = selectedAddress
-    if (!selectedAddress || !addresses.find(addr => addr.id === selectedAddress)) {
+    if (!selectedAddress || !addresses.find((addr) => addr.id === selectedAddress)) {
       validSelectedAddress = addresses[0].id || ''
       setSelectedAddress(validSelectedAddress)
     }
@@ -306,7 +301,7 @@ export function CheckoutPage() {
         wardCode?: string
       }
 
-      const selectedAddr = addresses.find(addr => addr.id === validSelectedAddress)
+      const selectedAddr = addresses.find((addr) => addr.id === validSelectedAddress)
       if (selectedAddr) {
         addressObj = {
           firstName: user.firstName,
@@ -328,23 +323,23 @@ export function CheckoutPage() {
 
       // Map frontend payment method to backend format
       const paymentMethodMap: Record<string, string> = {
-        'cod': 'cod',
-        'banking': 'bank_transfer',
-        'vnpay': 'vnpay',
-        'momo': 'momo',
-        'payos': 'payos'
+        cod: 'cod',
+        banking: 'bank_transfer',
+        vnpay: 'vnpay',
+        momo: 'momo',
+        payos: 'payos',
       }
 
       // Get estimated delivery date from selected shipping method
-      const selectedShippingMethod = shippingMethods.find(m => m.id === shippingMethod)
+      const selectedShippingMethod = shippingMethods.find((m) => m.id === shippingMethod)
       const estimatedDeliveryDate = selectedShippingMethod?.estimatedDays || '2-3 ngày'
 
       // Create order using real API
       const orderData = {
-        items: cartItems.map(item => ({
+        items: cartItems.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
-          unit: item.unit
+          unit: item.unit,
         })),
         isDirectBuy: isBuyNow,
         shippingAddress: addressObj,
@@ -387,13 +382,14 @@ export function CheckoutPage() {
       <div className='bg-white border-b border-gray-200'>
         <div className='max-w-7xl mx-auto px-4 py-4'>
           <nav className='flex items-center space-x-2 text-sm text-gray-600'>
-            <Link to='/cart' className='hover:text-blue-600'>Giỏ hàng</Link>
+            <Link to='/cart' className='hover:text-blue-600'>
+              Giỏ hàng
+            </Link>
             <ChevronRight className='w-4 h-4' />
             <span className='text-blue-600 font-medium'>Thanh toán</span>
           </nav>
         </div>
       </div>
-
 
       {/* Progress Steps */}
       <div className='bg-white border-b border-gray-200'>
@@ -446,7 +442,10 @@ export function CheckoutPage() {
                     <RadioGroup value={selectedAddress} onValueChange={setSelectedAddress}>
                       {addresses.map((address, index) => (
                         <div key={address.id || index} className='flex items-start space-x-2'>
-                          <RadioGroupItem value={address.id || `address-${index}`} id={address.id || `address-${index}`} />
+                          <RadioGroupItem
+                            value={address.id || `address-${index}`}
+                            id={address.id || `address-${index}`}
+                          />
                           <Label htmlFor={address.id || `address-${index}`} className='flex-1 cursor-pointer'>
                             <div className='p-3 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors'>
                               <div className='flex items-center gap-2 mb-1'>
@@ -508,12 +507,12 @@ export function CheckoutPage() {
                   setSelectedAddress(newAddress.id || '')
                 }
               }}
-              title="Thêm địa chỉ giao hàng"
-              description="Thêm địa chỉ mới để giao hàng thuận tiện hơn"
+              title='Thêm địa chỉ giao hàng'
+              description='Thêm địa chỉ mới để giao hàng thuận tiện hơn'
               showEmail={false}
               showType={true}
               showNameFields={true}
-              submitButtonText="Lưu địa chỉ"
+              submitButtonText='Lưu địa chỉ'
             />
 
             {/* Shipping Method */}
@@ -537,7 +536,10 @@ export function CheckoutPage() {
                                 <Clock className='w-4 h-4 text-blue-500' />
                                 <span className='font-medium'>{method.name}</span>
                                 {subtotal >= 300000 && method.price > 0 && (
-                                  <Badge variant='secondary' className='bg-green-100 text-green-800 hover:bg-green-100 text-xs'>
+                                  <Badge
+                                    variant='secondary'
+                                    className='bg-green-100 text-green-800 hover:bg-green-100 text-xs'
+                                  >
                                     Freeship
                                   </Badge>
                                 )}
@@ -553,7 +555,9 @@ export function CheckoutPage() {
                                   {(() => {
                                     // Rule: Orders >= 300k are completely free shipping
                                     const finalPrice = subtotal >= 300000 ? 0 : method.price
-                                    return finalPrice === 0 ? 'Miễn phí' : `${new Intl.NumberFormat('vi-VN').format(finalPrice)}đ`
+                                    return finalPrice === 0
+                                      ? 'Miễn phí'
+                                      : `${new Intl.NumberFormat('vi-VN').format(finalPrice)}đ`
                                   })()}
                                 </span>
                               </div>
@@ -642,7 +646,8 @@ export function CheckoutPage() {
                         <div className='flex-1 min-w-0'>
                           <div className='font-medium text-sm line-clamp-1'>{item.name}</div>
                           <div className='text-xs text-gray-500'>
-                            SL: {item.quantity}{item.unit ? ` x ${item.unit}` : ''}
+                            SL: {item.quantity}
+                            {item.unit ? ` x ${item.unit}` : ''}
                           </div>
                         </div>
                         <div className='text-right'>
@@ -768,7 +773,9 @@ export function CheckoutPage() {
                         Đang xử lý...
                       </div>
                     ) : (
-                      <>Đặt hàng ({cartItems.length} sản phẩm - {new Intl.NumberFormat('vi-VN').format(total)}đ)</>
+                      <>
+                        Đặt hàng ({cartItems.length} sản phẩm - {new Intl.NumberFormat('vi-VN').format(total)}đ)
+                      </>
                     )}
                   </Button>
 

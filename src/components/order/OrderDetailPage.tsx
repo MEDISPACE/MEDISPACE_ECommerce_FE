@@ -46,7 +46,7 @@ const ORDER_STEPS = [
   { status: 'confirmed', statusText: 'Xác nhận', description: 'Đơn hàng đã được xác nhận' },
   { status: 'preparing', statusText: 'Đang chuẩn bị', description: 'Đơn hàng đang được chuẩn bị' },
   { status: 'shipping', statusText: 'Đang giao', description: 'Đơn hàng đang được vận chuyển' },
-  { status: 'delivered', statusText: 'Đã giao', description: 'Đơn hàng đã được giao thành công' }
+  { status: 'delivered', statusText: 'Đã giao', description: 'Đơn hàng đã được giao thành công' },
 ]
 
 // Generate timeline based on current order status
@@ -56,14 +56,16 @@ const generateOrderTimeline = (currentStatus: string, createdAt: string, updated
 
   // Handle cancelled status
   if (currentStatus === 'cancelled') {
-    return [{
-      id: 'cancelled',
-      status: 'cancelled',
-      statusText: 'Đã hủy',
-      description: 'Đơn hàng đã bị hủy',
-      isCompleted: true,
-      timestamp: updatedAt
-    }]
+    return [
+      {
+        id: 'cancelled',
+        status: 'cancelled',
+        statusText: 'Đã hủy',
+        description: 'Đơn hàng đã bị hủy',
+        isCompleted: true,
+        timestamp: updatedAt,
+      },
+    ]
   }
 
   // Handle returned status
@@ -75,7 +77,7 @@ const generateOrderTimeline = (currentStatus: string, createdAt: string, updated
         statusText: step.statusText,
         description: step.description,
         isCompleted: true,
-        timestamp: index === 0 ? createdAt : updatedAt
+        timestamp: index === 0 ? createdAt : updatedAt,
       })),
       {
         id: 'returned',
@@ -83,15 +85,16 @@ const generateOrderTimeline = (currentStatus: string, createdAt: string, updated
         statusText: 'Đã hoàn trả',
         description: 'Đơn hàng đã được hoàn trả',
         isCompleted: true,
-        timestamp: updatedAt
-      }
+        timestamp: updatedAt,
+      },
     ]
   }
 
   return ORDER_STEPS.map((step, index) => {
     const stepIndex = statusOrder.indexOf(step.status)
     const isCompleted = currentIndex >= stepIndex
-    const isCurrent = currentStatus === step.status ||
+    const isCurrent =
+      currentStatus === step.status ||
       (step.status === 'pending' && currentStatus === 'pending_payment') ||
       (step.status === 'preparing' && currentStatus === 'processing')
 
@@ -101,7 +104,7 @@ const generateOrderTimeline = (currentStatus: string, createdAt: string, updated
       statusText: step.statusText,
       description: step.description,
       isCompleted,
-      timestamp: isCompleted ? (index === 0 ? createdAt : updatedAt) : ''
+      timestamp: isCompleted ? (index === 0 ? createdAt : updatedAt) : '',
     }
   })
 }
@@ -128,8 +131,16 @@ export function OrderDetailPage() {
           id: fetchedOrder.id,
           customerId: fetchedOrder.userId,
           orderNumber: fetchedOrder.orderNumber,
-          status: fetchedOrder.status as 'pending' | 'pending_payment' | 'confirmed' | 'processing' | 'preparing' | 'shipping' | 'delivered' | 'cancelled',
-          items: fetchedOrder.items.map(item => ({
+          status: fetchedOrder.status as
+            | 'pending'
+            | 'pending_payment'
+            | 'confirmed'
+            | 'processing'
+            | 'preparing'
+            | 'shipping'
+            | 'delivered'
+            | 'cancelled',
+          items: fetchedOrder.items.map((item) => ({
             id: item.id,
             productId: item.productId,
             productName: item.product.name,
@@ -158,7 +169,15 @@ export function OrderDetailPage() {
             isDefault: false,
           },
           paymentMethod: fetchedOrder.paymentMethod,
-          paymentStatus: (fetchedOrder.paymentStatus === 'pending' ? 'pending' : fetchedOrder.paymentStatus === 'paid' ? 'paid' : fetchedOrder.paymentStatus === 'failed' ? 'failed' : fetchedOrder.paymentStatus === 'refunded' ? 'refunded' : 'pending') as 'pending' | 'paid' | 'failed' | 'refunded',
+          paymentStatus: (fetchedOrder.paymentStatus === 'pending'
+            ? 'pending'
+            : fetchedOrder.paymentStatus === 'paid'
+              ? 'paid'
+              : fetchedOrder.paymentStatus === 'failed'
+                ? 'failed'
+                : fetchedOrder.paymentStatus === 'refunded'
+                  ? 'refunded'
+                  : 'pending') as 'pending' | 'paid' | 'failed' | 'refunded',
           createdAt: fetchedOrder.createdAt,
           updatedAt: fetchedOrder.updatedAt,
           deliveryMethod: fetchedOrder.shippingMethod,
@@ -189,7 +208,6 @@ export function OrderDetailPage() {
 
   if (!order) {
     return (
-
       <div className='text-center py-12'>
         <Package className='w-16 h-16 text-gray-300 mx-auto mb-4' />
         <h2 className='text-xl font-medium text-gray-900 mb-2'>Không tìm thấy đơn hàng</h2>
@@ -198,7 +216,6 @@ export function OrderDetailPage() {
           <Button>Quay lại danh sách đơn hàng</Button>
         </Link>
       </div>
-
     )
   }
 
@@ -255,7 +272,9 @@ export function OrderDetailPage() {
             className='!border-blue-200 !text-blue-600 hover:!bg-blue-100 hover:!text-blue-700'
             size='sm'
             onClick={() => {
-              const chatBtn = document.querySelector('button[aria-label="Chat với dược sĩ"]') as HTMLButtonElement | null
+              const chatBtn = document.querySelector(
+                'button[aria-label="Chat với dược sĩ"]',
+              ) as HTMLButtonElement | null
               if (chatBtn) {
                 chatBtn.click()
               } else {
@@ -351,7 +370,11 @@ export function OrderDetailPage() {
 
                     <div className='flex items-center gap-2'>
                       <Link to={`/products/${item.productId}`}>
-                        <Button variant='outline' size='sm' className='!border-blue-200 !text-blue-600 hover:!bg-blue-50'>
+                        <Button
+                          variant='outline'
+                          size='sm'
+                          className='!border-blue-200 !text-blue-600 hover:!bg-blue-50'
+                        >
                           Xem sản phẩm
                         </Button>
                       </Link>
@@ -494,7 +517,7 @@ export function OrderDetailPage() {
                   onClick={() => {
                     toast.info('Tính năng thanh toán lại đang được phát triển', {
                       description: 'Vui lòng liên hệ hỗ trợ để được trợ giúp thanh toán',
-                      duration: 4000
+                      duration: 4000,
                     })
                   }}
                 >
@@ -517,7 +540,9 @@ export function OrderDetailPage() {
                 variant='outline'
                 className='w-full !border-blue-200 !text-blue-600 hover:!bg-blue-50 hover:!text-blue-700'
                 onClick={() => {
-                  const chatBtn = document.querySelector('button[aria-label="Chat với dược sĩ"]') as HTMLButtonElement | null
+                  const chatBtn = document.querySelector(
+                    'button[aria-label="Chat với dược sĩ"]',
+                  ) as HTMLButtonElement | null
                   if (chatBtn) {
                     chatBtn.click()
                   } else {
@@ -580,7 +605,7 @@ export function OrderDetailPage() {
           product={{
             id: selectedProductForReview.productId,
             name: selectedProductForReview.productName,
-            image: selectedProductForReview.productImage || ''
+            image: selectedProductForReview.productImage || '',
           }}
           orderId={order.id}
           onSubmit={async (data) => {
@@ -612,7 +637,8 @@ export function OrderDetailPage() {
             <AlertDialogDescription className='text-base text-gray-600 mt-2'>
               {order.paymentStatus === 'paid' ? (
                 <span>
-                  Đơn hàng này <b>đã được thanh toán</b>. Nếu bạn hủy ngay bây giờ, <b>Medispace</b> sẽ liên hệ và hoàn tiền cho bạn trong vòng <b>72h làm việc</b>.
+                  Đơn hàng này <b>đã được thanh toán</b>. Nếu bạn hủy ngay bây giờ, <b>Medispace</b> sẽ liên hệ và hoàn
+                  tiền cho bạn trong vòng <b>72h làm việc</b>.
                 </span>
               ) : (
                 'Bạn có chắc chắn muốn hủy đơn hàng này không? Hành động này không thể hoàn tác.'
@@ -632,7 +658,7 @@ export function OrderDetailPage() {
                     toast.success('Gửi yêu cầu hủy thành công', {
                       description: 'Chúng tôi sẽ liên hệ trong 72h để hoàn tiền.',
                       duration: 5000,
-                      icon: '💸'
+                      icon: '💸',
                     })
                   } else {
                     toast.success('Đã hủy đơn hàng thành công')

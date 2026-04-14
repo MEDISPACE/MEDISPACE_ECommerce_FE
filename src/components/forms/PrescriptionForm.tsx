@@ -60,7 +60,7 @@ export interface OCRInitialData {
 interface PrescriptionFormProps {
   onSubmit: (data: PrescriptionFormData, medications: MedicationItem[]) => void
   onSaveDraft: (data: PrescriptionFormData) => void
-  initialData?: OCRInitialData   // ← Dữ liệu auto-fill từ OCR
+  initialData?: OCRInitialData // ← Dữ liệu auto-fill từ OCR
   className?: string
 }
 
@@ -74,7 +74,14 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
     doctorName: initialData?.doctorName || '',
     hospitalName: initialData?.hospitalName || '',
     examinationDate: initialData?.prescriptionDate
-      ? (() => { try { const d = parseISO(initialData.prescriptionDate!); return isNaN(d.getTime()) ? undefined : d } catch { return undefined } })()
+      ? (() => {
+          try {
+            const d = parseISO(initialData.prescriptionDate!)
+            return isNaN(d.getTime()) ? undefined : d
+          } catch {
+            return undefined
+          }
+        })()
       : undefined,
     diagnosis: initialData?.diagnosis || '',
     specialNotes: initialData?.specialNotes || '',
@@ -86,16 +93,18 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
   }))
 
   // Medications từ OCR — có thể edit
-  const [medications, setMedications] = useState<MedicationItem[]>(
-    initialData?.medications || []
-  )
+  const [medications, setMedications] = useState<MedicationItem[]>(initialData?.medications || [])
 
-  const isOCRFilled = !!(initialData?.patientName || initialData?.doctorName || (initialData?.medications && initialData.medications.length > 0))
+  const isOCRFilled = !!(
+    initialData?.patientName ||
+    initialData?.doctorName ||
+    (initialData?.medications && initialData.medications.length > 0)
+  )
 
   // Nếu initialData thay đổi (re-scan), sync lại form
   useEffect(() => {
     if (!initialData) return
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       patientName: initialData.patientName || prev.patientName,
       patientAge: initialData.patientAge || prev.patientAge,
@@ -106,13 +115,20 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
       diagnosis: initialData.diagnosis || prev.diagnosis,
       specialNotes: initialData.specialNotes || prev.specialNotes,
       examinationDate: initialData.prescriptionDate
-        ? (() => { try { const d = parseISO(initialData.prescriptionDate!); return isNaN(d.getTime()) ? prev.examinationDate : d } catch { return prev.examinationDate } })()
+        ? (() => {
+            try {
+              const d = parseISO(initialData.prescriptionDate!)
+              return isNaN(d.getTime()) ? prev.examinationDate : d
+            } catch {
+              return prev.examinationDate
+            }
+          })()
         : prev.examinationDate,
     }))
     if (initialData.medications && initialData.medications.length > 0) {
       setMedications(initialData.medications)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData])
 
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -165,7 +181,6 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
 
   return (
     <form onSubmit={handleSubmit} className={`space-y-6 ${className}`}>
-
       {/* OCR Auto-fill badge */}
       {isOCRFilled && (
         <div className='flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl'>
@@ -367,20 +382,25 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
             </h3>
             <div className='space-y-2'>
               {medications.map((med, idx) => (
-                <div key={idx} className='flex items-start justify-between p-3 bg-emerald-50 rounded-lg border border-emerald-100'>
+                <div
+                  key={idx}
+                  className='flex items-start justify-between p-3 bg-emerald-50 rounded-lg border border-emerald-100'
+                >
                   <div className='flex-1'>
                     <p className='font-medium text-emerald-900 text-sm'>{med.productName}</p>
                     {med.dosage && <p className='text-xs text-gray-600 mt-0.5'>Liều: {med.dosage}</p>}
                     <div className='flex gap-3 mt-0.5'>
                       {med.quantity != null && (
-                        <span className='text-xs text-gray-500'>SL: {med.quantity} {med.unit || ''}</span>
+                        <span className='text-xs text-gray-500'>
+                          SL: {med.quantity} {med.unit || ''}
+                        </span>
                       )}
                       {med.instructions && <span className='text-xs text-gray-500'>{med.instructions}</span>}
                     </div>
                   </div>
                   <button
                     type='button'
-                    onClick={() => setMedications(prev => prev.filter((_, i) => i !== idx))}
+                    onClick={() => setMedications((prev) => prev.filter((_, i) => i !== idx))}
                     className='text-gray-400 hover:text-red-500 ml-2 shrink-0'
                   >
                     <X className='w-4 h-4' />

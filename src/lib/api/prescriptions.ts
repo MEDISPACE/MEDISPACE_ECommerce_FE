@@ -52,7 +52,7 @@ class PrescriptionsAPI {
     const response = await apiClient.post<{ message: string; result: OCRScanResult }>(
       '/prescriptions/scan',
       { imageUrl },
-      { timeout: 150000 }
+      { timeout: 150000 },
     )
     return response.data.result
   }

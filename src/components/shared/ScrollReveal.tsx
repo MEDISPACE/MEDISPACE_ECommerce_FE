@@ -11,14 +11,6 @@ interface ScrollRevealProps {
 }
 
 // Simplified - no animation to prevent white screen when scrolling fast
-export function ScrollReveal({
-  children,
-  className = '',
-}: ScrollRevealProps) {
-  return (
-    <div className={className}>
-      {children}
-    </div>
-  )
+export function ScrollReveal({ children, className = '' }: ScrollRevealProps) {
+  return <div className={className}>{children}</div>
 }
-
