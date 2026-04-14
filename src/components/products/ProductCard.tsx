@@ -11,6 +11,8 @@ interface PriceVariant {
   unit: string
   price: number
   originalPrice?: number
+  salePrice?: number        // Giá sau campaign (từ backend)
+  discountPercent?: number  // % giảm từ campaign
   isDefault?: boolean
 }
 
@@ -29,10 +31,17 @@ interface ProductCardProps {
     isPrescription?: boolean
     isOnSale?: boolean
     discountPercentage?: number
-    unit?: string // Đơn vị: Hộp, Gói, Lọ, Viên
-    packaging?: string // Thông tin đóng gói: "Hộp 10 vi x 10 viên"
-    needsConsultation?: boolean // Cần tư vấn dược sĩ
-    priceVariants?: PriceVariant[] // Multiple unit options
+    unit?: string
+    packaging?: string
+    needsConsultation?: boolean
+    priceVariants?: PriceVariant[]
+    campaign?: {
+      _id: string
+      name: string
+      badgeText: string
+      badgeColor: string
+      endDate: string
+    }
   }
   variant?: 'grid' | 'list'
   onAddToCart?: (selectedUnit?: string) => void
@@ -52,10 +61,15 @@ export function ProductCard({
   const [selectedUnit, setSelectedUnit] = useState<string>(defaultVariant?.unit || product.unit || 'Hộp')
 
   // Get current variant based on selected unit
-  const currentVariant = product.priceVariants?.find((v) => v.unit === selectedUnit) || defaultVariant
-  const currentPrice = currentVariant?.price || product.salePrice
-  const currentOriginalPrice = currentVariant?.originalPrice || product.originalPrice
+  const currentVariant = product.priceVariants?.find(v => v.unit === selectedUnit) || defaultVariant
+  // Campaign-aware pricing: prefer salePrice if available
+  const currentPrice = currentVariant?.salePrice || currentVariant?.price || product.salePrice
+  const currentOriginalPrice = currentVariant?.salePrice
+    ? currentVariant.price // Giá gốc khi có campaign
+    : (currentVariant?.originalPrice || product.originalPrice)
   const hasDiscount = currentOriginalPrice && currentOriginalPrice > currentPrice
+  const campaignDiscountPercent = currentVariant?.discountPercent || product.discountPercentage
+  const hasCampaign = !!product.campaign
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -115,10 +129,13 @@ export function ProductCard({
                   {product.inStock && product.isPrescription && <RxBadge size='sm' />}
                 </div>
 
-                {product.isOnSale && product.inStock && (
+                {(product.isOnSale || hasCampaign) && product.inStock && (
                   <div className='absolute top-2 right-2'>
-                    <Badge className='bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full'>
-                      -{product.discountPercentage}%
+                    <Badge
+                      className='text-white text-xs px-2 py-0.5 rounded-full'
+                      style={{ backgroundColor: product.campaign?.badgeColor || '#f97316' }}
+                    >
+                      {hasCampaign ? product.campaign!.badgeText : `-${product.discountPercentage}%`}
                     </Badge>
                   </div>
                 )}
@@ -261,10 +278,13 @@ export function ProductCard({
               {product.inStock && product.isPrescription && <RxBadge size='sm' />}
             </div>
 
-            {product.isOnSale && product.inStock && (
+            {(product.isOnSale || hasCampaign) && product.inStock && (
               <div className='absolute top-3 right-3'>
-                <Badge className='bg-orange-500 text-white text-xs px-2 py-1 rounded-full'>
-                  -{product.discountPercentage}%
+                <Badge
+                  className='text-white text-xs px-2 py-1 rounded-full'
+                  style={{ backgroundColor: product.campaign?.badgeColor || '#f97316' }}
+                >
+                  {hasCampaign ? product.campaign!.badgeText : `-${product.discountPercentage}%`}
                 </Badge>
               </div>
             )}

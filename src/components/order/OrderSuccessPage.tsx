@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router'
+import { Link, useSearchParams, useNavigate } from 'react-router'
 import { CheckCircle, Package, MapPin, CreditCard, ArrowRight, Home, FileText, Loader2 } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
@@ -12,6 +12,7 @@ import { logger } from '../../utils/logger'
 
 export function OrderSuccessPage() {
   const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
   const orderId = searchParams.get('orderId')
   const paymentStatus = searchParams.get('paymentStatus')
   const [order, setOrder] = useState<Order | null>(null)
@@ -21,6 +22,13 @@ export function OrderSuccessPage() {
   useEffect(() => {
     // Scroll to top on mount
     window.scrollTo(0, 0)
+
+    // Xóa /cart/checkout khỏi browser history để Back không quay lại trang checkout rỗng
+    // Thay thế history entry hiện tại để stack là: ... → / → /order/success
+    window.history.replaceState(null, '', window.location.href)
+    // Đẩy trang chủ vào trước success để back → về home
+    window.history.pushState(null, '', '/')
+    window.history.pushState(null, '', window.location.href)
 
     // Clear selectedItems from sessionStorage on successful payment
     if (paymentStatus === 'success') {
