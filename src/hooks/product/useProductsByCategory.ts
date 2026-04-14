@@ -20,7 +20,7 @@ export function useProductsByCategory(categoryId: string | undefined, limit: num
           categoryId,
           limit,
           sortBy: 'createdAt',
-          sortOrder: 'desc'
+          sortOrder: 'desc',
         })
         setProducts(products || [])
         setError(null)

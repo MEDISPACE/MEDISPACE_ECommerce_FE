@@ -248,7 +248,6 @@ export function RewardsPage() {
   ]
 
   return (
-
     <EnhancedPageTransition>
       <div className='space-y-6'>
         {/* Page Header */}
@@ -327,25 +326,37 @@ export function RewardsPage() {
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className='inline-flex w-full overflow-x-auto bg-blue-100 p-1 rounded-lg shadow-sm scrollbar-hide'>
-            <TabsTrigger value='overview' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+            <TabsTrigger
+              value='overview'
+              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+            >
               <span className='whitespace-nowrap flex items-center gap-1'>
                 <Award className='w-4 h-4' />
                 Tổng quan
               </span>
             </TabsTrigger>
-            <TabsTrigger value='vouchers' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+            <TabsTrigger
+              value='vouchers'
+              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+            >
               <span className='whitespace-nowrap flex items-center gap-1'>
                 <Gift className='w-4 h-4' />
                 Đổi quà
               </span>
             </TabsTrigger>
-            <TabsTrigger value='earn' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+            <TabsTrigger
+              value='earn'
+              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+            >
               <span className='whitespace-nowrap flex items-center gap-1'>
                 <Zap className='w-4 h-4' />
                 Cách tích điểm
               </span>
             </TabsTrigger>
-            <TabsTrigger value='history' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+            <TabsTrigger
+              value='history'
+              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+            >
               <span className='whitespace-nowrap flex items-center gap-1'>
                 <Clock className='w-4 h-4' />
                 Lịch sử
@@ -373,8 +384,9 @@ export function RewardsPage() {
                       transition={{ delay: index * 0.1 }}
                     >
                       <Card
-                        className={`relative overflow-hidden ${index === currentTierIndex ? 'border-2 border-blue-500 shadow-lg' : 'border border-gray-200'
-                          }`}
+                        className={`relative overflow-hidden ${
+                          index === currentTierIndex ? 'border-2 border-blue-500 shadow-lg' : 'border border-gray-200'
+                        }`}
                       >
                         {index === currentTierIndex && (
                           <div className='absolute top-2 right-2'>
@@ -559,8 +571,9 @@ export function RewardsPage() {
                     >
                       <div className='flex items-center gap-4'>
                         <div
-                          className={`w-10 h-10 rounded-full flex items-center justify-center ${transaction.type === 'earn' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
-                            }`}
+                          className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                            transaction.type === 'earn' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                          }`}
                         >
                           {transaction.type === 'earn' ? (
                             <TrendingUp className='w-5 h-5' />
@@ -575,8 +588,9 @@ export function RewardsPage() {
                       </div>
                       <div className='text-right'>
                         <p
-                          className={`text-lg font-semibold ${transaction.type === 'earn' ? 'text-green-600' : 'text-red-600'
-                            }`}
+                          className={`text-lg font-semibold ${
+                            transaction.type === 'earn' ? 'text-green-600' : 'text-red-600'
+                          }`}
                         >
                           {transaction.type === 'earn' ? '+' : ''}
                           {transaction.points.toLocaleString()}
@@ -594,6 +608,5 @@ export function RewardsPage() {
         </Tabs>
       </div>
     </EnhancedPageTransition>
-
   )
 }

@@ -164,8 +164,9 @@ export function AccountLayout({ children, breadcrumbItems = [] }: AccountLayoutP
               key={item.href}
               to={item.href}
               onClick={() => setIsMobileMenuOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${isActive ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                isActive ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+              }`}
             >
               <Icon className='w-5 h-5' />
               {item.label}

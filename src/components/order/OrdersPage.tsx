@@ -25,9 +25,17 @@ export function OrdersPage() {
       setLoading(true)
       const fetchedOrders = await orderService.getOrders()
       // Transform to account Order type
-      const transformedOrders: Order[] = fetchedOrders.map(order => {
+      const transformedOrders: Order[] = fetchedOrders.map((order) => {
         // Determine display status based on both orderStatus and paymentStatus
-        let displayStatus: 'pending_payment' | 'confirmed' | 'processing' | 'preparing' | 'shipping' | 'delivered' | 'cancelled' | 'pending'
+        let displayStatus:
+          | 'pending_payment'
+          | 'confirmed'
+          | 'processing'
+          | 'preparing'
+          | 'shipping'
+          | 'delivered'
+          | 'cancelled'
+          | 'pending'
 
         if (order.status === 'pending') {
           // If order is pending, check payment status
@@ -43,7 +51,7 @@ export function OrdersPage() {
           customerId: order.userId,
           orderNumber: order.orderNumber,
           status: displayStatus,
-          items: order.items.map(item => ({
+          items: order.items.map((item) => ({
             id: item.id,
             productId: item.productId,
             productName: item.product.name,
@@ -72,7 +80,15 @@ export function OrdersPage() {
             isDefault: false,
           },
           paymentMethod: order.paymentMethod,
-          paymentStatus: (order.paymentStatus === 'pending' ? 'pending' : order.paymentStatus === 'paid' ? 'paid' : order.paymentStatus === 'failed' ? 'failed' : order.paymentStatus === 'refunded' ? 'refunded' : 'pending') as 'pending' | 'paid' | 'failed' | 'refunded',
+          paymentStatus: (order.paymentStatus === 'pending'
+            ? 'pending'
+            : order.paymentStatus === 'paid'
+              ? 'paid'
+              : order.paymentStatus === 'failed'
+                ? 'failed'
+                : order.paymentStatus === 'refunded'
+                  ? 'refunded'
+                  : 'pending') as 'pending' | 'paid' | 'failed' | 'refunded',
           createdAt: order.createdAt,
           updatedAt: order.updatedAt,
           deliveryMethod: order.shippingMethod,
@@ -206,13 +222,18 @@ export function OrdersPage() {
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className='w-full'>
         <TabsList className='!inline-flex !overflow-x-auto !gap-1.5 !h-auto !w-full !bg-blue-50 !p-2 !pb-3 !rounded-lg !justify-start scrollbar-thin'>
           {tabs.map((tab) => (
-            <TabsTrigger key={tab.value} value={tab.value} className='flex-shrink-0 text-sm px-3 py-2 !bg-white !text-gray-700 border border-blue-200 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:!border-blue-600 transition-all duration-200 rounded-md hover:!bg-blue-100'>
+            <TabsTrigger
+              key={tab.value}
+              value={tab.value}
+              className='flex-shrink-0 text-sm px-3 py-2 !bg-white !text-gray-700 border border-blue-200 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:!border-blue-600 transition-all duration-200 rounded-md hover:!bg-blue-100'
+            >
               <span className='whitespace-nowrap'>{tab.label}</span>
               {tab.count > 0 && (
-                <span className={`ml-1.5 rounded-full px-1.5 py-0.5 text-xs font-medium ${selectedTab === tab.value
-                  ? 'bg-white/90 text-blue-600'
-                  : 'bg-blue-500 text-white'
-                  }`}>
+                <span
+                  className={`ml-1.5 rounded-full px-1.5 py-0.5 text-xs font-medium ${
+                    selectedTab === tab.value ? 'bg-white/90 text-blue-600' : 'bg-blue-500 text-white'
+                  }`}
+                >
                   {tab.count}
                 </span>
               )}

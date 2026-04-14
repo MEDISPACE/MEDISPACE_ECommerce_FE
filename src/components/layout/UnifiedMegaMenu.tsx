@@ -17,10 +17,7 @@ export function UnifiedMegaMenu({ activeCategory, isVisible, onClose }: UnifiedM
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Fetch products for the active subcategory
-  const { products: featuredProducts, loading: productsLoading } = useProductsByCategory(
-    activeSubCategory?._id,
-    4
-  )
+  const { products: featuredProducts, loading: productsLoading } = useProductsByCategory(activeSubCategory?._id, 4)
 
   // Simple effect to set first subcategory when category changes
   useEffect(() => {
@@ -28,7 +25,6 @@ export function UnifiedMegaMenu({ activeCategory, isVisible, onClose }: UnifiedM
       setActiveSubCategory(activeCategory.subcategories[0])
     }
   }, [activeCategory?._id, activeCategory?.subcategories])
-
 
   // Clean up timeout on unmount
   useEffect(() => {
@@ -76,17 +72,19 @@ export function UnifiedMegaMenu({ activeCategory, isVisible, onClose }: UnifiedM
                 key={subCategory._id}
                 to={`/categories/${subCategory.slug}`}
                 onMouseEnter={() => setActiveSubCategory(subCategory)}
-                className={`block w-full text-left px-3 py-2.5 rounded-md text-sm transition-all ${activeSubCategory?._id === subCategory._id
-                  ? 'bg-blue-50 text-blue-700 font-medium'
-                  : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                  }`}
+                className={`block w-full text-left px-3 py-2.5 rounded-md text-sm transition-all ${
+                  activeSubCategory?._id === subCategory._id
+                    ? 'bg-blue-50 text-blue-700 font-medium'
+                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                }`}
                 onClick={onClose}
               >
                 <div className='flex items-center justify-between'>
                   <span className='line-clamp-1'>{subCategory.name}</span>
                   <ChevronRight
-                    className={`w-4 h-4 transition-transform ${activeSubCategory?._id === subCategory._id ? 'translate-x-0.5' : ''
-                      }`}
+                    className={`w-4 h-4 transition-transform ${
+                      activeSubCategory?._id === subCategory._id ? 'translate-x-0.5' : ''
+                    }`}
                   />
                 </div>
               </Link>
@@ -96,9 +94,7 @@ export function UnifiedMegaMenu({ activeCategory, isVisible, onClose }: UnifiedM
 
         {/* Column 2: Level 2 Sub-subcategories (40%) */}
         <div className='w-[40%] bg-white border-r border-gray-200 p-5 overflow-y-auto'>
-          <h4 className='font-semibold text-gray-900 mb-3 text-sm'>
-            {activeSubCategory?.name || 'Chọn danh mục'}
-          </h4>
+          <h4 className='font-semibold text-gray-900 mb-3 text-sm'>{activeSubCategory?.name || 'Chọn danh mục'}</h4>
           <div className='space-y-1.5'>
             {activeSubCategory?.subcategories && activeSubCategory.subcategories.length > 0 ? (
               activeSubCategory.subcategories.map((subSubCategory) => (
@@ -109,9 +105,7 @@ export function UnifiedMegaMenu({ activeCategory, isVisible, onClose }: UnifiedM
                   onClick={onClose}
                 >
                   <span className='line-clamp-1 group-hover:font-medium'>{subSubCategory.name}</span>
-                  <span className='text-xs text-gray-400 ml-2 flex-shrink-0'>
-                    ({subSubCategory.productCount || 0})
-                  </span>
+                  <span className='text-xs text-gray-400 ml-2 flex-shrink-0'>({subSubCategory.productCount || 0})</span>
                 </Link>
               ))
             ) : (
@@ -172,19 +166,20 @@ export function UnifiedMegaMenu({ activeCategory, isVisible, onClose }: UnifiedM
                       </Badge>
                     )}
                     <p className='text-sm text-blue-600 font-semibold'>
-                      {product.requiresPrescription ? 'Liên hệ' : (() => {
-                        const defaultVariant = product.priceVariants?.find(v => v.isDefault) || product.priceVariants?.[0]
-                        const price = defaultVariant?.price
-                        return price ? price.toLocaleString('vi-VN') + 'đ' : 'Liên hệ'
-                      })()}
+                      {product.requiresPrescription
+                        ? 'Liên hệ'
+                        : (() => {
+                            const defaultVariant =
+                              product.priceVariants?.find((v) => v.isDefault) || product.priceVariants?.[0]
+                            const price = defaultVariant?.price
+                            return price ? price.toLocaleString('vi-VN') + 'đ' : 'Liên hệ'
+                          })()}
                     </p>
                   </div>
                 </Link>
               ))
             ) : (
-              <div className='text-sm text-gray-500 text-center py-8'>
-                Không có sản phẩm nổi bật
-              </div>
+              <div className='text-sm text-gray-500 text-center py-8'>Không có sản phẩm nổi bật</div>
             )}
           </div>
         </div>

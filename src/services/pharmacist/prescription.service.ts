@@ -62,10 +62,10 @@ export const prescriptionService = {
       // Convert params to ensure integers
       const queryParams = params
         ? {
-          page: params.page ? Number(params.page) : undefined,
-          limit: params.limit ? Number(params.limit) : undefined,
-          status: params.status,
-        }
+            page: params.page ? Number(params.page) : undefined,
+            limit: params.limit ? Number(params.limit) : undefined,
+            status: params.status,
+          }
         : undefined
 
       // Use /prescriptions/pending endpoint which is designed for pharmacists to see all prescriptions
@@ -89,8 +89,9 @@ export const prescriptionService = {
    * Get pending prescriptions
    */
   getPending: async (): Promise<Prescription[]> => {
-    const response: AxiosResponse<{ message: string; result: Prescription[] }> =
-      await apiClient.get(API_ENDPOINTS.PRESCRIPTIONS.PENDING)
+    const response: AxiosResponse<{ message: string; result: Prescription[] }> = await apiClient.get(
+      API_ENDPOINTS.PRESCRIPTIONS.PENDING,
+    )
     return response.data.result
   },
 
@@ -120,9 +121,9 @@ export const prescriptionService = {
    */
   getStats: async (): Promise<PrescriptionStats> => {
     try {
-
-      const response: AxiosResponse<{ message: string; result: PrescriptionStats }> =
-        await apiClient.get(API_ENDPOINTS.PRESCRIPTIONS.STATS)
+      const response: AxiosResponse<{ message: string; result: PrescriptionStats }> = await apiClient.get(
+        API_ENDPOINTS.PRESCRIPTIONS.STATS,
+      )
 
       return response.data.result
     } catch (error: unknown) {

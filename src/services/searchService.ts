@@ -90,7 +90,7 @@ export const searchService = {
   async suggest(q: string): Promise<SearchSuggestHit[]> {
     try {
       const response = await apiClient.get<{ hits?: SearchSuggestHit[] }>('/search/suggest', {
-        params: { q }
+        params: { q },
       })
       return response.data?.hits || []
     } catch {
@@ -104,7 +104,7 @@ export const searchService = {
   async searchProducts(params: SearchProductsParams): Promise<SearchProductsResult> {
     try {
       const response = await apiClient.get<SearchProductsResult>('/search/products', {
-        params
+        params,
       })
       return response.data
     } catch {
@@ -134,7 +134,7 @@ export const searchService = {
     } catch {
       return { typesense: false, message: 'Search service unavailable' }
     }
-  }
+  },
 }
 
 export default searchService

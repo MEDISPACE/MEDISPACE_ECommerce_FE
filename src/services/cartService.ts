@@ -14,14 +14,17 @@ class CartService {
   }
 
   async updateCartItem(productId: string, updates: UpdateCartItemRequest): Promise<Cart> {
-    const response = await apiClient.put<{ message: string; result: Cart }>(API_ENDPOINTS.CART.UPDATE_ITEM(productId), updates)
+    const response = await apiClient.put<{ message: string; result: Cart }>(
+      API_ENDPOINTS.CART.UPDATE_ITEM(productId),
+      updates,
+    )
     return response.data.result
   }
 
   async updateCartItemUnit(productId: string, unit: string): Promise<Cart> {
     const response = await apiClient.put<{ message: string; result: Cart }>(
       API_ENDPOINTS.CART.UPDATE_ITEM_UNIT(productId),
-      { unit }
+      { unit },
     )
     return response.data.result
   }

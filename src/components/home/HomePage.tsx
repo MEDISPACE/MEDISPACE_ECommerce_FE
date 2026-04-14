@@ -548,7 +548,9 @@ export function HomePage() {
                                       product={product}
                                       variant='grid'
                                       onAddToCart={(selectedUnit) => {
-                                        const variant = originalProduct?.priceVariants?.find(v => v.unit === selectedUnit)
+                                        const variant = originalProduct?.priceVariants?.find(
+                                          (v) => v.unit === selectedUnit,
+                                        )
                                         const price = variant?.price || originalProduct?.priceVariants?.[0]?.price
                                         addToCart(originalProduct, 1, selectedUnit, price)
                                       }}
@@ -579,10 +581,11 @@ export function HomePage() {
                           <motion.button
                             key={index}
                             onClick={() => setFeaturedCurrentIndex(index)}
-                            className={`h-3 rounded-full transition-all duration-300 ${index === featuredCurrentIndex
-                              ? 'bg-blue-600 w-8 shadow-lg'
-                              : 'bg-blue-200 hover:bg-blue-300 w-3'
-                              }`}
+                            className={`h-3 rounded-full transition-all duration-300 ${
+                              index === featuredCurrentIndex
+                                ? 'bg-blue-600 w-8 shadow-lg'
+                                : 'bg-blue-200 hover:bg-blue-300 w-3'
+                            }`}
                             whileHover={{
                               scale: 1.2,
                               backgroundColor: index === featuredCurrentIndex ? '#0066CC' : '#4A90E2',
@@ -647,7 +650,9 @@ export function HomePage() {
                     <Button
                       size='lg'
                       onClick={() => {
-                        const chatBtn = document.querySelector('button[aria-label="Chat với dược sĩ"]') as HTMLButtonElement | null
+                        const chatBtn = document.querySelector(
+                          'button[aria-label="Chat với dược sĩ"]',
+                        ) as HTMLButtonElement | null
                         if (chatBtn) {
                           chatBtn.click()
                         }

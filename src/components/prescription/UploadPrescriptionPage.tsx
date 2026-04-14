@@ -1,6 +1,19 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router'
-import { CheckCircle, ArrowLeft, Clock, UserCheck, Package, Upload, AlertCircle, Sparkles, Loader2, ScanLine, Brain, FileSearch } from 'lucide-react'
+import {
+  CheckCircle,
+  ArrowLeft,
+  Clock,
+  UserCheck,
+  Package,
+  Upload,
+  AlertCircle,
+  Sparkles,
+  Loader2,
+  ScanLine,
+  Brain,
+  FileSearch,
+} from 'lucide-react'
 
 import { Button } from '../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
@@ -68,7 +81,9 @@ export function UploadPrescriptionPage() {
 
   // Cleanup timer on unmount
   useEffect(() => {
-    return () => { if (scanTimerRef.current) clearInterval(scanTimerRef.current) }
+    return () => {
+      if (scanTimerRef.current) clearInterval(scanTimerRef.current)
+    }
   }, [])
 
   // Find product if specified - TODO: Replace with real API call
@@ -113,7 +128,7 @@ export function UploadPrescriptionPage() {
             rawText: scanResult.rawText,
             confidence: scanResult.data.confidence,
             // Chuẩn hóa null → string cho MedicationItem
-            medications: (scanResult.data.medications || []).map(m => ({
+            medications: (scanResult.data.medications || []).map((m) => ({
               productName: m.productName || '',
               dosage: m.dosage || '',
               quantity: m.quantity,
@@ -160,7 +175,7 @@ export function UploadPrescriptionPage() {
         legalUnderstanding: boolean
       }
     },
-    medications: MedicationItem[]
+    medications: MedicationItem[],
   ) => {
     if (!isAuthenticated) {
       toast.error('Vui lòng đăng nhập để gửi đơn thuốc')
@@ -192,15 +207,23 @@ export function UploadPrescriptionPage() {
         prescriptionDate: formData.examinationDate ? formData.examinationDate.toISOString() : new Date().toISOString(),
         images: imageUrls,
         // Thuốc từ OCR (hoặc mặc định nếu không quét được)
-        medications: medications.length > 0
-          ? medications.map(m => ({
-            productName: m.productName,
-            dosage: m.dosage || 'Theo chỉ định bác sĩ',
-            quantity: m.quantity ?? 1,
-            unit: m.unit || undefined,
-            instructions: m.instructions || 'Theo hướng dẫn của bác sĩ',
-          }))
-          : [{ productName: 'Theo đơn thuốc', dosage: 'Theo chỉ định bác sĩ', quantity: 1, instructions: 'Theo hướng dẫn của bác sĩ' }],
+        medications:
+          medications.length > 0
+            ? medications.map((m) => ({
+                productName: m.productName,
+                dosage: m.dosage || 'Theo chỉ định bác sĩ',
+                quantity: m.quantity ?? 1,
+                unit: m.unit || undefined,
+                instructions: m.instructions || 'Theo hướng dẫn của bác sĩ',
+              }))
+            : [
+                {
+                  productName: 'Theo đơn thuốc',
+                  dosage: 'Theo chỉ định bác sĩ',
+                  quantity: 1,
+                  instructions: 'Theo hướng dẫn của bác sĩ',
+                },
+              ],
         // OCR metadata
         ocrRawText: ocrData?.rawText || undefined,
         ocrConfidence: ocrData?.confidence || undefined,
@@ -250,10 +273,11 @@ export function UploadPrescriptionPage() {
         if (isScanning) {
           const firstUrl = getUploadedImageUrls()[0]
           const stageLabels = ['', 'Phát hiện vùng chữ...', 'Đọc text Tiếng Việt...', 'Trích xuất thông tin...']
-          const stageIcons = [null,
+          const stageIcons = [
+            null,
             <ScanLine key='1' className='w-5 h-5' />,
             <FileSearch key='2' className='w-5 h-5' />,
-            <Brain key='3' className='w-5 h-5' />
+            <Brain key='3' className='w-5 h-5' />,
           ]
           const tips = [
             'Chụp ảnh rõ ràng, đủ ánh sáng để tăng độ chính xác.',
@@ -274,10 +298,11 @@ export function UploadPrescriptionPage() {
 
               <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
                 {/* Image preview with scan line */}
-                <div className='relative rounded-2xl overflow-hidden border-2 border-blue-200 bg-gray-100' style={{ minHeight: '200px' }}>
-                  {firstUrl && (
-                    <img src={firstUrl} alt='Đơn thuốc' className='w-full h-full object-contain' />
-                  )}
+                <div
+                  className='relative rounded-2xl overflow-hidden border-2 border-blue-200 bg-gray-100'
+                  style={{ minHeight: '200px' }}
+                >
+                  {firstUrl && <img src={firstUrl} alt='Đơn thuốc' className='w-full h-full object-contain' />}
                   {/* Animated scan line */}
                   <div
                     className='absolute left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-blue-500 to-transparent'
@@ -310,26 +335,39 @@ export function UploadPrescriptionPage() {
                       return (
                         <div
                           key={stage}
-                          className={`flex items-center gap-3 p-3 rounded-xl border transition-all duration-500 ${isDone ? 'bg-emerald-50 border-emerald-200' :
-                            isActive ? 'bg-blue-50 border-blue-200 shadow-sm' :
-                              'bg-gray-50 border-gray-200 opacity-40'
-                            }`}
-                        >
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isDone ? 'bg-emerald-100 text-emerald-600' :
-                            isActive ? 'bg-blue-100 text-blue-600' :
-                              'bg-gray-100 text-gray-400'
-                            }`}>
-                            {isDone
-                              ? <CheckCircle className='w-5 h-5' />
+                          className={`flex items-center gap-3 p-3 rounded-xl border transition-all duration-500 ${
+                            isDone
+                              ? 'bg-emerald-50 border-emerald-200'
                               : isActive
-                                ? <Loader2 className='w-5 h-5 animate-spin' />
-                                : stageIcons[stage]
-                            }
+                                ? 'bg-blue-50 border-blue-200 shadow-sm'
+                                : 'bg-gray-50 border-gray-200 opacity-40'
+                          }`}
+                        >
+                          <div
+                            className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                              isDone
+                                ? 'bg-emerald-100 text-emerald-600'
+                                : isActive
+                                  ? 'bg-blue-100 text-blue-600'
+                                  : 'bg-gray-100 text-gray-400'
+                            }`}
+                          >
+                            {isDone ? (
+                              <CheckCircle className='w-5 h-5' />
+                            ) : isActive ? (
+                              <Loader2 className='w-5 h-5 animate-spin' />
+                            ) : (
+                              stageIcons[stage]
+                            )}
                           </div>
                           <div className='flex-1 min-w-0'>
-                            <p className={`text-xs font-medium ${isDone ? 'text-emerald-700' : isActive ? 'text-blue-700' : 'text-gray-400'
-                              }`}>
-                              Trạm {stage}: {isDone ? '✓ Hoàn thành' : isActive ? stageLabels[stage] : stageLabels[stage]}
+                            <p
+                              className={`text-xs font-medium ${
+                                isDone ? 'text-emerald-700' : isActive ? 'text-blue-700' : 'text-gray-400'
+                              }`}
+                            >
+                              Trạm {stage}:{' '}
+                              {isDone ? '✓ Hoàn thành' : isActive ? stageLabels[stage] : stageLabels[stage]}
                             </p>
                           </div>
                         </div>
@@ -579,8 +617,9 @@ export function UploadPrescriptionPage() {
                 <div className='space-y-3'>
                   <div className='flex items-start gap-3'>
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${currentStep >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
-                        }`}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
+                        currentStep >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
+                      }`}
                     >
                       <Upload className='w-4 h-4' />
                     </div>
@@ -592,8 +631,9 @@ export function UploadPrescriptionPage() {
 
                   <div className='flex items-start gap-3'>
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${currentStep >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
-                        }`}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
+                        currentStep >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
+                      }`}
                     >
                       <UserCheck className='w-4 h-4' />
                     </div>
@@ -605,8 +645,9 @@ export function UploadPrescriptionPage() {
 
                   <div className='flex items-start gap-3'>
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${currentStep >= 3 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
-                        }`}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
+                        currentStep >= 3 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
+                      }`}
                     >
                       <Package className='w-4 h-4' />
                     </div>
@@ -618,8 +659,9 @@ export function UploadPrescriptionPage() {
 
                   <div className='flex items-start gap-3'>
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${currentStep >= 3 ? 'bg-emerald-600 text-white' : 'bg-gray-300 text-gray-600'
-                        }`}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
+                        currentStep >= 3 ? 'bg-emerald-600 text-white' : 'bg-gray-300 text-gray-600'
+                      }`}
                     >
                       <CheckCircle className='w-4 h-4' />
                     </div>

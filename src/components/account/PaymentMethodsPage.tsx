@@ -223,15 +223,12 @@ export function PaymentMethodsPage() {
   const bankAccounts = paymentMethods.filter((m) => m.type === 'bank')
 
   return (
-
     <div className='space-y-6'>
       {/* Header */}
       <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
         <div className='flex flex-col md:flex-row md:items-center justify-between gap-4'>
           <div>
-            <h1 className='text-2xl font-bold text-blue-800 mb-2'>
-              Phương thức thanh toán
-            </h1>
+            <h1 className='text-2xl font-bold text-blue-800 mb-2'>Phương thức thanh toán</h1>
             <p className='text-gray-600 mt-1'>Quản lý thẻ và ví điện tử của bạn</p>
           </div>
 
@@ -362,19 +359,28 @@ export function PaymentMethodsPage() {
             }}
           >
             <TabsList className='inline-flex w-full overflow-x-auto bg-blue-100 p-1 rounded-lg shadow-sm scrollbar-hide'>
-              <TabsTrigger value='card' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 !text-blue-600 border-0 data-[state=active]:!bg-blue-500 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+              <TabsTrigger
+                value='card'
+                className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 !text-blue-600 border-0 data-[state=active]:!bg-blue-500 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+              >
                 <span className='whitespace-nowrap flex items-center gap-1'>
                   <CreditCard className='w-4 h-4' />
                   Thẻ
                 </span>
               </TabsTrigger>
-              <TabsTrigger value='ewallet' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 !text-blue-600 border-0 data-[state=active]:!bg-blue-500 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+              <TabsTrigger
+                value='ewallet'
+                className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 !text-blue-600 border-0 data-[state=active]:!bg-blue-500 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+              >
                 <span className='whitespace-nowrap flex items-center gap-1'>
                   <Smartphone className='w-4 h-4' />
                   Ví điện tử
                 </span>
               </TabsTrigger>
-              <TabsTrigger value='bank' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 !text-blue-600 border-0 data-[state=active]:!bg-blue-500 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+              <TabsTrigger
+                value='bank'
+                className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 !text-blue-600 border-0 data-[state=active]:!bg-blue-500 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+              >
                 <span className='whitespace-nowrap flex items-center gap-1'>
                   <Building className='w-4 h-4' />
                   Ngân hàng
@@ -595,6 +601,5 @@ export function PaymentMethodsPage() {
         </DialogContent>
       </Dialog>
     </div>
-
   )
 }

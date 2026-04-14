@@ -250,23 +250,29 @@ export function Header() {
 
             {/* Desktop Categories with unified mega menu - Only show main categories (level 0) */}
             <div className='hidden lg:flex items-center gap-4'>
-              {categories.filter((cat) => cat.level === 0).map((category) => (
-                <div key={category._id} className='relative' onMouseEnter={() => handleCategoryHover(category)}>
-                  <Link
-                    to={`/categories/${category.slug}`}
-                    className={`relative flex items-center px-1 py-3 text-sm font-medium transition-colors duration-200 group ${activeMegaMenuCategory?._id === category._id ? 'text-blue-600' : 'text-gray-700 hover:text-blue-600'
+              {categories
+                .filter((cat) => cat.level === 0)
+                .map((category) => (
+                  <div key={category._id} className='relative' onMouseEnter={() => handleCategoryHover(category)}>
+                    <Link
+                      to={`/categories/${category.slug}`}
+                      className={`relative flex items-center px-1 py-3 text-sm font-medium transition-colors duration-200 group ${
+                        activeMegaMenuCategory?._id === category._id
+                          ? 'text-blue-600'
+                          : 'text-gray-700 hover:text-blue-600'
                       }`}
-                    title={category.name}
-                  >
-                    <span className='text-center leading-tight'>{category.name}</span>
-                    <ChevronDown className='w-3 h-3 ml-1 opacity-60 flex-shrink-0' />
-                    <span
-                      className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-blue-600 to-cyan-500 transition-all duration-300 ${activeMegaMenuCategory?._id === category._id ? 'w-full' : 'w-0 group-hover:w-full'
+                      title={category.name}
+                    >
+                      <span className='text-center leading-tight'>{category.name}</span>
+                      <ChevronDown className='w-3 h-3 ml-1 opacity-60 flex-shrink-0' />
+                      <span
+                        className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-blue-600 to-cyan-500 transition-all duration-300 ${
+                          activeMegaMenuCategory?._id === category._id ? 'w-full' : 'w-0 group-hover:w-full'
                         }`}
-                    ></span>
-                  </Link>
-                </div>
-              ))}
+                      ></span>
+                    </Link>
+                  </div>
+                ))}
             </div>
 
             <Link

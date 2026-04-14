@@ -436,7 +436,11 @@ export function ProductManagementPage() {
       active: allProducts.filter((p) => p.status === 'active').length,
       outOfStock: allProducts.filter((p) => p.status === 'out_of_stock').length,
       lowStock: allProducts.filter((p) => (p.stockQuantity || 0) > 0 && (p.stockQuantity || 0) < 20).length,
-      totalValue: allProducts.reduce((sum, p) => sum + (p.price || 0) * (p.stockQuantity || 0), 0),
+      totalValue: allProducts.reduce((sum, p) => {
+        const defaultVariant = p.priceVariants?.find((v) => v.isDefault) || p.priceVariants?.[0]
+        const price = defaultVariant?.price || 0
+        return sum + price * (p.stockQuantity || 0)
+      }, 0),
       rxProducts: allProducts.filter((p) => p.requiresPrescription).length,
       otcProducts: allProducts.filter((p) => !p.requiresPrescription).length,
     }

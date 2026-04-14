@@ -54,10 +54,9 @@ export function ShoppingCartPage() {
         setAddresses(fetchedAddresses)
 
         // Find default address or use first one
-        const defaultAddr = fetchedAddresses.find(addr => addr.isDefault) || fetchedAddresses[0] || null
+        const defaultAddr = fetchedAddresses.find((addr) => addr.isDefault) || fetchedAddresses[0] || null
         setDefaultAddress(defaultAddr)
       } catch (error) {
-
       } finally {
         setLoadingAddress(false)
       }
@@ -76,10 +75,10 @@ export function ShoppingCartPage() {
     }
 
     // Check if any selected items are no longer in cart
-    const validKeys = new Set(cart.items.map(item => createSelectionKey(item.productId, item.unit)))
+    const validKeys = new Set(cart.items.map((item) => createSelectionKey(item.productId, item.unit)))
     const invalidKeys: string[] = []
 
-    selectedItems.forEach(key => {
+    selectedItems.forEach((key) => {
       if (!validKeys.has(key)) {
         invalidKeys.push(key)
       }
@@ -87,7 +86,7 @@ export function ShoppingCartPage() {
 
     // Only remove invalid selections, keep valid ones
     if (invalidKeys.length > 0) {
-      invalidKeys.forEach(key => {
+      invalidKeys.forEach((key) => {
         toggleItemSelection(key.split('-')[0], key.includes('-') ? key.split('-').slice(1).join('-') : undefined)
       })
     }
@@ -103,17 +102,19 @@ export function ShoppingCartPage() {
     navigate('/cart/checkout')
   }
 
-
   // Note: Don't clear selections on mount anymore
   // Selections are managed by CartContext and persisted in sessionStorage
 
   // Calculate if all items are selected
-  const allSelected = cart?.items && cart.items.length > 0 && cart.items.every(item => selectedItems.has(createSelectionKey(item.productId, item.unit)))
+  const allSelected =
+    cart?.items &&
+    cart.items.length > 0 &&
+    cart.items.every((item) => selectedItems.has(createSelectionKey(item.productId, item.unit)))
 
   // Calculate totals
   const subtotal = getSelectedItemsTotal()
   const discount = 0 // No discount
-  const shippingFee = getSelectedItemsCount() === 0 ? 0 : (subtotal >= 300000 ? 0 : 30000)
+  const shippingFee = getSelectedItemsCount() === 0 ? 0 : subtotal >= 300000 ? 0 : 30000
   const total = subtotal - discount + shippingFee
 
   // Handle select all
@@ -258,7 +259,10 @@ export function ShoppingCartPage() {
           {/* Cart Items */}
           <div className='space-y-4'>
             {cart?.items.map((item) => (
-              <Card key={createSelectionKey(item.productId, item.unit)} className='bg-white border-blue-100 hover:shadow-md transition-shadow'>
+              <Card
+                key={createSelectionKey(item.productId, item.unit)}
+                className='bg-white border-blue-100 hover:shadow-md transition-shadow'
+              >
                 <CardContent className='p-6'>
                   <div className='flex items-start gap-4'>
                     <Checkbox
@@ -288,12 +292,9 @@ export function ShoppingCartPage() {
                       {item.priceVariants && item.priceVariants.length > 1 ? (
                         <div className='flex items-center gap-2 mb-2'>
                           <span className='text-xs text-gray-500'>Đơn vị:</span>
-                          <Select
-                            value={item.unit}
-                            onValueChange={(value) => updateUnit(item.productId, value)}
-                          >
+                          <Select value={item.unit} onValueChange={(value) => updateUnit(item.productId, value)}>
                             <SelectTrigger className='h-7 w-[100px] text-xs border-blue-200'>
-                              <SelectValue placeholder="Chọn đơn vị" />
+                              <SelectValue placeholder='Chọn đơn vị' />
                             </SelectTrigger>
                             <SelectContent>
                               {item.priceVariants.map((variant) => (
@@ -304,12 +305,14 @@ export function ShoppingCartPage() {
                             </SelectContent>
                           </Select>
                         </div>
-                      ) : item.unit && (
-                        <div className='mb-2'>
-                          <span className='inline-flex items-center px-2 py-1 text-xs bg-blue-50 text-blue-600 rounded-full'>
-                            Đơn vị: {item.unit}
-                          </span>
-                        </div>
+                      ) : (
+                        item.unit && (
+                          <div className='mb-2'>
+                            <span className='inline-flex items-center px-2 py-1 text-xs bg-blue-50 text-blue-600 rounded-full'>
+                              Đơn vị: {item.unit}
+                            </span>
+                          </div>
+                        )
                       )}
 
                       <div className='flex items-center justify-between'>
@@ -497,7 +500,10 @@ export function ShoppingCartPage() {
 
                 <div className='text-center'>
                   <Link to='/products'>
-                    <Button variant='outline' className='w-full !border-blue-200 hover:!bg-blue-100 hover:!border-blue-100 hover:shadow-md transition-shadow text-blue-600'>
+                    <Button
+                      variant='outline'
+                      className='w-full !border-blue-200 hover:!bg-blue-100 hover:!border-blue-100 hover:shadow-md transition-shadow text-blue-600'
+                    >
                       Tiếp tục mua sắm
                     </Button>
                   </Link>

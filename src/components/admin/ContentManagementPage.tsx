@@ -242,16 +242,28 @@ export function ContentManagementPage() {
       <Tabs defaultValue='banners' className='space-y-4'>
         <div className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-4'>
           <TabsList className='grid w-full grid-cols-3 !bg-blue-50 p-1.5 rounded-lg h-auto'>
-            <TabsTrigger value='banners' className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'>
+            <TabsTrigger
+              value='banners'
+              className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'
+            >
               Banners
             </TabsTrigger>
-            <TabsTrigger value='categories' className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'>
+            <TabsTrigger
+              value='categories'
+              className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'
+            >
               Danh mục
             </TabsTrigger>
-            <TabsTrigger value='news' className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'>
+            <TabsTrigger
+              value='news'
+              className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'
+            >
               Tin tức
             </TabsTrigger>
-            <TabsTrigger value='promotions' className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'>
+            <TabsTrigger
+              value='promotions'
+              className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'
+            >
               Khuyến mãi
             </TabsTrigger>
           </TabsList>
@@ -429,10 +441,7 @@ export function ContentManagementPage() {
 
             <div className='grid md:grid-cols-2 gap-4'>
               {promotions.map((promo) => (
-                <Card
-                  key={promo.id}
-                  className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'
-                >
+                <Card key={promo.id} className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
                   <CardContent className='p-4'>
                     <div className='flex items-start justify-between mb-3'>
                       <div className='flex-1'>

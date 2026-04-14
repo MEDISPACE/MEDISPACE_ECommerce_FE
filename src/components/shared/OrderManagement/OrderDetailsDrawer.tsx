@@ -12,7 +12,15 @@ interface OrderDetailsDrawerProps {
   order: Order | null
 }
 
-type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'shipping' | 'shipped' | 'delivered' | 'cancelled' | 'returned'
+type OrderStatus =
+  | 'pending'
+  | 'confirmed'
+  | 'processing'
+  | 'shipping'
+  | 'shipped'
+  | 'delivered'
+  | 'cancelled'
+  | 'returned'
 type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded'
 
 export function OrderDetailsDrawer({ isOpen, onClose, order }: OrderDetailsDrawerProps) {
@@ -154,15 +162,13 @@ export function OrderDetailsDrawer({ isOpen, onClose, order }: OrderDetailsDrawe
                     <div className='flex items-center gap-2 flex-wrap'>
                       <span className='text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded'>SKU: {item.sku}</span>
                       {(item as any).unit && (
-                        <span className='text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded'>
-                          {(item as any).unit}
-                        </span>
+                        <span className='text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded'>{(item as any).unit}</span>
                       )}
                     </div>
                     <p className='text-sm text-gray-600'>
                       <span className='text-blue-600 font-medium'>{formatCurrency(item.unitPrice)}</span>
-                      {(item as any).unit && <span className='text-gray-400'>/{(item as any).unit}</span>}
-                      {' '}x {item.quantity}
+                      {(item as any).unit && <span className='text-gray-400'>/{(item as any).unit}</span>} x{' '}
+                      {item.quantity}
                     </p>
                   </div>
                   <div className='text-right flex flex-col justify-center'>
@@ -216,30 +222,30 @@ export function OrderDetailsDrawer({ isOpen, onClose, order }: OrderDetailsDrawe
           {/* Notes Card */}
           {(order.notes ||
             ('pharmacistNotes' in order && (order as Order & { pharmacistNotes?: string }).pharmacistNotes)) && (
-              <Card className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
-                <CardHeader className='pb-3'>
-                  <CardTitle className='text-lg font-semibold text-blue-900'>Ghi chú</CardTitle>
-                </CardHeader>
-                <CardContent className='space-y-3'>
-                  {order.notes && (
-                    <div className='bg-gradient-to-r from-yellow-50 to-amber-50 p-4 rounded-xl border border-yellow-200'>
-                      <p className='text-sm font-semibold text-amber-800 mb-1 flex items-center gap-2'>
-                        <span>💬</span> Ghi chú khách hàng:
-                      </p>
-                      <p className='text-gray-700'>{order.notes}</p>
-                    </div>
-                  )}
-                  {'pharmacistNotes' in order && (order as Order & { pharmacistNotes?: string }).pharmacistNotes && (
-                    <div className='bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-200'>
-                      <p className='text-sm font-semibold text-blue-800 mb-1 flex items-center gap-2'>
-                        <span>💊</span> Ghi chú dược sĩ:
-                      </p>
-                      <p className='text-gray-700'>{(order as Order & { pharmacistNotes?: string }).pharmacistNotes}</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+            <Card className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+              <CardHeader className='pb-3'>
+                <CardTitle className='text-lg font-semibold text-blue-900'>Ghi chú</CardTitle>
+              </CardHeader>
+              <CardContent className='space-y-3'>
+                {order.notes && (
+                  <div className='bg-gradient-to-r from-yellow-50 to-amber-50 p-4 rounded-xl border border-yellow-200'>
+                    <p className='text-sm font-semibold text-amber-800 mb-1 flex items-center gap-2'>
+                      <span>💬</span> Ghi chú khách hàng:
+                    </p>
+                    <p className='text-gray-700'>{order.notes}</p>
+                  </div>
+                )}
+                {'pharmacistNotes' in order && (order as Order & { pharmacistNotes?: string }).pharmacistNotes && (
+                  <div className='bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-200'>
+                    <p className='text-sm font-semibold text-blue-800 mb-1 flex items-center gap-2'>
+                      <span>💊</span> Ghi chú dược sĩ:
+                    </p>
+                    <p className='text-gray-700'>{(order as Order & { pharmacistNotes?: string }).pharmacistNotes}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </SheetContent>
     </Sheet>

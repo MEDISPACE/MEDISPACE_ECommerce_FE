@@ -20,9 +20,7 @@ export const getProductImage = (product: Product): string => {
 export const getProductImages = (product: Product): string[] => {
   // First check for media images from productMedia collection
   if (product.media?.images && product.media.images.length > 0) {
-    return product.media.images
-      .sort((a, b) => a.sortOrder - b.sortOrder)
-      .map(img => img.url)
+    return product.media.images.sort((a, b) => a.sortOrder - b.sortOrder).map((img) => img.url)
   }
   // Fall back to legacy images array
   if (product.images && product.images.length > 0) {
@@ -32,7 +30,6 @@ export const getProductImages = (product: Product): string[] => {
   const mainImage = getProductImage(product)
   return [mainImage]
 }
-
 
 export const isProductInStock = (product: Product): boolean => {
   if (product.inStock !== undefined) {
@@ -67,7 +64,7 @@ export const getDefaultPriceVariant = (product: Product): PriceVariant | null =>
   if (!product.priceVariants || product.priceVariants.length === 0) {
     return null
   }
-  return product.priceVariants.find(v => v.isDefault) || product.priceVariants[0]
+  return product.priceVariants.find((v) => v.isDefault) || product.priceVariants[0]
 }
 
 /**

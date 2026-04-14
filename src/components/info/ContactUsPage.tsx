@@ -243,22 +243,24 @@ export function ContactUsPage() {
             </form>
 
             {/* Chat Section */}
-            <div className="mt-8 pt-6 border-t border-blue-100">
-              <div className="flex items-start gap-4 p-4 bg-blue-50 rounded-xl">
-                <div className="p-2 bg-white rounded-full shadow-sm">
-                  <MessageCircle className="w-6 h-6 text-blue-600" />
+            <div className='mt-8 pt-6 border-t border-blue-100'>
+              <div className='flex items-start gap-4 p-4 bg-blue-50 rounded-xl'>
+                <div className='p-2 bg-white rounded-full shadow-sm'>
+                  <MessageCircle className='w-6 h-6 text-blue-600' />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-blue-900 mb-1">Cần hỗ trợ ngay?</h4>
-                  <p className="text-sm text-gray-600 mb-3">
+                  <h4 className='font-semibold text-blue-900 mb-1'>Cần hỗ trợ ngay?</h4>
+                  <p className='text-sm text-gray-600 mb-3'>
                     Dược sĩ của chúng tôi đang trực tuyến để giải đáp thắc mắc của bạn.
                   </p>
                   <Button
-                    variant="outline"
-                    className="bg-white border-blue-200 text-blue-600 hover:bg-blue-600 hover:text-white transition-colors"
+                    variant='outline'
+                    className='bg-white border-blue-200 text-blue-600 hover:bg-blue-600 hover:text-white transition-colors'
                     onClick={() => {
                       // Trigger global event or just direct user
-                      const chatBtn = document.querySelector('button[aria-label="Chat với dược sĩ"]') as HTMLButtonElement | null
+                      const chatBtn = document.querySelector(
+                        'button[aria-label="Chat với dược sĩ"]',
+                      ) as HTMLButtonElement | null
                       if (chatBtn) {
                         chatBtn.click()
                       } else {

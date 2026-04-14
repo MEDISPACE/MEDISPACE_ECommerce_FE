@@ -116,6 +116,7 @@ export interface PatientInfo {
   dateOfBirth?: string
   gender?: number
   avatar?: string
+  addresses?: any[]
   role: string
   status: string
   createdAt: string
@@ -175,23 +176,23 @@ export const dashboardService = {
    * Search patient by phone number
    */
   searchPatient: async (phone: string): Promise<PatientSearchResult[]> => {
-    const response: AxiosResponse<{ message: string; result: PatientInfo }> = await apiClient.get(
+    const response: AxiosResponse<{ message: string; result: PatientInfo[] }> = await apiClient.get(
       '/pharmacist/patients/search',
       {
         params: { phone },
       },
     )
 
-    // Map single result to array for PatientHistoryPage
-    if (response.data.result) {
-      const patient = response.data.result
-      return [{
+    // Map results to array for PatientHistoryPage
+    if (response.data.result && Array.isArray(response.data.result)) {
+      return response.data.result.map((patient) => ({
         customerId: patient._id,
-        fullName: `${patient.firstName} ${patient.lastName}`,
+        fullName: `${patient.firstName || ''} ${patient.lastName || ''}`.trim() || 'Khách hàng',
         phoneNumber: patient.phoneNumber || '',
         email: patient.email,
-        avatar: patient.avatar
-      }]
+        avatar: patient.avatar,
+        addresses: patient.addresses,
+      }))
     }
     return []
   },

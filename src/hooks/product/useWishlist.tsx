@@ -45,9 +45,8 @@ export const WishlistProvider = ({ children }: WishlistProviderProps) => {
           setLoading(true)
           const items = await wishlistService.getWishlist()
           // Map Product[] to string[] (product IDs)
-          setWishlist(items.map(product => product._id || product.id).filter((id): id is string => !!id))
+          setWishlist(items.map((product) => product._id || product.id).filter((id): id is string => !!id))
         } catch (error) {
-
         } finally {
           setLoading(false)
         }
@@ -59,28 +58,31 @@ export const WishlistProvider = ({ children }: WishlistProviderProps) => {
     loadWishlist()
   }, [isAuthenticated])
 
-  const toggleWishlist = useCallback(async (productId: string) => {
-    if (!isAuthenticated) {
-      toast.error('Bạn cần phải đăng nhập để thêm sản phẩm vào danh sách yêu thích')
-      return
-    }
-
-    const isIn = wishlist.includes(productId)
-
-    try {
-      if (isIn) {
-        await wishlistService.removeFromWishlist(productId)
-        setWishlist(prev => prev.filter(id => id !== productId))
-        toast.info('Đã xóa sản phẩm khỏi danh sách yêu thích')
-      } else {
-        await wishlistService.addToWishlist(productId)
-        setWishlist(prev => [...prev, productId])
-        toast.success('Đã thêm sản phẩm vào danh sách yêu thích')
+  const toggleWishlist = useCallback(
+    async (productId: string) => {
+      if (!isAuthenticated) {
+        toast.error('Bạn cần phải đăng nhập để thêm sản phẩm vào danh sách yêu thích')
+        return
       }
-    } catch (error) {
-      toast.error('Có lỗi xảy ra khi cập nhật danh sách yêu thích')
-    }
-  }, [wishlist, isAuthenticated])
+
+      const isIn = wishlist.includes(productId)
+
+      try {
+        if (isIn) {
+          await wishlistService.removeFromWishlist(productId)
+          setWishlist((prev) => prev.filter((id) => id !== productId))
+          toast.info('Đã xóa sản phẩm khỏi danh sách yêu thích')
+        } else {
+          await wishlistService.addToWishlist(productId)
+          setWishlist((prev) => [...prev, productId])
+          toast.success('Đã thêm sản phẩm vào danh sách yêu thích')
+        }
+      } catch (error) {
+        toast.error('Có lỗi xảy ra khi cập nhật danh sách yêu thích')
+      }
+    },
+    [wishlist, isAuthenticated],
+  )
 
   const isInWishlist = useCallback(
     (productId: string) => {
@@ -94,7 +96,7 @@ export const WishlistProvider = ({ children }: WishlistProviderProps) => {
     toggleWishlist,
     isInWishlist,
     wishlistCount: wishlist.length,
-    loading
+    loading,
   }
 
   return <WishlistContext.Provider value={value}>{children}</WishlistContext.Provider>

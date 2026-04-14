@@ -227,21 +227,23 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   key={item.href}
                   to={item.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative ${isActive
-                    ? 'bg-gradient-to-r from-[#0066CC] to-[#4A90E2] text-white shadow-lg shadow-blue-500/30'
-                    : 'text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 hover:text-[#0066CC]'
-                    }`}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative ${
+                    isActive
+                      ? 'bg-gradient-to-r from-[#0066CC] to-[#4A90E2] text-white shadow-lg shadow-blue-500/30'
+                      : 'text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 hover:text-[#0066CC]'
+                  }`}
                 >
                   <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-500 group-hover:text-[#0066CC]'}`} />
                   <span className='flex-1 text-sm font-medium'>{item.label}</span>
                   {badge && (
                     <Badge
-                      className={`text-xs ${badgeVariant === 'destructive'
-                        ? 'bg-red-500'
-                        : badgeVariant === 'warning'
-                          ? 'bg-yellow-500'
-                          : 'bg-blue-500'
-                        } text-white`}
+                      className={`text-xs ${
+                        badgeVariant === 'destructive'
+                          ? 'bg-red-500'
+                          : badgeVariant === 'warning'
+                            ? 'bg-yellow-500'
+                            : 'bg-blue-500'
+                      } text-white`}
                     >
                       {badge}
                     </Badge>
@@ -387,9 +389,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 <div>
                   <p className='text-xs text-gray-600'>Doanh thu</p>
                   <p className='text-sm font-semibold text-[#0066CC]'>
-                    {dashboardStats?.revenue.month
-                      ? `₫${(dashboardStats.revenue.month / 1000000).toFixed(1)}M`
-                      : '...'}
+                    {dashboardStats?.revenue.month ? `₫${(dashboardStats.revenue.month / 1000000).toFixed(1)}M` : '...'}
                   </p>
                 </div>
               </div>
@@ -430,9 +430,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                       </DropdownMenuItem>
                     ))
                   ) : (
-                    <div className='py-8 text-center text-gray-500 text-sm'>
-                      Không có thông báo mới
-                    </div>
+                    <div className='py-8 text-center text-gray-500 text-sm'>Không có thông báo mới</div>
                   )}
                 </div>
                 <DropdownMenuSeparator />

@@ -33,7 +33,6 @@ export function PharmacistReportsPage() {
   }
 
   return (
-
     <div className='space-y-6'>
       {/* Header */}
       <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
@@ -137,13 +136,22 @@ export function PharmacistReportsPage() {
       <Tabs defaultValue='daily' className='space-y-4'>
         <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
           <TabsList className='grid w-full grid-cols-3 !bg-blue-50 p-1.5 rounded-lg h-auto'>
-            <TabsTrigger value='daily' className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'>
+            <TabsTrigger
+              value='daily'
+              className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'
+            >
               Theo ngày
             </TabsTrigger>
-            <TabsTrigger value='category' className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'>
+            <TabsTrigger
+              value='category'
+              className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'
+            >
               Theo danh mục
             </TabsTrigger>
-            <TabsTrigger value='performance' className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'>
+            <TabsTrigger
+              value='performance'
+              className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'
+            >
               Hiệu suất
             </TabsTrigger>
           </TabsList>
@@ -291,9 +299,7 @@ export function PharmacistReportsPage() {
                 <div className='flex items-start gap-3 p-3 bg-yellow-50 rounded-lg'>
                   <TrendingUp className='w-5 h-5 text-yellow-600 mt-0.5' />
                   <div>
-                    <p className='text-sm text-gray-900 mb-1'>
-                      Tăng tốc độ xử lý đơn thuốc vào khung giờ 14:00-18:00
-                    </p>
+                    <p className='text-sm text-gray-900 mb-1'>Tăng tốc độ xử lý đơn thuốc vào khung giờ 14:00-18:00</p>
                     <p className='text-xs text-gray-600'>
                       Đây là khung giờ cao điểm với thời gian chờ trung bình 12 phút
                     </p>
@@ -314,6 +320,5 @@ export function PharmacistReportsPage() {
         </div>
       </Tabs>
     </div>
-
   )
 }
