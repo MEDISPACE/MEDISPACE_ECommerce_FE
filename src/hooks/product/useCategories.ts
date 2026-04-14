@@ -30,9 +30,9 @@ export function useCategories() {
             subcategories: subs.map((subCat) => ({
               ...subCat,
               subcategories: subSubCategories.filter((subSubCat) =>
-                subSubCat.path?.startsWith((subCat.path || '') + '/')
-              )
-            }))
+                subSubCat.path?.startsWith((subCat.path || '') + '/'),
+              ),
+            })),
           }
         })
 

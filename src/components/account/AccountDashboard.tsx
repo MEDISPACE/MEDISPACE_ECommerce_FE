@@ -27,12 +27,31 @@ export function AccountDashboard() {
       try {
         const fetchedOrders = await orderService.getOrders()
         // Transform to account Order type
-        const transformedOrders: Order[] = fetchedOrders.map(order => ({
+        const transformedOrders: Order[] = fetchedOrders.map((order) => ({
           id: order.id,
           customerId: order.userId,
           orderNumber: order.orderNumber,
-          status: (order.status === 'pending' ? 'pending_payment' : order.status === 'shipped' ? 'shipping' : order.status === 'confirmed' ? 'confirmed' : order.status === 'processing' ? 'processing' : order.status === 'delivered' ? 'delivered' : order.status === 'cancelled' ? 'cancelled' : 'pending_payment') as 'pending_payment' | 'confirmed' | 'processing' | 'preparing' | 'shipping' | 'delivered' | 'cancelled',
-          items: order.items.map(item => ({
+          status: (order.status === 'pending'
+            ? 'pending_payment'
+            : order.status === 'shipped'
+              ? 'shipping'
+              : order.status === 'confirmed'
+                ? 'confirmed'
+                : order.status === 'processing'
+                  ? 'processing'
+                  : order.status === 'delivered'
+                    ? 'delivered'
+                    : order.status === 'cancelled'
+                      ? 'cancelled'
+                      : 'pending_payment') as
+            | 'pending_payment'
+            | 'confirmed'
+            | 'processing'
+            | 'preparing'
+            | 'shipping'
+            | 'delivered'
+            | 'cancelled',
+          items: order.items.map((item) => ({
             id: item.id,
             productId: item.productId,
             productName: item.product.name,
@@ -61,7 +80,15 @@ export function AccountDashboard() {
             isDefault: false,
           },
           paymentMethod: order.paymentMethod,
-          paymentStatus: (order.paymentStatus === 'pending' ? 'pending' : order.paymentStatus === 'paid' ? 'paid' : order.paymentStatus === 'failed' ? 'failed' : order.paymentStatus === 'refunded' ? 'refunded' : 'pending') as 'pending' | 'paid' | 'failed' | 'refunded',
+          paymentStatus: (order.paymentStatus === 'pending'
+            ? 'pending'
+            : order.paymentStatus === 'paid'
+              ? 'paid'
+              : order.paymentStatus === 'failed'
+                ? 'failed'
+                : order.paymentStatus === 'refunded'
+                  ? 'refunded'
+                  : 'pending') as 'pending' | 'paid' | 'failed' | 'refunded',
           createdAt: order.createdAt,
           updatedAt: order.updatedAt,
           deliveryMethod: order.shippingMethod,
@@ -153,9 +180,7 @@ export function AccountDashboard() {
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-sm text-gray-600'>Đã tiết kiệm</p>
-                <p className='text-2xl font-bold text-green-600'>
-                  {formatPrice(accountUser?.totalSaved || 0)}
-                </p>
+                <p className='text-2xl font-bold text-green-600'>{formatPrice(accountUser?.totalSaved || 0)}</p>
               </div>
               <div className='w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center'>
                 <TrendingUp className='w-6 h-6 text-green-600' />
@@ -289,8 +314,9 @@ export function AccountDashboard() {
               {notifications.slice(0, 2).map((notification) => (
                 <div
                   key={notification.id}
-                  className={`p-3 rounded-lg border ${notification.isRead ? 'bg-gray-50 border-gray-200' : 'bg-blue-50 border-blue-200'
-                    }`}
+                  className={`p-3 rounded-lg border ${
+                    notification.isRead ? 'bg-gray-50 border-gray-200' : 'bg-blue-50 border-blue-200'
+                  }`}
                 >
                   <div className='flex items-start gap-2'>
                     <div className='text-sm'>

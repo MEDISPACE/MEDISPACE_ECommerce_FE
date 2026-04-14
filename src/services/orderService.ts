@@ -8,7 +8,7 @@ interface BackendOrderItem {
   productId: string
   name: string
   sku: string
-  unit: string           // Unit selected by user: "Viên", "Hộp", "Vỉ"...
+  unit: string // Unit selected by user: "Viên", "Hộp", "Vỉ"...
   quantity: number
   unitPrice: number
   totalPrice: number
@@ -58,18 +58,20 @@ interface PaginationInfo {
 
 // TODO: Replace with real API calls when backend implements orders API
 class OrderService {
-
   async getOrders(): Promise<Order[]> {
-    const response = await apiClient.get<{ message: string, result: { orders: BackendOrder[], pagination: PaginationInfo } }>(API_ENDPOINTS.ORDERS.BASE)
+    const response = await apiClient.get<{
+      message: string
+      result: { orders: BackendOrder[]; pagination: PaginationInfo }
+    }>(API_ENDPOINTS.ORDERS.BASE)
     return response.data.result.orders.map(this.transformOrderFromBackend)
   }
 
   async getOrderById(orderId: string): Promise<Order | null> {
-    const response = await apiClient.get<{ message: string, result: BackendOrder }>(API_ENDPOINTS.ORDERS.BY_ID(orderId))
+    const response = await apiClient.get<{ message: string; result: BackendOrder }>(API_ENDPOINTS.ORDERS.BY_ID(orderId))
     return this.transformOrderFromBackend(response.data.result)
   }
 
-  async createOrder(orderData: CreateOrderRequest): Promise<{ order: Order, paymentUrl?: string }> {
+  async createOrder(orderData: CreateOrderRequest): Promise<{ order: Order; paymentUrl?: string }> {
     const requestBody = {
       selectedItems: orderData.items, // Map 'items' from frontend to 'selectedItems' for backend
       shippingAddress: orderData.shippingAddress,
@@ -78,22 +80,31 @@ class OrderService {
       shippingFee: (orderData as any).shippingFee, // Pass calculated shipping fee
       estimatedDeliveryDate: (orderData as any).estimatedDeliveryDate, // Pass estimated delivery date
       notes: orderData.notes,
-      isDirectBuy: orderData.isDirectBuy
+      isDirectBuy: orderData.isDirectBuy,
     }
-    const response = await apiClient.post<{ message: string, result: { order: BackendOrder, paymentUrl?: string } }>(API_ENDPOINTS.ORDERS.CREATE, requestBody)
+    const response = await apiClient.post<{ message: string; result: { order: BackendOrder; paymentUrl?: string } }>(
+      API_ENDPOINTS.ORDERS.CREATE,
+      requestBody,
+    )
     return {
       order: this.transformOrderFromBackend(response.data.result.order),
-      paymentUrl: response.data.result.paymentUrl
+      paymentUrl: response.data.result.paymentUrl,
     }
   }
 
   async updateOrderStatus(orderId: string, status: OrderStatus): Promise<Order> {
-    const response = await apiClient.patch<{ message: string, result: BackendOrder }>(API_ENDPOINTS.ORDERS.UPDATE_STATUS(orderId), { status })
+    const response = await apiClient.patch<{ message: string; result: BackendOrder }>(
+      API_ENDPOINTS.ORDERS.UPDATE_STATUS(orderId),
+      { status },
+    )
     return this.transformOrderFromBackend(response.data.result)
   }
 
   async cancelOrder(orderId: string): Promise<Order> {
-    const response = await apiClient.put<{ message: string, result: BackendOrder }>(API_ENDPOINTS.ORDERS.UPDATE_STATUS(orderId), { status: 'cancelled' })
+    const response = await apiClient.put<{ message: string; result: BackendOrder }>(
+      API_ENDPOINTS.ORDERS.UPDATE_STATUS(orderId),
+      { status: 'cancelled' },
+    )
     return this.transformOrderFromBackend(response.data.result)
   }
 
@@ -108,39 +119,40 @@ class OrderService {
       id: backendOrder._id,
       orderNumber: backendOrder.orderNumber,
       userId: backendOrder.userId,
-      items: backendOrder.items?.map((item: BackendOrderItem) => ({
-        id: item.productId,
-        productId: item.productId,
-        product: {
-          _id: item.productId,
+      items:
+        backendOrder.items?.map((item: BackendOrderItem) => ({
           id: item.productId,
-          name: item.name,
-          slug: '',
-          sku: item.sku,
-          shortDescription: '',
-          categoryId: '',
-          stockQuantity: item.quantity,
-          maxOrderQuantity: 100,
-          status: 'active' as const,
-          isActive: true,
-          requiresPrescription: item.prescriptionRequired,
-          featuredImage: item.image,
-          createdAt: '',
-          updatedAt: '',
-          createdBy: '',
-          description: '',
-          image: item.image,
-          images: item.image ? [item.image] : [],
+          productId: item.productId,
+          product: {
+            _id: item.productId,
+            id: item.productId,
+            name: item.name,
+            slug: '',
+            sku: item.sku,
+            shortDescription: '',
+            categoryId: '',
+            stockQuantity: item.quantity,
+            maxOrderQuantity: 100,
+            status: 'active' as const,
+            isActive: true,
+            requiresPrescription: item.prescriptionRequired,
+            featuredImage: item.image,
+            createdAt: '',
+            updatedAt: '',
+            createdBy: '',
+            description: '',
+            image: item.image,
+            images: item.image ? [item.image] : [],
+            price: item.unitPrice,
+            originalPrice: item.unitPrice,
+            unit: item.unit, // Pass unit from order item
+            priceVariants: [], // Empty array to satisfy Product type
+          },
+          unit: item.unit, // Also at item level for direct access
+          quantity: item.quantity,
           price: item.unitPrice,
-          originalPrice: item.unitPrice,
-          unit: item.unit,          // Pass unit from order item
-          priceVariants: []         // Empty array to satisfy Product type
-        },
-        unit: item.unit,           // Also at item level for direct access
-        quantity: item.quantity,
-        price: item.unitPrice,
-        total: item.totalPrice,
-      })) || [],
+          total: item.totalPrice,
+        })) || [],
       subtotal: backendOrder.subtotal,
       discount: backendOrder.discountAmount,
       tax: backendOrder.taxAmount,
@@ -155,7 +167,7 @@ class OrderService {
         province: backendOrder.shippingAddress.province,
         postalCode: backendOrder.shippingAddress.postalCode,
         phone: backendOrder.shippingAddress.phone,
-        email: backendOrder.shippingAddress.email
+        email: backendOrder.shippingAddress.email,
       },
       shippingMethod: backendOrder.shippingMethod || 'standard',
       shippingCost: backendOrder.shippingFee,

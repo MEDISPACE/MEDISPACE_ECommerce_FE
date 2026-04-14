@@ -17,7 +17,7 @@ interface UniversalBreadcrumbProps {
 
 /**
  * UniversalBreadcrumb - Sets breadcrumb items via context
- * 
+ *
  * The actual breadcrumb UI is rendered inside Header component for proper sticky behavior.
  * This component just pushes the items to context when mounted.
  */

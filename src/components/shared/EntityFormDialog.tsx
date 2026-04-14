@@ -195,7 +195,7 @@ export function EntityDeleteDialog({
 }: EntityDeleteDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white">
+      <DialogContent className='bg-white'>
         <DialogHeader>
           <DialogTitle>Xác nhận xóa {entityName}</DialogTitle>
           <DialogDescription>

@@ -169,7 +169,6 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
           setOrders(mappedOrders)
         }
       } catch (error) {
-
         toast.error('Không thể tải danh sách đơn hàng', {
           description: 'Vui lòng thử lại sau',
         })
@@ -199,7 +198,7 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
     revenue: orders.filter((o) => o.status !== 'cancelled').reduce((sum, o) => sum + o.total, 0),
     avgOrder:
       orders.filter((o) => o.status !== 'cancelled').reduce((sum, o) => sum + o.total, 0) /
-      orders.filter((o) => o.status !== 'cancelled').length || 0,
+        orders.filter((o) => o.status !== 'cancelled').length || 0,
   }
 
   const filteredOrders = orders.filter((order) => {
@@ -239,7 +238,6 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
         toast.info('Chi tiết đơn hàng đang được phát triển')
       }
     } catch (error) {
-
       toast.error('Không thể tải chi tiết đơn hàng')
     }
   }
@@ -296,16 +294,18 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
         await generalOrderService.updateOrderStatus(currentOrder.id, statusMap[newStatus])
       }
 
-
-
       // Update local state
       const updatedPaymentStatus = newPaymentStatus as PaymentStatus
-      setOrders(orders.map((o) => (o.id === currentOrder.id ? { ...o, status: newStatus, paymentStatus: updatedPaymentStatus } : o)))
+      setOrders(
+        orders.map((o) =>
+          o.id === currentOrder.id ? { ...o, status: newStatus, paymentStatus: updatedPaymentStatus } : o,
+        ),
+      )
 
       // Show specific message for paid orders cancellation
       if (newStatus === 'cancelled' && currentOrder.paymentStatus === 'paid') {
         toast.success('Huỷ thành công', {
-          description: 'Medispace sẽ liên hệ và hoàn tiền trong 72h làm việc.'
+          description: 'Medispace sẽ liên hệ và hoàn tiền trong 72h làm việc.',
         })
       } else {
         toast.success('Cập nhật thành công', {
@@ -319,7 +319,6 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
       setNotes('')
       setNewPaymentStatus('')
     } catch (error) {
-
       toast.error('Cập nhật thất bại', {
         description: 'Vui lòng thử lại sau',
       })
@@ -338,8 +337,6 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
     // Otherwise proceed directly
     executeStatusUpdate()
   }
-
-
 
   if (loading) {
     return (
@@ -480,16 +477,28 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value='pending'>
-                    Chờ thanh toán {currentOrder?.paymentStatus === 'pending' && <span className='ml-2 text-xs text-blue-600'>(Hiện tại)</span>}
+                    Chờ thanh toán{' '}
+                    {currentOrder?.paymentStatus === 'pending' && (
+                      <span className='ml-2 text-xs text-blue-600'>(Hiện tại)</span>
+                    )}
                   </SelectItem>
                   <SelectItem value='paid'>
-                    Đã thanh toán {currentOrder?.paymentStatus === 'paid' && <span className='ml-2 text-xs text-blue-600'>(Hiện tại)</span>}
+                    Đã thanh toán{' '}
+                    {currentOrder?.paymentStatus === 'paid' && (
+                      <span className='ml-2 text-xs text-blue-600'>(Hiện tại)</span>
+                    )}
                   </SelectItem>
                   <SelectItem value='failed'>
-                    Thanh toán thất bại {currentOrder?.paymentStatus === 'failed' && <span className='ml-2 text-xs text-blue-600'>(Hiện tại)</span>}
+                    Thanh toán thất bại{' '}
+                    {currentOrder?.paymentStatus === 'failed' && (
+                      <span className='ml-2 text-xs text-blue-600'>(Hiện tại)</span>
+                    )}
                   </SelectItem>
                   <SelectItem value='refunded'>
-                    Đã hoàn tiền {currentOrder?.paymentStatus === 'refunded' && <span className='ml-2 text-xs text-blue-600'>(Hiện tại)</span>}
+                    Đã hoàn tiền{' '}
+                    {currentOrder?.paymentStatus === 'refunded' && (
+                      <span className='ml-2 text-xs text-blue-600'>(Hiện tại)</span>
+                    )}
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -531,18 +540,18 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
             </AlertDialogTitle>
             <AlertDialogDescription className='text-base text-gray-600 mt-2'>
               Đơn hàng <b>#{currentOrder?.id}</b> đang có trạng thái thanh toán là <b>ĐÃ THANH TOÁN</b>.
-              <br /><br />
-              Việc hủy đơn hàng này sẽ yêu cầu quy trình hoàn tiền thủ công. <b>Medispace</b> cam kết sẽ hoàn tiền cho khách hàng trong vòng <b>72h làm việc</b>.
-              <br /><br />
+              <br />
+              <br />
+              Việc hủy đơn hàng này sẽ yêu cầu quy trình hoàn tiền thủ công. <b>Medispace</b> cam kết sẽ hoàn tiền cho
+              khách hàng trong vòng <b>72h làm việc</b>.
+              <br />
+              <br />
               Bạn có chắc chắn muốn tiếp tục hủy không?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Quay lại</AlertDialogCancel>
-            <AlertDialogAction
-              className='bg-red-600 hover:bg-red-700 text-white'
-              onClick={executeStatusUpdate}
-            >
+            <AlertDialogAction className='bg-red-600 hover:bg-red-700 text-white' onClick={executeStatusUpdate}>
               Xác nhận hủy & Hoàn tiền
             </AlertDialogAction>
           </AlertDialogFooter>

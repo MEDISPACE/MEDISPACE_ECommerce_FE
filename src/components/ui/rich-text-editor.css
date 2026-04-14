@@ -1,55 +1,57 @@
 /* React Quill Custom Styles */
 .rich-text-editor {
-    margin-bottom: 1rem;
-    background-color: white;
-    /* Fix transparency issue */
-    border-radius: 0.5rem;
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  margin-bottom: 1rem;
+  background-color: white;
+  /* Fix transparency issue */
+  border-radius: 0.5rem;
+  box-shadow:
+    0 1px 3px 0 rgb(0 0 0 / 0.1),
+    0 1px 2px -1px rgb(0 0 0 / 0.1);
 }
 
 .rich-text-editor .quill {
-    background: white;
-    /* Ensure editor area is white */
-    border-radius: 0.5rem;
-    border: 1px solid #e5e7eb;
+  background: white;
+  /* Ensure editor area is white */
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
 }
 
 .rich-text-editor .ql-toolbar {
-    background: #f8fafc;
-    /* Light gray for toolbar */
-    border-top-left-radius: 0.5rem;
-    border-top-right-radius: 0.5rem;
-    border-bottom: 1px solid #e5e7eb;
-    padding: 12px !important;
+  background: #f8fafc;
+  /* Light gray for toolbar */
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 12px !important;
 }
 
 .rich-text-editor .ql-container {
-    border-bottom-left-radius: 0.5rem;
-    border-bottom-right-radius: 0.5rem;
-    font-size: 15px;
-    /* Slightly larger text */
-    font-family: inherit;
-    background-color: white;
+  border-bottom-left-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+  font-size: 15px;
+  /* Slightly larger text */
+  font-family: inherit;
+  background-color: white;
 }
 
 .rich-text-editor .ql-editor {
-    min-height: 400px;
-    /* Taller editor */
-    padding: 1.5rem;
-    /* More padding text */
-    color: #1f2937;
-    /* Dark gray text */
-    line-height: 1.6;
+  min-height: 400px;
+  /* Taller editor */
+  padding: 1.5rem;
+  /* More padding text */
+  color: #1f2937;
+  /* Dark gray text */
+  line-height: 1.6;
 }
 
 /* Placeholder style */
 .rich-text-editor .ql-editor.ql-blank::before {
-    color: #9ca3af;
-    font-style: normal;
-    font-size: 15px;
+  color: #9ca3af;
+  font-style: normal;
+  font-size: 15px;
 }
 
 /* Fix z-index issues if any */
 .ql-tooltip {
-    z-index: 1000 !important;
+  z-index: 1000 !important;
 }

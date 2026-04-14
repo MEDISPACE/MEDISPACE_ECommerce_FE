@@ -67,7 +67,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
         )
         setCategories(uniqueCategories)
         setBrands(brandsData)
-        
+
         // Fetch Typesense facet counts
         try {
           const result = await searchService.searchProducts({ q: '*', limit: 1 })

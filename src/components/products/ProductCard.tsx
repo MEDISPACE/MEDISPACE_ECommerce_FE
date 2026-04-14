@@ -48,11 +48,11 @@ export function ProductCard({
   isInWishlist = false,
 }: ProductCardProps) {
   // Find default variant or first variant
-  const defaultVariant = product.priceVariants?.find(v => v.isDefault) || product.priceVariants?.[0]
+  const defaultVariant = product.priceVariants?.find((v) => v.isDefault) || product.priceVariants?.[0]
   const [selectedUnit, setSelectedUnit] = useState<string>(defaultVariant?.unit || product.unit || 'Hộp')
 
   // Get current variant based on selected unit
-  const currentVariant = product.priceVariants?.find(v => v.unit === selectedUnit) || defaultVariant
+  const currentVariant = product.priceVariants?.find((v) => v.unit === selectedUnit) || defaultVariant
   const currentPrice = currentVariant?.price || product.salePrice
   const currentOriginalPrice = currentVariant?.originalPrice || product.originalPrice
   const hasDiscount = currentOriginalPrice && currentOriginalPrice > currentPrice
@@ -86,8 +86,9 @@ export function ProductCard({
     return (
       <Link to={`/products/${product.slug}`} className='block'>
         <Card
-          className={`group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm border hover:border-blue-300 ${isConsultationRequired ? 'border-2 border-blue-300' : 'border-blue-100'
-            } ${!product.inStock ? 'opacity-75' : ''}`}
+          className={`group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm border hover:border-blue-300 ${
+            isConsultationRequired ? 'border-2 border-blue-300' : 'border-blue-100'
+          } ${!product.inStock ? 'opacity-75' : ''}`}
         >
           <CardContent className='p-4'>
             <div className='flex gap-4'>
@@ -97,8 +98,9 @@ export function ProductCard({
                   <ImageWithFallback
                     src={product.image}
                     alt={product.name}
-                    className={`w-full h-full object-contain transition-transform duration-300 ${!product.inStock ? 'grayscale' : 'group-hover:scale-110'
-                      }`}
+                    className={`w-full h-full object-contain transition-transform duration-300 ${
+                      !product.inStock ? 'grayscale' : 'group-hover:scale-110'
+                    }`}
                   />
                   {/* Out of stock overlay */}
                   {!product.inStock && (
@@ -137,10 +139,11 @@ export function ProductCard({
                       <button
                         key={variant.unit}
                         onClick={(e) => handleUnitSelect(e, variant.unit)}
-                        className={`flex-1 px-2 py-1.5 text-xs font-medium transition-all ${selectedUnit === variant.unit
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-white text-gray-600 hover:bg-gray-50'
-                          } ${index > 0 ? 'border-l border-gray-300' : ''}`}
+                        className={`flex-1 px-2 py-1.5 text-xs font-medium transition-all ${
+                          selectedUnit === variant.unit
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white text-gray-600 hover:bg-gray-50'
+                        } ${index > 0 ? 'border-l border-gray-300' : ''}`}
                       >
                         {variant.unit}
                       </button>
@@ -228,8 +231,9 @@ export function ProductCard({
   return (
     <Link to={`/products/${product.slug}`} className='block h-full'>
       <Card
-        className={`group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm relative overflow-hidden h-full ${isConsultationRequired ? 'border-2 border-blue-300' : 'border border-blue-100 hover:border-blue-300'
-          } ${!product.inStock ? 'opacity-75' : ''}`}
+        className={`group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm relative overflow-hidden h-full ${
+          isConsultationRequired ? 'border-2 border-blue-300' : 'border border-blue-100 hover:border-blue-300'
+        } ${!product.inStock ? 'opacity-75' : ''}`}
       >
         <CardContent className='p-0 flex flex-col h-full'>
           {/* Image Section */}
@@ -238,8 +242,9 @@ export function ProductCard({
               <ImageWithFallback
                 src={product.image}
                 alt={product.name}
-                className={`w-full h-full object-contain transition-transform duration-300 ${!product.inStock ? 'grayscale' : 'group-hover:scale-105'
-                  }`}
+                className={`w-full h-full object-contain transition-transform duration-300 ${
+                  !product.inStock ? 'grayscale' : 'group-hover:scale-105'
+                }`}
               />
               {/* Out of stock overlay */}
               {!product.inStock && (
@@ -289,10 +294,11 @@ export function ProductCard({
                   <button
                     key={variant.unit}
                     onClick={(e) => handleUnitSelect(e, variant.unit)}
-                    className={`flex-1 px-2 py-1.5 text-xs font-medium transition-all ${selectedUnit === variant.unit
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-gray-600 hover:bg-gray-50'
-                      } ${index > 0 ? 'border-l border-gray-300' : ''}`}
+                    className={`flex-1 px-2 py-1.5 text-xs font-medium transition-all ${
+                      selectedUnit === variant.unit
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-white text-gray-600 hover:bg-gray-50'
+                    } ${index > 0 ? 'border-l border-gray-300' : ''}`}
                   >
                     {variant.unit}
                   </button>

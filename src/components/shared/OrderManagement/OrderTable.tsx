@@ -21,12 +21,7 @@ interface OrderTableProps {
   config: RoleConfig
 }
 
-export function OrderTable({
-  orders,
-  onUpdateStatus,
-  onViewDetails,
-  config,
-}: OrderTableProps) {
+export function OrderTable({ orders, onUpdateStatus, onViewDetails, config }: OrderTableProps) {
   return (
     <div className='overflow-x-auto'>
       <Table>
@@ -94,11 +89,17 @@ export function OrderTable({
                   <DropdownMenuContent align='end' className='bg-white border border-blue-200 shadow-lg'>
                     <DropdownMenuLabel className='text-blue-700'>Thao tác</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className='hover:!bg-blue-50 hover:!text-blue-600' onClick={() => onViewDetails(order.id)}>
+                    <DropdownMenuItem
+                      className='hover:!bg-blue-50 hover:!text-blue-600'
+                      onClick={() => onViewDetails(order.id)}
+                    >
                       <Eye className='w-4 h-4 mr-2' />
                       Xem chi tiết
                     </DropdownMenuItem>
-                    <DropdownMenuItem className='hover:!bg-blue-50 hover:!text-blue-600' onClick={() => onUpdateStatus(order)}>
+                    <DropdownMenuItem
+                      className='hover:!bg-blue-50 hover:!text-blue-600'
+                      onClick={() => onUpdateStatus(order)}
+                    >
                       <Edit className='w-4 h-4 mr-2' />
                       Cập nhật trạng thái
                     </DropdownMenuItem>

@@ -3,7 +3,7 @@
  * @returns Access token or null
  */
 export function getAuthToken(): string | null {
-    return localStorage.getItem('medispace_access_token')
+  return localStorage.getItem('medispace_access_token')
 }
 
 /**
@@ -11,5 +11,5 @@ export function getAuthToken(): string | null {
  * @returns true if user has valid token
  */
 export function isAuthenticated(): boolean {
-    return getAuthToken() !== null
+  return getAuthToken() !== null
 }

@@ -59,14 +59,17 @@ interface BackendPrescription {
 
 type TrackingStatus = 'pending' | 'approved' | 'rejected' | 'completed'
 
-const STATUS_CONFIG: Record<string, {
-  label: string
-  color: string
-  bgColor: string
-  borderColor: string
-  icon: React.ReactNode
-  description: string
-}> = {
+const STATUS_CONFIG: Record<
+  string,
+  {
+    label: string
+    color: string
+    bgColor: string
+    borderColor: string
+    icon: React.ReactNode
+    description: string
+  }
+> = {
   pending: {
     label: 'Chờ xem xét',
     color: 'text-yellow-700',
@@ -164,7 +167,7 @@ function timeAgo(dateString: string) {
   return `${diffDays} ngày trước`
 }
 
-function TimelineDot({ status, isRejected }: { status: 'done' | 'active' | 'pending', isRejected?: boolean }) {
+function TimelineDot({ status, isRejected }: { status: 'done' | 'active' | 'pending'; isRejected?: boolean }) {
   if (isRejected) {
     return (
       <div className='w-8 h-8 rounded-full bg-red-100 border-2 border-red-400 flex items-center justify-center shrink-0 z-10'>
@@ -204,7 +207,7 @@ export function PrescriptionDetailPage() {
     const fetch = async () => {
       try {
         setLoading(true)
-        const res = await prescriptionsAPI.getPrescription(id) as { result?: BackendPrescription }
+        const res = (await prescriptionsAPI.getPrescription(id)) as { result?: BackendPrescription }
         if (res.result) {
           setPrescription(res.result)
         } else {
@@ -245,21 +248,30 @@ export function PrescriptionDetailPage() {
   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.pending
 
   // Compute timeline step states
-  const getStepState = (step: typeof TIMELINE_STEPS[number]): 'done' | 'active' | 'pending' => {
+  const getStepState = (step: (typeof TIMELINE_STEPS)[number]): 'done' | 'active' | 'pending' => {
     if (step.alwaysDone) return 'done'
     if (step.doneStatuses?.includes(status)) return 'done'
     if (step.activeStatuses?.includes(status)) return 'active'
     return 'pending'
   }
 
-  const genderLabel = prescription.patientGender === 'male' ? 'Nam' :
-    prescription.patientGender === 'female' ? 'Nữ' : prescription.patientGender || ''
+  const genderLabel =
+    prescription.patientGender === 'male'
+      ? 'Nam'
+      : prescription.patientGender === 'female'
+        ? 'Nữ'
+        : prescription.patientGender || ''
 
   return (
     <div className='space-y-6'>
       {/* Back button + Header */}
       <div className='flex items-center gap-3'>
-        <Button variant='ghost' size='sm' onClick={() => navigate('/account/prescriptions')} className='text-gray-500 hover:text-blue-700 -ml-2'>
+        <Button
+          variant='ghost'
+          size='sm'
+          onClick={() => navigate('/account/prescriptions')}
+          className='text-gray-500 hover:text-blue-700 -ml-2'
+        >
           <ArrowLeft className='w-4 h-4 mr-1' /> Lịch sử đơn thuốc
         </Button>
       </div>
@@ -270,7 +282,9 @@ export function PrescriptionDetailPage() {
             <ClipboardList className='w-6 h-6' />
             Đơn thuốc #{prescription.prescriptionNumber}
           </h1>
-          <p className='text-gray-500 text-sm mt-1'>Gửi lúc {formatDateTime(prescription.createdAt)} · {timeAgo(prescription.createdAt)}</p>
+          <p className='text-gray-500 text-sm mt-1'>
+            Gửi lúc {formatDateTime(prescription.createdAt)} · {timeAgo(prescription.createdAt)}
+          </p>
         </div>
         <StatusBadge status={status} type='prescription' />
       </div>
@@ -316,7 +330,6 @@ export function PrescriptionDetailPage() {
       <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
         {/* Main content */}
         <div className='lg:col-span-2 space-y-6'>
-
           {/* Tracking Timeline */}
           <Card className='border-blue-100 shadow-sm'>
             <CardHeader className='pb-2'>
@@ -339,10 +352,17 @@ export function PrescriptionDetailPage() {
                       <div key={step.key} className='flex items-start gap-4 relative'>
                         <TimelineDot status={isRejectedStep ? 'done' : stepStatus} isRejected={isRejectedStep} />
                         <div className='pt-1 flex-1 min-w-0'>
-                          <p className={`font-medium text-sm ${
-                            stepStatus === 'done' || isRejectedStep ? 'text-gray-800' :
-                            stepStatus === 'active' ? 'text-blue-700' : 'text-gray-400'
-                          }`}>{label}</p>
+                          <p
+                            className={`font-medium text-sm ${
+                              stepStatus === 'done' || isRejectedStep
+                                ? 'text-gray-800'
+                                : stepStatus === 'active'
+                                  ? 'text-blue-700'
+                                  : 'text-gray-400'
+                            }`}
+                          >
+                            {label}
+                          </p>
                           {/* Timestamps */}
                           {idx === 0 && (
                             <p className='text-xs text-gray-400 mt-0.5'>{formatDateTime(prescription.createdAt)}</p>
@@ -350,9 +370,12 @@ export function PrescriptionDetailPage() {
                           {step.rejectedKey && status === 'rejected' && prescription.verifiedAt && (
                             <p className='text-xs text-gray-400 mt-0.5'>{formatDateTime(prescription.verifiedAt)}</p>
                           )}
-                          {step.rejectedKey && status !== 'rejected' && stepStatus === 'done' && prescription.verifiedAt && (
-                            <p className='text-xs text-gray-400 mt-0.5'>{formatDateTime(prescription.verifiedAt)}</p>
-                          )}
+                          {step.rejectedKey &&
+                            status !== 'rejected' &&
+                            stepStatus === 'done' &&
+                            prescription.verifiedAt && (
+                              <p className='text-xs text-gray-400 mt-0.5'>{formatDateTime(prescription.verifiedAt)}</p>
+                            )}
                           {stepStatus === 'active' && (
                             <p className='text-xs text-blue-500 mt-0.5 animate-pulse'>Đang xử lý...</p>
                           )}
@@ -374,10 +397,22 @@ export function PrescriptionDetailPage() {
             </CardHeader>
             <CardContent>
               <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm'>
-                <InfoRow icon={<User className='w-4 h-4 text-blue-400' />} label='Tên bệnh nhân' value={prescription.patientName} />
-                <InfoRow icon={<Calendar className='w-4 h-4 text-blue-400' />} label='Tuổi' value={prescription.patientAge} />
+                <InfoRow
+                  icon={<User className='w-4 h-4 text-blue-400' />}
+                  label='Tên bệnh nhân'
+                  value={prescription.patientName}
+                />
+                <InfoRow
+                  icon={<Calendar className='w-4 h-4 text-blue-400' />}
+                  label='Tuổi'
+                  value={prescription.patientAge}
+                />
                 <InfoRow icon={<User className='w-4 h-4 text-blue-400' />} label='Giới tính' value={genderLabel} />
-                <InfoRow icon={<Stethoscope className='w-4 h-4 text-blue-400' />} label='Chẩn đoán' value={prescription.diagnosis} />
+                <InfoRow
+                  icon={<Stethoscope className='w-4 h-4 text-blue-400' />}
+                  label='Chẩn đoán'
+                  value={prescription.diagnosis}
+                />
               </div>
               {prescription.specialNotes && (
                 <div className='mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg'>
@@ -397,21 +432,41 @@ export function PrescriptionDetailPage() {
             </CardHeader>
             <CardContent>
               <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm'>
-                <InfoRow icon={<User className='w-4 h-4 text-blue-400' />} label='Bác sĩ' value={prescription.doctorName} />
-                <InfoRow icon={<Hospital className='w-4 h-4 text-blue-400' />} label='Phòng khám / Bệnh viện' value={prescription.hospitalName} />
-                <InfoRow icon={<Calendar className='w-4 h-4 text-blue-400' />} label='Ngày kê đơn' value={formatDate(prescription.prescriptionDate)} />
+                <InfoRow
+                  icon={<User className='w-4 h-4 text-blue-400' />}
+                  label='Bác sĩ'
+                  value={prescription.doctorName}
+                />
+                <InfoRow
+                  icon={<Hospital className='w-4 h-4 text-blue-400' />}
+                  label='Phòng khám / Bệnh viện'
+                  value={prescription.hospitalName}
+                />
+                <InfoRow
+                  icon={<Calendar className='w-4 h-4 text-blue-400' />}
+                  label='Ngày kê đơn'
+                  value={formatDate(prescription.prescriptionDate)}
+                />
                 {prescription.ocrConfidence && (
                   <div className='flex items-start gap-2'>
                     <FileText className='w-4 h-4 text-blue-400 mt-0.5 shrink-0' />
                     <div>
                       <p className='text-xs text-gray-400'>Độ tin cậy OCR</p>
-                      <Badge variant='outline' className={
-                        prescription.ocrConfidence === 'high' ? 'border-green-300 text-green-700' :
-                        prescription.ocrConfidence === 'medium' ? 'border-yellow-300 text-yellow-700' :
-                        'border-red-300 text-red-700'
-                      }>
-                        {prescription.ocrConfidence === 'high' ? 'Cao' :
-                         prescription.ocrConfidence === 'medium' ? 'Trung bình' : 'Thấp'}
+                      <Badge
+                        variant='outline'
+                        className={
+                          prescription.ocrConfidence === 'high'
+                            ? 'border-green-300 text-green-700'
+                            : prescription.ocrConfidence === 'medium'
+                              ? 'border-yellow-300 text-yellow-700'
+                              : 'border-red-300 text-red-700'
+                        }
+                      >
+                        {prescription.ocrConfidence === 'high'
+                          ? 'Cao'
+                          : prescription.ocrConfidence === 'medium'
+                            ? 'Trung bình'
+                            : 'Thấp'}
                       </Badge>
                     </div>
                   </div>
@@ -433,7 +488,10 @@ export function PrescriptionDetailPage() {
               ) : (
                 <div className='space-y-3'>
                   {prescription.medications.map((med, idx) => (
-                    <div key={idx} className='flex items-start gap-3 p-3 bg-blue-50/60 rounded-lg border border-blue-100'>
+                    <div
+                      key={idx}
+                      className='flex items-start gap-3 p-3 bg-blue-50/60 rounded-lg border border-blue-100'
+                    >
                       <div className='w-7 h-7 bg-blue-100 rounded-full flex items-center justify-center shrink-0 text-xs font-bold text-blue-700'>
                         {idx + 1}
                       </div>
@@ -442,7 +500,10 @@ export function PrescriptionDetailPage() {
                         <div className='flex flex-wrap gap-x-4 gap-y-0.5 mt-1'>
                           {med.dosage && <p className='text-xs text-gray-600'>💊 Liều: {med.dosage}</p>}
                           <p className='text-xs text-gray-600'>
-                            📦 Số lượng: <span className='font-medium'>{med.quantity} {med.unit || ''}</span>
+                            📦 Số lượng:{' '}
+                            <span className='font-medium'>
+                              {med.quantity} {med.unit || ''}
+                            </span>
                           </p>
                           {med.instructions && med.instructions !== med.dosage && (
                             <p className='text-xs text-gray-500 w-full mt-0.5'>📋 {med.instructions}</p>
@@ -495,12 +556,20 @@ export function PrescriptionDetailPage() {
             </CardHeader>
             <CardContent className='space-y-2'>
               <Link to='/upload-prescription'>
-                <Button variant='outline' size='sm' className='w-full justify-start text-blue-700 border-blue-200 hover:bg-blue-50'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  className='w-full justify-start text-blue-700 border-blue-200 hover:bg-blue-50'
+                >
                   <Upload className='w-4 h-4 mr-2' /> Gửi đơn thuốc mới
                 </Button>
               </Link>
               <Link to={`/contact?ref=prescription&id=${prescription._id}`}>
-                <Button variant='outline' size='sm' className='w-full justify-start text-gray-600 border-gray-200 hover:bg-gray-50'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  className='w-full justify-start text-gray-600 border-gray-200 hover:bg-gray-50'
+                >
                   <MessageCircle className='w-4 h-4 mr-2' /> Liên hệ dược sĩ
                 </Button>
               </Link>
@@ -553,14 +622,18 @@ export function PrescriptionDetailPage() {
           className='fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4'
           onClick={() => setSelectedImage(null)}
         >
-          <div className='relative max-w-4xl max-h-full' onClick={e => e.stopPropagation()}>
+          <div className='relative max-w-4xl max-h-full' onClick={(e) => e.stopPropagation()}>
             <button
               className='absolute -top-10 right-0 text-white hover:text-gray-300 flex items-center gap-1 text-sm'
               onClick={() => setSelectedImage(null)}
             >
               <X className='w-5 h-5' /> Đóng
             </button>
-            <img src={selectedImage} alt='preview' className='max-w-full max-h-[85vh] rounded-lg border border-white/20' />
+            <img
+              src={selectedImage}
+              alt='preview'
+              className='max-w-full max-h-[85vh] rounded-lg border border-white/20'
+            />
           </div>
         </div>
       )}

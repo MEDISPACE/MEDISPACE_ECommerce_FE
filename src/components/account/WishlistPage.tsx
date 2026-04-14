@@ -55,27 +55,28 @@ export function WishlistPage() {
         if (isAuthenticated) {
           // Fetch from API
           const items = await wishlistService.getWishlist()
-          const mappedProducts: WishlistProduct[] = items.map(product => ({
-            id: product._id || product.id || '',
-            name: product.name,
-            image: product.featuredImage || product.images?.[0] || product.image || '/placeholder-product.jpg',
-            currentPrice: getProductSalePrice(product) || 0,
-            originalPrice: getProductOriginalPrice(product),
-            addedDate: product.createdAt || new Date().toISOString(),
-            priceChange: 0, // API doesn't provide this yet
-            inStock: (product.stockQuantity || 0) > 0,
-            isRx: product.requiresPrescription || product.isPrescription || false,
-            rating: product.rating || 0,
-            reviewCount: product.reviewCount || 0,
-            category: product.category?.name || 'Sản phẩm',
-            slug: product.slug
-          })).filter(p => p.id !== '')
+          const mappedProducts: WishlistProduct[] = items
+            .map((product) => ({
+              id: product._id || product.id || '',
+              name: product.name,
+              image: product.featuredImage || product.images?.[0] || product.image || '/placeholder-product.jpg',
+              currentPrice: getProductSalePrice(product) || 0,
+              originalPrice: getProductOriginalPrice(product),
+              addedDate: product.createdAt || new Date().toISOString(),
+              priceChange: 0, // API doesn't provide this yet
+              inStock: (product.stockQuantity || 0) > 0,
+              isRx: product.requiresPrescription || product.isPrescription || false,
+              rating: product.rating || 0,
+              reviewCount: product.reviewCount || 0,
+              category: product.category?.name || 'Sản phẩm',
+              slug: product.slug,
+            }))
+            .filter((p) => p.id !== '')
           setWishlistProducts(mappedProducts)
         } else {
           setWishlistProducts([])
         }
       } catch (error) {
-
         toast.error('Không thể tải danh sách yêu thích')
       } finally {
         setLoading(false)
@@ -170,7 +171,7 @@ export function WishlistPage() {
             slug: product.slug,
             stockQuantity: 10, // Assume stock
             requiresPrescription: product.isRx,
-            isPrescription: product.isRx
+            isPrescription: product.isRx,
           }
 
           await addToCart(productData, 1)
@@ -191,7 +192,7 @@ export function WishlistPage() {
 
   // Custom add to cart for single item that we can implement easily
   const handleAddToCart = async (product: WishlistProduct) => {
-    if (!product.inStock) return;
+    if (!product.inStock) return
 
     // We need to reconstruct a Product object compatible with CartContext
     // This is a bit hacky, ideally we store the full product
@@ -204,10 +205,10 @@ export function WishlistPage() {
       images: [product.image],
       slug: product.slug,
       stockQuantity: 10, // Assume stock
-      isPrescription: product.isRx
+      isPrescription: product.isRx,
     }
 
-    addToCart(productData, 1);
+    addToCart(productData, 1)
   }
 
   const handleRemoveSelected = async () => {
@@ -228,7 +229,7 @@ export function WishlistPage() {
     // TODO: Implement backend API to send wishlist via email
     toast.info('Tính năng chia sẻ danh sách yêu thích đang được phát triển', {
       description: 'Chúng tôi sẽ sớm ra mắt tính năng này trong thời gian tới',
-      duration: 4000
+      duration: 4000,
     })
     setShareEmail('')
     setIsShareModalOpen(false)
@@ -267,14 +268,13 @@ export function WishlistPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className='flex justify-center items-center min-h-[400px]'>
+        <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600'></div>
       </div>
     )
   }
 
   return (
-
     <div className='space-y-6'>
       {/* Header */}
       <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
@@ -417,8 +417,9 @@ export function WishlistPage() {
         </Card>
       ) : (
         <div
-          className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'
-            }`}
+          className={`grid gap-6 ${
+            viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'
+          }`}
         >
           {sortedProducts.map((product) => (
             <div key={product.id} className='relative'>
@@ -464,8 +465,6 @@ export function WishlistPage() {
                             </div>
                             {getPriceChangeIndicator(product.priceChange)}
                           </div>
-
-
                         </div>
                       </div>
 
@@ -532,6 +531,5 @@ export function WishlistPage() {
         </div>
       )}
     </div>
-
   )
 }

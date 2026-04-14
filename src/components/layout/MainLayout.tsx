@@ -42,8 +42,7 @@ export function MainLayout({ children, breadcrumbItems = [], showBreadcrumb = fa
           }
           return prev
         })
-      } catch (err) {
-      }
+      } catch (err) {}
     }
 
     // Initial measurements

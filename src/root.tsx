@@ -46,7 +46,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   <head>
                     <meta charSet='utf-8' />
                     <meta name='viewport' content='width=device-width, initial-scale=1' />
-                    <meta name='color-scheme' content='light only' />
+                    <meta name='color-scheme' content='only light' />
                     <meta name='theme-color' content='#ffffff' />
                     <meta name='title' content='MEDISPACE - Nền tảng mua thuốc trực tuyến' />
                     <meta name='description' content='Nền tảng mua thuốc trực tuyến uy tín, an toàn và tiện lợi' />
@@ -68,7 +68,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
     </QueryClientProvider>
   )
 }
-
 
 export default function Root() {
   return <Outlet />
