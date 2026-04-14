@@ -269,14 +269,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [state.wishlist])
 
   // Cart actions
-  const addToCart = async (product: Product, quantity: number = 1, unit?: string, price?: number) => {
+  const addToCart = async (product: Product, quantity: number = 1, unit?: string, _price?: number) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true })
       const request: AddToCartRequest = {
         productId: product._id,
         quantity,
         unit,
-        price,
+        // price omitted: backend calculates authoritative campaign price
       }
       const updatedCart = await cartService.addToCart(request)
       dispatch({ type: 'ADD_TO_CART_SUCCESS', payload: updatedCart })

@@ -359,6 +359,14 @@ export function ProductDetailPage() {
                   <Badge className='bg-red-600 text-white font-medium shadow-lg'>Rx - Kê đơn</Badge>
                 )}
                 {product.isOnSale && <Badge className='bg-orange-500 text-white shadow-lg'>Sale</Badge>}
+                {product.campaign && (
+                  <Badge
+                    className='text-white shadow-lg'
+                    style={{ backgroundColor: product.campaign.badgeColor || '#FF5722' }}
+                  >
+                    {product.campaign.badgeText}
+                  </Badge>
+                )}
               </div>
 
               {/* Image counter badge - Bottom Left */}
@@ -508,8 +516,10 @@ export function ProductDetailPage() {
                                 : 'border-gray-200 bg-white text-gray-700 hover:border-blue-200 hover:bg-blue-50/50'
                             }`}
                           >
-                            <span>{variant.unit}</span>
-                            <span className='ml-2 text-xs opacity-75'>{variant.price.toLocaleString('vi-VN')}đ</span>
+                          <span>{variant.unit}</span>
+                            <span className='ml-2 text-xs opacity-75'>
+                              {(variant.salePrice || variant.price).toLocaleString('vi-VN')}đ
+                            </span>
                           </button>
                         ))}
                       </div>
@@ -518,8 +528,12 @@ export function ProductDetailPage() {
 
                   {/* Price Display */}
                   <PriceDisplay
-                    originalPrice={selectedVariant?.originalPrice || product.originalPrice}
-                    salePrice={selectedVariant?.price || getProductSalePrice(product) || 0}
+                    originalPrice={
+                      selectedVariant?.salePrice
+                        ? selectedVariant.price // Giá gốc khi có campaign
+                        : (selectedVariant?.originalPrice || product.originalPrice)
+                    }
+                    salePrice={selectedVariant?.salePrice || selectedVariant?.price || getProductSalePrice(product) || 0}
                     size='lg'
                     unit={selectedVariant?.unit}
                   />
