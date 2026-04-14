@@ -168,7 +168,9 @@ export function OrderSuccessPage() {
           <CheckCircle className='w-14 h-14 text-white' />
         </div>
         <h1 className='bg-gradient-to-r from-green-600 via-green-500 to-emerald-500 bg-clip-text text-transparent mb-3'>
-          {paymentStatus === 'success' || paymentStatus === 'vnpay_success' ? 'Thanh toán thành công!' : 'Đặt hàng thành công!'}
+          {paymentStatus === 'success' || paymentStatus === 'vnpay_success'
+            ? 'Thanh toán thành công!'
+            : 'Đặt hàng thành công!'}
         </h1>
         <p className='text-xl text-gray-600'>
           Cảm ơn bạn đã tin tưởng và mua sắm tại <span className='text-blue-600'>MEDISPACE</span>
@@ -218,7 +220,8 @@ export function OrderSuccessPage() {
               <div className='flex-1'>
                 <p className='text-sm text-blue-800 mb-1'>Địa chỉ giao hàng</p>
                 <p className='text-gray-900'>
-                  {order.shippingAddress.address}, {order.shippingAddress.ward}, {order.shippingAddress.district}, {order.shippingAddress.province}
+                  {order.shippingAddress.address}, {order.shippingAddress.ward}, {order.shippingAddress.district},{' '}
+                  {order.shippingAddress.province}
                 </p>
                 <p className='text-sm text-gray-600 mt-1'>SĐT: {order.shippingAddress.phone}</p>
                 {order.shippingAddress.email && (
@@ -269,7 +272,8 @@ export function OrderSuccessPage() {
             </div>
             <div className='flex-1'>
               <p className='text-gray-900'>
-                Đơn hàng sẽ được giao đến địa chỉ của bạn trong <strong>{order.estimatedDeliveryDate || '2-3 ngày'}</strong>
+                Đơn hàng sẽ được giao đến địa chỉ của bạn trong{' '}
+                <strong>{order.estimatedDeliveryDate || '2-3 ngày'}</strong>
               </p>
             </div>
           </div>

@@ -1,13 +1,35 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router'
 import {
-  CheckCircle, XCircle, Package, Pill, User, Hospital, Calendar,
-  Clock, AlertCircle, FileText, Stethoscope, Eye, Phone, Mail,
-  ShieldAlert, Info,
+  CheckCircle,
+  XCircle,
+  Package,
+  Pill,
+  User,
+  Hospital,
+  Calendar,
+  Clock,
+  AlertCircle,
+  FileText,
+  Stethoscope,
+  Eye,
+  Phone,
+  Mail,
+  ShieldAlert,
+  Info,
+  X,
 } from 'lucide-react'
 
 import { Button } from '~/components/ui/button'
 import { Badge } from '~/components/ui/badge'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '~/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+} from '~/components/ui/dialog'
 import { Textarea } from '~/components/ui/textarea'
 import { toast } from 'sonner'
 import { prescriptionService, type Prescription } from '~/services/pharmacist'
@@ -40,13 +62,19 @@ function timeAgo(dateStr: string) {
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('vi-VN', {
-    day: '2-digit', month: '2-digit', year: 'numeric',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
   })
 }
 
 function formatDateTime(dateStr: string) {
   return new Date(dateStr).toLocaleString('vi-VN', {
-    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   })
 }
 
@@ -58,29 +86,28 @@ function OCRConfidenceBadge({ confidence }: { confidence?: string }) {
     low: { label: 'OCR: Thấp ⚠️', cls: 'bg-red-100 text-red-700 border-red-300' },
   }
   const info = map[confidence] || map.medium
-  return (
-    <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${info.cls}`}>
-      {info.label}
-    </span>
-  )
+  return <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${info.cls}`}>{info.label}</span>
 }
 
 type ConfirmAction = 'verified' | 'rejected' | null
 
-export function PrescriptionDetailsDialog({
-  isOpen, onClose, prescription, onUpdate,
-}: PrescriptionDetailsDialogProps) {
+export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpdate }: PrescriptionDetailsDialogProps) {
   const [pharmacistNotes, setPharmacistNotes] = useState(prescription?.pharmacistNotes || '')
   const [submitting, setSubmitting] = useState(false)
   const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null)
+  const navigate = useNavigate()
 
   if (!prescription) return null
 
   const isPending = prescription.status === 'pending'
   const urgency = getUrgencyInfo(prescription.createdAt)
 
-  const genderLabel = prescription.patientGender === 'male' ? 'Nam' :
-    prescription.patientGender === 'female' ? 'Nữ' : prescription.patientGender || ''
+  const genderLabel =
+    prescription.patientGender === 'male'
+      ? 'Nam'
+      : prescription.patientGender === 'female'
+        ? 'Nữ'
+        : prescription.patientGender || ''
 
   const customerName = prescription.customer
     ? `${prescription.customer.firstName} ${prescription.customer.lastName}`
@@ -99,10 +126,8 @@ export function PrescriptionDetailsDialog({
         notes: pharmacistNotes,
       })
       toast.success(
-        confirmAction === 'verified'
-          ? '✅ Đơn thuốc đã được phê duyệt thành công!'
-          : '❌ Đơn thuốc đã bị từ chối',
-        { description: pharmacistNotes || undefined }
+        confirmAction === 'verified' ? '✅ Đơn thuốc đã được phê duyệt thành công!' : '❌ Đơn thuốc đã bị từ chối',
+        { description: pharmacistNotes || undefined },
       )
       if (onUpdate) await onUpdate()
       onClose()
@@ -118,7 +143,6 @@ export function PrescriptionDetailsDialog({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className='max-w-5xl max-h-[90vh] flex flex-col overflow-hidden rounded-xl p-0'>
-
         {/* ── HEADER ── */}
         <div className='px-6 pt-5 pb-4 border-b border-gray-100 sticky top-0 bg-white z-10'>
           <DialogHeader>
@@ -136,23 +160,40 @@ export function PrescriptionDetailsDialog({
                 <OCRConfidenceBadge confidence={prescription.ocrConfidence} />
                 {/* Urgency badge */}
                 {isPending && (
-                  <span className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border font-medium
-                    ${urgency.level === 'high' ? 'bg-red-50 text-red-700 border-red-300' :
-                      urgency.level === 'medium' ? 'bg-yellow-50 text-yellow-700 border-yellow-300' :
-                      'bg-blue-50 text-blue-700 border-blue-200'}`}>
+                  <span
+                    className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border font-medium
+                    ${
+                      urgency.level === 'high'
+                        ? 'bg-red-50 text-red-700 border-red-300'
+                        : urgency.level === 'medium'
+                          ? 'bg-yellow-50 text-yellow-700 border-yellow-300'
+                          : 'bg-blue-50 text-blue-700 border-blue-200'
+                    }`}
+                  >
                     <Clock className='w-3 h-3' />
                     {urgency.label}
                   </span>
                 )}
                 {/* Status badge */}
-                <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium border
-                  ${prescription.status === 'pending' ? 'bg-yellow-50 text-yellow-700 border-yellow-300' :
-                    prescription.status === 'verified' ? 'bg-green-50 text-green-700 border-green-300' :
-                    prescription.status === 'rejected' ? 'bg-red-50 text-red-700 border-red-300' :
-                    'bg-gray-100 text-gray-600 border-gray-300'}`}>
-                  {prescription.status === 'pending' ? 'Chờ xử lý' :
-                   prescription.status === 'verified' ? 'Đã duyệt' :
-                   prescription.status === 'rejected' ? 'Từ chối' : 'Hết hạn'}
+                <span
+                  className={`text-xs px-2.5 py-0.5 rounded-full font-medium border
+                  ${
+                    prescription.status === 'pending'
+                      ? 'bg-yellow-50 text-yellow-700 border-yellow-300'
+                      : prescription.status === 'verified'
+                        ? 'bg-green-50 text-green-700 border-green-300'
+                        : prescription.status === 'rejected'
+                          ? 'bg-red-50 text-red-700 border-red-300'
+                          : 'bg-gray-100 text-gray-600 border-gray-300'
+                  }`}
+                >
+                  {prescription.status === 'pending'
+                    ? 'Chờ xử lý'
+                    : prescription.status === 'verified'
+                      ? 'Đã duyệt'
+                      : prescription.status === 'rejected'
+                        ? 'Từ chối'
+                        : 'Hết hạn'}
                 </span>
                 {/* Close button */}
                 <DialogClose asChild>
@@ -161,7 +202,10 @@ export function PrescriptionDetailsDialog({
                     aria-label='Đóng'
                   >
                     <svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24'>
-                      <path fill='currentColor' d='m12 13.4l-2.917 2.925q-.277.275-.704.275t-.704-.275q-.275-.275-.275-.7t.275-.7L10.6 12L7.675 9.108Q7.4 8.831 7.4 8.404t.275-.704q.275-.275.7-.275t.7.275L12 10.625L14.892 7.7q.277-.275.704-.275t.704.275q.3.3.3.713t-.3.687L13.375 12l2.925 2.917q.275.277.275.704t-.275.704q-.3.3-.712.3t-.688-.3z'/>
+                      <path
+                        fill='currentColor'
+                        d='m12 13.4l-2.917 2.925q-.277.275-.704.275t-.704-.275q-.275-.275-.275-.7t.275-.7L10.6 12L7.675 9.108Q7.4 8.831 7.4 8.404t.275-.704q.275-.275.7-.275t.7.275L12 10.625L14.892 7.7q.277-.275.704-.275t.704.275q.3.3.3.713t-.3.687L13.375 12l2.925 2.917q.275.277.275.704t-.275.704q-.3.3-.712.3t-.688-.3z'
+                      />
                     </svg>
                   </button>
                 </DialogClose>
@@ -171,7 +215,6 @@ export function PrescriptionDetailsDialog({
         </div>
 
         <div className='px-6 py-4 space-y-5 overflow-y-auto flex-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-blue-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-blue-400'>
-
           {/* ── REJECTION REASON (if rejected) ── */}
           {prescription.status === 'rejected' && (prescription.pharmacistNotes || prescription.notes) && (
             <div className='p-3 bg-red-50 border border-red-200 rounded-lg flex gap-2'>
@@ -191,7 +234,9 @@ export function PrescriptionDetailsDialog({
             <div className='p-3 bg-green-50 border border-green-200 rounded-lg flex gap-2'>
               <CheckCircle className='w-4 h-4 text-green-600 mt-0.5 shrink-0' />
               <div>
-                <p className='text-sm font-medium text-green-700'>Đã phê duyệt lúc {formatDateTime(prescription.verifiedAt || '')}</p>
+                <p className='text-sm font-medium text-green-700'>
+                  Đã phê duyệt lúc {formatDateTime(prescription.verifiedAt || '')}
+                </p>
                 {prescription.pharmacistNotes && (
                   <p className='text-sm text-green-600 mt-0.5'>Ghi chú: {prescription.pharmacistNotes}</p>
                 )}
@@ -201,7 +246,6 @@ export function PrescriptionDetailsDialog({
 
           {/* ── MAIN 2-COL LAYOUT ── */}
           <div className='grid grid-cols-1 lg:grid-cols-5 gap-5'>
-
             {/* LEFT: images */}
             <div className='lg:col-span-2'>
               <p className='text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2'>
@@ -212,7 +256,6 @@ export function PrescriptionDetailsDialog({
 
             {/* RIGHT: info panels */}
             <div className='lg:col-span-3 space-y-4'>
-
               {/* Patient Info */}
               <InfoSection title='Thông tin bệnh nhân' icon={<User className='w-4 h-4' />}>
                 <div className='grid grid-cols-2 gap-3 text-sm'>
@@ -224,7 +267,9 @@ export function PrescriptionDetailsDialog({
                 {prescription.specialNotes && (
                   <div className='mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg flex gap-2'>
                     <AlertCircle className='w-4 h-4 text-amber-600 shrink-0 mt-0.5' />
-                    <p className='text-xs text-amber-800'><strong>Ghi chú đặc biệt:</strong> {prescription.specialNotes}</p>
+                    <p className='text-xs text-amber-800'>
+                      <strong>Ghi chú đặc biệt:</strong> {prescription.specialNotes}
+                    </p>
                   </div>
                 )}
               </InfoSection>
@@ -246,13 +291,10 @@ export function PrescriptionDetailsDialog({
                     {prescription.customer?.phoneNumber && (
                       <InfoRow label='Số điện thoại' value={prescription.customer.phoneNumber} />
                     )}
-                    {prescription.customer?.email && (
-                      <InfoRow label='Email' value={prescription.customer.email} />
-                    )}
+                    {prescription.customer?.email && <InfoRow label='Email' value={prescription.customer.email} />}
                   </div>
                 </InfoSection>
               )}
-
             </div>
           </div>
 
@@ -275,7 +317,11 @@ export function PrescriptionDetailsDialog({
                       <div className='flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5'>
                         {med.dosage && <p className='text-xs text-gray-600'>💊 {med.dosage}</p>}
                         <p className='text-xs text-gray-600'>
-                          📦 SL: <span className='font-medium text-gray-800'>{med.quantity}{med.unit ? ` ${med.unit}` : ''}</span>
+                          📦 SL:{' '}
+                          <span className='font-medium text-gray-800'>
+                            {med.quantity}
+                            {med.unit ? ` ${med.unit}` : ''}
+                          </span>
                         </p>
                       </div>
                       {med.instructions && med.instructions !== med.dosage && (
@@ -294,7 +340,9 @@ export function PrescriptionDetailsDialog({
               <label className='text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1 mb-2'>
                 <Info className='w-3.5 h-3.5' />
                 Ghi chú dược sĩ
-                {confirmAction === 'rejected' && <span className='text-red-500 text-xs normal-case font-normal'>(Bắt buộc khi từ chối)</span>}
+                {confirmAction === 'rejected' && (
+                  <span className='text-red-500 text-xs normal-case font-normal'>(Bắt buộc khi từ chối)</span>
+                )}
               </label>
               <Textarea
                 value={pharmacistNotes}
@@ -310,24 +358,29 @@ export function PrescriptionDetailsDialog({
           {!isPending && prescription.pharmacistNotes && (
             <div>
               <p className='text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1'>Ghi chú dược sĩ</p>
-              <p className='text-sm text-gray-700 p-3 bg-gray-50 rounded-lg border border-gray-200'>{prescription.pharmacistNotes}</p>
+              <p className='text-sm text-gray-700 p-3 bg-gray-50 rounded-lg border border-gray-200'>
+                {prescription.pharmacistNotes}
+              </p>
             </div>
           )}
 
           {/* ── CONFIRM PANEL ── */}
           {confirmAction && (
-            <div className={`p-4 rounded-xl border-2 ${
-              confirmAction === 'verified'
-                ? 'bg-green-50 border-green-300'
-                : 'bg-red-50 border-red-300'
-            }`}>
+            <div
+              className={`p-4 rounded-xl border-2 ${
+                confirmAction === 'verified' ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'
+              }`}
+            >
               <div className='flex items-start gap-3'>
-                {confirmAction === 'verified'
-                  ? <CheckCircle className='w-5 h-5 text-green-600 mt-0.5 shrink-0' />
-                  : <XCircle className='w-5 h-5 text-red-600 mt-0.5 shrink-0' />
-                }
+                {confirmAction === 'verified' ? (
+                  <CheckCircle className='w-5 h-5 text-green-600 mt-0.5 shrink-0' />
+                ) : (
+                  <XCircle className='w-5 h-5 text-red-600 mt-0.5 shrink-0' />
+                )}
                 <div className='flex-1'>
-                  <p className={`font-semibold text-sm ${confirmAction === 'verified' ? 'text-green-800' : 'text-red-800'}`}>
+                  <p
+                    className={`font-semibold text-sm ${confirmAction === 'verified' ? 'text-green-800' : 'text-red-800'}`}
+                  >
                     {confirmAction === 'verified'
                       ? 'Xác nhận phê duyệt đơn thuốc này?'
                       : 'Xác nhận từ chối đơn thuốc này?'}
@@ -346,9 +399,11 @@ export function PrescriptionDetailsDialog({
                     size='sm'
                     onClick={handleConfirmAction}
                     disabled={submitting}
-                    className={confirmAction === 'verified'
-                      ? 'bg-green-600 hover:bg-green-700 text-white'
-                      : 'bg-red-600 hover:bg-red-700 text-white'}
+                    className={
+                      confirmAction === 'verified'
+                        ? 'bg-green-600 hover:bg-green-700 text-white'
+                        : 'bg-red-600 hover:bg-red-700 text-white'
+                    }
                   >
                     {submitting ? 'Đang xử lý...' : 'Xác nhận'}
                   </Button>
@@ -356,14 +411,11 @@ export function PrescriptionDetailsDialog({
               </div>
             </div>
           )}
-
         </div>
 
         {/* ── FOOTER (fixed, does not scroll) ── */}
         <div className='px-6 py-3 border-t border-gray-100 bg-white flex justify-between items-center gap-3 shrink-0'>
-          <p className='text-xs text-gray-400'>
-            Cập nhật: {timeAgo(prescription.updatedAt)}
-          </p>
+          <p className='text-xs text-gray-400'>Cập nhật: {timeAgo(prescription.updatedAt)}</p>
 
           <div className='flex gap-2'>
             {isPending && !confirmAction && (
@@ -390,8 +442,8 @@ export function PrescriptionDetailsDialog({
               <Button
                 size='sm'
                 onClick={() => {
-                  window.location.href = `/pharmacist/create-order?prescriptionId=${prescription._id}`
                   onClose()
+                  navigate(`/pharmacist/create-order?prescriptionId=${prescription._id}`)
                 }}
                 className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'
               >
@@ -400,11 +452,12 @@ export function PrescriptionDetailsDialog({
             )}
 
             {(prescription.status === 'rejected' || prescription.status === 'expired') && (
-              <Button variant='outline' size='sm' onClick={onClose}>Đóng</Button>
+              <Button variant='outline' size='sm' onClick={onClose}>
+                Đóng
+              </Button>
             )}
           </div>
         </div>
-
       </DialogContent>
     </Dialog>
   )
@@ -412,11 +465,7 @@ export function PrescriptionDetailsDialog({
 
 // ── Helper components ──
 
-function InfoSection({ title, icon, children }: {
-  title: string
-  icon: React.ReactNode
-  children: React.ReactNode
-}) {
+function InfoSection({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className='p-3 bg-gray-50 rounded-lg border border-gray-100'>
       <p className='text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1.5 mb-2'>

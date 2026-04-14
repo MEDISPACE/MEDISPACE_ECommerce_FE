@@ -29,13 +29,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '../ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { Avatar, AvatarFallback } from '../ui/avatar'
 import { Badge } from '../ui/badge'
@@ -124,7 +118,7 @@ export function UserManagementPage() {
     description: string
     onConfirm: () => void
     variant?: 'default' | 'destructive'
-  }>({ open: false, title: '', description: '', onConfirm: () => { }, variant: 'default' })
+  }>({ open: false, title: '', description: '', onConfirm: () => {}, variant: 'default' })
 
   // Debounce search
   useEffect(() => {
@@ -136,7 +130,12 @@ export function UserManagementPage() {
   }, [searchQuery])
 
   // Fetch users with React Query
-  const { data: usersData, isLoading, error, refetch } = useQuery<UsersResponse>({
+  const {
+    data: usersData,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery<UsersResponse>({
     queryKey: ['admin', 'users', page, limit, filterRole, filterStatus, debouncedSearch],
     queryFn: async () => {
       const response = await adminService.getAllUsers({
@@ -196,8 +195,7 @@ export function UserManagementPage() {
 
   // Update user mutation (for ban/unban and edit)
   const updateMutation = useMutation({
-    mutationFn: ({ userId, data }: { userId: string; data: any }) =>
-      adminService.updateUser(userId, data),
+    mutationFn: ({ userId, data }: { userId: string; data: any }) => adminService.updateUser(userId, data),
     onSuccess: () => {
       toast.success('Đã cập nhật thông tin người dùng')
       queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
@@ -265,7 +263,7 @@ export function UserManagementPage() {
           setIsEditDialogOpen(false)
           setSelectedUser(null)
         },
-      }
+      },
     )
   }
 
@@ -277,10 +275,11 @@ export function UserManagementPage() {
       open: true,
       title: newStatus === 2 ? 'Khóa tài khoản' : 'Mở khóa tài khoản',
       description: `Bạn có chắc chắn muốn ${action} tài khoản người dùng này?`,
-      onConfirm: () => updateMutation.mutate({
-        userId: user._id,
-        data: { status: newStatus },
-      }),
+      onConfirm: () =>
+        updateMutation.mutate({
+          userId: user._id,
+          data: { status: newStatus },
+        }),
       variant: newStatus === 2 ? 'destructive' : 'default',
     })
   }
@@ -304,11 +303,7 @@ export function UserManagementPage() {
       pharmacist: 'Dược sĩ',
       admin: 'Admin',
     }
-    return (
-      <Badge className={colors[roleStr] || 'bg-gray-100 text-gray-700'}>
-        {labels[roleStr] || roleStr}
-      </Badge>
-    )
+    return <Badge className={colors[roleStr] || 'bg-gray-100 text-gray-700'}>{labels[roleStr] || roleStr}</Badge>
   }
 
   const getStatusBadge = (status: number) => {
@@ -323,11 +318,7 @@ export function UserManagementPage() {
       unverified: 'Chưa xác thực',
       banned: 'Đã khóa',
     }
-    return (
-      <Badge className={colors[statusStr] || 'bg-gray-100 text-gray-700'}>
-        {labels[statusStr] || statusStr}
-      </Badge>
-    )
+    return <Badge className={colors[statusStr] || 'bg-gray-100 text-gray-700'}>{labels[statusStr] || statusStr}</Badge>
   }
 
   const users = usersData?.result?.users || []
@@ -344,7 +335,11 @@ export function UserManagementPage() {
           <p className='text-gray-600 mt-2'>Quản lý tất cả người dùng trong hệ thống</p>
         </div>
         <div className='flex items-center gap-3'>
-          <Button variant='outline' className='!border-blue-300 !text-blue-600 hover:!bg-blue-50 !gap-2' onClick={handleRefresh}>
+          <Button
+            variant='outline'
+            className='!border-blue-300 !text-blue-600 hover:!bg-blue-50 !gap-2'
+            onClick={handleRefresh}
+          >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
             Làm mới
           </Button>
@@ -489,9 +484,7 @@ export function UserManagementPage() {
               <RefreshCw className='w-8 h-8 animate-spin text-blue-600' />
             </div>
           ) : error ? (
-            <div className='text-center text-red-600 py-8'>
-              Không thể tải danh sách người dùng. Vui lòng thử lại.
-            </div>
+            <div className='text-center text-red-600 py-8'>Không thể tải danh sách người dùng. Vui lòng thử lại.</div>
           ) : (
             <>
               <div className='overflow-x-auto'>
@@ -534,9 +527,7 @@ export function UserManagementPage() {
                         <TableCell>{getStatusBadge(user.status)}</TableCell>
                         <TableCell>
                           <p className='text-sm text-gray-900'>
-                            {user.createdAt
-                              ? format(new Date(user.createdAt), 'dd/MM/yyyy', { locale: vi })
-                              : 'N/A'}
+                            {user.createdAt ? format(new Date(user.createdAt), 'dd/MM/yyyy', { locale: vi }) : 'N/A'}
                           </p>
                         </TableCell>
                         <TableCell className='text-right'>
@@ -551,32 +542,37 @@ export function UserManagementPage() {
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
-                                onClick={() => handleViewDetails(user)}>
+                                onClick={() => handleViewDetails(user)}
+                              >
                                 <Eye className='w-4 h-4 mr-2' />
                                 Xem chi tiết
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
-                                onClick={() => handleEdit(user)}>
+                                onClick={() => handleEdit(user)}
+                              >
                                 <Edit className='w-4 h-4 mr-2' />
                                 Chỉnh sửa
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
-                                onClick={() => handleVerifyEmail(user._id)}>
+                                onClick={() => handleVerifyEmail(user._id)}
+                              >
                                 <CheckCircle className='w-4 h-4 mr-2' />
                                 Xác thực email
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
-                                onClick={() => handleResetPassword(user._id)}>
+                                onClick={() => handleResetPassword(user._id)}
+                              >
                                 <RefreshCw className='w-4 h-4 mr-2' />
                                 Reset mật khẩu
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
-                                onClick={() => handleToggleBan(user)}>
+                                onClick={() => handleToggleBan(user)}
+                              >
                                 <Ban className='w-4 h-4 mr-2' />
                                 {user.status === 2 ? 'Mở khóa' : 'Khóa tài khoản'}
                               </DropdownMenuItem>
@@ -659,8 +655,8 @@ export function UserManagementPage() {
                   <p className='text-base'>
                     {selectedUser.createdAt
                       ? format(new Date(selectedUser.createdAt), 'dd/MM/yyyy HH:mm', {
-                        locale: vi,
-                      })
+                          locale: vi,
+                        })
                       : 'N/A'}
                   </p>
                 </div>

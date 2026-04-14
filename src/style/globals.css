@@ -4,6 +4,25 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ===== FORCE LIGHT MODE - Prevent Chrome/OS dark mode from affecting UI ===== */
+/* MEDISPACE is designed as a light-mode only application */
+:root {
+  color-scheme: only light;
+}
+
+html,
+body {
+  color-scheme: only light;
+}
+
+/* Force browser-native form elements to use light colors */
+input,
+textarea,
+select,
+button {
+  color-scheme: only light;
+}
+
 :root {
   --font-size: 16px;
   --background: #ffffff;
@@ -22,7 +41,7 @@
   --accent-foreground: #0066cc;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --border: #e2e8f0;
+  --border: rgba(15, 23, 42, 0.12);
   --input: transparent;
   --input-background: #f8fafc;
   --switch-background: #e2e8f0;
@@ -41,7 +60,7 @@
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #eff6ff;
   --sidebar-accent-foreground: #0066cc;
-  --sidebar-border: #e2e8f0;
+  --sidebar-border: rgba(15, 23, 42, 0.12);
   --sidebar-ring: #0066cc;
 
   /* ===== MEDISPACE LAYOUT SYSTEM ===== */
@@ -307,7 +326,6 @@ html {
 
 /* Auth Layout Animations */
 @keyframes gradientShift {
-
   0%,
   100% {
     background-position: 0% 50%;
@@ -319,7 +337,6 @@ html {
 }
 
 @keyframes float {
-
   0%,
   100% {
     transform: translateY(0px);
@@ -331,7 +348,6 @@ html {
 }
 
 @keyframes floatSlow {
-
   0%,
   100% {
     transform: translateY(0px) rotate(0deg);
@@ -343,7 +359,6 @@ html {
 }
 
 @keyframes pulse {
-
   0%,
   100% {
     opacity: 1;
@@ -389,7 +404,6 @@ html {
 }
 
 @keyframes floatPattern {
-
   0%,
   100% {
     transform: translate(0, 0);
@@ -584,7 +598,6 @@ html.scroll-instant {
 /* Add padding to body/main to account for fixed breadcrumb height */
 /* This prevents content from being hidden behind the fixed breadcrumb */
 
-
 /* DEBUG: Uncomment to visualize sticky positions */
 /*
 .sticky-breadcrumb::before {
@@ -604,7 +617,6 @@ html.scroll-instant {
 
 /* ===== MEDISPACE SEMANTIC UTILITY CLASSES ===== */
 @layer utilities {
-
   /* Performance optimizations for sticky elements */
   .will-change-transform {
     will-change: var(--will-change-sticky);

@@ -50,7 +50,6 @@ export function PrescriptionManagementPage() {
       setLoading(true)
       const mappedStatus = mapStatusToBackend(statusFilter)
 
-
       // Load stats and prescriptions in parallel
       const [statsData, prescriptionsData] = await Promise.all([
         prescriptionService.getStats(),
@@ -64,7 +63,6 @@ export function PrescriptionManagementPage() {
       setStats(statsData)
       setPrescriptions(prescriptionsData)
     } catch (error) {
-
       toast.error('Không thể tải danh sách đơn thuốc', {
         description: 'Vui lòng thử lại sau',
       })
@@ -146,10 +144,10 @@ export function PrescriptionManagementPage() {
       badge:
         (stats?.pending || 0) > 0
           ? {
-            text: 'Cần xử lý',
-            icon: AlertTriangle,
-            show: true,
-          }
+              text: 'Cần xử lý',
+              icon: AlertTriangle,
+              show: true,
+            }
           : undefined,
     },
     {
@@ -296,25 +294,28 @@ export function PrescriptionManagementPage() {
                         <span className='font-semibold text-sm text-gray-900'>{prescription.prescriptionNumber}</span>
                         {getPrescriptionStatusBadge(prescription.status)}
                         {/* Urgency: how long waiting? */}
-                        {prescription.status === 'pending' && (() => {
-                          const diffHours = (Date.now() - new Date(prescription.createdAt).getTime()) / 3600000
-                          return diffHours > 8 ? (
-                            <span className='flex items-center gap-1 text-xs text-red-600 bg-red-50 px-1.5 py-0.5 rounded-full border border-red-200'>
-                              <AlertTriangle className='w-3 h-3' />
-                              Chờ {Math.floor(diffHours)}h
-                            </span>
-                          ) : null
-                        })()}
+                        {prescription.status === 'pending' &&
+                          (() => {
+                            const diffHours = (Date.now() - new Date(prescription.createdAt).getTime()) / 3600000
+                            return diffHours > 8 ? (
+                              <span className='flex items-center gap-1 text-xs text-red-600 bg-red-50 px-1.5 py-0.5 rounded-full border border-red-200'>
+                                <AlertTriangle className='w-3 h-3' />
+                                Chờ {Math.floor(diffHours)}h
+                              </span>
+                            ) : null
+                          })()}
                       </div>
                       {/* Patient name prominently */}
                       <p className='text-sm font-medium text-blue-800'>
-                        {prescription.patientName
-                          ? <span className='flex items-center gap-1'>
-                              <User className='w-3.5 h-3.5' />
-                              {prescription.patientName}{prescription.patientAge ? `, ${prescription.patientAge} tuổi` : ''}
-                            </span>
-                          : <span className='text-gray-400 italic text-xs'>Chưa có tên bệnh nhân</span>
-                        }
+                        {prescription.patientName ? (
+                          <span className='flex items-center gap-1'>
+                            <User className='w-3.5 h-3.5' />
+                            {prescription.patientName}
+                            {prescription.patientAge ? `, ${prescription.patientAge} tuổi` : ''}
+                          </span>
+                        ) : (
+                          <span className='text-gray-400 italic text-xs'>Chưa có tên bệnh nhân</span>
+                        )}
                       </p>
                       <p className='text-xs text-gray-500 mt-0.5'>
                         BS. {prescription.doctorName}
@@ -329,7 +330,12 @@ export function PrescriptionManagementPage() {
                       <Clock className='w-3 h-3 inline mr-0.5' />
                       {formatDateTime(prescription.createdAt)}
                     </span>
-                    <Button variant='outline' size='sm' onClick={() => handleViewPrescription(prescription)} className='border-blue-200 text-blue-700 hover:bg-blue-50'>
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      onClick={() => handleViewPrescription(prescription)}
+                      className='border-blue-200 text-blue-700 hover:bg-blue-50'
+                    >
                       <Eye className='w-4 h-4 mr-1' />
                       Xem &amp; Xét duyệt
                     </Button>
@@ -351,7 +357,9 @@ export function PrescriptionManagementPage() {
 
                 {prescription.notes && (
                   <div className='mt-3 p-2 bg-blue-50 border border-blue-200 rounded-lg'>
-                    <p className='text-xs text-blue-800'><strong>Ghi chú:</strong> {prescription.notes}</p>
+                    <p className='text-xs text-blue-800'>
+                      <strong>Ghi chú:</strong> {prescription.notes}
+                    </p>
                   </div>
                 )}
               </CardContent>

@@ -192,8 +192,13 @@ export const productService = {
    * Search products by query
    */
   async searchProducts(query: string, filters?: Partial<ProductFilter>): Promise<Product[]> {
+    const params: Record<string, any> = { ...filters }
+    if (query?.trim()) {
+      params.search = query.trim()
+    }
+
     const response = await apiClient.get(API_ENDPOINTS.PRODUCTS.BASE, {
-      params: { search: query, ...filters },
+      params,
     })
     if (response && response.data) {
       const data = response.data as ProductsResponse

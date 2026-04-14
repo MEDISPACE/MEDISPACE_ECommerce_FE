@@ -50,9 +50,11 @@ interface ProductSearchWidgetProps {
 }
 
 const categoryFilters = [
+  { id: 'all', label: 'Tất cả', icon: '📋', color: 'text-gray-700' },
   { id: 'rx', label: 'Thuốc kê đơn', icon: '💊', color: 'text-red-600' },
   { id: 'otc', label: 'OTC', icon: '🏥', color: 'text-blue-600' },
   { id: 'supplement', label: 'TPCN', icon: '🌿', color: 'text-green-600' },
+  { id: 'medical_device', label: 'Thiết bị y tế', icon: '🩺', color: 'text-purple-600' },
   { id: 'cosmetic', label: 'Mỹ phẩm', icon: '💄', color: 'text-pink-600' },
 ]
 
@@ -80,77 +82,19 @@ export function ProductSearchWidget({ onProductAdd, onProductInfo, className = '
       const products = await productService.searchProducts(term)
 
       // Transform API products to local Product format
-      const transformedProducts: Product[] = products.map((p) => ({
-        id: p._id,
-        name: p.name,
-        image: p.featuredImage || '/images/product-placeholder.jpg',
-        price: p.price || p.salePrice || 0,
-        originalPrice: p.originalPrice,
-        salePrice: p.salePrice,
-        discountPercentage: p.discountPercentage,
-        onSale: p.onSale || p.isOnSale,
-        unit: p.unit || 'Hộp',
-        stock: p.stockQuantity,
-        maxOrderQuantity: p.maxOrderQuantity,
-        rating: p.rating || 4.5,
-        reviewCount: p.reviewCount,
-        type: p.requiresPrescription ? 'rx' : 'otc',
-        brand: p.brand?.name || 'Unknown',
-        barcode: p.barcode,
-        sku: p.sku,
-        category: p.category,
-        shortDescription: p.shortDescription,
-        description: p.description,
-        origin: p.origin,
-        packaging: p.packaging,
-        expiryInfo: p.expiryInfo,
-        ingredients: p.ingredients,
-        uses: p.uses,
-        instructions: p.instructions,
-        warnings: p.warnings,
-        status: p.status,
-        requiresPrescription: p.requiresPrescription,
-        tags: p.tags,
-      }))
-
-      setSearchResults(transformedProducts)
-    } catch {
-      setSearchResults([])
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleCategoryFilter = async (categoryId: string) => {
-    if (selectedCategory === categoryId) {
-      setSelectedCategory(null)
-      // Reset to search results without category filter
-      if (searchTerm.trim()) {
-        await handleSearch(searchTerm)
-      } else {
-        setSearchResults([])
-      }
-    } else {
-      setSelectedCategory(categoryId)
-      try {
-        setLoading(true)
-        // Filter by prescription requirement based on category
-        const isPrescription = categoryId === 'rx'
-        const products = await productService.getProducts({
-          isPrescription,
-          limit: 50,
-        })
-
-        const transformedProducts: Product[] = products.map((p) => ({
+      const transformedProducts: Product[] = products.map((p) => {
+        const defaultVariant = p.priceVariants?.find((v: any) => v.isDefault) ||
+          p.priceVariants?.[0] || { price: 0, unit: 'Hộp' }
+        return {
           id: p._id,
           name: p.name,
           image: p.featuredImage || '/images/product-placeholder.jpg',
-          price: p.price || p.salePrice || 0,
-          originalPrice: p.originalPrice,
-          salePrice: p.salePrice,
-          discountPercentage: p.discountPercentage,
-          onSale: p.onSale || p.isOnSale,
-          unit: p.unit || 'Hộp',
+          price: defaultVariant.price,
+          originalPrice: defaultVariant.originalPrice,
+          salePrice: undefined,
+          discountPercentage: undefined,
+          onSale: false,
+          unit: defaultVariant.unit,
           stock: p.stockQuantity,
           maxOrderQuantity: p.maxOrderQuantity,
           rating: p.rating || 4.5,
@@ -172,7 +116,84 @@ export function ProductSearchWidget({ onProductAdd, onProductInfo, className = '
           status: p.status,
           requiresPrescription: p.requiresPrescription,
           tags: p.tags,
-        }))
+        }
+      })
+
+      setSearchResults(transformedProducts)
+    } catch {
+      setSearchResults([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCategoryFilter = async (categoryId: string) => {
+    if (categoryId === 'all' || selectedCategory === categoryId) {
+      setSelectedCategory(null)
+      // Reset to search results without category filter
+      if (searchTerm.trim()) {
+        await handleSearch(searchTerm)
+      } else {
+        setSearchResults([])
+      }
+    } else {
+      setSelectedCategory(categoryId)
+      try {
+        setLoading(true)
+
+        let searchQuery = searchTerm.trim() || ''
+        const filters: any = {}
+
+        if (categoryId === 'rx') {
+          filters.requiresPrescription = true
+        } else if (categoryId === 'otc') {
+          filters.requiresPrescription = false
+        } else if (categoryId === 'supplement') {
+          searchQuery = searchQuery ? `${searchQuery} Thực phẩm chức năng` : 'Thực phẩm chức năng'
+        } else if (categoryId === 'medical_device') {
+          searchQuery = searchQuery ? `${searchQuery} Trang thiết bị y tế` : 'Trang thiết bị y tế'
+        } else if (categoryId === 'cosmetic') {
+          searchQuery = searchQuery ? `${searchQuery} Mỹ phẩm` : 'Mỹ phẩm'
+        }
+
+        const products = await productService.searchProducts(searchQuery, filters)
+
+        const transformedProducts: Product[] = products.map((p) => {
+          const defaultVariant = p.priceVariants?.find((v: any) => v.isDefault) ||
+            p.priceVariants?.[0] || { price: 0, unit: 'Hộp' }
+          return {
+            id: p._id,
+            name: p.name,
+            image: p.featuredImage || '/images/product-placeholder.jpg',
+            price: defaultVariant.price,
+            originalPrice: defaultVariant.originalPrice,
+            salePrice: undefined,
+            discountPercentage: undefined,
+            onSale: false,
+            unit: defaultVariant.unit,
+            stock: p.stockQuantity,
+            maxOrderQuantity: p.maxOrderQuantity,
+            rating: p.rating || 4.5,
+            reviewCount: p.reviewCount,
+            type: p.requiresPrescription ? 'rx' : 'otc',
+            brand: p.brand?.name || 'Unknown',
+            barcode: p.barcode,
+            sku: p.sku,
+            category: p.category,
+            shortDescription: p.shortDescription,
+            description: p.description,
+            origin: p.origin,
+            packaging: p.packaging,
+            expiryInfo: p.expiryInfo,
+            ingredients: p.ingredients,
+            uses: p.uses,
+            instructions: p.instructions,
+            warnings: p.warnings,
+            status: p.status,
+            requiresPrescription: p.requiresPrescription,
+            tags: p.tags,
+          }
+        })
 
         setSearchResults(transformedProducts)
       } catch {
@@ -215,44 +236,40 @@ export function ProductSearchWidget({ onProductAdd, onProductInfo, className = '
         }}
         onAddToCart={onProductAdd}
       />
-      <div className={`space-y-4 ${className}`}>
-        {/* Search Input */}
-        <div className='relative'>
-          <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4' />
+      <div className={`space-y-4 ${className} w-full`}>
+        <div className='relative w-full flex items-center bg-white rounded-xl border border-gray-200 px-4 hover:border-blue-300 transition-colors focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-400 shadow-sm'>
+          <Search className='text-blue-400 w-4 h-4 flex-shrink-0 mr-2' />
           <Input
             ref={searchInputRef}
             type='text'
-            placeholder='Tìm thuốc, barcode, tên...'
+            placeholder='Tìm thuốc, barcode, tên, thành phần...'
             value={searchTerm}
             onChange={(e) => handleSearch(e.target.value)}
-            className='pl-10 border-2 border-blue-200 focus:border-blue-500'
+            className='flex-1 h-11 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm px-0 shadow-none text-gray-900 placeholder:text-gray-400'
           />
         </div>
 
         {/* Category Filters */}
-        <Card className='p-3 border-b border-blue-100'>
-          <h4 className='font-medium text-blue-900 flex items-center gap-2'>
-            <Folders className='w-4 h-4' />
-            DANH MỤC NHANH:
-          </h4>
-          <div className='grid grid-cols-2 gap-2'>
-            {categoryFilters.map((category) => (
+        <div className='flex flex-nowrap overflow-x-auto hide-scrollbar gap-2 pb-2'>
+          {categoryFilters.map((category) => {
+            const isSelected = category.id === 'all' ? selectedCategory === null : selectedCategory === category.id
+            return (
               <Button
                 key={category.id}
-                variant={selectedCategory === category.id ? 'default' : 'outline'}
-                size='sm'
+                variant={isSelected ? 'default' : 'outline'}
                 onClick={() => handleCategoryFilter(category.id)}
-                className={`justify-start text-xs ${selectedCategory === category.id
-                    ? `bg-blue-600 text-white`
-                    : `border-blue-200 ${category.color} hover:bg-blue-50`
-                  }`}
+                className={`whitespace-nowrap flex-shrink-0 rounded-full border px-4 h-9 text-xs font-medium transition-all ${
+                  isSelected
+                    ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700 shadow-sm'
+                    : `bg-white border-gray-200 ${category.color} hover:bg-gray-50 hover:border-blue-300`
+                }`}
               >
-                <span className='mr-1'>{category.icon}</span>
+                <span className='mr-1.5 text-sm opacity-80'>{category.icon}</span>
                 {category.label}
               </Button>
-            ))}
-          </div>
-        </Card>
+            )
+          })}
+        </div>
 
         {/* Search Results */}
         <Card className='border-blue-100'>
@@ -296,13 +313,19 @@ export function ProductSearchWidget({ onProductAdd, onProductInfo, className = '
                 searchResults.map((product) => {
                   const typeInfo = getProductTypeInfo(product.type)
                   return (
-                    <Card key={product.id} className='p-3 hover:shadow-md transition-shadow border-b border-blue-200'>
-                      <div className='flex space-x-3'>
+                    <Card
+                      key={product.id}
+                      className='p-3 border border-transparent hover:border-blue-300 hover:shadow-lg hover:-translate-y-0.5 transition-all bg-white relative overflow-hidden group cursor-pointer'
+                    >
+                      {/* Decorative gradient blur on hover */}
+                      <div className='absolute inset-0 bg-gradient-to-r from-blue-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none' />
+
+                      <div className='flex space-x-3 relative z-10'>
                         <div className='flex-shrink-0'>
                           <ImageWithFallback
                             src={product.image}
                             alt={product.name}
-                            className='w-12 h-12 object-cover rounded border border-b border-blue-100'
+                            className='w-16 h-16 object-cover rounded-md border border-gray-100 shadow-sm'
                           />
                         </div>
 
@@ -315,7 +338,9 @@ export function ProductSearchWidget({ onProductAdd, onProductInfo, className = '
                               className='p-1 h-auto text-gray-400 hover:text-red-500'
                               onClick={() => toggleWishlist(product.id)}
                             >
-                              <Heart className={`w-3 h-3 ${isInWishlist(product.id) ? 'fill-red-500 text-red-500' : ''}`} />
+                              <Heart
+                                className={`w-3 h-3 ${isInWishlist(product.id) ? 'fill-red-500 text-red-500' : ''}`}
+                              />
                             </Button>
                           </div>
 

@@ -85,22 +85,40 @@ export function SystemSettingsPage() {
       <Tabs defaultValue='general' className='space-y-4'>
         <div className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-4'>
           <TabsList className='grid w-full grid-cols-6 !bg-blue-50 p-1.5 rounded-lg h-auto'>
-            <TabsTrigger value='general' className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'>
+            <TabsTrigger
+              value='general'
+              className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'
+            >
               Chung
             </TabsTrigger>
-            <TabsTrigger value='email' className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'>
+            <TabsTrigger
+              value='email'
+              className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'
+            >
               Email
             </TabsTrigger>
-            <TabsTrigger value='sms' className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'>
+            <TabsTrigger
+              value='sms'
+              className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'
+            >
               SMS
             </TabsTrigger>
-            <TabsTrigger value='payment' className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'>
+            <TabsTrigger
+              value='payment'
+              className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'
+            >
               Thanh toán
             </TabsTrigger>
-            <TabsTrigger value='shipping' className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'>
+            <TabsTrigger
+              value='shipping'
+              className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'
+            >
               Vận chuyển
             </TabsTrigger>
-            <TabsTrigger value='security' className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'>
+            <TabsTrigger
+              value='security'
+              className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'
+            >
               Bảo mật
             </TabsTrigger>
           </TabsList>
@@ -117,7 +135,9 @@ export function SystemSettingsPage() {
               <CardContent className='space-y-4'>
                 <div className='grid md:grid-cols-2 gap-4'>
                   <div>
-                    <Label htmlFor='siteName' className='mb-2 block'>Tên website</Label>
+                    <Label htmlFor='siteName' className='mb-2 block'>
+                      Tên website
+                    </Label>
                     <Input
                       id='siteName'
                       value={settings.siteName}
@@ -126,7 +146,9 @@ export function SystemSettingsPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor='siteUrl' className='mb-2 block'>URL website</Label>
+                    <Label htmlFor='siteUrl' className='mb-2 block'>
+                      URL website
+                    </Label>
                     <Input
                       id='siteUrl'
                       value={settings.siteUrl}
@@ -135,7 +157,9 @@ export function SystemSettingsPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor='supportEmail' className='mb-2 block'>Email hỗ trợ</Label>
+                    <Label htmlFor='supportEmail' className='mb-2 block'>
+                      Email hỗ trợ
+                    </Label>
                     <Input
                       id='supportEmail'
                       value={settings.supportEmail}
@@ -144,7 +168,9 @@ export function SystemSettingsPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor='supportPhone' className='mb-2 block'>Hotline</Label>
+                    <Label htmlFor='supportPhone' className='mb-2 block'>
+                      Hotline
+                    </Label>
                     <Input
                       id='supportPhone'
                       value={settings.supportPhone}
@@ -153,7 +179,9 @@ export function SystemSettingsPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor='timezone' className='mb-2 block'>Múi giờ</Label>
+                    <Label htmlFor='timezone' className='mb-2 block'>
+                      Múi giờ
+                    </Label>
                     <Select value={settings.timezone} onValueChange={(val) => handleChange('timezone', val)}>
                       <SelectTrigger className='border-2 border-blue-200 focus:border-blue-500'>
                         <SelectValue />
@@ -166,7 +194,9 @@ export function SystemSettingsPage() {
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor='currency' className='mb-2 block'>Đơn vị tiền tệ</Label>
+                    <Label htmlFor='currency' className='mb-2 block'>
+                      Đơn vị tiền tệ
+                    </Label>
                     <Select value={settings.currency} onValueChange={(val) => handleChange('currency', val)}>
                       <SelectTrigger className='border-2 border-blue-200 focus:border-blue-500'>
                         <SelectValue />
@@ -216,7 +246,9 @@ export function SystemSettingsPage() {
                     <Separator />
                     <div className='grid md:grid-cols-2 gap-4'>
                       <div>
-                        <Label htmlFor='smtpHost' className='mb-2 block'>SMTP Host</Label>
+                        <Label htmlFor='smtpHost' className='mb-2 block'>
+                          SMTP Host
+                        </Label>
                         <Input
                           id='smtpHost'
                           value={settings.smtpHost}
@@ -226,7 +258,9 @@ export function SystemSettingsPage() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor='smtpPort' className='mb-2 block'>SMTP Port</Label>
+                        <Label htmlFor='smtpPort' className='mb-2 block'>
+                          SMTP Port
+                        </Label>
                         <Input
                           id='smtpPort'
                           value={settings.smtpPort}
@@ -236,7 +270,9 @@ export function SystemSettingsPage() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor='smtpUser' className='mb-2 block'>SMTP Username</Label>
+                        <Label htmlFor='smtpUser' className='mb-2 block'>
+                          SMTP Username
+                        </Label>
                         <Input
                           id='smtpUser'
                           value={settings.smtpUser}
@@ -245,7 +281,9 @@ export function SystemSettingsPage() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor='smtpPassword' className='mb-2 block'>SMTP Password</Label>
+                        <Label htmlFor='smtpPassword' className='mb-2 block'>
+                          SMTP Password
+                        </Label>
                         <Input
                           id='smtpPassword'
                           type='password'
@@ -292,7 +330,9 @@ export function SystemSettingsPage() {
                     <Separator />
                     <div className='space-y-4'>
                       <div>
-                        <Label htmlFor='smsProvider' className='mb-2 block'>Nhà cung cấp SMS</Label>
+                        <Label htmlFor='smsProvider' className='mb-2 block'>
+                          Nhà cung cấp SMS
+                        </Label>
                         <Select value={settings.smsProvider} onValueChange={(val) => handleChange('smsProvider', val)}>
                           <SelectTrigger className='border-2 border-blue-200 focus:border-blue-500'>
                             <SelectValue />
@@ -305,7 +345,9 @@ export function SystemSettingsPage() {
                         </Select>
                       </div>
                       <div>
-                        <Label htmlFor='smsApiKey' className='mb-2 block'>API Key</Label>
+                        <Label htmlFor='smsApiKey' className='mb-2 block'>
+                          API Key
+                        </Label>
                         <Input
                           id='smsApiKey'
                           value={settings.smsApiKey}
@@ -508,7 +550,9 @@ export function SystemSettingsPage() {
 
                 <div className='grid md:grid-cols-2 gap-4'>
                   <div>
-                    <Label htmlFor='sessionTimeout' className='mb-2 block'>Thời gian session (phút)</Label>
+                    <Label htmlFor='sessionTimeout' className='mb-2 block'>
+                      Thời gian session (phút)
+                    </Label>
                     <Input
                       id='sessionTimeout'
                       type='number'
@@ -518,7 +562,9 @@ export function SystemSettingsPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor='maxLoginAttempts' className='mb-2 block'>Số lần đăng nhập tối đa</Label>
+                    <Label htmlFor='maxLoginAttempts' className='mb-2 block'>
+                      Số lần đăng nhập tối đa
+                    </Label>
                     <Input
                       id='maxLoginAttempts'
                       type='number'

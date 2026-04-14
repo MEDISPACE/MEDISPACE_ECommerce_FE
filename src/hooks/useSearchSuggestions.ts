@@ -53,15 +53,15 @@ export function useSearchSuggestions(query: string) {
 
   const categorySuggestions: SearchSuggestion[] = debouncedQuery.trim()
     ? allCategories
-      .filter((category: Category) => category.name.toLowerCase().includes(debouncedQuery.toLowerCase()))
-      .slice(0, 3)
-      .map((category: Category) => ({
-        id: `category-${category._id}`,
-        text: category.name,
-        type: 'category' as const,
-        slug: category.slug,
-        icon: '📁',
-      }))
+        .filter((category: Category) => category.name.toLowerCase().includes(debouncedQuery.toLowerCase()))
+        .slice(0, 3)
+        .map((category: Category) => ({
+          id: `category-${category._id}`,
+          text: category.name,
+          type: 'category' as const,
+          slug: category.slug,
+          icon: '📁',
+        }))
     : []
 
   // Deduplicate by id to prevent React "duplicate key" warnings

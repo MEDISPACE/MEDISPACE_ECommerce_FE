@@ -448,9 +448,7 @@ export function SearchResultsPage() {
                   size='sm'
                   onClick={() => setViewMode('grid')}
                   className={
-                    viewMode === 'grid'
-                      ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white'
-                      : 'text-gray-600'
+                    viewMode === 'grid' ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : 'text-gray-600'
                   }
                 >
                   <Grid className='w-4 h-4' />
@@ -460,9 +458,7 @@ export function SearchResultsPage() {
                   size='sm'
                   onClick={() => setViewMode('list')}
                   className={
-                    viewMode === 'list'
-                      ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white'
-                      : 'text-gray-600'
+                    viewMode === 'list' ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : 'text-gray-600'
                   }
                 >
                   <List className='w-4 h-4' />

@@ -43,11 +43,12 @@ export interface OrderStatistics {
 }
 
 export interface CreateOrderData {
-  customerId: string
+  customerId?: string
   prescriptionId?: string
   items: Array<{
     productId: string
     quantity: number
+    unit?: string
     notes?: string
   }>
   shippingAddress: {
@@ -59,10 +60,14 @@ export interface CreateOrderData {
     ward: string
     district: string
     province: string
+    provinceId?: number
+    districtId?: number
+    wardCode?: string
     postalCode?: string
   }
-  deliveryMethod: string // 'standard', 'fast', 'express'
-  paymentMethod: string // 'cod', 'transfer', 'ewallet'
+  deliveryMethod: string
+  paymentMethod: string
+  shippingFee?: number
   orderNotes?: string
   pharmacistNotes?: string
 }

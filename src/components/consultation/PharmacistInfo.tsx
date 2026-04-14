@@ -128,8 +128,9 @@ export function PharmacistInfo({
               {[1, 2, 3, 4, 5].map((star) => (
                 <Star
                   key={star}
-                  className={`w-4 h-4 ${star <= Math.floor(pharmacist.rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
-                    }`}
+                  className={`w-4 h-4 ${
+                    star <= Math.floor(pharmacist.rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
+                  }`}
                 />
               ))}
             </div>

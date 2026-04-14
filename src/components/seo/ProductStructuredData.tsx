@@ -7,20 +7,15 @@ import { generateProductStructuredData } from '~/utils/seo'
  * Renders a JSON-LD script tag for Google rich snippets
  */
 export function ProductStructuredData({
-    product,
-    reviews,
-    stats
+  product,
+  reviews,
+  stats,
 }: {
-    product: Product
-    reviews: Review[]
-    stats: ReviewStats | null
+  product: Product
+  reviews: Review[]
+  stats: ReviewStats | null
 }) {
-    const structuredData = generateProductStructuredData(product, reviews, stats)
+  const structuredData = generateProductStructuredData(product, reviews, stats)
 
-    return (
-        <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-        />
-    )
+  return <script type='application/ld+json' dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
 }

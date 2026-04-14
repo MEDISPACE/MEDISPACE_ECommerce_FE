@@ -108,7 +108,6 @@ export function PatientHistoryPage() {
         toast.info('Không tìm thấy bệnh nhân')
       }
     } catch (error) {
-
       toast.error('Lỗi tìm kiếm bệnh nhân')
     } finally {
       setSearching(false)
@@ -130,7 +129,6 @@ export function PatientHistoryPage() {
       setMedicalInfo(medicalData as unknown as MedicalInfo)
       setPatientNotes(notesData)
     } catch (error) {
-
       toast.error('Lỗi tải thông tin bệnh nhân')
     } finally {
       setLoading(false)
