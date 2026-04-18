@@ -28,6 +28,7 @@ import {
   Gift,
   Zap,
   Sparkles,
+  Archive,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { Button } from '../ui/button'
@@ -81,6 +82,11 @@ const navigationItems: NavItem[] = [
     label: 'Quản lý sản phẩm',
     href: '/admin/products',
     icon: Package,
+  },
+  {
+    label: 'Quản lý tồn kho',
+    href: '/admin/inventory',
+    icon: Archive,
   },
   {
     label: 'Quản lý danh mục',
