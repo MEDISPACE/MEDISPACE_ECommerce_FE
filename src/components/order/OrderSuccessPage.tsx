@@ -23,12 +23,7 @@ export function OrderSuccessPage() {
     // Scroll to top on mount
     window.scrollTo(0, 0)
 
-    // Xóa /cart/checkout khỏi browser history để Back không quay lại trang checkout rỗng
-    // Thay thế history entry hiện tại để stack là: ... → / → /order/success
-    window.history.replaceState(null, '', window.location.href)
-    // Đẩy trang chủ vào trước success để back → về home
-    window.history.pushState(null, '', '/')
-    window.history.pushState(null, '', window.location.href)
+
 
     // Clear selectedItems from sessionStorage on successful payment
     if (paymentStatus === 'success') {

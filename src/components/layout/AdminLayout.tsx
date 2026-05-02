@@ -12,7 +12,6 @@ import {
   Settings,
   Menu,
   X,
-  Bell,
   Search,
   ChevronDown,
   LogOut,
@@ -49,9 +48,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { getFullName, getUserInitials } from '~/utils/lib'
 import type { BreadcrumbItem } from '../shared/UniversalBreadcrumb'
 import { getDashboardStats } from '../../services/adminService'
-import { notificationService } from '../../services/notificationService'
-import { formatDistanceToNow } from 'date-fns'
-import { vi } from 'date-fns/locale'
+import { NotificationDropdown } from '../shared/NotificationDropdown'
 import faviconLogo from '../../assets/MEDISPACE_Logo_favicon.png'
 
 interface AdminLayoutProps {
@@ -180,14 +177,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     staleTime: 20000,
   })
 
-  // Fetch notifications
-  const { data: notifications = [] } = useQuery({
-    queryKey: ['admin-notifications'],
-    queryFn: () => notificationService.getNotifications(),
-    refetchInterval: 60000, // Refetch every minute
-    staleTime: 30000,
-  })
-
   const isActiveRoute = (href: string) => {
     return location.pathname === href || location.pathname.startsWith(href + '/')
   }
@@ -197,17 +186,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     navigate('/login')
   }
 
-  // Format notification time
-  const formatNotificationTime = (timestamp: string) => {
-    try {
-      return formatDistanceToNow(new Date(timestamp), { addSuffix: true, locale: vi })
-    } catch {
-      return timestamp
-    }
-  }
 
-  // Get unread notification count
-  const unreadCount = notifications.filter((n: any) => !n.isRead).length
 
   const SidebarContent = () => (
     <div className='flex flex-col h-full'>
@@ -372,7 +351,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       {/* Main Content Area */}
       <div className='flex-1 flex flex-col overflow-hidden'>
         {/* Top Header */}
-        <header className='h-16 bg-white/80 backdrop-blur-lg border-b border-blue-100 flex items-center justify-between px-6 shadow-sm'>
+        <header className='relative z-50 h-16 bg-white/80 backdrop-blur-lg border-b border-blue-100 flex items-center justify-between px-6 shadow-sm'>
           <div className='flex items-center gap-4'>
             {/* Toggle Sidebar Button */}
             <Button
@@ -428,40 +407,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               </div>
             </div>
 
-            {/* Notifications */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant='ghost' size='sm' className='relative'>
-                  <Bell className='w-5 h-5 text-gray-600' />
-                  {unreadCount > 0 && (
-                    <span className='absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center'>
-                      {unreadCount > 99 ? '99+' : unreadCount}
-                    </span>
-                  )}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align='end' className='w-80 z-50 bg-white shadow-lg border border-blue-100'>
-                <DropdownMenuLabel>Thông báo</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <div className='max-h-96 overflow-y-auto'>
-                  {notifications.length > 0 ? (
-                    notifications.slice(0, 5).map((notification: any) => (
-                      <DropdownMenuItem key={notification._id || notification.id} className='flex-col items-start py-3'>
-                        <p className='font-medium text-sm'>{notification.title || notification.message}</p>
-                        <p className='text-xs text-gray-500'>
-                          {formatNotificationTime(notification.createdAt || notification.timestamp)}
-                        </p>
-                      </DropdownMenuItem>
-                    ))
-                  ) : (
-                    <div className='py-8 text-center text-gray-500 text-sm'>Không có thông báo mới</div>
-                  )}
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className='justify-center text-[#0066CC]'>Xem tất cả thông báo</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
+            {/* Notifications – rich dropdown with type icons, mark-all-read, navigation */}
+            <NotificationDropdown viewAllUrl='/admin/notifications' />
             {/* User Menu - Always visible for quick access to logout */}
             <div>
               <DropdownMenu>

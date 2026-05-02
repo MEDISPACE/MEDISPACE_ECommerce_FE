@@ -7,12 +7,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group'
 import { Checkbox } from '../ui/checkbox'
 import { Button } from '../ui/button'
-import { CalendarIcon, Sparkles, X } from 'lucide-react'
+import { CalendarIcon, Sparkles, X, PhoneCall } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { Calendar as CalendarComponent } from '../ui/calendar'
 import { format, parseISO } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { Badge } from '../ui/badge'
+import { useAuth } from '../../contexts/AuthContext'
 
 interface PrescriptionFormData {
   patientName: string
@@ -65,23 +66,26 @@ interface PrescriptionFormProps {
 }
 
 export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className = '' }: PrescriptionFormProps) {
+  const { user } = useAuth()
+
   const [formData, setFormData] = useState<PrescriptionFormData>(() => ({
     patientName: initialData?.patientName || '',
     patientAge: initialData?.patientAge || '',
     patientGender: initialData?.patientGender || '',
-    phoneNumber: initialData?.phoneNumber || '',
+    // Build UX auto-fill profile phone number OR fallback to OCR data
+    phoneNumber: (user as any)?.phone || (user as any)?.phoneNumber || initialData?.phoneNumber || '',
     relationship: 'myself',
     doctorName: initialData?.doctorName || '',
     hospitalName: initialData?.hospitalName || '',
     examinationDate: initialData?.prescriptionDate
       ? (() => {
-          try {
-            const d = parseISO(initialData.prescriptionDate!)
-            return isNaN(d.getTime()) ? undefined : d
-          } catch {
-            return undefined
-          }
-        })()
+        try {
+          const d = parseISO(initialData.prescriptionDate!)
+          return isNaN(d.getTime()) ? undefined : d
+        } catch {
+          return undefined
+        }
+      })()
       : undefined,
     diagnosis: initialData?.diagnosis || '',
     specialNotes: initialData?.specialNotes || '',
@@ -109,20 +113,20 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
       patientName: initialData.patientName || prev.patientName,
       patientAge: initialData.patientAge || prev.patientAge,
       patientGender: initialData.patientGender || prev.patientGender,
-      phoneNumber: initialData.phoneNumber || prev.phoneNumber,
+      phoneNumber: prev.phoneNumber || initialData.phoneNumber || '',
       doctorName: initialData.doctorName || prev.doctorName,
       hospitalName: initialData.hospitalName || prev.hospitalName,
       diagnosis: initialData.diagnosis || prev.diagnosis,
       specialNotes: initialData.specialNotes || prev.specialNotes,
       examinationDate: initialData.prescriptionDate
         ? (() => {
-            try {
-              const d = parseISO(initialData.prescriptionDate!)
-              return isNaN(d.getTime()) ? prev.examinationDate : d
-            } catch {
-              return prev.examinationDate
-            }
-          })()
+          try {
+            const d = parseISO(initialData.prescriptionDate!)
+            return isNaN(d.getTime()) ? prev.examinationDate : d
+          } catch {
+            return prev.examinationDate
+          }
+        })()
         : prev.examinationDate,
     }))
     if (initialData.medications && initialData.medications.length > 0) {
@@ -179,13 +183,16 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
     onSaveDraft(formData)
   }
 
+  const suggestedPhone = initialData?.phoneNumber
+  const showPhoneSuggestion = !!suggestedPhone && suggestedPhone !== formData.phoneNumber
+
   return (
     <form onSubmit={handleSubmit} className={`space-y-6 ${className}`}>
       {/* OCR Auto-fill badge */}
       {isOCRFilled && (
         <div className='flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl'>
           <Sparkles className='w-5 h-5 text-emerald-600 shrink-0' />
-          <span className='text-sm text-emerald-800 font-medium'>Form đã được điền tự động từ OCR</span>
+          <span className='text-sm text-emerald-800 font-medium'>Form đã được điền tự động từ Đơn thuốc</span>
           {initialData?.confidence && (
             <Badge variant='outline' className='ml-auto text-emerald-700 border-emerald-300 text-xs'>
               Độ tin cậy: {initialData.confidence}
@@ -248,17 +255,38 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
             </div>
 
             <div className='md:col-span-2'>
-              <Label htmlFor='phoneNumber' className='mb-2 block'>
-                Số điện thoại liên hệ *
+              <Label htmlFor='phoneNumber' className='mb-2 block font-medium'>
+                SĐT Dược sĩ liên hệ tư vấn *
               </Label>
-              <Input
-                id='phoneNumber'
-                placeholder='Nhập số điện thoại'
-                value={formData.phoneNumber}
-                onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
-                className='border-2 border-blue-200 focus:border-blue-500'
-                required
-              />
+              <div className='relative'>
+                <Input
+                  id='phoneNumber'
+                  placeholder='Nhập số điện thoại'
+                  value={formData.phoneNumber}
+                  onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+                  className='border-2 border-blue-200 focus:border-blue-500 pl-10'
+                  required
+                />
+                <PhoneCall className='w-4 h-4 text-gray-400 absolute left-3 top-3' />
+              </div>
+
+              {showPhoneSuggestion && (
+                <div className='mt-2.5 text-sm flex flex-col sm:flex-row items-start sm:items-center gap-2 text-indigo-700 bg-indigo-50/80 p-2.5 rounded-lg border border-indigo-200 shadow-sm'>
+                  <span className='font-medium flex-1 flex items-center gap-1.5'>
+                    <Sparkles className='w-4 h-4 text-indigo-500' />
+                    AI tìm thấy SĐT trên đơn: <strong>{suggestedPhone}</strong>
+                  </span>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    className='h-7 flex-shrink-0 text-xs border-indigo-300 hover:bg-indigo-100/80 hover:text-indigo-900 bg-white'
+                    onClick={() => handleInputChange('phoneNumber', suggestedPhone)}
+                  >
+                    Dùng số này
+                  </Button>
+                </div>
+              )}
             </div>
 
             <div className='md:col-span-2'>
