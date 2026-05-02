@@ -1,37 +1,67 @@
 import { apiClient } from './apiClient'
-import { API_ENDPOINTS } from '../constants'
 import type { Notification } from '../types/account'
 
-/**
- * notificationService
- * Tries a few plausible endpoints to fetch notifications from the backend.
- * Returns an empty array when no endpoint is available so the UI can display placeholders.
- */
+export interface NotificationPagination {
+  page: number
+  limit: number
+  total: number
+  totalPages: number
+}
+
+export interface NotificationsResponse {
+  notifications: Notification[]
+  pagination: NotificationPagination
+}
+
 export const notificationService = {
-  async getNotifications(): Promise<Notification[]> {
-    const candidates = [
-      '/notifications',
-      // e.g. /users/me/notifications
-      `${API_ENDPOINTS.USERS.ME}/notifications`,
-    ]
-
-    for (const url of candidates) {
-      try {
-        const res = await apiClient.get<{ result: Notification[] }>(url)
-        if (res?.data?.result) return res.data.result
-      } catch (err: unknown) {
-        // If endpoint isn't available, continue to next candidate.
-        try {
-          // non-blocking debug log for development
-        } catch {
-          /* ignore */
-        }
-        continue
-      }
+  /**
+   * Get paginated notifications
+   */
+  async getNotifications(
+    page = 1,
+    limit = 20,
+    filter: 'all' | 'unread' | 'order' | 'prescription' | 'promotion' | 'system' | 'reminder' = 'all'
+  ): Promise<NotificationsResponse> {
+    const res = await apiClient.get<{ result: Notification[]; pagination: NotificationPagination }>(
+      `/notifications?page=${page}&limit=${limit}&filter=${filter}`
+    )
+    return {
+      notifications: res?.data?.result ?? [],
+      pagination: res?.data?.pagination ?? { page: 1, limit, total: 0, totalPages: 0 },
     }
+  },
 
-    // No local mock fallback anymore — return empty list so UI can show placeholders
-    return []
+  /**
+   * Get unread count (for bell badge)
+   */
+  async getUnreadCount(): Promise<number> {
+    try {
+      const res = await apiClient.get<{ result: { count: number } }>('/notifications/unread-count')
+      return res?.data?.result?.count ?? 0
+    } catch {
+      return 0
+    }
+  },
+
+  /**
+   * Mark a single notification as read
+   */
+  async markAsRead(id: string): Promise<void> {
+    await apiClient.patch(`/notifications/${id}/read`)
+  },
+
+  /**
+   * Mark all notifications as read
+   */
+  async markAllAsRead(): Promise<void> {
+    await apiClient.patch('/notifications/read-all')
+  },
+
+  /**
+   * Delete a notification permanently
+   */
+  async deleteNotification(id: string): Promise<void> {
+    await apiClient.delete(`/notifications/${id}`)
   },
 }
 
