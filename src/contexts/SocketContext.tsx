@@ -23,6 +23,7 @@ interface SocketCallbacks {
     transferredAt: string
   }) => void
   onConversationNew?: (data: { conversationId: string }) => void
+  onNewNotification?: (notification: Record<string, unknown>) => void
   onError?: (error: { message: string }) => void
 }
 
@@ -161,6 +162,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         broadcast('onConversationTransferred', data),
     )
     s.on('conversation:new', (data: { conversationId: string }) => broadcast('onConversationNew', data))
+    s.on('notification:new', (notification: Record<string, unknown>) => broadcast('onNewNotification', notification))
     s.on('error', (err: { message: string }) => broadcast('onError', err))
   }, [])
 

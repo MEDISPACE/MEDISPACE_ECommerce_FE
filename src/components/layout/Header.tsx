@@ -35,6 +35,7 @@ import { useCart } from '~/contexts/CartContext'
 import { useCategories } from '~/hooks/product'
 import type { Category } from '../../types/product'
 import medispaceLogo from '../../assets/MEDISPACE_Logo_Final.svg'
+import { NotificationDropdown } from '../shared/NotificationDropdown'
 
 export function Header() {
   const navigate = useNavigate()
@@ -113,6 +114,11 @@ export function Header() {
                 </Badge>
               </Button>
             </Link>
+
+            {/* Notifications Bell – show only for customers */}
+            {isAuthenticated && user?.role === UserRole.Customer && (
+              <NotificationDropdown />
+            )}
 
             {/* Account */}
             {isAuthenticated ? (
@@ -312,6 +318,9 @@ function HeaderBreadcrumb() {
   // Hide if no items
   if (items.length === 0) return null
 
+  // Lọc bỏ 'Trang chủ' để tránh lặp lại vì đã được render mặc định ở trên
+  const displayItems = items.length > 0 && items[0].label === 'Trang chủ' ? items.slice(1) : items;
+
   return (
     <div className='bg-blue-40 border-t border-gray-100'>
       <div className='max-w-7xl mx-auto px-4 py-3'>
@@ -320,9 +329,9 @@ function HeaderBreadcrumb() {
             <Home className='w-4 h-4' />
             <span>Trang chủ</span>
           </Link>
-          {items.length > 0 && <ChevronRight className='w-4 h-4 mx-2 text-gray-400' />}
+          {displayItems.length > 0 && <ChevronRight className='w-4 h-4 mx-2 text-gray-400' />}
 
-          {items.map((item, index) => (
+          {displayItems.map((item, index) => (
             <div key={index} className='flex items-center'>
               {item.href ? (
                 <Link
@@ -337,7 +346,7 @@ function HeaderBreadcrumb() {
                 </div>
               )}
 
-              {index < items.length - 1 && <ChevronRight className='w-4 h-4 mx-2 text-gray-400' />}
+              {index < displayItems.length - 1 && <ChevronRight className='w-4 h-4 mx-2 text-gray-400' />}
             </div>
           ))}
         </nav>

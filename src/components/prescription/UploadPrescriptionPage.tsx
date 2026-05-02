@@ -13,6 +13,15 @@ import {
   ScanLine,
   Brain,
   FileSearch,
+  Check,
+  X,
+  Copy,
+  Bell,
+  Mail,
+  ShoppingBag,
+  ClipboardList,
+  Home,
+  PlusCircle,
 } from 'lucide-react'
 
 import { Button } from '../ui/button'
@@ -470,92 +479,132 @@ export function UploadPrescriptionPage() {
 
       case 3:
         return (
-          <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
-            <CardContent className='p-8 text-center'>
-              <div className='mb-6'>
-                <div className='w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4'>
+          <div className='max-w-2xl mx-auto'>
+            <Card className='bg-white/80 backdrop-blur-lg shadow-xl rounded-3xl border border-emerald-100 overflow-hidden'>
+              <div className='bg-gradient-to-b from-emerald-50 to-white pt-10 pb-6 text-center border-b border-emerald-100/50'>
+                <div className='w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4 ring-8 ring-emerald-50/50'>
                   <CheckCircle className='w-10 h-10 text-emerald-600' />
                 </div>
-
-                <h2 className='text-2xl mb-2 text-emerald-900'>✅ ĐÃ GỬI ĐƠN THUỐC THÀNH CÔNG</h2>
-
-                <p className='text-lg text-emerald-700 mb-6'>🎉 Cảm ơn bạn đã gửi đơn thuốc!</p>
+                <h2 className='text-2xl font-bold mb-2 text-emerald-900'>ĐÃ GỬI ĐƠN THUỐC THÀNH CÔNG</h2>
+                <p className='text-emerald-700'>🎉 Cảm ơn bạn đã tin tưởng MEDISPACE!</p>
               </div>
 
-              <div className='bg-blue-50 rounded-lg p-6 mb-6'>
-                <div className='space-y-3 text-left'>
-                  <div className='flex justify-between'>
-                    <span className='text-gray-600'>📋 Mã đơn thuốc:</span>
-                    <Badge variant='default' className='bg-blue-600'>
+              <CardContent className='p-6 md:p-8 flex flex-col gap-8'>
+                
+                {/* Info Block */}
+                <div className='bg-white border border-gray-100 rounded-2xl p-5 shadow-sm space-y-4 text-sm'>
+                  <div className='flex justify-between items-center pb-4 border-b border-gray-50'>
+                    <span className='text-gray-500 font-medium'>Mã đơn thuốc:</span>
+                    <div 
+                      className='bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors px-3 py-1.5 rounded-lg flex items-center gap-2 cursor-pointer font-mono font-medium border border-blue-100 active:scale-95'
+                      onClick={() => {
+                        navigator.clipboard.writeText(prescriptionNumber || prescriptionId || '')
+                        toast.success('Đã copy mã đơn thuốc')
+                      }}
+                    >
                       #{prescriptionNumber || prescriptionId}
-                    </Badge>
+                      <Copy className='w-3.5 h-3.5 text-blue-500' />
+                    </div>
                   </div>
-                  <div className='flex justify-between'>
-                    <span className='text-gray-600'>⏰ Thời gian gửi:</span>
-                    <span>{new Date().toLocaleString('vi-VN')}</span>
+                  <div className='flex justify-between items-center'>
+                    <span className='text-gray-500 font-medium'>Thời gian gửi:</span>
+                    <span className='text-gray-900 font-medium'>{new Date().toLocaleString('vi-VN')}</span>
                   </div>
-                  <div className='flex justify-between'>
-                    <span className='text-gray-600'>📸 Số ảnh:</span>
-                    <span>{getUploadedImageUrls().length} ảnh</span>
+                  <div className='flex justify-between items-center'>
+                    <span className='text-gray-500 font-medium'>Số lượng ảnh:</span>
+                    <span className='text-gray-900 font-medium'>{getUploadedImageUrls().length} ảnh đính kèm</span>
                   </div>
                 </div>
-              </div>
 
-              <Alert className='mb-6 border-blue-200 bg-blue-50'>
-                <Clock className='h-4 w-4 text-blue-600' />
-                <AlertDescription className='text-blue-800'>
-                  👨‍⚕️ Dược sĩ sẽ xem xét và phản hồi trong vòng 2-4 giờ (giờ hành chính)
-                </AlertDescription>
-              </Alert>
-
-              <div className='bg-gray-50 rounded-lg p-4 mb-6'>
-                <p className='text-sm text-gray-700 mb-2'>📱 Chúng tôi sẽ thông báo qua:</p>
-                <div className='space-y-1 text-sm'>
-                  <div>• Email: {user?.email || 'Email của bạn'}</div>
-                  <div>• Thông báo trong tài khoản</div>
+                {/* Next Steps Timeline */}
+                <div className='bg-blue-50/50 border border-blue-100/50 rounded-2xl p-5'>
+                  <h3 className='text-xs font-bold text-blue-800 uppercase tracking-wider mb-5 flex items-center gap-2'>
+                    <Clock className='w-4 h-4' />
+                    Các bước tiếp theo
+                  </h3>
+                  
+                  <div className='space-y-0'>
+                    {/* Item 1 */}
+                    <div className='flex gap-4'>
+                      <div className='flex flex-col items-center mt-0.5'>
+                        <div className='w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 z-10'>
+                          <UserCheck className='w-4 h-4' />
+                        </div>
+                        <div className='w-0.5 h-12 bg-blue-200 my-1 rounded-full'></div>
+                      </div>
+                      <div className='pb-4'>
+                        <h4 className='text-sm font-semibold text-gray-900'>Dược sĩ đang xem xét</h4>
+                        <p className='text-sm text-gray-600 mt-1 leading-relaxed'>Chúng tôi sẽ kiểm tra và phản hồi trong vòng <span className='font-medium text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded'>2-4 giờ</span> (giờ hành chính).</p>
+                      </div>
+                    </div>
+                    
+                    {/* Item 2 */}
+                    <div className='flex gap-4'>
+                      <div className='flex flex-col items-center mt-0.5'>
+                        <div className='w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 z-10'>
+                          <Bell className='w-4 h-4' />
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className='text-sm font-semibold text-gray-900'>Nhận thông báo kết quả</h4>
+                        <div className='text-sm text-gray-600 mt-2 flex flex-wrap items-center gap-2'>
+                          <Badge variant='secondary' className='bg-white font-normal hover:bg-white text-gray-700 border-gray-200 shadow-sm'><Mail className='w-3 h-3 mr-1.5 text-gray-400' /> Email</Badge>
+                          <Badge variant='secondary' className='bg-white font-normal hover:bg-white text-gray-700 border-gray-200 shadow-sm'><Bell className='w-3 h-3 mr-1.5 text-gray-400' /> Tài khoản</Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
 
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
-                <Button
-                  variant='outline'
-                  className='border-blue-200 text-blue-700 hover:bg-blue-50'
-                  onClick={() => navigate('/account/prescriptions')}
-                >
-                  📋 Xem đơn thuốc của tôi
-                </Button>
+                {/* Call to Actions */}
+                <div className='pt-2'>
+                  <div className='grid grid-cols-1 md:grid-cols-2 gap-3 mb-5'>
+                    <Button
+                      className='w-full h-12 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white shadow-md border-0 rounded-xl text-base'
+                      onClick={() => navigate('/account/prescriptions')}
+                    >
+                      <ClipboardList className='w-5 h-5 mr-2' />
+                      Theo dõi đơn thuốc
+                    </Button>
 
-                <Button
-                  variant='outline'
-                  className='border-gray-200 text-gray-700 hover:bg-gray-50'
-                  onClick={() => navigate('/')}
-                >
-                  🏠 Về trang chủ
-                </Button>
-
-                <Button
-                  variant='outline'
-                  className='border-gray-200 text-gray-700 hover:bg-gray-50'
-                  onClick={() => navigate('/products')}
-                >
-                  🛒 Tiếp tục mua sắm
-                </Button>
-
-                <Button
-                  className='bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-700 hover:to-blue-600'
-                  onClick={() => {
-                    // Reset form for new upload
-                    setCurrentStep(1)
-                    setUploadedImages([])
-                    setPrescriptionId(null)
-                    setPrescriptionNumber(null)
-                  }}
-                >
-                  ➕ Gửi đơn thuốc khác
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+                    <Button
+                      variant='outline'
+                      className='w-full h-12 border-blue-200 text-blue-700 hover:bg-blue-50 rounded-xl text-base shadow-sm'
+                      onClick={() => navigate('/products')}
+                    >
+                      <ShoppingBag className='w-5 h-5 mr-2' />
+                      Tiếp tục mua sắm
+                    </Button>
+                  </div>
+                  
+                  <div className='flex items-center justify-center text-sm pt-4 border-t border-gray-100/80'>
+                    <Button
+                      variant='ghost'
+                      className='text-gray-500 hover:text-gray-900'
+                      onClick={() => navigate('/')}
+                    >
+                      <Home className='w-4 h-4 mr-2' />
+                      Về trang chủ
+                    </Button>
+                    <span className='text-gray-300 mx-1'>|</span>
+                    <Button
+                      variant='ghost'
+                      className='text-gray-500 hover:text-blue-600'
+                      onClick={() => {
+                        setCurrentStep(1)
+                        setUploadedImages([])
+                        setPrescriptionId(null)
+                        setPrescriptionNumber(null)
+                      }}
+                    >
+                      <PlusCircle className='w-4 h-4 mr-2' />
+                      Gửi đơn khác
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         )
 
       default:
@@ -608,7 +657,43 @@ export function UploadPrescriptionPage() {
               </Card>
             )}
 
+            {/* Guidelines */}
+            <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+              <div className='p-4'>
+                <h3 className='mb-3 text-blue-900 flex items-center text-sm font-bold'>📋 HƯỚNG DẪN CHỤP ẢNH TỐT</h3>
+
+                <div className='space-y-3 text-xs'>
+                  <div className='space-y-1.5'>
+                    <div className='flex items-start text-emerald-600'>
+                      <Check className='w-3.5 h-3.5 mr-1.5 mt-0.5 shrink-0' />
+                      <span>Ảnh rõ nét, đủ sáng, không bị mờ</span>
+                    </div>
+                    <div className='flex items-start text-emerald-600'>
+                      <Check className='w-3.5 h-3.5 mr-1.5 mt-0.5 shrink-0' />
+                      <span>Chụp toàn bộ đơn thuốc, không bị cắt</span>
+                    </div>
+                    <div className='flex items-start text-emerald-600'>
+                      <Check className='w-3.5 h-3.5 mr-1.5 mt-0.5 shrink-0' />
+                      <span>Đặt ngang trên nền phẳng, tránh bóng</span>
+                    </div>
+                  </div>
+
+                  <div className='space-y-1.5'>
+                    <div className='flex items-start text-red-500'>
+                      <X className='w-3.5 h-3.5 mr-1.5 mt-0.5 shrink-0' />
+                      <span>Không chụp nghiêng hay bị che khuất</span>
+                    </div>
+                    <div className='flex items-start text-red-500'>
+                      <X className='w-3.5 h-3.5 mr-1.5 mt-0.5 shrink-0' />
+                      <span>Không chụp trong điều kiện thiếu sáng</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
             {/* Process Timeline */}
+
             <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
               <CardHeader>
                 <CardTitle className='text-blue-800'>Quy trình xử lý</CardTitle>

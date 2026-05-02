@@ -367,7 +367,7 @@ export function CheckoutPage() {
         // COD: Clear selections and sessionStorage
         selectAllItems(false)
         sessionStorage.removeItem('medispace_selected_items')
-        window.location.href = `/order/success?orderId=${order.id}`
+        navigate(`/order/success?orderId=${order.id}`, { replace: true })
       }
     } catch (error) {
       alert('Đặt hàng thất bại. Vui lòng thử lại.')
