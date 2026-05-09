@@ -52,6 +52,8 @@ import { toast } from 'sonner'
 import { orderService, dashboardService, prescriptionService } from '~/services/pharmacist'
 import { productService } from '~/services/productService'
 import { ghnService } from '~/services/ghnService'
+import { recommendationService } from '~/services/recommendationService'
+import type { RecommendedProduct } from '~/services/recommendationService'
 
 interface Product {
   id: string
@@ -163,6 +165,10 @@ export function CreateOrderPage() {
     currentNote: '',
   })
   const [orderType, setOrderType] = useState<'instore' | 'delivery'>('instore')
+
+  // ML Pharmacist Suggestions state
+  const [mlSuggestions, setMlSuggestions] = useState<RecommendedProduct[]>([])
+  const [mlLoading, setMlLoading] = useState(false)
 
   const [shippingAddress, setShippingAddress] = useState({
     firstName: '',
@@ -487,6 +493,35 @@ export function CreateOrderPage() {
 
     toast.success(`Đã thêm ${product.name} vào đơn hàng`)
   }
+
+  // Fetch ML pharmacist suggestions khi thêm/xóa sản phẩm
+  useEffect(() => {
+    if (orderItems.length === 0) {
+      setMlSuggestions([])
+      return
+    }
+    let cancelled = false
+    const prescriptionProductIds = orderItems.map((item) => item.product.id)
+
+    setMlLoading(true)
+    recommendationService
+      .getPharmacistSuggestions({ prescriptionProductIds }, 6)
+      .then((res) => {
+        if (!cancelled) {
+          // Lọc bỏ sản phẩm đã có trong đơn
+          const filtered = res.products.filter(
+            (p) => !orderItems.some((item) => item.product.id === p._id),
+          )
+          setMlSuggestions(filtered)
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setMlLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [orderItems.map((i) => i.product.id).join(',')])
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleProductInfo = (product: Product) => {
@@ -863,7 +898,81 @@ export function CreateOrderPage() {
             </CardContent>
           </Card>
 
+          {/* 💡 ML Pharmacist Suggestions — hiển thị khi có sản phẩm trong đơn */}
+          {(mlLoading || mlSuggestions.length > 0) && (
+            <Card className='bg-gradient-to-br from-violet-50 to-white shadow-md rounded-2xl border border-violet-100 overflow-hidden'>
+              <div className='bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-2.5 text-white flex items-center gap-2'>
+                <Sparkles className='w-4 h-4 text-violet-200' />
+                <span className='font-medium text-sm'>💡 ML Gợi Ý Dược Sĩ</span>
+                <span className='text-xs text-violet-200 ml-1'>Dựa trên các thuốc trong đơn</span>
+              </div>
+              <CardContent className='p-4'>
+                {mlLoading ? (
+                  <div className='flex items-center gap-3 text-gray-500 text-sm py-2'>
+                    <Loader2 className='w-4 h-4 animate-spin text-violet-500' />
+                    Đang phân tích gợi ý...
+                  </div>
+                ) : (
+                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+                    {mlSuggestions.map((p) => {
+                      const defaultVariant = p.priceVariants?.find((v) => v.isDefault) ?? p.priceVariants?.[0]
+                      const price = defaultVariant?.price ?? 0
+                      const unit = defaultVariant?.unit ?? 'Hộp'
+                      return (
+                        <div
+                          key={p._id}
+                          className='flex items-center gap-3 p-3 bg-white border border-violet-100 rounded-xl shadow-sm hover:border-violet-300 transition-all group'
+                        >
+                          {p.featuredImage ? (
+                            <img
+                              src={p.featuredImage}
+                              alt={p.name}
+                              className='w-12 h-12 rounded-lg object-cover flex-shrink-0 border border-gray-100'
+                            />
+                          ) : (
+                            <div className='w-12 h-12 rounded-lg bg-violet-50 flex items-center justify-center flex-shrink-0'>
+                              <Package className='w-6 h-6 text-violet-400' />
+                            </div>
+                          )}
+                          <div className='flex-1 min-w-0'>
+                            <p className='text-sm font-medium text-gray-900 line-clamp-2 leading-snug'>{p.name}</p>
+                            <p className='text-xs text-violet-600 font-semibold mt-0.5'>
+                              {price.toLocaleString('vi-VN')}đ/{unit}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => {
+                              handleProductAdd(
+                                {
+                                  id: p._id,
+                                  name: p.name,
+                                  image: p.featuredImage ?? '/images/product-placeholder.jpg',
+                                  price,
+                                  unit,
+                                  stock: p.stockQuantity,
+                                  rating: p.rating ?? 0,
+                                  type: p.requiresPrescription ? 'rx' : 'otc',
+                                  brand: p.brand?.[0]?.name ?? '',
+                                } as Product,
+                                1,
+                              )
+                            }}
+                            className='flex-shrink-0 w-8 h-8 rounded-full bg-violet-100 hover:bg-violet-600 text-violet-600 hover:text-white transition-all flex items-center justify-center group-hover:scale-110'
+                            title='Thêm vào đơn hàng'
+                          >
+                            <Plus className='w-4 h-4' />
+                          </button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Shopping Cart */}
+
           <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
             <CardHeader>
               <CardTitle className='text-blue-900 flex items-center justify-between'>

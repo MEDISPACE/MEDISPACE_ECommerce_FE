@@ -96,6 +96,7 @@ export default [
     route('reports', 'routes/pharmacist/reports.tsx'),
     route('settings', 'routes/pharmacist/settings.tsx'),
     route('chat', 'routes/pharmacist/chat.tsx'),
+    route('notifications', 'routes/pharmacist/notifications.tsx'),
     route('articles', 'routes/pharmacist/articles/_index.tsx'),
     route('articles/new', 'routes/pharmacist/articles/new.tsx'),
     route('articles/:id/edit', 'routes/pharmacist/articles/$id.edit.tsx'),
@@ -135,5 +136,6 @@ export default [
     route('coupons', 'routes/admin/coupons.tsx'),
     route('campaigns', 'routes/admin/campaigns.tsx'),
     route('loyalty', 'routes/admin/loyalty.tsx'),
+    route('notifications', 'routes/admin/notifications.tsx'),
   ]),
 ] satisfies RouteConfig

@@ -25,14 +25,14 @@ button {
 
 :root {
   --font-size: 16px;
-  --background: #ffffff;
+  --background: rgba(255, 255, 255, 0.999);
   --foreground: #0f172a;
-  --card: #ffffff;
+  --card: rgba(255, 255, 255, 0.999);
   --card-foreground: #0f172a;
-  --popover: #ffffff;
+  --popover: rgba(255, 255, 255, 0.999);
   --popover-foreground: #0f172a;
   --primary: #0066cc;
-  --primary-foreground: #ffffff;
+  --primary-foreground: rgba(255, 255, 255, 0.999);
   --secondary: #f0f9ff;
   --secondary-foreground: #0f172a;
   --muted: #f8fafc;
@@ -40,7 +40,7 @@ button {
   --accent: #eff6ff;
   --accent-foreground: #0066cc;
   --destructive: #ef4444;
-  --destructive-foreground: #ffffff;
+  --destructive-foreground: rgba(255, 255, 255, 0.999);
   --border: rgba(15, 23, 42, 0.12);
   --input: transparent;
   --input-background: #f8fafc;
@@ -54,10 +54,10 @@ button {
   --chart-4: #10b981;
   --chart-5: #f59e0b;
   --radius: 0.625rem;
-  --sidebar: #ffffff;
+  --sidebar: rgba(255, 255, 255, 0.999);
   --sidebar-foreground: #0f172a;
   --sidebar-primary: #0066cc;
-  --sidebar-primary-foreground: #ffffff;
+  --sidebar-primary-foreground: rgba(255, 255, 255, 0.999);
   --sidebar-accent: #eff6ff;
   --sidebar-accent-foreground: #0066cc;
   --sidebar-border: rgba(15, 23, 42, 0.12);
@@ -617,6 +617,11 @@ html.scroll-instant {
 
 /* ===== MEDISPACE SEMANTIC UTILITY CLASSES ===== */
 @layer utilities {
+  /* Override bg-white to use rgba to prevent Chrome auto-dark mode inversion */
+  .bg-white {
+    background-color: rgba(255, 255, 255, 0.999) !important;
+  }
+
   /* Performance optimizations for sticky elements */
   .will-change-transform {
     will-change: var(--will-change-sticky);

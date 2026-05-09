@@ -1,0 +1,129 @@
+import { useEffect, useId } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
+import { notificationService } from '../services/notificationService'
+import { useSocketContext } from '../contexts/SocketContext'
+import { useAuth } from '../contexts/AuthContext'
+
+export const NOTIFICATIONS_QUERY_KEY = ['notifications'] as const
+export const UNREAD_COUNT_QUERY_KEY = ['notifications-unread-count'] as const
+
+/**
+ * Main hook: fetch notification list + real-time socket integration
+ */
+export function useNotifications(
+  filter: 'all' | 'unread' | 'order' | 'prescription' | 'promotion' | 'system' | 'reminder' = 'all',
+  page = 1
+) {
+  const queryClient = useQueryClient()
+  const { isAuthenticated } = useAuth()
+  const { subscribe, unsubscribe } = useSocketContext()
+  const subscriberId = useId()
+
+  const query = useQuery({
+    queryKey: [...NOTIFICATIONS_QUERY_KEY, filter, page],
+    queryFn: () => notificationService.getNotifications(page, 20, filter),
+    enabled: isAuthenticated,
+    staleTime: 1000 * 30, // 30s
+  })
+
+  // Mark single as read
+  const markAsReadMutation = useMutation({
+    mutationFn: (id: string) => notificationService.markAsRead(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_QUERY_KEY })
+      queryClient.invalidateQueries({ queryKey: UNREAD_COUNT_QUERY_KEY })
+    },
+  })
+
+  // Mark all as read
+  const markAllAsReadMutation = useMutation({
+    mutationFn: () => notificationService.markAllAsRead(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_QUERY_KEY })
+      queryClient.invalidateQueries({ queryKey: UNREAD_COUNT_QUERY_KEY })
+      toast.success('Đã đánh dấu tất cả là đã đọc')
+    },
+  })
+
+  // Delete notification
+  const deleteNotificationMutation = useMutation({
+    mutationFn: (id: string) => notificationService.deleteNotification(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_QUERY_KEY })
+      queryClient.invalidateQueries({ queryKey: UNREAD_COUNT_QUERY_KEY })
+      toast.success('Đã xóa thông báo')
+    },
+  })
+
+  // Listen for real-time notifications via Socket.IO
+  useEffect(() => {
+    if (!isAuthenticated) return
+
+    subscribe(subscriberId, {
+      onNewNotification: (notification) => {
+        // Invalidate queries to refresh counts and lists
+        queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_QUERY_KEY })
+        queryClient.invalidateQueries({ queryKey: UNREAD_COUNT_QUERY_KEY })
+
+        // Show toast for the incoming notification
+        const title = notification?.title as string | undefined
+        const message = notification?.message as string | undefined
+        if (title) {
+          toast.info(title, { description: message, duration: 5000 })
+        }
+      },
+    })
+
+    return () => {
+      unsubscribe(subscriberId)
+    }
+  }, [isAuthenticated, subscriberId, subscribe, unsubscribe, queryClient])
+
+  return {
+    ...query,
+    notifications: query.data?.notifications ?? [],
+    pagination: query.data?.pagination,
+    markAsRead: markAsReadMutation.mutate,
+    markAllAsRead: markAllAsReadMutation.mutate,
+    deleteNotification: deleteNotificationMutation.mutate,
+    isMarkingRead: markAsReadMutation.isPending,
+    isMarkingAll: markAllAsReadMutation.isPending,
+  }
+}
+
+/**
+ * Lightweight hook: just the unread count (for bell badge)
+ * Polls every 60s as fallback if socket push is missed
+ */
+export function useUnreadNotificationCount() {
+  const queryClient = useQueryClient()
+  const { isAuthenticated } = useAuth()
+  const { subscribe, unsubscribe } = useSocketContext()
+  const subscriberId = useId()
+
+  const query = useQuery({
+    queryKey: UNREAD_COUNT_QUERY_KEY,
+    queryFn: () => notificationService.getUnreadCount(),
+    enabled: isAuthenticated,
+    staleTime: 1000 * 60, // 60s
+    refetchInterval: 1000 * 60, // poll every 60s as socket fallback
+  })
+
+  // Also listen to socket for instant count update
+  useEffect(() => {
+    if (!isAuthenticated) return
+
+    subscribe(subscriberId, {
+      onNewNotification: () => {
+        queryClient.invalidateQueries({ queryKey: UNREAD_COUNT_QUERY_KEY })
+      },
+    })
+
+    return () => {
+      unsubscribe(subscriberId)
+    }
+  }, [isAuthenticated, subscriberId, subscribe, unsubscribe, queryClient])
+
+  return query.data ?? 0
+}

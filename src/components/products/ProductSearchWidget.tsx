@@ -6,7 +6,7 @@ import { Card } from '../ui/card'
 import { Badge } from '../ui/badge'
 import { ScrollArea } from '../ui/scroll-area'
 import { ImageWithFallback } from '../shared/ImageWithFallback'
-import { productService } from '../../services/productService'
+import { searchService } from '../../services/searchService'
 import { ProductDetailModal } from './ProductDetailModal'
 import { useWishlist } from '../../hooks/product/useWishlist'
 
@@ -68,6 +68,31 @@ export function ProductSearchWidget({ onProductAdd, onProductInfo, className = '
   const [isModalOpen, setIsModalOpen] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
+  const mapHitToProduct = (hit: any): Product => {
+    const p = hit.document as any
+    const defaultVariant = p.priceVariants?.find((v: any) => v.isDefault) || p.priceVariants?.[0]
+    const price = p.price ?? defaultVariant?.price ?? 0
+    const unit = defaultVariant?.unit ?? 'Hộp'
+
+    return {
+      id: p.mongoId || p._id || '',
+      name: p.name || '',
+      image: p.featuredImage || '/images/product-placeholder.jpg',
+      price: price,
+      originalPrice: p.originalPrice || defaultVariant?.originalPrice || price,
+      unit: unit,
+      stock: p.stockQuantity || 0,
+      rating: p.rating || 4.5,
+      type: p.requiresPrescription ? 'rx' : 'otc',
+      brand: p.brandName || p.brand?.name || 'Unknown',
+      sku: p.sku || '',
+      category: { name: p.categoryName || p.category?.name || '' },
+      shortDescription: p.shortDescription || p.description || '',
+      status: p.isActive === false ? 'discontinued' : 'active',
+      requiresPrescription: p.requiresPrescription,
+    } as Product
+  }
+
   const handleSearch = async (term: string) => {
     setSearchTerm(term)
 
@@ -78,47 +103,8 @@ export function ProductSearchWidget({ onProductAdd, onProductInfo, className = '
         return
       }
 
-      // Use real API to search products
-      const products = await productService.searchProducts(term)
-
-      // Transform API products to local Product format
-      const transformedProducts: Product[] = products.map((p) => {
-        const defaultVariant = p.priceVariants?.find((v: any) => v.isDefault) ||
-          p.priceVariants?.[0] || { price: 0, unit: 'Hộp' }
-        return {
-          id: p._id,
-          name: p.name,
-          image: p.featuredImage || '/images/product-placeholder.jpg',
-          price: defaultVariant.price,
-          originalPrice: defaultVariant.originalPrice,
-          salePrice: undefined,
-          discountPercentage: undefined,
-          onSale: false,
-          unit: defaultVariant.unit,
-          stock: p.stockQuantity,
-          maxOrderQuantity: p.maxOrderQuantity,
-          rating: p.rating || 4.5,
-          reviewCount: p.reviewCount,
-          type: p.requiresPrescription ? 'rx' : 'otc',
-          brand: p.brand?.name || 'Unknown',
-          barcode: p.barcode,
-          sku: p.sku,
-          category: p.category,
-          shortDescription: p.shortDescription,
-          description: p.description,
-          origin: p.origin,
-          packaging: p.packaging,
-          expiryInfo: p.expiryInfo,
-          ingredients: p.ingredients,
-          uses: p.uses,
-          instructions: p.instructions,
-          warnings: p.warnings,
-          status: p.status,
-          requiresPrescription: p.requiresPrescription,
-          tags: p.tags,
-        }
-      })
-
+      const result = await searchService.searchProducts({ q: term, limit: 20 })
+      const transformedProducts = result.hits.map(mapHitToProduct)
       setSearchResults(transformedProducts)
     } catch {
       setSearchResults([])
@@ -142,58 +128,25 @@ export function ProductSearchWidget({ onProductAdd, onProductInfo, className = '
         setLoading(true)
 
         let searchQuery = searchTerm.trim() || ''
-        const filters: any = {}
+        const searchParams: any = { q: searchQuery, limit: 30 }
 
         if (categoryId === 'rx') {
-          filters.requiresPrescription = true
+          searchParams.requiresPrescription = true
         } else if (categoryId === 'otc') {
-          filters.requiresPrescription = false
+          searchParams.requiresPrescription = false
         } else if (categoryId === 'supplement') {
           searchQuery = searchQuery ? `${searchQuery} Thực phẩm chức năng` : 'Thực phẩm chức năng'
+          searchParams.q = searchQuery
         } else if (categoryId === 'medical_device') {
           searchQuery = searchQuery ? `${searchQuery} Trang thiết bị y tế` : 'Trang thiết bị y tế'
+          searchParams.q = searchQuery
         } else if (categoryId === 'cosmetic') {
           searchQuery = searchQuery ? `${searchQuery} Mỹ phẩm` : 'Mỹ phẩm'
+          searchParams.q = searchQuery
         }
 
-        const products = await productService.searchProducts(searchQuery, filters)
-
-        const transformedProducts: Product[] = products.map((p) => {
-          const defaultVariant = p.priceVariants?.find((v: any) => v.isDefault) ||
-            p.priceVariants?.[0] || { price: 0, unit: 'Hộp' }
-          return {
-            id: p._id,
-            name: p.name,
-            image: p.featuredImage || '/images/product-placeholder.jpg',
-            price: defaultVariant.price,
-            originalPrice: defaultVariant.originalPrice,
-            salePrice: undefined,
-            discountPercentage: undefined,
-            onSale: false,
-            unit: defaultVariant.unit,
-            stock: p.stockQuantity,
-            maxOrderQuantity: p.maxOrderQuantity,
-            rating: p.rating || 4.5,
-            reviewCount: p.reviewCount,
-            type: p.requiresPrescription ? 'rx' : 'otc',
-            brand: p.brand?.name || 'Unknown',
-            barcode: p.barcode,
-            sku: p.sku,
-            category: p.category,
-            shortDescription: p.shortDescription,
-            description: p.description,
-            origin: p.origin,
-            packaging: p.packaging,
-            expiryInfo: p.expiryInfo,
-            ingredients: p.ingredients,
-            uses: p.uses,
-            instructions: p.instructions,
-            warnings: p.warnings,
-            status: p.status,
-            requiresPrescription: p.requiresPrescription,
-            tags: p.tags,
-          }
-        })
+        const result = await searchService.searchProducts(searchParams)
+        const transformedProducts = result.hits.map(mapHitToProduct)
 
         setSearchResults(transformedProducts)
       } catch {

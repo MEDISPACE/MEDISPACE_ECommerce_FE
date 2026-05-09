@@ -44,6 +44,7 @@ import { getFullName, getUserInitials } from '~/utils/lib'
 import type { BreadcrumbItem } from '../shared/UniversalBreadcrumb'
 import { dashboardService, type DashboardStats } from '~/services/pharmacist'
 import { settingsService } from '~/services/pharmacist/settings.service'
+import { NotificationDropdown } from '../shared/NotificationDropdown'
 import faviconLogo from '../../assets/MEDISPACE_Logo_favicon.png'
 
 interface PharmacistLayoutProps {
@@ -125,6 +126,7 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isOnline, setIsOnline] = useState(user?.isOnline ?? true)
   const [stats, setStats] = useState<DashboardStats | null>(null)
+
 
   // Redirect if not authenticated or not pharmacist
   useEffect(() => {
@@ -364,7 +366,7 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
       {/* Main Content Area */}
       <div className='flex-1 flex flex-col overflow-hidden'>
         {/* Top Header */}
-        <header className='h-16 bg-white/80 backdrop-blur-lg border-b border-blue-100 flex items-center justify-between px-6 shadow-sm'>
+        <header className='relative z-50 h-16 bg-white/80 backdrop-blur-lg border-b border-blue-100 flex items-center justify-between px-6 shadow-sm'>
           <div className='flex items-center gap-4'>
             {/* Toggle Sidebar Button */}
             <Button
@@ -422,37 +424,8 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
               {isOnline ? 'Online' : 'Offline'}
             </Badge>
 
-            {/* Notifications */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant='ghost' size='sm' className='relative'>
-                  <Bell className='w-5 h-5 text-gray-600' />
-                  <span className='absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center'>
-                    5
-                  </span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align='end' className='w-80 z-50 bg-white shadow-lg border border-blue-100'>
-                <DropdownMenuLabel>Thông báo</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <div className='max-h-96 overflow-y-auto'>
-                  <DropdownMenuItem className='flex-col items-start py-3'>
-                    <p className='font-medium text-sm'>Đơn thuốc mới #RX-2024-001</p>
-                    <p className='text-xs text-gray-500'>5 phút trước</p>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className='flex-col items-start py-3'>
-                    <p className='font-medium text-sm'>Tư vấn mới từ Nguyễn Văn A</p>
-                    <p className='text-xs text-gray-500'>10 phút trước</p>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className='flex-col items-start py-3'>
-                    <p className='font-medium text-sm'>Nhắc nhở: Kiểm tra tương tác thuốc</p>
-                    <p className='text-xs text-gray-500'>15 phút trước</p>
-                  </DropdownMenuItem>
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className='justify-center text-blue-600'>Xem tất cả thông báo</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Notifications - real-time via socket + polling */}
+            <NotificationDropdown viewAllUrl='/pharmacist/notifications' />
 
             {/* User Menu - Always visible for quick access to logout */}
             <div>
