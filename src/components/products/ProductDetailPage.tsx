@@ -52,6 +52,8 @@ import {
 } from '../../utils/productHelpers'
 import type { PriceVariant } from '../../types/product'
 import productService from '../../services/productService'
+import { RecommendationCarousel } from './RecommendationCarousel'
+import { useRelated, useBoughtTogether } from '~/hooks/product/useRecommendations'
 
 export function ProductDetailPage() {
   const { addToCart, buyNow, showPrescriptionWarning } = useCart()
@@ -60,7 +62,6 @@ export function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1)
   const [selectedImage, setSelectedImage] = useState(0)
   const [product, setProduct] = useState<Product | null>(null)
-  const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState('description')
@@ -98,15 +99,7 @@ export function ProductDetailPage() {
           setError('Sản phẩm không tồn tại')
         }
 
-        // Fetch related products (same brand)
-        if (productData?.brand) {
-          const allProducts = await productService.getProducts({ limit: 12 })
-          const related = allProducts.filter(
-            (p: Product) =>
-              getBrandName(p) === getBrandName(productData) && getProductId(p) !== getProductId(productData),
-          )
-          setRelatedProducts(related)
-        }
+        // Related products handled by ML hook (useRelated) below
       } catch {
         setError('Không thể tải thông tin sản phẩm')
       } finally {
@@ -193,6 +186,11 @@ export function ProductDetailPage() {
     images: product ? getProductImages(product) : [],
     initialIndex: 0,
   })
+
+  // ML Recommendation hooks
+  const mlProductId = product?._id ?? ''
+  const { products: relatedProducts, loading: relatedLoading } = useRelated(mlProductId, 8)
+  const { products: boughtTogetherProducts, loading: boughtTogetherLoading } = useBoughtTogether(mlProductId, 6)
 
   const carousel = useCarousel({
     itemsCount: relatedProducts.length,
@@ -914,105 +912,36 @@ export function ProductDetailPage() {
           </TabsContent>
         </Tabs>
 
-        {/* Related Products */}
-        {relatedProducts.length > 0 && (
-          <div>
-            <h2 className='text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent mb-6'>
-              Sản phẩm liên quan
-            </h2>
-            {/* Carousel Container */}
-            <div className='relative group'>
-              {/* Navigation Arrows - Only show if more than items per slide */}
-              {relatedProducts.length > getItemsPerSlide() && (
-                <>
-                  {/* Previous Button */}
-                  <button
-                    onClick={handlePrevSlide}
-                    className='absolute -left-12 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/90 backdrop-blur-lg border-2 border-blue-100 shadow-lg hover:shadow-xl hover:bg-gradient-to-r hover:from-blue-600 hover:to-cyan-500 hover:border-blue-400 transition-all opacity-0 group-hover:opacity-100 hover:scale-110 group/btn'
-                    aria-label='Previous products'
-                  >
-                    <ChevronLeft className='w-5 h-5 text-blue-600 group-hover/btn:text-white transition-colors' />
-                  </button>
-
-                  {/* Next Button */}
-                  <button
-                    onClick={handleNextSlide}
-                    className='absolute -right-16 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/90 backdrop-blur-lg border-2 border-blue-100 shadow-lg hover:shadow-xl hover:bg-gradient-to-r hover:from-blue-600 hover:to-cyan-500 hover:border-blue-400 transition-all opacity-0 group-hover:opacity-100 hover:scale-110 group/btn'
-                    aria-label='Next products'
-                  >
-                    <ChevronRight className='w-5 h-5 text-blue-600 group-hover/btn:text-white transition-colors' />
-                  </button>
-                </>
-              )}
-
-              {/* Carousel - Smooth horizontal scroll */}
-              <div
-                ref={carousel.carouselRef}
-                className='overflow-hidden scroll-smooth'
-                style={{
-                  scrollbarWidth: 'none',
-                  msOverflowStyle: 'none',
-                }}
-              >
-                <div className='flex gap-6'>
-                  {relatedProducts.map((relatedProduct: Product) => (
-                    <div
-                      key={getProductId(relatedProduct)}
-                      className='flex-shrink-0 w-full sm:w-[calc(50%-12px)] md:w-[calc(33.333%-16px)] lg:w-[calc(25%-18px)]'
-                    >
-                      <ProductCard
-                        product={{
-                          id: getProductId(relatedProduct),
-                          name: relatedProduct.name,
-                          slug: relatedProduct.slug,
-                          brand: getBrandName(relatedProduct),
-                          image: getProductImage(relatedProduct),
-                          originalPrice: relatedProduct.originalPrice,
-                          salePrice: getProductSalePrice(relatedProduct) || 0,
-                          rating: getProductRating(relatedProduct),
-                          reviewCount: getProductReviewCount(relatedProduct),
-                          inStock: isProductInStock(relatedProduct),
-                          isPrescription: isProductPrescription(relatedProduct),
-                          isOnSale: relatedProduct.isOnSale,
-                          discountPercentage: relatedProduct.discountPercentage,
-                          unit: relatedProduct.unit,
-                          packaging: relatedProduct.packaging,
-                          needsConsultation: relatedProduct.needsConsultation,
-                        }}
-                        variant='grid'
-                        onToggleWishlist={() => {
-                          toggleWishlist(getProductId(relatedProduct))
-                        }}
-                        isInWishlist={isInWishlist(getProductId(relatedProduct))}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Dots Indicator - Only show if multiple slides */}
-              {maxSlides > 1 && (
-                <div className='flex justify-center gap-2 mt-6'>
-                  {Array.from({ length: maxSlides }).map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => scrollToSlide(index)}
-                      className={`h-2 rounded-full transition-all ${
-                        carousel.currentSlide === index
-                          ? 'w-8 bg-gradient-to-r from-blue-600 to-cyan-500'
-                          : 'w-2 bg-blue-200 hover:bg-blue-300'
-                      }`}
-                      aria-label={`Go to slide ${index + 1}`}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
       </div>
 
+      {/* ── ML Recommendation Sections ── */}
+      {product && (
+        <div className='bg-gradient-to-b from-white to-blue-50/30'>
+          {/* Thường Mua Kèm */}
+          <RecommendationCarousel
+            title='Thường Mua Kèm'
+            subtitle='Khách hàng thường mua thêm những sản phẩm này'
+            badge='bundle'
+            products={boughtTogetherProducts}
+            loading={boughtTogetherLoading}
+            viewAllLink='/products'
+          />
+
+          {/* Sản Phẩm Liên Quan */}
+          <RecommendationCarousel
+            title='Sản Phẩm Liên Quan'
+            subtitle='Dựa trên thành phần và công dụng tương tự'
+            badge='trending'
+            products={relatedProducts}
+            loading={relatedLoading}
+            viewAllLink='/products'
+            className='bg-transparent'
+          />
+        </div>
+      )}
+
       {/* Image Lightbox - Full screen modal */}
+
       <Dialog open={lightbox.isOpen} onOpenChange={lightbox.close}>
         <DialogContent className='max-w-[95vw] max-h-[95vh] p-0 bg-black/95 backdrop-blur-xl border-blue-500/20 overflow-hidden'>
           {/* Accessibility: Hidden title and description for screen readers */}
