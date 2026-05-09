@@ -9,6 +9,8 @@ import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
 import { orderService } from '../../services/orderService'
 import type { Order } from '../../types/order'
 import { logger } from '../../utils/logger'
+import { RecommendationCarousel } from '../products/RecommendationCarousel'
+import { usePostPurchase } from '../../hooks/product/useRecommendations'
 
 export function OrderSuccessPage() {
   const [searchParams] = useSearchParams()
@@ -18,6 +20,10 @@ export function OrderSuccessPage() {
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // Extract productIds from order for post-purchase recommendations
+  const orderProductIds = order?.items?.map((item: any) => item.productId || item.product?._id || '').filter(Boolean) ?? []
+  const { products: postPurchaseProducts, loading: postPurchaseLoading } = usePostPurchase(orderProductIds)
 
   useEffect(() => {
     // Scroll to top on mount
@@ -313,6 +319,20 @@ export function OrderSuccessPage() {
           </Link>
         </div>
       </div>
+
+      {/* Post-purchase Recommendations */}
+      {order && (
+        <div className='mt-4'>
+          <RecommendationCarousel
+            title='Bạn Có Thể Cũng Thích'
+            subtitle='Dựa trên đơn hàng vừa đặt của bạn'
+            badge='post-purchase'
+            products={postPurchaseProducts}
+            loading={postPurchaseLoading}
+            viewAllLink='/products'
+          />
+        </div>
+      )}
     </div>
   )
 }
