@@ -372,7 +372,7 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
                     )}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className='w-auto p-0'>
+                <PopoverContent className='w-auto p-0 rounded-xl border-blue-200 shadow-lg overflow-hidden'>
                   <CalendarComponent
                     mode='single'
                     selected={formData.examinationDate}
@@ -466,8 +466,9 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
                 id='authentic'
                 checked={formData.agreements.authentic}
                 onCheckedChange={(checked) => handleAgreementChange('authentic', !!checked)}
+                className='mt-0.5'
               />
-              <Label htmlFor='authentic' className='text-sm leading-relaxed'>
+              <Label htmlFor='authentic' className='text-sm leading-normal'>
                 Tôi cam kết đơn thuốc này là thật và hợp lệ
               </Label>
             </div>
@@ -477,8 +478,9 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
                 id='contactPermission'
                 checked={formData.agreements.contactPermission}
                 onCheckedChange={(checked) => handleAgreementChange('contactPermission', !!checked)}
+                className='mt-0.5'
               />
-              <Label htmlFor='contactPermission' className='text-sm leading-relaxed'>
+              <Label htmlFor='contactPermission' className='text-sm leading-normal'>
                 Tôi đồng ý để dược sĩ liên hệ xác minh
               </Label>
             </div>
@@ -488,8 +490,9 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
                 id='legalUnderstanding'
                 checked={formData.agreements.legalUnderstanding}
                 onCheckedChange={(checked) => handleAgreementChange('legalUnderstanding', !!checked)}
+                className='mt-0.5'
               />
-              <Label htmlFor='legalUnderstanding' className='text-sm leading-relaxed'>
+              <Label htmlFor='legalUnderstanding' className='text-sm leading-normal'>
                 Tôi hiểu việc cung cấp thông tin sai có thể bị từ chối hoặc xử lý pháp lý
               </Label>
             </div>

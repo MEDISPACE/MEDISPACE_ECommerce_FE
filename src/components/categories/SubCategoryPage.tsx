@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router'
-import { Search, Grid, List, SlidersHorizontal } from 'lucide-react'
+import { Search, Grid, List, SlidersHorizontal, PackageX } from 'lucide-react'
 import { EnhancedPageTransition } from '../shared/EnhancedPageTransition'
 import { CategoryNavigation, CategoryQuickActions } from './CategoryNavigation'
 import { ProductCard } from '../products/ProductCard'
@@ -546,7 +546,7 @@ export function SubCategoryPage() {
                 <Card className='text-center py-12 border-blue-200 bg-white'>
                   <CardContent>
                     <div className='text-gray-500 mb-4'>
-                      <Search className='w-16 h-16 mx-auto mb-4 text-gray-300' />
+                      <PackageX className='w-16 h-16 mx-auto mb-4 text-gray-300' strokeWidth={1.5} />
                       <h3 className='text-lg font-medium'>Không tìm thấy sản phẩm</h3>
                       <p className='text-sm'>Thử điều chỉnh bộ lọc hoặc từ khóa tìm kiếm</p>
                     </div>
