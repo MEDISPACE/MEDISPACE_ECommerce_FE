@@ -119,7 +119,7 @@ export function AccountDashboard() {
     const load = async () => {
       try {
         const data = await notificationService.getNotifications()
-        if (mounted) setNotifications(data)
+        if (mounted) setNotifications(data.notifications)
       } catch {
         // Failed to load notifications
       }

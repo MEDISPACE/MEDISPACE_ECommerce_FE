@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { Grid, List, Search as SearchIcon, Loader2 } from 'lucide-react'
+import { Grid, List, Search as SearchIcon, Loader2, PackageX } from 'lucide-react'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useCart } from '../../contexts/CartContext'
 import { useWishlist } from '../../hooks/product/useWishlist'
@@ -240,7 +240,7 @@ export function ProductsListingPage() {
                   <CardContent className='p-12 text-center flex flex-col items-center justify-center min-h-[400px]'>
                     <StaggerContainer direction='up' staggerDelay={0.2}>
                       <StaggerItem>
-                        <SearchIcon className='w-16 h-16 text-blue-300 mx-auto mb-4' />
+                        <PackageX className='w-16 h-16 text-blue-300 mx-auto mb-4' strokeWidth={1.5} />
                       </StaggerItem>
                       <StaggerItem>
                         <h3 className='text-xl font-medium text-gray-900 mb-2'>Không tìm thấy sản phẩm phù hợp</h3>

@@ -651,6 +651,20 @@ html.scroll-instant {
     z-index: 1;
   }
 
+  /* Fix Radix Checkbox missing checked styles */
+  [data-slot="checkbox"][data-state="checked"] {
+    background-color: var(--primary) !important;
+    color: white !important;
+    border-color: var(--primary) !important;
+  }
+
+  [data-slot="checkbox-indicator"] {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: currentColor !important;
+  }
+
   /* Medical Semantic Background Classes */
   .bg-medical-consultation {
     background-color: var(--medical-consultation);
