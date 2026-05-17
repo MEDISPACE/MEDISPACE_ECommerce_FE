@@ -3,7 +3,7 @@ name: Auto Merge dev → main
 on:
   workflow_run:
     workflows: ["Frontend Pipeline"]
-    branches: [dev]
+    branches: [develop]
     types: [completed]
 
 env:
@@ -32,7 +32,7 @@ jobs:
           git pull origin main
 
           echo "🔀 Merging dev into main..."
-          git merge origin/dev --no-ff -m "chore: auto-merge dev → main [skip ci]"
+          git merge origin/develop --no-ff -m "chore: auto-merge develop → main [skip ci]"
 
           git push origin main
           echo "✅ Merged successfully"
