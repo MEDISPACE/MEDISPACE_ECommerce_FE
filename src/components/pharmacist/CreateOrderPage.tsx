@@ -1432,36 +1432,36 @@ export function CreateOrderPage() {
                     </div>
 
                     {customerInfo.prescriptionId && (
-                      <div className='text-xs text-blue-600 flex items-center bg-blue-50 w-max px-2 py-1 rounded'>
-                        <FileText className='w-3 h-3 mr-1' />
-                        Đơn thuốc liên kết: #{customerInfo.prescriptionId}
+                      <div className='text-xs text-blue-600 flex items-center bg-blue-50 px-2 py-1 rounded overflow-hidden'>
+                        <FileText className='w-3 h-3 mr-1 flex-shrink-0' />
+                        <span className='truncate'>Đơn thuốc: #{customerInfo.prescriptionId}</span>
                       </div>
                     )}
 
-                    <div className='grid grid-cols-3 gap-2 pt-2'>
+                    <div className='flex gap-2 pt-2'>
                       <Button
                         size='sm'
                         variant='outline'
-                        className='text-xs px-2 h-8 border-blue-100 hover:bg-blue-50 text-blue-700'
+                        title='Gọi cho khách hàng'
+                        className='flex-1 h-8 border-blue-100 hover:bg-blue-50 text-blue-700'
                       >
-                        <Phone className='w-3 h-3 mr-1' />
-                        Gọi
+                        <Phone className='w-4 h-4' />
                       </Button>
                       <Button
                         size='sm'
                         variant='outline'
-                        className='text-xs px-2 h-8 border-blue-100 hover:bg-blue-50 text-blue-700'
+                        title='Chat với khách hàng'
+                        className='flex-1 h-8 border-blue-100 hover:bg-blue-50 text-blue-700'
                       >
-                        <MessageCircle className='w-3 h-3 mr-1' />
-                        Chat
+                        <MessageCircle className='w-4 h-4' />
                       </Button>
                       <Button
                         size='sm'
                         variant='outline'
-                        className='text-xs px-2 h-8 border-blue-100 hover:bg-blue-50 text-blue-700'
+                        title='Lịch sử mua hàng'
+                        className='flex-1 h-8 border-blue-100 hover:bg-blue-50 text-blue-700'
                       >
-                        <History className='w-3 h-3 mr-1' />
-                        Lịch sử
+                        <History className='w-4 h-4' />
                       </Button>
                     </div>
                   </div>
