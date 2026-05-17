@@ -43,6 +43,10 @@ export interface Prescription {
     quantity: number
     unit?: string
     instructions: string
+    // Mapped from DB by BE after OCR
+    productId?: string
+    matchedName?: string
+    image?: string | null
   }>
   status: 'pending' | 'verified' | 'rejected' | 'expired'
   verifiedBy?: string
