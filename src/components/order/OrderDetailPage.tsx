@@ -38,7 +38,9 @@ import { reviewService } from '../../services/reviewService'
 import { useCart } from '../../contexts/CartContext'
 import { WriteReviewDialog } from '../reviews/WriteReviewDialog'
 import type { Order, OrderItem } from '../../types/account'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { RecommendationCarousel } from '../products/RecommendationCarousel'
+import { usePostPurchase } from '../../hooks/product/useRecommendations'
 
 // Order status steps for timeline
 const ORDER_STEPS = [
@@ -118,6 +120,10 @@ export function OrderDetailPage() {
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false)
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
   const [selectedProductForReview, setSelectedProductForReview] = useState<OrderItem | null>(null)
+
+  // Product IDs từ đơn hàng — dùng cho post-purchase carousel
+  const orderProductIds = useMemo(() => order?.items.map((i) => i.productId) ?? [], [order])
+  const { products: crossSellProducts, loading: crossSellLoading } = usePostPurchase(orderProductIds, 8)
 
   const fetchOrder = useCallback(async () => {
     if (!orderId) return
@@ -596,6 +602,16 @@ export function OrderDetailPage() {
           </Card>
         </div>
       </div>
+
+      {/* Post-purchase cross-sell carousel */}
+      <RecommendationCarousel
+        title='Mua Kèm Được Nhiều Người Chọn'
+        subtitle='Sản phẩm thường được mua cùng với đơn hàng này'
+        badge='post-purchase'
+        products={crossSellProducts}
+        loading={crossSellLoading}
+        viewAllLink='/products'
+      />
 
       {/* Write Review Dialog - Direct for specific product */}
       {selectedProductForReview && order && (

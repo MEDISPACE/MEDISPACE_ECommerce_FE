@@ -1,5 +1,5 @@
 import { Link } from 'react-router'
-import { Package, FileText, Search, Gift, Star, TrendingUp, Calendar } from 'lucide-react'
+import { Package, FileText, Search, Gift, Star, TrendingUp, Calendar, RefreshCcw, Sparkles } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import { Button } from '../ui/button'
@@ -9,6 +9,9 @@ import { OrderCard } from '../order'
 import { useAuth } from '../../contexts/AuthContext'
 import { notificationService } from '../../services/notificationService'
 import { orderService } from '../../services/orderService'
+import { RecommendationCarousel } from '../products/RecommendationCarousel'
+import { useForYou, useReplenishment } from '../../hooks/product/useRecommendations'
+import type { RecommendedProduct } from '../../services/recommendationService'
 import type { User as AccountUser, Notification, Order } from '../../types/account'
 
 export function AccountDashboard() {
@@ -18,6 +21,11 @@ export function AccountDashboard() {
 
   const { user } = useAuth()
   const accountUser = user as unknown as AccountUser | undefined
+
+  // ML Recommendations (isAuthenticated = !!user)
+  const isAuth = !!user
+  const { products: forYouProducts, loading: forYouLoading } = useForYou(8, isAuth)
+  const { products: replenishProducts, loading: replenishLoading } = useReplenishment(4, isAuth)
 
   const [orders, setOrders] = useState<Order[]>([])
   // const [loading, setLoading] = useState(true) // TODO: Add loading state if needed
@@ -336,6 +344,56 @@ export function AccountDashboard() {
           </CardContent>
         </Card>
       </div>
+      {/* Replenishment — sản phẩm cần mua lại */}
+      {!replenishLoading && replenishProducts.length > 0 && (
+        <Card className='border-amber-100 bg-amber-50/50'>
+          <CardHeader>
+            <div className='flex items-center gap-2'>
+              <RefreshCcw className='w-5 h-5 text-amber-600' />
+              <CardTitle className='text-amber-800'>Có thể bạn cần mua lại</CardTitle>
+              <Badge className='bg-amber-100 text-amber-700 border-amber-200 text-xs'>Tái đặt hàng</Badge>
+            </div>
+            <p className='text-sm text-amber-600'>Dựa trên lịch sử mua hàng của bạn</p>
+          </CardHeader>
+          <CardContent>
+            <div className='grid grid-cols-2 md:grid-cols-4 gap-3'>
+              {replenishProducts.map((product: RecommendedProduct) => {
+                const defaultVariant = product.priceVariants?.find((v) => v.isDefault) ?? product.priceVariants?.[0]
+                const price = defaultVariant?.salePrice || defaultVariant?.price || 0
+                return (
+                  <Link
+                    key={product._id}
+                    to={`/products/${product.slug || product._id}`}
+                    className='group p-3 bg-white rounded-lg border border-amber-200 hover:border-amber-400 hover:shadow-md transition-all'
+                  >
+                    <img
+                      src={product.featuredImage || '/placeholder-product.jpg'}
+                      alt={product.name}
+                      className='w-full h-20 object-contain mb-2 group-hover:scale-105 transition-transform'
+                    />
+                    <p className='text-xs font-medium text-gray-800 line-clamp-2'>{product.name}</p>
+                    {price > 0 && (
+                      <p className='text-xs text-amber-600 font-semibold mt-1'>
+                        {new Intl.NumberFormat('vi-VN').format(price)}đ
+                      </p>
+                    )}
+                  </Link>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* For You — gợi ý cá nhân hoá */}
+      <RecommendationCarousel
+        title='Dành Riêng Cho Bạn'
+        subtitle='Gợi ý dựa trên lịch sử mua hàng và sở thích của bạn'
+        badge='for-you'
+        products={forYouProducts}
+        loading={forYouLoading}
+        viewAllLink='/products'
+      />
     </div>
   )
 }

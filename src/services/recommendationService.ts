@@ -130,6 +130,15 @@ export const recommendationService = {
     )
     return data ?? { algorithm: 'unavailable', products: [] }
   },
+
+  /**
+   * Gợi ý tái đặt hàng — dựa trên lịch sử mua (requires auth)
+   * Dùng trên: AccountDashboard
+   */
+  async getReplenishment(limit = 5): Promise<RecommendationResult> {
+    const data = await safeGet<RecommendationResult>('/recommendations/replenishment', { limit })
+    return data ?? { algorithm: 'unavailable', products: [] }
+  },
 }
 
 export default recommendationService
