@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Heart, Grid, List, SortAsc, Share2, ShoppingCart, Trash2, TrendingDown, TrendingUp, Clock } from 'lucide-react'
 
 import { ProductCard } from '../products/ProductCard'
@@ -17,6 +17,8 @@ import { wishlistService } from '../../services/wishlistService'
 import { productService } from '../../services/productService'
 import type { Product } from '../../types/product'
 import { getProductSalePrice, getProductOriginalPrice } from '../../utils/productHelpers'
+import { RecommendationCarousel } from '../products/RecommendationCarousel'
+import { useRelated, useTrending } from '../../hooks/product/useRecommendations'
 
 interface WishlistProduct {
   id: string
@@ -46,6 +48,11 @@ export function WishlistPage() {
   const [selectedProducts, setSelectedProducts] = useState<string[]>([])
   const [isShareModalOpen, setIsShareModalOpen] = useState(false)
   const [shareEmail, setShareEmail] = useState('')
+
+  // Related dựa trên sản phẩm đầu tiên trong wishlist
+  const firstWishlistId = useMemo(() => wishlistProducts[0]?.id || '', [wishlistProducts])
+  const { products: relatedProducts, loading: relatedLoading } = useRelated(firstWishlistId, 8)
+  const { products: trendingProducts, loading: trendingLoading } = useTrending(8)
 
   // Fetch wishlist products
   useEffect(() => {
@@ -529,6 +536,27 @@ export function WishlistPage() {
             </div>
           ))}
         </div>
+      )}
+
+      {/* Related / Trending carousel */}
+      {wishlistProducts.length > 0 ? (
+        <RecommendationCarousel
+          title='Bạn Có Thể Cũng Thích'
+          subtitle={`Sản phẩm liên quan đến "${wishlistProducts[0]?.name?.slice(0, 30)}..."`}
+          badge='related'
+          products={relatedProducts}
+          loading={relatedLoading}
+          viewAllLink='/products'
+        />
+      ) : (
+        <RecommendationCarousel
+          title='Sản Phẩm Nổi Bật'
+          subtitle='Những sản phẩm đang được nhiều người yêu thích'
+          badge='trending'
+          products={trendingProducts}
+          loading={trendingLoading}
+          viewAllLink='/products'
+        />
       )}
     </div>
   )

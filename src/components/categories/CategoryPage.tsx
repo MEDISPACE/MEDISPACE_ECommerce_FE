@@ -22,6 +22,8 @@ import { categoryService } from '../../services/categoryService'
 import { useCart } from '../../contexts/CartContext'
 import { useWishlist } from '../../hooks/product/useWishlist'
 import { useInfiniteProducts } from '../../hooks/useInfiniteProducts'
+import { RecommendationCarousel } from '../products/RecommendationCarousel'
+import { useTrending } from '../../hooks/product/useRecommendations'
 import {
   getProductSalePrice,
   getProductOriginalPrice,
@@ -55,6 +57,9 @@ export function CategoryPage() {
   const [currentCategory, setCurrentCategory] = useState<Category | null>(null)
   const [isLoadingCategory, setIsLoadingCategory] = useState(true)
   const [notFound, setNotFound] = useState(false)
+
+  // Trending trong danh mục này
+  const { products: trendingProducts, loading: trendingLoading } = useTrending(8, currentCategory?._id)
 
   const [filters, setFilters] = useState<ProductFilter>({
     categories: [],
@@ -361,6 +366,20 @@ export function CategoryPage() {
                 </Card>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Trending trong danh mục — hiện trước product grid để user thấy ngay */}
+        {(trendingLoading || trendingProducts.length > 0) && (
+          <div className='mb-6'>
+            <RecommendationCarousel
+              title={`Đang Được Mua Nhiều Trong "${category.name}"`}
+              subtitle='Các sản phẩm nổi bật trong danh mục này'
+              badge='trending'
+              products={trendingProducts}
+              loading={trendingLoading}
+              viewAllLink={`/categories/${slug}`}
+            />
           </div>
         )}
 

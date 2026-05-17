@@ -100,145 +100,145 @@ export function ProductCard({
     return (
       <Link to={`/products/${product.slug}`} className='block'>
         <Card
-          className={`group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm border hover:border-blue-300 ${
-            isConsultationRequired ? 'border-2 border-blue-300' : 'border-blue-100'
-          } ${!product.inStock ? 'opacity-75' : ''}`}
-        >
-          <CardContent className='p-4'>
-            <div className='flex gap-4'>
-              {/* Image Section */}
-              <div className='relative flex-shrink-0'>
-                <div className='w-32 h-32 overflow-hidden bg-gray-50 rounded-xl flex items-center justify-center p-3 border border-gray-100'>
-                  <ImageWithFallback
-                    src={product.image}
-                    alt={product.name}
-                    className={`w-full h-full object-contain transition-transform duration-300 ${
-                      !product.inStock ? 'grayscale' : 'group-hover:scale-110'
-                    }`}
-                  />
-                  {/* Out of stock overlay */}
-                  {!product.inStock && (
-                    <div className='absolute inset-0 bg-black/40 flex items-center justify-center rounded-xl'>
-                      <div className='bg-gray-600 text-white px-3 py-1.5 rounded-full text-xs'>Hết hàng</div>
+            className={`group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm border hover:border-blue-300 ${
+              isConsultationRequired ? 'border-2 border-blue-300' : 'border-blue-100'
+            } ${!product.inStock ? 'opacity-75' : ''}`}
+          >
+            <CardContent className='p-4'>
+              <div className='flex gap-4'>
+                {/* Image Section */}
+                <div className='relative flex-shrink-0'>
+                  <div className='w-32 h-32 overflow-hidden bg-gray-50 rounded-xl flex items-center justify-center p-3 border border-gray-100'>
+                    <ImageWithFallback
+                      src={product.image}
+                      alt={product.name}
+                      className={`w-full h-full object-contain transition-transform duration-300 ${
+                        !product.inStock ? 'grayscale' : 'group-hover:scale-110'
+                      }`}
+                    />
+                    {/* Out of stock overlay */}
+                    {!product.inStock && (
+                      <div className='absolute inset-0 bg-black/40 flex items-center justify-center rounded-xl'>
+                        <div className='bg-gray-600 text-white px-3 py-1.5 rounded-full text-xs'>Hết hàng</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Badges */}
+                  <div className='absolute top-2 left-2'>
+                    {product.inStock && product.isPrescription && <RxBadge size='sm' />}
+                  </div>
+
+                  {(product.isOnSale || hasCampaign) && product.inStock && (
+                    <div className='absolute top-2 right-2'>
+                      <Badge
+                        className='text-white text-xs px-2 py-0.5 rounded-full'
+                        style={{ backgroundColor: product.campaign?.badgeColor || '#f97316' }}
+                      >
+                        {hasCampaign ? product.campaign!.badgeText : `-${product.discountPercentage}%`}
+                      </Badge>
                     </div>
                   )}
                 </div>
 
-                {/* Badges */}
-                <div className='absolute top-2 left-2'>
-                  {product.inStock && product.isPrescription && <RxBadge size='sm' />}
-                </div>
-
-                {(product.isOnSale || hasCampaign) && product.inStock && (
-                  <div className='absolute top-2 right-2'>
-                    <Badge
-                      className='text-white text-xs px-2 py-0.5 rounded-full'
-                      style={{ backgroundColor: product.campaign?.badgeColor || '#f97316' }}
-                    >
-                      {hasCampaign ? product.campaign!.badgeText : `-${product.discountPercentage}%`}
-                    </Badge>
+                {/* Content Section */}
+                <div className='flex-1 min-w-0 flex flex-col'>
+                  {/* Title & Brand */}
+                  <div className='mb-2'>
+                    <h3 className='line-clamp-2 group-hover:text-blue-600 transition-colors mb-1'>{product.name}</h3>
+                    <p className='text-sm text-gray-500'>{product.brand}</p>
                   </div>
-                )}
-              </div>
 
-              {/* Content Section */}
-              <div className='flex-1 min-w-0 flex flex-col'>
-                {/* Title & Brand */}
-                <div className='mb-2'>
-                  <h3 className='line-clamp-2 group-hover:text-blue-600 transition-colors mb-1'>{product.name}</h3>
-                  <p className='text-sm text-gray-500'>{product.brand}</p>
-                </div>
+                  {/* Unit selector - only show when multiple variants */}
+                  {product.priceVariants && product.priceVariants.length > 1 && !isConsultationRequired && (
+                    <div className='flex border border-gray-300 rounded-md overflow-hidden mb-2 max-w-[200px]'>
+                      {product.priceVariants.map((variant, index) => (
+                        <button
+                          key={variant.unit}
+                          onClick={(e) => handleUnitSelect(e, variant.unit)}
+                          className={`flex-1 px-2 py-1.5 text-xs font-medium transition-all ${
+                            selectedUnit === variant.unit
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-white text-gray-600 hover:bg-gray-50'
+                          } ${index > 0 ? 'border-l border-gray-300' : ''}`}
+                        >
+                          {variant.unit}
+                        </button>
+                      ))}
+                    </div>
+                  )}
 
-                {/* Unit selector - only show when multiple variants */}
-                {product.priceVariants && product.priceVariants.length > 1 && !isConsultationRequired && (
-                  <div className='flex border border-gray-300 rounded-md overflow-hidden mb-2 max-w-[200px]'>
-                    {product.priceVariants.map((variant, index) => (
-                      <button
-                        key={variant.unit}
-                        onClick={(e) => handleUnitSelect(e, variant.unit)}
-                        className={`flex-1 px-2 py-1.5 text-xs font-medium transition-all ${
-                          selectedUnit === variant.unit
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-white text-gray-600 hover:bg-gray-50'
-                        } ${index > 0 ? 'border-l border-gray-300' : ''}`}
-                      >
-                        {variant.unit}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                  {/* Packaging */}
+                  {product.packaging && <p className='text-xs text-gray-500 mb-3 line-clamp-1'>{product.packaging}</p>}
 
-                {/* Packaging */}
-                {product.packaging && <p className='text-xs text-gray-500 mb-3 line-clamp-1'>{product.packaging}</p>}
-
-                {/* Price & Actions Row */}
-                <div className='mt-auto flex items-center justify-between gap-4'>
-                  {/* Price Section */}
-                  <div>
-                    {isConsultationRequired ? (
-                      <p className='text-sm text-gray-500 italic'>Sản phẩm cần tư vấn từ dược sĩ</p>
-                    ) : (
-                      <>
-                        <div className='flex items-baseline gap-2 mb-1'>
-                          <span className={`font-semibold ${!product.inStock ? 'text-gray-400' : 'text-blue-600'}`}>
-                            {currentPrice.toLocaleString('vi-VN')}đ
-                          </span>
-                          <span className='text-sm text-gray-500'>/ {selectedUnit}</span>
-                        </div>
-                        <div className='flex items-center gap-2'>
-                          {hasDiscount && product.inStock && (
-                            <span className='text-xs text-gray-400 line-through'>
-                              {currentOriginalPrice?.toLocaleString('vi-VN')}đ
+                  {/* Price & Actions Row */}
+                  <div className='mt-auto flex items-center justify-between gap-4'>
+                    {/* Price Section */}
+                    <div>
+                      {isConsultationRequired ? (
+                        <p className='text-sm text-gray-500 italic'>Sản phẩm cần tư vấn từ dược sĩ</p>
+                      ) : (
+                        <>
+                          <div className='flex items-baseline gap-2 mb-1'>
+                            <span className={`font-semibold ${!product.inStock ? 'text-gray-400' : 'text-blue-600'}`}>
+                              {currentPrice.toLocaleString('vi-VN')}đ
                             </span>
-                          )}
-                          {!product.inStock && <span className='text-xs text-red-500 font-medium'>Tạm hết hàng</span>}
-                        </div>
-                      </>
-                    )}
-                  </div>
+                            <span className='text-sm text-gray-500'>/ {selectedUnit}</span>
+                          </div>
+                          <div className='flex items-center gap-2'>
+                            {hasDiscount && product.inStock && (
+                              <span className='text-xs text-gray-400 line-through'>
+                                {currentOriginalPrice?.toLocaleString('vi-VN')}đ
+                              </span>
+                            )}
+                            {!product.inStock && <span className='text-xs text-red-500 font-medium'>Tạm hết hàng</span>}
+                          </div>
+                        </>
+                      )}
+                    </div>
 
-                  {/* Action Buttons */}
-                  <div className='flex items-center gap-2 flex-shrink-0'>
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      onClick={handleToggleWishlist}
-                      className='text-gray-400 hover:text-red-500 bg-white/80 backdrop-blur-sm w-9 h-9 p-0 rounded-full shadow-md hover:shadow-lg transition-all'
-                    >
-                      <Heart className={`w-4 h-4 ${isInWishlist ? 'fill-red-500 text-red-500' : ''}`} />
-                    </Button>
+                    {/* Action Buttons */}
+                    <div className='flex items-center gap-2 flex-shrink-0'>
+                      <Button
+                        variant='ghost'
+                        size='sm'
+                        onClick={handleToggleWishlist}
+                        className='text-gray-400 hover:text-red-500 bg-white/80 backdrop-blur-sm w-9 h-9 p-0 rounded-full shadow-md hover:shadow-lg transition-all'
+                      >
+                        <Heart className={`w-4 h-4 ${isInWishlist ? 'fill-red-500 text-red-500' : ''}`} />
+                      </Button>
 
-                    {!product.inStock ? (
-                      <Button size='sm' disabled className='bg-gray-300 text-gray-500 cursor-not-allowed h-9 px-4'>
-                        Hết hàng
-                      </Button>
-                    ) : isConsultationRequired ? (
-                      <Button
-                        size='sm'
-                        onClick={(e) => {
-                          e.preventDefault()
-                          window.location.href = `/products/${product.slug}`
-                        }}
-                        variant='outline'
-                        className='border-blue-500 text-blue-600 hover:bg-blue-50 h-9 px-4'
-                      >
-                        Xem chi tiết
-                      </Button>
-                    ) : (
-                      <Button
-                        size='sm'
-                        onClick={handleAddToCart}
-                        className='bg-blue-600 hover:bg-blue-700 text-white h-9 px-4 gap-1'
-                      >
-                        <ShoppingCart className='w-4 h-4' />
-                        <span>Chọn mua</span>
-                      </Button>
-                    )}
+                      {!product.inStock ? (
+                        <Button size='sm' disabled className='bg-gray-300 text-gray-500 cursor-not-allowed h-9 px-4'>
+                          Hết hàng
+                        </Button>
+                      ) : isConsultationRequired ? (
+                        <Button
+                          size='sm'
+                          onClick={(e) => {
+                            e.preventDefault()
+                            window.location.href = `/products/${product.slug}`
+                          }}
+                          variant='outline'
+                          className='border-blue-500 text-blue-600 hover:bg-blue-50 h-9 px-4'
+                        >
+                          Xem chi tiết
+                        </Button>
+                      ) : (
+                        <Button
+                          size='sm'
+                          onClick={handleAddToCart}
+                          className='bg-blue-600 hover:bg-blue-700 text-white h-9 px-4 gap-1'
+                        >
+                          <ShoppingCart className='w-4 h-4' />
+                          <span>Chọn mua</span>
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </CardContent>
+        </CardContent>
         </Card>
       </Link>
     )
@@ -376,6 +376,7 @@ export function ProductCard({
                   Chọn mua
                 </Button>
               )}
+
             </div>
           </div>
         </CardContent>

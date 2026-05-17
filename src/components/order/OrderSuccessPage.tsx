@@ -241,45 +241,6 @@ export function OrderSuccessPage() {
         </CardContent>
       </Card>
 
-      {/* Next Steps */}
-      <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 mb-6 animate-slide-in-up'>
-        <CardHeader>
-          <CardTitle className='text-blue-900'>Bước tiếp theo</CardTitle>
-        </CardHeader>
-        <CardContent className='space-y-3'>
-          <div className='flex items-start gap-4 p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors'>
-            <div className='w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center flex-shrink-0'>
-              1
-            </div>
-            <div className='flex-1'>
-              <p className='text-gray-900'>
-                Chúng tôi sẽ xác nhận đơn hàng và liên hệ với bạn trong vòng <strong>30 phút</strong>
-              </p>
-            </div>
-          </div>
-
-          <div className='flex items-start gap-4 p-4 bg-green-50 border border-green-200 rounded-lg'>
-            <div className='w-10 h-10 rounded-full bg-green-600 text-white flex items-center justify-center flex-shrink-0'>
-              2
-            </div>
-            <div className='flex-1'>
-              <p className='text-gray-900'>Dược sĩ sẽ kiểm tra và chuẩn bị đơn hàng của bạn</p>
-            </div>
-          </div>
-
-          <div className='flex items-start gap-4 p-4 bg-purple-50 border border-purple-200 rounded-lg'>
-            <div className='w-10 h-10 rounded-full bg-purple-600 text-white flex items-center justify-center flex-shrink-0'>
-              3
-            </div>
-            <div className='flex-1'>
-              <p className='text-gray-900'>
-                Đơn hàng sẽ được giao đến địa chỉ của bạn trong{' '}
-                <strong>{order.estimatedDeliveryDate || '2-3 ngày'}</strong>
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Action Buttons */}
       <div className='flex flex-col sm:flex-row gap-4 justify-center animate-fade-in'>
