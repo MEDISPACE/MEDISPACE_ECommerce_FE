@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router'
+import { Link, useSearchParams, useNavigate } from 'react-router'
 import { CheckCircle, Package, MapPin, CreditCard, ArrowRight, Home, FileText, Loader2 } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
@@ -9,18 +9,27 @@ import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
 import { orderService } from '../../services/orderService'
 import type { Order } from '../../types/order'
 import { logger } from '../../utils/logger'
+import { RecommendationCarousel } from '../products/RecommendationCarousel'
+import { usePostPurchase } from '../../hooks/product/useRecommendations'
 
 export function OrderSuccessPage() {
   const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
   const orderId = searchParams.get('orderId')
   const paymentStatus = searchParams.get('paymentStatus')
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Extract productIds from order for post-purchase recommendations
+  const orderProductIds = order?.items?.map((item: any) => item.productId || item.product?._id || '').filter(Boolean) ?? []
+  const { products: postPurchaseProducts, loading: postPurchaseLoading } = usePostPurchase(orderProductIds)
+
   useEffect(() => {
     // Scroll to top on mount
     window.scrollTo(0, 0)
+
+
 
     // Clear selectedItems from sessionStorage on successful payment
     if (paymentStatus === 'success') {
@@ -160,7 +169,9 @@ export function OrderSuccessPage() {
           <CheckCircle className='w-14 h-14 text-white' />
         </div>
         <h1 className='bg-gradient-to-r from-green-600 via-green-500 to-emerald-500 bg-clip-text text-transparent mb-3'>
-          {paymentStatus === 'success' || paymentStatus === 'vnpay_success' ? 'Thanh toán thành công!' : 'Đặt hàng thành công!'}
+          {paymentStatus === 'success' || paymentStatus === 'vnpay_success'
+            ? 'Thanh toán thành công!'
+            : 'Đặt hàng thành công!'}
         </h1>
         <p className='text-xl text-gray-600'>
           Cảm ơn bạn đã tin tưởng và mua sắm tại <span className='text-blue-600'>MEDISPACE</span>
@@ -210,7 +221,8 @@ export function OrderSuccessPage() {
               <div className='flex-1'>
                 <p className='text-sm text-blue-800 mb-1'>Địa chỉ giao hàng</p>
                 <p className='text-gray-900'>
-                  {order.shippingAddress.address}, {order.shippingAddress.ward}, {order.shippingAddress.district}, {order.shippingAddress.province}
+                  {order.shippingAddress.address}, {order.shippingAddress.ward}, {order.shippingAddress.district},{' '}
+                  {order.shippingAddress.province}
                 </p>
                 <p className='text-sm text-gray-600 mt-1'>SĐT: {order.shippingAddress.phone}</p>
                 {order.shippingAddress.email && (
@@ -261,7 +273,8 @@ export function OrderSuccessPage() {
             </div>
             <div className='flex-1'>
               <p className='text-gray-900'>
-                Đơn hàng sẽ được giao đến địa chỉ của bạn trong <strong>{order.estimatedDeliveryDate || '2-3 ngày'}</strong>
+                Đơn hàng sẽ được giao đến địa chỉ của bạn trong{' '}
+                <strong>{order.estimatedDeliveryDate || '2-3 ngày'}</strong>
               </p>
             </div>
           </div>
@@ -306,6 +319,20 @@ export function OrderSuccessPage() {
           </Link>
         </div>
       </div>
+
+      {/* Post-purchase Recommendations */}
+      {order && (
+        <div className='mt-4'>
+          <RecommendationCarousel
+            title='Bạn Có Thể Cũng Thích'
+            subtitle='Dựa trên đơn hàng vừa đặt của bạn'
+            badge='post-purchase'
+            products={postPurchaseProducts}
+            loading={postPurchaseLoading}
+            viewAllLink='/products'
+          />
+        </div>
+      )}
     </div>
   )
 }

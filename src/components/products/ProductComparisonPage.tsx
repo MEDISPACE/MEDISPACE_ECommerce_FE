@@ -60,15 +60,17 @@ interface ComparisonProduct {
 }
 // Helper to map backend Product -> ComparisonProduct (fill missing fields conservatively)
 function mapProductToComparison(p: Product): ComparisonProduct {
+  const defaultVariant = (p.priceVariants || []).find((v: any) => v.isDefault) ||
+    (p.priceVariants && p.priceVariants[0]) || { price: 0, originalPrice: undefined, unit: p.unit || p.packaging || '' }
   return {
     id: p._id || p.id || '',
     name: p.name,
     brand: p.brand?.name || p.brandId || 'Không rõ',
     image: p.featuredImage || p.image || (p.images && p.images[0]) || '/images/placeholder.png',
-    price: p.price ?? p.salePrice ?? p.originalPrice ?? 0,
-    onSale: !!p.onSale || !!p.salePrice,
-    salePrice: p.salePrice ?? p.price,
-    unit: p.unit || p.packaging || '',
+    price: defaultVariant.price,
+    onSale: false,
+    salePrice: undefined,
+    unit: defaultVariant.unit,
     rating: p.rating ?? 0,
     reviewCount: p.reviewCount ?? 0,
     activeIngredient: p.ingredients?.[0] || '',
@@ -118,8 +120,7 @@ export function ProductComparisonPage() {
             if (p) fetched.push(mapProductToComparison(p))
           }
           setProducts(fetched)
-        } catch (err) {
-        }
+        } catch (err) {}
       })()
     } else {
       setProducts([])
@@ -195,7 +196,7 @@ export function ProductComparisonPage() {
         toast.error('Không tìm thấy sản phẩm')
         return
       }
-      
+
       await addToCart(product, 1)
       toast.success('Đã thêm sản phẩm vào giỏ hàng')
     } catch (error) {
@@ -225,7 +226,7 @@ export function ProductComparisonPage() {
   }
 
   const handleToggleWishlist = (productId: string) => {
-    const product = products.find(p => p.id === productId)
+    const product = products.find((p) => p.id === productId)
     if (product) {
       toggleWishlist(productId, product.name)
     }

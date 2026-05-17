@@ -3,7 +3,9 @@ import {
   Package,
   Search,
   Plus,
+  Minus,
   Edit,
+  Edit3,
   Trash2,
   Download,
   Upload,
@@ -14,6 +16,7 @@ import {
   Tag,
   Box,
   Barcode,
+  X,
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Button } from '../ui/button'
@@ -31,6 +34,9 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog'
+import { Label } from '../ui/label'
+import { Textarea } from '../ui/textarea'
 import { EntityFormDialog, EntityDeleteDialog } from '../shared/EntityFormDialog'
 import {
   TextField,
@@ -81,6 +87,25 @@ export function ProductManagementPage() {
     errors: Record<string, string>
   }>({ data: {}, errors: {} })
 
+  // Stock adjustment dialog
+  type AdjustmentMode = 'add' | 'subtract' | 'set'
+  const [stockDialog, setStockDialog] = useState<{
+    isOpen: boolean
+    product: Product | null
+    adjustmentMode: AdjustmentMode
+    selectedUnit: string
+    inputQuantity: string
+    newAbsoluteQuantity: number
+    note: string
+  }>({ isOpen: false, product: null, adjustmentMode: 'add', selectedUnit: '', inputQuantity: '', newAbsoluteQuantity: 0, note: '' })
+
+  // Helper: get base unit (quantityPerUnit === 1)
+  const getBaseUnit = (product: Product | null): string => {
+    if (!product) return 'Đơn vị'
+    const base = product.priceVariants?.find((v) => v.quantityPerUnit === 1)
+    return base?.unit || product.priceVariants?.[0]?.unit || 'Đơn vị'
+  }
+
   // Fetch products with server-side pagination
   const {
     data: productsResponse,
@@ -98,7 +123,7 @@ export function ProductManagementPage() {
       filterPrescription,
     ],
     queryFn: async () => {
-      console.log(`Fetching products page ${currentPage}...`)
+      // console.log(`Fetching products page ${currentPage}...`)
       const result = await productService.getProducts({
         page: currentPage,
         limit: itemsPerPage,
@@ -109,7 +134,8 @@ export function ProductManagementPage() {
         status: filterStatus !== 'all' ? filterStatus : undefined,
         requiresPrescription: filterPrescription === 'rx' ? true : filterPrescription === 'otc' ? false : undefined,
       })
-      console.log(`✅ Loaded ${result.length} products for page ${currentPage}`)
+      // console.log(`✅ Loaded ${result.length} products for page ${currentPage}`)
+      // console.log('Sample product with brand:', result[0])
       return result
     },
     staleTime: 60000,
@@ -140,9 +166,16 @@ export function ProductManagementPage() {
   // Fetch brands for dropdown
   const { data: brandsData = [] } = useQuery({
     queryKey: ['brands'],
-    queryFn: () => brandService.getBrands(),
+    queryFn: () => brandService.getBrands({ limit: 450 }), // Fetch all brands
     staleTime: 60000,
   })
+
+  // Debug brands data
+  // useEffect(() => {
+  //   if (brandsData.length > 0) {
+  //     console.log(`✅ Loaded ${brandsData.length} brands:`, brandsData.slice(0, 5))
+  //   }
+  // }, [brandsData])
 
   // Flatten categories for dropdown
   const categories = useMemo(() => {
@@ -240,9 +273,101 @@ export function ProductManagementPage() {
     })
   }
 
+  const openStockDialog = (product: Product) => {
+    const baseUnit = getBaseUnit(product)
+    setStockDialog({
+      isOpen: true,
+      product,
+      adjustmentMode: 'add',
+      selectedUnit: baseUnit,
+      inputQuantity: '',
+      newAbsoluteQuantity: product.stockQuantity || 0,
+      note: '',
+    })
+  }
+
+  const closeStockDialog = () => setStockDialog({
+    isOpen: false, product: null, adjustmentMode: 'add',
+    selectedUnit: '', inputQuantity: '', newAbsoluteQuantity: 0, note: ''
+  })
+
+  // Compute newAbsoluteQuantity whenever dialog inputs change
+  const computeNewStock = (mode: string, unit: string, inputQty: string, product: Product | null): number => {
+    const qty = parseFloat(inputQty)
+    if (isNaN(qty) || qty < 0 || !product) return product?.stockQuantity || 0
+    const variant = product.priceVariants?.find((v) => v.unit === unit)
+    const qpu = variant?.quantityPerUnit || 1
+    const base = Math.round(qty * qpu)
+    const current = product.stockQuantity || 0
+    if (mode === 'add') return current + base
+    if (mode === 'subtract') return Math.max(0, current - base)
+    return base // 'set'
+  }
+
+  const handleStockAdjustment = async () => {
+    if (!stockDialog.product) return
+    const qty = parseFloat(stockDialog.inputQuantity)
+    if (isNaN(qty) || qty < 0) {
+      toast.error('Vui lòng nhập số lượng hợp lệ (≥ 0)')
+      return
+    }
+    if (stockDialog.newAbsoluteQuantity < 0) {
+      toast.error('Tồn kho không thể âm')
+      return
+    }
+    try {
+      await productService.updateStock(stockDialog.product._id, stockDialog.newAbsoluteQuantity)
+      queryClient.invalidateQueries({ queryKey: ['admin', 'products'] })
+      toast.success(
+        stockDialog.adjustmentMode === 'add'
+          ? `✅ Nhập kho thành công — tồn kho mới: ${stockDialog.newAbsoluteQuantity} ${getBaseUnit(stockDialog.product)}`
+          : stockDialog.adjustmentMode === 'subtract'
+          ? `📤 Xuất kho thành công — tồn kho mới: ${stockDialog.newAbsoluteQuantity} ${getBaseUnit(stockDialog.product)}`
+          : `✏️ Cập nhật tồn kho: ${stockDialog.newAbsoluteQuantity} ${getBaseUnit(stockDialog.product)}`
+      )
+      closeStockDialog()
+    } catch (error) {
+      const err = error as { response?: { data?: { message?: string } } }
+      toast.error(err.response?.data?.message || 'Cập nhật tồn kho thất bại')
+    }
+  }
+
   const openEditDialog = (entity: Product) => {
     setDialogState({ isOpen: true, mode: 'edit', entity })
-    setFormState({ data: entity, errors: {} })
+
+    // Normalize data: ensure brandId and categoryId are strings, not objects
+    const normalizedData = {
+      ...entity,
+      // Handle brandId: can be entity.brand._id or entity.brandId (if string)
+      brandId:
+        entity.brand?._id ||
+        (typeof entity.brandId === 'object' && entity.brandId !== null
+          ? (entity.brandId as { _id: string })._id
+          : entity.brandId),
+      // Handle categoryId: can be entity.category._id or entity.categoryId (if string)
+      categoryId:
+        entity.category?._id ||
+        (typeof entity.categoryId === 'object' && entity.categoryId !== null
+          ? (entity.categoryId as { _id: string })._id
+          : entity.categoryId),
+    }
+
+    // console.log('📝 Edit dialog normalized data:', {
+    //   brandId: normalizedData.brandId,
+    //   categoryId: normalizedData.categoryId,
+    //   originalBrand: entity.brand,
+    //   originalCategory: entity.category,
+    // })
+
+    // Check if brandId exists in brandsData
+    // const brandExists = brandsData.find((b) => b._id === normalizedData.brandId)
+    // console.log('🔍 Brand lookup:', {
+    //   brandId: normalizedData.brandId,
+    //   brandExists: brandExists,
+    //   totalBrands: brandsData.length,
+    // })
+
+    setFormState({ data: normalizedData, errors: {} })
   }
 
   const openDeleteDialog = (entity: Product) => {
@@ -345,7 +470,11 @@ export function ProductManagementPage() {
       active: allProducts.filter((p) => p.status === 'active').length,
       outOfStock: allProducts.filter((p) => p.status === 'out_of_stock').length,
       lowStock: allProducts.filter((p) => (p.stockQuantity || 0) > 0 && (p.stockQuantity || 0) < 20).length,
-      totalValue: allProducts.reduce((sum, p) => sum + (p.price || 0) * (p.stockQuantity || 0), 0),
+      totalValue: allProducts.reduce((sum, p) => {
+        const defaultVariant = p.priceVariants?.find((v) => v.isDefault) || p.priceVariants?.[0]
+        const price = defaultVariant?.price || 0
+        return sum + price * (p.stockQuantity || 0)
+      }, 0),
       rxProducts: allProducts.filter((p) => p.requiresPrescription).length,
       otcProducts: allProducts.filter((p) => !p.requiresPrescription).length,
     }
@@ -415,14 +544,14 @@ export function ProductManagementPage() {
           </p>
         </div>
         <div className='flex gap-2'>
-          <Button variant='outline' className='gap-2'>
+          {/* <Button variant='outline' className='gap-2'>
             <Download className='w-4 h-4' />
             Export
-          </Button>
-          <Button variant='outline' className='gap-2'>
+          </Button> */}
+          {/* <Button variant='outline' className='gap-2'>
             <Upload className='w-4 h-4' />
             Import
-          </Button>
+          </Button> */}
           <Button
             onClick={openAddDialog}
             className='bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8] gap-2 text-white'
@@ -537,7 +666,7 @@ export function ProductManagementPage() {
               <SelectTrigger className='w-48 border-2 border-blue-200'>
                 <SelectValue placeholder='Danh mục' />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className='max-h-64 overflow-y-auto'>
                 <SelectItem value='all'>Tất cả danh mục</SelectItem>
                 {categories.map((cat) => (
                   <SelectItem key={cat._id} value={cat._id}>
@@ -584,6 +713,24 @@ export function ProductManagementPage() {
                 <SelectItem value='50'>50 / trang</SelectItem>
               </SelectContent>
             </Select>
+            {/* Clear filters button */}
+            {(searchQuery || filterCategory !== 'all' || filterStatus !== 'all' || filterPrescription !== 'all') && (
+              <Button
+                variant='outline'
+                size='default'
+                className='!h-9 !px-4 !border-2 !border-red-200 !text-red-600 hover:!bg-red-50 hover:!border-red-300 transition-all flex items-center gap-2'
+                onClick={() => {
+                  setSearchQuery('')
+                  setFilterCategory('all')
+                  setFilterStatus('all')
+                  setFilterPrescription('all')
+                  setCurrentPage(1)
+                }}
+              >
+                <X className='w-4 h-4' />
+                Xóa bộ lọc
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -600,7 +747,7 @@ export function ProductManagementPage() {
           <div className='overflow-x-auto'>
             <Table>
               <TableHeader>
-                <TableRow>
+                <TableRow className='!border-b-2 !border-blue-300'>
                   <TableHead className='w-48 sm:w-56 md:w-64 lg:w-72 xl:w-80'>Sản phẩm</TableHead>
                   <TableHead className='hidden sm:table-cell w-24 sm:w-28 lg:w-32'>SKU</TableHead>
                   <TableHead className='hidden md:table-cell'>Danh mục</TableHead>
@@ -627,7 +774,7 @@ export function ProductManagementPage() {
                   </TableRow>
                 ) : (
                   paginatedProducts.map((product) => (
-                    <TableRow key={product._id} className='hover:bg-blue-50/50'>
+                    <TableRow key={product._id} className='border-b-2 border-blue-200 hover:bg-blue-50/30'>
                       <TableCell>
                         <div className='w-48 sm:w-56 md:w-64 lg:w-72 xl:w-80'>
                           <p className='font-medium text-gray-900 truncate' title={product.name}>
@@ -663,11 +810,27 @@ export function ProductManagementPage() {
                         )}
                       </TableCell>
                       <TableCell className='hidden lg:table-cell'>
-                        <div className='flex items-center gap-1'>
-                          <Box className='w-4 h-4 text-gray-400' />
-                          <span className={(product.stockQuantity || 0) < 20 ? 'text-yellow-600 font-semibold' : ''}>
-                            {product.stockQuantity || 0}
-                          </span>
+                        <div className='flex flex-col'>
+                          <div className='flex items-center gap-1'>
+                            <Box className='w-4 h-4 text-gray-400 flex-shrink-0' />
+                            <span className={
+                              (product.stockQuantity || 0) <= 0
+                                ? 'text-red-600 font-bold'
+                                : (product.stockQuantity || 0) < 10
+                                ? 'text-yellow-600 font-semibold'
+                                : 'text-gray-900'
+                            }>
+                              {(product.stockQuantity || 0).toLocaleString('vi-VN')}
+                            </span>
+                            <span className='text-xs text-gray-400'>
+                              {getBaseUnit(product)}
+                            </span>
+                          </div>
+                          {(product.priceVariants?.length || 0) > 1 && (
+                            <span className='text-xs text-blue-500 mt-0.5'>
+                              {product.priceVariants?.length} đơn vị
+                            </span>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell className='hidden xl:table-cell'>
@@ -704,14 +867,27 @@ export function ProductManagementPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align='end' className='bg-white shadow-lg border-2 border-blue-200'>
-                            <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
+                            <DropdownMenuLabel className='text-blue-700'>Thao tác</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => openEditDialog(product)}>
-                              <Edit className='w-4 h-4 mr-2' />
+                            <DropdownMenuItem
+                              className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
+                              onClick={() => openEditDialog(product)}
+                            >
+                              <Edit className='w-4 h-4 mr-2 hover:!text-blue-600' />
                               Chỉnh sửa
                             </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
+                              onClick={() => openStockDialog(product)}
+                            >
+                              <Package className='w-4 h-4 mr-2' />
+                              Nhập/Xuất hàng
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => openDeleteDialog(product)} className='text-red-600'>
+                            <DropdownMenuItem
+                              onClick={() => openDeleteDialog(product)}
+                              className='text-red-600 hover:!bg-red-100 hover:!border-red-100 hover:!text-red-700'
+                            >
                               <Trash2 className='w-4 h-4 mr-2' />
                               Xóa
                             </DropdownMenuItem>
@@ -727,7 +903,7 @@ export function ProductManagementPage() {
 
           {/* Pagination */}
           {allProducts.length > 0 && totalPages > 1 && (
-            <div className='mt-6 flex items-center justify-between border-t pt-4'>
+            <div className='mt-6 flex items-center justify-between border-t border-blue-400 pt-4'>
               <div className='text-sm text-gray-600'>
                 Trang {currentPage}/{totalPages} - Hiển thị {allProducts.length} sản phẩm
                 {dashboardStats && <span> (Tổng: {dashboardStats.total} sản phẩm)</span>}
@@ -940,6 +1116,164 @@ export function ProductManagementPage() {
         onConfirm={confirmDelete}
         warningMessage='Sản phẩm sẽ bị xóa khỏi hệ thống và không thể khôi phục.'
       />
+
+      {/* Stock Adjustment Dialog — Smart Multi-Unit */}
+      <Dialog open={stockDialog.isOpen} onOpenChange={(open) => !open && closeStockDialog()}>
+        <DialogContent className='sm:max-w-lg'>
+          <DialogHeader>
+            <DialogTitle className='flex items-center gap-2'>
+              <Box className='w-5 h-5 text-blue-600' />
+              Điều chỉnh tồn kho
+            </DialogTitle>
+            <DialogDescription>
+              <span className='font-semibold text-gray-900'>{stockDialog.product?.name}</span>
+              <br />
+              <span className='text-xs'>SKU: {stockDialog.product?.sku}</span>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className='space-y-5 py-2'>
+            {/* Current stock */}
+            <div className='bg-gray-50 rounded-lg p-3'>
+              <p className='text-xs text-gray-500 mb-1'>Tồn kho hiện tại</p>
+              <p className='text-2xl font-bold text-gray-900'>
+                {(stockDialog.product?.stockQuantity || 0).toLocaleString('vi-VN')}{' '}
+                <span className='text-base font-medium text-gray-500'>{getBaseUnit(stockDialog.product)}</span>
+              </p>
+              {stockDialog.product?.priceVariants && stockDialog.product.priceVariants.length > 1 && (
+                <div className='flex flex-wrap gap-1.5 mt-2'>
+                  {(stockDialog.product.priceVariants as PriceVariant[]).filter(v => (v.quantityPerUnit ?? 1) > 1).map((v) => (
+                    <span key={v.unit} className='text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded'>
+                      {Math.floor((stockDialog.product?.stockQuantity || 0) / (v.quantityPerUnit ?? 1))} {v.unit}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Mode selector */}
+            <div>
+              <Label className='text-sm font-medium text-gray-700 mb-2 block'>Loại điều chỉnh</Label>
+              <div className='flex gap-2'>
+                {([{ mode: 'add', label: 'Nhập kho', icon: Plus, c: 'emerald' }, { mode: 'subtract', label: 'Xuất kho', icon: Minus, c: 'amber' }, { mode: 'set', label: 'Đặt lại', icon: Edit3, c: 'blue' }] as const).map(({ mode, label, icon: Icon, c }) => (
+                  <button
+                    key={mode}
+                    onClick={() => {
+                      const newAbs = computeNewStock(mode, stockDialog.selectedUnit, stockDialog.inputQuantity, stockDialog.product)
+                      setStockDialog(prev => ({ ...prev, adjustmentMode: mode, newAbsoluteQuantity: newAbs }))
+                    }}
+                    className={`flex-1 flex flex-col items-center gap-1 py-2 px-3 rounded-lg border-2 text-sm font-medium transition-all ${
+                      stockDialog.adjustmentMode === mode
+                        ? c === 'emerald' ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                        : c === 'amber' ? 'border-amber-500 bg-amber-50 text-amber-700'
+                        : 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                    }`}
+                  >
+                    <Icon className='w-4 h-4' />
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Unit + Quantity */}
+            <div className='flex gap-3'>
+              {stockDialog.product?.priceVariants && stockDialog.product.priceVariants.length > 1 && (
+                <div className='w-36'>
+                  <Label className='text-sm font-medium text-gray-700 mb-1.5 block'>Đơn vị</Label>
+                  <Select
+                    value={stockDialog.selectedUnit}
+                    onValueChange={(val) => {
+                      const newAbs = computeNewStock(stockDialog.adjustmentMode, val, stockDialog.inputQuantity, stockDialog.product)
+                      setStockDialog(prev => ({ ...prev, selectedUnit: val, newAbsoluteQuantity: newAbs }))
+                    }}
+                  >
+                    <SelectTrigger className='border-2 border-blue-200'>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(stockDialog.product.priceVariants as PriceVariant[]).map((v) => (
+                        <SelectItem key={v.unit} value={v.unit}>
+                          {v.unit}{(v.quantityPerUnit ?? 1) > 1 ? ` (${v.quantityPerUnit} ${getBaseUnit(stockDialog.product)})` : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              <div className='flex-1'>
+                <Label htmlFor='adjQty' className='text-sm font-medium text-gray-700 mb-1.5 block'>
+                  Số lượng ({stockDialog.selectedUnit || getBaseUnit(stockDialog.product)})
+                </Label>
+                <Input
+                  id='adjQty'
+                  type='number'
+                  min='0'
+                  value={stockDialog.inputQuantity}
+                  onChange={(e) => {
+                    const newAbs = computeNewStock(stockDialog.adjustmentMode, stockDialog.selectedUnit, e.target.value, stockDialog.product)
+                    setStockDialog(prev => ({ ...prev, inputQuantity: e.target.value, newAbsoluteQuantity: newAbs }))
+                  }}
+                  className='text-lg font-bold border-2 border-blue-200 focus:border-blue-500'
+                  placeholder='0'
+                  autoFocus
+                />
+              </div>
+            </div>
+
+            {/* Preview */}
+            {stockDialog.inputQuantity && parseFloat(stockDialog.inputQuantity) > 0 && (
+              <div className={`p-3 rounded-lg border ${
+                stockDialog.adjustmentMode === 'add' ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                : stockDialog.adjustmentMode === 'subtract' ? 'bg-amber-50 border-amber-200 text-amber-700'
+                : 'bg-blue-50 border-blue-200 text-blue-700'
+              }`}>
+                <div className='flex items-center justify-between'>
+                  <span className='text-sm font-medium'>
+                    {stockDialog.adjustmentMode === 'add' ? '📦 Sau khi nhập kho'
+                    : stockDialog.adjustmentMode === 'subtract' ? '📤 Sau khi xuất kho'
+                    : '✏️ Sau khi đặt lại'}
+                  </span>
+                  <span className='text-base font-bold'>
+                    {stockDialog.newAbsoluteQuantity.toLocaleString('vi-VN')} {getBaseUnit(stockDialog.product)}
+                  </span>
+                </div>
+                <div className='text-xs mt-1 opacity-75'>
+                  {stockDialog.adjustmentMode !== 'set' && (
+                    <>{stockDialog.product?.stockQuantity?.toLocaleString('vi-VN')}
+                    {stockDialog.adjustmentMode === 'add' ? ' + ' : ' − '}
+                    {Math.round(parseFloat(stockDialog.inputQuantity || '0') * ((stockDialog.product?.priceVariants as PriceVariant[] | undefined)?.find(v => v.unit === stockDialog.selectedUnit)?.quantityPerUnit || 1)).toLocaleString('vi-VN')}
+                    {' = '}{stockDialog.newAbsoluteQuantity.toLocaleString('vi-VN')} {getBaseUnit(stockDialog.product)}</>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Note */}
+            <div className='space-y-2'>
+              <Label>Ghi chú (tùy chọn)</Label>
+              <Textarea
+                value={stockDialog.note}
+                onChange={(e) => setStockDialog(prev => ({ ...prev, note: e.target.value }))}
+                placeholder='Lý do nhập/xuất hàng...'
+                rows={2}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant='outline' onClick={closeStockDialog}>Hủy</Button>
+            <Button
+              onClick={handleStockAdjustment}
+              disabled={!stockDialog.inputQuantity || parseFloat(stockDialog.inputQuantity) <= 0}
+              className='bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8] text-white'
+            >
+              Xác nhận
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

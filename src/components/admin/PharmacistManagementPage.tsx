@@ -8,8 +8,6 @@ import {
   Calendar,
   FileText,
   RefreshCw,
-  ChevronLeft,
-  ChevronRight,
   MoreVertical,
   Trash2,
   Edit,
@@ -31,18 +29,13 @@ import {
 } from '../ui/dropdown-menu'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { Avatar, AvatarFallback } from '../ui/avatar'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '../ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog'
 import adminService, { type PharmacistStats } from '~/services/adminService'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { ConfirmDialog } from '../shared/ConfirmDialog'
+import { PaginationComponent } from '../shared/PaginationComponent'
 
 // Type definitions
 interface UserData {
@@ -108,7 +101,7 @@ export function PharmacistManagementPage() {
     description: string
     onConfirm: () => void
     variant?: 'default' | 'destructive'
-  }>({ open: false, title: '', description: '', onConfirm: () => { }, variant: 'default' })
+  }>({ open: false, title: '', description: '', onConfirm: () => {}, variant: 'default' })
 
   // Debounce search
   useEffect(() => {
@@ -120,7 +113,12 @@ export function PharmacistManagementPage() {
   }, [searchQuery])
 
   // Fetch pharmacists (users with role=1)
-  const { data: pharmacistsData, isLoading, error, refetch } = useQuery<UsersResponse>({
+  const {
+    data: pharmacistsData,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery<UsersResponse>({
     queryKey: ['admin', 'pharmacists', page, limit, filterStatus, debouncedSearch],
     queryFn: async () => {
       const response = await adminService.getAllUsers({
@@ -178,8 +176,7 @@ export function PharmacistManagementPage() {
 
   // Update user mutation (for ban/unban)
   const updateMutation = useMutation({
-    mutationFn: ({ userId, data }: { userId: string; data: any }) =>
-      adminService.updateUser(userId, data),
+    mutationFn: ({ userId, data }: { userId: string; data: any }) => adminService.updateUser(userId, data),
     onSuccess: () => {
       toast.success('Đã cập nhật thông tin dược sĩ')
       queryClient.invalidateQueries({ queryKey: ['admin', 'pharmacists'] })
@@ -247,7 +244,7 @@ export function PharmacistManagementPage() {
           setIsEditDialogOpen(false)
           setSelectedPharmacist(null)
         },
-      }
+      },
     )
   }
 
@@ -259,10 +256,11 @@ export function PharmacistManagementPage() {
       open: true,
       title: newStatus === 2 ? 'Khóa tài khoản' : 'Mở khóa tài khoản',
       description: `Bạn có chắc chắn muốn ${action} tài khoản dược sĩ này?`,
-      onConfirm: () => updateMutation.mutate({
-        userId: pharmacist._id,
-        data: { status: newStatus },
-      }),
+      onConfirm: () =>
+        updateMutation.mutate({
+          userId: pharmacist._id,
+          data: { status: newStatus },
+        }),
       variant: newStatus === 2 ? 'destructive' : 'default',
     })
   }
@@ -285,11 +283,7 @@ export function PharmacistManagementPage() {
       unverified: 'Chưa xác thực',
       banned: 'Đã khóa',
     }
-    return (
-      <Badge className={colors[statusStr] || 'bg-gray-100 text-gray-700'}>
-        {labels[statusStr] || statusStr}
-      </Badge>
-    )
+    return <Badge className={colors[statusStr] || 'bg-gray-100 text-gray-700'}>{labels[statusStr] || statusStr}</Badge>
   }
 
   const pharmacists = pharmacistsData?.result?.users || []
@@ -444,15 +438,13 @@ export function PharmacistManagementPage() {
               <RefreshCw className='w-8 h-8 animate-spin text-blue-600' />
             </div>
           ) : error ? (
-            <div className='text-center text-red-600 py-8'>
-              Không thể tải danh sách dược sĩ. Vui lòng thử lại.
-            </div>
+            <div className='text-center text-red-600 py-8'>Không thể tải danh sách dược sĩ. Vui lòng thử lại.</div>
           ) : (
             <>
               <div className='overflow-x-auto'>
                 <Table>
                   <TableHeader>
-                    <TableRow>
+                    <TableRow className='!border-b-2 !border-blue-300'>
                       <TableHead>Dược sĩ</TableHead>
                       <TableHead>Liên hệ</TableHead>
                       <TableHead>Trạng thái</TableHead>
@@ -462,7 +454,7 @@ export function PharmacistManagementPage() {
                   </TableHeader>
                   <TableBody>
                     {pharmacists.map((pharmacist: UserData) => (
-                      <TableRow key={pharmacist._id}>
+                      <TableRow key={pharmacist._id} className='border-b-2 border-blue-200 hover:bg-blue-50/30'>
                         <TableCell>
                           <div className='flex items-center gap-3'>
                             <Avatar>
@@ -500,33 +492,48 @@ export function PharmacistManagementPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align='end' className='bg-white shadow-lg border-2 border-blue-200'>
-                              <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
+                              <DropdownMenuLabel className='text-blue-700'>Thao tác</DropdownMenuLabel>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => handleViewDetails(pharmacist)}>
+                              <DropdownMenuItem
+                                className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
+                                onClick={() => handleViewDetails(pharmacist)}
+                              >
                                 <Eye className='w-4 h-4 mr-2' />
                                 Xem chi tiết
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleEdit(pharmacist)}>
+                              <DropdownMenuItem
+                                className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
+                                onClick={() => handleEdit(pharmacist)}
+                              >
                                 <Edit className='w-4 h-4 mr-2' />
                                 Chỉnh sửa
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => handleVerifyEmail(pharmacist._id)}>
+                              <DropdownMenuItem
+                                className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
+                                onClick={() => handleVerifyEmail(pharmacist._id)}
+                              >
                                 <CheckCircle className='w-4 h-4 mr-2' />
                                 Xác thực email
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleResetPassword(pharmacist._id)}>
+                              <DropdownMenuItem
+                                className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
+                                onClick={() => handleResetPassword(pharmacist._id)}
+                              >
                                 <RefreshCw className='w-4 h-4 mr-2' />
                                 Reset mật khẩu
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleToggleBan(pharmacist)}>
+                              <DropdownMenuItem
+                                className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
+                                onClick={() => handleToggleBan(pharmacist)}
+                              >
                                 <Ban className='w-4 h-4 mr-2' />
                                 {pharmacist.status === 2 ? 'Mở khóa' : 'Khóa tài khoản'}
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
+                                className='text-red-600 hover:!bg-red-100 hover:!border-red-100 hover:!text-red-700'
                                 onClick={() => handleDelete(pharmacist._id)}
-                                className='text-red-600'
                               >
                                 <Trash2 className='w-4 h-4 mr-2' />
                                 Xóa dược sĩ
@@ -541,33 +548,15 @@ export function PharmacistManagementPage() {
               </div>
 
               {/* Pagination */}
-              <div className='flex items-center justify-between mt-4'>
-                <p className='text-sm text-gray-600'>
-                  Hiển thị {(page - 1) * limit + 1} - {Math.min(page * limit, pagination.total)} của{' '}
-                  {pagination.total} dược sĩ
-                </p>
-                <div className='flex items-center gap-2'>
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={page === 1}
-                  >
-                    <ChevronLeft className='w-4 h-4' />
-                  </Button>
-                  <span className='text-sm text-gray-600'>
-                    Trang {page} / {pagination.totalPages}
-                  </span>
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
-                    disabled={page === pagination.totalPages}
-                  >
-                    <ChevronRight className='w-4 h-4' />
-                  </Button>
+              {pagination.totalPages > 1 && (
+                <div className='flex items-center justify-between mt-4 pt-4 border-t border-blue-300'>
+                  <p className='text-sm text-gray-600'>
+                    Hiển thị {(page - 1) * limit + 1} - {Math.min(page * limit, pagination.total)} của{' '}
+                    {pagination.total} dược sĩ
+                  </p>
+                  <PaginationComponent currentPage={page} totalPages={pagination.totalPages} onPageChange={setPage} />
                 </div>
-              </div>
+              )}
             </>
           )}
         </CardContent>
@@ -606,8 +595,8 @@ export function PharmacistManagementPage() {
                   <p className='text-base'>
                     {selectedPharmacist.createdAt
                       ? format(new Date(selectedPharmacist.createdAt), 'dd/MM/yyyy HH:mm', {
-                        locale: vi,
-                      })
+                          locale: vi,
+                        })
                       : 'N/A'}
                   </p>
                 </div>

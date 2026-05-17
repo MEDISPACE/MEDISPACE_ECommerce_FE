@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { Shield, ChevronRight, MapPin, CreditCard, Truck, Clock, Smartphone, Plus, RotateCcw } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
@@ -21,6 +21,9 @@ import type { User, Address } from '../../types/user'
 import type { CartItem } from '../../types/cart'
 import { productService } from '../../services/productService'
 import { ghnService } from '../../services/ghnService'
+import { CouponInput } from '../discount/CouponInput'
+import { PointsRedeemInput } from '../discount/PointsRedeemInput'
+import { Sparkles } from 'lucide-react'
 
 const GLOBAL_DEFAULT_SHIPPING_METHODS: ShippingMethod[] = [
   {
@@ -73,6 +76,7 @@ const paymentMethods: PaymentMethod[] = [
 export function CheckoutPage() {
   const { state, getSelectedItemsTotal, getSelectedItemsCount, clearCart, refreshCart, selectAllItems } = useCart()
   const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
   const isBuyNow = searchParams.get('mode') === 'buy_now'
   const [buyNowItem, setBuyNowItem] = useState<CartItem | null>(null)
 
@@ -88,6 +92,27 @@ export function CheckoutPage() {
   const [orderNotes, setOrderNotes] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
 
+  // Coupon states
+  const [appliedCoupons, setAppliedCoupons] = useState<any[]>([])
+  const [couponDiscount, setCouponDiscount] = useState(0)
+  const [freeShippingFromCoupon, setFreeShippingFromCoupon] = useState(false)
+
+  // Loyalty points states
+  const [pointsToRedeem, setPointsToRedeem] = useState(0)
+  const [pointsDiscount, setPointsDiscount] = useState(0)
+
+  // Sync cart coupons on initial load for normal cart flow
+  useEffect(() => {
+    if (!isBuyNow && state.cart?.appliedCoupons) {
+      setAppliedCoupons(state.cart.appliedCoupons)
+      const totalDisc = state.cart.appliedCoupons
+        .filter((c: any) => c.type !== 'free_shipping')
+        .reduce((sum: number, c: any) => sum + (c.discountAmount || 0), 0)
+      setCouponDiscount(totalDisc)
+      setFreeShippingFromCoupon(state.cart.appliedCoupons.some((c: any) => c.type === 'free_shipping'))
+    }
+  }, [state.cart, isBuyNow])
+
   // Load Buy Now Item
   useEffect(() => {
     const loadBuyNowItem = async () => {
@@ -101,29 +126,31 @@ export function CheckoutPage() {
         if (product) {
           const quantity = parseInt(searchParams.get('quantity') || '1')
           const unit = searchParams.get('unit')
-          let price = product.price
 
-          // Check for unit price variant
-          if (unit && product.priceVariants) {
-            const variant = product.priceVariants.find(v => v.unit === unit)
-            if (variant) price = variant.price
-          }
+          // Check for unit price variant (enriched by campaign from backend)
+          const selectedVariant = unit && product.priceVariants
+            ? product.priceVariants.find((v: any) => v.unit === unit)
+            : (product.priceVariants?.find((v: any) => v.isDefault) || product.priceVariants?.[0])
+
+          // Use campaign salePrice if available, fallback to original price
+          const originalPrice = selectedVariant?.price || product.price || 0
+          const unitPrice = selectedVariant?.salePrice || originalPrice
 
           setBuyNowItem({
             productId: product._id,
             name: product.name,
             sku: product.sku || '',
-            unit: unit || product.unit,
+            unit: unit || selectedVariant?.unit || product.unit,
             quantity: quantity || 1,
-            unitPrice: price || 0,
-            totalPrice: (price || 0) * (quantity || 1),
+            unitPrice,
+            originalUnitPrice: originalPrice !== unitPrice ? originalPrice : undefined,
+            totalPrice: unitPrice * (quantity || 1),
             prescriptionRequired: product.requiresPrescription || false,
-            image: product.images?.[0] || '',
-            priceVariants: product.priceVariants
+            image: product.featuredImage || product.image || product.images?.[0] || '',
+            priceVariants: product.priceVariants,
           })
         }
-      } catch (error) {
-      }
+      } catch (error) {}
     }
 
     loadBuyNowItem()
@@ -132,15 +159,12 @@ export function CheckoutPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [userData, userAddresses] = await Promise.all([
-          authService.getMe(),
-          addressService.getAddresses()
-        ])
+        const [userData, userAddresses] = await Promise.all([authService.getMe(), addressService.getAddresses()])
         setUser(userData)
         setAddresses(userAddresses)
         // Set default address selection
         if (userAddresses && userAddresses.length > 0) {
-          const defaultAddr = userAddresses.find(addr => addr.isDefault) || userAddresses[0]
+          const defaultAddr = userAddresses.find((addr) => addr.isDefault) || userAddresses[0]
           setSelectedAddress(defaultAddr.id || '')
         }
       } catch (error) {
@@ -153,9 +177,23 @@ export function CheckoutPage() {
     fetchData()
   }, [])
 
+  // Guard: nếu không phải buy_now và không có item nào được chọn sau khi load xong
+  // thì redirect về /cart thành thay vì hiển thị trang checkout rỗng
+  useEffect(() => {
+    if (!loading && !isBuyNow && state.cart !== undefined) {
+      const selectedCount = state.selectedItems.size
+      const cartHasItems = (state.cart?.items?.length ?? 0) > 0
+      if (!cartHasItems || selectedCount === 0) {
+        navigate('/cart', { replace: true })
+      }
+    }
+  }, [loading, isBuyNow, state.cart, state.selectedItems])
+
   const cartItems = isBuyNow
-    ? (buyNowItem ? [buyNowItem] : [])
-    : (state.cart?.items.filter(item => state.selectedItems.has(createSelectionKey(item.productId, item.unit))) || [])
+    ? buyNowItem
+      ? [buyNowItem]
+      : []
+    : state.cart?.items.filter((item) => state.selectedItems.has(createSelectionKey(item.productId, item.unit))) || []
 
   const addressObj = addresses.find((a) => a.id === selectedAddress)
 
@@ -172,16 +210,16 @@ export function CheckoutPage() {
         const options = await ghnService.getShippingOptions({
           to_district_id: addressObj.districtId,
           to_ward_code: addressObj.wardCode,
-          weight: 500 // Estimated 500g
+          weight: 500, // Estimated 500g
         })
 
         if (options && options.length > 0) {
-          const mappedOptions: ShippingMethod[] = options.map(opt => ({
+          const mappedOptions: ShippingMethod[] = options.map((opt) => ({
             id: opt.id.toString(),
             name: opt.name,
             description: `Giao hàng bởi GHN`,
             price: opt.price,
-            estimatedDays: opt.estimatedDays
+            estimatedDays: opt.estimatedDays,
           }))
           setShippingMethods(mappedOptions)
           // Auto-select cheapest/first optio
@@ -200,26 +238,22 @@ export function CheckoutPage() {
     fetchOptions()
   }, [addressObj])
 
-
-
   // Calculate totals
   const subtotal = isBuyNow
     ? (buyNowItem ? buyNowItem.totalPrice : 0)
     : getSelectedItemsTotal()
-  const discount = 0
   const selectedShipping = shippingMethods.find((method) => method.id === shippingMethod)
   let bgShippingFee = selectedShipping?.price || 0
 
-  // Apply logic Freeship Frontend: Free shipping for orders >= 300k
-  if (subtotal >= 300000) {
+  // Apply logic Freeship Frontend: Free shipping for orders >= 300k or via Coupon
+  if (subtotal >= 300000 || freeShippingFromCoupon) {
     bgShippingFee = 0
   }
 
   const shippingFee = bgShippingFee
-  const total = subtotal - discount + shippingFee
+  const total = Math.max(0, subtotal - couponDiscount - pointsDiscount + shippingFee)
 
   const handlePlaceOrder = async () => {
-
     if (!user) {
       alert('Không thể lấy thông tin người dùng. Vui lòng đăng nhập lại.')
       return
@@ -244,7 +278,7 @@ export function CheckoutPage() {
 
     // Ensure selectedAddress is valid, fallback to first address if not
     let validSelectedAddress = selectedAddress
-    if (!selectedAddress || !addresses.find(addr => addr.id === selectedAddress)) {
+    if (!selectedAddress || !addresses.find((addr) => addr.id === selectedAddress)) {
       validSelectedAddress = addresses[0].id || ''
       setSelectedAddress(validSelectedAddress)
     }
@@ -267,7 +301,7 @@ export function CheckoutPage() {
         wardCode?: string
       }
 
-      const selectedAddr = addresses.find(addr => addr.id === validSelectedAddress)
+      const selectedAddr = addresses.find((addr) => addr.id === validSelectedAddress)
       if (selectedAddr) {
         addressObj = {
           firstName: user.firstName,
@@ -289,23 +323,23 @@ export function CheckoutPage() {
 
       // Map frontend payment method to backend format
       const paymentMethodMap: Record<string, string> = {
-        'cod': 'cod',
-        'banking': 'bank_transfer',
-        'vnpay': 'vnpay',
-        'momo': 'momo',
-        'payos': 'payos'
+        cod: 'cod',
+        banking: 'bank_transfer',
+        vnpay: 'vnpay',
+        momo: 'momo',
+        payos: 'payos',
       }
 
       // Get estimated delivery date from selected shipping method
-      const selectedShippingMethod = shippingMethods.find(m => m.id === shippingMethod)
+      const selectedShippingMethod = shippingMethods.find((m) => m.id === shippingMethod)
       const estimatedDeliveryDate = selectedShippingMethod?.estimatedDays || '2-3 ngày'
 
       // Create order using real API
       const orderData = {
-        items: cartItems.map(item => ({
+        items: cartItems.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
-          unit: item.unit
+          unit: item.unit,
         })),
         isDirectBuy: isBuyNow,
         shippingAddress: addressObj,
@@ -314,6 +348,8 @@ export function CheckoutPage() {
         shippingFee: shippingFee, // Pass calculated shipping fee to backend
         estimatedDeliveryDate,
         notes: orderNotes,
+        couponCodes: appliedCoupons.map(c => c.code),
+        pointsToRedeem: pointsToRedeem > 0 ? pointsToRedeem : undefined
       }
 
       const { order, paymentUrl } = await orderService.createOrder(orderData)
@@ -331,7 +367,7 @@ export function CheckoutPage() {
         // COD: Clear selections and sessionStorage
         selectAllItems(false)
         sessionStorage.removeItem('medispace_selected_items')
-        window.location.href = `/order/success?orderId=${order.id}`
+        navigate(`/order/success?orderId=${order.id}`, { replace: true })
       }
     } catch (error) {
       alert('Đặt hàng thất bại. Vui lòng thử lại.')
@@ -346,13 +382,14 @@ export function CheckoutPage() {
       <div className='bg-white border-b border-gray-200'>
         <div className='max-w-7xl mx-auto px-4 py-4'>
           <nav className='flex items-center space-x-2 text-sm text-gray-600'>
-            <Link to='/cart' className='hover:text-blue-600'>Giỏ hàng</Link>
+            <Link to='/cart' className='hover:text-blue-600'>
+              Giỏ hàng
+            </Link>
             <ChevronRight className='w-4 h-4' />
             <span className='text-blue-600 font-medium'>Thanh toán</span>
           </nav>
         </div>
       </div>
-
 
       {/* Progress Steps */}
       <div className='bg-white border-b border-gray-200'>
@@ -405,7 +442,10 @@ export function CheckoutPage() {
                     <RadioGroup value={selectedAddress} onValueChange={setSelectedAddress}>
                       {addresses.map((address, index) => (
                         <div key={address.id || index} className='flex items-start space-x-2'>
-                          <RadioGroupItem value={address.id || `address-${index}`} id={address.id || `address-${index}`} />
+                          <RadioGroupItem
+                            value={address.id || `address-${index}`}
+                            id={address.id || `address-${index}`}
+                          />
                           <Label htmlFor={address.id || `address-${index}`} className='flex-1 cursor-pointer'>
                             <div className='p-3 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors'>
                               <div className='flex items-center gap-2 mb-1'>
@@ -467,12 +507,12 @@ export function CheckoutPage() {
                   setSelectedAddress(newAddress.id || '')
                 }
               }}
-              title="Thêm địa chỉ giao hàng"
-              description="Thêm địa chỉ mới để giao hàng thuận tiện hơn"
+              title='Thêm địa chỉ giao hàng'
+              description='Thêm địa chỉ mới để giao hàng thuận tiện hơn'
               showEmail={false}
               showType={true}
               showNameFields={true}
-              submitButtonText="Lưu địa chỉ"
+              submitButtonText='Lưu địa chỉ'
             />
 
             {/* Shipping Method */}
@@ -496,7 +536,10 @@ export function CheckoutPage() {
                                 <Clock className='w-4 h-4 text-blue-500' />
                                 <span className='font-medium'>{method.name}</span>
                                 {subtotal >= 300000 && method.price > 0 && (
-                                  <Badge variant='secondary' className='bg-green-100 text-green-800 hover:bg-green-100 text-xs'>
+                                  <Badge
+                                    variant='secondary'
+                                    className='bg-green-100 text-green-800 hover:bg-green-100 text-xs'
+                                  >
                                     Freeship
                                   </Badge>
                                 )}
@@ -512,7 +555,9 @@ export function CheckoutPage() {
                                   {(() => {
                                     // Rule: Orders >= 300k are completely free shipping
                                     const finalPrice = subtotal >= 300000 ? 0 : method.price
-                                    return finalPrice === 0 ? 'Miễn phí' : `${new Intl.NumberFormat('vi-VN').format(finalPrice)}đ`
+                                    return finalPrice === 0
+                                      ? 'Miễn phí'
+                                      : `${new Intl.NumberFormat('vi-VN').format(finalPrice)}đ`
                                   })()}
                                 </span>
                               </div>
@@ -601,11 +646,19 @@ export function CheckoutPage() {
                         <div className='flex-1 min-w-0'>
                           <div className='font-medium text-sm line-clamp-1'>{item.name}</div>
                           <div className='text-xs text-gray-500'>
-                            SL: {item.quantity}{item.unit ? ` x ${item.unit}` : ''}
+                            SL: {item.quantity}
+                            {item.unit ? ` x ${item.unit}` : ''}
                           </div>
                         </div>
-                        <div className='text-sm font-medium text-blue-600'>
-                          {new Intl.NumberFormat('vi-VN').format(item.totalPrice)}đ
+                        <div className='text-right'>
+                          <div className='text-sm font-medium text-blue-600'>
+                            {new Intl.NumberFormat('vi-VN').format(item.totalPrice)}đ
+                          </div>
+                          {(item as any).originalUnitPrice && (item as any).originalUnitPrice > item.unitPrice && (
+                            <div className='text-xs text-gray-400 line-through'>
+                              {new Intl.NumberFormat('vi-VN').format((item as any).originalUnitPrice * item.quantity)}đ
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -633,12 +686,46 @@ export function CheckoutPage() {
                       </span>
                     </div>
 
-                    {/* {discount > 0 && (
+                    {couponDiscount > 0 && (
                         <div className='flex justify-between'>
-                          <span className='text-gray-600'>Giảm giá</span>
-                          <span className='text-green-600'>-{new Intl.NumberFormat('vi-VN').format(discount)}đ</span>
+                          <span className='text-gray-600'>Giảm giá Coupon</span>
+                          <span className='text-green-600'>-{new Intl.NumberFormat('vi-VN').format(couponDiscount)}đ</span>
                         </div>
-                      )} */}
+                    )}
+
+                    {pointsDiscount > 0 && (
+                      <div className='flex justify-between'>
+                        <span className='text-gray-600 flex items-center gap-1'>
+                          <Sparkles className='w-3.5 h-3.5 text-purple-500' />
+                          Điểm thưởng
+                        </span>
+                        <span className='text-purple-600'>-{new Intl.NumberFormat('vi-VN').format(pointsDiscount)}đ</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <Separator />
+
+                  {/* Coupon Input Section */}
+                  <div className='py-2 space-y-3'>
+                    <CouponInput
+                      subtotal={subtotal}
+                      hasPrescriptionItems={cartItems.some(i => i.prescriptionRequired)}
+                      isDirectBuy={isBuyNow}
+                      initialCoupons={appliedCoupons}
+                      onCouponsChange={(coupons, discount, hasFreeship) => {
+                        setAppliedCoupons(coupons)
+                        setCouponDiscount(discount)
+                        setFreeShippingFromCoupon(hasFreeship)
+                      }}
+                    />
+                    <PointsRedeemInput
+                      subtotal={subtotal}
+                      onRedeemChange={(pts, amount) => {
+                        setPointsToRedeem(pts)
+                        setPointsDiscount(amount)
+                      }}
+                    />
                   </div>
 
                   <Separator />
@@ -686,7 +773,9 @@ export function CheckoutPage() {
                         Đang xử lý...
                       </div>
                     ) : (
-                      <>Đặt hàng ({cartItems.length} sản phẩm - {new Intl.NumberFormat('vi-VN').format(total)}đ)</>
+                      <>
+                        Đặt hàng ({cartItems.length} sản phẩm - {new Intl.NumberFormat('vi-VN').format(total)}đ)
+                      </>
                     )}
                   </Button>
 

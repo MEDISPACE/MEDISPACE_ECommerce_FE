@@ -1,8 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Bell, Check, Settings } from 'lucide-react'
 
 import { NotificationItem } from './NotificationItem'
 import { Button } from '../ui/button'
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem as PaginationItemUI,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '../ui/pagination'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import { Switch } from '../ui/switch'
 import { Label } from '../ui/label'
@@ -10,8 +19,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Separator } from '../ui/separator'
 import { Badge } from '../ui/badge'
 import { toast } from 'sonner'
-import { notificationService } from '../../services/notificationService'
-import type { Notification as ApiNotification } from '../../types/account'
+import { useNotifications, useUnreadNotificationCount } from '~/hooks/useNotifications'
+
 
 type UiNotification = {
   id: string
@@ -24,31 +33,7 @@ type UiNotification = {
   actionText?: string
 }
 
-const mapApiToUi = (n: ApiNotification): UiNotification => {
-  const obj = n as unknown as {
-    id?: string
-    _id?: string
-    type?: string
-    title?: string
-    message?: string
-    createdAt?: string
-    timestamp?: string
-    isRead?: boolean
-    actionUrl?: string
-    actionText?: string
-  }
 
-  return {
-    id: obj.id ?? obj._id ?? '',
-    type: (obj.type as UiNotification['type']) ?? 'system',
-    title: obj.title ?? '',
-    message: obj.message ?? '',
-    timestamp: obj.createdAt ?? obj.timestamp ?? new Date().toISOString(),
-    isRead: Boolean(obj.isRead),
-    actionUrl: obj.actionUrl,
-    actionText: obj.actionText,
-  }
-}
 
 interface NotificationSettings {
   email: boolean
@@ -63,8 +48,8 @@ interface NotificationSettings {
 }
 
 export function NotificationsPage() {
-  const [notifications, setNotifications] = useState<UiNotification[]>([])
   const [activeTab, setActiveTab] = useState('all')
+  const [page, setPage] = useState(1)
   const [settings, setSettings] = useState<NotificationSettings>({
     email: true,
     sms: false,
@@ -77,35 +62,45 @@ export function NotificationsPage() {
     quietHours: true,
   })
 
-  const filteredNotifications = notifications.filter((notification) => {
-    if (activeTab === 'all') return true
-    if (activeTab === 'unread') return !notification.isRead
-    return notification.type === activeTab
+  // Use real hook with live data
+  const filter = activeTab === 'all' || activeTab === 'unread' || activeTab === 'settings'
+    ? activeTab === 'settings' ? 'all' : activeTab as 'all' | 'unread'
+    : activeTab as 'order' | 'prescription' | 'promotion' | 'system'
+
+  const { notifications: rawNotifications, pagination, markAsRead, markAllAsRead, deleteNotification } = useNotifications(filter, page)
+  const unreadCount = useUnreadNotificationCount()
+
+  // Map API notifications to UI format
+  const notifications: UiNotification[] = rawNotifications.map((n) => {
+    const obj = n as unknown as {
+      id?: string; _id?: string; type?: string; title?: string
+      message?: string; createdAt?: string; isRead?: boolean
+      actionUrl?: string; actionText?: string
+    }
+    return {
+      id: obj._id ?? obj.id ?? '',
+      type: (obj.type as UiNotification['type']) ?? 'system',
+      title: obj.title ?? '',
+      message: obj.message ?? '',
+      timestamp: obj.createdAt ?? new Date().toISOString(),
+      isRead: Boolean(obj.isRead),
+      actionUrl: obj.actionUrl,
+      actionText: obj.actionText,
+    }
   })
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length
+  const filteredNotifications = activeTab === 'settings' ? [] : notifications
 
   const handleMarkAsRead = (notificationId: string) => {
-    setNotifications((prev) =>
-      prev.map((notification) =>
-        notification.id === notificationId ? { ...notification, isRead: true } : notification,
-      ),
-    )
+    markAsRead(notificationId)
     toast.success('Đã đánh dấu là đã đọc')
   }
 
   const handleMarkAllAsRead = () => {
-    setNotifications((prev) =>
-      prev.map((notification) => ({
-        ...notification,
-        isRead: true,
-      })),
-    )
-    toast.success('Đã đánh dấu tất cả là đã đọc')
+    markAllAsRead()
   }
 
   const handleNotificationAction = (actionUrl: string) => {
-    // Navigate to the action URL
     window.location.href = actionUrl
   }
 
@@ -119,26 +114,6 @@ export function NotificationsPage() {
     if (type === 'unread') return unreadCount
     return notifications.filter((n) => n.type === type).length
   }
-
-  useEffect(() => {
-    let mounted = true
-    const load = async () => {
-      try {
-        const data = await notificationService.getNotifications()
-        if (mounted) setNotifications(data.map(mapApiToUi))
-      } catch (err) {
-        try {
-        } catch {
-          /* ignore */
-        }
-      }
-    }
-
-    load()
-    return () => {
-      mounted = false
-    }
-  }, [])
 
   return (
     <div className='space-y-6'>
@@ -172,10 +147,13 @@ export function NotificationsPage() {
 
       {/* Tabs */}
       <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setPage(1); }}>
           <div className='px-6 pt-6'>
             <TabsList className='inline-flex w-full overflow-x-auto bg-blue-100 p-1 rounded-lg shadow-sm scrollbar-hide'>
-              <TabsTrigger value='all' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+              <TabsTrigger
+                value='all'
+                className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+              >
                 <span className='whitespace-nowrap flex items-center gap-1'>
                   Tất cả
                   {getTabCount('all') > 0 && (
@@ -185,7 +163,10 @@ export function NotificationsPage() {
                   )}
                 </span>
               </TabsTrigger>
-              <TabsTrigger value='unread' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+              <TabsTrigger
+                value='unread'
+                className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+              >
                 <span className='whitespace-nowrap flex items-center gap-1'>
                   Chưa đọc
                   {getTabCount('unread') > 0 && (
@@ -195,7 +176,10 @@ export function NotificationsPage() {
                   )}
                 </span>
               </TabsTrigger>
-              <TabsTrigger value='order' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:!shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+              <TabsTrigger
+                value='order'
+                className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:!shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+              >
                 <span className='whitespace-nowrap flex items-center gap-1'>
                   Đơn hàng
                   {getTabCount('order') > 0 && (
@@ -205,7 +189,10 @@ export function NotificationsPage() {
                   )}
                 </span>
               </TabsTrigger>
-              <TabsTrigger value='promotion' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:!shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+              <TabsTrigger
+                value='promotion'
+                className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:!shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+              >
                 <span className='whitespace-nowrap flex items-center gap-1'>
                   Khuyến mãi
                   {getTabCount('promotion') > 0 && (
@@ -215,7 +202,10 @@ export function NotificationsPage() {
                   )}
                 </span>
               </TabsTrigger>
-              <TabsTrigger value='health' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:!shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+              <TabsTrigger
+                value='health'
+                className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:!shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+              >
                 <span className='whitespace-nowrap flex items-center gap-1'>
                   Sức khỏe
                   {getTabCount('health') > 0 && (
@@ -225,7 +215,10 @@ export function NotificationsPage() {
                   )}
                 </span>
               </TabsTrigger>
-              <TabsTrigger value='settings' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+              <TabsTrigger
+                value='settings'
+                className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+              >
                 <span className='whitespace-nowrap flex items-center gap-1'>
                   <Settings className='w-4 h-4' />
                   Cài đặt
@@ -451,6 +444,58 @@ export function NotificationsPage() {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Pagination Controls */}
+        {activeTab !== 'settings' && pagination && pagination.totalPages > 1 && (
+          <div className='px-6 py-4 border-t border-blue-100/50 mt-4'>
+            <Pagination>
+              <PaginationContent>
+                <PaginationItemUI>
+                  <PaginationPrevious
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    className={page === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                  />
+                </PaginationItemUI>
+
+                {Array.from({ length: pagination.totalPages }).map((_, i) => {
+                  const pageNum = i + 1
+                  if (
+                    pageNum === 1 ||
+                    pageNum === pagination.totalPages ||
+                    (pageNum >= page - 1 && pageNum <= page + 1)
+                  ) {
+                    return (
+                      <PaginationItemUI key={pageNum}>
+                        <PaginationLink
+                          isActive={page === pageNum}
+                          onClick={() => setPage(pageNum)}
+                          className='cursor-pointer'
+                        >
+                          {pageNum}
+                        </PaginationLink>
+                      </PaginationItemUI>
+                    )
+                  }
+                  if (pageNum === page - 2 || pageNum === page + 2) {
+                    return (
+                      <PaginationItemUI key={pageNum}>
+                        <PaginationEllipsis />
+                      </PaginationItemUI>
+                    )
+                  }
+                  return null
+                })}
+
+                <PaginationItemUI>
+                  <PaginationNext
+                    onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
+                    className={page === pagination.totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                  />
+                </PaginationItemUI>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </div>
     </div>
   )

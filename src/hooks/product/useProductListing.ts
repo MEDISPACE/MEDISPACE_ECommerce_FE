@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { useSearchParams } from 'react-router'
 import type { Product, ProductFilter } from '~/types/product'
 import { getProductPrice } from '~/utils/priceUtils'
+import { useDebounce } from '../useDebounce'
 
 interface UseProductListingOptions {
   products: Product[]
@@ -58,6 +59,8 @@ export function useProductListing({
     isPrescription: undefined,
   }))
 
+  // Debounce search query to prevent excessive filtering while typing
+  const debouncedSearchQuery = useDebounce(searchQuery, 500)
 
   // Helper function to check if product belongs to selected category (including children)
   const matchesCategoryFilter = (product: Product, selectedCategories: string[]): boolean => {
@@ -86,12 +89,12 @@ export function useProductListing({
   // Filter products
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
-      // Search query filter
+      // Search query filter - using debounced value
       if (
-        searchQuery &&
-        !product.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !(product.shortDescription?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) &&
-        !(product.brand?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false)
+        debouncedSearchQuery &&
+        !product.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) &&
+        !(product.shortDescription?.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ?? false) &&
+        !(product.brand?.name?.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ?? false)
       ) {
         return false
       }
@@ -129,7 +132,7 @@ export function useProductListing({
 
       return true
     })
-  }, [products, searchQuery, filters])
+  }, [products, debouncedSearchQuery, filters])
 
   // Sort products
   const sortedProducts = useMemo(() => {
@@ -152,10 +155,7 @@ export function useProductListing({
 
   // Pagination
   const totalPages = Math.ceil(sortedProducts.length / resultsPerPage)
-  const paginatedProducts = sortedProducts.slice(
-    (currentPage - 1) * resultsPerPage,
-    currentPage * resultsPerPage,
-  )
+  const paginatedProducts = sortedProducts.slice((currentPage - 1) * resultsPerPage, currentPage * resultsPerPage)
 
   // Actions
   const handleSearch = (query: string) => {

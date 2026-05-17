@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router'
-import { Search, Grid, List, SlidersHorizontal } from 'lucide-react'
+import { Search, Grid, List, SlidersHorizontal, PackageX } from 'lucide-react'
 import { EnhancedPageTransition } from '../shared/EnhancedPageTransition'
 import { CategoryNavigation, CategoryQuickActions } from './CategoryNavigation'
 import { ProductCard } from '../products/ProductCard'
@@ -76,7 +76,7 @@ export function SubCategoryPage() {
         // Find subcategory
         let foundSubCategory = null
         if (subCategorySlug) {
-          foundSubCategory = categoryData.subcategories?.find(sub => sub.slug === subCategorySlug) || null
+          foundSubCategory = categoryData.subcategories?.find((sub) => sub.slug === subCategorySlug) || null
           setSubCategory(foundSubCategory)
         }
 
@@ -84,7 +84,6 @@ export function SubCategoryPage() {
         const categoryId = foundSubCategory ? foundSubCategory._id : categoryData._id
         const productsData = await productService.getProducts({ categories: [categoryId] })
         setProducts(productsData)
-
       } catch (error) {
         setError('Không thể tải dữ liệu danh mục')
       } finally {
@@ -115,9 +114,7 @@ export function SubCategoryPage() {
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.shortDescription.toLowerCase().includes(searchQuery.toLowerCase())
     const productPrice = getProductPrice(product)
-    const matchesPrice =
-      productPrice >= priceRange[0] &&
-      productPrice <= priceRange[1]
+    const matchesPrice = productPrice >= priceRange[0] && productPrice <= priceRange[1]
     const matchesBrands =
       selectedBrands.length === 0 ||
       selectedBrands.some((brand: string) => product.brand?.name?.toLowerCase().includes(brand.toLowerCase()))
@@ -153,7 +150,9 @@ export function SubCategoryPage() {
   const paginatedProducts = sortedProducts.slice(startIndex, startIndex + itemsPerPage)
 
   const handleBrandToggle = (brandName: string) => {
-    setSelectedBrands((prev: string[]) => (prev.includes(brandName) ? prev.filter((b: string) => b !== brandName) : [...prev, brandName]))
+    setSelectedBrands((prev: string[]) =>
+      prev.includes(brandName) ? prev.filter((b: string) => b !== brandName) : [...prev, brandName],
+    )
   }
 
   // const handleFilterToggle = (filterId: string, optionId: string) => {
@@ -192,9 +191,7 @@ export function SubCategoryPage() {
       <div className='min-h-screen flex items-center justify-center'>
         <div className='text-center'>
           <div className='text-red-500 mb-4'>⚠️ {error}</div>
-          <Button onClick={() => window.location.reload()}>
-            Thử lại
-          </Button>
+          <Button onClick={() => window.location.reload()}>Thử lại</Button>
         </div>
       </div>
     )
@@ -220,15 +217,11 @@ export function SubCategoryPage() {
       <EnhancedPageTransition>
         <div className='max-w-7xl mx-auto px-4 py-6'>
           {/* Sub-category Header */}
-          <div
-            className='bg-gradient-to-r from-white to-gray-50 rounded-2xl p-6 mb-6 border-l-4 border-blue-500'
-          >
+          <div className='bg-gradient-to-r from-white to-gray-50 rounded-2xl p-6 mb-6 border-l-4 border-blue-500'>
             <div className='flex items-center justify-between'>
               <div className='flex-1'>
                 <div className='flex items-center gap-4 mb-2'>
-                  <div
-                    className='w-16 h-16 rounded-xl flex items-center justify-center text-white font-bold text-2xl bg-blue-500'
-                  >
+                  <div className='w-16 h-16 rounded-xl flex items-center justify-center text-white font-bold text-2xl bg-blue-500'>
                     {subCategory.name.charAt(0)}
                   </div>
                   <div>
@@ -362,7 +355,10 @@ export function SubCategoryPage() {
                           checked={ratingFilter === rating}
                           onCheckedChange={(checked) => setRatingFilter(checked ? rating : 0)}
                         />
-                        <Label htmlFor={`sub-rating-${rating}`} className='text-sm cursor-pointer flex items-center gap-1'>
+                        <Label
+                          htmlFor={`sub-rating-${rating}`}
+                          className='text-sm cursor-pointer flex items-center gap-1'
+                        >
                           <RatingStars rating={rating} size='sm' showRating={false} />
                           <span className='text-xs'>từ {rating} sao</span>
                         </Label>
@@ -383,7 +379,9 @@ export function SubCategoryPage() {
                         checked={inStockFilter}
                         onCheckedChange={(checked) => setInStockFilter(checked as boolean)}
                       />
-                      <Label htmlFor='sub-in-stock' className='text-sm cursor-pointer'>Còn hàng</Label>
+                      <Label htmlFor='sub-in-stock' className='text-sm cursor-pointer'>
+                        Còn hàng
+                      </Label>
                     </div>
                     <div className='flex items-center space-x-2'>
                       <Checkbox
@@ -391,7 +389,9 @@ export function SubCategoryPage() {
                         checked={prescriptionFilter}
                         onCheckedChange={(checked) => setPrescriptionFilter(checked as boolean)}
                       />
-                      <Label htmlFor='sub-prescription' className='text-sm cursor-pointer'>Thuốc kê đơn</Label>
+                      <Label htmlFor='sub-prescription' className='text-sm cursor-pointer'>
+                        Thuốc kê đơn
+                      </Label>
                     </div>
                   </CardContent>
                 </Card>
@@ -521,7 +521,7 @@ export function SubCategoryPage() {
                         }}
                         variant={viewMode}
                         onAddToCart={(selectedUnit) => {
-                          const variant = product.priceVariants?.find(v => v.unit === selectedUnit)
+                          const variant = product.priceVariants?.find((v) => v.unit === selectedUnit)
                           const price = variant?.price || product.priceVariants?.[0]?.price
                           addToCart(product, 1, selectedUnit, price)
                         }}
@@ -546,7 +546,7 @@ export function SubCategoryPage() {
                 <Card className='text-center py-12 border-blue-200 bg-white'>
                   <CardContent>
                     <div className='text-gray-500 mb-4'>
-                      <Search className='w-16 h-16 mx-auto mb-4 text-gray-300' />
+                      <PackageX className='w-16 h-16 mx-auto mb-4 text-gray-300' strokeWidth={1.5} />
                       <h3 className='text-lg font-medium'>Không tìm thấy sản phẩm</h3>
                       <p className='text-sm'>Thử điều chỉnh bộ lọc hoặc từ khóa tìm kiếm</p>
                     </div>

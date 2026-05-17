@@ -48,15 +48,16 @@ interface Prescription {
   images: string[]
   status: 'pending' | 'processing' | 'approved' | 'rejected' | 'fulfilled' | 'expired'
 
-
   createdAt: string
   updatedAt: string
   doctorName?: string
   diagnosis?: string
   medications: {
-    name: string
+    productName: string
+    name?: string
     dosage: string
     quantity: number
+    instructions?: string
   }[]
   notes?: string
   pharmacistNotes?: string
@@ -71,7 +72,6 @@ export function PrescriptionManagementPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
 
-
   const [page, setPage] = useState(1)
   const [selectedPrescriptions, setSelectedPrescriptions] = useState<string[]>([])
   const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null)
@@ -82,35 +82,39 @@ export function PrescriptionManagementPage() {
   const [showExpireConfirm, setShowExpireConfirm] = useState(false)
 
   // Fetch prescriptions with React Query
-  const { data: prescriptionsData, isLoading, error } = useQuery({
+  const {
+    data: prescriptionsData,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['admin', 'prescriptions', { page, status: statusFilter, search: searchQuery }],
-    queryFn: () => adminService.getAllPrescriptions({
-      page,
-      limit: 10,
-      status: statusFilter === 'all' ? undefined : statusFilter,
-      search: searchQuery
-    }),
-    staleTime: 30000 // 30 seconds
+    queryFn: () =>
+      adminService.getAllPrescriptions({
+        page,
+        limit: 10,
+        status: statusFilter === 'all' ? undefined : statusFilter,
+        search: searchQuery,
+      }),
+    staleTime: 30000, // 30 seconds
   })
 
   // Fetch prescription stats
   const { data: statsData } = useQuery({
     queryKey: ['admin', 'prescriptions', 'stats'],
     queryFn: adminService.getPrescriptionStats,
-    staleTime: 60000 // 1 minute
+    staleTime: 60000, // 1 minute
   })
 
   // Update prescription status mutation
   const updateStatusMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) =>
-      adminService.updatePrescriptionStatus(id, data),
+    mutationFn: ({ id, data }: { id: string; data: any }) => adminService.updatePrescriptionStatus(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'prescriptions'] })
       toast.success('Cập nhật trạng thái thành công')
     },
     onError: () => {
       toast.error('Cập nhật trạng thái thất bại')
-    }
+    },
   })
 
   // Bulk update mutation
@@ -124,7 +128,7 @@ export function PrescriptionManagementPage() {
     },
     onError: () => {
       toast.error('Cập nhật hàng loạt thất bại')
-    }
+    },
   })
 
   // Extract data
@@ -133,9 +137,6 @@ export function PrescriptionManagementPage() {
 
   // Client-side filtering for type and priority (since backend doesn't support these yet)
   const filteredPrescriptions = prescriptions.filter((prescription: any) => {
-
-
-
     // Date range filter
     let matchesDateRange = true
     if (dateRange !== 'all') {
@@ -159,7 +160,7 @@ export function PrescriptionManagementPage() {
     rejected: statsData?.rejected || 0,
     fulfilled: 0, // Backend doesn't have this status
 
-    approvedToday: statsData?.verifiedToday || 0
+    approvedToday: statsData?.verifiedToday || 0,
   }
 
   // Handle bulk actions
@@ -173,13 +174,13 @@ export function PrescriptionManagementPage() {
       case 'approve':
         bulkUpdateMutation.mutate({
           ids: selectedPrescriptions,
-          status: 'verified' // Backend uses 'verified' instead of 'approved'
+          status: 'verified', // Backend uses 'verified' instead of 'approved'
         })
         break
       case 'reject':
         bulkUpdateMutation.mutate({
           ids: selectedPrescriptions,
-          status: 'rejected'
+          status: 'rejected',
         })
         break
       case 'export':
@@ -211,18 +212,21 @@ export function PrescriptionManagementPage() {
   const handleApprovePrescription = () => {
     if (!selectedPrescription) return
 
-    updateStatusMutation.mutate({
-      id: selectedPrescription._id || selectedPrescription.id,
-      data: {
-        status: 'verified',
-        pharmacistNotes: 'Đã phê duyệt bởi Admin'
-      }
-    }, {
-      onSuccess: () => {
-        setSelectedPrescription(null)
-        setShowApproveConfirm(false)
-      }
-    })
+    updateStatusMutation.mutate(
+      {
+        id: selectedPrescription._id || selectedPrescription.id,
+        data: {
+          status: 'verified',
+          pharmacistNotes: 'Đã phê duyệt bởi Admin',
+        },
+      },
+      {
+        onSuccess: () => {
+          setSelectedPrescription(null)
+          setShowApproveConfirm(false)
+        },
+      },
+    )
   }
 
   // Handle reject prescription
@@ -232,37 +236,43 @@ export function PrescriptionManagementPage() {
       return
     }
 
-    updateStatusMutation.mutate({
-      id: selectedPrescription._id || selectedPrescription.id,
-      data: {
-        status: 'rejected',
-        pharmacistNotes: rejectionReason
-      }
-    }, {
-      onSuccess: () => {
-        setSelectedPrescription(null)
-        setShowRejectDialog(false)
-        setRejectionReason('')
-      }
-    })
+    updateStatusMutation.mutate(
+      {
+        id: selectedPrescription._id || selectedPrescription.id,
+        data: {
+          status: 'rejected',
+          pharmacistNotes: rejectionReason,
+        },
+      },
+      {
+        onSuccess: () => {
+          setSelectedPrescription(null)
+          setShowRejectDialog(false)
+          setRejectionReason('')
+        },
+      },
+    )
   }
 
   // Handle expire prescription
   const handleExpirePrescription = () => {
     if (!selectedPrescription) return
 
-    updateStatusMutation.mutate({
-      id: selectedPrescription._id || selectedPrescription.id,
-      data: {
-        status: 'expired',
-        pharmacistNotes: 'Đơn thuốc đã hết hạn sử dụng'
-      }
-    }, {
-      onSuccess: () => {
-        setSelectedPrescription(null)
-        setShowExpireConfirm(false)
-      }
-    })
+    updateStatusMutation.mutate(
+      {
+        id: selectedPrescription._id || selectedPrescription.id,
+        data: {
+          status: 'expired',
+          pharmacistNotes: 'Đơn thuốc đã hết hạn sử dụng',
+        },
+      },
+      {
+        onSuccess: () => {
+          setSelectedPrescription(null)
+          setShowExpireConfirm(false)
+        },
+      },
+    )
   }
 
   // Format datetime
@@ -413,10 +423,6 @@ export function PrescriptionManagementPage() {
             </SelectContent>
           </Select>
 
-
-
-
-
           <Select value={dateRange} onValueChange={setDateRange}>
             <SelectTrigger className='w-40 border-2 border-blue-200 focus:border-blue-500'>
               <SelectValue placeholder='Thời gian' />
@@ -439,7 +445,7 @@ export function PrescriptionManagementPage() {
                 size='sm'
                 variant='outline'
                 onClick={() => handleBulkAction('approve')}
-                className='bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
+                className='!bg-green-50 !text-green-700 !border-green-200 hover:!bg-green-100 hover:!text-green-800 hover:!border-green-100'
               >
                 <CheckCircle className='w-4 h-4 mr-1' />
                 Phê duyệt
@@ -448,12 +454,17 @@ export function PrescriptionManagementPage() {
                 size='sm'
                 variant='outline'
                 onClick={() => handleBulkAction('reject')}
-                className='bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+                className='!bg-red-50 !text-red-700 !border-red-200 hover:!bg-red-100 hover:!text-red-800 hover:!border-red-100'
               >
                 <XCircle className='w-4 h-4 mr-1' />
                 Từ chối
               </Button>
-              <Button size='sm' variant='outline' onClick={() => handleBulkAction('export')}>
+              <Button
+                size='sm'
+                variant='outline'
+                onClick={() => handleBulkAction('export')}
+                className='!bg-blue-50 !text-blue-700 !border-blue-200 hover:!bg-blue-100 hover:!text-blue-800 hover:!border-blue-100'
+              >
                 <Download className='w-4 h-4 mr-1' />
                 Xuất
               </Button>
@@ -583,7 +594,7 @@ export function PrescriptionManagementPage() {
               <Button
                 variant='outline'
                 size='sm'
-                onClick={() => setPage(p => Math.max(1, p - 1))}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={pagination.page === 1 || isLoading}
               >
                 <ChevronLeft className='w-4 h-4 mr-1' />
@@ -609,7 +620,7 @@ export function PrescriptionManagementPage() {
               <Button
                 variant='outline'
                 size='sm'
-                onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))}
+                onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
                 disabled={pagination.page >= pagination.totalPages || isLoading}
               >
                 Sau
@@ -623,18 +634,17 @@ export function PrescriptionManagementPage() {
       {/* Prescription Detail Dialog */}
       {selectedPrescription && (
         <Dialog open={!!selectedPrescription} onOpenChange={() => setSelectedPrescription(null)}>
-          <DialogContent className='!w-[900px] max-w-[95vw] max-h-[90vh] overflow-y-auto'>
+          <DialogContent className='!w-[900px] max-w-[95vw] max-h-[90vh] flex flex-col overflow-hidden'>
             <DialogHeader>
               <DialogTitle className='flex items-center gap-3'>
                 <span>Chi tiết đơn thuốc #{selectedPrescription.id}</span>
 
                 {getPrescriptionStatusBadge(selectedPrescription.status)}
-
               </DialogTitle>
               <DialogDescription>Xem đầy đủ thông tin đơn thuốc, dược sĩ phụ trách và lịch sử xử lý</DialogDescription>
             </DialogHeader>
 
-            <div className='space-y-6'>
+            <div className='space-y-6 overflow-y-auto flex-1 px-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-blue-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-blue-400'>
               {/* Customer & Pharmacist Info */}
               <div className='grid grid-cols-2 gap-4'>
                 <div className='p-4 bg-blue-50 rounded-lg border border-blue-200'>
@@ -683,7 +693,6 @@ export function PrescriptionManagementPage() {
                       )}
                     </div>
                   ) : (
-
                     <p className='text-sm text-gray-500'>Chưa phân công</p>
                   )}
                 </div>
@@ -724,7 +733,9 @@ export function PrescriptionManagementPage() {
                         <div className='flex items-start gap-2'>
                           <Pill className='w-4 h-4 text-blue-600 mt-0.5' />
                           <div className='flex-1'>
-                            <p className='text-sm'>{medication.name}</p>
+                            <p className='text-sm font-medium text-blue-900'>
+                              {medication.productName || medication.name || 'Không rõ tên thuốc'}
+                            </p>
                             <p className='text-xs text-gray-600'>
                               Liều dùng: {medication.dosage} • Số lượng: {medication.quantity}
                             </p>
@@ -778,18 +789,15 @@ export function PrescriptionManagementPage() {
                   </div>
                 </div>
               )}
+            </div>
 
-              {/* Action Buttons */}
-              {/* Admin can approve/reject any prescription */}
-              <div className='flex gap-3 pt-6 border-t'>
-                <Button
-                  variant='outline'
-                  onClick={() => setSelectedPrescription(null)}
-                  className='flex-1'
-                >
-                  Đóng
-                </Button>
-                {selectedPrescription.status !== 'expired' && (
+            {/* ── FOOTER: fixed actions ── */}
+            <div className='flex gap-3 pt-3 border-t border-gray-100 shrink-0 bg-white'>
+              <Button variant='outline' onClick={() => setSelectedPrescription(null)}>
+                Đóng
+              </Button>
+              {selectedPrescription.status === 'pending' && (
+                <>
                   <Button
                     onClick={() => setShowExpireConfirm(true)}
                     className='flex-1 bg-gray-600 hover:bg-gray-700 text-white'
@@ -798,24 +806,24 @@ export function PrescriptionManagementPage() {
                     <Clock className='w-4 h-4 mr-2 text-white' />
                     Đánh dấu hết hạn
                   </Button>
-                )}
-                <Button
-                  onClick={() => setShowRejectDialog(true)}
-                  className='flex-1 bg-red-600 hover:bg-red-700 text-white'
-                  disabled={updateStatusMutation.isPending}
-                >
-                  <XCircle className='w-4 h-4 mr-2 text-white' />
-                  Từ chối
-                </Button>
-                <Button
-                  onClick={() => setShowApproveConfirm(true)}
-                  className='flex-1 bg-green-600 hover:bg-green-700 text-white'
-                  disabled={updateStatusMutation.isPending}
-                >
-                  <CheckCircle className='w-4 h-4 mr-2 text-white' />
-                  Phê duyệt
-                </Button>
-              </div>
+                  <Button
+                    onClick={() => setShowRejectDialog(true)}
+                    className='flex-1 bg-red-600 hover:bg-red-700 text-white'
+                    disabled={updateStatusMutation.isPending}
+                  >
+                    <XCircle className='w-4 h-4 mr-2 text-white' />
+                    Từ chối
+                  </Button>
+                  <Button
+                    onClick={() => setShowApproveConfirm(true)}
+                    className='flex-1 bg-green-600 hover:bg-green-700 text-white'
+                    disabled={updateStatusMutation.isPending}
+                  >
+                    <CheckCircle className='w-4 h-4 mr-2 text-white' />
+                    Phê duyệt
+                  </Button>
+                </>
+              )}
             </div>
           </DialogContent>
         </Dialog>
@@ -871,11 +879,7 @@ export function PrescriptionManagementPage() {
             </DialogDescription>
           </DialogHeader>
           <div className='flex gap-3'>
-            <Button
-              variant='outline'
-              onClick={() => setShowApproveConfirm(false)}
-              className='flex-1'
-            >
+            <Button variant='outline' onClick={() => setShowApproveConfirm(false)} className='flex-1'>
               Hủy
             </Button>
             <Button
@@ -899,11 +903,7 @@ export function PrescriptionManagementPage() {
             </DialogDescription>
           </DialogHeader>
           <div className='flex gap-3'>
-            <Button
-              variant='outline'
-              onClick={() => setShowExpireConfirm(false)}
-              className='flex-1'
-            >
+            <Button variant='outline' onClick={() => setShowExpireConfirm(false)} className='flex-1'>
               Hủy
             </Button>
             <Button

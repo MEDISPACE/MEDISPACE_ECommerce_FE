@@ -12,6 +12,8 @@ import { RatingStars } from '../shared/RatingStars'
 import type { ProductFilter, Category, Brand } from '../../types/product'
 import { categoryService } from '../../services/categoryService'
 import { brandService } from '../../services/brandService'
+import { searchService } from '../../services/searchService'
+import { useDebounce } from '../../hooks/useDebounce'
 
 interface FilterSidebarProps {
   filters: ProductFilter
@@ -25,6 +27,32 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
   const [categorySearch, setCategorySearch] = useState('')
   const [categories, setCategories] = useState<Category[]>([])
   const [brands, setBrands] = useState<Brand[]>([])
+  const [facetCounts, setFacetCounts] = useState<Record<string, number>>({}) // categoryId/brandId → count
+
+  // Local state for price range to allow smooth slider movement
+  const [localPriceRange, setLocalPriceRange] = useState<number[]>(filters.priceRange || [0, 1000000])
+
+  // Debounce the price range to prevent excessive re-renders during slider drag
+  const debouncedPriceRange = useDebounce(localPriceRange, 300)
+
+  // Update filters when debounced price range changes
+  useEffect(() => {
+    if (debouncedPriceRange[0] !== filters.priceRange?.[0] || debouncedPriceRange[1] !== filters.priceRange?.[1]) {
+      onFiltersChange({ ...filters, priceRange: [debouncedPriceRange[0], debouncedPriceRange[1]] })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedPriceRange])
+
+  // Sync local price range when filters change externally (e.g., reset filters)
+  useEffect(() => {
+    if (
+      filters.priceRange &&
+      (localPriceRange[0] !== filters.priceRange[0] || localPriceRange[1] !== filters.priceRange[1])
+    ) {
+      setLocalPriceRange(filters.priceRange)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.priceRange])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -35,13 +63,29 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
         ])
         // Remove duplicate categories by slug to prevent React key conflicts
         const uniqueCategories = categoriesData.filter(
-          (category, index, self) =>
-            index === self.findIndex((c) => c.slug === category.slug)
+          (category, index, self) => index === self.findIndex((c) => c.slug === category.slug),
         )
         setCategories(uniqueCategories)
         setBrands(brandsData)
-      } catch (error) {
-      }
+
+        // Fetch Typesense facet counts
+        try {
+          const result = await searchService.searchProducts({ q: '*', limit: 1 })
+          if (result?.facet_counts) {
+            const counts: Record<string, number> = {}
+            for (const facet of result.facet_counts) {
+              if (facet.fieldName === 'categoryId' || facet.fieldName === 'brandId') {
+                for (const item of facet.counts) {
+                  counts[item.value] = item.count
+                }
+              }
+            }
+            setFacetCounts(counts)
+          }
+        } catch {
+          // Facets unavailable — show without counts
+        }
+      } catch (error) {}
     }
 
     fetchData()
@@ -70,7 +114,9 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
   }
 
   const handlePriceRangeChange = (range: number[]) => {
-    onFiltersChange({ ...filters, priceRange: [range[0], range[1]] })
+    // Update local state immediately for smooth UI
+    setLocalPriceRange([range[0], range[1]])
+    // The debounced effect will handle updating the actual filters
   }
 
   const handleRatingChange = (rating: number) => {
@@ -78,10 +124,12 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
   }
 
   const clearFilters = () => {
+    const defaultPriceRange: [number, number] = [0, 1000000]
+    setLocalPriceRange(defaultPriceRange)
     onFiltersChange({
       categories: [],
       brands: [],
-      priceRange: [0, 1000000],
+      priceRange: defaultPriceRange,
       rating: 0,
       inStock: undefined,
       isPrescription: undefined,
@@ -107,7 +155,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
   )
 
   const filteredCategories = categories.filter((category) =>
-    category.name.toLowerCase().includes(categorySearch.toLowerCase())
+    category.name.toLowerCase().includes(categorySearch.toLowerCase()),
   )
 
   const filteredBrands = brands.filter((brand) => brand.name.toLowerCase().includes(brandSearch.toLowerCase()))
@@ -175,10 +223,15 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
                       />
                       <Label
                         htmlFor={`category-${category.slug}`}
-                        className='text-xs cursor-pointer flex-1 min-w-0 truncate'
+                        className='text-xs cursor-pointer flex-1 min-w-0 flex items-center justify-between gap-1'
                         title={category.name}
                       >
-                        {category.name}
+                        <span className='truncate'>{category.name}</span>
+                        {facetCounts[category._id] !== undefined && (
+                          <span className='text-[10px] bg-blue-50 text-blue-500 rounded px-1 shrink-0'>
+                            {facetCounts[category._id]}
+                          </span>
+                        )}
                       </Label>
                     </div>
                   ))}
@@ -227,10 +280,15 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
                       />
                       <Label
                         htmlFor={`brand-${brand._id}`}
-                        className='text-xs cursor-pointer flex-1 min-w-0 truncate'
+                        className='text-xs cursor-pointer flex-1 min-w-0 flex items-center justify-between gap-1'
                         title={brand.name}
                       >
-                        {brand.name}
+                        <span className='truncate'>{brand.name}</span>
+                        {facetCounts[brand._id] !== undefined && (
+                          <span className='text-[10px] bg-blue-50 text-blue-500 rounded px-1 shrink-0'>
+                            {facetCounts[brand._id]}
+                          </span>
+                        )}
                       </Label>
                     </div>
                   ))}
@@ -246,7 +304,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
             <Label className='text-sm font-medium text-gray-700 mb-2 block'>Khoảng giá</Label>
             <div className='space-y-3'>
               <Slider
-                value={filters.priceRange}
+                value={localPriceRange}
                 onValueChange={handlePriceRangeChange}
                 max={1000000}
                 min={0}
@@ -256,20 +314,20 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
               <div className='grid grid-cols-2 gap-1'>
                 <Input
                   type='text'
-                  value={new Intl.NumberFormat('vi-VN').format(filters.priceRange?.[0] || 0)}
+                  value={new Intl.NumberFormat('vi-VN').format(localPriceRange[0] || 0)}
                   onChange={(e) => {
                     const value = parseInt(e.target.value.replace(/\./g, '')) || 0
-                    handlePriceRangeChange([value, filters.priceRange?.[1] || 1000000])
+                    handlePriceRangeChange([value, localPriceRange[1] || 1000000])
                   }}
                   placeholder='Từ'
                   className='h-8 text-xs border-blue-200 focus:border-blue-500'
                 />
                 <Input
                   type='text'
-                  value={new Intl.NumberFormat('vi-VN').format(filters.priceRange?.[1] || 1000000)}
+                  value={new Intl.NumberFormat('vi-VN').format(localPriceRange[1] || 1000000)}
                   onChange={(e) => {
                     const value = parseInt(e.target.value.replace(/\./g, '')) || 0
-                    handlePriceRangeChange([filters.priceRange?.[0] || 0, value])
+                    handlePriceRangeChange([localPriceRange[0] || 0, value])
                   }}
                   placeholder='Đến'
                   className='h-8 text-xs border-blue-200 focus:border-blue-500'

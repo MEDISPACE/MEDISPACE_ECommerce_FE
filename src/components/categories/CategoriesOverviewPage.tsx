@@ -73,7 +73,7 @@ export function CategoriesOverviewPage() {
         // Fetch categories and featured products in parallel
         const [categoriesData, productsData] = await Promise.all([
           categoryService.getCategories(),
-          productService.getFeaturedProducts(12)
+          productService.getFeaturedProducts(12),
         ])
 
         setCategories(categoriesData)
@@ -99,8 +99,7 @@ export function CategoriesOverviewPage() {
   const breadcrumbItems = [{ label: 'Danh mục sản phẩm' }]
 
   // Only show parent categories (level 0) for cleaner UI
-  const filteredCategories = categories.filter(cat => cat.level === 0)
-
+  const filteredCategories = categories.filter((cat) => cat.level === 0)
 
   if (loading) {
     return (
@@ -118,9 +117,7 @@ export function CategoriesOverviewPage() {
       <div className='min-h-screen flex items-center justify-center'>
         <div className='text-center'>
           <div className='text-red-500 mb-4'>⚠️ {error}</div>
-          <Button onClick={() => window.location.reload()}>
-            Thử lại
-          </Button>
+          <Button onClick={() => window.location.reload()}>Thử lại</Button>
         </div>
       </div>
     )
@@ -133,30 +130,13 @@ export function CategoriesOverviewPage() {
       <section className='relative bg-gradient-to-br from-blue-50 via-white to-cyan-50 overflow-hidden'>
         {/* Floating Elements */}
         <div className='absolute inset-0 overflow-hidden pointer-events-none'>
-          <div
-            className='absolute top-20 left-10 w-20 h-20 bg-blue-200/30 rounded-full'
-
-
-          />
-          <div
-            className='absolute top-32 right-20 w-16 h-16 bg-cyan-200/30 rounded-full'
-
-
-          />
-          <div
-            className='absolute bottom-32 left-1/4 w-12 h-12 bg-blue-300/20 rounded-full'
-
-
-          />
+          <div className='absolute top-20 left-10 w-20 h-20 bg-blue-200/30 rounded-full' />
+          <div className='absolute top-32 right-20 w-16 h-16 bg-cyan-200/30 rounded-full' />
+          <div className='absolute bottom-32 left-1/4 w-12 h-12 bg-blue-300/20 rounded-full' />
         </div>
 
         <div className='max-w-7xl mx-auto px-4 py-16'>
-          <div
-
-
-
-            className='text-center mt-8'
-          >
+          <div className='text-center mt-8'>
             <h1 className='text-5xl font-bold bg-gradient-to-r from-blue-800 via-blue-600 to-cyan-600 bg-clip-text text-transparent mb-4 px-[0px] py-[12px]'>
               Khám phá thế giới sức khỏe
             </h1>
@@ -170,21 +150,9 @@ export function CategoriesOverviewPage() {
       {/* Stats Section */}
       <section className='py-16 bg-white'>
         <div className='max-w-7xl mx-auto px-4'>
-          <div
-
-
-
-            className='grid grid-cols-2 md:grid-cols-4 gap-8'
-          >
+          <div className='grid grid-cols-2 md:grid-cols-4 gap-8'>
             {stats.map((stat, index) => (
-              <div
-                key={index}
-
-
-
-
-                className='text-center group'
-              >
+              <div key={index} className='text-center group'>
                 <div className='bg-gradient-to-br from-blue-500 to-cyan-500 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 hover:scale-110 transition-transform duration-300'>
                   <stat.icon className='w-8 h-8 text-white' />
                 </div>
@@ -199,12 +167,7 @@ export function CategoriesOverviewPage() {
       <div className='max-w-7xl mx-auto px-4 py-12 pb-24'>
         {/* Main Categories Grid */}
         <section className='mb-16'>
-          <div
-
-
-
-            className='text-center mb-12'
-          >
+          <div className='text-center mb-12'>
             <h2 className='text-4xl font-bold bg-gradient-to-r from-blue-800 to-cyan-600 bg-clip-text text-transparent mb-4'>
               Danh mục sản phẩm
             </h2>
@@ -215,7 +178,7 @@ export function CategoriesOverviewPage() {
             {filteredCategories.map((category) => {
               const IconComponent = categoryIcons[category.slug] || ShoppingBag
               // Get child categories for this parent
-              const childCategories = categories.filter(cat => cat.parentId === category._id)
+              const childCategories = categories.filter((cat) => cat.parentId === category._id)
 
               return (
                 <Card
@@ -232,9 +195,7 @@ export function CategoriesOverviewPage() {
                         {category.productCount?.toLocaleString() || 0} SP
                       </Badge>
                     </div>
-                    <CardTitle className='text-xl font-bold text-gray-900'>
-                      {category.name}
-                    </CardTitle>
+                    <CardTitle className='text-xl font-bold text-gray-900'>{category.name}</CardTitle>
                   </CardHeader>
 
                   <CardContent className='flex-1 flex flex-col pt-0'>
@@ -246,23 +207,16 @@ export function CategoriesOverviewPage() {
                     {/* Subcategories List */}
                     <div className='flex-1 space-y-2 mb-4'>
                       {childCategories.slice(0, 3).map((sub) => (
-                        <div
-                          key={sub._id}
-                          className='flex items-center justify-between text-sm'
-                        >
+                        <div key={sub._id} className='flex items-center justify-between text-sm'>
                           <span className='text-gray-700'>{sub.name}</span>
                           <span className='text-blue-600 font-medium'>({sub.productCount || 0})</span>
                         </div>
                       ))}
                       {childCategories.length > 3 && (
-                        <div className='text-sm text-gray-400 pt-1'>
-                          +{childCategories.length - 3} danh mục khác
-                        </div>
+                        <div className='text-sm text-gray-400 pt-1'>+{childCategories.length - 3} danh mục khác</div>
                       )}
                       {childCategories.length === 0 && (
-                        <div className='text-sm text-gray-400 italic'>
-                          Xem chi tiết danh mục
-                        </div>
+                        <div className='text-sm text-gray-400 italic'>Xem chi tiết danh mục</div>
                       )}
                     </div>
 
@@ -289,17 +243,12 @@ export function CategoriesOverviewPage() {
             </h2>
             <p className='text-xl text-gray-600'>
               Chất lượng cao với thiết kế chuyên nghiệp và thông tin đóng gói chi tiết
-
             </p>
 
             {/* View All Products Button */}
             <div className='text-center mt-6'>
               <Link to='/products'>
-                <Button
-                  variant='outline'
-                  size='lg'
-                  className='border-2 border-blue-300 text-blue-600 hover:bg-blue-50'
-                >
+                <Button variant='outline' size='lg' className='border-2 border-blue-300 text-blue-600 hover:bg-blue-50'>
                   Xem tất cả sản phẩm
                   <ArrowRight className='ml-2 w-4 h-4' />
                 </Button>
@@ -308,20 +257,11 @@ export function CategoriesOverviewPage() {
           </div>
 
           {/* 4 Products Carousel with Smooth Sliding */}
-          <div
-            className='relative px-16 lg:px-20'
-
-
-
-          >
+          <div className='relative px-16 lg:px-20'>
             {/* Navigation Arrows - Positioned outside product area */}
             {featuredTotalPages > 1 && (
               <>
-                <div
-                  className='absolute left-0 top-1/2 -translate-y-1/2 z-20'
-
-
-                >
+                <div className='absolute left-0 top-1/2 -translate-y-1/2 z-20'>
                   <Button
                     variant='outline'
                     size='icon'
@@ -332,11 +272,7 @@ export function CategoriesOverviewPage() {
                   </Button>
                 </div>
 
-                <div
-                  className='absolute right-0 top-1/2 -translate-y-1/2 z-20'
-
-
-                >
+                <div className='absolute right-0 top-1/2 -translate-y-1/2 z-20'>
                   <Button
                     variant='outline'
                     size='icon'
@@ -362,7 +298,8 @@ export function CategoriesOverviewPage() {
                   >
                     {featuredProducts.slice(pageIndex * 4, (pageIndex + 1) * 4).map((product, productIndex) => {
                       // Extract price from priceVariants (new data format)
-                      const defaultVariant = product.priceVariants?.find(v => v.isDefault) || product.priceVariants?.[0]
+                      const defaultVariant =
+                        product.priceVariants?.find((v) => v.isDefault) || product.priceVariants?.[0]
                       const salePrice = defaultVariant?.price || product.price || 0
                       const originalPrice = defaultVariant?.originalPrice || salePrice
                       const hasDiscount = originalPrice > salePrice
@@ -396,7 +333,7 @@ export function CategoriesOverviewPage() {
                             }}
                             variant='grid'
                             onAddToCart={(selectedUnit) => {
-                              const variant = product.priceVariants?.find(v => v.unit === selectedUnit)
+                              const variant = product.priceVariants?.find((v) => v.unit === selectedUnit)
                               const price = variant?.price || product.priceVariants?.[0]?.price
                               addToCart(product, 1, selectedUnit, price)
                             }}
@@ -415,20 +352,14 @@ export function CategoriesOverviewPage() {
 
             {/* Enhanced Page Indicators */}
             {featuredTotalPages > 1 && (
-              <div
-                className='flex justify-center items-center gap-2 mt-8'
-
-
-
-              >
+              <div className='flex justify-center items-center gap-2 mt-8'>
                 {Array.from({ length: featuredTotalPages }).map((_, index) => (
                   <button
                     key={index}
                     onClick={() => setFeaturedCurrentIndex(index)}
-                    className={`h-3 rounded-full transition-all duration-300 ${index === featuredCurrentIndex
-                      ? 'bg-blue-600 w-8 shadow-lg'
-                      : 'bg-blue-200 hover:bg-blue-300 w-3'
-                      }`}
+                    className={`h-3 rounded-full transition-all duration-300 ${
+                      index === featuredCurrentIndex ? 'bg-blue-600 w-8 shadow-lg' : 'bg-blue-200 hover:bg-blue-300 w-3'
+                    }`}
                   />
                 ))}
               </div>
@@ -440,12 +371,7 @@ export function CategoriesOverviewPage() {
 
         {/* Medical Consultation CTA */}
         <section className='mb-16'>
-          <div
-
-
-
-            className='glass-consultation rounded-3xl p-12 text-center relative overflow-hidden'
-          >
+          <div className='glass-consultation rounded-3xl p-12 text-center relative overflow-hidden'>
             {/* Background Pattern */}
             <div className='absolute inset-0 opacity-10'>
               <div className='absolute top-10 left-10 w-32 h-32 bg-white rounded-full'></div>
@@ -454,18 +380,14 @@ export function CategoriesOverviewPage() {
             </div>
 
             <div className='relative z-10'>
-              <div
-
-
-                className='w-24 h-24 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center mx-auto mb-8'
-              >
+              <div className='w-24 h-24 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center mx-auto mb-8'>
                 <Stethoscope className='w-12 h-12 text-white' />
               </div>
 
               <h2 className='text-4xl font-bold text-blue-800 mb-4'>Cần tư vấn từ dược sĩ?</h2>
               <p className='text-xl text-gray-700 mb-8 max-w-2xl mx-auto'>
-                Đội ngũ dược sĩ chuyên nghiệp luôn sẵn sàng tư vấn miễn phí 24/7. Hãy để chúng tôi giúp bạn tìm ra
-                giải pháp tốt nhất cho sức khỏe.
+                Đội ngũ dược sĩ chuyên nghiệp luôn sẵn sàng tư vấn miễn phí 24/7. Hãy để chúng tôi giúp bạn tìm ra giải
+                pháp tốt nhất cho sức khỏe.
               </p>
 
               <div className='flex flex-col sm:flex-row items-center justify-center gap-4'>
@@ -495,12 +417,7 @@ export function CategoriesOverviewPage() {
 
         {/* Health Tips Section */}
         <section className='mb-16'>
-          <div
-
-
-
-            className='text-center mb-12'
-          >
+          <div className='text-center mb-12'>
             <h2 className='text-4xl font-bold bg-gradient-to-r from-blue-800 to-cyan-600 bg-clip-text text-transparent mb-4'>
               Góc sức khỏe
             </h2>
@@ -528,13 +445,7 @@ export function CategoriesOverviewPage() {
                 color: 'from-pink-500 to-purple-500',
               },
             ].map((tip, index) => (
-              <div
-                key={index}
-
-
-
-
-              >
+              <div key={index}>
                 <Card className='group hover:shadow-xl transition-all duration-500 bg-white/80 backdrop-blur-sm border border-gray-100 hover:border-blue-200 h-full'>
                   <CardContent className='p-6'>
                     <div
@@ -560,32 +471,15 @@ export function CategoriesOverviewPage() {
 
         {/* Newsletter Section */}
         <section>
-          <div
-
-
-
-            className='bg-gradient-to-r from-blue-600 via-blue-700 to-cyan-600 rounded-3xl p-12 text-center text-white relative overflow-hidden'
-          >
+          <div className='bg-gradient-to-r from-blue-600 via-blue-700 to-cyan-600 rounded-3xl p-12 text-center text-white relative overflow-hidden'>
             {/* Background Effects */}
             <div className='absolute inset-0 opacity-20'>
-              <div
-                className='absolute top-4 left-4 w-16 h-16 bg-white rounded-full'
-
-
-              />
-              <div
-                className='absolute bottom-4 right-4 w-20 h-20 bg-white rounded-full'
-
-
-              />
+              <div className='absolute top-4 left-4 w-16 h-16 bg-white rounded-full' />
+              <div className='absolute bottom-4 right-4 w-20 h-20 bg-white rounded-full' />
             </div>
 
             <div className='relative z-10'>
-              <div
-
-
-                className='w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-8'
-              >
+              <div className='w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-8'>
                 <Zap className='w-10 h-10 text-white' />
               </div>
 
@@ -605,7 +499,7 @@ export function CategoriesOverviewPage() {
             </div>
           </div>
         </section>
-      </div >
-    </div >
+      </div>
+    </div>
   )
 }

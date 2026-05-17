@@ -13,8 +13,6 @@ import {
   Stethoscope,
   User,
   RefreshCw,
-  ChevronLeft,
-  ChevronRight,
   Edit,
   Eye,
   Ban,
@@ -31,13 +29,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '../ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { Avatar, AvatarFallback } from '../ui/avatar'
 import { Badge } from '../ui/badge'
@@ -46,6 +38,7 @@ import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { ConfirmDialog } from '../shared/ConfirmDialog'
+import { PaginationComponent } from '../shared/PaginationComponent'
 
 // Type definitions
 interface UserData {
@@ -125,7 +118,7 @@ export function UserManagementPage() {
     description: string
     onConfirm: () => void
     variant?: 'default' | 'destructive'
-  }>({ open: false, title: '', description: '', onConfirm: () => { }, variant: 'default' })
+  }>({ open: false, title: '', description: '', onConfirm: () => {}, variant: 'default' })
 
   // Debounce search
   useEffect(() => {
@@ -137,7 +130,12 @@ export function UserManagementPage() {
   }, [searchQuery])
 
   // Fetch users with React Query
-  const { data: usersData, isLoading, error, refetch } = useQuery<UsersResponse>({
+  const {
+    data: usersData,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery<UsersResponse>({
     queryKey: ['admin', 'users', page, limit, filterRole, filterStatus, debouncedSearch],
     queryFn: async () => {
       const response = await adminService.getAllUsers({
@@ -197,8 +195,7 @@ export function UserManagementPage() {
 
   // Update user mutation (for ban/unban and edit)
   const updateMutation = useMutation({
-    mutationFn: ({ userId, data }: { userId: string; data: any }) =>
-      adminService.updateUser(userId, data),
+    mutationFn: ({ userId, data }: { userId: string; data: any }) => adminService.updateUser(userId, data),
     onSuccess: () => {
       toast.success('Đã cập nhật thông tin người dùng')
       queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
@@ -266,7 +263,7 @@ export function UserManagementPage() {
           setIsEditDialogOpen(false)
           setSelectedUser(null)
         },
-      }
+      },
     )
   }
 
@@ -278,10 +275,11 @@ export function UserManagementPage() {
       open: true,
       title: newStatus === 2 ? 'Khóa tài khoản' : 'Mở khóa tài khoản',
       description: `Bạn có chắc chắn muốn ${action} tài khoản người dùng này?`,
-      onConfirm: () => updateMutation.mutate({
-        userId: user._id,
-        data: { status: newStatus },
-      }),
+      onConfirm: () =>
+        updateMutation.mutate({
+          userId: user._id,
+          data: { status: newStatus },
+        }),
       variant: newStatus === 2 ? 'destructive' : 'default',
     })
   }
@@ -305,11 +303,7 @@ export function UserManagementPage() {
       pharmacist: 'Dược sĩ',
       admin: 'Admin',
     }
-    return (
-      <Badge className={colors[roleStr] || 'bg-gray-100 text-gray-700'}>
-        {labels[roleStr] || roleStr}
-      </Badge>
-    )
+    return <Badge className={colors[roleStr] || 'bg-gray-100 text-gray-700'}>{labels[roleStr] || roleStr}</Badge>
   }
 
   const getStatusBadge = (status: number) => {
@@ -324,11 +318,7 @@ export function UserManagementPage() {
       unverified: 'Chưa xác thực',
       banned: 'Đã khóa',
     }
-    return (
-      <Badge className={colors[statusStr] || 'bg-gray-100 text-gray-700'}>
-        {labels[statusStr] || statusStr}
-      </Badge>
-    )
+    return <Badge className={colors[statusStr] || 'bg-gray-100 text-gray-700'}>{labels[statusStr] || statusStr}</Badge>
   }
 
   const users = usersData?.result?.users || []
@@ -345,18 +335,22 @@ export function UserManagementPage() {
           <p className='text-gray-600 mt-2'>Quản lý tất cả người dùng trong hệ thống</p>
         </div>
         <div className='flex items-center gap-3'>
-          <Button variant='outline' className='gap-2' onClick={handleRefresh}>
+          <Button
+            variant='outline'
+            className='!border-blue-300 !text-blue-600 hover:!bg-blue-50 !gap-2'
+            onClick={handleRefresh}
+          >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
             Làm mới
           </Button>
-          <Button variant='outline' className='gap-2'>
+          {/* <Button variant='outline' className='gap-2'>
             <Upload className='w-4 h-4' />
             Import
-          </Button>
-          <Button variant='outline' className='gap-2'>
+          </Button> */}
+          {/* <Button variant='outline' className='gap-2'>
             <Download className='w-4 h-4' />
             Export
-          </Button>
+          </Button> */}
         </div>
       </div>
 
@@ -490,14 +484,12 @@ export function UserManagementPage() {
               <RefreshCw className='w-8 h-8 animate-spin text-blue-600' />
             </div>
           ) : error ? (
-            <div className='text-center text-red-600 py-8'>
-              Không thể tải danh sách người dùng. Vui lòng thử lại.
-            </div>
+            <div className='text-center text-red-600 py-8'>Không thể tải danh sách người dùng. Vui lòng thử lại.</div>
           ) : (
             <>
               <div className='overflow-x-auto'>
                 <Table>
-                  <TableHeader>
+                  <TableHeader className='border-b-2 border-blue-300'>
                     <TableRow>
                       <TableHead>Người dùng</TableHead>
                       <TableHead>Liên hệ</TableHead>
@@ -509,7 +501,7 @@ export function UserManagementPage() {
                   </TableHeader>
                   <TableBody>
                     {users.map((user: UserData) => (
-                      <TableRow key={user._id}>
+                      <TableRow key={user._id} className='border-b border-blue-200 hover:bg-blue-50/30'>
                         <TableCell>
                           <div className='flex items-center gap-3'>
                             <Avatar>
@@ -535,9 +527,7 @@ export function UserManagementPage() {
                         <TableCell>{getStatusBadge(user.status)}</TableCell>
                         <TableCell>
                           <p className='text-sm text-gray-900'>
-                            {user.createdAt
-                              ? format(new Date(user.createdAt), 'dd/MM/yyyy', { locale: vi })
-                              : 'N/A'}
+                            {user.createdAt ? format(new Date(user.createdAt), 'dd/MM/yyyy', { locale: vi }) : 'N/A'}
                           </p>
                         </TableCell>
                         <TableCell className='text-right'>
@@ -548,33 +538,48 @@ export function UserManagementPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align='end' className='bg-white shadow-lg border-2 border-blue-200'>
-                              <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
+                              <DropdownMenuLabel className='text-blue-700'>Thao tác</DropdownMenuLabel>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => handleViewDetails(user)}>
+                              <DropdownMenuItem
+                                className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
+                                onClick={() => handleViewDetails(user)}
+                              >
                                 <Eye className='w-4 h-4 mr-2' />
                                 Xem chi tiết
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleEdit(user)}>
+                              <DropdownMenuItem
+                                className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
+                                onClick={() => handleEdit(user)}
+                              >
                                 <Edit className='w-4 h-4 mr-2' />
                                 Chỉnh sửa
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => handleVerifyEmail(user._id)}>
+                              <DropdownMenuItem
+                                className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
+                                onClick={() => handleVerifyEmail(user._id)}
+                              >
                                 <CheckCircle className='w-4 h-4 mr-2' />
                                 Xác thực email
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleResetPassword(user._id)}>
+                              <DropdownMenuItem
+                                className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
+                                onClick={() => handleResetPassword(user._id)}
+                              >
                                 <RefreshCw className='w-4 h-4 mr-2' />
                                 Reset mật khẩu
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleToggleBan(user)}>
+                              <DropdownMenuItem
+                                className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
+                                onClick={() => handleToggleBan(user)}
+                              >
                                 <Ban className='w-4 h-4 mr-2' />
                                 {user.status === 2 ? 'Mở khóa' : 'Khóa tài khoản'}
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 onClick={() => handleDelete(user._id)}
-                                className='text-red-600'
+                                className='text-red-600 hover:!bg-red-100 hover:!border-red-100 hover:!text-red-700'
                               >
                                 <Trash2 className='w-4 h-4 mr-2' />
                                 Xóa người dùng
@@ -589,33 +594,15 @@ export function UserManagementPage() {
               </div>
 
               {/* Pagination */}
-              <div className='flex items-center justify-between mt-4'>
-                <p className='text-sm text-gray-600'>
-                  Hiển thị {(page - 1) * limit + 1} - {Math.min(page * limit, pagination.total)} của{' '}
-                  {pagination.total} người dùng
-                </p>
-                <div className='flex items-center gap-2'>
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={page === 1}
-                  >
-                    <ChevronLeft className='w-4 h-4' />
-                  </Button>
-                  <span className='text-sm text-gray-600'>
-                    Trang {page} / {pagination.totalPages}
-                  </span>
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
-                    disabled={page === pagination.totalPages}
-                  >
-                    <ChevronRight className='w-4 h-4' />
-                  </Button>
+              {pagination.totalPages > 1 && (
+                <div className='flex items-center justify-between mt-4 pt-4 border-t border-blue-300'>
+                  <p className='text-sm text-gray-600'>
+                    Hiển thị {(page - 1) * limit + 1} - {Math.min(page * limit, pagination.total)} của{' '}
+                    {pagination.total} người dùng
+                  </p>
+                  <PaginationComponent currentPage={page} totalPages={pagination.totalPages} onPageChange={setPage} />
                 </div>
-              </div>
+              )}
             </>
           )}
         </CardContent>
@@ -668,8 +655,8 @@ export function UserManagementPage() {
                   <p className='text-base'>
                     {selectedUser.createdAt
                       ? format(new Date(selectedUser.createdAt), 'dd/MM/yyyy HH:mm', {
-                        locale: vi,
-                      })
+                          locale: vi,
+                        })
                       : 'N/A'}
                   </p>
                 </div>

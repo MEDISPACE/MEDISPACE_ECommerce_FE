@@ -237,10 +237,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
             <div className='flex flex-col items-center space-y-4'>
               <div className='relative'>
                 <Avatar className='w-24 h-24 border-4 border-blue-100'>
-                  <AvatarImage
-                    src={avatarPreview || user?.avatar}
-                    alt={`${user?.firstName} ${user?.lastName}`}
-                  />
+                  <AvatarImage src={avatarPreview || user?.avatar} alt={`${user?.firstName} ${user?.lastName}`} />
                   <AvatarFallback className='text-2xl bg-blue-100 text-blue-600'>
                     {user?.firstName?.[0]}
                     {user?.lastName?.[0]}
@@ -265,12 +262,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
               />
 
               <div className='flex gap-2'>
-                <Button
-                  type='button'
-                  variant='outline'
-                  size='sm'
-                  onClick={() => fileInputRef.current?.click()}
-                >
+                <Button type='button' variant='outline' size='sm' onClick={() => fileInputRef.current?.click()}>
                   Đổi ảnh
                 </Button>
               </div>
@@ -314,9 +306,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
                         <div className='flex items-start gap-3'>
                           <Mail className='w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0' />
                           <div className='flex-1'>
-                            <h4 className='text-sm font-medium text-amber-800 mb-1'>
-                              Tài khoản chưa được xác thực
-                            </h4>
+                            <h4 className='text-sm font-medium text-amber-800 mb-1'>Tài khoản chưa được xác thực</h4>
                             <p className='text-sm text-amber-700 mb-3'>
                               Bạn cần xác thực email để sử dụng đầy đủ tính năng của MediSpace.
                             </p>
@@ -454,10 +444,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
                   <UserIcon className='w-4 h-4 text-gray-600' />
                   Giới tính
                 </Label>
-                <Select
-                  value={watchedGender}
-                  onValueChange={(value) => setValue('gender', value as '0' | '1')}
-                >
+                <Select value={watchedGender} onValueChange={(value) => setValue('gender', value as '0' | '1')}>
                   <SelectTrigger className='border-2 border-blue-200 focus:border-blue-500'>
                     <SelectValue placeholder='Chọn giới tính' />
                   </SelectTrigger>

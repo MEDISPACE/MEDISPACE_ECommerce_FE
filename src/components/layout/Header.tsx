@@ -35,6 +35,7 @@ import { useCart } from '~/contexts/CartContext'
 import { useCategories } from '~/hooks/product'
 import type { Category } from '../../types/product'
 import medispaceLogo from '../../assets/MEDISPACE_Logo_Final.svg'
+import { NotificationDropdown } from '../shared/NotificationDropdown'
 
 export function Header() {
   const navigate = useNavigate()
@@ -114,6 +115,11 @@ export function Header() {
               </Button>
             </Link>
 
+            {/* Notifications Bell – show only for customers */}
+            {isAuthenticated && user?.role === UserRole.Customer && (
+              <NotificationDropdown />
+            )}
+
             {/* Account */}
             {isAuthenticated ? (
               <DropdownMenu>
@@ -134,10 +140,12 @@ export function Header() {
                 <DropdownMenuContent align='end' className='w-56 bg-white/95 backdrop-blur-lg border-blue-100'>
                   <DropdownMenuLabel className='text-blue-900'>
                     <div className='flex flex-col space-y-1'>
-                      <p className='text-sm font-medium'>
+                      <p className='text-sm font-medium truncate'>
                         {user?.firstName} {user?.lastName}
                       </p>
-                      <p className='text-xs text-blue-600'>{user?.email}</p>
+                      <p className='text-xs text-blue-600 truncate overflow-hidden text-ellipsis' title={user?.email}>
+                        {user?.email}
+                      </p>
                       <div className='text-xs text-gray-500 capitalize font-normal mt-1'>
                         {user?.role === UserRole.Admin
                           ? 'Quản trị viên'
@@ -248,23 +256,29 @@ export function Header() {
 
             {/* Desktop Categories with unified mega menu - Only show main categories (level 0) */}
             <div className='hidden lg:flex items-center gap-4'>
-              {categories.filter((cat) => cat.level === 0).map((category) => (
-                <div key={category._id} className='relative' onMouseEnter={() => handleCategoryHover(category)}>
-                  <Link
-                    to={`/categories/${category.slug}`}
-                    className={`relative flex items-center px-1 py-3 text-sm font-medium transition-colors duration-200 group ${activeMegaMenuCategory?._id === category._id ? 'text-blue-600' : 'text-gray-700 hover:text-blue-600'
+              {categories
+                .filter((cat) => cat.level === 0)
+                .map((category) => (
+                  <div key={category._id} className='relative' onMouseEnter={() => handleCategoryHover(category)}>
+                    <Link
+                      to={`/categories/${category.slug}`}
+                      className={`relative flex items-center px-1 py-3 text-sm font-medium transition-colors duration-200 group ${
+                        activeMegaMenuCategory?._id === category._id
+                          ? 'text-blue-600'
+                          : 'text-gray-700 hover:text-blue-600'
                       }`}
-                    title={category.name}
-                  >
-                    <span className='text-center leading-tight'>{category.name}</span>
-                    <ChevronDown className='w-3 h-3 ml-1 opacity-60 flex-shrink-0' />
-                    <span
-                      className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-blue-600 to-cyan-500 transition-all duration-300 ${activeMegaMenuCategory?._id === category._id ? 'w-full' : 'w-0 group-hover:w-full'
+                      title={category.name}
+                    >
+                      <span className='text-center leading-tight'>{category.name}</span>
+                      <ChevronDown className='w-3 h-3 ml-1 opacity-60 flex-shrink-0' />
+                      <span
+                        className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-blue-600 to-cyan-500 transition-all duration-300 ${
+                          activeMegaMenuCategory?._id === category._id ? 'w-full' : 'w-0 group-hover:w-full'
                         }`}
-                    ></span>
-                  </Link>
-                </div>
-              ))}
+                      ></span>
+                    </Link>
+                  </div>
+                ))}
             </div>
 
             <Link
@@ -304,6 +318,9 @@ function HeaderBreadcrumb() {
   // Hide if no items
   if (items.length === 0) return null
 
+  // Lọc bỏ 'Trang chủ' để tránh lặp lại vì đã được render mặc định ở trên
+  const displayItems = items.length > 0 && items[0].label === 'Trang chủ' ? items.slice(1) : items;
+
   return (
     <div className='bg-blue-40 border-t border-gray-100'>
       <div className='max-w-7xl mx-auto px-4 py-3'>
@@ -312,9 +329,9 @@ function HeaderBreadcrumb() {
             <Home className='w-4 h-4' />
             <span>Trang chủ</span>
           </Link>
-          {items.length > 0 && <ChevronRight className='w-4 h-4 mx-2 text-gray-400' />}
+          {displayItems.length > 0 && <ChevronRight className='w-4 h-4 mx-2 text-gray-400' />}
 
-          {items.map((item, index) => (
+          {displayItems.map((item, index) => (
             <div key={index} className='flex items-center'>
               {item.href ? (
                 <Link
@@ -329,7 +346,7 @@ function HeaderBreadcrumb() {
                 </div>
               )}
 
-              {index < items.length - 1 && <ChevronRight className='w-4 h-4 mx-2 text-gray-400' />}
+              {index < displayItems.length - 1 && <ChevronRight className='w-4 h-4 mx-2 text-gray-400' />}
             </div>
           ))}
         </nav>

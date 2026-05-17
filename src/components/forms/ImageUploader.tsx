@@ -10,7 +10,7 @@ import { toast } from 'sonner'
 interface UploadedImage {
   id: string
   file: File
-  url: string  // S3 URL after upload, or local blob URL before upload
+  url: string // S3 URL after upload, or local blob URL before upload
   name: string
   quality: 'good' | 'fair' | 'poor'
   isUploading?: boolean
@@ -43,7 +43,7 @@ export function ImageUploader({
   const analyzeImageQuality = useCallback((file: File): 'good' | 'fair' | 'poor' => {
     // Simple quality check based on file size
     if (file.size > 1024 * 1024) return 'good' // > 1MB
-    if (file.size > 500 * 1024) return 'fair' // > 500KB  
+    if (file.size > 500 * 1024) return 'fair' // > 500KB
     return 'poor'
   }, [])
 
@@ -136,8 +136,8 @@ export function ImageUploader({
         onImagesChange?.(finalImages)
 
         // Show toast for results
-        const successCount = newImages.filter(img => img.isUploaded).length
-        const failCount = newImages.filter(img => img.uploadError).length
+        const successCount = newImages.filter((img) => img.isUploaded).length
+        const failCount = newImages.filter((img) => img.uploadError).length
 
         if (successCount > 0) {
           toast.success(`Đã tải lên ${successCount} ảnh thành công`)
@@ -181,46 +181,49 @@ export function ImageUploader({
   )
 
   // Retry failed upload
-  const retryUpload = useCallback(async (imageId: string) => {
-    const imageIndex = images.findIndex(img => img.id === imageId)
-    if (imageIndex === -1) return
+  const retryUpload = useCallback(
+    async (imageId: string) => {
+      const imageIndex = images.findIndex((img) => img.id === imageId)
+      if (imageIndex === -1) return
 
-    const image = images[imageIndex]
+      const image = images[imageIndex]
 
-    // Update state to show uploading
-    const updatingImages = [...images]
-    updatingImages[imageIndex] = {
-      ...image,
-      isUploading: true,
-      uploadError: undefined,
-    }
-    setImages(updatingImages)
-
-    // Try upload again
-    const s3Url = await uploadImageToServer(image.file)
-
-    const finalImages = [...images]
-    if (s3Url) {
-      finalImages[imageIndex] = {
+      // Update state to show uploading
+      const updatingImages = [...images]
+      updatingImages[imageIndex] = {
         ...image,
-        url: s3Url,
-        isUploading: false,
-        isUploaded: true,
+        isUploading: true,
         uploadError: undefined,
       }
-      toast.success('Tải lên thành công')
-    } else {
-      finalImages[imageIndex] = {
-        ...image,
-        isUploading: false,
-        uploadError: 'Upload thất bại',
-      }
-      toast.error('Tải lên thất bại')
-    }
+      setImages(updatingImages)
 
-    setImages(finalImages)
-    onImagesChange?.(finalImages)
-  }, [images, onImagesChange])
+      // Try upload again
+      const s3Url = await uploadImageToServer(image.file)
+
+      const finalImages = [...images]
+      if (s3Url) {
+        finalImages[imageIndex] = {
+          ...image,
+          url: s3Url,
+          isUploading: false,
+          isUploaded: true,
+          uploadError: undefined,
+        }
+        toast.success('Tải lên thành công')
+      } else {
+        finalImages[imageIndex] = {
+          ...image,
+          isUploading: false,
+          uploadError: 'Upload thất bại',
+        }
+        toast.error('Tải lên thất bại')
+      }
+
+      setImages(finalImages)
+      onImagesChange?.(finalImages)
+    },
+    [images, onImagesChange],
+  )
 
   const getQualityIcon = (quality: string) => {
     switch (quality) {
@@ -250,7 +253,7 @@ export function ImageUploader({
 
   // Get only successfully uploaded images (for form submission)
   const getUploadedImages = useCallback(() => {
-    return images.filter(img => img.isUploaded).map(img => img.url)
+    return images.filter((img) => img.isUploaded).map((img) => img.url)
   }, [images])
 
   // Expose getUploadedImages through a ref or callback
@@ -259,7 +262,8 @@ export function ImageUploader({
   return (
     <div className={`space-y-6 ${className}`}>
       {/* Upload Area */}
-      <Card className='border-2 border-dashed border-blue-200 bg-white hover:border-blue-300 transition-all duration-200'>
+      {images.length === 0 && (
+        <Card className='border-2 border-dashed border-blue-200 bg-white hover:border-blue-300 transition-all duration-200'>
         <div
           className={`p-8 text-center ${isDragging ? 'bg-blue-100/50' : ''}`}
           onDrop={handleDrop}
@@ -312,73 +316,34 @@ export function ImageUploader({
               Chọn từ máy
             </Button>
           </div>
-
-          <input
-            ref={fileInputRef}
-            type='file'
-            multiple
-            accept={acceptedTypes.join(',')}
-            onChange={(e) => handleFiles(e.target.files)}
-            className='hidden'
-          />
         </div>
       </Card>
+      )}
 
-      {/* Guidelines */}
-      <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
-        <div className='p-6'>
-          <h3 className='mb-4 text-blue-900 flex items-center'>📋 HƯỚNG DẪN CHỤP ẢNH ĐƠN THUỐC TỐT</h3>
-
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-            <div className='space-y-2'>
-              <div className='flex items-center text-emerald-600'>
-                <Check className='w-4 h-4 mr-2' />
-                <span>Ảnh rõ nét, đủ sáng, không bị mờ</span>
-              </div>
-              <div className='flex items-center text-emerald-600'>
-                <Check className='w-4 h-4 mr-2' />
-                <span>Chụp toàn bộ đơn thuốc, không bị cắt</span>
-              </div>
-              <div className='flex items-center text-emerald-600'>
-                <Check className='w-4 h-4 mr-2' />
-                <span>Đặt đơn thuốc trên nền phẳng, tránh bóng</span>
-              </div>
-              <div className='flex items-center text-emerald-600'>
-                <Check className='w-4 h-4 mr-2' />
-                <span>Thông tin bác sĩ, bệnh viện phải rõ ràng</span>
-              </div>
-            </div>
-
-            <div className='space-y-2'>
-              <div className='flex items-center text-red-500'>
-                <X className='w-4 h-4 mr-2' />
-                <span>Không chụp nghiêng, không bị che khuất</span>
-              </div>
-              <div className='flex items-center text-red-500'>
-                <X className='w-4 h-4 mr-2' />
-                <span>Không chụp trong điều kiện thiếu sáng</span>
-              </div>
-              <div className='flex items-center text-red-500'>
-                <X className='w-4 h-4 mr-2' />
-                <span>Không để bị mờ hoặc rung tay</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Card>
+      {/* Hidden file input - Needs to remain mounted always */}
+      <input
+        ref={fileInputRef}
+        type='file'
+        multiple
+        accept={acceptedTypes.join(',')}
+        onChange={(e) => handleFiles(e.target.files)}
+        className='hidden'
+      />
 
       {/* Image Preview */}
       {images.length > 0 && (
         <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
           <div className='p-6'>
             <h3 className='mb-4 text-blue-900 flex items-center'>
-              🖼️ ẢNH ĐÃ TẢI LÊN ({images.filter(img => img.isUploaded).length}/{images.length})
+              🖼️ ẢNH ĐÃ TẢI LÊN ({images.filter((img) => img.isUploaded).length}/{images.length})
             </h3>
 
             <div className='grid grid-cols-1 md:grid-cols-3 gap-4 mb-4'>
               {images.map((image) => (
                 <div key={image.id} className='relative'>
-                  <div className={`aspect-square rounded-lg overflow-hidden bg-gray-100 ${image.isUploading ? 'opacity-50' : ''}`}>
+                  <div
+                    className={`aspect-square rounded-lg overflow-hidden bg-gray-100 ${image.isUploading ? 'opacity-50' : ''}`}
+                  >
                     <ImageWithFallback src={image.url} alt={image.name} className='w-full h-full object-cover' />
 
                     {/* Upload overlay */}
@@ -433,19 +398,26 @@ export function ImageUploader({
                   </div>
                 </div>
               ))}
-            </div>
 
-            {images.length < maxFiles && (
-              <Button
-                variant='outline'
-                className='border-blue-200 text-blue-700 hover:bg-blue-50'
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
-              >
-                <Upload className='w-4 h-4 mr-2' />
-                Thêm ảnh
-              </Button>
-            )}
+              {/* Add more button as a grid item with drag & drop */}
+              {images.length < maxFiles && (
+                <div
+                  className='relative aspect-square rounded-lg border-2 border-dashed border-blue-300 bg-blue-50/30 flex justify-center items-center cursor-pointer hover:bg-blue-50 transition-colors'
+                  onClick={() => fileInputRef.current?.click()}
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                >
+                  <div className='text-center pointer-events-none'>
+                    <Upload className='w-6 h-6 text-blue-500 mb-2 mx-auto' />
+                    <span className='block text-sm text-blue-700 font-medium'>Thêm ảnh</span>
+                    <span className='block text-xs text-blue-500'>
+                      ({images.length}/{maxFiles})
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </Card>
       )}

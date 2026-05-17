@@ -35,7 +35,9 @@ export const useProductFilter = ({ products, initialFilters = {} }: UseProductFi
 
     // Category filter
     if (filters.category) {
-      results = results.filter((product) => product.category?.name?.toLowerCase().includes(filters.category!.toLowerCase()))
+      results = results.filter((product) =>
+        product.category?.name?.toLowerCase().includes(filters.category!.toLowerCase()),
+      )
     }
 
     // Price range filter

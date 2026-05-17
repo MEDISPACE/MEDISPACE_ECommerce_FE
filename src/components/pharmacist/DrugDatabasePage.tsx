@@ -1,5 +1,16 @@
 import { useState, useEffect } from 'react'
-import { Search, Pill, AlertTriangle, Info, BookOpen, Tag, ChevronRight, Package, ShoppingCart, Loader2 } from 'lucide-react'
+import {
+  Search,
+  Pill,
+  AlertTriangle,
+  Info,
+  BookOpen,
+  Tag,
+  ChevronRight,
+  Package,
+  ShoppingCart,
+  Loader2,
+} from 'lucide-react'
 
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
@@ -30,8 +41,8 @@ export function DrugDatabasePage() {
       setLoading(true)
       try {
         const [productsData, categoriesData] = await Promise.all([
-          productService.getProducts({ limit: 5000 }),
-          categoryService.getCategories()
+          productService.getProducts({ limit: 1000 }),
+          categoryService.getCategories(),
         ])
         setProducts(Array.isArray(productsData) ? productsData : [])
         setCategories(Array.isArray(categoriesData) ? categoriesData : [])
@@ -54,11 +65,14 @@ export function DrugDatabasePage() {
       (product.details?.activeIngredients || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       (product.brand?.name || '').toLowerCase().includes(searchQuery.toLowerCase())
 
-    const matchesCategory = categoryFilter === 'all' || product.categoryId === categoryFilter || product.category?._id === categoryFilter
-    const matchesType = typeFilter === 'all' ||
+    const matchesCategory =
+      categoryFilter === 'all' || product.categoryId === categoryFilter || product.category?._id === categoryFilter
+    const matchesType =
+      typeFilter === 'all' ||
       (typeFilter === 'Rx' && product.requiresPrescription) ||
       (typeFilter === 'OTC' && !product.requiresPrescription)
-    const matchesStock = stockFilter === 'all' ||
+    const matchesStock =
+      stockFilter === 'all' ||
       (stockFilter === 'inStock' && product.stockQuantity > 0) ||
       (stockFilter === 'outOfStock' && product.stockQuantity <= 0)
 
@@ -73,7 +87,7 @@ export function DrugDatabasePage() {
 
   // Get product unit
   const getUnit = (product: Product) => {
-    const defaultVariant = product.priceVariants?.find(v => v.isDefault) || product.priceVariants?.[0]
+    const defaultVariant = product.priceVariants?.find((v) => v.isDefault) || product.priceVariants?.[0]
     return defaultVariant?.unit || product.unit || 'Đơn vị'
   }
 
@@ -84,7 +98,9 @@ export function DrugDatabasePage() {
         <h1 className='text-2xl font-bold bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 bg-clip-text text-transparent'>
           Cơ sở dữ liệu thuốc
         </h1>
-        <p className='text-gray-600 mt-1'>Tra cứu thông tin chi tiết về thuốc và sản phẩm y tế ({products.length} sản phẩm)</p>
+        <p className='text-gray-600 mt-1'>
+          Tra cứu thông tin chi tiết về thuốc và sản phẩm y tế ({products.length} sản phẩm)
+        </p>
       </div>
 
       {/* Search & Filters */}
@@ -171,12 +187,16 @@ export function DrugDatabasePage() {
                   {/* Header with badges */}
                   <div className='flex items-start justify-between mb-2'>
                     <div className='flex gap-1'>
-                      <Badge className={product.requiresPrescription ? 'bg-red-500 text-white text-xs' : 'bg-green-500 text-white text-xs'}>
+                      <Badge
+                        className={
+                          product.requiresPrescription
+                            ? 'bg-red-500 text-white text-xs'
+                            : 'bg-green-500 text-white text-xs'
+                        }
+                      >
                         {product.requiresPrescription ? 'Rx' : 'OTC'}
                       </Badge>
-                      {product.stockQuantity <= 0 && (
-                        <Badge className='bg-gray-500 text-white text-xs'>Hết hàng</Badge>
-                      )}
+                      {product.stockQuantity <= 0 && <Badge className='bg-gray-500 text-white text-xs'>Hết hàng</Badge>}
                     </div>
                     {product.stockQuantity > 0 && product.stockQuantity <= 10 && (
                       <Badge className='bg-yellow-500 text-white text-xs'>Còn {product.stockQuantity}</Badge>
@@ -240,22 +260,30 @@ export function DrugDatabasePage() {
             <DialogHeader>
               <DialogTitle className='flex items-center gap-3'>
                 <span>{selectedProduct.name}</span>
-                <Badge className={selectedProduct.requiresPrescription ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}>
+                <Badge
+                  className={selectedProduct.requiresPrescription ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}
+                >
                   {selectedProduct.requiresPrescription ? 'Rx - Kê đơn' : 'OTC'}
                 </Badge>
-                {selectedProduct.stockQuantity <= 0 && (
-                  <Badge className='bg-gray-500 text-white'>Hết hàng</Badge>
-                )}
+                {selectedProduct.stockQuantity <= 0 && <Badge className='bg-gray-500 text-white'>Hết hàng</Badge>}
               </DialogTitle>
               <DialogDescription>{selectedProduct.brand?.name || 'Không có thương hiệu'}</DialogDescription>
             </DialogHeader>
 
             <Tabs defaultValue='info' className='space-y-4'>
               <TabsList className='grid w-full grid-cols-4 bg-blue-50'>
-                <TabsTrigger value='info' className='data-[state=active]:bg-white'>Thông tin</TabsTrigger>
-                <TabsTrigger value='usage' className='data-[state=active]:bg-white'>Cách dùng</TabsTrigger>
-                <TabsTrigger value='stock' className='data-[state=active]:bg-white'>Tồn kho</TabsTrigger>
-                <TabsTrigger value='pricing' className='data-[state=active]:bg-white'>Giá bán</TabsTrigger>
+                <TabsTrigger value='info' className='data-[state=active]:bg-white'>
+                  Thông tin
+                </TabsTrigger>
+                <TabsTrigger value='usage' className='data-[state=active]:bg-white'>
+                  Cách dùng
+                </TabsTrigger>
+                <TabsTrigger value='stock' className='data-[state=active]:bg-white'>
+                  Tồn kho
+                </TabsTrigger>
+                <TabsTrigger value='pricing' className='data-[state=active]:bg-white'>
+                  Giá bán
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value='info' className='space-y-4'>
@@ -263,7 +291,11 @@ export function DrugDatabasePage() {
                 <div className='flex gap-4'>
                   <div className='w-32 h-32 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0'>
                     {selectedProduct.featuredImage ? (
-                      <img src={selectedProduct.featuredImage} alt={selectedProduct.name} className='w-full h-full object-contain' />
+                      <img
+                        src={selectedProduct.featuredImage}
+                        alt={selectedProduct.name}
+                        className='w-full h-full object-contain'
+                      />
                     ) : (
                       <Pill className='w-16 h-16 text-gray-300' />
                     )}
@@ -287,11 +319,15 @@ export function DrugDatabasePage() {
                   </div>
                   <div>
                     <label className='text-sm text-gray-600'>Quy cách đóng gói</label>
-                    <p className='text-gray-900'>{selectedProduct.details?.packSize || selectedProduct.packaging || 'N/A'}</p>
+                    <p className='text-gray-900'>
+                      {selectedProduct.details?.packSize || selectedProduct.packaging || 'N/A'}
+                    </p>
                   </div>
                   <div>
                     <label className='text-sm text-gray-600'>Nhà sản xuất</label>
-                    <p className='text-gray-900'>{selectedProduct.details?.manufacturer || selectedProduct.brand?.name || 'N/A'}</p>
+                    <p className='text-gray-900'>
+                      {selectedProduct.details?.manufacturer || selectedProduct.brand?.name || 'N/A'}
+                    </p>
                   </div>
                   <div>
                     <label className='text-sm text-gray-600'>Danh mục</label>
@@ -356,7 +392,9 @@ export function DrugDatabasePage() {
                 <div className='grid md:grid-cols-3 gap-4'>
                   <div className='p-4 bg-blue-50 border border-blue-200 rounded-lg text-center'>
                     <Package className='w-8 h-8 mx-auto mb-2 text-blue-600' />
-                    <p className='text-2xl font-bold text-blue-600'>{selectedProduct.stockQuantity.toLocaleString('vi-VN')}</p>
+                    <p className='text-2xl font-bold text-blue-600'>
+                      {selectedProduct.stockQuantity.toLocaleString('vi-VN')}
+                    </p>
                     <p className='text-sm text-gray-600'>Tồn kho (đơn vị nhỏ nhất)</p>
                   </div>
                   <div className='p-4 bg-green-50 border border-green-200 rounded-lg text-center'>
@@ -389,8 +427,12 @@ export function DrugDatabasePage() {
                   </div>
                 )}
 
-                <div className={`p-4 rounded-lg ${selectedProduct.stockQuantity > 10 ? 'bg-green-50 border-green-200' : selectedProduct.stockQuantity > 0 ? 'bg-yellow-50 border-yellow-200' : 'bg-red-50 border-red-200'} border`}>
-                  <p className={`font-medium ${selectedProduct.stockQuantity > 10 ? 'text-green-800' : selectedProduct.stockQuantity > 0 ? 'text-yellow-800' : 'text-red-800'}`}>
+                <div
+                  className={`p-4 rounded-lg ${selectedProduct.stockQuantity > 10 ? 'bg-green-50 border-green-200' : selectedProduct.stockQuantity > 0 ? 'bg-yellow-50 border-yellow-200' : 'bg-red-50 border-red-200'} border`}
+                >
+                  <p
+                    className={`font-medium ${selectedProduct.stockQuantity > 10 ? 'text-green-800' : selectedProduct.stockQuantity > 0 ? 'text-yellow-800' : 'text-red-800'}`}
+                  >
                     {selectedProduct.stockQuantity > 10
                       ? '✓ Còn hàng - Sẵn sàng bán'
                       : selectedProduct.stockQuantity > 0
@@ -404,17 +446,24 @@ export function DrugDatabasePage() {
                 <div className='grid md:grid-cols-2 gap-4'>
                   {selectedProduct.priceVariants && selectedProduct.priceVariants.length > 0 ? (
                     selectedProduct.priceVariants.map((variant, idx) => (
-                      <div key={idx} className={`p-4 rounded-lg border ${variant.isDefault ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 border-gray-200'}`}>
+                      <div
+                        key={idx}
+                        className={`p-4 rounded-lg border ${variant.isDefault ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 border-gray-200'}`}
+                      >
                         <div className='flex items-center justify-between mb-2'>
                           <span className='font-medium text-gray-900'>{variant.unit}</span>
                           {variant.isDefault && <Badge className='bg-blue-500 text-white text-xs'>Mặc định</Badge>}
                         </div>
                         <p className='text-xl font-bold text-blue-600'>{variant.price.toLocaleString('vi-VN')}đ</p>
                         {variant.originalPrice && variant.originalPrice > variant.price && (
-                          <p className='text-sm text-gray-400 line-through'>{variant.originalPrice.toLocaleString('vi-VN')}đ</p>
+                          <p className='text-sm text-gray-400 line-through'>
+                            {variant.originalPrice.toLocaleString('vi-VN')}đ
+                          </p>
                         )}
                         {variant.costPrice && (
-                          <p className='text-xs text-gray-500 mt-1'>Giá vốn: {variant.costPrice.toLocaleString('vi-VN')}đ</p>
+                          <p className='text-xs text-gray-500 mt-1'>
+                            Giá vốn: {variant.costPrice.toLocaleString('vi-VN')}đ
+                          </p>
                         )}
                       </div>
                     ))

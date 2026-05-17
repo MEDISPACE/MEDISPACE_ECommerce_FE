@@ -1,0 +1,38 @@
+name: Auto Merge dev → master
+
+on:
+  workflow_run:
+    workflows: ["Frontend Pipeline"]
+    branches: [dev]
+    types: [completed]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.INFRA_PAT }}
+
+      - name: Merge dev → main
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git checkout master
+          git pull origin master
+
+          echo "🔀 Merging dev into master..."
+          git merge origin/dev --no-ff -m "chore: auto-merge dev → master [skip ci]"
+
+          git push origin master
+          echo "✅ Merged successfully"

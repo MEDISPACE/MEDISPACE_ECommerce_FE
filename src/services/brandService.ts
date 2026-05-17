@@ -4,13 +4,13 @@ import { API_ENDPOINTS } from '../constants'
 
 type BrandsResponse =
   | {
-    message?: string
-    result?: {
+      message?: string
+      result?: {
+        brands?: Brand[]
+        pagination?: unknown
+      }
       brands?: Brand[]
-      pagination?: unknown
     }
-    brands?: Brand[]
-  }
   | Brand[]
 
 export interface CreateBrandData {

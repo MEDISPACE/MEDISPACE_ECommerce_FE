@@ -156,11 +156,12 @@ export function ForgotPasswordPage() {
             <Label className='text-gray-700 font-medium'>Email</Label>
             <Input
               type='email'
-              placeholder='Email cua ban'
+              placeholder='Email của bạn'
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className={`h-12 text-base px-4 bg-blue-50/50 focus:bg-white backdrop-blur-sm border-blue-200 focus:border-blue-500 transition-all duration-300 ${errors.email ? 'border-red-500 focus:border-red-500' : ''
-                }`}
+              className={`h-12 text-base px-4 bg-blue-50/50 focus:bg-white backdrop-blur-sm border-blue-200 focus:border-blue-500 transition-all duration-300 ${
+                errors.email ? 'border-red-500 focus:border-red-500' : ''
+              }`}
             />
             {errors.email && (
               <div className='flex items-center gap-2 text-red-500 text-sm animate-in slide-in-from-left-1'>

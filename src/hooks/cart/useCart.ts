@@ -37,8 +37,7 @@ const getStoredCart = (): CartItem[] => {
 const saveCart = (items: CartItem[]) => {
   try {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items))
-  } catch (error) {
-  }
+  } catch (error) {}
 }
 
 export const useCart = (): UseCartReturn => {

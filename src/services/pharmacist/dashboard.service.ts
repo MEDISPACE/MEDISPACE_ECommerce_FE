@@ -25,6 +25,14 @@ export interface Prescription {
   _id: string
   prescriptionNumber: string
   customerId: string
+
+  // Thông tin bệnh nhân (từ OCR)
+  patientName?: string
+  patientAge?: string
+  patientGender?: string
+  diagnosis?: string
+  specialNotes?: string
+
   doctorName: string
   hospitalName?: string
   prescriptionDate: string
@@ -33,16 +41,31 @@ export interface Prescription {
     productName: string
     dosage: string
     quantity: number
+    unit?: string
     instructions: string
+    // Mapped from DB by BE after OCR
+    productId?: string
+    matchedName?: string
+    image?: string | null
   }>
-  status: 'pending' | 'verified' | 'rejected' | 'expired' // lowercase for consistency
+  status: 'pending' | 'verified' | 'rejected' | 'expired'
   verifiedBy?: string
   verifiedAt?: string
   notes?: string
   validUntil?: string
   createdAt: string
   updatedAt: string
-  pharmacistNotes?: string // Notes added by the pharmacist
+  pharmacistNotes?: string
+  ocrConfidence?: string
+  // Customer info (populated from lookup)
+  customer?: {
+    _id: string
+    firstName: string
+    lastName: string
+    email: string
+    phoneNumber?: string
+    avatar?: string
+  }
 }
 
 export interface Order {
@@ -97,6 +120,7 @@ export interface PatientInfo {
   dateOfBirth?: string
   gender?: number
   avatar?: string
+  addresses?: any[]
   role: string
   status: string
   createdAt: string
@@ -156,23 +180,23 @@ export const dashboardService = {
    * Search patient by phone number
    */
   searchPatient: async (phone: string): Promise<PatientSearchResult[]> => {
-    const response: AxiosResponse<{ message: string; result: PatientInfo }> = await apiClient.get(
+    const response: AxiosResponse<{ message: string; result: PatientInfo[] }> = await apiClient.get(
       '/pharmacist/patients/search',
       {
         params: { phone },
       },
     )
 
-    // Map single result to array for PatientHistoryPage
-    if (response.data.result) {
-      const patient = response.data.result
-      return [{
+    // Map results to array for PatientHistoryPage
+    if (response.data.result && Array.isArray(response.data.result)) {
+      return response.data.result.map((patient) => ({
         customerId: patient._id,
-        fullName: `${patient.firstName} ${patient.lastName}`,
+        fullName: `${patient.firstName || ''} ${patient.lastName || ''}`.trim() || 'Khách hàng',
         phoneNumber: patient.phoneNumber || '',
         email: patient.email,
-        avatar: patient.avatar
-      }]
+        avatar: patient.avatar,
+        addresses: patient.addresses,
+      }))
     }
     return []
   },

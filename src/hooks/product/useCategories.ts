@@ -21,18 +21,25 @@ export function useCategories() {
         const subCategories = data.filter((cat) => cat.level === 1)
         const subSubCategories = data.filter((cat) => cat.level === 2)
 
-        // Build 3-level hierarchy
+        // Build 3-level hierarchy using parentId (reliable) instead of path
+        // NOTE: All level-0 categories share path="/" in DB, so path-based matching fails
         const hierarchicalCategories = mainCategories.map((mainCat) => {
-          const subs = subCategories.filter((subCat) => subCat.path?.startsWith((mainCat.path || '') + '/'))
+          const mainCatId = mainCat._id?.toString()
+          const subs = subCategories.filter(
+            (subCat) => subCat.parentId?.toString() === mainCatId,
+          )
 
           return {
             ...mainCat,
-            subcategories: subs.map((subCat) => ({
-              ...subCat,
-              subcategories: subSubCategories.filter((subSubCat) =>
-                subSubCat.path?.startsWith((subCat.path || '') + '/')
-              )
-            }))
+            subcategories: subs.map((subCat) => {
+              const subCatId = subCat._id?.toString()
+              return {
+                ...subCat,
+                subcategories: subSubCategories.filter(
+                  (subSubCat) => subSubCat.parentId?.toString() === subCatId,
+                ),
+              }
+            }),
           }
         })
 

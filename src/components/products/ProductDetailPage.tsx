@@ -9,7 +9,6 @@ import {
   Shield,
   RotateCcw,
   Star,
-  ThumbsUp,
   BadgeAlert,
   FileText,
   MessageCircle,
@@ -27,22 +26,18 @@ import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
 import { Card, CardContent } from '../ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
-import { Separator } from '../ui/separator'
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Dialog, DialogContent, DialogClose, DialogTitle, DialogDescription } from '../ui/dialog'
 import { ImageWithFallback } from '~/components/shared/ImageWithFallback'
 import { useCart } from '../../contexts/CartContext'
 import { useWishlist } from '../../hooks/product/useWishlist'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
 import { useImageLightbox, useCarousel } from '~/hooks/ui'
-import type { Product, Review, Category } from '~/types/product'
+import type { Product, Category } from '~/types/product'
 
 import { ReviewList } from '../reviews/ReviewList'
 import { ReviewStats } from '../reviews/ReviewStats'
-import { WriteReviewDialog } from '../reviews/WriteReviewDialog'
 import { useProductReviews, useReviewActions } from '~/hooks/product/useReviews'
 import { ProductStructuredData } from '~/components/seo'
-import orderService from '~/services/orderService'
 import {
   getProductId,
   getProductImage,
@@ -54,10 +49,11 @@ import {
   isProductPrescription,
   getBrandName,
   getProductDescription,
-  getDefaultPriceVariant,
 } from '../../utils/productHelpers'
 import type { PriceVariant } from '../../types/product'
 import productService from '../../services/productService'
+import { RecommendationCarousel } from './RecommendationCarousel'
+import { useRelated, useBoughtTogether } from '~/hooks/product/useRecommendations'
 
 export function ProductDetailPage() {
   const { addToCart, buyNow, showPrescriptionWarning } = useCart()
@@ -66,7 +62,6 @@ export function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1)
   const [selectedImage, setSelectedImage] = useState(0)
   const [product, setProduct] = useState<Product | null>(null)
-  const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState('description')
@@ -76,7 +71,17 @@ export function ProductDetailPage() {
 
   // Reviews - Use real API (read-only)
   const productId = product?._id || ''
-  const { reviews, stats, loading: reviewsLoading, page, totalPages, sortBy, setPage, setSortBy, refetch: refetchReviews } = useProductReviews(productId)
+  const {
+    reviews,
+    stats,
+    loading: reviewsLoading,
+    page,
+    totalPages,
+    sortBy,
+    setPage,
+    setSortBy,
+    refetch: refetchReviews,
+  } = useProductReviews(productId)
   const { markHelpful } = useReviewActions()
 
   // Fetch product data
@@ -94,16 +99,8 @@ export function ProductDetailPage() {
           setError('Sản phẩm không tồn tại')
         }
 
-        // Fetch related products (same brand)
-        if (productData?.brand) {
-          const allProducts = await productService.getProducts({ limit: 12 })
-          const related = allProducts.filter(
-            (p: Product) =>
-              getBrandName(p) === getBrandName(productData) && getProductId(p) !== getProductId(productData),
-          )
-          setRelatedProducts(related)
-        }
-      } catch (err) {
+        // Related products handled by ML hook (useRelated) below
+      } catch {
         setError('Không thể tải thông tin sản phẩm')
       } finally {
         setLoading(false)
@@ -116,7 +113,7 @@ export function ProductDetailPage() {
   // Initialize selectedVariantIndex when product loads
   useEffect(() => {
     if (product?.priceVariants && product.priceVariants.length > 0) {
-      const defaultIndex = product.priceVariants.findIndex(v => v.isDefault)
+      const defaultIndex = product.priceVariants.findIndex((v) => v.isDefault)
       setSelectedVariantIndex(defaultIndex >= 0 ? defaultIndex : 0)
     }
   }, [product])
@@ -142,14 +139,14 @@ export function ProductDetailPage() {
 
   // Lookup category name from slug using fetched categories
   const getCategoryNameBySlug = (slugStr: string): string => {
-    const foundCategory = allCategoriesFlat.find(cat => cat.slug === slugStr)
+    const foundCategory = allCategoriesFlat.find((cat) => cat.slug === slugStr)
     if (foundCategory) {
       return foundCategory.name // Vietnamese name with diacritics
     }
     // Fallback: capitalize slug
     return slugStr
       .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ')
   }
 
@@ -160,10 +157,12 @@ export function ProductDetailPage() {
     const categoryPath = product.category.path // e.g., "/thuoc/thuoc-bo-vitamin/thuoc-tang-cuong"
     if (!categoryPath) {
       // Fallback: just show current category
-      return [{
-        label: product.category.name,
-        href: `/products?category=${product.category.slug}`
-      }]
+      return [
+        {
+          label: product.category.name,
+          href: `/products?category=${product.category.slug}`,
+        },
+      ]
     }
 
     // Parse path into slugs (remove leading slash and split)
@@ -174,24 +173,24 @@ export function ProductDetailPage() {
       const isLast = index === slugs.length - 1
       return {
         label: isLast ? product.category!.name : getCategoryNameBySlug(slugItem),
-        href: `/categories/${slugItem}`
+        href: `/categories/${slugItem}`,
       }
     })
-
 
     return items
   }
 
   const breadcrumbItems = buildCategoryBreadcrumb()
 
-
-
-
-
   const lightbox = useImageLightbox({
     images: product ? getProductImages(product) : [],
     initialIndex: 0,
   })
+
+  // ML Recommendation hooks
+  const mlProductId = product?._id ?? ''
+  const { products: relatedProducts, loading: relatedLoading } = useRelated(mlProductId, 8)
+  const { products: boughtTogetherProducts, loading: boughtTogetherLoading } = useBoughtTogether(mlProductId, 6)
 
   const carousel = useCarousel({
     itemsCount: relatedProducts.length,
@@ -220,7 +219,12 @@ export function ProductDetailPage() {
           <div className='text-center py-12'>
             <h2 className='text-2xl font-bold text-gray-900 mb-2'>Sản phẩm không tồn tại</h2>
             <p className='text-gray-600 mb-6'>{error || 'Sản phẩm bạn đang tìm kiếm không có trong hệ thống.'}</p>
-            <Button className='!border-blue-200 !text-blue-600 hover:!bg-blue-50 hover:!text-blue-700' onClick={() => window.history.back()}>Quay lại</Button>
+            <Button
+              className='!border-blue-200 !text-blue-600 hover:!bg-blue-50 hover:!text-blue-700'
+              onClick={() => window.history.back()}
+            >
+              Quay lại
+            </Button>
           </div>
         </div>
       </PageTransition>
@@ -276,7 +280,6 @@ export function ProductDetailPage() {
     }
   }
 
-
   const scrollToSlide = (index: number) => {
     carousel.goToSlide(index)
   }
@@ -315,13 +318,7 @@ export function ProductDetailPage() {
   return (
     <PageTransition>
       {/* SEO: Structured Data for Google Rich Snippets */}
-      {product && (
-        <ProductStructuredData
-          product={product}
-          reviews={reviews}
-          stats={stats}
-        />
-      )}
+      {product && <ProductStructuredData product={product} reviews={reviews} stats={stats} />}
 
       {/* Breadcrumb - Must be OUTSIDE container for sticky to work */}
       <UniversalBreadcrumb items={breadcrumbItems} />
@@ -352,7 +349,6 @@ export function ProductDetailPage() {
                   alt={product.name}
                   className='w-full h-full object-cover hover:scale-105 transition-transform duration-300 animate-fade-in'
                 />
-
               </div>
 
               {/* Badges - Top Left */}
@@ -361,6 +357,14 @@ export function ProductDetailPage() {
                   <Badge className='bg-red-600 text-white font-medium shadow-lg'>Rx - Kê đơn</Badge>
                 )}
                 {product.isOnSale && <Badge className='bg-orange-500 text-white shadow-lg'>Sale</Badge>}
+                {product.campaign && (
+                  <Badge
+                    className='text-white shadow-lg'
+                    style={{ backgroundColor: product.campaign.badgeColor || '#FF5722' }}
+                  >
+                    {product.campaign.badgeText}
+                  </Badge>
+                )}
               </div>
 
               {/* Image counter badge - Bottom Left */}
@@ -369,7 +373,6 @@ export function ProductDetailPage() {
                   <span className='font-medium text-sm'>
                     {selectedImage + 1}/{getProductImages(product).length}
                   </span>
-
                 </div>
               )}
 
@@ -409,7 +412,6 @@ export function ProductDetailPage() {
                   </>
                 )}
 
-
                 {/* Thumbnail gallery with smooth scroll */}
                 <div
                   ref={thumbnailScrollRef}
@@ -424,10 +426,11 @@ export function ProductDetailPage() {
                     <button
                       key={index}
                       onClick={() => setSelectedImage(index)}
-                      className={`relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${selectedImage === index
-                        ? 'border-blue-500 shadow-lg scale-105 ring-2 ring-blue-200'
-                        : 'border-blue-100 hover:border-blue-300 hover:shadow-md'
-                        }`}
+                      className={`relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
+                        selectedImage === index
+                          ? 'border-blue-500 shadow-lg scale-105 ring-2 ring-blue-200'
+                          : 'border-blue-100 hover:border-blue-300 hover:shadow-md'
+                      }`}
                     >
                       <ImageWithFallback
                         src={image}
@@ -450,8 +453,9 @@ export function ProductDetailPage() {
                     <button
                       key={index}
                       onClick={() => setSelectedImage(index)}
-                      className={`h-1.5 rounded-full transition-all ${selectedImage === index ? 'w-6 bg-blue-600' : 'w-1.5 bg-blue-200 hover:bg-blue-300'
-                        }`}
+                      className={`h-1.5 rounded-full transition-all ${
+                        selectedImage === index ? 'w-6 bg-blue-600' : 'w-1.5 bg-blue-200 hover:bg-blue-300'
+                      }`}
                       aria-label={`View image ${index + 1}`}
                     />
                   ))}
@@ -471,11 +475,7 @@ export function ProductDetailPage() {
               </div>
 
               <div className='flex items-center gap-2 mb-4'>
-                <RatingStars
-                  rating={stats?.averageRating || 0}
-                  size='lg'
-                  reviewCount={reviews.length}
-                />
+                <RatingStars rating={stats?.averageRating || 0} size='lg' reviewCount={reviews.length} />
                 <span
                   className='text-blue-600 hover:underline cursor-pointer text-sm'
                   onClick={() => {
@@ -508,14 +508,15 @@ export function ProductDetailPage() {
                           <button
                             key={variant.unit}
                             onClick={() => setSelectedVariantIndex(index)}
-                            className={`px-4 py-2 rounded-lg border-2 text-sm font-medium transition-all ${selectedVariantIndex === index
-                              ? 'border-blue-500 bg-blue-50 text-blue-700'
-                              : 'border-gray-200 bg-white text-gray-700 hover:border-blue-200 hover:bg-blue-50/50'
-                              }`}
+                            className={`px-4 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
+                              selectedVariantIndex === index
+                                ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                : 'border-gray-200 bg-white text-gray-700 hover:border-blue-200 hover:bg-blue-50/50'
+                            }`}
                           >
-                            <span>{variant.unit}</span>
+                          <span>{variant.unit}</span>
                             <span className='ml-2 text-xs opacity-75'>
-                              {variant.price.toLocaleString('vi-VN')}đ
+                              {(variant.salePrice || variant.price).toLocaleString('vi-VN')}đ
                             </span>
                           </button>
                         ))}
@@ -525,8 +526,12 @@ export function ProductDetailPage() {
 
                   {/* Price Display */}
                   <PriceDisplay
-                    originalPrice={selectedVariant?.originalPrice || product.originalPrice}
-                    salePrice={selectedVariant?.price || getProductSalePrice(product) || 0}
+                    originalPrice={
+                      selectedVariant?.salePrice
+                        ? selectedVariant.price // Giá gốc khi có campaign
+                        : (selectedVariant?.originalPrice || product.originalPrice)
+                    }
+                    salePrice={selectedVariant?.salePrice || selectedVariant?.price || getProductSalePrice(product) || 0}
                     size='lg'
                     unit={selectedVariant?.unit}
                   />
@@ -578,7 +583,9 @@ export function ProductDetailPage() {
                     <Button
                       variant='outline'
                       onClick={() => {
-                        const chatBtn = document.querySelector('button[aria-label="Chat với dược sĩ"]') as HTMLButtonElement | null
+                        const chatBtn = document.querySelector(
+                          'button[aria-label="Chat với dược sĩ"]',
+                        ) as HTMLButtonElement | null
                         if (chatBtn) {
                           chatBtn.click()
                         }
@@ -613,7 +620,7 @@ export function ProductDetailPage() {
                     onClick={handleAddToCart}
                     disabled={!isProductInStock(product)}
                     variant='outline'
-                    className='flex-1 border-2 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 h-12 shadow-md hover:shadow-lg transition-all'
+                    className='flex-1 border-2 !bg-white !border-blue-200 text-blue-500 hover:bg-blue-50 hover:text-blue-600 hover:!border-blue-300 h-12 shadow-md hover:shadow-lg transition-all'
                   >
                     <ShoppingCart className='w-5 h-5 mr-2' />
                     Thêm giỏ hàng
@@ -633,10 +640,11 @@ export function ProductDetailPage() {
                   variant='outline'
                   size='sm'
                   onClick={handleWishlistToggle}
-                  className={`flex-1 border-2 transition-all ${isInWishlist(getProductId(product))
-                    ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100'
-                    : 'border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300'
-                    }`}
+                  className={`flex-1 border-2 transition-all ${
+                    isInWishlist(getProductId(product))
+                      ? '!bg-red-50 !border-red-200 !text-red-600 hover:!bg-red-100'
+                      : '!bg-white !border-blue-200 !text-blue-500 hover:!bg-blue-50 hover:!text-blue-600 hover:!border-blue-300'
+                  }`}
                 >
                   <Heart className={`w-4 h-4 mr-2 ${isInWishlist(getProductId(product)) ? 'fill-red-600' : ''}`} />
                   {isInWishlist(getProductId(product)) ? 'Đã yêu thích' : 'Yêu thích'}
@@ -703,22 +711,40 @@ export function ProductDetailPage() {
         {/* Product Details Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className='mb-12'>
           <TabsList className='inline-flex w-full overflow-x-auto bg-blue-100 p-1 rounded-lg shadow-sm scrollbar-hide'>
-            <TabsTrigger value='description' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+            <TabsTrigger
+              value='description'
+              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+            >
               <span className='whitespace-nowrap'>Mô tả</span>
             </TabsTrigger>
-            <TabsTrigger value='ingredients' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+            <TabsTrigger
+              value='ingredients'
+              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+            >
               <span className='whitespace-nowrap'>Thành phần</span>
             </TabsTrigger>
-            <TabsTrigger value='uses' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+            <TabsTrigger
+              value='uses'
+              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+            >
               <span className='whitespace-nowrap'>Công dụng</span>
             </TabsTrigger>
-            <TabsTrigger value='instructions' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+            <TabsTrigger
+              value='instructions'
+              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+            >
               <span className='whitespace-nowrap'>Cách dùng</span>
             </TabsTrigger>
-            <TabsTrigger value='warnings' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+            <TabsTrigger
+              value='warnings'
+              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+            >
               <span className='whitespace-nowrap'>Chú ý</span>
             </TabsTrigger>
-            <TabsTrigger value='reviews' className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'>
+            <TabsTrigger
+              value='reviews'
+              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+            >
               <span className='whitespace-nowrap'>Đánh giá ({reviews.length})</span>
             </TabsTrigger>
           </TabsList>
@@ -797,7 +823,9 @@ export function ProductDetailPage() {
               <CardContent className='p-6'>
                 <div className='prose max-w-none'>
                   {product.details?.dosageInstructions ? (
-                    <p className='text-gray-700 leading-relaxed whitespace-pre-line'>{product.details.dosageInstructions}</p>
+                    <p className='text-gray-700 leading-relaxed whitespace-pre-line'>
+                      {product.details.dosageInstructions}
+                    </p>
                   ) : (
                     <p className='text-gray-600'>Thông tin hướng dẫn sử dụng đang được cập nhật...</p>
                   )}
@@ -848,17 +876,15 @@ export function ProductDetailPage() {
                 <div className='md:col-span-2'>
                   <Card className='bg-white border-blue-200 shadow-sm'>
                     <CardContent className='p-6'>
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
-                        <Star className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-                        <h4 className="font-semibold text-blue-900 mb-2">
-                          Đánh giá sản phẩm
-                        </h4>
-                        <p className="text-sm text-blue-700 mb-3">
+                      <div className='bg-blue-50 border border-blue-200 rounded-lg p-4 text-center'>
+                        <Star className='w-8 h-8 text-blue-600 mx-auto mb-2' />
+                        <h4 className='font-semibold text-blue-900 mb-2'>Đánh giá sản phẩm</h4>
+                        <p className='text-sm text-blue-700 mb-3'>
                           Để đảm bảo tính xác thực, bạn chỉ có thể đánh giá sản phẩm từ đơn hàng đã hoàn thành.
                         </p>
                         <Link
-                          to="/account/orders"
-                          className="inline-flex items-center text-sm text-blue-600 hover:text-blue-700 underline font-medium"
+                          to='/account/orders'
+                          className='inline-flex items-center text-sm text-blue-600 hover:text-blue-700 underline font-medium'
                         >
                           Xem đơn hàng của tôi →
                         </Link>
@@ -876,7 +902,7 @@ export function ProductDetailPage() {
                 totalPages={totalPages}
                 sortBy={sortBy}
                 onPageChange={setPage}
-                onSortChange={(sort) => setSortBy(sort as any)}
+                onSortChange={(sort) => setSortBy(sort as typeof sortBy)}
                 onHelpful={async (reviewId) => {
                   await markHelpful(reviewId)
                   refetchReviews()
@@ -886,104 +912,36 @@ export function ProductDetailPage() {
           </TabsContent>
         </Tabs>
 
-        {/* Related Products */}
-        {relatedProducts.length > 0 && (
-          <div>
-            <h2 className='text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent mb-6'>
-              Sản phẩm liên quan
-            </h2>
-            {/* Carousel Container */}
-            <div className='relative group'>
-              {/* Navigation Arrows - Only show if more than items per slide */}
-              {relatedProducts.length > getItemsPerSlide() && (
-                <>
-                  {/* Previous Button */}
-                  <button
-                    onClick={handlePrevSlide}
-                    className='absolute -left-12 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/90 backdrop-blur-lg border-2 border-blue-100 shadow-lg hover:shadow-xl hover:bg-gradient-to-r hover:from-blue-600 hover:to-cyan-500 hover:border-blue-400 transition-all opacity-0 group-hover:opacity-100 hover:scale-110 group/btn'
-                    aria-label='Previous products'
-                  >
-                    <ChevronLeft className='w-5 h-5 text-blue-600 group-hover/btn:text-white transition-colors' />
-                  </button>
-
-                  {/* Next Button */}
-                  <button
-                    onClick={handleNextSlide}
-                    className='absolute -right-16 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/90 backdrop-blur-lg border-2 border-blue-100 shadow-lg hover:shadow-xl hover:bg-gradient-to-r hover:from-blue-600 hover:to-cyan-500 hover:border-blue-400 transition-all opacity-0 group-hover:opacity-100 hover:scale-110 group/btn'
-                    aria-label='Next products'
-                  >
-                    <ChevronRight className='w-5 h-5 text-blue-600 group-hover/btn:text-white transition-colors' />
-                  </button>
-                </>
-              )}
-
-              {/* Carousel - Smooth horizontal scroll */}
-              <div
-                ref={carousel.carouselRef}
-                className='overflow-hidden scroll-smooth'
-                style={{
-                  scrollbarWidth: 'none',
-                  msOverflowStyle: 'none',
-                }}
-              >
-                <div className='flex gap-6'>
-                  {relatedProducts.map((relatedProduct: Product) => (
-                    <div
-                      key={getProductId(relatedProduct)}
-                      className='flex-shrink-0 w-full sm:w-[calc(50%-12px)] md:w-[calc(33.333%-16px)] lg:w-[calc(25%-18px)]'
-                    >
-                      <ProductCard
-                        product={{
-                          id: getProductId(relatedProduct),
-                          name: relatedProduct.name,
-                          slug: relatedProduct.slug,
-                          brand: getBrandName(relatedProduct),
-                          image: getProductImage(relatedProduct),
-                          originalPrice: relatedProduct.originalPrice,
-                          salePrice: getProductSalePrice(relatedProduct) || 0,
-                          rating: getProductRating(relatedProduct),
-                          reviewCount: getProductReviewCount(relatedProduct),
-                          inStock: isProductInStock(relatedProduct),
-                          isPrescription: isProductPrescription(relatedProduct),
-                          isOnSale: relatedProduct.isOnSale,
-                          discountPercentage: relatedProduct.discountPercentage,
-                          unit: relatedProduct.unit,
-                          packaging: relatedProduct.packaging,
-                          needsConsultation: relatedProduct.needsConsultation,
-                        }}
-                        variant='grid'
-                        onToggleWishlist={() => {
-                          toggleWishlist(getProductId(relatedProduct))
-                        }}
-                        isInWishlist={isInWishlist(getProductId(relatedProduct))}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Dots Indicator - Only show if multiple slides */}
-              {maxSlides > 1 && (
-                <div className='flex justify-center gap-2 mt-6'>
-                  {Array.from({ length: maxSlides }).map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => scrollToSlide(index)}
-                      className={`h-2 rounded-full transition-all ${carousel.currentSlide === index
-                        ? 'w-8 bg-gradient-to-r from-blue-600 to-cyan-500'
-                        : 'w-2 bg-blue-200 hover:bg-blue-300'
-                        }`}
-                      aria-label={`Go to slide ${index + 1}`}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
       </div>
 
+      {/* ── ML Recommendation Sections ── */}
+      {product && (
+        <div className='bg-gradient-to-b from-white to-blue-50/30'>
+          {/* Thường Mua Kèm */}
+          <RecommendationCarousel
+            title='Thường Mua Kèm'
+            subtitle='Khách hàng thường mua thêm những sản phẩm này'
+            badge='bundle'
+            products={boughtTogetherProducts}
+            loading={boughtTogetherLoading}
+            viewAllLink='/products'
+          />
+
+          {/* Sản Phẩm Liên Quan */}
+          <RecommendationCarousel
+            title='Sản Phẩm Liên Quan'
+            subtitle='Dựa trên thành phần và công dụng tương tự'
+            badge='trending'
+            products={relatedProducts}
+            loading={relatedLoading}
+            viewAllLink='/products'
+            className='bg-transparent'
+          />
+        </div>
+      )}
+
       {/* Image Lightbox - Full screen modal */}
+
       <Dialog open={lightbox.isOpen} onOpenChange={lightbox.close}>
         <DialogContent className='max-w-[95vw] max-h-[95vh] p-0 bg-black/95 backdrop-blur-xl border-blue-500/20 overflow-hidden'>
           {/* Accessibility: Hidden title and description for screen readers */}
@@ -1052,8 +1010,9 @@ export function ProductDetailPage() {
                   <button
                     key={index}
                     onClick={() => setSelectedImage(index)}
-                    className={`h-2 rounded-full transition-all ${selectedImage === index ? 'w-8 bg-white' : 'w-2 bg-white/40 hover:bg-white/60'
-                      }`}
+                    className={`h-2 rounded-full transition-all ${
+                      selectedImage === index ? 'w-8 bg-white' : 'w-2 bg-white/40 hover:bg-white/60'
+                    }`}
                     aria-label={`View image ${index + 1}`}
                   />
                 ))}
@@ -1062,6 +1021,6 @@ export function ProductDetailPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </PageTransition >
+    </PageTransition>
   )
 }

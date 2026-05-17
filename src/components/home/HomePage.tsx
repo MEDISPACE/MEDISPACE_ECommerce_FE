@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import { EnhancedPageTransition } from '../shared/EnhancedPageTransition'
 import { ScrollReveal } from '../shared/ScrollReveal'
 import { StaggerContainer, StaggerItem } from '../shared/StaggerContainer'
@@ -18,26 +18,14 @@ import {
   ArrowRight,
   Award,
   HeartHandshake,
-  ChevronLeft,
-  ChevronRight,
   User,
   Droplets,
 } from 'lucide-react'
 import { Link } from 'react-router'
-import { motion } from 'framer-motion'
-import { ProductCard } from '../products/ProductCard'
-import { productService } from '../../services/productService'
-import { useWishlist } from '../../hooks/product/useWishlist'
 import { useCategories } from '../../hooks/product'
-import { useCart } from '../../contexts/CartContext'
-import type { Product } from '../../types/product'
-import {
-  getProductSalePrice,
-  getProductOriginalPrice,
-  getProductUnit,
-  getDiscountPercentage,
-  isProductOnSale,
-} from '../../utils/productHelpers'
+import { RecommendationCarousel } from '../products/RecommendationCarousel'
+import { useTrending, useForYou } from '../../hooks/product/useRecommendations'
+import { useAuth } from '../../contexts/AuthContext'
 
 // Now using proper Product type from service
 
@@ -51,68 +39,14 @@ const categoryIcons = {
 }
 
 export function HomePage() {
-  const { addToCart } = useCart()
-  const { toggleWishlist, isInWishlist } = useWishlist()
-  // Products state
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
+  const { isAuthenticated } = useAuth()
+
+  // ML Recommendation hooks
+  const { products: forYouProducts, loading: forYouLoading } = useForYou(8, isAuthenticated)
+  const { products: trendingProducts, loading: trendingLoading } = useTrending(8)
 
   // Categories state
   const { categories: realCategories, loading: categoriesLoading } = useCategories()
-
-  // Fetch featured products using service
-  useEffect(() => {
-    const fetchFeaturedProducts = async () => {
-      try {
-        setLoading(true)
-        const products = await productService.getFeaturedProducts(12)
-        // Ensure we always set an array
-        setFeaturedProducts(Array.isArray(products) ? products : [])
-      } catch (error) {
-        setFeaturedProducts([]) // Set empty array on error
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchFeaturedProducts()
-  }, [])
-
-  const allFeaturedProducts = Array.isArray(featuredProducts) ? featuredProducts : []
-
-  // Featured products carousel state
-  const [featuredCurrentIndex, setFeaturedCurrentIndex] = useState(0)
-  const featuredProductsPerPage = 4
-  const featuredTotalPages = Math.ceil(allFeaturedProducts.length / featuredProductsPerPage)
-
-  // Transform products for ProductCard component
-  const transformedFeaturedProducts = allFeaturedProducts.map((product) => ({
-    id: product._id || product.id || '',
-    name: product.name,
-    slug: product.slug,
-    brand: product.brand?.name || 'Jpanwell',
-    image: product.featuredImage || product.image || '/placeholder-product.png',
-    originalPrice: getProductOriginalPrice(product),
-    salePrice: getProductSalePrice(product) || 0,
-    rating: product.rating || 4.5,
-    reviewCount: product.reviewCount || 0,
-    inStock: product.inStock !== false && (product.stockQuantity || 0) > 0,
-    isPrescription: product.requiresPrescription || product.isPrescription || false,
-    isOnSale: isProductOnSale(product),
-    discountPercentage: getDiscountPercentage(product),
-    unit: getProductUnit(product),
-    packaging: product.packaging || '',
-    needsConsultation: product.needsConsultation || product.requiresPrescription || false,
-    priceVariants: product.priceVariants,
-  }))
-
-  const scrollFeatured = (direction: 'left' | 'right') => {
-    if (direction === 'left') {
-      setFeaturedCurrentIndex((prev) => (prev === 0 ? featuredTotalPages - 1 : prev - 1))
-    } else {
-      setFeaturedCurrentIndex((prev) => (prev === featuredTotalPages - 1 ? 0 : prev + 1))
-    }
-  }
 
   return (
     <EnhancedPageTransition variant='scale' duration={0.8}>
@@ -364,7 +298,7 @@ export function HomePage() {
             <StaggerContainer direction='up' staggerDelay={0.1}>
               <StaggerItem>
                 <div className='text-center mb-16'>
-                  <h2 className='text-4xl font-bold bg-gradient-to-r from-blue-800 to-cyan-600 bg-clip-text text-transparent mb-4'>
+                  <h2 className='text-4xl font-bold bg-gradient-to-r from-blue-800 to-cyan-600 bg-clip-text text-transparent inline-block mb-4 pb-2'>
                     Danh mục sản phẩm
                   </h2>
                   <p className='text-xl text-gray-600 max-w-2xl mx-auto'>
@@ -427,184 +361,38 @@ export function HomePage() {
         </section>
       </ScrollReveal>
 
-      {/* Featured Products - Carousel design */}
-      <ScrollReveal direction='up' delay={0.4}>
-        <section className='py-20 bg-gradient-to-br from-gray-50 to-blue-50 px-[0px] py-[60px]'>
-          <div className='max-w-7xl mx-auto px-4'>
-            <StaggerContainer direction='up' staggerDelay={0.1}>
-              <StaggerItem>
-                <div className='text-center mb-8'>
-                  <h2 className='text-4xl font-bold bg-gradient-to-r from-blue-800 to-cyan-600 bg-clip-text text-transparent mb-4'>
-                    Sản phẩm nổi bật
-                  </h2>
-                  <p className='text-xl text-gray-600 max-w-2xl mx-auto'>
-                    Chất lượng cao với thiết kế chuyên nghiệp và thông tin đóng gói chi tiết
-                  </p>
-                </div>
-              </StaggerItem>
+      {/* Dành Cho Bạn — SVD/NMF personalized (login) | Trending fallback (guest) */}
+      <div className='bg-white'>
+        <RecommendationCarousel
+          title={isAuthenticated ? 'Dành Cho Bạn' : 'Gợi Ý Hôm Nay'}
+          subtitle={
+            isAuthenticated
+              ? 'Được cá nhân hoá dựa trên lịch sử của bạn'
+              : 'Những sản phẩm được nhiều khách hàng yêu thích'
+          }
+          badge='for-you'
+          products={forYouProducts}
+          loading={forYouLoading}
+          viewAllLink='/products'
+          itemsPerPage={4}
+          layout='centered'
+        />
+      </div>
 
-              <StaggerItem>
-                <div className='text-center mb-[12px] mt-[0px] mr-[0px] ml-[0px]'>
-                  <Link to='/products'>
-                    <Button variant='outline' className='border-2 border-blue-200 text-blue-700 hover:bg-blue-50 px-6'>
-                      Xem tất cả sản phẩm
-                      <ArrowRight className='w-4 h-4 ml-2' />
-                    </Button>
-                  </Link>
-                </div>
-              </StaggerItem>
+      {/* Xu Hướng Hôm Nay — NMF Trending */}
+      <div className='bg-gradient-to-br from-gray-50 to-blue-50/50'>
+        <RecommendationCarousel
+          title='Xu Hướng Hôm Nay'
+          subtitle='Những sản phẩm đang được mua nhiều nhất'
+          badge='trending'
+          products={trendingProducts}
+          loading={trendingLoading}
+          viewAllLink='/products'
+          itemsPerPage={4}
+          layout='centered'
+        />
+      </div>
 
-              <StaggerItem>
-                {loading ? (
-                  <div className='text-center py-12'>
-                    <div className='inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600'></div>
-                    <p className='mt-4 text-gray-600'>Đang tải sản phẩm...</p>
-                  </div>
-                ) : (
-                  /* 4 Products Carousel with Smooth Sliding */
-                  <div className='relative px-16 lg:px-20 py-[10px] px-[80px] py-[8px]'>
-                    {/* Navigation Arrows - Positioned outside product area */}
-                    {featuredTotalPages > 1 && (
-                      <>
-                        <motion.div
-                          className='absolute left-6 top-1/2 -translate-y-1/2 z-20'
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                        >
-                          <Button
-                            variant='outline'
-                            size='icon'
-                            onClick={() => scrollFeatured('left')}
-                            className='h-12 w-12 rounded-full border-2 border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 bg-white/90 backdrop-blur-sm shadow-lg transition-all duration-300 hover:shadow-xl'
-                          >
-                            <ChevronLeft className='w-6 h-6' />
-                          </Button>
-                        </motion.div>
-
-                        <motion.div
-                          className='absolute right-6 top-1/2 -translate-y-1/2 z-20'
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                        >
-                          <Button
-                            variant='outline'
-                            size='icon'
-                            onClick={() => scrollFeatured('right')}
-                            className='h-12 w-12 rounded-full border-2 border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 bg-white/90 backdrop-blur-sm shadow-lg transition-all duration-300 hover:shadow-xl'
-                          >
-                            <ChevronRight className='w-6 h-6' />
-                          </Button>
-                        </motion.div>
-                      </>
-                    )}
-
-                    {/* Products Carousel Container */}
-                    <div className='overflow-hidden rounded-2xl'>
-                      <motion.div
-                        className='flex'
-                        animate={{
-                          x: `${-featuredCurrentIndex * 100}%`,
-                        }}
-                        transition={{
-                          type: 'spring',
-                          stiffness: 300,
-                          damping: 30,
-                          mass: 0.8,
-                        }}
-                      >
-                        {Array.from({
-                          length: featuredTotalPages,
-                        }).map((_, pageIndex) => (
-                          <div
-                            key={pageIndex}
-                            className='w-full flex-shrink-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 px-[0px] m-[10px] py-[10px] p-[10px]'
-                          >
-                            {allFeaturedProducts
-                              .slice(pageIndex * 4, (pageIndex + 1) * 4)
-                              .map((originalProduct, productIndex) => {
-                                const product = transformedFeaturedProducts[pageIndex * 4 + productIndex]
-                                return (
-                                  <motion.div
-                                    key={`${product.id}-${pageIndex}`}
-                                    className='h-full'
-                                    initial={{
-                                      opacity: 0,
-                                      y: 20,
-                                    }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{
-                                      delay: productIndex * 0.1,
-                                      duration: 0.5,
-                                      ease: 'easeOut',
-                                    }}
-                                    whileHover={{
-                                      y: -5,
-                                      transition: {
-                                        duration: 0.2,
-                                      },
-                                    }}
-                                  >
-                                    <ProductCard
-                                      product={product}
-                                      variant='grid'
-                                      onAddToCart={(selectedUnit) => {
-                                        const variant = originalProduct?.priceVariants?.find(v => v.unit === selectedUnit)
-                                        const price = variant?.price || originalProduct?.priceVariants?.[0]?.price
-                                        addToCart(originalProduct, 1, selectedUnit, price)
-                                      }}
-                                      onToggleWishlist={() => {
-                                        toggleWishlist(product.id)
-                                      }}
-                                      isInWishlist={isInWishlist(product.id)}
-                                    />
-                                  </motion.div>
-                                )
-                              })}
-                          </div>
-                        ))}
-                      </motion.div>
-                    </div>
-
-                    {/* Enhanced Page Indicators */}
-                    {featuredTotalPages > 1 && (
-                      <motion.div
-                        className='flex justify-center items-center gap-2 mt-8'
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.5 }}
-                      >
-                        {Array.from({
-                          length: featuredTotalPages,
-                        }).map((_, index) => (
-                          <motion.button
-                            key={index}
-                            onClick={() => setFeaturedCurrentIndex(index)}
-                            className={`h-3 rounded-full transition-all duration-300 ${index === featuredCurrentIndex
-                              ? 'bg-blue-600 w-8 shadow-lg'
-                              : 'bg-blue-200 hover:bg-blue-300 w-3'
-                              }`}
-                            whileHover={{
-                              scale: 1.2,
-                              backgroundColor: index === featuredCurrentIndex ? '#0066CC' : '#4A90E2',
-                            }}
-                            whileTap={{ scale: 0.9 }}
-                          />
-                        ))}
-                        <motion.span
-                          className='ml-4 text-sm text-gray-500'
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: 0.7 }}
-                        ></motion.span>
-                      </motion.div>
-                    )}
-                  </div>
-                )}
-              </StaggerItem>
-            </StaggerContainer>
-          </div>
-        </section>
-      </ScrollReveal>
 
       {/* Consultation CTA - Enhanced blue gradient */}
       <ScrollReveal direction='up' delay={0.6}>
@@ -647,7 +435,9 @@ export function HomePage() {
                     <Button
                       size='lg'
                       onClick={() => {
-                        const chatBtn = document.querySelector('button[aria-label="Chat với dược sĩ"]') as HTMLButtonElement | null
+                        const chatBtn = document.querySelector(
+                          'button[aria-label="Chat với dược sĩ"]',
+                        ) as HTMLButtonElement | null
                         if (chatBtn) {
                           chatBtn.click()
                         }

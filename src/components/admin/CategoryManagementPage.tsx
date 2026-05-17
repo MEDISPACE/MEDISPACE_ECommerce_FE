@@ -441,7 +441,7 @@ export function CategoryManagementPage() {
           <div className='overflow-x-auto'>
             <Table>
               <TableHeader>
-                <TableRow>
+                <TableRow className='!border-b-2 border-blue-300'>
                   <TableHead>Danh mục</TableHead>
                   <TableHead>Slug</TableHead>
                   <TableHead>Sản phẩm</TableHead>
@@ -465,7 +465,7 @@ export function CategoryManagementPage() {
                   </TableRow>
                 ) : (
                   paginatedCategories.map((category: Category) => (
-                    <TableRow key={category._id} className='hover:bg-blue-50/50'>
+                    <TableRow key={category._id} className='border-b-2 border-blue-200 hover:bg-blue-50/30'>
                       <TableCell>
                         <div className='flex items-center gap-2' style={{ paddingLeft: `${category.level * 24}px` }}>
                           {category.level > 0 && <ChevronUp className='w-4 h-4 text-gray-400 rotate-90' />}
@@ -524,18 +524,27 @@ export function CategoryManagementPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align='end' className='bg-white shadow-lg border-2 border-blue-200'>
-                            <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
+                            <DropdownMenuLabel className='text-blue-700'>Thao tác</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => openAddDialog(category._id)}>
+                            <DropdownMenuItem
+                              className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
+                              onClick={() => openAddDialog(category._id)}
+                            >
                               <Plus className='w-4 h-4 mr-2' />
                               Thêm danh mục con
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => openEditDialog(category)}>
+                            <DropdownMenuItem
+                              className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
+                              onClick={() => openEditDialog(category)}
+                            >
                               <Edit className='w-4 h-4 mr-2' />
                               Chỉnh sửa
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => openDeleteDialog(category)} className='text-red-600'>
+                            <DropdownMenuItem
+                              className='text-red-600 hover:!bg-red-100 hover:!border-red-100 hover:!text-red-700'
+                              onClick={() => openDeleteDialog(category)}
+                            >
                               <Trash2 className='w-4 h-4 mr-2' />
                               Xóa
                             </DropdownMenuItem>
@@ -551,7 +560,7 @@ export function CategoryManagementPage() {
 
           {/* Pagination */}
           {filteredCategories.length > 0 && totalPages > 1 && (
-            <div className='mt-6 flex items-center justify-between border-t pt-4'>
+            <div className='mt-6 flex items-center justify-between border-t border-blue-400 pt-4'>
               <div className='text-sm text-gray-600'>
                 Hiển thị {(currentPage - 1) * itemsPerPage + 1} -{' '}
                 {Math.min(currentPage * itemsPerPage, filteredCategories.length)} trong tổng số{' '}

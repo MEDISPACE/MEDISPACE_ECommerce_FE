@@ -1,9 +1,10 @@
-import { useState } from 'react'
-import { Link } from 'react-router'
+import { useState, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router'
 import {
   FileText,
   Upload,
   Eye,
+  ExternalLink,
   MessageCircle,
   ShoppingCart,
   Calendar,
@@ -13,6 +14,7 @@ import {
   CheckCircle,
   Clock,
   X,
+  Loader2,
 } from 'lucide-react'
 
 import { Button } from '../ui/button'
@@ -21,13 +23,104 @@ import { Tabs, TabsList, TabsTrigger } from '../ui/tabs'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '../ui/dialog'
 import { StatusBadge } from '../shared/StatusBadge'
 import { EmptyState } from '../shared/EmptyState'
+import { prescriptionsAPI } from '~/lib/api/prescriptions'
 import type { Prescription } from '~/types/account'
 
-export function PrescriptionsPage() {
-  const [selectedTab, setSelectedTab] = useState('all')
+// Interface for backend prescription data
+interface BackendPrescription {
+  _id: string
+  prescriptionNumber: string
+  customerId: string
+  doctorName: string
+  hospitalName?: string
+  prescriptionDate: string
+  images: string[]
+  medications: {
+    productName: string
+    dosage: string
+    quantity: number
+    instructions: string
+  }[]
+  status: string
+  pharmacistNotes?: string
+  notes?: string
+  createdAt: string
+  updatedAt: string
+  orderId?: string
+}
 
-  // TODO: Replace with real prescription data when backend implements prescriptions API
-  const prescriptions: Prescription[] = []
+// Map backend status to frontend status
+const mapStatus = (status: string): Prescription['status'] => {
+  switch (status.toLowerCase()) {
+    case 'pending':
+      return 'pending'
+    case 'verified':
+    case 'approved':
+      return 'approved'
+    case 'rejected':
+      return 'rejected'
+    case 'completed':
+      return 'completed'
+    default:
+      return 'pending'
+  }
+}
+
+// Map backend prescription to frontend format
+const mapPrescription = (bp: BackendPrescription): Prescription => ({
+  id: bp._id,
+  customerId: bp.customerId,
+  prescriptionNumber: bp.prescriptionNumber,
+  doctorName: bp.doctorName,
+  hospital: bp.hospitalName || '',
+  prescriptionDate: bp.prescriptionDate,
+  images: bp.images || [],
+  medicines: (bp.medications || []).map((med, index) => ({
+    id: `${bp._id}-med-${index}`,
+    name: med.productName,
+    dosage: med.dosage,
+    frequency: med.instructions,
+    duration: '',
+    quantity: med.quantity,
+  })),
+  status: mapStatus(bp.status),
+  pharmacistNotes: bp.pharmacistNotes || bp.notes,
+  contactPhone: '',
+  createdAt: bp.createdAt,
+  updatedAt: bp.updatedAt,
+  orderId: bp.orderId,
+  rejectionReason: bp.status === 'rejected' ? bp.pharmacistNotes || bp.notes : undefined,
+})
+
+export function PrescriptionsPage() {
+  const navigate = useNavigate()
+  const [selectedTab, setSelectedTab] = useState('all')
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Fetch prescriptions from API
+  useEffect(() => {
+    const fetchPrescriptions = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        const response = (await prescriptionsAPI.getPrescriptions()) as {
+          result?: { prescriptions?: BackendPrescription[] }
+        }
+        const backendPrescriptions: BackendPrescription[] = response.result?.prescriptions || []
+        const mappedPrescriptions = backendPrescriptions.map(mapPrescription)
+        setPrescriptions(mappedPrescriptions)
+      } catch (err) {
+        console.error('Error fetching prescriptions:', err)
+        setError('Không thể tải danh sách đơn thuốc. Vui lòng thử lại sau.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchPrescriptions()
+  }, [])
 
   const filterPrescriptions = (status?: string) => {
     if (!status || status === 'all') {
@@ -166,7 +259,14 @@ export function PrescriptionsPage() {
         </div>
 
         {/* Actions */}
-        <div className='flex items-center gap-2 pt-3 border-t border-gray-100'>
+        <div className='flex items-center flex-wrap gap-2 pt-3 border-t border-gray-100'>
+          <Link to={`/account/prescriptions/${prescription.id}`}>
+            <Button size='sm' variant='outline' className='border-blue-200 text-blue-700 hover:bg-blue-50'>
+              <ExternalLink className='w-4 h-4 mr-1' />
+              Xem chi tiết
+            </Button>
+          </Link>
+
           <Dialog>
             <DialogTrigger asChild>
               <Button variant='outline' size='sm'>
@@ -265,7 +365,6 @@ export function PrescriptionsPage() {
   ]
 
   return (
-
     <div className='space-y-6'>
       {/* Header */}
       <div className='flex items-center justify-between'>
@@ -275,7 +374,7 @@ export function PrescriptionsPage() {
         </div>
 
         <Link to='/upload-prescription'>
-          <Button className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600'>
+          <Button className='bg-gradient-to-r text-white from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600'>
             <Upload className='w-4 h-4 mr-2' />
             Gửi đơn thuốc mới
           </Button>
@@ -284,20 +383,36 @@ export function PrescriptionsPage() {
 
       {/* Status Tabs */}
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className='w-full'>
-        <TabsList className='grid w-full grid-cols-5 bg-blue-50'>
+        <TabsList className='inline-flex w-full overflow-x-auto bg-blue-100 p-1 rounded-lg shadow-sm scrollbar-hide mb-2'>
           {tabs.map((tab) => (
-            <TabsTrigger key={tab.value} value={tab.value} className='text-sm'>
-              {tab.label}
-              {tab.count > 0 && (
-                <span className='ml-2 bg-blue-600 text-white rounded-full px-2 py-0.5 text-xs'>{tab.count}</span>
-              )}
+            <TabsTrigger
+              key={tab.value}
+              value={tab.value}
+              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+            >
+              <span className='whitespace-nowrap flex items-center gap-1'>
+                {tab.label} ({tab.count})
+              </span>
             </TabsTrigger>
           ))}
         </TabsList>
 
         {/* Prescriptions List */}
         <div className='mt-6'>
-          {filteredPrescriptions.length > 0 ? (
+          {loading ? (
+            <div className='flex flex-col items-center justify-center py-12'>
+              <Loader2 className='w-8 h-8 text-blue-600 animate-spin mb-4' />
+              <p className='text-gray-500'>Đang tải danh sách đơn thuốc...</p>
+            </div>
+          ) : error ? (
+            <div className='bg-red-50 border border-red-200 rounded-lg p-4 text-center'>
+              <AlertCircle className='w-8 h-8 text-red-500 mx-auto mb-2' />
+              <p className='text-red-700'>{error}</p>
+              <Button variant='outline' className='mt-4' onClick={() => window.location.reload()}>
+                Thử lại
+              </Button>
+            </div>
+          ) : filteredPrescriptions.length > 0 ? (
             <div className='space-y-6'>
               {filteredPrescriptions.map((prescription) => (
                 <PrescriptionCard key={prescription.id} prescription={prescription} />
@@ -316,14 +431,15 @@ export function PrescriptionsPage() {
               title={
                 selectedTab === 'all'
                   ? 'Chưa có đơn thuốc nào'
-                  : `Không có đơn thuốc ${selectedTab === 'pending'
-                    ? 'chờ xử lý'
-                    : selectedTab === 'approved'
-                      ? 'đã xác nhận'
-                      : selectedTab === 'rejected'
-                        ? 'bị từ chối'
-                        : 'hoàn thành'
-                  }`
+                  : `Không có đơn thuốc ${
+                      selectedTab === 'pending'
+                        ? 'chờ xử lý'
+                        : selectedTab === 'approved'
+                          ? 'đã xác nhận'
+                          : selectedTab === 'rejected'
+                            ? 'bị từ chối'
+                            : 'hoàn thành'
+                    }`
               }
               description={
                 selectedTab === 'all'
@@ -370,6 +486,5 @@ export function PrescriptionsPage() {
         </div>
       )}
     </div>
-
   )
 }

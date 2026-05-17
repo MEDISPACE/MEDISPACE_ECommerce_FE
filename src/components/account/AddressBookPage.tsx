@@ -26,7 +26,6 @@ export function AddressBookPage() {
       const userAddresses = await addressService.getAddresses()
       setAddresses(userAddresses)
     } catch (error) {
-
       toast.error('Không thể tải danh sách địa chỉ')
     }
   }
@@ -54,7 +53,6 @@ export function AddressBookPage() {
       toast.success('Đã xóa địa chỉ thành công')
       loadAddresses() // Reload addresses
     } catch (error) {
-
       toast.error('Không thể xóa địa chỉ')
     }
   }
@@ -65,21 +63,17 @@ export function AddressBookPage() {
       toast.success('Đã đặt địa chỉ mặc định thành công')
       loadAddresses() // Reload addresses
     } catch (error) {
-
       toast.error('Không thể đặt địa chỉ mặc định')
     }
   }
 
   return (
-
     <div className='space-y-6'>
       {/* Header */}
       <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
         <div className='flex flex-col md:flex-row md:items-center justify-between gap-4'>
           <div>
-            <h1 className='text-2xl font-bold text-blue-800 mb-2'>
-              Sổ địa chỉ
-            </h1>
+            <h1 className='text-2xl font-bold text-blue-800 mb-2'>Sổ địa chỉ</h1>
             <p className='text-gray-600 mt-1'>Quản lý địa chỉ giao hàng của bạn</p>
           </div>
 

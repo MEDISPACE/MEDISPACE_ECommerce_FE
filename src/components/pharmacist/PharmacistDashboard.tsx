@@ -64,7 +64,6 @@ export function PharmacistDashboard() {
         setRecentPrescriptions(prescriptions)
         setRecentOrders(orders)
       } catch (error) {
-
         const err = error as { response?: { status?: number; data?: { message?: string } } }
 
         // Check if it's an authentication error
@@ -196,10 +195,10 @@ export function PharmacistDashboard() {
       badge:
         (stats?.pendingPrescriptions || 0) > 0
           ? {
-            text: 'Cần xử lý',
-            icon: AlertCircle,
-            show: true,
-          }
+              text: 'Cần xử lý',
+              icon: AlertCircle,
+              show: true,
+            }
           : undefined,
     },
     {
@@ -215,10 +214,10 @@ export function PharmacistDashboard() {
       color: 'emerald',
       trend: stats?.prescriptionsToday
         ? {
-          value: `${stats.prescriptionsToday.verified}/${stats.prescriptionsToday.total}`,
-          type: 'positive' as const,
-          label: 'đơn đã duyệt',
-        }
+            value: `${stats.prescriptionsToday.verified}/${stats.prescriptionsToday.total}`,
+            type: 'positive' as const,
+            label: 'đơn đã duyệt',
+          }
         : undefined,
     },
   ]
@@ -375,7 +374,6 @@ export function PharmacistDashboard() {
                               setSelectedOrder(orderDetails)
                               setShowOrderDetails(true)
                             } catch (error) {
-
                               toast.error('Không thể tải chi tiết đơn hàng')
                             }
                           }}
@@ -490,7 +488,6 @@ export function PharmacistDashboard() {
             </CardContent>
           </Card>
         </TabsContent>
-
 
         {/* Reports Tab */}
         <TabsContent value='reports'>
