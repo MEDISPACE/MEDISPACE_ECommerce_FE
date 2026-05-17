@@ -1,11 +1,11 @@
 # Stage 1: Dependencies (Cache layer này khi package.json không đổi)
-FROM node:20-alpine AS deps
+FROM node:26-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
 # Stage 2: Build (Chỉ rebuild khi code thay đổi)
-FROM node:20-alpine AS builder
+FROM node:26-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
