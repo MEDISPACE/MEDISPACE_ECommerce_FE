@@ -300,20 +300,57 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
 
           {/* ── MEDICATIONS ── */}
           <div>
-            <p className='text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2'>
-              Danh sách thuốc ({prescription.medications.length} loại)
-            </p>
+            <div className='flex items-center justify-between mb-2'>
+              <p className='text-xs font-semibold text-gray-500 uppercase tracking-wide'>
+                Danh sách thuốc ({prescription.medications.length} loại)
+              </p>
+              {prescription.medications.some((m) => m.productId) && (
+                <span className='text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium'>
+                  ✓ {prescription.medications.filter((m) => m.productId).length}/{prescription.medications.length} khớp kho
+                </span>
+              )}
+            </div>
             {prescription.medications.length === 0 ? (
               <p className='text-sm text-gray-400 italic'>Không có thông tin thuốc</p>
             ) : (
               <div className='grid grid-cols-1 sm:grid-cols-2 gap-2'>
                 {prescription.medications.map((med, idx) => (
-                  <div key={idx} className='flex gap-2 p-3 bg-blue-50 border border-blue-100 rounded-lg'>
-                    <div className='w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 mt-0.5'>
-                      {idx + 1}
-                    </div>
-                    <div className='min-w-0'>
-                      <p className='text-sm font-semibold text-blue-900 truncate'>{med.productName}</p>
+                  <div
+                    key={idx}
+                    className={`flex gap-3 p-3 rounded-lg border ${
+                      med.productId
+                        ? 'bg-emerald-50 border-emerald-200'
+                        : 'bg-blue-50 border-blue-100'
+                    }`}
+                  >
+                    {/* Product thumbnail or numbered circle */}
+                    {med.image ? (
+                      <div className='w-12 h-12 rounded-lg overflow-hidden border border-emerald-200 bg-white shrink-0 shadow-sm'>
+                        <img src={med.image} alt={med.matchedName || med.productName} className='w-full h-full object-cover' />
+                      </div>
+                    ) : (
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 mt-0.5 ${
+                        med.productId ? 'bg-emerald-600' : 'bg-blue-600'
+                      }`}>
+                        {idx + 1}
+                      </div>
+                    )}
+                    <div className='min-w-0 flex-1'>
+                      <div className='flex items-start gap-1.5 flex-wrap'>
+                        <p className={`text-sm font-semibold truncate ${
+                          med.productId ? 'text-emerald-900' : 'text-blue-900'
+                        }`}>
+                          {med.matchedName || med.productName}
+                        </p>
+                        {med.productId && (
+                          <span className='text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200 font-medium shrink-0'>
+                            ✓ Có trong kho
+                          </span>
+                        )}
+                      </div>
+                      {med.matchedName && med.matchedName !== med.productName && (
+                        <p className='text-[11px] text-gray-400 italic'>AI đọc: {med.productName}</p>
+                      )}
                       <div className='flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5'>
                         {med.dosage && <p className='text-xs text-gray-600'>💊 {med.dosage}</p>}
                         <p className='text-xs text-gray-600'>
@@ -443,11 +480,22 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
                 size='sm'
                 onClick={() => {
                   onClose()
-                  navigate(`/pharmacist/create-order?prescriptionId=${prescription._id}`)
+                  // Pass pre-mapped productIds as query param so CreateOrderPage can prefill
+                  const mappedIds = prescription.medications
+                    .filter((m) => m.productId)
+                    .map((m) => m.productId)
+                    .join(',')
+                  const query = mappedIds
+                    ? `?prescriptionId=${prescription._id}&productIds=${mappedIds}`
+                    : `?prescriptionId=${prescription._id}`
+                  navigate(`/pharmacist/create-order${query}`)
                 }}
                 className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'
               >
-                <Package className='w-4 h-4 mr-1' /> Tạo đơn hàng
+                <Package className='w-4 h-4 mr-1' />
+                {prescription.medications.some((m) => m.productId)
+                  ? `Tạo đơn (${prescription.medications.filter((m) => m.productId).length} sản phẩm AI map)`
+                  : 'Tạo đơn hàng'}
               </Button>
             )}
 

@@ -40,6 +40,9 @@ export interface MedicationItem {
   quantity: number | null
   unit: string | null
   instructions: string
+  productId?: string
+  matchedName?: string
+  image?: string | null
 }
 
 // Dữ liệu OCR để auto-fill
@@ -414,16 +417,35 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
                   key={idx}
                   className='flex items-start justify-between p-3 bg-emerald-50 rounded-lg border border-emerald-100'
                 >
-                  <div className='flex-1'>
-                    <p className='font-medium text-emerald-900 text-sm'>{med.productName}</p>
-                    {med.dosage && <p className='text-xs text-gray-600 mt-0.5'>Liều: {med.dosage}</p>}
-                    <div className='flex gap-3 mt-0.5'>
-                      {med.quantity != null && (
-                        <span className='text-xs text-gray-500'>
-                          SL: {med.quantity} {med.unit || ''}
-                        </span>
+                  <div className='flex items-start gap-3 flex-1'>
+                    {med.image && (
+                      <div className='w-14 h-14 shrink-0 bg-white rounded-lg border border-emerald-200 overflow-hidden shadow-sm'>
+                        <img src={med.image} alt={med.matchedName || med.productName} className='w-full h-full object-cover' />
+                      </div>
+                    )}
+                    <div>
+                      <div className='flex items-center gap-2'>
+                        <p className='font-medium text-emerald-900 text-sm'>
+                          {med.matchedName || med.productName}
+                        </p>
+                        {med.productId && (
+                          <Badge className='bg-emerald-100 text-emerald-700 hover:bg-emerald-200 text-[10px] px-1.5 py-0 border-emerald-200'>
+                            ✓ Có trong kho
+                          </Badge>
+                        )}
+                      </div>
+                      {med.matchedName && med.productName !== med.matchedName && (
+                        <p className='text-[11px] text-gray-500 italic mt-0.5'>AI đọc: {med.productName}</p>
                       )}
-                      {med.instructions && <span className='text-xs text-gray-500'>{med.instructions}</span>}
+                      {med.dosage && <p className='text-xs text-gray-600 mt-0.5'>Liều: {med.dosage}</p>}
+                      <div className='flex gap-3 mt-0.5'>
+                        {med.quantity != null && (
+                          <span className='text-xs text-gray-500'>
+                            SL: {med.quantity} {med.unit || ''}
+                          </span>
+                        )}
+                        {med.instructions && <span className='text-xs text-gray-500'>{med.instructions}</span>}
+                      </div>
                     </div>
                   </div>
                   <button

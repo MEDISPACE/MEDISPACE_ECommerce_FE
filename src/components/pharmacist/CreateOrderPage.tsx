@@ -26,6 +26,7 @@ import {
   Image as ImageIcon,
   Check,
   ChevronsUpDown,
+  Info,
 } from 'lucide-react'
 
 import { useQuery } from '@tanstack/react-query'
@@ -47,10 +48,12 @@ import { Tabs, TabsList, TabsTrigger } from '../ui/tabs'
 import { ProductSearchWidget } from '../products/ProductSearchWidget'
 import { DrugInteractionChecker } from '../products/DrugInteractionChecker'
 import { ProductNoteModal } from '../products/ProductNoteModal'
+import { ProductDetailModal } from '../products/ProductDetailModal'
 import { ImageWithFallback } from '../shared/ImageWithFallback'
 import { toast } from 'sonner'
 import { orderService, dashboardService, prescriptionService } from '~/services/pharmacist'
 import { productService } from '~/services/productService'
+import { searchService } from '~/services/searchService'
 import { ghnService } from '~/services/ghnService'
 import { recommendationService } from '~/services/recommendationService'
 import type { RecommendedProduct } from '~/services/recommendationService'
@@ -147,6 +150,55 @@ export function CreateOrderPage() {
   })
 
   const [isLoadingPrescription, setIsLoadingPrescription] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false)
+  const [isLoadingDetail, setIsLoadingDetail] = useState(false)
+
+  // Fetch full product details by ID before opening modal
+  const handleOpenDetail = async (basicProduct: Product) => {
+    setIsLoadingDetail(true)
+    try {
+      const full = await productService.getProductById(basicProduct.id)
+      if (full) {
+        // Map full product to the Product interface
+        const defaultVariant = (full as any).priceVariants?.find((v: any) => v.isDefault)
+          || (full as any).priceVariants?.[0]
+        setSelectedProduct({
+          id: (full as any)._id || basicProduct.id,
+          name: (full as any).name || basicProduct.name,
+          image: (full as any).featuredImage || basicProduct.image,
+          price: defaultVariant?.price ?? basicProduct.price,
+          originalPrice: defaultVariant?.originalPrice,
+          unit: defaultVariant?.unit || basicProduct.unit,
+          stock: (full as any).stockQuantity ?? basicProduct.stock,
+          rating: (full as any).rating || basicProduct.rating,
+          type: (full as any).requiresPrescription ? 'rx' : 'otc',
+          brand: (full as any).brand?.name || basicProduct.brand,
+          sku: (full as any).sku,
+          barcode: (full as any).barcode,
+          category: (full as any).category ? { name: (full as any).category.name } : undefined,
+          shortDescription: (full as any).shortDescription || (full as any).description,
+          description: (full as any).description,
+          origin: (full as any).origin,
+          packaging: (full as any).packaging,
+          ingredients: (full as any).ingredients,
+          uses: (full as any).uses,
+          instructions: (full as any).instructions,
+          warnings: (full as any).warnings,
+          tags: (full as any).tags,
+          requiresPrescription: (full as any).requiresPrescription,
+          status: (full as any).isActive === false ? 'discontinued' : 'active',
+        } as Product)
+      } else {
+        setSelectedProduct(basicProduct)
+      }
+    } catch {
+      setSelectedProduct(basicProduct)
+    } finally {
+      setIsLoadingDetail(false)
+      setIsProductModalOpen(true)
+    }
+  }
   const [selectedDelivery, setSelectedDelivery] = useState('fast')
   const [selectedPayment, setSelectedPayment] = useState('cod')
   const [orderNotes, setOrderNotes] = useState('')
@@ -403,44 +455,69 @@ export function CreateOrderPage() {
                   const rawText = med.productName || med.name
                   if (!rawText) return { medication: med, matches: [] }
 
-                  // Step 1: take only the text before parenthesis/dash/comma — e.g. "Panadol Extra (500mg)" → "Panadol Extra"
-                  const beforeParen = rawText.split(/[\(\[\,\-]/)[0]
+                  // ── Helper: clean dosage units (mg, ml...) from text ──
+                  const stripDosageUnits = (text: string): string =>
+                    text.replace(/\d+(\.\d+)?\s*(mg|g|ml|mcg|iu|%)/gi, '')
 
-                  // Step 2: remove dosage numbers e.g. "500mg" → ""
-                  const withoutDosage = beforeParen.replace(/\d+(\.\d+)?\s*(mg|g|ml|mcg|iu|%)/gi, '')
+                  // ── Helper: clean brand name (also strips standalone numbers like "40", "200") ──
+                  const buildBrandQuery = (text: string): string => {
+                    const withoutDosage = stripDosageUnits(text)
+                    // Remove standalone numbers (e.g. "YESOM 40" → "YESOM")
+                    const withoutNumbers = withoutDosage.replace(/\b\d+\b/g, ' ')
+                    const sanitized = withoutNumbers.replace(/[^a-zA-Z0-9\u00C0-\u024F\u1E00-\u1EFF\s]/g, ' ')
+                    return sanitized.trim().replace(/\s+/g, ' ').split(' ').slice(0, 3).join(' ')
+                  }
 
-                  // Step 3: strip any remaining special characters, keep letters/digits/spaces (including Vietnamese)
-                  const sanitized = withoutDosage.replace(/[^a-zA-Z0-9\u00C0-\u024F\u1E00-\u1EFF\s]/g, ' ')
+                  // ── Helper: clean generic/active ingredient name ──
+                  const buildGenericQuery = (text: string): string => {
+                    const withoutDosage = stripDosageUnits(text)
+                    const sanitized = withoutDosage.replace(/[^a-zA-Z0-9\u00C0-\u024F\u1E00-\u1EFF\s]/g, ' ')
+                    return sanitized.trim().replace(/\s+/g, ' ').split(' ').slice(0, 4).join(' ')
+                  }
 
-                  // Step 4: collapse multiple spaces, trim, take max first 4 words
-                  const cleanQuery = sanitized.trim().replace(/\s+/g, ' ').split(' ').slice(0, 4).join(' ')
+                  // ── Helper: search via Typesense and transform hits → Product[] ──
+                  const typesenseSearch = async (q: string): Promise<Product[]> => {
+                    if (!q || q.length < 2) return []
+                    const result = await searchService.searchProducts({ q, limit: 5 })
+                    return (result.hits || []).map((hit) => ({
+                      id: hit.document.mongoId,
+                      name: hit.document.name,
+                      image: hit.document.featuredImage || '/images/product-placeholder.jpg',
+                      price: hit.document.price || 0,
+                      type: hit.document.requiresPrescription ? 'rx' : 'otc',
+                      brand: hit.document.brandName || 'Unknown',
+                      unit: 'Hộp',
+                      stock: hit.document.inStock ? 999 : 0,
+                      rating: hit.document.rating || 4.5,
+                    } as Product))
+                  }
 
-                  if (!cleanQuery) return { medication: med, matches: [] }
+                  // ── Extract brand (before parenthesis) and generic (inside parenthesis) ──
+                  const brandPart = rawText.split(/[([,\-]/)[0].trim()
+                  const brandQuery = buildBrandQuery(brandPart)
 
-                  const products = await productService.searchProducts(cleanQuery)
+                  const parenMatch = rawText.match(/\(([^)]+)\)/)
+                  const genericPart = parenMatch ? parenMatch[1].trim() : ''
+                  const genericQuery = buildGenericQuery(genericPart)
 
-                  // Transform to Product format
-                  const transformedProducts: Product[] = products.map((p) => {
-                    const defaultVariant = p.priceVariants?.find((v: any) => v.isDefault) ||
-                      p.priceVariants?.[0] || { price: 0, unit: 'Hộp' }
-                    return {
-                      id: p._id,
-                      name: p.name,
-                      image: p.featuredImage || '/images/product-placeholder.jpg',
-                      price: defaultVariant.price,
-                      originalPrice: defaultVariant.originalPrice,
-                      salePrice: undefined,
-                      type: p.requiresPrescription ? 'rx' : 'otc',
-                      brand: p.brand?.name || 'Unknown',
-                      unit: defaultVariant.unit,
-                      stock: p.stockQuantity,
-                      rating: p.rating || 4.5,
-                    } as Product
-                  })
+                  // ── Strategy: prioritize generic (hoạt chất) → fallback to brand ──
+                  // Generic name is far more reliable than brand (which may be foreign/unknown)
+                  let finalMatches: Product[] = []
+
+                  if (genericQuery) {
+                    finalMatches = await typesenseSearch(genericQuery)
+                  }
+
+                  // Only use brand results if generic found nothing
+                  if (finalMatches.length === 0 && brandQuery) {
+                    finalMatches = await typesenseSearch(brandQuery)
+                  }
+
+                  if (finalMatches.length === 0) return { medication: med, matches: [] }
 
                   return {
                     medication: med,
-                    matches: transformedProducts.slice(0, 3), // Top 3 matches
+                    matches: finalMatches.slice(0, 3),
                   }
                 }),
               )
@@ -782,6 +859,13 @@ export function CreateOrderPage() {
 
   return (
     <div className='space-y-6'>
+      {/* Product Detail Modal for OCR suggestions */}
+      <ProductDetailModal
+        product={selectedProduct}
+        isOpen={isProductModalOpen}
+        onClose={() => { setIsProductModalOpen(false); setSelectedProduct(null) }}
+        onAddToCart={(product, qty) => { handleProductAdd(product, qty); setIsProductModalOpen(false) }}
+      />
       {/* Header */}
       <div className='flex items-center justify-between'>
         <div>
@@ -831,44 +915,90 @@ export function CreateOrderPage() {
               <CardContent className='p-4 space-y-3 max-h-80 overflow-y-auto'>
                 {ocrSuggestions.map((suggestion, idx) => (
                   <div key={idx} className='p-3 bg-white border border-indigo-100 rounded-xl shadow-sm'>
-                    <div className='flex items-center gap-2 mb-2'>
-                      <Badge variant='outline' className='bg-indigo-50 border-indigo-200 text-indigo-700'>
-                        Đơn thuốc:{' '}
-                        {suggestion.medication.productName || suggestion.medication.name || 'Thuốc ' + (idx + 1)}
+                    {/* Medication header */}
+                    <div className='flex items-center gap-2 mb-3'>
+                      <Badge variant='outline' className='bg-indigo-50 border-indigo-200 text-indigo-700 text-xs'>
+                        Đơn thuốc: {suggestion.medication.productName || suggestion.medication.name || 'Thuốc ' + (idx + 1)}
                       </Badge>
-                      <span className='text-xs text-gray-500 flex items-center gap-1'>
-                        <ChevronRight className='w-3 h-3' />
-                        {suggestion.medication.quantity > 0 ? `SL: ${suggestion.medication.quantity}` : ''}
-                      </span>
+                      {suggestion.medication.quantity > 0 && (
+                        <span className='text-xs text-gray-500 flex items-center gap-1'>
+                          <ChevronRight className='w-3 h-3' />
+                          SL: {suggestion.medication.quantity}
+                        </span>
+                      )}
                     </div>
 
                     {suggestion.matches.length > 0 ? (
-                      <div className='pl-4 border-l-2 border-indigo-100 space-y-2 mt-2 flex flex-col gap-2'>
+                      <div className='space-y-2'>
                         {suggestion.matches.map((match) => (
                           <div
                             key={match.id}
-                            className='flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-200 transition-all'
+                            className='flex items-center gap-3 p-2.5 rounded-xl border border-gray-100 hover:border-indigo-200 hover:bg-indigo-50/30 transition-all group'
                           >
-                            <div className='flex items-center gap-3'>
-                              <ImageWithFallback
-                                src={match.image}
-                                alt={match.name}
-                                className='w-10 h-10 object-cover rounded-md border border-gray-200'
-                              />
-                              <div>
-                                <p className='text-sm font-medium text-gray-900'>{match.name}</p>
-                                <p className='text-xs text-gray-500'>
-                                  {match.price.toLocaleString('vi-VN')}đ • {match.unit}
-                                </p>
+                            {/* Product image */}
+                            <ImageWithFallback
+                              src={match.image}
+                              alt={match.name}
+                              className='w-14 h-14 object-cover rounded-lg border border-gray-200 flex-shrink-0 bg-gray-50'
+                            />
+
+                            {/* Product info */}
+                            <div className='flex-1 min-w-0'>
+                              <p className='text-sm font-medium text-gray-900 line-clamp-2 leading-snug'>{match.name}</p>
+                              <div className='flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1'>
+                                <span className='text-xs font-semibold text-indigo-600'>
+                                  {match.price > 0 ? `${match.price.toLocaleString('vi-VN')}đ` : 'Liên hệ'}
+                                </span>
+                                <span className='text-xs text-gray-400'>•</span>
+                                <span className='text-xs text-gray-500'>{match.unit}</span>
+                              </div>
+                              <div className='flex items-center gap-2 mt-1 flex-wrap'>
+                                {match.stock > 0 && (
+                                  <span className='text-[11px] text-gray-500'>
+                                    Tồn: <span className='font-medium text-gray-700'>{match.stock.toLocaleString()}</span>
+                                  </span>
+                                )}
+                                <span
+                                  className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
+                                    match.type === 'rx'
+                                      ? 'bg-red-100 text-red-700'
+                                      : 'bg-green-100 text-green-700'
+                                  }`}
+                                >
+                                  {match.type === 'rx' ? 'Rx' : 'OTC'}
+                                </span>
+                                {match.rating > 0 && (
+                                  <span className='text-[11px] text-amber-500 flex items-center gap-0.5'>
+                                    ★ {match.rating.toFixed(1)}
+                                  </span>
+                                )}
                               </div>
                             </div>
-                            <Button
-                              size='sm'
-                              onClick={() => handleProductAdd(match, Number(suggestion.medication.quantity) || 1)}
-                              className='h-7 bg-indigo-600 hover:bg-indigo-700 text-white flex-shrink-0 ml-4'
-                            >
-                              <Plus className='w-3 h-3 mr-1' /> Thêm
-                            </Button>
+
+                            {/* Action buttons */}
+                            <div className='flex flex-col gap-1.5 flex-shrink-0'>
+                              <Button
+                                size='sm'
+                                onClick={() => handleProductAdd(match, Number(suggestion.medication.quantity) || 1)}
+                                className='h-8 px-3 bg-indigo-600 hover:bg-indigo-700 text-white text-xs'
+                              >
+                                <Plus className='w-3 h-3 mr-1' /> Thêm
+                              </Button>
+                              <Button
+                                size='sm'
+                                variant='outline'
+                                disabled={isLoadingDetail}
+                                onClick={() => handleOpenDetail(match)}
+                                className='h-8 px-3 border-indigo-200 text-indigo-700 hover:bg-indigo-50 text-xs'
+                              >
+                                {isLoadingDetail ? (
+                                  <Loader2 className='w-3 h-3 mr-1 animate-spin' />
+                                ) : (
+                                  <Info className='w-3 h-3 mr-1' />
+                                )}
+                                Chi tiết
+                              </Button>
+                            </div>
                           </div>
                         ))}
                       </div>
