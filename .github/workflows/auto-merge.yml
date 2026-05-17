@@ -1,4 +1,4 @@
-name: Auto Merge dev → main
+name: Auto Merge dev → master
 
 on:
   workflow_run:
@@ -28,11 +28,11 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git checkout main
-          git pull origin main
+          git checkout master
+          git pull origin master
 
-          echo "🔀 Merging dev into main..."
-          git merge origin/dev --no-ff -m "chore: auto-merge dev → main [skip ci]"
+          echo "🔀 Merging dev into master..."
+          git merge origin/dev --no-ff -m "chore: auto-merge dev → master [skip ci]"
 
-          git push origin main
+          git push origin master
           echo "✅ Merged successfully"
