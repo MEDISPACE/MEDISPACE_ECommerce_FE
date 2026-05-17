@@ -137,12 +137,15 @@ export function UploadPrescriptionPage() {
             rawText: scanResult.rawText,
             confidence: scanResult.data.confidence,
             // Chuẩn hóa null → string cho MedicationItem
-            medications: (scanResult.data.medications || []).map((m) => ({
+            medications: (scanResult.data.medications || []).map((m: any) => ({
               productName: m.productName || '',
               dosage: m.dosage || '',
               quantity: m.quantity,
               unit: m.unit,
               instructions: m.instructions || '',
+              productId: m.productId,
+              matchedName: m.matchedName,
+              image: m.image
             })),
           })
         }
