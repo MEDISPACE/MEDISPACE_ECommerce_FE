@@ -40,7 +40,7 @@ export const downloadExportFile = async (
       }
     }
 
-    const blob = new Blob([response.data], {
+    const blob = new Blob([response.data as BlobPart], {
       type: format === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     })
 

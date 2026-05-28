@@ -94,7 +94,7 @@ export function ConversationList({
               className='flex-1 flex items-start gap-3 text-left'
             >
               <div className='relative flex-shrink-0'>
-                <Avatar className='w-10 h-10 bg-gradient-to-r from-blue-600 to-cyan-500'>
+                <Avatar className='w-10 h-10 bg-blue-600'>
                   <AvatarImage src={otherUser?.avatar} />
                   <AvatarFallback className='text-white font-medium text-sm'>
                     {otherUserName.charAt(0).toUpperCase()}
