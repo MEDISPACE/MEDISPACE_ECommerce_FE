@@ -567,8 +567,53 @@ export function CreateOrderPage() {
       }
       setOrderItems((items) => [...items, newItem])
     }
-
     toast.success(`Đã thêm ${product.name} vào đơn hàng`)
+  }
+
+  const handleAddAllSuggestions = () => {
+    let addedCount = 0
+    const itemsToAdd: { product: Product; quantity: number }[] = []
+
+    ocrSuggestions.forEach((suggestion) => {
+      if (suggestion.matches && suggestion.matches.length > 0) {
+        // Pick the best match (first one)
+        const match = suggestion.matches[0]
+        const qty = Number(suggestion.medication.quantity) || 1
+        itemsToAdd.push({ product: match, quantity: qty })
+        addedCount++
+      }
+    })
+
+    if (addedCount === 0) {
+      toast.info('Không có sản phẩm nào có thể thêm')
+      return
+    }
+
+    setOrderItems((currentItems) => {
+      const newItems = [...currentItems]
+
+      itemsToAdd.forEach((itemToAdd) => {
+        const existingIdx = newItems.findIndex((i) => i.product.id === itemToAdd.product.id)
+        if (existingIdx >= 0) {
+          newItems[existingIdx] = {
+            ...newItems[existingIdx],
+            quantity: newItems[existingIdx].quantity + itemToAdd.quantity,
+          }
+        } else {
+          newItems.push({
+            id: Math.random().toString(36).substr(2, 9),
+            product: itemToAdd.product,
+            quantity: itemToAdd.quantity,
+            notes: '',
+            warnings: itemToAdd.product.type === 'rx' ? ['Cần theo dõi dị ứng'] : [],
+          })
+        }
+      })
+
+      return newItems
+    })
+
+    toast.success(`Đã thêm ${addedCount} sản phẩm gợi ý vào đơn hàng`)
   }
 
   // Fetch ML pharmacist suggestions khi thêm/xóa sản phẩm
@@ -911,6 +956,16 @@ export function CreateOrderPage() {
                   <Sparkles className='w-4 h-4 mr-2 text-indigo-200' />
                   🤖 Robot AI Gợi ý Thuốc từ Đơn OCR
                 </h3>
+                {ocrSuggestions.some((s) => s.matches.length > 0) && (
+                  <Button
+                    size='sm'
+                    onClick={handleAddAllSuggestions}
+                    className='h-7 px-2.5 bg-white/20 hover:bg-white/30 text-white text-xs border-0 transition-colors'
+                  >
+                    <Plus className='w-3 h-3 mr-1' />
+                    Thêm tất cả ({ocrSuggestions.filter((s) => s.matches.length > 0).length})
+                  </Button>
+                )}
               </div>
               <CardContent className='p-4 space-y-3 max-h-80 overflow-y-auto'>
                 {ocrSuggestions.map((suggestion, idx) => (

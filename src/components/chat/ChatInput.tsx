@@ -162,7 +162,7 @@ export function ChatInput({
         <Button
           onClick={handleSend}
           disabled={disabled || (!message.trim() && !imageUrl)}
-          className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-4 py-2 h-[40px]'
+          className='bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 h-[40px]'
         >
           <Send className='w-5 h-5' />
         </Button>

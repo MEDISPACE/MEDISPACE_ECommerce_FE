@@ -25,6 +25,8 @@ interface SocketCallbacks {
   onConversationNew?: (data: { conversationId: string }) => void
   onNewNotification?: (notification: Record<string, unknown>) => void
   onError?: (error: { message: string }) => void
+  onMessageStreamStart?: (data: { conversationId: string }) => void
+  onMessageStreamChunk?: (data: { conversationId: string; content: string }) => void
 }
 
 interface SocketContextType {
@@ -43,6 +45,7 @@ interface SocketContextType {
   startTyping: (conversationId: string) => void
   stopTyping: (conversationId: string) => void
   markAsRead: (conversationId: string) => void
+  requestHuman: (conversationId: string) => void
   // Subscribe/unsubscribe pattern to allow multiple components to listen
   subscribe: (id: string, callbacks: SocketCallbacks) => void
   unsubscribe: (id: string) => void
@@ -164,6 +167,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     s.on('conversation:new', (data: { conversationId: string }) => broadcast('onConversationNew', data))
     s.on('notification:new', (notification: Record<string, unknown>) => broadcast('onNewNotification', notification))
     s.on('error', (err: { message: string }) => broadcast('onError', err))
+    s.on('message:stream:start', (data: { conversationId: string }) => broadcast('onMessageStreamStart', data))
+    s.on('message:stream:chunk', (data: { conversationId: string; content: string }) => broadcast('onMessageStreamChunk', data))
   }, [])
 
   const disconnect = useCallback(() => {
@@ -211,6 +216,10 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     socketRef.current?.connected && socketRef.current.emit('messages:read', { conversationId })
   }, [])
 
+  const requestHuman = useCallback((conversationId: string) => {
+    socketRef.current?.connected && socketRef.current.emit('conversation:request_human', { conversationId })
+  }, [])
+
   // Connect khi user đăng nhập, disconnect khi logout
   const { isAuthenticated } = useAuth()
   useEffect(() => {
@@ -242,6 +251,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         markAsRead,
         subscribe,
         unsubscribe,
+        requestHuman,
       }}
     >
       {children}
