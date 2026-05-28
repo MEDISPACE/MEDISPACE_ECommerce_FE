@@ -15,7 +15,8 @@ import { addressService } from '../../services/addressService'
 import wishlistService from '../../services/wishlistService'
 import type { Address } from '../../types/user'
 import { CouponInput } from '../discount/CouponInput'
-
+import { RecommendationCarousel } from '../products/RecommendationCarousel'
+import { usePostPurchase } from '../../hooks/product/useRecommendations'
 import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
 import { useAuth } from '../../contexts/AuthContext'
@@ -35,6 +36,10 @@ export function ShoppingCartPage() {
 
   const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
+
+  // Cart product IDs for cross-sell recommendations
+  const cartProductIds = cart?.items?.map((item) => item.productId).filter(Boolean) ?? []
+  const { products: crossSellProducts, loading: crossSellLoading } = usePostPurchase(cartProductIds, 8)
 
   const [addresses, setAddresses] = useState<Address[]>([])
   const [defaultAddress, setDefaultAddress] = useState<Address | null>(null)
@@ -540,6 +545,20 @@ export function ShoppingCartPage() {
           </div>
         </div>
       </div>
+
+      {/* Cross-sell Recommendations */}
+      {cart?.items && cart.items.length > 0 && (
+        <div className='mt-8'>
+          <RecommendationCarousel
+            title='Thêm vào đơn hàng?'
+            subtitle='Khách hàng thường mua kèm với sản phẩm trong giỏ của bạn'
+            badge='bundle'
+            products={crossSellProducts}
+            loading={crossSellLoading}
+            viewAllLink='/products'
+          />
+        </div>
+      )}
     </div>
   )
 }

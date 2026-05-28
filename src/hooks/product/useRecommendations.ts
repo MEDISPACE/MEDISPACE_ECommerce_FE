@@ -156,3 +156,35 @@ export function usePostPurchase(productIds: string[], limit = 8): UseRecommendat
 
   return { products, loading, algorithm }
 }
+
+// ─── useReplenishment ─────────────────────────────────────────────────────────
+
+export function useReplenishment(limit = 5, isAuthenticated = false): UseRecommendationResult {
+  const [products, setProducts] = useState<RecommendedProduct[]>([])
+  const [loading, setLoading] = useState(true)
+  const [algorithm, setAlgorithm] = useState('')
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+
+    const fetch = async () => {
+      if (isAuthenticated) {
+        const res = await recommendationService.getReplenishment(limit)
+        if (!cancelled) {
+          setProducts(res.products)
+          setAlgorithm(res.algorithm)
+        }
+      } else {
+        // Guest: không có lịch sử → trả rỗng, không hiện carousel
+        if (!cancelled) setProducts([])
+      }
+      if (!cancelled) setLoading(false)
+    }
+
+    fetch()
+    return () => { cancelled = true }
+  }, [limit, isAuthenticated])
+
+  return { products, loading, algorithm }
+}
