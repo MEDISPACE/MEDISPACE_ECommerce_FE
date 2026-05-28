@@ -42,7 +42,7 @@ export function PharmacistChatPage() {
   const loadConversations = useCallback(async () => {
     try {
       setIsLoading(true)
-      const response = await chatService.getConversations({ page: 1, limit: 100, status: 'active' })
+      const response = await chatService.getConversations({ page: 1, limit: 100, status: 'active', type: 'pharmacist' })
       setConversations(response.conversations)
     } catch {
       toast.error('Không thể tải danh sách trò chuyện')
@@ -80,7 +80,14 @@ export function PharmacistChatPage() {
       },
       // (3.5) Cập nhật conversation khi được assign
       onConversationAssigned: ({ conversationId, pharmacistId }) => {
-        setConversations((prev) => prev.map((c) => (c._id === conversationId ? { ...c, pharmacistId } : c)))
+        setConversations((prev) => {
+          const exists = prev.some((c) => c._id === conversationId)
+          if (!exists) {
+            loadConversations()
+            return prev
+          }
+          return prev.map((c) => (c._id === conversationId ? { ...c, pharmacistId } : c))
+        })
         // Nếu mình là người được assign → chuyển sang tab "Của tôi"
         if (pharmacistId === user?._id) {
           setActiveTab('mine')
@@ -162,17 +169,14 @@ export function PharmacistChatPage() {
   }
 
   // Filter theo tab và search
-  // Ẩn conversation rỗng (chưa có tin nhắn) từ mọi tab
-  const hasMessages = (c: Conversation) => !!(c.lastMessage || c.lastMessageAt)
-  // Option A: "Chờ xử lý" = chưa assign + đã assign nhưng pharmacist offline
+  // "Chờ xử lý" = chưa assign + đã assign nhưng pharmacist offline
   const pendingConversations = conversations.filter(
     (c) =>
-      hasMessages(c) &&
       c.status === 'active' &&
       (!c.pharmacistId || (c.pharmacist && !c.pharmacist.isOnline && c.pharmacistId !== user?._id)),
   )
   const myConversations = conversations.filter(
-    (c) => hasMessages(c) && c.status === 'active' && c.pharmacistId === user?._id,
+    (c) => c.status === 'active' && c.pharmacistId === user?._id,
   )
 
   const getFilteredList = () => {

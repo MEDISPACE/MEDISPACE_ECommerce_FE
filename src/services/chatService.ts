@@ -25,9 +25,9 @@ class ChatService {
   }
 
   // Get or create conversation (Customer only - shared inbox)
-  async getOrCreateConversation(): Promise<Conversation> {
+  async getOrCreateConversation(type?: 'ai' | 'pharmacist'): Promise<Conversation> {
     try {
-      const response = await apiClient.post<{ message: string; result: Conversation }>('/chats/conversations')
+      const response = await apiClient.post<{ message: string; result: Conversation }>('/chats/conversations', { type })
       return response.data.result
     } catch (error) {
       const axiosError = error as AxiosError<{ message: string }>
@@ -99,6 +99,16 @@ class ChatService {
     } catch (error) {
       const axiosError = error as AxiosError<{ message: string }>
       throw axiosError.response?.data || { message: 'Failed to assign conversation' }
+    }
+  }
+
+  // Send feedback (thumbs up/down) for an AI response
+  async sendFeedback(messageId: string, feedback: 'up' | 'down'): Promise<void> {
+    try {
+      await apiClient.post(`/chats/messages/${messageId}/feedback`, { feedback })
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message: string }>
+      throw axiosError.response?.data || { message: 'Failed to send feedback' }
     }
   }
 }
