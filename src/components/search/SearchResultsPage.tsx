@@ -13,6 +13,8 @@ import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet'
 import { ProductCard } from '../products/ProductCard'
 import { EmptyState } from '../shared/EmptyState'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
+import { RecommendationCarousel } from '../products/RecommendationCarousel'
+import { useTrending, useRelated } from '../../hooks/product/useRecommendations'
 import { productService } from '../../services/productService'
 import { categoryService } from '../../services/categoryService'
 import { brandService } from '../../services/brandService'
@@ -39,6 +41,13 @@ export function SearchResultsPage() {
   const { addToCart } = useCart()
   const { toggleWishlist, isInWishlist } = useWishlist()
   const observerTarget = useRef<HTMLDivElement>(null)
+
+  // Trending fallback khi 0 kết quả
+  const { products: trendingProducts, loading: trendingLoading } = useTrending(8)
+
+  // Related khi 1–5 kết quả — firstResultId cập nhật sau khi query resolve
+  const [firstResultId, setFirstResultId] = useState('')
+  const { products: relatedProducts, loading: relatedLoading } = useRelated(firstResultId, 8)
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [isFilterOpen, setIsFilterOpen] = useState(false)
@@ -181,6 +190,16 @@ export function SearchResultsPage() {
   const allProducts = useMemo(() => {
     return data?.pages.flatMap((page) => page) ?? []
   }, [data])
+
+  // Cập nhật firstResultId khi kết quả thay đổi
+  useEffect(() => {
+    if (!allProducts || allProducts.length === 0) {
+      setFirstResultId('')
+      return
+    }
+    const id = getProductId(allProducts[0]) || ''
+    setFirstResultId(id)
+  }, [allProducts])
 
   const totalResults = allProducts.length
 
@@ -529,19 +548,47 @@ export function SearchResultsPage() {
                   </div>
                 )}
               </div>
+
+              {/* Related carousel khi kết quả ít (1–5) — liên quan đến sp đầu tiên tìm được */}
+              {!isLoading && allProducts.length < 6 && allProducts.length > 0 && (
+                <div className='mt-4'>
+                  <RecommendationCarousel
+                    title='Sản phẩm liên quan'
+                    subtitle={`Dựa trên kết quả tìm kiếm "${searchQuery}"`}
+                    badge='related'
+                    products={relatedProducts}
+                    loading={relatedLoading}
+                    viewAllLink='/products'
+                  />
+                </div>
+              )}
             </>
           ) : (
-            <EmptyState
-              icon={<Search className='w-16 h-16' />}
-              title='Không tìm thấy sản phẩm'
-              description={
-                searchQuery
-                  ? `Không có sản phẩm nào phù hợp với từ khóa "${searchQuery}". Thử tìm kiếm với từ khóa khác hoặc điều chỉnh bộ lọc.`
-                  : 'Không có sản phẩm nào phù hợp với bộ lọc hiện tại. Thử điều chỉnh bộ lọc hoặc xóa bộ lọc.'
-              }
-              actionLabel='Xóa bộ lọc'
-              onAction={clearFilters}
-            />
+            <>
+              <EmptyState
+                icon={<Search className='w-16 h-16' />}
+                title='Không tìm thấy sản phẩm'
+                description={
+                  searchQuery
+                    ? `Không có sản phẩm nào phù hợp với từ khóa "${searchQuery}". Thử tìm kiếm với từ khóa khác hoặc điều chỉnh bộ lọc.`
+                    : 'Không có sản phẩm nào phù hợp với bộ lọc hiện tại. Thử điều chỉnh bộ lọc hoặc xóa bộ lọc.'
+                }
+                actionLabel='Xóa bộ lọc'
+                onAction={clearFilters}
+              />
+
+              {/* Trending fallback khi search không có kết quả */}
+              <div className='mt-8'>
+                <RecommendationCarousel
+                  title='Có thể bạn đang tìm...'
+                  subtitle='Những sản phẩm đang được nhiều khách hàng yêu thích'
+                  badge='trending'
+                  products={trendingProducts}
+                  loading={trendingLoading}
+                  viewAllLink='/products'
+                />
+              </div>
+            </>
           )}
         </div>
       </div>

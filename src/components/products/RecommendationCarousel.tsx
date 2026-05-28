@@ -23,7 +23,7 @@ import {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type BadgeVariant = 'trending' | 'for-you' | 'bundle' | 'post-purchase'
+type BadgeVariant = 'trending' | 'for-you' | 'bundle' | 'post-purchase' | 'related'
 
 interface RecommendationCarouselProps {
   title: string
@@ -59,6 +59,11 @@ const BADGE_CONFIG: Record<BadgeVariant, { icon: React.ElementType; label: strin
     icon: Sparkles,
     label: 'Gợi Ý',
     color: 'from-blue-500 to-cyan-500',
+  },
+  related: {
+    icon: Sparkles,
+    label: 'Liên Quan',
+    color: 'from-indigo-500 to-blue-500',
   },
 }
 

@@ -91,6 +91,8 @@ export function CheckoutPage() {
   const [agreeToTerms, setAgreeToTerms] = useState(false)
   const [orderNotes, setOrderNotes] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
+  // Sau khi đặt hàng thành công, disable guard vĩnh viễn
+  const [orderPlaced, setOrderPlaced] = useState(false)
 
   // Coupon states
   const [appliedCoupons, setAppliedCoupons] = useState<any[]>([])
@@ -177,9 +179,10 @@ export function CheckoutPage() {
     fetchData()
   }, [])
 
-  // Guard: nếu không phải buy_now và không có item nào được chọn sau khi load xong
-  // thì redirect về /cart thành thay vì hiển thị trang checkout rỗng
+  // Guard: redirect về /cart nếu chưa chọn sản phẩm nào
+  // Chỉ chạy khi chưa đặt hàng (orderPlaced = false)
   useEffect(() => {
+    if (orderPlaced) return  // Đã đặt hàng xong, tắt guard
     if (!loading && !isBuyNow && state.cart !== undefined) {
       const selectedCount = state.selectedItems.size
       const cartHasItems = (state.cart?.items?.length ?? 0) > 0
@@ -187,7 +190,7 @@ export function CheckoutPage() {
         navigate('/cart', { replace: true })
       }
     }
-  }, [loading, isBuyNow, state.cart, state.selectedItems])
+  }, [loading, isBuyNow, state.cart, state.selectedItems, orderPlaced])
 
   const cartItems = isBuyNow
     ? buyNowItem
@@ -359,12 +362,10 @@ export function CheckoutPage() {
 
       // Redirect logic
       if (paymentUrl) {
-        // For online payments, keep selectedItems in sessionStorage
-        // They will be cleared when payment succeeds (in OrderSuccessPage)
-        // DON'T call selectAllItems(false) here - it would clear sessionStorage!
         window.location.href = paymentUrl
       } else {
-        // COD: Clear selections and sessionStorage
+        // COD: set orderPlaced TRƯỚC để disable guard, rồi navigate
+        setOrderPlaced(true)
         selectAllItems(false)
         sessionStorage.removeItem('medispace_selected_items')
         navigate(`/order/success?orderId=${order.id}`, { replace: true })
