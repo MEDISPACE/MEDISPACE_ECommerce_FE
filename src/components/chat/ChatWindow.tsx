@@ -13,6 +13,8 @@ interface ChatWindowProps {
   onClose?: () => void
   onNewConversation?: () => void
   showHeader?: boolean
+  aiMode?: boolean
+  setAiMode?: (mode: boolean) => void
 }
 
 export function ChatWindow({
@@ -22,6 +24,8 @@ export function ChatWindow({
   onClose,
   onNewConversation,
   showHeader = true,
+  aiMode = false,
+  setAiMode,
 }: ChatWindowProps) {
   const id = useId() // unique subscriber id
   const [messages, setMessages] = useState<Message[]>([])
@@ -29,9 +33,17 @@ export function ChatWindow({
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(false)
   const [typingUserId, setTypingUserId] = useState<string | null>(null)
+  const [isAiTyping, setIsAiTyping] = useState(false)
+  const [streamingMessageText, setStreamingMessageText] = useState<string>('')
   const [isClosed, setIsClosed] = useState(conversation.status === 'closed')
   // FIX: dùng useRef thay useState cho timeout
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const aiTypingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const conversationIdRef = useRef(conversation._id)
+
+  useEffect(() => {
+    conversationIdRef.current = conversation._id
+  }, [conversation._id])
 
   const {
     isConnected,
@@ -42,6 +54,7 @@ export function ChatWindow({
     stopTyping,
     subscribe,
     unsubscribe,
+    requestHuman,
   } = useSocketContext()
 
   // Get other user info
@@ -52,26 +65,47 @@ export function ChatWindow({
   useEffect(() => {
     subscribe(id, {
       onNewMessage: (message: Message) => {
-        if (message.conversationId !== conversation._id) return
+        if (message.conversationId !== conversationIdRef.current) return
+        
+        // Turn off AI typing indicator when receiving a message from AI / pharmacist
+        if (message.isAI || message.senderRole === 'pharmacist') {
+          setIsAiTyping(false)
+          setStreamingMessageText('')
+          if (aiTypingTimeoutRef.current) {
+            clearTimeout(aiTypingTimeoutRef.current)
+            aiTypingTimeoutRef.current = null
+          }
+        }
+
         setMessages((prev) => {
           if (prev.some((m) => m._id === message._id)) return prev
           return [...prev, message]
         })
       },
+      onMessageStreamStart: (data) => {
+        if (data.conversationId !== conversationIdRef.current) return
+        setIsAiTyping(true)
+        setStreamingMessageText('')
+      },
+      onMessageStreamChunk: (data) => {
+        if (data.conversationId !== conversationIdRef.current) return
+        setIsAiTyping(true)
+        setStreamingMessageText((prev) => prev + data.content)
+      },
       onUserTyping: (data) => {
-        if (data.conversationId !== conversation._id || data.userId === currentUserId) return
+        if (data.conversationId !== conversationIdRef.current || data.userId === currentUserId) return
         setTypingUserId(data.userId)
         if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
         typingTimeoutRef.current = setTimeout(() => setTypingUserId(null), 3000)
       },
       onUserStopTyping: (data) => {
-        if (data.conversationId === conversation._id) {
+        if (data.conversationId === conversationIdRef.current) {
           setTypingUserId(null)
           if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
         }
       },
       onConversationClosed: (data) => {
-        if (data.conversationId === conversation._id) {
+        if (data.conversationId === conversationIdRef.current) {
           setIsClosed(true)
         }
       },
@@ -82,8 +116,9 @@ export function ChatWindow({
     return () => {
       unsubscribe(id)
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+      if (aiTypingTimeoutRef.current) clearTimeout(aiTypingTimeoutRef.current)
     }
-  }, [id, conversation._id, currentUserId, subscribe, unsubscribe])
+  }, [id, currentUserId, subscribe, unsubscribe])
 
   // Load messages
   const loadMessages = useCallback(
@@ -115,13 +150,20 @@ export function ChatWindow({
     if (!isLoading && hasMore) loadMessages(page + 1)
   }
 
-  // Send message
   const handleSendMessage = async (
     content: string,
     imageUrl?: string,
     productRef?: import('~/types/chat').ProductRef,
   ) => {
     try {
+      if (aiMode && currentUserRole === 'customer') {
+        setIsAiTyping(true)
+        if (aiTypingTimeoutRef.current) clearTimeout(aiTypingTimeoutRef.current)
+        aiTypingTimeoutRef.current = setTimeout(() => {
+          setIsAiTyping(false)
+        }, 60000) // Fallback timeout of 60s
+      }
+
       if (isConnected) {
         if (productRef) {
           sendSocketMessage({
@@ -150,6 +192,11 @@ export function ChatWindow({
         setMessages((prev) => [...prev, message])
       }
     } catch {
+      setIsAiTyping(false)
+      if (aiTypingTimeoutRef.current) {
+        clearTimeout(aiTypingTimeoutRef.current)
+        aiTypingTimeoutRef.current = null
+      }
       toast.error('Không thể gửi tin nhắn')
     }
   }
@@ -167,8 +214,17 @@ export function ChatWindow({
 
   // Load initial messages
   useEffect(() => {
+    setMessages([])
+    setPage(1)
+    setHasMore(false)
+    setIsClosed(conversation.status === 'closed')
+    setIsAiTyping(false)
+    if (aiTypingTimeoutRef.current) {
+      clearTimeout(aiTypingTimeoutRef.current)
+      aiTypingTimeoutRef.current = null
+    }
     loadMessages(1)
-  }, [loadMessages])
+  }, [conversation._id, conversation.status, loadMessages])
 
   // FIX 3.6: markAsRead khi component mount (user đang xem)
   useEffect(() => {
@@ -205,6 +261,25 @@ export function ChatWindow({
     return () => clearInterval(interval)
   }, [isConnected, conversation._id])
 
+  const handleRequestHuman = useCallback(() => {
+    if (isConnected) {
+      requestHuman(conversation._id)
+      toast.info('Đang kết nối bạn với Dược sĩ...')
+    }
+  }, [isConnected, conversation._id, requestHuman])
+
+  const handleFeedback = async (messageId: string, feedback: 'up' | 'down') => {
+    try {
+      setMessages((prev) =>
+        prev.map((msg) => (msg._id === messageId ? { ...msg, feedback } : msg))
+      )
+      await chatService.sendFeedback(messageId, feedback)
+      toast.success('Cảm ơn phản hồi của bạn!')
+    } catch {
+      toast.error('Không thể gửi phản hồi lúc này')
+    }
+  }
+
   return (
     <div className='flex flex-col h-full bg-white'>
       <MessageList
@@ -213,8 +288,13 @@ export function ChatWindow({
         currentUserRole={currentUserRole}
         isLoading={isLoading}
         typingUserId={typingUserId || undefined}
+        isAiTyping={isAiTyping}
+        streamingMessageText={streamingMessageText}
         onLoadMore={handleLoadMore}
         hasMore={hasMore}
+        onRequestHuman={aiMode ? handleRequestHuman : undefined}
+        onSuggestClick={aiMode ? handleSendMessage : undefined}
+        onFeedbackClick={handleFeedback}
       />
       {isClosed ? (
         <div className='flex-shrink-0 px-4 py-3 bg-gray-100 border-t border-gray-200 flex items-center gap-2 text-sm text-gray-500'>

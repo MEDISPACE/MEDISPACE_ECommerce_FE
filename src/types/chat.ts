@@ -17,6 +17,7 @@ export interface Conversation {
     pharmacist: number
   }
   status: 'active' | 'closed'
+  type: 'ai' | 'pharmacist'
   createdAt: string
   updatedAt: string
   customer?: User
@@ -39,10 +40,15 @@ export interface Message {
   senderId: string
   senderRole: 'customer' | 'pharmacist'
   content: string
-  type: 'text' | 'image' | 'product'
+  type: 'text' | 'image' | 'product' | 'system'
   imageUrl?: string
   productRef?: ProductRef
+  suggestedProducts?: ProductRef[]
+  suggestedQuestions?: string[]
+  feedback?: 'up' | 'down'
   isRead: boolean
+  isAI?: boolean
+  aiClassification?: 'emergency' | 'prescription_request' | 'general'
   createdAt: string
   updatedAt: string
 }
@@ -60,6 +66,7 @@ export interface GetConversationsParams {
   page?: number
   limit?: number
   status?: 'active' | 'closed'
+  type?: 'ai' | 'pharmacist'
 }
 
 export interface GetMessagesParams {
