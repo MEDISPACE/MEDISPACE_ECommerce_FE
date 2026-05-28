@@ -89,7 +89,7 @@ export function ProductPicker({ onSelect, onClose }: ProductPickerProps) {
       style={{ maxHeight: '380px' }}
     >
       {/* Header */}
-      <div className='flex items-center justify-between p-3 border-b border-gray-100 bg-gradient-to-r from-blue-600 to-cyan-500'>
+      <div className='flex items-center justify-between p-3 border-b border-gray-100 bg-blue-600'>
         <div className='flex items-center gap-2 text-white'>
           <Pill className='w-4 h-4' />
           <span className='text-sm font-semibold'>Gửi sản phẩm</span>

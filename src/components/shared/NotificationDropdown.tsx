@@ -191,7 +191,7 @@ export function NotificationDropdown({ viewAllUrl = '/account/notifications' }: 
               </div>
 
               {/* List */}
-              <ScrollArea className='max-h-80'>
+              <ScrollArea className='max-h-80 [&>[data-slot=scroll-area-viewport]]:max-h-80'>
                 {preview.length === 0 ? (
                   <div className='text-center py-10'>
                     <Bell className='w-10 h-10 mx-auto text-gray-200 mb-2' />
@@ -215,7 +215,7 @@ export function NotificationDropdown({ viewAllUrl = '/account/notifications' }: 
               </ScrollArea>
 
               {/* Footer */}
-              <div className='border-t border-blue-500/10 px-4 py-2.5'>
+              <div className='border-t border-blue-500/10 px-4 py-2.5 bg-white relative z-10'>
                 <Link
                   to={viewAllUrl}
                   onClick={() => setOpen(false)}
