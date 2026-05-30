@@ -186,10 +186,20 @@ export function SearchResultsPage() {
     }
   }, [fetchNextPage, hasNextPage, isFetchingNextPage])
 
-  // All products from server
+  // All products from server — sort OTC before prescription when no explicit filter
   const allProducts = useMemo(() => {
-    return data?.pages.flatMap((page) => page) ?? []
-  }, [data])
+    const products = data?.pages.flatMap((page) => page) ?? []
+    // Only apply OTC priority when user hasn't filtered by prescription type explicitly
+    if (prescriptionType === 'all') {
+      // Stable sort: OTC (requiresPrescription=false) trước kê đơn (true)
+      return [...products].sort((a, b) => {
+        const aRx = a.requiresPrescription ? 1 : 0
+        const bRx = b.requiresPrescription ? 1 : 0
+        return aRx - bRx
+      })
+    }
+    return products
+  }, [data, prescriptionType])
 
   // Cập nhật firstResultId khi kết quả thay đổi
   useEffect(() => {
