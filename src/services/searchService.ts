@@ -13,10 +13,22 @@ export interface SearchSuggestHit {
     featuredImage?: string
     price?: number
     rating?: number
+    brandName?: string
+    categoryName?: string
+    logo?: string
+    productCount?: number
+    level?: number
+    icon?: string
   }
   highlight?: {
     name?: { snippet?: string }
   }
+}
+
+export interface SearchSuggestResult {
+  products: SearchSuggestHit[]
+  brands: SearchSuggestHit[]
+  categories: SearchSuggestHit[]
 }
 
 export interface SearchProductsHit {
@@ -85,16 +97,17 @@ export interface SearchProductsParams {
 
 export const searchService = {
   /**
-   * Autocomplete — gọi khi user đang gõ (>= 2 ký tự)
+   * Autocomplete multi-collection — gọi khi user đang gõ (>= 2 ký tự)
+   * Trả về products, brands, categories
    */
-  async suggest(q: string): Promise<SearchSuggestHit[]> {
+  async suggest(q: string): Promise<SearchSuggestResult> {
     try {
-      const response = await apiClient.get<{ hits?: SearchSuggestHit[] }>('/search/suggest', {
+      const response = await apiClient.get<SearchSuggestResult>('/search/suggest', {
         params: { q },
       })
-      return response.data?.hits || []
+      return response.data || { products: [], brands: [], categories: [] }
     } catch {
-      return []
+      return { products: [], brands: [], categories: [] }
     }
   },
 
