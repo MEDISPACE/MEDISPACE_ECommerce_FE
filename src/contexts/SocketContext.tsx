@@ -34,6 +34,8 @@ interface SocketCallbacks {
   onCommunityModerationQueued?: (data: Record<string, unknown>) => void
   onNewNotification?: (notification: Record<string, unknown>) => void
   onError?: (error: { message: string }) => void
+  onMessageStreamStart?: (data: { conversationId: string }) => void
+  onMessageStreamChunk?: (data: { conversationId: string; content: string }) => void
 }
 
 interface SocketContextType {
@@ -54,6 +56,7 @@ interface SocketContextType {
   markAsRead: (conversationId: string) => void
   joinCommunityRoom: (roomId: string, onAck?: (payload: { ok: boolean; roomId?: string; message?: string }) => void) => void
   leaveCommunityRoom: (roomId: string) => void
+  requestHuman: (conversationId: string) => void
   // Subscribe/unsubscribe pattern to allow multiple components to listen
   subscribe: (id: string, callbacks: SocketCallbacks) => void
   unsubscribe: (id: string) => void
@@ -185,6 +188,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     )
     s.on('notification:new', (notification: Record<string, unknown>) => broadcast('onNewNotification', notification))
     s.on('error', (err: { message: string }) => broadcast('onError', err))
+    s.on('message:stream:start', (data: { conversationId: string }) => broadcast('onMessageStreamStart', data))
+    s.on('message:stream:chunk', (data: { conversationId: string; content: string }) => broadcast('onMessageStreamChunk', data))
   }, [])
 
   const disconnect = useCallback(() => {
@@ -248,6 +253,10 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     socketRef.current?.connected && socketRef.current.emit('community:room:leave', roomId)
   }, [])
 
+  const requestHuman = useCallback((conversationId: string) => {
+    socketRef.current?.connected && socketRef.current.emit('conversation:request_human', { conversationId })
+  }, [])
+
   // Connect khi user đăng nhập, disconnect khi logout
   const { isAuthenticated } = useAuth()
   useEffect(() => {
@@ -281,6 +290,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         leaveCommunityRoom,
         subscribe,
         unsubscribe,
+        requestHuman,
       }}
     >
       {children}

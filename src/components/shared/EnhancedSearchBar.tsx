@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Search, X, Mic, History, TrendingUp, Loader2, Camera } from 'lucide-react'
+import { Search, X, Mic, History, TrendingUp, Loader2, Camera, Tag, FolderOpen } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Card, CardContent } from '../ui/card'
@@ -30,8 +30,8 @@ export function EnhancedSearchBar({
   const navigate = useNavigate()
   const { recentSearches, addToHistory, removeFromHistory } = useSearchHistory()
 
-  // Use optimized search hook
-  const { suggestions, isLoading } = useSearchSuggestions(searchQuery)
+  // Use multi-collection search hook
+  const { products, brands, categories, all: suggestions, isLoading } = useSearchSuggestions(searchQuery)
 
   // Trending searches
   const trendingSearches = ['Paracetamol', 'Vitamin D3', 'Kem dưỡng da', 'Thuốc ho', 'Canxi']
@@ -80,6 +80,8 @@ export function EnhancedSearchBar({
       navigate(`/products/${suggestion.slug}`)
     } else if (suggestion.type === 'category' && suggestion.slug) {
       navigate(`/categories/${suggestion.slug}`)
+    } else if (suggestion.type === 'brand' && suggestion.slug) {
+      navigate(`/search?brandSlug=${suggestion.slug}`)
     } else {
       handleSearch(suggestion.text)
     }
@@ -215,47 +217,124 @@ export function EnhancedSearchBar({
         <Card className='absolute top-full left-0 right-0 mt-2 z-50 bg-white/95 backdrop-blur-lg shadow-2xl border border-blue-100 rounded-2xl overflow-hidden'>
           <CardContent className='p-0 max-h-96 overflow-y-auto'>
             {searchQuery ? (
-              // Search suggestions
+              // Search suggestions — grouped by type
               isLoading ? (
                 <div className='p-6 text-center'>
                   <Loader2 className='w-6 h-6 mx-auto animate-spin text-gray-400 mb-2' />
                   <div className='text-sm text-gray-500'>Đang tìm kiếm...</div>
                 </div>
               ) : suggestions.length > 0 ? (
-                <div className='p-4 space-y-2'>
-                  <div className='text-sm text-gray-500 mb-3'>Gợi ý tìm kiếm</div>
-                  {suggestions.map((suggestion, index) => (
-                    <button
-                      key={suggestion.id}
-                      onClick={() => handleSuggestionClick(suggestion)}
-                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${
-                        selectedIndex === index ? 'bg-blue-100 border border-blue-300' : 'hover:bg-blue-50'
-                      }`}
-                    >
-                      {suggestion.type === 'product' && suggestion.image ? (
-                        <img
-                          src={suggestion.image}
-                          alt={suggestion.text}
-                          className='w-12 h-12 object-cover rounded-lg border border-gray-200'
-                        />
-                      ) : (
-                        <span className='text-lg'>{(suggestion as any).icon}</span>
-                      )}
-                      <div className='flex-1'>
-                        <div className='font-medium'>{suggestion.text}</div>
-                        <div className='text-xs text-gray-500 capitalize'>
-                          {suggestion.type === 'product'
-                            ? 'Sản phẩm'
-                            : suggestion.type === 'category'
-                              ? 'Danh mục'
-                              : 'Thương hiệu'}
-                        </div>
+                <div className='p-3'>
+                  {/* ── THƯƠNG HIỆU ── */}
+                  {brands.length > 0 && (
+                    <div className='mb-2'>
+                      <div className='flex items-center gap-1.5 text-xs font-semibold text-blue-600 uppercase tracking-wider px-2 py-1.5'>
+                        <Tag className='w-3 h-3' />
+                        Thương hiệu
                       </div>
-                      <Badge variant='secondary' className='text-xs'>
-                        {suggestion.type === 'product' ? 'SP' : suggestion.type === 'category' ? 'DM' : 'TH'}
-                      </Badge>
-                    </button>
-                  ))}
+                      {brands.map((suggestion, index) => (
+                        <button
+                          key={suggestion.id}
+                          onClick={() => handleSuggestionClick(suggestion)}
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left ${
+                            selectedIndex === index ? 'bg-blue-50 border border-blue-200' : 'hover:bg-gray-50'
+                          }`}
+                        >
+                          {suggestion.image ? (
+                            <img src={suggestion.image} alt={suggestion.text} className='w-8 h-8 object-contain rounded border border-gray-100' />
+                          ) : (
+                            <div className='w-8 h-8 bg-blue-100 rounded flex items-center justify-center'>
+                              <Tag className='w-4 h-4 text-blue-500' />
+                            </div>
+                          )}
+                          <div className='flex-1 min-w-0'>
+                            <div className='font-medium text-sm truncate'>{suggestion.text}</div>
+                            {suggestion.productCount !== undefined && (
+                              <div className='text-xs text-gray-400'>{suggestion.productCount} sản phẩm</div>
+                            )}
+                          </div>
+                          <Badge variant='secondary' className='text-xs bg-blue-50 text-blue-600 shrink-0'>TH</Badge>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* ── DANH MỤC ── */}
+                  {categories.length > 0 && (
+                    <div className='mb-2'>
+                      {brands.length > 0 && <Separator className='mb-2' />}
+                      <div className='flex items-center gap-1.5 text-xs font-semibold text-green-600 uppercase tracking-wider px-2 py-1.5'>
+                        <FolderOpen className='w-3 h-3' />
+                        Danh mục
+                      </div>
+                      {categories.map((suggestion, index) => (
+                        <button
+                          key={suggestion.id}
+                          onClick={() => handleSuggestionClick(suggestion)}
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left ${
+                            selectedIndex === brands.length + index ? 'bg-green-50 border border-green-200' : 'hover:bg-gray-50'
+                          }`}
+                        >
+                          <div className='w-8 h-8 bg-green-50 rounded flex items-center justify-center text-base'>
+                            {suggestion.icon || '📁'}
+                          </div>
+                          <div className='flex-1 min-w-0'>
+                            <div className='font-medium text-sm truncate'>{suggestion.text}</div>
+                            {suggestion.productCount !== undefined && (
+                              <div className='text-xs text-gray-400'>{suggestion.productCount} sản phẩm</div>
+                            )}
+                          </div>
+                          <Badge variant='secondary' className='text-xs bg-green-50 text-green-600 shrink-0'>DM</Badge>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* ── SẢN PHẨM ── */}
+                  {products.length > 0 && (
+                    <div>
+                      {(brands.length > 0 || categories.length > 0) && <Separator className='mb-2' />}
+                      <div className='flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider px-2 py-1.5'>
+                        <Search className='w-3 h-3' />
+                        Sản phẩm
+                      </div>
+                      {products.map((suggestion, index) => (
+                        <button
+                          key={suggestion.id}
+                          onClick={() => handleSuggestionClick(suggestion)}
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left ${
+                            selectedIndex === brands.length + categories.length + index
+                              ? 'bg-blue-50 border border-blue-200'
+                              : 'hover:bg-gray-50'
+                          }`}
+                        >
+                          {suggestion.image ? (
+                            <img
+                              src={suggestion.image}
+                              alt={suggestion.text}
+                              className='w-10 h-10 object-cover rounded-lg border border-gray-100 shrink-0'
+                            />
+                          ) : (
+                            <div className='w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center shrink-0'>
+                              <Search className='w-4 h-4 text-gray-400' />
+                            </div>
+                          )}
+                          <div className='flex-1 min-w-0'>
+                            <div className='font-medium text-sm truncate'>{suggestion.text}</div>
+                            {suggestion.brandName && (
+                              <div className='text-xs text-gray-400 truncate'>{suggestion.brandName}</div>
+                            )}
+                          </div>
+                          <Badge
+                            variant='secondary'
+                            className={`text-xs shrink-0 ${suggestion.requiresPrescription ? 'bg-orange-50 text-orange-500 border border-orange-200' : 'bg-emerald-50 text-emerald-600 border border-emerald-200'}`}
+                          >
+                            {suggestion.requiresPrescription ? 'Kê đơn' : 'OTC'}
+                          </Badge>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className='p-6 text-center text-gray-500'>
