@@ -1,5 +1,15 @@
 import apiClient from '~/services/apiClient'
-import type { ModerationAction, ModerationActionLog, ModerationAppeal, ModerationQueueItem } from '~/types/moderation'
+import type {
+  AiModerationJob,
+  AiModerationJobStatus,
+  ModerationAction,
+  ModerationActionLog,
+  ModerationAppeal,
+  ModerationAppealType,
+  ModerationQueueItem,
+  ModerationSeverity,
+  ModerationTrigger,
+} from '~/types/moderation'
 
 type Envelope<T> = { message?: string; data?: T; result?: T }
 
@@ -10,11 +20,36 @@ function unwrap<T>(envelope: Envelope<T>): T {
 }
 
 export const moderationService = {
-  async getQueue(params: { page: number; limit: number }) {
+  async getQueue(params: {
+    page: number
+    limit: number
+    severity?: ModerationSeverity
+    trigger?: ModerationTrigger
+    search?: string
+  }) {
     const res = await apiClient.get<Envelope<{ items: ModerationQueueItem[]; page: number; limit: number; total: number }>>(
       '/admin/moderation/queue',
       { params },
     )
+    return unwrap(res.data)
+  },
+
+  async getAiJobs(params: {
+    page: number
+    limit: number
+    status?: AiModerationJobStatus
+    roomId?: string
+    messageId?: string
+    search?: string
+  }) {
+    const res = await apiClient.get<
+      Envelope<{ items: AiModerationJob[]; page: number; limit: number; total: number }>
+    >('/admin/moderation/ai-jobs', { params })
+    return unwrap(res.data)
+  },
+
+  async retryAiJob(jobId: string) {
+    const res = await apiClient.post<Envelope<any>>(`/admin/moderation/ai-jobs/${jobId}/retry`)
     return unwrap(res.data)
   },
 
@@ -46,6 +81,8 @@ export const moderationService = {
     messageId?: string
     targetUserId?: string
     action?: string
+    dateFrom?: string
+    dateTo?: string
   }) {
     const res = await apiClient.get<
       Envelope<{ items: ModerationActionLog[]; page: number; limit: number; total: number }>
@@ -53,7 +90,15 @@ export const moderationService = {
     return unwrap(res.data)
   },
 
-  async getAppeals(params: { page: number; limit: number; status?: 'open' | 'approved' | 'rejected' }) {
+  async getAppeals(params: {
+    page: number
+    limit: number
+    status?: 'open' | 'approved' | 'rejected'
+    type?: ModerationAppealType
+    roomId?: string
+    userId?: string
+    search?: string
+  }) {
     const res = await apiClient.get<
       Envelope<{ items: ModerationAppeal[]; page: number; limit: number; total: number }>
     >('/admin/moderation/appeals', { params })

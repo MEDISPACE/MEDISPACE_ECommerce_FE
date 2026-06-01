@@ -41,11 +41,12 @@ export function AdminCommunityPage() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'archived'>('all')
 
   const { data: rooms = [], isLoading, isFetching, refetch } = useQuery({
-    queryKey: ['admin-community-rooms', visibilityFilter, statusFilter],
+    queryKey: ['admin-community-rooms', visibilityFilter, statusFilter, roomSearch.trim()],
     queryFn: () =>
       adminCommunityService.listRooms({
         visibility: visibilityFilter === 'all' ? undefined : visibilityFilter,
         status: statusFilter === 'all' ? undefined : statusFilter,
+        search: roomSearch.trim() || undefined,
       }),
   })
 

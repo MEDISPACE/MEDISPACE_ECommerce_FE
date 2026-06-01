@@ -47,7 +47,15 @@ import {
   SelectValue,
 } from '~/components/ui/select'
 import moderationService from '~/services/moderationService'
-import type { ModerationAction, ModerationActionLog, ModerationAppeal, ModerationQueueItem } from '~/types/moderation'
+import type {
+  AiModerationJob,
+  AiModerationJobStatus,
+  ModerationAction,
+  ModerationActionLog,
+  ModerationAppeal,
+  ModerationAppealType,
+  ModerationQueueItem,
+} from '~/types/moderation'
 
 const PAGE_SIZE = 20
 
@@ -126,11 +134,23 @@ export function AdminModerationPage() {
   const [confirmTargetKey, setConfirmTargetKey] = useState<string | null>(null)
   const [actionLogs, setActionLogs] = useState<ModerationActionLog[]>([])
   const [appeals, setAppeals] = useState<ModerationAppeal[]>([])
+  const [aiJobs, setAiJobs] = useState<AiModerationJob[]>([])
+  const [aiJobTotal, setAiJobTotal] = useState(0)
   const [queueSearch, setQueueSearch] = useState('')
   const [severityFilter, setSeverityFilter] = useState('all')
   const [triggerFilter, setTriggerFilter] = useState('all')
   const [appealStatus, setAppealStatus] = useState<'all' | 'open' | 'approved' | 'rejected'>('open')
+  const [appealType, setAppealType] = useState<'all' | ModerationAppealType>('all')
+  const [appealSearch, setAppealSearch] = useState('')
   const [actionFilter, setActionFilter] = useState('all')
+  const [actionDateFrom, setActionDateFrom] = useState('')
+  const [actionDateTo, setActionDateTo] = useState('')
+  const [actionRoomId, setActionRoomId] = useState('')
+  const [actionTargetUserId, setActionTargetUserId] = useState('')
+  const [aiJobStatus, setAiJobStatus] = useState<'all' | AiModerationJobStatus>('all')
+  const [aiJobSearch, setAiJobSearch] = useState('')
+  const [aiJobRoomId, setAiJobRoomId] = useState('')
+  const [aiJobMessageId, setAiJobMessageId] = useState('')
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
@@ -138,13 +158,19 @@ export function AdminModerationPage() {
     async (pageNum = 1) => {
       try {
         setIsLoading(true)
-        const res = await moderationService.getQueue({ page: pageNum, limit: PAGE_SIZE })
+        const res = await moderationService.getQueue({
+          page: pageNum,
+          limit: PAGE_SIZE,
+          severity: severityFilter === 'all' ? undefined : (severityFilter as any),
+          trigger: triggerFilter === 'all' ? undefined : (triggerFilter as any),
+          search: queueSearch.trim() || undefined,
+        })
         setItems(res.items)
         setTotal(res.total)
         setPage(pageNum)
         if (res.items.length > 0) {
           const nextKey = getQueueKey(res.items[0])
-          setSelectedKey((prev) => prev || nextKey)
+          setSelectedKey((prev) => (prev && res.items.some((item) => getQueueKey(item) === prev) ? prev : nextKey))
         } else {
           setSelectedKey(null)
         }
@@ -154,7 +180,7 @@ export function AdminModerationPage() {
         setIsLoading(false)
       }
     },
-    [],
+    [queueSearch, severityFilter, triggerFilter],
   )
 
   const loadActions = useCallback(async () => {
@@ -163,12 +189,16 @@ export function AdminModerationPage() {
         page: 1,
         limit: 10,
         action: actionFilter === 'all' ? undefined : actionFilter,
+        roomId: actionRoomId.trim() || undefined,
+        targetUserId: actionTargetUserId.trim() || undefined,
+        dateFrom: actionDateFrom || undefined,
+        dateTo: actionDateTo || undefined,
       })
       setActionLogs(res.items)
     } catch {
       // Audit history is secondary; keep queue usable if it fails.
     }
-  }, [actionFilter])
+  }, [actionDateFrom, actionDateTo, actionFilter, actionRoomId, actionTargetUserId])
 
   const loadAppeals = useCallback(async () => {
     try {
@@ -176,18 +206,38 @@ export function AdminModerationPage() {
         page: 1,
         limit: 20,
         status: appealStatus === 'all' ? undefined : appealStatus,
+        type: appealType === 'all' ? undefined : appealType,
+        search: appealSearch.trim() || undefined,
       })
       setAppeals(res.items)
     } catch {
       // Appeal queue is secondary to moderation queue.
     }
-  }, [appealStatus])
+  }, [appealSearch, appealStatus, appealType])
+
+  const loadAiJobs = useCallback(async () => {
+    try {
+      const res = await moderationService.getAiJobs({
+        page: 1,
+        limit: 20,
+        status: aiJobStatus === 'all' ? undefined : aiJobStatus,
+        roomId: aiJobRoomId.trim() || undefined,
+        messageId: aiJobMessageId.trim() || undefined,
+        search: aiJobSearch.trim() || undefined,
+      })
+      setAiJobs(res.items)
+      setAiJobTotal(res.total)
+    } catch {
+      // AI audit is secondary to moderation actions.
+    }
+  }, [aiJobMessageId, aiJobRoomId, aiJobSearch, aiJobStatus])
 
   useEffect(() => {
     loadQueue(1)
     loadActions()
     loadAppeals()
-  }, [loadActions, loadAppeals, loadQueue])
+    loadAiJobs()
+  }, [loadActions, loadAiJobs, loadAppeals, loadQueue])
 
   useEffect(() => {
     if (!selectedKey && items.length > 0) {
@@ -200,19 +250,7 @@ export function AdminModerationPage() {
     [items, selectedKey],
   )
 
-  const filteredItems = useMemo(() => {
-    const needle = queueSearch.trim().toLowerCase()
-    return items.filter((item) => {
-      const matchesSearch =
-        !needle ||
-        [item.room?.name, item.room?.slug, item.message?.content, item.categories?.join(' ')]
-          .filter(Boolean)
-          .some((value) => String(value).toLowerCase().includes(needle))
-      const matchesSeverity = severityFilter === 'all' || item.severity === severityFilter
-      const matchesTrigger = triggerFilter === 'all' || item.trigger === triggerFilter
-      return matchesSearch && matchesSeverity && matchesTrigger
-    })
-  }, [items, queueSearch, severityFilter, triggerFilter])
+  const filteredItems = items
 
   const performAction = async (action: ModerationAction, target: ModerationQueueItem) => {
     const messageId = target.messageId || target.message?._id
@@ -272,6 +310,19 @@ export function AdminModerationPage() {
       await loadQueue(page)
     } catch {
       toast.error('Không thể chạy AI moderation')
+    } finally {
+      setIsPerforming(false)
+    }
+  }
+
+  const handleRetryAiJob = async (job: AiModerationJob) => {
+    try {
+      setIsPerforming(true)
+      await moderationService.retryAiJob(job._id)
+      toast.success('Đã đưa AI job vào hàng chờ chạy lại')
+      await loadAiJobs()
+    } catch {
+      toast.error('Không thể chạy lại AI job')
     } finally {
       setIsPerforming(false)
     }
@@ -644,12 +695,129 @@ export function AdminModerationPage() {
 
       <Card className='bg-white border-blue-100'>
         <CardContent className='p-5 space-y-3'>
-          <div className='flex items-center justify-between'>
+          <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
+            <h3 className='text-sm font-semibold text-gray-900 flex items-center gap-2'>
+              <Sparkles className='w-4 h-4 text-violet-600' />
+              AI moderation jobs
+            </h3>
+            <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
+              <Input
+                className='sm:w-72'
+                placeholder='Tìm phòng, slug, message, lỗi'
+                value={aiJobSearch}
+                onChange={(event) => setAiJobSearch(event.target.value)}
+              />
+              <Input
+                className='sm:w-48'
+                placeholder='roomId'
+                value={aiJobRoomId}
+                onChange={(event) => setAiJobRoomId(event.target.value)}
+              />
+              <Input
+                className='sm:w-48'
+                placeholder='messageId'
+                value={aiJobMessageId}
+                onChange={(event) => setAiJobMessageId(event.target.value)}
+              />
+              <Select value={aiJobStatus} onValueChange={(value: 'all' | AiModerationJobStatus) => setAiJobStatus(value)}>
+                <SelectTrigger className='sm:w-40'>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='all'>Mọi trạng thái</SelectItem>
+                  <SelectItem value='pending'>Pending</SelectItem>
+                  <SelectItem value='running'>Running</SelectItem>
+                  <SelectItem value='failed'>Failed</SelectItem>
+                  <SelectItem value='succeeded'>Succeeded</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant='outline' className='border-violet-200 text-violet-700' onClick={loadAiJobs}>
+                Làm mới AI
+              </Button>
+            </div>
+          </div>
+          <div className='text-xs text-gray-500'>{aiJobs.length}/{aiJobTotal} job</div>
+          {aiJobs.length === 0 ? (
+            <p className='text-sm text-gray-500 py-4'>Chưa có AI moderation job phù hợp.</p>
+          ) : (
+            <div className='divide-y divide-violet-50'>
+              {aiJobs.map((job) => (
+                <div key={job._id} className='py-3 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between'>
+                  <div className='min-w-0 space-y-1'>
+                    <div className='flex flex-wrap items-center gap-2'>
+                      <Badge
+                        className={
+                          job.status === 'failed'
+                            ? 'bg-red-100 text-red-700'
+                            : job.status === 'succeeded'
+                              ? 'bg-green-100 text-green-700'
+                              : job.status === 'running'
+                                ? 'bg-blue-100 text-blue-700'
+                                : 'bg-yellow-100 text-yellow-700'
+                        }
+                      >
+                        {job.status}
+                      </Badge>
+                      <span className='text-sm font-semibold text-gray-900'>
+                        {job.room?.name || job.roomId}
+                      </span>
+                      <span className='text-xs text-gray-500'>attempts {job.attempts || 0}</span>
+                      {job.latencyMs ? <span className='text-xs text-gray-500'>{job.latencyMs}ms</span> : null}
+                    </div>
+                    <p className='text-sm text-gray-600 line-clamp-2'>
+                      {job.message?.content || job.messageId}
+                    </p>
+                    {job.aiResult && (
+                      <p className='text-xs text-gray-500'>
+                        AI: {job.aiResult.severity} / {job.aiResult.confidence.toFixed(2)} / {job.aiResult.suggestedAction}
+                      </p>
+                    )}
+                    {job.lastError && <p className='text-xs text-red-600 line-clamp-2'>Lỗi: {job.lastError}</p>}
+                  </div>
+                  <div className='flex items-center gap-2 shrink-0'>
+                    <Button
+                      size='sm'
+                      variant='outline'
+                      className='border-violet-200 text-violet-700'
+                      disabled={isPerforming || job.status === 'running'}
+                      onClick={() => handleRetryAiJob(job)}
+                    >
+                      <RotateCcw className='w-4 h-4 mr-1' />
+                      Retry
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className='bg-white border-blue-100'>
+        <CardContent className='p-5 space-y-3'>
+          <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
             <h3 className='text-sm font-semibold text-gray-900 flex items-center gap-2'>
               <ShieldAlert className='w-4 h-4 text-blue-600' />
               Appeal đang chờ xử lý
             </h3>
-            <div className='flex items-center gap-2'>
+            <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
+              <Input
+                className='sm:w-64'
+                placeholder='Tìm user, phòng, lý do'
+                value={appealSearch}
+                onChange={(event) => setAppealSearch(event.target.value)}
+              />
+              <Select value={appealType} onValueChange={(value: 'all' | ModerationAppealType) => setAppealType(value)}>
+                <SelectTrigger className='w-36'>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='all'>Mọi loại</SelectItem>
+                  <SelectItem value='ban'>Ban</SelectItem>
+                  <SelectItem value='mute'>Mute</SelectItem>
+                  <SelectItem value='message'>Message</SelectItem>
+                </SelectContent>
+              </Select>
               <Select value={appealStatus} onValueChange={(value: 'all' | 'open' | 'approved' | 'rejected') => setAppealStatus(value)}>
                 <SelectTrigger className='w-40'>
                   <SelectValue />
@@ -732,12 +900,36 @@ export function AdminModerationPage() {
 
       <Card className='bg-white border-blue-100'>
         <CardContent className='p-5 space-y-3'>
-          <div className='flex items-center justify-between'>
+          <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
             <h3 className='text-sm font-semibold text-gray-900 flex items-center gap-2'>
               <History className='w-4 h-4 text-blue-600' />
               Lịch sử xử lý gần đây
             </h3>
-            <div className='flex items-center gap-2'>
+            <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
+              <Input
+                type='date'
+                className='sm:w-40'
+                value={actionDateFrom}
+                onChange={(event) => setActionDateFrom(event.target.value)}
+              />
+              <Input
+                type='date'
+                className='sm:w-40'
+                value={actionDateTo}
+                onChange={(event) => setActionDateTo(event.target.value)}
+              />
+              <Input
+                className='sm:w-48'
+                placeholder='roomId'
+                value={actionRoomId}
+                onChange={(event) => setActionRoomId(event.target.value)}
+              />
+              <Input
+                className='sm:w-48'
+                placeholder='targetUserId'
+                value={actionTargetUserId}
+                onChange={(event) => setActionTargetUserId(event.target.value)}
+              />
               <Select value={actionFilter} onValueChange={setActionFilter}>
                 <SelectTrigger className='w-44'>
                   <SelectValue />

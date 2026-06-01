@@ -83,7 +83,12 @@ export const communityService = {
 export default communityService
 
 export const adminCommunityService = {
-  async listRooms(params?: { visibility?: 'public' | 'private'; status?: 'active' | 'archived'; diseaseKey?: string }) {
+  async listRooms(params?: {
+    visibility?: 'public' | 'private'
+    status?: 'active' | 'archived'
+    diseaseKey?: string
+    search?: string
+  }) {
     const res = await apiClient.get<Envelope<CommunityRoom[]>>('/admin/community/rooms', { params })
     return unwrap(res.data)
   },
