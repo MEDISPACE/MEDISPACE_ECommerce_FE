@@ -1,8 +1,9 @@
-import { useState, useEffect, useId } from 'react'
-import { MessageCircle, X, Minimize2, Maximize2 } from 'lucide-react'
+import { useState, useEffect, useId, useRef } from 'react'
+import { MessageCircle, X, Minimize2, Maximize2, ArrowLeft, Loader2, MessageSquarePlus } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
 import { ChatWindow } from './ChatWindow'
+import { ConfirmDialog } from '../shared/ConfirmDialog'
 import { chatService } from '~/services/chatService'
 import { useAuth } from '../../contexts/AuthContext'
 import { useSocketContext } from '../../contexts/SocketContext'
@@ -17,52 +18,112 @@ export function FloatingChatWidget() {
   const [unreadCount, setUnreadCount] = useState(0)
   const [conversation, setConversation] = useState<Conversation | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isActionLoading, setIsActionLoading] = useState(false)
+  const [showConfirmReset, setShowConfirmReset] = useState(false)
 
   const isCustomer = user?.role === 0
   const canShow = !user || user.role === 0
 
+  const [aiMode, setAiMode] = useState(true)
+
   // FIX 3.1: dùng context thay useSocket()
-  const { subscribe, unsubscribe } = useSocketContext()
+  const { subscribe, unsubscribe, requestHuman, joinConversation } = useSocketContext()
+
+  // Sử dụng Refs để lưu giữ thông tin mới nhất tránh race conditions / re-subscribe liên tục
+  const conversationRef = useRef<Conversation | null>(conversation)
+  const isOpenRef = useRef(isOpen)
+  const isMinimizedRef = useRef(isMinimized)
+
+  useEffect(() => {
+    conversationRef.current = conversation
+  }, [conversation])
+
+  useEffect(() => {
+    isOpenRef.current = isOpen
+  }, [isOpen])
+
+  useEffect(() => {
+    isMinimizedRef.current = isMinimized
+  }, [isMinimized])
 
   // FIX 3.6: subscribe để nhận unread count khi widget đóng
   useEffect(() => {
     subscribe(id, {
       onNewMessage: (message) => {
-        if (conversation && message.conversationId === conversation._id) {
+        const currentConv = conversationRef.current
+        if (currentConv && message.conversationId === currentConv._id) {
           setConversation((prev) =>
             prev
               ? {
                   ...prev,
                   lastMessage: message.content,
                   lastMessageAt: message.createdAt,
+                  pharmacistId: message.senderRole === 'pharmacist' && !message.isAI ? message.senderId : prev.pharmacistId
                 }
               : prev,
           )
+          // Chỉ đặt aiMode dựa trên type của cuộc hội thoại hiện tại
+          if (currentConv.type === 'ai' && message.isAI) {
+            setAiMode(true)
+          } else if (currentConv.type === 'pharmacist') {
+            setAiMode(false)
+          }
         }
         // Tăng unread nếu widget đang đóng hoặc minimize
-        if (!isOpen || isMinimized) {
+        if (!isOpenRef.current || isMinimizedRef.current) {
           setUnreadCount((prev) => prev + 1)
         }
       },
+      onConversationAssigned: async ({ conversationId, pharmacistId }) => {
+        const currentConv = conversationRef.current
+        if (currentConv && currentConv._id === conversationId) {
+          try {
+            const updated = await chatService.getConversationById(conversationId)
+            setConversation(updated)
+            setAiMode(false)
+          } catch {
+            setConversation((prev) => (prev ? { ...prev, type: 'pharmacist', pharmacistId } : prev))
+            setAiMode(false)
+          }
+        }
+      }
     })
     return () => unsubscribe(id)
-  }, [id, conversation, isOpen, isMinimized, subscribe, unsubscribe])
+  }, [id, subscribe, unsubscribe])
 
-  // Load conversation khi mở widget — chỉ lấy active conversation
+  // Load conversation khi mở widget — chỉ lấy active conversation theo độ ưu tiên: Dược sĩ -> AI
   useEffect(() => {
-    if (!isAuthenticated || !isCustomer || !isOpen) return
-    if (conversation) return
+    if (!isAuthenticated || !isCustomer || !isOpen) {
+      if (!isOpen) {
+        setConversation(null) // Reset khi đóng widget để lần sau load lại từ đầu
+      }
+      return
+    }
 
     const load = async () => {
       try {
         setIsLoading(true)
-        // Chỉ load active conversation — tránh pick up conversation đã closed
-        const response = await chatService.getConversations({ page: 1, limit: 1, status: 'active' })
-        if (response.conversations.length > 0) {
-          setConversation(response.conversations[0])
-          setUnreadCount(response.conversations[0].unreadCount.customer || 0)
+        // 1. Tìm cuộc trò chuyện với dược sĩ đang hoạt động trước
+        const pharmRes = await chatService.getConversations({ page: 1, limit: 1, status: 'active', type: 'pharmacist' })
+        if (pharmRes.conversations.length > 0) {
+          const conv = pharmRes.conversations[0]
+          setConversation(conv)
+          setUnreadCount(conv.unreadCount.customer || 0)
+          setAiMode(false)
+          return
         }
-        // Nếu không có active → customer thấy màn "Bắt đầu chat" → tạo conversation mới
+
+        // 2. Nếu không có, tìm cuộc trò chuyện với AI đang hoạt động
+        const aiRes = await chatService.getConversations({ page: 1, limit: 1, status: 'active', type: 'ai' })
+        if (aiRes.conversations.length > 0) {
+          const conv = aiRes.conversations[0]
+          setConversation(conv)
+          setUnreadCount(conv.unreadCount.customer || 0)
+          setAiMode(true)
+          return
+        }
+
+        setConversation(null)
       } catch {
         setConversation(null)
       } finally {
@@ -70,7 +131,7 @@ export function FloatingChatWidget() {
       }
     }
     load()
-  }, [isAuthenticated, isCustomer, isOpen, conversation])
+  }, [isOpen, isAuthenticated, isCustomer])
 
   // unread count được cập nhật realtime qua subscribe onNewMessage ở trên
 
@@ -92,16 +153,54 @@ export function FloatingChatWidget() {
   }
   const handleMinimize = () => setIsMinimized(true)
 
-  const handleCreateConversation = async () => {
+  const handleCreateConversation = async (useAI: boolean) => {
     try {
-      setIsLoading(true)
-      const newConv = await chatService.getOrCreateConversation()
+      setIsActionLoading(true)
+      const type = useAI ? 'ai' : 'pharmacist'
+      const newConv = await chatService.getOrCreateConversation(type)
       setConversation(newConv)
-      toast.success('Đã kết nối với dược sĩ')
+      setAiMode(useAI)
+      
+      if (useAI) {
+         toast.success('Đã kết nối với Trợ lý Sức khỏe AI')
+      } else {
+         // Nếu chọn dược sĩ thật, gửi socket request human (để BE gán DS)
+         joinConversation(newConv._id)
+         requestHuman(newConv._id)
+         toast.success('Đang kết nối với Dược sĩ...')
+      }
     } catch (error: any) {
       toast.error(error?.message || 'Không thể tạo cuộc trò chuyện')
     } finally {
-      setIsLoading(false)
+      setIsActionLoading(false)
+    }
+  }
+
+  const handleSwitchToHuman = async () => {
+    if (!conversation) return
+    try {
+      setIsActionLoading(true)
+      // Gửi socket event yêu cầu dược sĩ thật cho chính cuộc hội thoại này
+      requestHuman(conversation._id)
+      toast.info('Đang kết nối bạn với Dược sĩ...')
+    } catch (error: any) {
+      toast.error(error?.message || 'Không thể chuyển kết nối')
+    } finally {
+      setIsActionLoading(false)
+    }
+  }
+
+  const handleConfirmReset = async () => {
+    if (!conversation) return
+    try {
+      setIsActionLoading(true)
+      await chatService.deleteConversation(conversation._id)
+      setConversation(null)
+      toast.success('Đã làm mới cuộc trò chuyện')
+    } catch (error: any) {
+      toast.error(error?.message || 'Không thể làm mới cuộc trò chuyện')
+    } finally {
+      setIsActionLoading(false)
     }
   }
 
@@ -109,17 +208,54 @@ export function FloatingChatWidget() {
     <>
       {/* Chat Widget Window */}
       {isOpen && !isMinimized && (
-        <div className='fixed bottom-24 right-6 z-50 w-[90vw] sm:w-[360px] h-[80vh] sm:h-[550px] max-h-[600px] bg-white rounded-2xl shadow-2xl border-2 border-blue-100 flex flex-col overflow-hidden slide-up-animation'>
+        <div className='fixed bottom-24 right-6 sm:bottom-6 sm:right-[88px] z-50 w-[90vw] sm:w-[360px] h-[80vh] sm:h-[550px] max-h-[calc(100vh-var(--header-height)-120px)] sm:max-h-[calc(100vh-var(--header-height)-48px)] bg-white rounded-2xl shadow-2xl border-2 border-blue-100 flex flex-col overflow-hidden slide-up-animation'>
           {/* Header */}
-          <div className='bg-gradient-to-r from-blue-600 to-cyan-500 text-white p-4 flex items-center justify-between'>
-            <div className='flex items-center gap-2'>
-              <MessageCircle className='w-5 h-5' />
-              <div>
-                <h3 className='font-semibold text-sm'>Chat với Dược sĩ</h3>
-                <p className='text-xs opacity-90'>Tư vấn trực tuyến</p>
+          <div className={`text-white px-4 py-3 flex items-center justify-between ${aiMode && conversation ? 'bg-teal-600' : 'bg-blue-600'} flex-shrink-0`}>
+            <div className='flex items-center gap-3 min-w-0 flex-1 mr-2'>
+              {conversation && (
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  onClick={() => setConversation(null)}
+                  className='text-white hover:bg-white/20 h-8 w-8 p-0 flex-shrink-0 mr-0.5'
+                  title='Quay lại Portal'
+                >
+                  <ArrowLeft className='w-4 h-4' />
+                </Button>
+              )}
+              {aiMode && conversation ? (
+                <div className='relative flex items-center justify-center w-9 h-9 bg-white/20 rounded-full border border-white/30 backdrop-blur-sm shadow-inner flex-shrink-0'>
+                  <span className="text-lg">🤖</span>
+                  <span className='absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 border border-white rounded-full animate-pulse' />
+                </div>
+              ) : (
+                <div className='relative flex items-center justify-center w-9 h-9 bg-white/20 rounded-full border border-white/30 backdrop-blur-sm flex-shrink-0'>
+                  <MessageCircle className='w-5 h-5 text-white' />
+                  <span className='absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 border border-white rounded-full animate-pulse' />
+                </div>
+              )}
+              <div className='min-w-0 flex-1'>
+                <h3 className='font-semibold text-sm truncate leading-tight'>
+                  {aiMode && conversation ? 'Trợ lý Sức khỏe AI' : 'Chat với Dược sĩ'}
+                </h3>
+                <p className='text-xs opacity-90 truncate leading-normal'>
+                  {aiMode && conversation ? 'Tư vấn tự động 24/7' : 'Tư vấn trực tuyến'}
+                </p>
               </div>
             </div>
-            <div className='flex items-center gap-1'>
+            <div className='flex items-center gap-1 flex-shrink-0'>
+              {conversation && (
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  onClick={() => setShowConfirmReset(true)}
+                  disabled={isActionLoading}
+                  className='text-white hover:bg-white/20 h-8 w-8 p-0'
+                  title='Tư vấn mới'
+                >
+                  <MessageSquarePlus className='w-4 h-4' />
+                </Button>
+              )}
               <Button
                 variant='ghost'
                 size='sm'
@@ -139,6 +275,27 @@ export function FloatingChatWidget() {
             </div>
           </div>
 
+          {/* AI Info & Transfer Banner */}
+          {aiMode && conversation && (
+            <div className='bg-teal-50 border-b border-teal-100 px-4 py-2 flex items-center justify-between text-xs text-teal-800 flex-shrink-0 slide-down-animation'>
+              <div className='flex items-center gap-1.5 min-w-0'>
+                <span className='w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0' />
+                <span className='truncate font-medium text-teal-700'>Trợ lý AI đang hoạt động</span>
+              </div>
+              <button
+                onClick={handleSwitchToHuman}
+                disabled={isActionLoading}
+                className='font-semibold text-teal-600 hover:text-teal-700 hover:underline flex items-center gap-1 active:scale-95 transition-all flex-shrink-0 ml-2 cursor-pointer'
+              >
+                {isActionLoading ? (
+                  <Loader2 className='w-3 h-3 animate-spin text-teal-600' />
+                ) : (
+                  'Gặp Dược sĩ 👨‍⚕️'
+                )}
+              </button>
+            </div>
+          )}
+
           {/* Content */}
           <div className='flex-1 overflow-hidden flex flex-col'>
             {!isAuthenticated ? (
@@ -152,7 +309,7 @@ export function FloatingChatWidget() {
                 </p>
                 <div className='flex flex-col gap-2 w-full max-w-[200px]'>
                   <a href='/login' className='w-full'>
-                    <Button className='w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'>
+                    <Button className='w-full bg-blue-600 hover:bg-blue-700 text-white'>
                       Đăng nhập ngay
                     </Button>
                   </a>
@@ -177,25 +334,46 @@ export function FloatingChatWidget() {
                 currentUserRole='customer'
                 showHeader={false}
                 onNewConversation={() => setConversation(null)}
+                aiMode={aiMode}
+                setAiMode={setAiMode}
               />
             ) : (
-              <div className='flex flex-col items-center justify-center h-full p-6 text-center'>
-                <div className='w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4'>
+              <div className='flex flex-col items-center justify-center h-full p-6 text-center space-y-4'>
+                <div className='w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-2'>
                   <MessageCircle className='w-8 h-8 text-blue-600' />
                 </div>
-                <h3 className='text-lg font-medium text-gray-900 mb-2'>Bắt đầu trò chuyện</h3>
-                <p className='text-gray-600 text-sm mb-4'>
-                  Gửi tin nhắn cho dược sĩ để được tư vấn.
-                  <br />
-                  Dược sĩ sẽ trả lời khi có thời gian.
-                </p>
-                <Button
-                  onClick={handleCreateConversation}
-                  disabled={isLoading}
-                  className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'
-                >
-                  Bắt đầu chat
-                </Button>
+                <h3 className='text-lg font-medium text-gray-900'>Chọn hình thức hỗ trợ</h3>
+                <p className='text-gray-500 text-sm mb-2'>Bạn muốn nhận hỗ trợ từ đâu?</p>
+                
+                <div className='flex flex-col gap-3 w-full max-w-[240px] mt-2'>
+                  <Button
+                    onClick={() => handleCreateConversation(true)}
+                    disabled={isActionLoading}
+                    className='w-full bg-teal-600 hover:bg-teal-700 text-white flex items-center justify-center gap-2 h-11 transition-all duration-200 active:scale-[0.98] shadow-md'
+                  >
+                    {isActionLoading ? (
+                      <Loader2 className='w-4 h-4 animate-spin' />
+                    ) : (
+                      <>
+                        <span className="text-lg">🤖</span> Hỏi Trợ lý Sức khỏe AI
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    onClick={() => handleCreateConversation(false)}
+                    disabled={isActionLoading}
+                    variant='outline'
+                    className='w-full border border-blue-200 text-blue-600 hover:bg-blue-50/50 hover:border-blue-400 flex items-center justify-center gap-2 h-11 bg-white transition-all duration-200 active:scale-[0.98] shadow-sm hover:shadow-md'
+                  >
+                    {isActionLoading ? (
+                      <Loader2 className='w-4 h-4 animate-spin' />
+                    ) : (
+                      <>
+                        <span className="text-lg">👨‍⚕️</span> Gặp Dược sĩ chuyên môn
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             )}
           </div>
@@ -205,7 +383,7 @@ export function FloatingChatWidget() {
       {/* Minimized State */}
       {isOpen && isMinimized && (
         <div
-          className='fixed bottom-24 right-6 z-50 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-lg shadow-xl px-4 py-3 cursor-pointer hover:shadow-2xl transition-shadow'
+          className={`fixed bottom-24 right-6 sm:bottom-6 sm:right-[88px] z-50 text-white rounded-lg shadow-xl px-4 py-3 cursor-pointer hover:shadow-2xl transition-shadow ${aiMode && conversation ? 'bg-teal-600 hover:bg-teal-700' : 'bg-blue-600 hover:bg-blue-700'}`}
           onClick={() => setIsMinimized(false)}
         >
           <div className='flex items-center gap-2'>
@@ -220,7 +398,7 @@ export function FloatingChatWidget() {
       <div className='fixed bottom-6 right-6 z-50'>
         <Button
           onClick={handleToggle}
-          className='relative w-14 h-14 rounded-full shadow-2xl bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white transition-all duration-300 hover:scale-110 animate-float'
+          className='relative w-14 h-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 text-white transition-all duration-300 hover:scale-110 animate-float'
           aria-label='Chat với dược sĩ'
         >
           {isOpen && !isMinimized ? (
@@ -240,6 +418,21 @@ export function FloatingChatWidget() {
         </Button>
       </div>
 
+      <ConfirmDialog
+        open={showConfirmReset}
+        onOpenChange={setShowConfirmReset}
+        title='Làm mới cuộc trò chuyện'
+        description={
+          aiMode
+            ? 'Bạn có chắc chắn muốn làm mới cuộc trò chuyện? Lịch sử chat với AI sẽ được xóa hoàn toàn để bắt đầu cuộc tư vấn mới.'
+            : 'Bạn có chắc chắn muốn kết thúc và xóa cuộc trò chuyện này?'
+        }
+        onConfirm={handleConfirmReset}
+        confirmText='Xác nhận'
+        cancelText='Bỏ qua'
+        variant='default'
+      />
+
       <style>{`
         @keyframes float {
           0%, 100% { transform: translateY(0px); }
@@ -251,6 +444,11 @@ export function FloatingChatWidget() {
           to { opacity: 1; transform: translateY(0) scale(1); }
         }
         .slide-up-animation { animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        @keyframes slideDown {
+          from { transform: translateY(-10px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        .slide-down-animation { animation: slideDown 0.2s ease-out forwards; }
       `}</style>
     </>
   )
