@@ -50,6 +50,7 @@ import type { BreadcrumbItem } from '../shared/UniversalBreadcrumb'
 import { getDashboardStats } from '../../services/adminService'
 import { NotificationDropdown } from '../shared/NotificationDropdown'
 import faviconLogo from '../../assets/MEDISPACE_Logo_favicon.png'
+import { UserRole } from '~/types/user'
 
 interface AdminLayoutProps {
   children: ReactNode
@@ -121,6 +122,16 @@ const navigationItems: NavItem[] = [
     icon: MessageCircle,
   },
   {
+    label: 'Kiểm duyệt cộng đồng',
+    href: '/admin/moderation',
+    icon: Shield,
+  },
+  {
+    label: 'Quản lý cộng đồng',
+    href: '/admin/community',
+    icon: Users,
+  },
+  {
     label: 'Quản lý nội dung',
     href: '/admin/content',
     icon: MessageSquare,
@@ -168,13 +179,15 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const { user, logout } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const isAdmin = user?.role === UserRole.Admin
 
   // Fetch dashboard stats
   const { data: dashboardStats } = useQuery({
     queryKey: ['admin-dashboard-stats'],
     queryFn: getDashboardStats,
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: isAdmin ? 30000 : false, // Refetch every 30 seconds for admins
     staleTime: 20000,
+    enabled: isAdmin,
   })
 
   const isActiveRoute = (href: string) => {

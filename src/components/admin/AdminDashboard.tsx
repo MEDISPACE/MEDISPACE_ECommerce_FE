@@ -2,6 +2,7 @@ import { Users, Package, FileText, BarChart3, Settings, Clock, DollarSign, Refre
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { useAuth } from '~/contexts/AuthContext'
+import { UserRole } from '~/types/user'
 import { useStatsCards } from '~/components/shared/useStatsCards'
 import { StatsCardGrid, type StatCardConfig } from '~/components/shared/StatsCard'
 import { useQuery } from '@tanstack/react-query'
@@ -16,6 +17,7 @@ export function AdminDashboard() {
   const { user } = useAuth()
   const { StatsCard } = useStatsCards()
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const isAdmin = user?.role === UserRole.Admin
 
   // Fetch dashboard stats
   const {
@@ -30,6 +32,7 @@ export function AdminDashboard() {
     retry: 3, // Retry 3 times on failure
     retryDelay: 1000, // Wait 1 second between retries
     staleTime: 2 * 60 * 1000, // Consider data fresh for 2 minutes
+    enabled: isAdmin,
   })
 
   // Fetch recent activities
@@ -43,6 +46,7 @@ export function AdminDashboard() {
     refetchInterval: 2 * 60 * 1000, // Refetch every 2 minutes
     retry: 2, // Retry 2 times on failure
     staleTime: 1 * 60 * 1000, // Consider data fresh for 1 minute
+    enabled: isAdmin,
   })
 
   // Format currency

@@ -60,6 +60,10 @@ export default [
     route('health/article/:slug', 'routes/health/article.$slug.tsx'),
     route('health/category/:slug', 'routes/health/category.$slug.tsx'),
 
+    // Community
+    route('community', 'routes/community/_index.tsx'),
+    route('community/:roomId', 'routes/community/$roomId.tsx'),
+
     // Search
     route('search', 'routes/search.tsx'),
 
@@ -133,6 +137,8 @@ export default [
     route('settings/general', 'routes/admin/settings/index.tsx'),
     route('users', 'routes/admin/users.tsx'),
     route('chat', 'routes/admin/chat.tsx'),
+    route('community', 'routes/admin/community.tsx'),
+    route('moderation', 'routes/admin/moderation.tsx'),
     route('coupons', 'routes/admin/coupons.tsx'),
     route('campaigns', 'routes/admin/campaigns.tsx'),
     route('loyalty', 'routes/admin/loyalty.tsx'),
