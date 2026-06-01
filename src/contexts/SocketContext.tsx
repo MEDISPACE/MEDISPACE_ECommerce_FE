@@ -4,6 +4,7 @@ import { authService } from '../services/authService'
 import apiClient from '../services/apiClient'
 import { useAuth } from './AuthContext'
 import type { Message, ProductRef } from '../types/chat'
+import type { CommunityMessage } from '../types/community'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -23,6 +24,14 @@ interface SocketCallbacks {
     transferredAt: string
   }) => void
   onConversationNew?: (data: { conversationId: string }) => void
+  onCommunityMessageNew?: (message: CommunityMessage) => void
+  onCommunityMessageHidden?: (message: CommunityMessage) => void
+  onCommunityMessageDeleted?: (message: CommunityMessage) => void
+  onCommunityMemberUpdated?: (data: Record<string, unknown>) => void
+  onCommunityMemberJoined?: (data: Record<string, unknown>) => void
+  onCommunityMemberLeft?: (data: Record<string, unknown>) => void
+  onCommunityRoomRead?: (data: Record<string, unknown>) => void
+  onCommunityModerationQueued?: (data: Record<string, unknown>) => void
   onNewNotification?: (notification: Record<string, unknown>) => void
   onError?: (error: { message: string }) => void
 }
@@ -43,6 +52,8 @@ interface SocketContextType {
   startTyping: (conversationId: string) => void
   stopTyping: (conversationId: string) => void
   markAsRead: (conversationId: string) => void
+  joinCommunityRoom: (roomId: string, onAck?: (payload: { ok: boolean; roomId?: string; message?: string }) => void) => void
+  leaveCommunityRoom: (roomId: string) => void
   // Subscribe/unsubscribe pattern to allow multiple components to listen
   subscribe: (id: string, callbacks: SocketCallbacks) => void
   unsubscribe: (id: string) => void
@@ -162,6 +173,16 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         broadcast('onConversationTransferred', data),
     )
     s.on('conversation:new', (data: { conversationId: string }) => broadcast('onConversationNew', data))
+    s.on('community:message:new', (message: CommunityMessage) => broadcast('onCommunityMessageNew', message))
+    s.on('community:message:hidden', (message: CommunityMessage) => broadcast('onCommunityMessageHidden', message))
+    s.on('community:message:deleted', (message: CommunityMessage) => broadcast('onCommunityMessageDeleted', message))
+    s.on('community:member:updated', (data: Record<string, unknown>) => broadcast('onCommunityMemberUpdated', data))
+    s.on('community:member:joined', (data: Record<string, unknown>) => broadcast('onCommunityMemberJoined', data))
+    s.on('community:member:left', (data: Record<string, unknown>) => broadcast('onCommunityMemberLeft', data))
+    s.on('community:room:read', (data: Record<string, unknown>) => broadcast('onCommunityRoomRead', data))
+    s.on('community:moderation:queued', (data: Record<string, unknown>) =>
+      broadcast('onCommunityModerationQueued', data),
+    )
     s.on('notification:new', (notification: Record<string, unknown>) => broadcast('onNewNotification', notification))
     s.on('error', (err: { message: string }) => broadcast('onError', err))
   }, [])
@@ -211,6 +232,22 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     socketRef.current?.connected && socketRef.current.emit('messages:read', { conversationId })
   }, [])
 
+  const joinCommunityRoom = useCallback(
+    (roomId: string, onAck?: (payload: { ok: boolean; roomId?: string; message?: string }) => void) => {
+      if (!socketRef.current?.connected) return
+      if (onAck) {
+        socketRef.current.emit('community:room:join', roomId, onAck)
+      } else {
+        socketRef.current.emit('community:room:join', roomId)
+      }
+    },
+    [],
+  )
+
+  const leaveCommunityRoom = useCallback((roomId: string) => {
+    socketRef.current?.connected && socketRef.current.emit('community:room:leave', roomId)
+  }, [])
+
   // Connect khi user đăng nhập, disconnect khi logout
   const { isAuthenticated } = useAuth()
   useEffect(() => {
@@ -240,6 +277,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         startTyping,
         stopTyping,
         markAsRead,
+        joinCommunityRoom,
+        leaveCommunityRoom,
         subscribe,
         unsubscribe,
       }}

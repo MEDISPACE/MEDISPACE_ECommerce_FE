@@ -129,8 +129,8 @@ function Calendar({
         className
       )}
       captionLayout="label"
-      startMonth={props.startMonth || startMonth}
-      endMonth={props.endMonth || endMonth}
+      startMonth={startMonth}
+      endMonth={endMonth}
       formatters={{
         ...formatters,
       }}
