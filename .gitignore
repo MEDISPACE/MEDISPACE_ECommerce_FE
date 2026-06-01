@@ -14,7 +14,10 @@ README.txt
 src/tests/
 vitest.config.ts
 coverage/
+test-results/
+tests/e2e/.auth/
 *.test.ts
 *.test.tsx
 *.spec.ts
 *.spec.tsx
+!tests/e2e/specs/**/*.spec.ts
