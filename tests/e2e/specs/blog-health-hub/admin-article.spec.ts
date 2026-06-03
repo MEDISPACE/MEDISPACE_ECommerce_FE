@@ -68,6 +68,27 @@ test.describe.serial('Admin Article Form — AI Writing Tools', () => {
     await context.close()
   })
 
+  test('admin articles insights tab renders analytics from journey events', async ({ browser }) => {
+    const context = await browser.newContext({ storageState: `${AUTH_DIR}/admin.json` })
+    const page = await context.newPage()
+    await page.goto(`${APP_URL}/admin/articles`)
+    await page.waitForLoadState('networkidle')
+
+    const [insightsResp] = await Promise.all([
+      page.waitForResponse((resp) => resp.url().includes('/articles/admin/insights') && resp.status() === 200),
+      page.getByRole('tab', { name: 'Insights' }).click(),
+    ])
+    expect(insightsResp.ok()).toBeTruthy()
+
+    await expect(page.getByRole('heading', { name: 'Insights bài viết' })).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByText('Funnel hành động sau khi đọc')).toBeVisible()
+    await expect(page.getByText('Top bài theo engagement')).toBeVisible()
+    await expect(page.getByText('Cảnh báo editorial cần rà soát')).toBeVisible()
+
+    await snap(page, '01b-admin-articles-insights')
+    await context.close()
+  })
+
   test('clicking AI without title shows toast error', async ({ browser }) => {
     const { context, page } = await openNewArticleForm(browser)
 

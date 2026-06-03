@@ -178,6 +178,25 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
       .map((item) => item.trim())
       .filter(Boolean)
 
+  const getValidFaqItems = (faq?: Array<{ question?: unknown; answer?: unknown }>) =>
+    Array.isArray(faq)
+      ? faq
+          .map((item) => ({
+            question: typeof item.question === 'string' ? item.question.trim() : '',
+            answer: typeof item.answer === 'string' ? item.answer.trim() : '',
+          }))
+          .filter((item) => item.question.length > 0 && item.answer.length > 0)
+      : []
+
+  const canInsertAiResult = () => {
+    if (!aiResult) return false
+    const { action, result } = aiResult
+    if (action === 'outline') return Boolean(result.outline?.length)
+    if (action === 'faq') return getValidFaqItems(result.faq).length > 0
+    if (action === 'sources') return Boolean(result.sourceTopics?.length)
+    return false
+  }
+
   const handleTitleChange = (title: string) => {
     setFormData({
       ...formData,
@@ -253,9 +272,10 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
       return
     }
 
-    if (action === 'faq' && result.faq?.length) {
+    const faqItems = getValidFaqItems(result.faq)
+    if (action === 'faq' && faqItems.length) {
       appendHtmlToContent(
-        `<h2>Câu hỏi thường gặp</h2>${result.faq
+        `<h2>Câu hỏi thường gặp</h2>${faqItems
           .map((item) => `<h3>${item.question}</h3><p>${item.answer}</p>`)
           .join('')}`,
       )
@@ -592,7 +612,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                     <p className='text-sm text-cyan-800 mt-1'>Kiểm tra lại nội dung trước khi đăng, đặc biệt với khuyến nghị y tế.</p>
                   </div>
                   {['outline', 'faq', 'sources'].includes(aiResult.action) && (
-                    <Button type='button' size='sm' onClick={insertAiResult} className='bg-cyan-700 hover:bg-cyan-800 text-white'>
+                    <Button type='button' size='sm' onClick={insertAiResult} disabled={!canInsertAiResult()} className='bg-cyan-700 hover:bg-cyan-800 text-white'>
                       Chèn vào bài
                     </Button>
                   )}
@@ -609,6 +629,13 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                   </div>
                 ) : null}
 
+                {aiResult.result.excerpt ? (
+                  <div className='rounded-md border border-cyan-100 bg-white/80 p-3'>
+                    <p className='text-sm font-medium text-gray-700 mb-2'>Tóm tắt đã áp dụng:</p>
+                    <p className='text-sm text-gray-700 leading-relaxed'>{aiResult.result.excerpt}</p>
+                  </div>
+                ) : null}
+
                 {aiResult.result.outline?.length ? (
                   <div>
                     <p className='text-sm font-medium text-gray-700 mb-2'>Dàn ý:</p>
@@ -620,10 +647,10 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                   </div>
                 ) : null}
 
-                {aiResult.result.faq?.length ? (
+                {getValidFaqItems(aiResult.result.faq).length ? (
                   <div className='space-y-2'>
                     <p className='text-sm font-medium text-gray-700'>FAQ:</p>
-                    {aiResult.result.faq.map((item, index) => (
+                    {getValidFaqItems(aiResult.result.faq).map((item, index) => (
                       <div key={`${item.question}-${index}`} className='text-sm text-gray-700'>
                         <p className='font-medium'>{item.question}</p>
                         <p>{item.answer}</p>
