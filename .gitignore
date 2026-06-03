@@ -1,23 +1,32 @@
 .env
+.env.*
+!.env.example
 
 .DS_Store
 /node_modules/
 
-# React Router
+# React Router / Build
 /.react-router/
 /build/
 
 # Custom ignore
 README.txt
 
-# Test
+# Vitest
 src/tests/
 vitest.config.ts
-coverage/
-test-results/
-tests/e2e/.auth/
+/coverage/
 *.test.ts
 *.test.tsx
+
+# Playwright E2E
+/test-results/
+/playwright-report/
+/playwright-report-blog/
+/blob-report/
+/playwright/.cache/
+tests/e2e/.auth/
+tests/e2e/screenshots/
 *.spec.ts
 *.spec.tsx
 !tests/e2e/specs/**/*.spec.ts
