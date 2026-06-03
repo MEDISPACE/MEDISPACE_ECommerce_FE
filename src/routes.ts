@@ -57,6 +57,8 @@ export default [
 
     // Health
     route('health', 'routes/health/_index.tsx'),
+    route('health/search', 'routes/health/search.tsx'),
+    route('health/checker', 'routes/health/checker.tsx'),
     route('health/article/:slug', 'routes/health/article.$slug.tsx'),
     route('health/category/:slug', 'routes/health/category.$slug.tsx'),
 
