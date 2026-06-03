@@ -1,4 +1,5 @@
-﻿import apiClient from './apiClient'
+﻿import type { AxiosError } from 'axios'
+import apiClient from './apiClient'
 
 // ==================== TYPES ====================
 
@@ -112,7 +113,10 @@ export const getDashboardStats = async (): Promise<DashboardStats> => {
     // console.log('Dashboard stats loaded successfully:', response.data.result)
     return response.data.result
   } catch (error) {
-    console.error('Error fetching dashboard stats:', error)
+    const status = (error as AxiosError).response?.status
+    if (status !== 401 && status !== 403) {
+      console.error('Error fetching dashboard stats:', error)
+    }
     throw error
   }
 }
@@ -129,7 +133,10 @@ export const getRecentActivities = async (limit?: number): Promise<RecentActivit
     console.log('Recent activities loaded successfully')
     return response.data.result
   } catch (error) {
-    console.error('Error fetching recent activities:', error)
+    const status = (error as AxiosError).response?.status
+    if (status !== 401 && status !== 403) {
+      console.error('Error fetching recent activities:', error)
+    }
     throw error
   }
 }

@@ -30,6 +30,20 @@ export interface Article {
   metaTitle?: string
   metaDescription?: string
   metaKeywords?: string[]
+  references?: Array<{
+    title: string
+    url?: string
+  }>
+  reviewedBy?: string
+  reviewedByTitle?: string
+  reviewedAt?: string
+  lastMedicallyReviewedAt?: string
+  contentVersion?: number
+  riskLevel?: 'general' | 'medication' | 'disease' | 'emergency-sensitive'
+  targetAudiences?: string[]
+  symptoms?: string[]
+  activeIngredients?: string[]
+  healthTopics?: string[]
   status: 'draft' | 'pending' | 'published' | 'archived'
   isPublished: boolean
   isFeatured: boolean

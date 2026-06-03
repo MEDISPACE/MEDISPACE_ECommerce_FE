@@ -9,6 +9,50 @@ import type {
   HealthCategoriesResponse,
   HealthCategoryResponse,
 } from '@/types/article'
+import type { Product } from '@/types/product'
+
+export type ArticleJourneyEventType =
+  | 'cta_chat'
+  | 'cta_prescription_upload'
+  | 'cta_product_search'
+  | 'related_product_click'
+  | 'article_share'
+  | 'source_click'
+  | 'article_ai_ask'
+  | 'article_save'
+  | 'topic_follow'
+
+export interface ArticleAiAssistResult {
+  action: string
+  result: {
+    suggestions?: string[]
+    title?: string
+    excerpt?: string
+    metaTitle?: string
+    metaDescription?: string
+    keywords?: string[]
+    outline?: string[]
+    faq?: Array<{ question: string; answer: string }>
+    warnings?: string[]
+    sourceTopics?: string[]
+  }
+}
+
+export interface ArticleAskResult {
+  answer: string
+  suggested_questions: string[]
+  is_escalated: boolean
+}
+
+function getArticleSessionId() {
+  const key = 'medispace_article_session_id'
+  const existing = localStorage.getItem(key)
+  if (existing) return existing
+
+  const sessionId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`
+  localStorage.setItem(key, sessionId)
+  return sessionId
+}
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 
@@ -110,6 +154,126 @@ class ArticleService {
     } catch (error) {
       console.error('Error fetching related articles:', error)
       return []
+    }
+  }
+
+  async getRelatedProducts(slugOrId: string, limit = 8): Promise<Product[]> {
+    try {
+      const response = await apiClient.get<{ message: string; result: Product[] }>(
+        `/articles/${slugOrId}/related-products`,
+        {
+          params: { limit },
+        },
+      )
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (response.data as any).result || []
+    } catch (error) {
+      console.error('Error fetching related products:', error)
+      return []
+    }
+  }
+
+  async trackJourneyEvent(
+    slugOrId: string,
+    event: {
+      eventType: ArticleJourneyEventType
+      targetType?: 'chat' | 'prescription' | 'search' | 'product' | 'source' | 'article' | 'ai'
+      targetId?: string
+      targetUrl?: string
+      metadata?: Record<string, unknown>
+    },
+  ): Promise<void> {
+    try {
+      await apiClient.post(`/articles/${slugOrId}/journey-events`, {
+        ...event,
+        sessionId: getArticleSessionId(),
+      })
+    } catch (error) {
+      console.error('Error tracking article journey event:', error)
+    }
+  }
+
+  async generateAiAssistance(payload: {
+    action: 'outline' | 'seo' | 'excerpt' | 'faq' | 'quality_check' | 'sources'
+    title?: string
+    excerpt?: string
+    content?: string
+    categoryName?: string
+    tags?: string[]
+  }): Promise<ArticleAiAssistResult | null> {
+    try {
+      const response = await apiClient.post<{ message: string; result: ArticleAiAssistResult }>('/articles/ai-assist', payload)
+      return response.data.result
+    } catch (error) {
+      console.error('Error generating article AI assistance:', error)
+      return null
+    }
+  }
+
+  async askArticleAssistant(slugOrId: string, question: string): Promise<ArticleAskResult | null> {
+    try {
+      const response = await apiClient.post<{ message: string; result: ArticleAskResult }>(`/articles/${slugOrId}/ask-ai`, {
+        question,
+      })
+      return response.data.result
+    } catch (error) {
+      console.error('Error asking article AI assistant:', error)
+      return null
+    }
+  }
+
+  async getPersonalizedArticles(
+    limit = 8,
+  ): Promise<{ source: 'personalized' | 'fallback'; reasons?: string[]; articles: Article[] } | null> {
+    try {
+      const response = await apiClient.get<{
+        message: string
+        result: { source: 'personalized' | 'fallback'; reasons?: string[]; articles: Article[] }
+      }>('/articles/personalized', {
+        params: { limit },
+      })
+      return response.data.result
+    } catch (error) {
+      console.error('Error fetching personalized articles:', error)
+      return null
+    }
+  }
+
+  async getArticlePreferences(): Promise<{ savedArticleIds: string[]; followedHealthTopics: string[] } | null> {
+    try {
+      const response = await apiClient.get<{
+        message: string
+        result: { savedArticleIds: string[]; followedHealthTopics: string[] }
+      }>('/articles/me/preferences')
+      return response.data.result
+    } catch (error) {
+      console.error('Error fetching article preferences:', error)
+      return null
+    }
+  }
+
+  async setSavedArticle(slugOrId: string, saved: boolean): Promise<boolean> {
+    try {
+      const response = await apiClient.patch<{ message: string; result: { saved: boolean } }>(`/articles/${slugOrId}/save`, {
+        saved,
+      })
+      return response.data.result.saved
+    } catch (error) {
+      console.error('Error setting saved article:', error)
+      throw error
+    }
+  }
+
+  async setFollowedHealthTopic(topicId: string, following: boolean): Promise<boolean> {
+    try {
+      const response = await apiClient.patch<{ message: string; result: { following: boolean } }>(
+        `/articles/topics/${encodeURIComponent(topicId)}/follow`,
+        { following },
+      )
+      return response.data.result.following
+    } catch (error) {
+      console.error('Error setting followed health topic:', error)
+      throw error
     }
   }
 
