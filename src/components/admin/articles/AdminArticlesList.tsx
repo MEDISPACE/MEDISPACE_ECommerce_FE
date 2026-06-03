@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~
 import apiClient from '~/services/apiClient'
 import type { Article, HealthCategory } from '@/types/article'
 import { useAuth } from '~/contexts/AuthContext'
+import { UserRole } from '~/types/user'
 
 interface AdminArticlesListProps {
   basePath?: string
@@ -17,7 +18,7 @@ interface AdminArticlesListProps {
 
 export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticlesListProps) {
   const { user } = useAuth()
-  const isAdmin = user?.role === 0 // 0 is Admin, 1 is Pharmacist
+  const isAdmin = user?.role === UserRole.Admin
 
   const [articles, setArticles] = useState<Article[]>([])
   const [categories, setCategories] = useState<HealthCategory[]>([])
