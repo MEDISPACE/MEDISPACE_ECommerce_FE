@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Edit, Trash2, Eye, CheckCircle, FileText, Clock, Star } from 'lucide-react'
+import { Plus, Edit, Trash2, Eye, CheckCircle, FileText, Clock, Star, BarChart3, Bot, MessageCircle, ShoppingBag, Bookmark, Bell, AlertTriangle, ShieldCheck } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent } from '~/components/ui/card'
 import { Badge } from '~/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '~/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import apiClient from '~/services/apiClient'
 import type { Article, HealthCategory } from '@/types/article'
 import { useAuth } from '~/contexts/AuthContext'
@@ -16,13 +17,59 @@ interface AdminArticlesListProps {
   basePath?: string
 }
 
+interface ArticleInsights {
+  period: { days: number; since: string }
+  overview: {
+    totalArticles: number
+    published: number
+    pending: number
+    draft: number
+    archived: number
+    totalEvents: number
+    savedArticles: number
+    followedTopics: number
+  }
+  riskLevels: Record<string, number>
+  funnel: Record<string, { count: number; uniqueSessions: number }>
+  topEngagedArticles: Array<{
+    articleId: string
+    title?: string
+    slug?: string
+    riskLevel?: string
+    viewCount?: number
+    totalEvents: number
+    aiAsks: number
+    ctaEvents: number
+  }>
+  categoryPerformance: Array<{
+    categoryId: string
+    categoryName: string
+    totalEvents: number
+    aiAsks: number
+    ctaEvents: number
+  }>
+  editorialWarnings: Array<{
+    _id: string
+    title: string
+    slug: string
+    riskLevel?: string
+    reviewedBy?: string
+    referencesCount?: number
+    lastMedicallyReviewedAt?: string
+    viewCount?: number
+  }>
+}
+
 export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticlesListProps) {
   const { user } = useAuth()
   const isAdmin = user?.role === UserRole.Admin
 
   const [articles, setArticles] = useState<Article[]>([])
   const [categories, setCategories] = useState<HealthCategory[]>([])
+  const [insights, setInsights] = useState<ArticleInsights | null>(null)
   const [loading, setLoading] = useState(true)
+  const [insightsLoading, setInsightsLoading] = useState(false)
+  const [insightsDays, setInsightsDays] = useState('30')
   const [filter, setFilter] = useState({
     status: 'all',
     categoryId: 'all',
@@ -31,6 +78,12 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
   useEffect(() => {
     loadData()
   }, [filter])
+
+  useEffect(() => {
+    if (isAdmin) {
+      loadInsights()
+    }
+  }, [isAdmin, insightsDays])
 
   const loadData = async () => {
     setLoading(true)
@@ -50,6 +103,21 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
       console.error('Error loading data:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadInsights = async () => {
+    setInsightsLoading(true)
+    try {
+      const response = await apiClient.get('/articles/admin/insights', {
+        params: { days: insightsDays },
+      })
+      setInsights((response.data as any).result || null)
+    } catch (error) {
+      console.error('Error loading article insights:', error)
+      toast.error('Không thể tải insights bài viết')
+    } finally {
+      setInsightsLoading(false)
     }
   }
 
@@ -91,6 +159,238 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
     }
     const variant = variants[status] || variants.draft
     return <Badge className={variant.color}>{variant.label}</Badge>
+  }
+
+  const formatNumber = (value?: number) => (value || 0).toLocaleString('vi-VN')
+
+  const eventLabels: Record<string, { label: string; icon: React.ElementType; color: string }> = {
+    article_ai_ask: { label: 'Hỏi AI', icon: Bot, color: 'text-cyan-700 bg-cyan-50 border-cyan-100' },
+    cta_chat: { label: 'Hỏi dược sĩ', icon: MessageCircle, color: 'text-blue-700 bg-blue-50 border-blue-100' },
+    cta_prescription_upload: { label: 'Gửi đơn thuốc', icon: FileText, color: 'text-amber-700 bg-amber-50 border-amber-100' },
+    cta_product_search: { label: 'Tìm sản phẩm', icon: ShoppingBag, color: 'text-emerald-700 bg-emerald-50 border-emerald-100' },
+    related_product_click: { label: 'Click sản phẩm', icon: ShoppingBag, color: 'text-green-700 bg-green-50 border-green-100' },
+    article_save: { label: 'Lưu bài', icon: Bookmark, color: 'text-purple-700 bg-purple-50 border-purple-100' },
+    topic_follow: { label: 'Follow chủ đề', icon: Bell, color: 'text-indigo-700 bg-indigo-50 border-indigo-100' },
+    article_share: { label: 'Chia sẻ', icon: BarChart3, color: 'text-slate-700 bg-slate-50 border-slate-100' },
+  }
+
+  const getEditorialReasons = (article: ArticleInsights['editorialWarnings'][number]) => {
+    const reasons: string[] = []
+    if (!article.reviewedBy) reasons.push('Thiếu reviewer')
+    if (!article.referencesCount) reasons.push('Thiếu nguồn')
+    if (article.riskLevel === 'emergency-sensitive') reasons.push('Nội dung nhạy cảm')
+    if (article.lastMedicallyReviewedAt) {
+      const reviewedAt = new Date(article.lastMedicallyReviewedAt).getTime()
+      if (Date.now() - reviewedAt > 180 * 24 * 60 * 60 * 1000) reasons.push('Review quá 180 ngày')
+    } else {
+      reasons.push('Chưa có ngày review')
+    }
+    return reasons
+  }
+
+  const renderInsights = () => {
+    if (insightsLoading || !insights) {
+      return (
+        <Card className='bg-white border-blue-100'>
+          <CardContent className='p-8 text-center text-gray-500'>Đang tải insights...</CardContent>
+        </Card>
+      )
+    }
+
+    const funnelItems = Object.entries(eventLabels).map(([eventType, config]) => ({
+      eventType,
+      ...config,
+      count: insights.funnel[eventType]?.count || 0,
+      uniqueSessions: insights.funnel[eventType]?.uniqueSessions || 0,
+    }))
+
+    return (
+      <div className='space-y-6'>
+        <div className='flex flex-wrap items-center justify-between gap-4'>
+          <div>
+            <h2 className='text-2xl font-bold text-gray-900'>Insights bài viết</h2>
+            <p className='text-sm text-gray-500 mt-1'>Đo event sau khi đọc trong {insights.period.days} ngày gần nhất và trạng thái editorial hiện tại.</p>
+          </div>
+          <Select value={insightsDays} onValueChange={setInsightsDays}>
+            <SelectTrigger className='w-40 bg-white border-2 border-blue-200'>
+              <SelectValue placeholder='Khoảng thời gian' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='7'>7 ngày</SelectItem>
+              <SelectItem value='30'>30 ngày</SelectItem>
+              <SelectItem value='90'>90 ngày</SelectItem>
+              <SelectItem value='180'>180 ngày</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
+          {[
+            { label: 'Tổng engagement', value: insights.overview.totalEvents, icon: BarChart3, color: 'bg-blue-100 text-blue-700' },
+            { label: 'Hỏi AI', value: insights.funnel.article_ai_ask?.count || 0, icon: Bot, color: 'bg-cyan-100 text-cyan-700' },
+            { label: 'CTA tư vấn/mua', value: (insights.funnel.cta_chat?.count || 0) + (insights.funnel.cta_prescription_upload?.count || 0) + (insights.funnel.cta_product_search?.count || 0) + (insights.funnel.related_product_click?.count || 0), icon: MessageCircle, color: 'bg-emerald-100 text-emerald-700' },
+            { label: 'Đang lưu/follow', value: insights.overview.savedArticles + insights.overview.followedTopics, icon: Bookmark, color: 'bg-purple-100 text-purple-700' },
+          ].map((item) => {
+            const Icon = item.icon
+            return (
+              <Card key={item.label} className='bg-white border-blue-100'>
+                <CardContent className='p-6 flex items-center gap-4'>
+                  <div className={`p-3 rounded-full ${item.color}`}>
+                    <Icon className='h-6 w-6' />
+                  </div>
+                  <div>
+                    <p className='text-sm font-medium text-gray-500'>{item.label}</p>
+                    <h3 className='text-2xl font-bold text-gray-900'>{formatNumber(item.value)}</h3>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
+
+        <Card className='bg-white border-blue-100'>
+          <CardContent className='p-6'>
+            <div className='flex items-center gap-2 mb-4'>
+              <BarChart3 className='h-5 w-5 text-blue-600' />
+              <h3 className='text-lg font-semibold text-gray-900'>Funnel hành động sau khi đọc</h3>
+            </div>
+            <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3'>
+              {funnelItems.map((item) => {
+                const Icon = item.icon
+                return (
+                  <div key={item.eventType} className={`rounded-lg border p-4 ${item.color}`}>
+                    <div className='flex items-center justify-between gap-3'>
+                      <div className='flex items-center gap-2'>
+                        <Icon className='h-4 w-4' />
+                        <span className='text-sm font-medium'>{item.label}</span>
+                      </div>
+                      <span className='text-xl font-bold'>{formatNumber(item.count)}</span>
+                    </div>
+                    <p className='text-xs mt-2 opacity-80'>{formatNumber(item.uniqueSessions)} phiên duy nhất</p>
+                  </div>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className='grid grid-cols-1 xl:grid-cols-2 gap-6'>
+          <Card className='bg-white border-blue-100'>
+            <CardContent className='p-6'>
+              <h3 className='text-lg font-semibold text-gray-900 mb-4'>Top bài theo engagement</h3>
+              <div className='space-y-3'>
+                {insights.topEngagedArticles.length === 0 ? (
+                  <p className='text-sm text-gray-500'>Chưa có dữ liệu engagement trong khoảng thời gian này.</p>
+                ) : (
+                  insights.topEngagedArticles.map((article, index) => (
+                    <div key={article.articleId} className='flex items-start justify-between gap-4 rounded-lg border border-blue-50 p-4'>
+                      <div className='min-w-0'>
+                        <div className='flex items-center gap-2'>
+                          <span className='text-sm font-semibold text-blue-600'>#{index + 1}</span>
+                          {article.riskLevel && <Badge variant='outline'>{article.riskLevel}</Badge>}
+                        </div>
+                        {article.slug ? (
+                          <Link to={`/health/article/${article.slug}`} target='_blank' className='mt-1 block font-medium text-gray-900 hover:text-blue-600 line-clamp-2'>
+                            {article.title || 'Bài viết đã xoá'}
+                          </Link>
+                        ) : (
+                          <p className='mt-1 font-medium text-gray-500 line-clamp-2'>Bài viết đã xoá</p>
+                        )}
+                        <p className='text-xs text-gray-500 mt-1'>{formatNumber(article.viewCount)} views · {formatNumber(article.aiAsks)} AI · {formatNumber(article.ctaEvents)} CTA</p>
+                      </div>
+                      <div className='text-right'>
+                        <p className='text-xl font-bold text-gray-900'>{formatNumber(article.totalEvents)}</p>
+                        <p className='text-xs text-gray-500'>events</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className='bg-white border-blue-100'>
+            <CardContent className='p-6'>
+              <h3 className='text-lg font-semibold text-gray-900 mb-4'>Hiệu quả theo danh mục</h3>
+              <div className='space-y-3'>
+                {insights.categoryPerformance.length === 0 ? (
+                  <p className='text-sm text-gray-500'>Chưa có dữ liệu danh mục trong khoảng thời gian này.</p>
+                ) : (
+                  insights.categoryPerformance.map((category) => (
+                    <div key={category.categoryId || category.categoryName} className='rounded-lg border border-blue-50 p-4'>
+                      <div className='flex items-center justify-between gap-4'>
+                        <p className='font-medium text-gray-900'>{category.categoryName}</p>
+                        <p className='font-bold text-blue-600'>{formatNumber(category.totalEvents)} events</p>
+                      </div>
+                      <div className='mt-3 grid grid-cols-2 gap-2 text-xs text-gray-600'>
+                        <span>{formatNumber(category.aiAsks)} lượt hỏi AI</span>
+                        <span>{formatNumber(category.ctaEvents)} CTA</span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className='bg-white border-amber-100'>
+          <CardContent className='p-6'>
+            <div className='flex items-center gap-2 mb-4'>
+              <ShieldCheck className='h-5 w-5 text-amber-600' />
+              <h3 className='text-lg font-semibold text-gray-900'>Cảnh báo editorial cần rà soát</h3>
+            </div>
+            <div className='rounded-md border border-amber-100 overflow-hidden'>
+              <Table>
+                <TableHeader>
+                  <TableRow className='bg-amber-50 hover:bg-amber-50'>
+                    <TableHead>Bài viết</TableHead>
+                    <TableHead>Rủi ro</TableHead>
+                    <TableHead>Vấn đề</TableHead>
+                    <TableHead className='text-right'>Views</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {insights.editorialWarnings.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className='text-center py-6 text-gray-500'>
+                        Không có cảnh báo editorial đáng chú ý.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    insights.editorialWarnings.map((article) => (
+                      <TableRow key={article._id}>
+                        <TableCell className='max-w-[360px]'>
+                          <Link to={`${basePath}/${article._id}/edit`} className='font-medium text-gray-900 hover:text-blue-600 line-clamp-2'>
+                            {article.title}
+                          </Link>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant='outline' className={article.riskLevel === 'emergency-sensitive' ? 'border-red-200 text-red-700 bg-red-50' : ''}>
+                            {article.riskLevel || 'general'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className='flex flex-wrap gap-1'>
+                            {getEditorialReasons(article).map((reason) => (
+                              <Badge key={reason} variant='outline' className='border-amber-200 text-amber-700 bg-amber-50'>
+                                <AlertTriangle className='h-3 w-3 mr-1' />
+                                {reason}
+                              </Badge>
+                            ))}
+                          </div>
+                        </TableCell>
+                        <TableCell className='text-right'>{formatNumber(article.viewCount)}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   // Stats calculation
@@ -171,8 +471,17 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
         </Card>
       </div>
 
-      <Card className='bg-white backdrop-blur-lg border-blue-100'>
-        <CardContent className='p-6'>
+      <Tabs defaultValue='list' className='space-y-6'>
+        {isAdmin && (
+          <TabsList className='grid w-full max-w-md grid-cols-2 bg-blue-50 p-1.5 rounded-lg h-auto'>
+            <TabsTrigger value='list'>Danh sách</TabsTrigger>
+            <TabsTrigger value='insights'>Insights</TabsTrigger>
+          </TabsList>
+        )}
+
+        <TabsContent value='list' className='mt-0'>
+          <Card className='bg-white backdrop-blur-lg border-blue-100'>
+            <CardContent className='p-6'>
           <div className='flex gap-4 mb-6'>
             <div className='w-48'>
               <Select value={filter.status} onValueChange={(value) => setFilter({ ...filter, status: value })}>
@@ -313,8 +622,12 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
               </TableBody>
             </Table>
           </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {isAdmin && <TabsContent value='insights' className='mt-0'>{renderInsights()}</TabsContent>}
+      </Tabs>
     </div>
   )
 }
