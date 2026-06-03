@@ -112,6 +112,8 @@ export interface CreateOrderRequest {
   shippingAddress: ShippingAddress
   paymentMethod: string
   couponCode?: string
+  couponCodes?: string[]
+  pointsToRedeem?: number
   notes?: string
   isDirectBuy?: boolean
 }
