@@ -81,6 +81,8 @@ class OrderService {
       estimatedDeliveryDate: (orderData as any).estimatedDeliveryDate, // Pass estimated delivery date
       notes: orderData.notes,
       isDirectBuy: orderData.isDirectBuy,
+      couponCodes: (orderData as any).couponCodes,
+      pointsToRedeem: (orderData as any).pointsToRedeem,
     }
     const response = await apiClient.post<{ message: string; result: { order: BackendOrder; paymentUrl?: string } }>(
       API_ENDPOINTS.ORDERS.CREATE,
