@@ -1,127 +1,51 @@
+/**
+ * community-ai-moderation.spec.ts
+ *
+ * End-to-end tests for AI Moderation:
+ *   - Manual AI review → job succeeds, auto-hides high confidence content
+ *   - [ai-review] content → queued finding, shouldHide=false
+ *   - Safe content → job succeeds, applied.queued=false
+ *   - Admin retries a job → status resets to pending
+ *   - Admin filters AI jobs by status
+ *
+ * Requires: backend running with AI_MODERATION_MOCK=true AI_MODERATION_ENABLED=true
+ * Set E2E_AI_MODERATION=true to run.
+ */
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { expect, test, type APIRequestContext, type Browser } from '@playwright/test'
+import {
+  API_URL,
+  APP_URL,
+  AUTH_DIR,
+  type Session,
+  auth,
+  createRoom,
+  getAiJobs,
+  getModerationQueue,
+  joinRoom,
+  newAuthedPage,
+  pickData,
+  rerunAiReview,
+  retryAiJob,
+  sendMessage,
+  sessions,
+  waitFor,
+} from './community/helpers'
 
-const APP_URL = process.env.E2E_BASE_URL || 'http://localhost:3000'
-const API_URL = process.env.E2E_API_URL || 'http://localhost:8000'
-const AUTH_DIR = path.resolve('tests/e2e/.auth')
-
-type Session = {
-  token: string
-  user: { _id: string; email: string }
-}
-
-type Sessions = {
-  admin: Session
-  customer: Session
-  customer2: Session
-}
-
-function sessions(): Sessions {
-  return JSON.parse(readFileSync(path.join(AUTH_DIR, 'sessions.json'), 'utf8')) as Sessions
-}
-
-function pickData(payload: any) {
-  if (payload?.data !== undefined) return payload.data
-  if (payload?.result !== undefined) return payload.result
-  return payload
-}
-
-function auth(token: string) {
-  return { Authorization: `Bearer ${token}` }
-}
-
-async function waitFor<T>(read: () => Promise<T>, accept: (value: T) => boolean, timeoutMs = 30_000) {
-  const startedAt = Date.now()
-  let latest: T
-
-  do {
-    latest = await read()
-    if (accept(latest)) return latest
-    await new Promise((resolve) => setTimeout(resolve, 500))
-  } while (Date.now() - startedAt < timeoutMs)
-
-  return latest!
-}
-
-function roomMeta(prefix: string) {
-  const stamp = `${Date.now()}-${Math.floor(Math.random() * 10000)}`
-  return {
-    name: `${prefix} ${stamp}`,
-    slug: `${prefix.toLowerCase().replace(/\s+/g, '-')}-${stamp}`,
-  }
-}
-
-async function createRoom(api: APIRequestContext, admin: Session) {
-  const res = await api.post(`${API_URL}/admin/community/rooms`, {
-    headers: auth(admin.token),
-    data: { ...roomMeta('E2E AI Moderation'), visibility: 'public', diseaseKey: 'e2e-ai' },
-  })
-  expect(res.ok()).toBeTruthy()
-  return pickData(await res.json()) as { _id: string; name: string; slug: string }
-}
-
-async function joinRoom(api: APIRequestContext, session: Session, roomId: string) {
-  const res = await api.post(`${API_URL}/community/rooms/${roomId}/join`, {
-    headers: auth(session.token),
-    data: {},
-  })
-  expect(res.ok()).toBeTruthy()
-}
-
-async function sendMessage(api: APIRequestContext, session: Session, roomId: string, content: string) {
-  const res = await api.post(`${API_URL}/community/rooms/${roomId}/messages`, {
-    headers: auth(session.token),
-    data: { content },
-  })
-  expect(res.ok()).toBeTruthy()
-  return pickData(await res.json())
-}
-
-async function rerunAiReview(api: APIRequestContext, admin: Session, messageId: string) {
-  const res = await api.post(`${API_URL}/admin/moderation/messages/${messageId}/ai-review`, {
-    headers: auth(admin.token),
-    data: {},
-  })
-  expect(res.ok()).toBeTruthy()
-  return pickData(await res.json())
-}
-
-async function getAiJob(api: APIRequestContext, admin: Session, messageId: string) {
-  const res = await api.get(`${API_URL}/admin/moderation/ai-jobs`, {
-    headers: auth(admin.token),
-    params: { page: 1, limit: 5, messageId },
-  })
-  expect(res.ok()).toBeTruthy()
-  const data = pickData(await res.json())
-  return data.items?.[0]
-}
-
-async function getAiFinding(api: APIRequestContext, admin: Session, search: string) {
-  const res = await api.get(`${API_URL}/admin/moderation/queue`, {
-    headers: auth(admin.token),
-    params: { page: 1, limit: 10, trigger: 'ai', search },
-  })
-  expect(res.ok()).toBeTruthy()
-  const data = pickData(await res.json())
-  return data.items?.[0]
-}
-
-async function newAuthedPage(browser: Browser, stateName: string) {
-  const context = await browser.newContext({ storageState: path.join(AUTH_DIR, stateName) })
-  const page = await context.newPage()
-  return { context, page }
-}
+const AI_ENABLED = !!process.env.E2E_AI_MODERATION
 
 test.describe.serial('community AI moderation e2e', () => {
-  test.skip(!process.env.E2E_AI_MODERATION, 'Set E2E_AI_MODERATION=true and run backend with AI_MODERATION_MOCK=true')
+  test.skip(!AI_ENABLED, 'Set E2E_AI_MODERATION=true and run backend with AI_MODERATION_MOCK=true')
+
+  // ── [ai-hide] → auto-hide + admin audit UI ─────────────────────────────────
 
   test('manual AI review creates a succeeded job, hides unsafe content, and appears in admin audit UI', async ({
     browser,
     request,
   }) => {
     const { admin, customer } = sessions()
-    const room = await createRoom(request, admin)
+    const room = await createRoom(request, admin, 'public', 'E2E AI Hide')
     await joinRoom(request, customer, room._id)
 
     const marker = `AI_E2E_HIDE_${Date.now()}`
@@ -133,27 +57,23 @@ test.describe.serial('community AI moderation e2e', () => {
     await rerunAiReview(request, admin, messageId)
 
     const job = await waitFor(
-      () => getAiJob(request, admin, messageId),
-      (item) => item?.status === 'succeeded',
+      () => getAiJobs(request, admin, { messageId }).then((d: any) => d.items?.[0]),
+      (item: any) => item?.status === 'succeeded',
     )
     expect(job).toMatchObject({
       status: 'succeeded',
-      aiResult: {
-        severity: 'high',
-        suggestedAction: 'hide',
-      },
+      aiResult: { severity: 'high', suggestedAction: 'hide' },
     })
     expect(job.applied?.autoHidden).toBe(true)
 
     const finding = await waitFor(
-      () => getAiFinding(request, admin, marker),
-      (item) => item?.trigger === 'ai' && item?.severity === 'high',
+      () =>
+        getModerationQueue(request, admin, { trigger: 'ai', search: marker }).then(
+          (d: any) => d.items?.[0],
+        ),
+      (item: any) => item?.trigger === 'ai' && item?.severity === 'high',
     )
-    expect(finding).toMatchObject({
-      trigger: 'ai',
-      severity: 'high',
-      status: 'open',
-    })
+    expect(finding).toMatchObject({ trigger: 'ai', severity: 'high', status: 'open' })
 
     const { context, page } = await newAuthedPage(browser, 'admin.json')
     await page.goto(`${APP_URL}/admin/moderation`)
@@ -170,5 +90,142 @@ test.describe.serial('community AI moderation e2e', () => {
     await expect(page.getByText(content).last()).toBeVisible()
     await expect(page.getByText('AI: high / 0.95 / hide')).toBeVisible()
     await context.close()
+  })
+
+  // ── [ai-review] → queued finding, message stays visible ───────────────────
+
+  test('[ai-review] content → job succeeded, shouldHide=false, finding queued with trigger=ai', async ({
+    request,
+  }) => {
+    const { admin, customer } = sessions()
+    const room = await createRoom(request, admin, 'public', 'E2E AI Review')
+    await joinRoom(request, customer, room._id)
+
+    const marker = `AI_E2E_REVIEW_${Date.now()}`
+    const content = `[ai-review] ${marker} possibly misleading`
+    const sent = await sendMessage(request, customer, room._id, content)
+    const messageId = sent?.message?._id
+    expect(messageId).toBeTruthy()
+
+    await rerunAiReview(request, admin, messageId)
+
+    const job = await waitFor(
+      () => getAiJobs(request, admin, { messageId }).then((d: any) => d.items?.[0]),
+      (item: any) => item?.status === 'succeeded',
+    )
+    expect(job.status).toBe('succeeded')
+    expect(job.aiResult?.shouldHide).toBe(false)
+    expect(job.aiResult?.suggestedAction).toBe('review')
+    expect(job.aiResult?.severity).toBe('medium')
+
+    // applied.autoHidden must be false – message still visible
+    expect(job.applied?.autoHidden).toBe(false)
+    expect(job.applied?.queued).toBe(true)
+
+    // Finding should exist with trigger=ai
+    const finding = await waitFor(
+      () =>
+        getModerationQueue(request, admin, { trigger: 'ai', search: marker }).then(
+          (d: any) => d.items?.[0],
+        ),
+      (item: any) => item?.trigger === 'ai',
+    )
+    expect(finding?.severity).toBe('medium')
+    expect(finding?.status).toBe('open')
+  })
+
+  // ── Safe content → job succeeds, no finding created ───────────────────────
+
+  test('safe content → job succeeded, applied.queued=false, no finding in queue', async ({
+    request,
+  }) => {
+    const { admin, customer } = sessions()
+    const room = await createRoom(request, admin, 'public', 'E2E AI Safe')
+    await joinRoom(request, customer, room._id)
+
+    const marker = `AI_E2E_SAFE_${Date.now()}`
+    const content = `Safe health question: ${marker} how to stay healthy?`
+    const sent = await sendMessage(request, customer, room._id, content)
+    const messageId = sent?.message?._id
+    expect(messageId).toBeTruthy()
+
+    await rerunAiReview(request, admin, messageId)
+
+    const job = await waitFor(
+      () => getAiJobs(request, admin, { messageId }).then((d: any) => d.items?.[0]),
+      (item: any) => item?.status === 'succeeded',
+    )
+    expect(job.status).toBe('succeeded')
+    expect(job.aiResult?.severity).toBe('low')
+    expect(job.applied?.queued).toBe(false)
+    expect(job.applied?.autoHidden).toBe(false)
+
+    // No finding in moderation queue for this message
+    const queue = await getModerationQueue(request, admin, { search: marker })
+    expect(queue.items.find((f: any) => f.messageId === messageId)).toBeUndefined()
+  })
+
+  // ── Retry failed job ───────────────────────────────────────────────────────
+
+  test('admin can retry a job – status resets to pending', async ({ request }) => {
+    const { admin, customer } = sessions()
+    const room = await createRoom(request, admin, 'public', 'E2E AI Retry')
+    await joinRoom(request, customer, room._id)
+
+    // Use [ai-hide] so a job is created
+    const content = `[ai-hide] retry test ${Date.now()}`
+    const sent = await sendMessage(request, customer, room._id, content)
+    const messageId = sent?.message?._id
+
+    await rerunAiReview(request, admin, messageId)
+
+    // Wait for job to finish
+    const job = await waitFor(
+      () => getAiJobs(request, admin, { messageId }).then((d: any) => d.items?.[0]),
+      (item: any) => item?.status === 'succeeded' || item?.status === 'failed',
+    )
+    expect(job._id).toBeTruthy()
+
+    // Retry the job
+    const retried = await retryAiJob(request, admin, job._id)
+    expect(retried.status).toBe('pending')
+
+    // Confirm job went back to pending then succeeded
+    const afterRetry = await waitFor(
+      () => getAiJobs(request, admin, { messageId }).then((d: any) => d.items?.[0]),
+      (item: any) => item?.status === 'succeeded' || item?.status === 'failed',
+    )
+    expect(['succeeded', 'failed']).toContain(afterRetry.status)
+  })
+
+  // ── Filter AI jobs by status ───────────────────────────────────────────────
+
+  test('admin can filter AI jobs by status=succeeded', async ({ request }) => {
+    const { admin } = sessions()
+    const result = await getAiJobs(request, admin, { status: 'succeeded' })
+    expect(result.items.every((j: any) => j.status === 'succeeded')).toBe(true)
+  })
+
+  test('admin can filter AI jobs by status=failed', async ({ request }) => {
+    const { admin } = sessions()
+    const result = await getAiJobs(request, admin, { status: 'failed' })
+    // May be empty but all items must be failed
+    expect(result.items.every((j: any) => j.status === 'failed')).toBe(true)
+  })
+
+  test('admin can filter AI jobs by status=pending', async ({ request }) => {
+    const { admin } = sessions()
+    const result = await getAiJobs(request, admin, { status: 'pending' })
+    expect(result.items.every((j: any) => j.status === 'pending')).toBe(true)
+  })
+
+  test('retry non-existent job returns 404', async ({ request }) => {
+    const { admin } = sessions()
+    const fakeJobId = '000000000000000000000001'
+    const res = await request.post(`${API_URL}/admin/moderation/ai-jobs/${fakeJobId}/retry`, {
+      headers: auth(admin.token),
+      data: {},
+    })
+    expect(res.status()).toBe(404)
   })
 })
