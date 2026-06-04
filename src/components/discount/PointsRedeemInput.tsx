@@ -31,7 +31,11 @@ export function PointsRedeemInput({ subtotal, onRedeemChange, className }: Point
   // Load preview khi mount hoặc subtotal thay đổi
   useEffect(() => {
     const fetchPreview = async () => {
-      if (subtotal <= 0) return
+      if (subtotal <= 0) {
+        setPreview(null)
+        setIsLoading(false)
+        return
+      }
       setIsLoading(true)
       try {
         const res = await apiClient.post<{ result: PointsPreview }>('/loyalty/preview-redeem', { orderSubtotal: subtotal })
@@ -147,7 +151,7 @@ export function PointsRedeemInput({ subtotal, onRedeemChange, className }: Point
           <div className='flex items-start gap-2 text-xs text-gray-500 bg-gray-50 p-3 rounded-lg'>
             <AlertCircle className='w-3.5 h-3.5 shrink-0 mt-0.5' />
             <p>
-              Tối đa <strong>{formatPoints(preview.pointsNeeded)}</strong> ({formatCurrency(preview.maxRedeemAmount)}) — tương đương ~30% giá trị đơn hàng. 1 điểm = 1đ.
+              Tối đa <strong>{formatPoints(preview.pointsNeeded)}</strong> ({formatCurrency(preview.maxRedeemAmount)}) — tương đương ~30% giá trị còn lại sau coupon. 1 điểm = 1đ.
             </p>
           </div>
 

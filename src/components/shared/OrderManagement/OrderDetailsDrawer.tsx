@@ -21,7 +21,7 @@ type OrderStatus =
   | 'delivered'
   | 'cancelled'
   | 'returned'
-type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded'
+type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded' | 'partially_refunded'
 
 export function OrderDetailsDrawer({ isOpen, onClose, order }: OrderDetailsDrawerProps) {
   const formatDate = (timestamp: string) => {
@@ -58,6 +58,7 @@ export function OrderDetailsDrawer({ isOpen, onClose, order }: OrderDetailsDrawe
       paid: { label: 'Đã thanh toán', className: 'bg-green-100 text-green-700' },
       failed: { label: 'Thất bại', className: 'bg-red-100 text-red-700' },
       refunded: { label: 'Đã hoàn tiền', className: 'bg-gray-100 text-gray-700' },
+      partially_refunded: { label: 'Hoàn tiền một phần', className: 'bg-slate-100 text-slate-700' },
     }
 
     const config = statusConfig[status] || statusConfig.pending
@@ -204,10 +205,47 @@ export function OrderDetailsDrawer({ isOpen, onClose, order }: OrderDetailsDrawe
                   <span className='text-gray-600'>VAT (10%):</span>
                   <span className='font-medium text-gray-900'>{formatCurrency(order.taxAmount)}</span>
                 </div>
-                {order.discountAmount > 0 && (
-                  <div className='flex justify-between items-center text-green-600'>
-                    <span className='font-medium'>Giảm giá:</span>
-                    <span className='font-semibold'>-{formatCurrency(order.discountAmount)}</span>
+                {(order.discountAmount > 0 || (order.appliedCoupons && order.appliedCoupons.length > 0)) && (
+                  <>
+                    {order.discountAmount > 0 && (
+                      <div className='flex justify-between items-center text-green-600'>
+                        <span className='font-medium'>Giảm giá coupon:</span>
+                        <span className='font-semibold'>-{formatCurrency(order.discountAmount)}</span>
+                      </div>
+                    )}
+                    {(order.shippingDiscountAmount || 0) > 0 && (
+                      <div className='flex justify-between items-center text-green-600'>
+                        <span className='font-medium'>Tiết kiệm phí vận chuyển:</span>
+                        <span className='font-semibold'>-{formatCurrency(order.shippingDiscountAmount || 0)}</span>
+                      </div>
+                    )}
+                    {order.appliedCoupons && order.appliedCoupons.length > 0 && (
+                      <div className='space-y-1 rounded-lg border border-green-100 bg-green-50/60 p-3'>
+                        {order.appliedCoupons.map((coupon) => (
+                          <div key={coupon.code} className='flex justify-between gap-3 text-xs text-gray-600'>
+                            <span className='font-medium'>
+                              {coupon.code}
+                              {coupon.name ? ` - ${coupon.name}` : ''}
+                            </span>
+                            {coupon.type === 'free_shipping' ? (
+                              <span className='text-green-700'>
+                                {coupon.discountAmount > 0 ? `-${formatCurrency(coupon.discountAmount)}` : 'Freeship'}
+                              </span>
+                            ) : (
+                              <span className='text-green-700'>-{formatCurrency(coupon.discountAmount)}</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+                {(order.pointsRedeemAmount || 0) > 0 && (
+                  <div className='flex justify-between items-center text-purple-600'>
+                    <span className='font-medium'>
+                      Điểm thưởng ({(order.pointsRedeemed || 0).toLocaleString('vi-VN')} điểm):
+                    </span>
+                    <span className='font-semibold'>-{formatCurrency(order.pointsRedeemAmount || 0)}</span>
                   </div>
                 )}
                 <Separator className='my-2' />

@@ -145,7 +145,8 @@ export function OrderDetailPage() {
             | 'preparing'
             | 'shipping'
             | 'delivered'
-            | 'cancelled',
+            | 'cancelled'
+            | 'returned',
           items: fetchedOrder.items.map((item) => ({
             id: item.id,
             productId: item.productId,
@@ -156,11 +157,17 @@ export function OrderDetailPage() {
             quantity: item.quantity,
             unitPrice: item.price,
             subtotal: item.total,
+            discountAllocation: item.discountAllocation,
+            pointsAllocation: item.pointsAllocation,
             isPrescription: item.product.requiresPrescription || false,
           })),
           subtotal: fetchedOrder.subtotal,
           shippingFee: fetchedOrder.shipping,
           discount: fetchedOrder.discount,
+          appliedCoupons: fetchedOrder.appliedCoupons,
+          pointsRedeemed: fetchedOrder.pointsRedeemed,
+          pointsRedeemAmount: fetchedOrder.pointsRedeemAmount,
+          shippingDiscountAmount: fetchedOrder.shippingDiscountAmount,
           total: fetchedOrder.total,
           shippingAddress: {
             id: '',
@@ -175,15 +182,7 @@ export function OrderDetailPage() {
             isDefault: false,
           },
           paymentMethod: fetchedOrder.paymentMethod,
-          paymentStatus: (fetchedOrder.paymentStatus === 'pending'
-            ? 'pending'
-            : fetchedOrder.paymentStatus === 'paid'
-              ? 'paid'
-              : fetchedOrder.paymentStatus === 'failed'
-                ? 'failed'
-                : fetchedOrder.paymentStatus === 'refunded'
-                  ? 'refunded'
-                  : 'pending') as 'pending' | 'paid' | 'failed' | 'refunded',
+          paymentStatus: fetchedOrder.paymentStatus as Order['paymentStatus'],
           createdAt: fetchedOrder.createdAt,
           updatedAt: fetchedOrder.updatedAt,
           deliveryMethod: fetchedOrder.shippingMethod,
@@ -436,10 +435,45 @@ export function OrderDetailPage() {
                   <span>Phí vận chuyển:</span>
                   <span>{formatPrice(order.shippingFee)}</span>
                 </div>
-                {order.discount > 0 && (
-                  <div className='flex justify-between text-sm text-green-600'>
-                    <span>Giảm giá:</span>
-                    <span>-{formatPrice(order.discount)}</span>
+                {(order.discount > 0 || (order.appliedCoupons && order.appliedCoupons.length > 0)) && (
+                  <>
+                    {order.discount > 0 && (
+                      <div className='flex justify-between text-sm text-green-600'>
+                        <span>Giảm giá coupon:</span>
+                        <span>-{formatPrice(order.discount)}</span>
+                      </div>
+                    )}
+                    {order.appliedCoupons && order.appliedCoupons.length > 0 && (
+                      <div className='space-y-1 pl-3 border-l border-green-200'>
+                        {order.appliedCoupons.map((coupon) => (
+                          <div key={coupon.code} className='flex justify-between text-xs text-gray-500'>
+                            <span>
+                              {coupon.code}
+                              {coupon.name ? ` - ${coupon.name}` : ''}
+                            </span>
+                            {coupon.type !== 'free_shipping' ? (
+                              <span>-{formatPrice(coupon.discountAmount)}</span>
+                            ) : coupon.discountAmount > 0 ? (
+                              <span>-{formatPrice(coupon.discountAmount)}</span>
+                            ) : (
+                              <span>Freeship</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {(order.shippingDiscountAmount || 0) > 0 && (
+                      <div className='flex justify-between text-sm text-green-600'>
+                        <span>Tiết kiệm phí vận chuyển:</span>
+                        <span>-{formatPrice(order.shippingDiscountAmount || 0)}</span>
+                      </div>
+                    )}
+                  </>
+                )}
+                {(order.pointsRedeemAmount || 0) > 0 && (
+                  <div className='flex justify-between text-sm text-purple-600'>
+                    <span>Điểm thưởng ({(order.pointsRedeemed || 0).toLocaleString('vi-VN')} điểm):</span>
+                    <span>-{formatPrice(order.pointsRedeemAmount || 0)}</span>
                   </div>
                 )}
                 <Separator />

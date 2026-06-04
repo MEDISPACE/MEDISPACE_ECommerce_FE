@@ -35,6 +35,7 @@ export function OrdersPage() {
           | 'shipping'
           | 'delivered'
           | 'cancelled'
+          | 'returned'
           | 'pending'
 
         if (order.status === 'pending') {
@@ -61,6 +62,8 @@ export function OrdersPage() {
             quantity: item.quantity,
             unitPrice: item.price,
             subtotal: item.total,
+            discountAllocation: item.discountAllocation,
+            pointsAllocation: item.pointsAllocation,
             isPrescription: item.product.requiresPrescription || false,
           })),
           subtotal: order.subtotal,
@@ -80,15 +83,7 @@ export function OrdersPage() {
             isDefault: false,
           },
           paymentMethod: order.paymentMethod,
-          paymentStatus: (order.paymentStatus === 'pending'
-            ? 'pending'
-            : order.paymentStatus === 'paid'
-              ? 'paid'
-              : order.paymentStatus === 'failed'
-                ? 'failed'
-                : order.paymentStatus === 'refunded'
-                  ? 'refunded'
-                  : 'pending') as 'pending' | 'paid' | 'failed' | 'refunded',
+          paymentStatus: order.paymentStatus as Order['paymentStatus'],
           createdAt: order.createdAt,
           updatedAt: order.updatedAt,
           deliveryMethod: order.shippingMethod,

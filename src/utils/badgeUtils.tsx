@@ -213,6 +213,11 @@ export const PAYMENT_STATUS_BADGES: Record<string, BadgeConfig> = {
     className: 'bg-gray-100 text-gray-800 border-gray-200',
     icon: XCircle,
   },
+  partially_refunded: {
+    label: 'Hoàn tiền một phần',
+    className: 'bg-slate-100 text-slate-800 border-slate-200',
+    icon: Activity,
+  },
 } as const
 
 /**
