@@ -12,6 +12,13 @@ interface BackendOrderItem {
   quantity: number
   unitPrice: number
   totalPrice: number
+  discountAllocation?: number
+  pointsAllocation?: number
+  couponAllocations?: Array<{
+    code: string
+    type: string
+    amount: number
+  }>
   prescriptionRequired: boolean
   image?: string
 }
@@ -38,6 +45,15 @@ interface BackendOrder {
   discountAmount: number
   taxAmount: number
   totalAmount: number
+  appliedCoupons?: Array<{
+    code: string
+    name?: string
+    type: string
+    discountAmount: number
+  }>
+  pointsRedeemed?: number
+  pointsRedeemAmount?: number
+  shippingDiscountAmount?: number
   shippingAddress: BackendShippingAddress
   paymentMethod: string
   paymentStatus: string
@@ -81,6 +97,8 @@ class OrderService {
       estimatedDeliveryDate: (orderData as any).estimatedDeliveryDate, // Pass estimated delivery date
       notes: orderData.notes,
       isDirectBuy: orderData.isDirectBuy,
+      couponCodes: (orderData as any).couponCodes,
+      pointsToRedeem: (orderData as any).pointsToRedeem,
     }
     const response = await apiClient.post<{ message: string; result: { order: BackendOrder; paymentUrl?: string } }>(
       API_ENDPOINTS.ORDERS.CREATE,
@@ -152,9 +170,16 @@ class OrderService {
           quantity: item.quantity,
           price: item.unitPrice,
           total: item.totalPrice,
+          discountAllocation: item.discountAllocation || 0,
+          pointsAllocation: item.pointsAllocation || 0,
+          couponAllocations: item.couponAllocations || [],
         })) || [],
       subtotal: backendOrder.subtotal,
       discount: backendOrder.discountAmount,
+      appliedCoupons: backendOrder.appliedCoupons || [],
+      pointsRedeemed: backendOrder.pointsRedeemed || 0,
+      pointsRedeemAmount: backendOrder.pointsRedeemAmount || 0,
+      shippingDiscountAmount: backendOrder.shippingDiscountAmount || 0,
       tax: backendOrder.taxAmount,
       shipping: backendOrder.shippingFee,
       total: backendOrder.totalAmount,

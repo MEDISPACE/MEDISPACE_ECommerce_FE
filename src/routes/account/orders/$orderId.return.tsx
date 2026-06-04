@@ -44,6 +44,8 @@ export default function CreateReturnRequestPage() {
             quantity: item.quantity,
             unitPrice: item.price,
             totalPrice: item.total,
+            discountAllocation: item.discountAllocation || 0,
+            pointsAllocation: item.pointsAllocation || 0,
             prescriptionRequired: item.product?.requiresPrescription || false,
             image: item.product?.images?.[0] || item.product?.featuredImage || '',
           })),

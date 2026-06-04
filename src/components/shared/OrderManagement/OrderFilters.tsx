@@ -56,8 +56,10 @@ export function OrderFilters({
                 <SelectItem value='confirmed'>✅ Đã xác nhận</SelectItem>
                 <SelectItem value='processing'>📦 Đang chuẩn bị</SelectItem>
                 <SelectItem value='shipping'>🚚 Đang giao</SelectItem>
+                <SelectItem value='shipped'>🚚 Đã gửi hàng</SelectItem>
                 <SelectItem value='delivered'>✔️ Đã giao</SelectItem>
                 <SelectItem value='cancelled'>❌ Đã hủy</SelectItem>
+                <SelectItem value='returned'>↩️ Đã trả hàng</SelectItem>
               </SelectContent>
             </Select>
 
@@ -69,7 +71,9 @@ export function OrderFilters({
                 <SelectItem value='all'>Tất cả</SelectItem>
                 <SelectItem value='paid'>✅ Đã thanh toán</SelectItem>
                 <SelectItem value='pending'>⏳ Chưa thanh toán</SelectItem>
+                <SelectItem value='failed'>❌ Thanh toán thất bại</SelectItem>
                 <SelectItem value='refunded'>↩️ Đã hoàn tiền</SelectItem>
+                <SelectItem value='partially_refunded'>↩️ Hoàn tiền một phần</SelectItem>
               </SelectContent>
             </Select>
 
