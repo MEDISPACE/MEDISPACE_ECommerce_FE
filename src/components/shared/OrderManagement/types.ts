@@ -7,7 +7,7 @@ export type OrderStatus =
   | 'delivered'
   | 'cancelled'
   | 'returned'
-export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded'
+export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded' | 'partially_refunded'
 export type UserRole = 'admin' | 'pharmacist'
 
 export interface Order {

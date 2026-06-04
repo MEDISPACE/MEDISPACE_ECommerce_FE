@@ -305,6 +305,7 @@ export function AdminLoyaltyPage() {
                             {acc.userInfo?.email && (
                               <p className='text-xs text-gray-400'>{acc.userInfo.email}</p>
                             )}
+                            <p className='text-xs text-gray-400 font-mono mt-0.5'>ID: {acc.userId}</p>
                           </div>
                         </td>
                         <td className='p-3'>
@@ -328,7 +329,8 @@ export function AdminLoyaltyPage() {
                           <p className='font-semibold'>{formatCurrency(acc.totalSpent)}</p>
                         </td>
                         <td className='p-3 text-xs text-gray-500'>
-                          {formatDate(acc.createdAt)}
+                          <p>{formatDate(acc.createdAt)}</p>
+                          <p className='text-gray-400'>Cập nhật: {formatDate(acc.updatedAt)}</p>
                         </td>
                       </motion.tr>
                     )
