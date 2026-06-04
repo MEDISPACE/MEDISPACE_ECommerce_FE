@@ -43,10 +43,14 @@ export interface Order {
   subtotal: number
   shippingFee: number
   discount: number
+  appliedCoupons?: AppliedCoupon[]
+  pointsRedeemed?: number
+  pointsRedeemAmount?: number
+  shippingDiscountAmount?: number
   total: number
   shippingAddress: Address
   paymentMethod: string
-  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded'
+  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded' | 'partially_refunded'
   createdAt: string
   updatedAt: string
   estimatedDelivery?: string
@@ -55,6 +59,13 @@ export interface Order {
   notes?: string
   prescriptionId?: string
   timeline: OrderTimeline[]
+}
+
+export interface AppliedCoupon {
+  code: string
+  name?: string
+  type: string
+  discountAmount: number
 }
 
 export interface OrderItem {
@@ -67,6 +78,9 @@ export interface OrderItem {
   quantity: number
   unitPrice: number
   subtotal: number
+  discountAllocation?: number
+  pointsAllocation?: number
+  netRefundAmount?: number
   isPrescription: boolean
 }
 

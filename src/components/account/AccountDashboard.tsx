@@ -51,14 +51,17 @@ export function AccountDashboard() {
                     ? 'delivered'
                     : order.status === 'cancelled'
                       ? 'cancelled'
-                      : 'pending_payment') as
+                      : order.status === 'returned'
+                        ? 'returned'
+                        : 'pending_payment') as
             | 'pending_payment'
             | 'confirmed'
             | 'processing'
             | 'preparing'
             | 'shipping'
             | 'delivered'
-            | 'cancelled',
+            | 'cancelled'
+            | 'returned',
           items: order.items.map((item) => ({
             id: item.id,
             productId: item.productId,
@@ -69,6 +72,8 @@ export function AccountDashboard() {
             quantity: item.quantity,
             unitPrice: item.price,
             subtotal: item.total,
+            discountAllocation: item.discountAllocation,
+            pointsAllocation: item.pointsAllocation,
             isPrescription: item.product.requiresPrescription || false,
           })),
           subtotal: order.subtotal,
@@ -88,15 +93,7 @@ export function AccountDashboard() {
             isDefault: false,
           },
           paymentMethod: order.paymentMethod,
-          paymentStatus: (order.paymentStatus === 'pending'
-            ? 'pending'
-            : order.paymentStatus === 'paid'
-              ? 'paid'
-              : order.paymentStatus === 'failed'
-                ? 'failed'
-                : order.paymentStatus === 'refunded'
-                  ? 'refunded'
-                  : 'pending') as 'pending' | 'paid' | 'failed' | 'refunded',
+          paymentStatus: order.paymentStatus as Order['paymentStatus'],
           createdAt: order.createdAt,
           updatedAt: order.updatedAt,
           deliveryMethod: order.shippingMethod,
