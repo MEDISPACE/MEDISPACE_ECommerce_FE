@@ -254,6 +254,7 @@ export function CheckoutPage() {
   }
 
   const shippingFee = bgShippingFee
+  const pointsRedeemBaseAmount = Math.max(0, subtotal - couponDiscount)
   const total = Math.max(0, subtotal - couponDiscount - pointsDiscount + shippingFee)
 
   const handlePlaceOrder = async () => {
@@ -721,7 +722,7 @@ export function CheckoutPage() {
                       }}
                     />
                     <PointsRedeemInput
-                      subtotal={subtotal}
+                      subtotal={pointsRedeemBaseAmount}
                       onRedeemChange={(pts, amount) => {
                         setPointsToRedeem(pts)
                         setPointsDiscount(amount)
