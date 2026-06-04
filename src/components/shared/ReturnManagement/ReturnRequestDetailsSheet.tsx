@@ -210,6 +210,34 @@ export function ReturnRequestDetailsSheet({ isOpen, onClose, request, onReview }
                     </div>
                     <div className='text-right flex flex-col justify-center'>
                       <p className='text-lg font-bold text-blue-600'>{formatPrice(item.totalPrice)}</p>
+                      {((item.discountAllocation || 0) > 0 ||
+                        (item.pointsAllocation || 0) > 0 ||
+                        typeof item.netRefundAmount === 'number') && (
+                        <div className='mt-2 min-w-[150px] space-y-1 rounded-lg border border-blue-100 bg-white/80 p-2 text-xs'>
+                          <div className='flex justify-between gap-3 text-gray-500'>
+                            <span>Giá gốc</span>
+                            <span>{formatPrice(item.totalPrice)}</span>
+                          </div>
+                          {(item.discountAllocation || 0) > 0 && (
+                            <div className='flex justify-between gap-3 text-green-600'>
+                              <span>Coupon</span>
+                              <span>-{formatPrice(item.discountAllocation || 0)}</span>
+                            </div>
+                          )}
+                          {(item.pointsAllocation || 0) > 0 && (
+                            <div className='flex justify-between gap-3 text-purple-600'>
+                              <span>Điểm</span>
+                              <span>-{formatPrice(item.pointsAllocation || 0)}</span>
+                            </div>
+                          )}
+                          {typeof item.netRefundAmount === 'number' && (
+                            <div className='flex justify-between gap-3 border-t border-blue-100 pt-1 font-semibold text-blue-700'>
+                              <span>Hoàn dự kiến</span>
+                              <span>{formatPrice(item.netRefundAmount)}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}

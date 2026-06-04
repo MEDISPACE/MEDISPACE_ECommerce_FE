@@ -26,6 +26,8 @@ interface OrderItem {
   quantity: number
   unitPrice: number
   totalPrice: number
+  discountAllocation?: number
+  pointsAllocation?: number
   prescriptionRequired: boolean
   image?: string
 }
@@ -183,9 +185,20 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
   })
 
   // Calculate total refund amount
+  const getRefundPreview = (item: OrderItem, quantity: number) => {
+    const ratio = item.quantity > 0 ? quantity / item.quantity : 0
+    const grossAmount = item.unitPrice * quantity
+    const couponDiscount = Math.round((item.discountAllocation || 0) * ratio)
+    const pointsDiscount = Math.round((item.pointsAllocation || 0) * ratio)
+    const netAmount = Math.max(0, grossAmount - couponDiscount - pointsDiscount)
+
+    return { grossAmount, couponDiscount, pointsDiscount, netAmount }
+  }
+
   const totalRefundAmount = Array.from(selectedItems.entries()).reduce((sum, [productId, data]) => {
     const orderItem = order.items.find((i) => i.productId === productId)
-    return sum + (orderItem?.unitPrice || 0) * data.quantity
+    if (!orderItem) return sum
+    return sum + getRefundPreview(orderItem, data.quantity).netAmount
   }, 0)
 
   // Validate form
@@ -285,6 +298,11 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
                     <p className='text-sm'>
                       Giá: {item.unitPrice.toLocaleString()}đ × {item.quantity} = {item.totalPrice.toLocaleString()}đ
                     </p>
+                    {((item.discountAllocation || 0) > 0 || (item.pointsAllocation || 0) > 0) && (
+                      <p className='text-xs text-muted-foreground mt-1'>
+                        Đã phân bổ giảm giá: {((item.discountAllocation || 0) + (item.pointsAllocation || 0)).toLocaleString()}đ
+                      </p>
+                    )}
                     {item.prescriptionRequired && (
                       <span className='inline-flex items-center px-2 py-0.5 rounded text-xs bg-red-100 text-red-700 mt-1'>
                         Thuốc kê đơn
@@ -334,6 +352,33 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
                         </Select>
                       </div>
                     </div>
+                    {(() => {
+                      const preview = getRefundPreview(item, selectedData.quantity)
+                      return (
+                        <div className='rounded-lg bg-white border border-blue-100 p-3 text-sm space-y-1'>
+                          <div className='flex justify-between'>
+                            <span className='text-muted-foreground'>Giá trị sản phẩm</span>
+                            <span>{preview.grossAmount.toLocaleString()}đ</span>
+                          </div>
+                          {preview.couponDiscount > 0 && (
+                            <div className='flex justify-between text-green-700'>
+                              <span>Coupon đã dùng</span>
+                              <span>-{preview.couponDiscount.toLocaleString()}đ</span>
+                            </div>
+                          )}
+                          {preview.pointsDiscount > 0 && (
+                            <div className='flex justify-between text-purple-700'>
+                              <span>Điểm đã đổi</span>
+                              <span>-{preview.pointsDiscount.toLocaleString()}đ</span>
+                            </div>
+                          )}
+                          <div className='flex justify-between font-semibold pt-1 border-t'>
+                            <span>Ước tính hoàn thực nhận</span>
+                            <span className='text-blue-600'>{preview.netAmount.toLocaleString()}đ</span>
+                          </div>
+                        </div>
+                      )
+                    })()}
                   </div>
                 )}
               </div>
