@@ -30,13 +30,15 @@ interface Coupon {
   code: string
   name: string
   description?: string
-  type: 'percentage' | 'fixed' | 'free_shipping'
+  type: 'percentage' | 'fixed_amount' | 'fixed' | 'free_shipping'
   value: number
   minOrderAmount: number
   maxDiscountAmount?: number
   totalUsageLimit: number
   currentUsageCount: number
   perUserLimit: number
+  excludePrescriptionItems?: boolean
+  isPublic?: boolean
   startDate: string
   endDate: string
   isActive: boolean
@@ -48,12 +50,14 @@ interface CouponFormData {
   code: string
   name: string
   description: string
-  type: 'percentage' | 'fixed' | 'free_shipping'
+  type: 'percentage' | 'fixed_amount' | 'fixed' | 'free_shipping'
   value: number
   minOrderAmount: number
   maxDiscountAmount: string
-  totalUsageLimit: number
+  totalUsageLimit: string
   perUserLimit: number
+  excludePrescriptionItems: boolean
+  isPublic: boolean
   startDate: string
   endDate: string
   isActive: boolean
@@ -62,8 +66,8 @@ interface CouponFormData {
 const EMPTY_FORM: CouponFormData = {
   code: '', name: '', description: '',
   type: 'percentage', value: 10,
-  minOrderAmount: 0, maxDiscountAmount: '',
-  totalUsageLimit: 100, perUserLimit: 1,
+  minOrderAmount: 0, maxDiscountAmount: '', totalUsageLimit: '100',
+  perUserLimit: 1, excludePrescriptionItems: false, isPublic: true,
   startDate: new Date().toISOString().substring(0, 16),
   endDate: new Date(Date.now() + 30 * 86400000).toISOString().substring(0, 16),
   isActive: true
@@ -129,10 +133,13 @@ export function CouponManagementPage() {
     setEditCoupon(c)
     setFormData({
       code: c.code, name: c.name, description: c.description || '',
-      type: c.type, value: c.value,
+      type: c.type === 'fixed_amount' ? 'fixed' : c.type, value: c.value,
       minOrderAmount: c.minOrderAmount,
       maxDiscountAmount: c.maxDiscountAmount?.toString() || '',
-      totalUsageLimit: c.totalUsageLimit || 100, perUserLimit: c.perUserLimit || 1,
+      totalUsageLimit: c.totalUsageLimit?.toString() || '',
+      perUserLimit: c.perUserLimit || 1,
+      excludePrescriptionItems: c.excludePrescriptionItems || false,
+      isPublic: c.isPublic !== false,
       startDate: c.startDate.substring(0, 16),
       endDate: c.endDate.substring(0, 16),
       isActive: c.isActive
@@ -146,12 +153,35 @@ export function CouponManagementPage() {
       setFormError('Vui lòng điền mã và tên coupon')
       return
     }
+    if (formData.type === 'percentage' && (formData.value <= 0 || formData.value > 100)) {
+      setFormError('Coupon phần trăm phải có giá trị từ 1 đến 100.')
+      return
+    }
+    if (formData.type === 'fixed' && formData.value <= 0) {
+      setFormError('Coupon giảm tiền cố định phải lớn hơn 0đ.')
+      return
+    }
+    if (formData.minOrderAmount < 0 || formData.perUserLimit < 1) {
+      setFormError('Điều kiện đơn hàng và lượt dùng phải hợp lệ.')
+      return
+    }
+    if (formData.totalUsageLimit && Number(formData.totalUsageLimit) < 1) {
+      setFormError('Tổng lượt dùng phải lớn hơn 0 hoặc để trống nếu không giới hạn.')
+      return
+    }
+    if (new Date(formData.startDate) >= new Date(formData.endDate)) {
+      setFormError('Ngày kết thúc phải sau ngày bắt đầu.')
+      return
+    }
+
     setIsSubmitting(true)
     setFormError('')
     try {
       const payload = {
         ...formData,
-        maxDiscountAmount: formData.maxDiscountAmount ? Number(formData.maxDiscountAmount) : undefined
+        value: formData.type === 'free_shipping' ? 0 : formData.value,
+        totalUsageLimit: formData.totalUsageLimit ? Number(formData.totalUsageLimit) : undefined,
+        maxDiscountAmount: formData.type === 'percentage' && formData.maxDiscountAmount ? Number(formData.maxDiscountAmount) : undefined
       }
       if (editCoupon) {
         await apiClient.put(`/coupons/${editCoupon._id}`, payload)
@@ -180,7 +210,10 @@ export function CouponManagementPage() {
       await apiClient.delete(`/coupons/${deleteTarget._id}`)
       setDeleteTarget(null)
       fetchCoupons()
-    } catch { }
+    } catch (err: any) {
+      setError(err?.response?.data?.message || 'Không thể xóa coupon')
+      setDeleteTarget(null)
+    }
   }
 
   const copyCode = (code: string, id: string) => {
@@ -196,10 +229,11 @@ export function CouponManagementPage() {
 
   const totalPages = Math.ceil(total / LIMIT)
 
-  const TYPE_LABELS = { percentage: 'Phần trăm', fixed: 'Cố định', free_shipping: 'Freeship' }
-  const TYPE_COLORS = {
+  const TYPE_LABELS: Record<string, string> = { percentage: 'Phần trăm', fixed: 'Cố định', fixed_amount: 'Cố định', free_shipping: 'Freeship' }
+  const TYPE_COLORS: Record<string, string> = {
     percentage: 'bg-blue-100 text-blue-700',
     fixed: 'bg-green-100 text-green-700',
+    fixed_amount: 'bg-green-100 text-green-700',
     free_shipping: 'bg-purple-100 text-purple-700'
   }
 
@@ -241,7 +275,7 @@ export function CouponManagementPage() {
       <div className='grid grid-cols-2 lg:grid-cols-4 gap-4'>
         {[
           { label: 'Tổng coupon', value: total, icon: <Tag className='w-5 h-5' />, color: 'text-blue-600 bg-blue-100' },
-          { label: 'Đang hoạt động', value: coupons.filter(c => c.isActive && !isExpired(c.endDate)).length, icon: <CheckCircle className='w-5 h-5' />, color: 'text-green-600 bg-green-100' },
+          { label: 'Đang hoạt động', value: coupons.filter(c => c.isActive && !isExpired(c.endDate) && !isExhausted(c)).length, icon: <CheckCircle className='w-5 h-5' />, color: 'text-green-600 bg-green-100' },
           { label: 'Đã dùng', value: coupons.reduce((s, c) => s + (c.currentUsageCount || 0), 0), icon: <Users className='w-5 h-5' />, color: 'text-purple-600 bg-purple-100' },
           { label: 'Hết hạn', value: coupons.filter(c => isExpired(c.endDate)).length, icon: <Calendar className='w-5 h-5' />, color: 'text-red-600 bg-red-100' },
         ].map((stat, i) => (
@@ -349,12 +383,16 @@ export function CouponManagementPage() {
                       <td className='p-3'>
                         <Badge className={`${TYPE_COLORS[c.type]} text-xs`}>{TYPE_LABELS[c.type]}</Badge>
                         <p className='text-xs mt-1 font-semibold'>
-                          {c.type === 'percentage' ? `${c.value}%` : c.type === 'fixed' ? formatCurrency(c.value) : 'Miễn phí ship'}
+                          {c.type === 'percentage' ? `${c.value}%` : (c.type === 'fixed' || c.type === 'fixed_amount') ? formatCurrency(c.value) : 'Miễn phí ship'}
                           {c.maxDiscountAmount ? ` (tối đa ${formatCurrency(c.maxDiscountAmount)})` : ''}
                         </p>
                         {c.minOrderAmount > 0 && (
                           <p className='text-xs text-gray-400'>ĐH tối thiểu: {formatCurrency(c.minOrderAmount)}</p>
                         )}
+                        <p className='text-xs text-gray-400'>
+                          {c.isPublic === false ? 'Chỉ nhập mã' : 'Công khai'}
+                          {c.excludePrescriptionItems ? ' · Không áp dụng Rx' : ''}
+                        </p>
                       </td>
                       <td className='p-3 text-xs text-gray-600'>
                         <p>{formatDate(c.startDate)}</p>
@@ -537,8 +575,9 @@ export function CouponManagementPage() {
                 <Input
                   type='number'
                   value={formData.totalUsageLimit}
-                  onChange={e => setFormData(f => ({ ...f, totalUsageLimit: Number(e.target.value) }))}
+                  onChange={e => setFormData(f => ({ ...f, totalUsageLimit: e.target.value }))}
                   min={1}
+                  placeholder='Để trống = không giới hạn'
                 />
               </div>
               <div className='space-y-1.5'>
@@ -579,6 +618,29 @@ export function CouponManagementPage() {
               <Label>Kích hoạt ngay</Label>
             </div>
 
+            <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-lg border border-blue-100 bg-blue-50/40 p-4'>
+              <div className='flex items-center gap-3'>
+                <Switch
+                  checked={formData.isPublic}
+                  onCheckedChange={v => setFormData(f => ({ ...f, isPublic: v }))}
+                />
+                <div>
+                  <Label>Công khai cho khách thấy</Label>
+                  <p className='text-xs text-gray-500 mt-0.5'>Tắt nếu chỉ muốn khách nhập mã được cấp riêng.</p>
+                </div>
+              </div>
+              <div className='flex items-center gap-3'>
+                <Switch
+                  checked={formData.excludePrescriptionItems}
+                  onCheckedChange={v => setFormData(f => ({ ...f, excludePrescriptionItems: v }))}
+                />
+                <div>
+                  <Label>Không áp dụng thuốc kê đơn</Label>
+                  <p className='text-xs text-gray-500 mt-0.5'>BE sẽ chặn đơn có sản phẩm cần đơn thuốc.</p>
+                </div>
+              </div>
+            </div>
+
             {formError && (
               <div className='flex items-center gap-2 text-red-600 text-sm bg-red-50 p-3 rounded-lg'>
                 <AlertCircle className='w-4 h-4 flex-shrink-0' />
@@ -607,7 +669,7 @@ export function CouponManagementPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Xóa coupon?</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn chắc chắn muốn xóa coupon <strong className='text-blue-600'>{deleteTarget?.code}</strong>? Hành động này không thể hoàn tác.
+              Bạn chắc chắn muốn xóa coupon <strong className='text-blue-600'>{deleteTarget?.code}</strong>? Chỉ coupon chưa có lượt dùng mới được xóa; coupon đã dùng nên tắt để giữ lịch sử đối soát.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

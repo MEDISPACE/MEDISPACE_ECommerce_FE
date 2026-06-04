@@ -11,6 +11,9 @@ import { Input } from '../ui/input'
 import { Badge } from '../ui/badge'
 import { Progress } from '../ui/progress'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog'
+import { Label } from '../ui/label'
+import { Textarea } from '../ui/textarea'
 import { apiClient } from '../../services/apiClient'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -65,6 +68,12 @@ export function AdminLoyaltyPage() {
   const [filterTier, setFilterTier] = useState<string>('all')
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
+  const [adjustTarget, setAdjustTarget] = useState<LoyaltyAccount | null>(null)
+  const [adjustAction, setAdjustAction] = useState<'add' | 'subtract'>('add')
+  const [adjustPoints, setAdjustPoints] = useState('')
+  const [adjustReason, setAdjustReason] = useState('')
+  const [adjustError, setAdjustError] = useState('')
+  const [isAdjusting, setIsAdjusting] = useState(false)
   const LIMIT = 20
 
   const fetchStats = async () => {
@@ -115,6 +124,43 @@ export function AdminLoyaltyPage() {
   const totalPages = Math.ceil(total / LIMIT)
 
   const tiers: LoyaltyTier[] = ['member', 'silver', 'gold', 'platinum']
+
+  const openAdjustDialog = (account: LoyaltyAccount) => {
+    setAdjustTarget(account)
+    setAdjustAction('add')
+    setAdjustPoints('')
+    setAdjustReason('')
+    setAdjustError('')
+  }
+
+  const submitAdjustment = async () => {
+    if (!adjustTarget) return
+    const points = Number(adjustPoints)
+    if (!Number.isFinite(points) || points <= 0) {
+      setAdjustError('Số điểm phải lớn hơn 0.')
+      return
+    }
+    if (adjustReason.trim().length < 5) {
+      setAdjustError('Vui lòng nhập lý do tối thiểu 5 ký tự.')
+      return
+    }
+
+    setIsAdjusting(true)
+    setAdjustError('')
+    try {
+      await apiClient.post(`/loyalty/admin/accounts/${adjustTarget.userId}/adjust-points`, {
+        action: adjustAction,
+        points,
+        reason: adjustReason.trim()
+      })
+      setAdjustTarget(null)
+      await Promise.all([fetchStats(), fetchAccounts()])
+    } catch (err: any) {
+      setAdjustError(err?.response?.data?.message || 'Không thể điều chỉnh điểm.')
+    } finally {
+      setIsAdjusting(false)
+    }
+  }
 
   return (
     <div className='space-y-6'>
@@ -282,6 +328,7 @@ export function AdminLoyaltyPage() {
                     <th className='text-left p-3'>Tổng tích / Đổi</th>
                     <th className='text-left p-3'>Chi tiêu</th>
                     <th className='text-left p-3'>Ngày tạo</th>
+                    <th className='text-right p-3 pr-6'>Thao tác</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -332,6 +379,16 @@ export function AdminLoyaltyPage() {
                           <p>{formatDate(acc.createdAt)}</p>
                           <p className='text-gray-400'>Cập nhật: {formatDate(acc.updatedAt)}</p>
                         </td>
+                        <td className='p-3 pr-6 text-right'>
+                          <Button
+                            variant='outline'
+                            size='sm'
+                            className='border-purple-200 text-purple-700 hover:bg-purple-50'
+                            onClick={() => openAdjustDialog(acc)}
+                          >
+                            Điều chỉnh điểm
+                          </Button>
+                        </td>
                       </motion.tr>
                     )
                   })}
@@ -355,6 +412,76 @@ export function AdminLoyaltyPage() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={!!adjustTarget} onOpenChange={(open) => !open && setAdjustTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Điều chỉnh điểm thưởng</DialogTitle>
+          </DialogHeader>
+          <div className='space-y-4 py-2'>
+            <div className='rounded-lg bg-purple-50 border border-purple-100 p-3 text-sm'>
+              <p className='font-medium text-gray-900'>
+                {adjustTarget?.userInfo
+                  ? `${adjustTarget.userInfo.lastName} ${adjustTarget.userInfo.firstName}`
+                  : adjustTarget?.userId}
+              </p>
+              <p className='text-gray-500'>Số dư hiện tại: {formatPoints(adjustTarget?.pointsBalance || 0)} điểm</p>
+            </div>
+
+            <div className='grid grid-cols-2 gap-4'>
+              <div className='space-y-1.5'>
+                <Label>Loại điều chỉnh</Label>
+                <Select value={adjustAction} onValueChange={(value) => setAdjustAction(value as 'add' | 'subtract')}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='add'>Cộng điểm</SelectItem>
+                    <SelectItem value='subtract'>Trừ điểm</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className='space-y-1.5'>
+                <Label>Số điểm</Label>
+                <Input
+                  type='number'
+                  min={1}
+                  value={adjustPoints}
+                  onChange={e => setAdjustPoints(e.target.value)}
+                  placeholder='VD: 10000'
+                />
+              </div>
+            </div>
+
+            <div className='space-y-1.5'>
+              <Label>Lý do điều chỉnh</Label>
+              <Textarea
+                value={adjustReason}
+                onChange={e => setAdjustReason(e.target.value)}
+                rows={3}
+                placeholder='VD: Bù điểm do lỗi hoàn tiền đơn hàng...'
+              />
+            </div>
+
+            {adjustError && (
+              <div className='flex items-center gap-2 text-red-600 text-sm bg-red-50 p-3 rounded-lg'>
+                <AlertCircle className='w-4 h-4 flex-shrink-0' />
+                {adjustError}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant='outline' onClick={() => setAdjustTarget(null)}>Hủy</Button>
+            <Button
+              onClick={submitAdjustment}
+              disabled={isAdjusting}
+              className='bg-purple-600 hover:bg-purple-700 text-white'
+            >
+              {isAdjusting ? 'Đang lưu...' : 'Xác nhận'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
