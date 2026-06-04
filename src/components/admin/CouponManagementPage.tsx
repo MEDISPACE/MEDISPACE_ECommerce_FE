@@ -205,9 +205,11 @@ export function CouponManagementPage() {
 
   const isExpired = (endDate: string) => new Date(endDate) < new Date()
   const isNotStarted = (startDate: string) => new Date(startDate) > new Date()
+  const isExhausted = (c: Coupon) => Boolean(c.totalUsageLimit) && (c.currentUsageCount || 0) >= c.totalUsageLimit
 
   const getStatusBadge = (c: Coupon) => {
     if (!c.isActive) return <Badge className='bg-gray-100 text-gray-600 hover:bg-gray-100'>Tắt</Badge>
+    if (isExhausted(c)) return <Badge className='bg-orange-100 text-orange-700 hover:bg-orange-100'>Hết lượt</Badge>
     if (isExpired(c.endDate)) return <Badge className='bg-red-100 text-red-600 hover:bg-red-100'>Hết hạn</Badge>
     if (isNotStarted(c.startDate)) return <Badge className='bg-yellow-100 text-yellow-700 hover:bg-yellow-100'>Chưa bắt đầu</Badge>
     return <Badge className='bg-green-100 text-green-700 hover:bg-green-100'>Hoạt động</Badge>
@@ -347,7 +349,7 @@ export function CouponManagementPage() {
                       <td className='p-3'>
                         <Badge className={`${TYPE_COLORS[c.type]} text-xs`}>{TYPE_LABELS[c.type]}</Badge>
                         <p className='text-xs mt-1 font-semibold'>
-                          {c.type === 'percentage' ? `${c.value}%` : c.type === 'fixed' ? formatCurrency(c.value) : '0đ ship'}
+                          {c.type === 'percentage' ? `${c.value}%` : c.type === 'fixed' ? formatCurrency(c.value) : 'Miễn phí ship'}
                           {c.maxDiscountAmount ? ` (tối đa ${formatCurrency(c.maxDiscountAmount)})` : ''}
                         </p>
                         {c.minOrderAmount > 0 && (
@@ -363,9 +365,10 @@ export function CouponManagementPage() {
                           <span className='font-semibold'>{c.currentUsageCount || 0}</span>
                           <span className='text-gray-400'>/{c.totalUsageLimit || '∞'}</span>
                         </div>
+                        <p className='text-xs text-gray-400 mt-1'>/{c.perUserLimit || 1} mỗi khách</p>
                         <div className='h-1.5 bg-gray-100 rounded-full mt-1 w-20'>
                           <div
-                            className='h-full bg-blue-500 rounded-full'
+                            className={`h-full rounded-full ${isExhausted(c) ? 'bg-orange-500' : 'bg-blue-500'}`}
                             style={{ width: `${Math.min(100, ((c.currentUsageCount || 0) / Math.max(c.totalUsageLimit || 1, 1)) * 100)}%` }}
                           />
                         </div>
