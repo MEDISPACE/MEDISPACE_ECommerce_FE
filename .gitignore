@@ -18,6 +18,11 @@ vitest.config.ts
 /coverage/
 *.test.ts
 *.test.tsx
+!src/tests/
+!src/tests/chat/
+!src/tests/chat/AdminChatPage.test.tsx
+!src/tests/chat/ProductPicker.test.tsx
+!src/tests/chat/FloatingChatButton.test.tsx
 
 # Playwright E2E
 /test-results/
