@@ -136,6 +136,9 @@ export function ShoppingCartPage() {
 
   // Calculate totals
   const subtotal = getSelectedItemsTotal()
+  const selectedCartItems = (cart?.items || []).filter((item) =>
+    selectedItems.has(createSelectionKey(item.productId, item.unit))
+  )
   const discount = couponDiscount
   const shippingFee = getSelectedItemsCount() === 0 ? 0 : (subtotal >= 300000 || freeShippingFromCoupon ? 0 : 30000)
   const total = Math.max(0, subtotal - discount + shippingFee)
@@ -417,7 +420,14 @@ export function ShoppingCartPage() {
               ) : (
                 <CouponInput
                   subtotal={subtotal}
-                  hasPrescriptionItems={cart?.items.some(i => i.prescriptionRequired)}
+                  hasPrescriptionItems={selectedCartItems.some(i => i.prescriptionRequired)}
+                  items={selectedCartItems.map(item => ({
+                    productId: item.productId,
+                    unit: item.unit,
+                    quantity: item.quantity,
+                    totalPrice: item.totalPrice,
+                    prescriptionRequired: item.prescriptionRequired
+                  }))}
                   initialCoupons={appliedCoupons}
                   onCouponsChange={(coupons, discount, hasFreeship) => {
                     setAppliedCoupons([...coupons])
