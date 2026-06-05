@@ -321,8 +321,8 @@ export function ChatWindow({
           onSendMessage={handleSendMessage}
           onTyping={handleTyping}
           onStopTyping={handleStopTyping}
-          disabled={!isConnected}
-          placeholder={isConnected ? 'Nhập tin nhắn...' : 'Đang kết nối...'}
+          disabled={false}
+          placeholder={isConnected ? 'Nhập tin nhắn...' : 'Đang kết nối realtime, tin nhắn vẫn gửi được...'}
           currentUserRole={currentUserRole}
         />
       )}
