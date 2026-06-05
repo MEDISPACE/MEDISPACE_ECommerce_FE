@@ -570,8 +570,17 @@ export function CommunityRoomPage() {
               <p className='text-sm text-gray-600'>
                 Nếu cần tư vấn chuyên sâu, hãy dùng kênh chat với dược sĩ hoặc bác sĩ.
               </p>
-              <Button variant='outline' className='border-blue-200 w-full' asChild>
-                <Link to='/pharmacist/chat'>Chat với dược sĩ</Link>
+              <Button
+                variant='outline'
+                className='border-blue-200 w-full'
+                onClick={() => {
+                  const chatButton = document.querySelector(
+                    'button[aria-label="Chat với dược sĩ"]',
+                  ) as HTMLButtonElement | null
+                  chatButton?.click()
+                }}
+              >
+                Chat với dược sĩ
               </Button>
             </CardContent>
           </Card>
@@ -579,7 +588,7 @@ export function CommunityRoomPage() {
       </div>
 
       <Dialog open={reportOpen} onOpenChange={setReportOpen}>
-        <DialogContent>
+        <DialogContent className='sm:max-w-lg max-h-[90vh] overflow-y-auto'>
           <DialogHeader>
             <DialogTitle>Báo cáo tin nhắn</DialogTitle>
             <DialogDescription>
@@ -588,7 +597,7 @@ export function CommunityRoomPage() {
           </DialogHeader>
 
           <div className='space-y-3'>
-            <div className='rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-gray-700'>
+            <div className='rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-gray-700 break-words max-h-32 overflow-y-auto'>
               {reportTarget?.content}
             </div>
             <Textarea
@@ -616,7 +625,7 @@ export function CommunityRoomPage() {
       </Dialog>
 
       <Dialog open={Boolean(appealTarget)} onOpenChange={(open) => !open && setAppealTarget(null)}>
-        <DialogContent>
+        <DialogContent className='sm:max-w-lg max-h-[90vh] overflow-y-auto'>
           <DialogHeader>
             <DialogTitle>Appeal tin nhắn bị ẩn</DialogTitle>
             <DialogDescription>
@@ -625,7 +634,7 @@ export function CommunityRoomPage() {
           </DialogHeader>
 
           <div className='space-y-3'>
-            <div className='rounded-md border border-amber-100 bg-amber-50 px-3 py-2 text-sm text-amber-900'>
+            <div className='rounded-md border border-amber-100 bg-amber-50 px-3 py-2 text-sm text-amber-900 break-words max-h-32 overflow-y-auto'>
               {appealTarget?.content}
             </div>
             <Textarea
