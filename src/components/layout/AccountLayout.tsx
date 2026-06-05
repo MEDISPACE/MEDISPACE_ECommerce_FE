@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
-import { useState } from 'react'
-import { Link, useLocation } from 'react-router'
+import { useEffect, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router'
 import {
   User,
   Package,
@@ -117,14 +117,30 @@ const getMembershipLevelConfig = (level: string) => {
 
 export function AccountLayout({ children, breadcrumbItems = [] }: AccountLayoutProps) {
   const location = useLocation()
+  const navigate = useNavigate()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-  const { user } = useAuth()
+  const { user, isAuthenticated, loading } = useAuth()
   // Auth user shape (backend) differs from the account mock shape used in the account UI.
   // We'll treat the auth user as an AccountUser when available
   const accountUser = user as unknown as AccountUser | undefined
   const membershipLevel = accountUser?.membershipLevel ?? 'bronze'
   const membershipConfig = getMembershipLevelConfig(membershipLevel)
+
+  useEffect(() => {
+    if (loading) return
+    if (!isAuthenticated || !user) {
+      navigate('/login', { replace: true, state: { from: location } })
+    }
+  }, [isAuthenticated, loading, location, navigate, user])
+
+  if (loading || !isAuthenticated || !user) {
+    return (
+      <div className='min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 flex items-center justify-center'>
+        <div className='w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin' />
+      </div>
+    )
+  }
 
   const isActiveRoute = (href: string, exact = false) => {
     if (exact) {
