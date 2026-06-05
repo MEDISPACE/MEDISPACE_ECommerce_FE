@@ -289,7 +289,7 @@ export function CouponManagementPage() {
     percentage: 'bg-blue-100 text-blue-700',
     fixed: 'bg-green-100 text-green-700',
     fixed_amount: 'bg-green-100 text-green-700',
-    free_shipping: 'bg-purple-100 text-purple-700'
+    free_shipping: 'bg-cyan-100 text-cyan-700'
   }
 
   const isExpired = (endDate: string) => new Date(endDate) < new Date()
@@ -331,7 +331,7 @@ export function CouponManagementPage() {
         {[
           { label: 'Tổng coupon', value: total, icon: <Tag className='w-5 h-5' />, color: 'text-blue-600 bg-blue-100' },
           { label: 'Đang hoạt động', value: coupons.filter(c => c.isActive && !isExpired(c.endDate) && !isExhausted(c)).length, icon: <CheckCircle className='w-5 h-5' />, color: 'text-green-600 bg-green-100' },
-          { label: 'Đã dùng', value: coupons.reduce((s, c) => s + (c.currentUsageCount || 0), 0), icon: <Users className='w-5 h-5' />, color: 'text-purple-600 bg-purple-100' },
+          { label: 'Đã dùng', value: coupons.reduce((s, c) => s + (c.currentUsageCount || 0), 0), icon: <Users className='w-5 h-5' />, color: 'text-blue-600 bg-blue-100' },
           { label: 'Hết hạn', value: coupons.filter(c => isExpired(c.endDate)).length, icon: <Calendar className='w-5 h-5' />, color: 'text-red-600 bg-red-100' },
         ].map((stat, i) => (
           <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
@@ -602,9 +602,10 @@ export function CouponManagementPage() {
                 <Label>Đơn hàng tối thiểu (đ)</Label>
                 <Input
                   type='number'
-                  value={formData.minOrderAmount}
+                  value={formData.minOrderAmount || ''}
                   onChange={e => setFormData(f => ({ ...f, minOrderAmount: Number(e.target.value) }))}
                   min={0}
+                  placeholder='0'
                 />
               </div>
               {formData.type === 'percentage' && (
@@ -797,7 +798,7 @@ export function CouponManagementPage() {
                   {formData.applicableProductIds.length > 0 && (
                     <div className='flex flex-wrap gap-2 mt-2'>
                       {formData.applicableProductIds.map(id => (
-                        <Badge key={id} className='bg-purple-100 text-purple-700 hover:bg-purple-100 gap-1'>
+                        <Badge key={id} className='bg-blue-100 text-blue-700 hover:bg-blue-100 gap-1'>
                           Product {id.slice(-6)}
                           <button type='button' onClick={() => removeId('applicableProductIds', id)}><X className='w-3 h-3' /></button>
                         </Badge>

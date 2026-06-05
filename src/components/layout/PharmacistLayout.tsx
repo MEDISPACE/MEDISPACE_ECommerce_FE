@@ -167,7 +167,6 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
 
   const handleLogout = () => {
     logout()
-    navigate('/login')
   }
 
   const handleStatusToggle = async (checked: boolean) => {
