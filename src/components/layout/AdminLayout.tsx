@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import {
   LayoutDashboard,
@@ -51,6 +51,7 @@ import { getDashboardStats } from '../../services/adminService'
 import { NotificationDropdown } from '../shared/NotificationDropdown'
 import faviconLogo from '../../assets/MEDISPACE_Logo_favicon.png'
 import { UserRole } from '~/types/user'
+import { toast } from 'sonner'
 
 interface AdminLayoutProps {
   children: ReactNode
@@ -176,7 +177,7 @@ const navigationItems: NavItem[] = [
 export function AdminLayout({ children }: AdminLayoutProps) {
   const location = useLocation()
   const navigate = useNavigate()
-  const { user, logout } = useAuth()
+  const { user, logout, isAuthenticated, loading } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const isAdmin = user?.role === UserRole.Admin
@@ -189,6 +190,27 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     staleTime: 20000,
     enabled: isAdmin,
   })
+
+  useEffect(() => {
+    if (loading) return
+    if (!isAuthenticated) {
+      toast.error('Vui lòng đăng nhập để tiếp tục')
+      navigate('/login', { replace: true })
+      return
+    }
+    if (!isAdmin) {
+      toast.error('Bạn không có quyền truy cập trang này')
+      navigate('/', { replace: true })
+    }
+  }, [isAuthenticated, isAdmin, loading, navigate])
+
+  if (loading || !isAuthenticated || !isAdmin) {
+    return (
+      <div className='flex h-screen items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-100'>
+        <div className='h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent' />
+      </div>
+    )
+  }
 
   const isActiveRoute = (href: string) => {
     return location.pathname === href || location.pathname.startsWith(href + '/')
