@@ -414,12 +414,12 @@ export function AdminLoyaltyPage() {
       </Card>
 
       <Dialog open={!!adjustTarget} onOpenChange={(open) => !open && setAdjustTarget(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Điều chỉnh điểm thưởng</DialogTitle>
+        <DialogContent className='sm:max-w-[420px] max-h-[90vh] overflow-y-auto p-5'>
+          <DialogHeader className='space-y-1'>
+            <DialogTitle className='text-lg'>Điều chỉnh điểm thưởng</DialogTitle>
           </DialogHeader>
-          <div className='space-y-4 py-2'>
-            <div className='rounded-lg bg-purple-50 border border-purple-100 p-3 text-sm'>
+          <div className='space-y-3 py-1'>
+            <div className='rounded-md bg-purple-50 border border-purple-100 px-3 py-2 text-sm'>
               <p className='font-medium text-gray-900'>
                 {adjustTarget?.userInfo
                   ? `${adjustTarget.userInfo.lastName} ${adjustTarget.userInfo.firstName}`
@@ -428,11 +428,11 @@ export function AdminLoyaltyPage() {
               <p className='text-gray-500'>Số dư hiện tại: {formatPoints(adjustTarget?.pointsBalance || 0)} điểm</p>
             </div>
 
-            <div className='grid grid-cols-2 gap-4'>
+            <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
               <div className='space-y-1.5'>
-                <Label>Loại điều chỉnh</Label>
+                <Label className='text-xs'>Loại điều chỉnh</Label>
                 <Select value={adjustAction} onValueChange={(value) => setAdjustAction(value as 'add' | 'subtract')}>
-                  <SelectTrigger>
+                  <SelectTrigger className='h-9'>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -442,37 +442,40 @@ export function AdminLoyaltyPage() {
                 </Select>
               </div>
               <div className='space-y-1.5'>
-                <Label>Số điểm</Label>
+                <Label className='text-xs'>Số điểm</Label>
                 <Input
                   type='number'
                   min={1}
                   value={adjustPoints}
                   onChange={e => setAdjustPoints(e.target.value)}
                   placeholder='VD: 10000'
+                  className='h-9'
                 />
               </div>
             </div>
 
             <div className='space-y-1.5'>
-              <Label>Lý do điều chỉnh</Label>
+              <Label className='text-xs'>Lý do điều chỉnh</Label>
               <Textarea
                 value={adjustReason}
                 onChange={e => setAdjustReason(e.target.value)}
-                rows={3}
+                rows={2}
                 placeholder='VD: Bù điểm do lỗi hoàn tiền đơn hàng...'
+                className='min-h-[76px] resize-none'
               />
             </div>
 
             {adjustError && (
-              <div className='flex items-center gap-2 text-red-600 text-sm bg-red-50 p-3 rounded-lg'>
+              <div className='flex items-center gap-2 text-red-600 text-sm bg-red-50 px-3 py-2 rounded-md'>
                 <AlertCircle className='w-4 h-4 flex-shrink-0' />
                 {adjustError}
               </div>
             )}
           </div>
-          <DialogFooter>
-            <Button variant='outline' onClick={() => setAdjustTarget(null)}>Hủy</Button>
+          <DialogFooter className='gap-2 sm:gap-2 pt-1'>
+            <Button variant='outline' size='sm' onClick={() => setAdjustTarget(null)}>Hủy</Button>
             <Button
+              size='sm'
               onClick={submitAdjustment}
               disabled={isAdjusting}
               className='bg-purple-600 hover:bg-purple-700 text-white'
