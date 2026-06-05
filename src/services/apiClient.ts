@@ -4,6 +4,7 @@ import { API_ENDPOINTS } from '../constants'
 
 // API base URL - Vite environment variables
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const AUTH_TOKEN_REFRESHED_EVENT = 'medispace:auth-token-refreshed'
 
 class ApiClient {
   private client: AxiosInstance
@@ -71,7 +72,7 @@ class ApiClient {
           } catch (refreshError) {
             // Refresh failed, clear tokens and redirect to login
             this.clearAuthState()
-            window.location.href = '/login'
+            window.location.replace('/login')
             return Promise.reject(refreshError)
           }
         }
@@ -120,6 +121,7 @@ class ApiClient {
 
       const { accessToken } = response.data.result
       localStorage.setItem('medispace_access_token', accessToken)
+      window.dispatchEvent(new CustomEvent(AUTH_TOKEN_REFRESHED_EVENT, { detail: { accessToken } }))
       return accessToken
     } catch (error) {
       // Clear tokens on refresh failure

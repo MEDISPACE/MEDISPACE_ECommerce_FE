@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState, useCallback, ty
 import { io, type Socket } from 'socket.io-client'
 import { authService } from '../services/authService'
 import apiClient from '../services/apiClient'
-import { useAuth } from './AuthContext'
+import { AuthContext } from './AuthContext'
 import type { Message, ProductRef } from '../types/chat'
 import type { CommunityMessage } from '../types/community'
 
@@ -65,6 +65,18 @@ interface SocketContextType {
 // ─── Context ─────────────────────────────────────────────────────────────────
 
 const SocketContext = createContext<SocketContextType | null>(null)
+const AUTH_TOKEN_REFRESHED_EVENT = 'medispace:auth-token-refreshed'
+
+const isSocketAuthError = (message: string) => {
+  const normalized = message.toLowerCase()
+  return (
+    normalized.includes('authentication') ||
+    normalized.includes('unauthenticated') ||
+    normalized.includes('unauthorized') ||
+    normalized.includes('invalid access token') ||
+    normalized.includes('jwt expired')
+  )
+}
 
 export const useSocketContext = () => {
   const ctx = useContext(SocketContext)
@@ -76,6 +88,7 @@ export const useSocketContext = () => {
 
 export function SocketProvider({ children }: { children: ReactNode }) {
   const socketRef = useRef<Socket | null>(null)
+  const authReconnectPromiseRef = useRef<Promise<void> | null>(null)
   const [isConnected, setIsConnected] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false)
 
@@ -100,6 +113,33 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     })
   }
 
+  const refreshAndReconnect = useCallback(() => {
+    if (authReconnectPromiseRef.current) return authReconnectPromiseRef.current
+
+    setIsConnecting(true)
+    authReconnectPromiseRef.current = apiClient
+      .refreshToken()
+      .then((fresh) => {
+        const socket = socketRef.current
+        if (!fresh || !socket) return
+
+        socket.auth = { token: fresh }
+        if (!socket.connected) {
+          socket.connect()
+        }
+      })
+      .catch(() => {
+        setIsConnected(false)
+        setIsConnecting(false)
+        broadcast('onError', { message: 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.' })
+      })
+      .finally(() => {
+        authReconnectPromiseRef.current = null
+      })
+
+    return authReconnectPromiseRef.current
+  }, [])
+
   // ── Connect ──────────────────────────────────────────────────────────────
   const connect = useCallback(() => {
     if (socketRef.current?.connected) return
@@ -108,6 +148,13 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     if (!token) return
 
     setIsConnecting(true)
+
+    if (socketRef.current) {
+      socketRef.current.auth = { token }
+      socketRef.current.connect()
+      return
+    }
+
     const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
     socketRef.current = io(SOCKET_URL, {
@@ -129,29 +176,16 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 
     s.on('disconnect', (reason) => {
       setIsConnected(false)
+      setIsConnecting(false)
       if (reason === 'io server disconnect') {
-        setTimeout(() => {
-          const fresh = authService.getAccessToken()
-          if (fresh && socketRef.current) {
-            socketRef.current.auth = { token: fresh }
-            socketRef.current.connect()
-          }
-        }, 1000)
+        window.setTimeout(() => refreshAndReconnect(), 1000)
       }
     })
 
     s.on('connect_error', (error) => {
       setIsConnecting(false)
-      if (error.message.includes('Authentication') || error.message.includes('jwt expired')) {
-        apiClient
-          .refreshToken()
-          .then((fresh) => {
-            if (fresh && socketRef.current) {
-              socketRef.current.auth = { token: fresh }
-              socketRef.current.connect()
-            }
-          })
-          .catch(() => broadcast('onError', { message: 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.' }))
+      if (isSocketAuthError(error.message)) {
+        refreshAndReconnect()
       } else {
         broadcast('onError', { message: 'Không thể kết nối đến máy chủ chat' })
       }
@@ -190,7 +224,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     s.on('error', (err: { message: string }) => broadcast('onError', err))
     s.on('message:stream:start', (data: { conversationId: string }) => broadcast('onMessageStreamStart', data))
     s.on('message:stream:chunk', (data: { conversationId: string; content: string }) => broadcast('onMessageStreamChunk', data))
-  }, [])
+  }, [refreshAndReconnect])
 
   const disconnect = useCallback(() => {
     if (socketRef.current) {
@@ -258,7 +292,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   }, [])
 
   // Connect khi user đăng nhập, disconnect khi logout
-  const { isAuthenticated } = useAuth()
+  const authContext = useContext(AuthContext)
+  const isAuthenticated = authContext?.isAuthenticated ?? false
   useEffect(() => {
     if (isAuthenticated) {
       connect()
@@ -269,6 +304,29 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       // cleanup chỉ khi unmount hẳn
     }
   }, [isAuthenticated]) // eslint-disable-line
+
+  useEffect(() => {
+    const handleTokenRefreshed = (event: Event) => {
+      if (!isAuthenticated) return
+
+      const accessToken = (event as CustomEvent<{ accessToken?: string }>).detail?.accessToken
+      const token = accessToken || authService.getAccessToken()
+      if (!token) return
+
+      if (socketRef.current) {
+        socketRef.current.auth = { token }
+      }
+
+      if (authReconnectPromiseRef.current) return
+
+      if (!socketRef.current?.connected) {
+        connect()
+      }
+    }
+
+    window.addEventListener(AUTH_TOKEN_REFRESHED_EVENT, handleTokenRefreshed)
+    return () => window.removeEventListener(AUTH_TOKEN_REFRESHED_EVENT, handleTokenRefreshed)
+  }, [connect, isAuthenticated])
 
   // Cleanup khi unmount
   useEffect(() => {
