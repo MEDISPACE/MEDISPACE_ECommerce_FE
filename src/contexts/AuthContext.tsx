@@ -159,10 +159,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } finally {
       setUser(null)
       setIsAuthenticated(false)
-      // Navigate to home page after logout
-      window.location.href = '/'
       // Dispatch custom event for cart reload
       window.dispatchEvent(new CustomEvent('auth-changed'))
+      // Replace instead of push so Back does not revisit a protected page/login flash.
+      window.location.replace('/')
     }
   }
 
