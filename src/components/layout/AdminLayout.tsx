@@ -218,7 +218,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   const handleLogout = () => {
     logout()
-    navigate('/login')
   }
 
 
