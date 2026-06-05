@@ -713,6 +713,13 @@ export function CheckoutPage() {
                     <CouponInput
                       subtotal={subtotal}
                       hasPrescriptionItems={cartItems.some(i => i.prescriptionRequired)}
+                      items={cartItems.map(item => ({
+                        productId: item.productId,
+                        unit: item.unit,
+                        quantity: item.quantity,
+                        totalPrice: item.totalPrice,
+                        prescriptionRequired: item.prescriptionRequired
+                      }))}
                       isDirectBuy={isBuyNow}
                       initialCoupons={appliedCoupons}
                       onCouponsChange={(coupons, discount, hasFreeship) => {
