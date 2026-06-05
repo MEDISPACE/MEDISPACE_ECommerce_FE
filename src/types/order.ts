@@ -30,6 +30,7 @@ export enum PaymentMethod {
 export interface OrderItem {
   id: string
   productId: string
+  categoryId?: string
   product: Product
   quantity: number
   price: number
@@ -119,6 +120,9 @@ export interface AppliedCoupon {
   name?: string
   type: string
   discountAmount: number
+  eligibleSubtotal?: number
+  applicableProductIds?: string[]
+  applicableCategoryIds?: string[]
 }
 
 export interface CreateOrderRequest {

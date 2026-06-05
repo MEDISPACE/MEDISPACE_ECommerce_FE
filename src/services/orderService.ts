@@ -6,6 +6,7 @@ import type { OrderStatus, PaymentStatus, PaymentMethod } from '../types/order'
 // Backend response types
 interface BackendOrderItem {
   productId: string
+  categoryId?: string
   name: string
   sku: string
   unit: string // Unit selected by user: "Viên", "Hộp", "Vỉ"...
@@ -50,6 +51,9 @@ interface BackendOrder {
     name?: string
     type: string
     discountAmount: number
+    eligibleSubtotal?: number
+    applicableProductIds?: string[]
+    applicableCategoryIds?: string[]
   }>
   pointsRedeemed?: number
   pointsRedeemAmount?: number
@@ -141,6 +145,7 @@ class OrderService {
         backendOrder.items?.map((item: BackendOrderItem) => ({
           id: item.productId,
           productId: item.productId,
+          categoryId: item.categoryId,
           product: {
             _id: item.productId,
             id: item.productId,
