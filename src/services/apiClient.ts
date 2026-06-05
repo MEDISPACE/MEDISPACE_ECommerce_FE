@@ -5,6 +5,7 @@ import { API_ENDPOINTS } from '../constants'
 // API base URL - Vite environment variables
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 const AUTH_TOKEN_REFRESHED_EVENT = 'medispace:auth-token-refreshed'
+const AUTH_SESSION_EXPIRED_EVENT = 'medispace:auth-session-expired'
 
 class ApiClient {
   private client: AxiosInstance
@@ -71,7 +72,7 @@ class ApiClient {
             return this.client(originalRequest)
           } catch (refreshError) {
             // Refresh failed, clear tokens and redirect to login
-            this.clearAuthState()
+            this.expireSession()
             window.location.replace('/login')
             return Promise.reject(refreshError)
           }
@@ -121,11 +122,12 @@ class ApiClient {
 
       const { accessToken } = response.data.result
       localStorage.setItem('medispace_access_token', accessToken)
+      localStorage.setItem('medispace_session_hint', '1')
       window.dispatchEvent(new CustomEvent(AUTH_TOKEN_REFRESHED_EVENT, { detail: { accessToken } }))
       return accessToken
     } catch (error) {
       // Clear tokens on refresh failure
-      this.clearAuthState()
+      this.expireSession()
       throw error
     }
   }
@@ -136,6 +138,12 @@ class ApiClient {
   private clearAuthState(): void {
     localStorage.removeItem('medispace_access_token')
     localStorage.removeItem('medispace_user_data')
+    localStorage.removeItem('medispace_session_hint')
+  }
+
+  private expireSession(): void {
+    this.clearAuthState()
+    window.dispatchEvent(new CustomEvent(AUTH_SESSION_EXPIRED_EVENT))
   }
 
   async get<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
