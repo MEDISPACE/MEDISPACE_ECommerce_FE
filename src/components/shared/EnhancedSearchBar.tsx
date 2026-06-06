@@ -31,7 +31,7 @@ export function EnhancedSearchBar({
   const { recentSearches, addToHistory, removeFromHistory } = useSearchHistory()
 
   // Use multi-collection search hook
-  const { products, brands, categories, articles, all: suggestions, isLoading } = useSearchSuggestions(searchQuery)
+  const { products, brands, categories, articles, querySuggestions, all: suggestions, isLoading } = useSearchSuggestions(searchQuery)
 
   // Trending searches
   const trendingSearches = ['Paracetamol', 'Vitamin D3', 'Kem dưỡng da', 'Thuốc ho', 'Canxi']
@@ -227,6 +227,32 @@ export function EnhancedSearchBar({
                 </div>
               ) : suggestions.length > 0 ? (
                 <div className='p-3'>
+                  {/* ── GỢI Ý TÌM KIẾM (query completion) ── */}
+                  {querySuggestions.length > 0 && (
+                    <div className='mb-3'>
+                      <div className='flex items-center gap-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider px-2 py-1 mb-1.5'>
+                        <Search className='w-3 h-3' />
+                        Gợi ý tìm kiếm
+                      </div>
+                      <div className='flex flex-wrap gap-1.5 px-1'>
+                        {querySuggestions.map((q) => (
+                          <button
+                            key={q}
+                            onClick={() => {
+                              setSearchQuery(q)
+                              handleSearch(q)
+                            }}
+                            className='inline-flex items-center gap-1 text-sm px-3 py-1.5 rounded-full bg-gray-50 hover:bg-blue-50 hover:text-blue-600 border border-gray-200 hover:border-blue-200 transition-all duration-150 text-gray-700'
+                          >
+                            <Search className='w-3 h-3 opacity-50' />
+                            {q}
+                          </button>
+                        ))}
+                      </div>
+                      {(brands.length > 0 || categories.length > 0 || products.length > 0) && <Separator className='mt-3' />}
+                    </div>
+                  )}
+
                   {/* ── THƯƠNG HIỆU ── */}
                   {brands.length > 0 && (
                     <div className='mb-2'>
