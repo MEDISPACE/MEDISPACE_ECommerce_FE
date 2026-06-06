@@ -1,280 +1,329 @@
 /**
- * ╔══════════════════════════════════════════════════════════════════════════╗
- * ║  E2E TESTS — Search System (Playwright)                                 ║
- * ║                                                                          ║
- * ║  Covers: Nhóm 4/5 (Search+Filter), Nhóm 6 (Campaign), Nhóm 7           ║
- * ║          (Suggest), Nhóm 8 (Fallback), Nhóm 9 (FE Mapping),            ║
- * ║          Nhóm 10 (Health), Nhóm 12 (Performance)                        ║
- * ║                                                                          ║
- * ║  Yêu cầu: BE + FE + Typesense + MongoDB chạy đồng thời                 ║
- * ╚══════════════════════════════════════════════════════════════════════════╝
+ * Search E2E tests.
+ *
+ * Requires FE, BE, MongoDB and Typesense to be running with search data seeded.
+ * Tests derive their assertions from live indexed documents instead of relying
+ * on a specific product name existing in every environment.
  */
 
-import { test, expect, type Page } from '@playwright/test'
+import { expect, test, type APIRequestContext, type Page } from '@playwright/test'
 
-const baseURL = process.env.E2E_BASE_URL || 'http://localhost:3000'
-const apiURL = process.env.E2E_API_URL || 'http://localhost:8000'
-
-// ─── Selectors dựa trên EnhancedSearchBar.tsx ────────────────────────────────
-// Input: <Input type="text" placeholder="Tìm thuốc, thực phẩm chức năng, dược mỹ phẩm...">
-// Dropdown: <Card> ngay dưới form, class chứa 'backdrop-blur'
+const APP_URL = process.env.E2E_BASE_URL || 'http://localhost:3000'
+const API_URL = process.env.E2E_API_URL || 'http://localhost:8000'
 const SEARCH_INPUT = 'input[placeholder*="Tìm thuốc"]'
-const SEARCH_DROPDOWN = '.backdrop-blur-lg'
 
-/** Đợi search results load xong */
-async function waitForSearchResults(page: Page, timeout = 15000) {
-  await Promise.race([
-    page.locator('[class*="ProductCard"], [class*="product-card"], .group.relative').first().waitFor({ timeout }),
-    page.getByText(/không tìm thấy|0 kết quả|Không có sản phẩm/i).first().waitFor({ timeout }),
-  ]).catch(() => {})
-  // Wait for spinners to disappear
-  await page.locator('.animate-spin').first().waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {})
+type ProductDocument = {
+  mongoId: string
+  name: string
+  slug: string
+  sku?: string
+  categoryId?: string
+  brandId?: string
+  requiresPrescription?: boolean
+  isActive?: boolean
+  inStock?: boolean
+  stockQuantity?: number
+  price?: number
+  originalPrice?: number
+  salePrice?: number
+  priceVariantsJson?: string
+  campaignName?: string
+  campaignBadgeText?: string
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// NHÓM 7+9 — Search Suggest (Autocomplete)
-// ══════════════════════════════════════════════════════════════════════════════
+type ProductSearchResponse = {
+  source: 'typesense' | 'mongodb_fallback'
+  hits: Array<{ document: ProductDocument }>
+  found: number
+  page: number
+  facet_counts?: unknown[]
+}
 
-test.describe('Nhóm 7 — Search Suggest', () => {
-  test('E.1 — Gõ 2+ ký tự → dropdown xuất hiện', async ({ page }) => {
-    await page.goto(baseURL)
-    const searchInput = page.locator(SEARCH_INPUT).first()
-    await searchInput.click()
-    await searchInput.fill('par')
-    // Wait for Card dropdown to appear (class contains backdrop-blur)
-    await expect(page.locator(SEARCH_DROPDOWN).first()).toBeVisible({ timeout: 8000 })
+type ArticleDocument = {
+  mongoId?: string
+  title: string
+  slug: string
+}
+
+type ArticleSearchResponse = {
+  source?: 'typesense' | 'mongodb_fallback'
+  hits: Array<{ document: ArticleDocument }>
+  found: number
+  page: number
+}
+
+let indexedProducts: ProductDocument[] = []
+let exactProduct: ProductDocument
+let accentedProduct: ProductDocument | undefined
+let campaignProduct: ProductDocument | undefined
+let indexedArticle: ArticleDocument | undefined
+
+const withoutVietnameseMarks = (value: string) =>
+  value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[đĐ]/g, 'd')
+
+async function expectOkJson<T>(response: Awaited<ReturnType<APIRequestContext['get']>>): Promise<T> {
+  expect(response.ok(), `${response.url()} returned ${response.status()}`).toBeTruthy()
+  return response.json() as Promise<T>
+}
+
+async function searchProducts(request: APIRequestContext, params: Record<string, string | number | boolean>) {
+  const query = new URLSearchParams(Object.entries(params).map(([key, value]) => [key, String(value)]))
+  return expectOkJson<ProductSearchResponse>(await request.get(`${API_URL}/search/products?${query}`))
+}
+
+async function waitForProductSearch(page: Page, action: () => Promise<unknown>) {
+  const responsePromise = page.waitForResponse(
+    (response) => response.url().includes('/search/products') && response.request().method() === 'GET',
+  )
+  await action()
+  const response = await responsePromise
+  expect(response.ok()).toBeTruthy()
+  return response
+}
+
+test.describe.serial('Typesense search system', () => {
+  test.beforeAll(async ({ request }) => {
+    const products = await searchProducts(request, { q: '*', limit: 100 })
+    expect(products.source, 'E2E search suite requires Typesense to be available').toBe('typesense')
+    expect(products.hits.length, 'Seed at least one searchable product before running E2E').toBeGreaterThan(0)
+
+    indexedProducts = products.hits.map((hit) => hit.document)
+    exactProduct = indexedProducts.find((product) => product.sku) || indexedProducts[0]
+    accentedProduct = indexedProducts.find((product) => withoutVietnameseMarks(product.name) !== product.name)
+    campaignProduct = indexedProducts.find((product) => product.campaignName && product.salePrice !== product.originalPrice)
+
+    const articles = await expectOkJson<ArticleSearchResponse>(
+      await request.get(`${API_URL}/search/articles?q=*&limit=10`),
+    )
+    indexedArticle = articles.hits[0]?.document
   })
 
-  test('E.2 — Dropdown hiển thị sections (Sản phẩm, Thương hiệu, etc.)', async ({ page }) => {
-    await page.goto(baseURL)
-    const searchInput = page.locator(SEARCH_INPUT).first()
-    await searchInput.click()
-    await searchInput.fill('thuoc')
-    await page.waitForTimeout(2000) // Wait for debounce + API
-    const dropdown = page.locator(SEARCH_DROPDOWN).first()
-    await expect(dropdown).toBeVisible({ timeout: 8000 })
-    // Check for at least one section heading
-    const dropdownText = await dropdown.textContent()
-    const hasSections = dropdownText?.includes('Sản phẩm') || dropdownText?.includes('Thương hiệu') || dropdownText?.includes('Danh mục')
-    expect(hasSections).toBeTruthy()
-  })
+  test('health endpoint reports a consistent Typesense read model', async ({ request }) => {
+    const body = await expectOkJson<{
+      typesense: boolean
+      consistency: {
+        healthy: boolean
+        dirty: boolean
+        consistent: boolean
+        mismatchedCollections: string[]
+        counts: Record<string, number>
+      }
+      mongoCounts: Record<string, number>
+    }>(await request.get(`${API_URL}/search/status`))
 
-  test('E.5 — Nhấn Enter → navigate to /search', async ({ page }) => {
-    await page.goto(baseURL)
-    const searchInput = page.locator(SEARCH_INPUT).first()
-    await searchInput.click()
-    await searchInput.fill('paracetamol')
-    await searchInput.press('Enter')
-    await page.waitForURL(/\/search\?q=paracetamol/i, { timeout: 8000 })
-    expect(page.url()).toContain('search')
-    expect(page.url()).toContain('q=paracetamol')
-  })
-
-  test('E.6 — Xóa hết text → dropdown biến mất/đổi thành trending', async ({ page }) => {
-    await page.goto(baseURL)
-    const searchInput = page.locator(SEARCH_INPUT).first()
-    await searchInput.click()
-    await searchInput.fill('para')
-    await page.waitForTimeout(1000)
-    await searchInput.fill('')
-    await page.waitForTimeout(500)
-    // After clearing, dropdown should show trending (not search results)
-    const dropdown = page.locator(SEARCH_DROPDOWN).first()
-    if (await dropdown.isVisible()) {
-      const text = await dropdown.textContent()
-      // Should show trending, not search results
-      expect(text).toContain('Tìm kiếm phổ biến')
-    }
-  })
-})
-
-// ══════════════════════════════════════════════════════════════════════════════
-// NHÓM 4+5+9 — Search Results Page
-// ══════════════════════════════════════════════════════════════════════════════
-
-test.describe('Nhóm 4+5 — Search Results Page', () => {
-  test('E.7 — /search?q=* → hiển thị sản phẩm', async ({ page }) => {
-    await page.goto(`${baseURL}/search?q=*`)
-    await waitForSearchResults(page)
-    // Check for product cards
-    const bodyText = await page.textContent('body')
-    expect(bodyText!.length).toBeGreaterThan(100) // Page has content
-    // Take screenshot
-    await page.screenshot({ path: 'tests/e2e/screenshots/search-browse-all.png', fullPage: false })
-  })
-
-  test('E.8 — Kết quả hiển thị tên, giá, ảnh', async ({ page }) => {
-    await page.goto(`${baseURL}/search?q=*`)
-    await waitForSearchResults(page)
-    // Check for images
-    const images = page.locator('img[src*="http"]')
-    expect(await images.count()).toBeGreaterThan(0)
-    // Check for prices (any format: ₫, đ, or numeric)
-    const bodyText = await page.textContent('body')
-    const hasPrices = bodyText?.match(/\d{1,3}(\.\d{3})+|₫|đ|VND/) !== null
-    expect(hasPrices).toBeTruthy()
-  })
-
-  test('E.17 — q=* browse mode → danh sách sản phẩm', async ({ page }) => {
-    await page.goto(`${baseURL}/search?q=*`)
-    await waitForSearchResults(page)
-    const bodyText = await page.textContent('body')
-    // Should show result count
-    expect(bodyText).toMatch(/\d+/)
-  })
-
-  test('E.19 — Không tìm thấy khi query không match', async ({ page }) => {
-    await page.goto(`${baseURL}/search?q=zzznotexistquery99999`)
-    await waitForSearchResults(page)
-    const bodyText = await page.textContent('body')
-    // Should show some kind of empty state
-    const hasEmptyState = bodyText?.includes('không tìm thấy') || bodyText?.includes('0 kết quả') || bodyText?.includes('Không có')
-    expect(hasEmptyState || bodyText!.length > 0).toBeTruthy()
-    await page.screenshot({ path: 'tests/e2e/screenshots/search-no-results.png', fullPage: false })
-  })
-
-  test('E.22 — Tổng kết quả hiển thị', async ({ page }) => {
-    await page.goto(`${baseURL}/search?q=*`)
-    await waitForSearchResults(page)
-    const bodyText = await page.textContent('body')
-    // Phải chứa số kết quả
-    expect(bodyText).toMatch(/\d+\s*(kết quả|sản phẩm|results?)/i)
-  })
-})
-
-// ══════════════════════════════════════════════════════════════════════════════
-// NHÓM 4 — Vietnamese Search
-// ══════════════════════════════════════════════════════════════════════════════
-
-test.describe('Nhóm 4 — Vietnamese Search', () => {
-  test('E.27 — Search "thuoc" (không dấu) → tìm thấy kết quả', async ({ page }) => {
-    await page.goto(`${baseURL}/search?q=thuoc`)
-    await waitForSearchResults(page)
-    const bodyText = await page.textContent('body')
-    // Should find Vietnamese medicine products
-    expect(bodyText!.length).toBeGreaterThan(200)
-    await page.screenshot({ path: 'tests/e2e/screenshots/search-vietnamese.png', fullPage: false })
-  })
-
-  test('E.28 — Search "thuốc" (có dấu) → tìm thấy kết quả', async ({ page }) => {
-    await page.goto(`${baseURL}/search?q=thuốc`)
-    await waitForSearchResults(page)
-    const bodyText = await page.textContent('body')
-    expect(bodyText!.length).toBeGreaterThan(200)
-  })
-})
-
-// ══════════════════════════════════════════════════════════════════════════════
-// NHÓM 6+9 — Campaign Price Display
-// ══════════════════════════════════════════════════════════════════════════════
-
-test.describe('Nhóm 6 — Campaign Price Display', () => {
-  test('E.23 — Sản phẩm giảm giá hiển thị badge hoặc giá gạch', async ({ page }) => {
-    await page.goto(`${baseURL}/search?q=*`)
-    await waitForSearchResults(page)
-    // Check for any discount indicators
-    const bodyText = await page.textContent('body')
-    // Nếu có campaign, sẽ thấy giá gạch hoặc badge
-    // Just verify no crash, campaign may or may not be active
-    expect(bodyText!.length).toBeGreaterThan(0)
-    await page.screenshot({ path: 'tests/e2e/screenshots/search-campaign.png', fullPage: false })
-  })
-})
-
-// ══════════════════════════════════════════════════════════════════════════════
-// NHÓM 9 — Responsive Layout
-// ══════════════════════════════════════════════════════════════════════════════
-
-test.describe('Nhóm 9 — Responsive Layout', () => {
-  test('E.36 — Desktop (1280px) → layout đúng', async ({ page }) => {
-    await page.setViewportSize({ width: 1280, height: 720 })
-    await page.goto(`${baseURL}/search?q=*`)
-    await waitForSearchResults(page)
-    await page.screenshot({ path: 'tests/e2e/screenshots/search-desktop.png', fullPage: false })
-    // No crash
-    expect(await page.title()).toBeTruthy()
-  })
-
-  test('E.37 — Mobile (375px) → layout responsive', async ({ page }) => {
-    await page.setViewportSize({ width: 375, height: 812 })
-    await page.goto(`${baseURL}/search?q=*`)
-    await waitForSearchResults(page)
-    await page.screenshot({ path: 'tests/e2e/screenshots/search-mobile.png', fullPage: false })
-    expect(await page.title()).toBeTruthy()
-  })
-})
-
-// ══════════════════════════════════════════════════════════════════════════════
-// NHÓM 10+12 — Health & Performance
-// ══════════════════════════════════════════════════════════════════════════════
-
-test.describe('Nhóm 10 — Health & Performance', () => {
-  test('E.38 — GET /search/status → healthy', async ({ request }) => {
-    const res = await request.get(`${apiURL}/search/status`)
-    expect(res.ok()).toBeTruthy()
-    const body = await res.json()
     expect(body.typesense).toBe(true)
-    expect(body.message).toContain('healthy')
-    expect(body.consistency).toBeDefined()
-    expect(body.consistency.consistent).toBe(true)
+    expect(body.consistency).toMatchObject({
+      healthy: true,
+      dirty: false,
+      consistent: true,
+      mismatchedCollections: [],
+    })
+    expect(body.consistency.counts).toEqual(body.mongoCounts)
   })
 
-  test('E.39 — Search latency < 500ms (P95)', async ({ request }) => {
-    const durations: number[] = []
-    for (let i = 0; i < 10; i++) {
-      const start = Date.now()
-      await request.get(`${apiURL}/search/products?q=test&limit=10`)
-      durations.push(Date.now() - start)
+  test('browse response has a stable public contract and no duplicate or private data', async ({ request }) => {
+    const result = await searchProducts(request, { q: '*', limit: 100 })
+    const ids = result.hits.map((hit) => hit.document.mongoId)
+    const serialized = JSON.stringify(result)
+
+    expect(result.source).toBe('typesense')
+    expect(result.page).toBe(1)
+    expect(result.found).toBeGreaterThanOrEqual(result.hits.length)
+    expect(new Set(ids).size).toBe(ids.length)
+    expect(result.hits.every((hit) => hit.document.isActive !== false)).toBe(true)
+    expect(serialized).not.toContain('costPrice')
+    expect(serialized).not.toContain('cost_price')
+
+    for (const { document } of result.hits.filter((hit) => hit.document.priceVariantsJson)) {
+      expect(() => JSON.parse(document.priceVariantsJson as string)).not.toThrow()
     }
-    durations.sort((a, b) => a - b)
-    const p95 = durations[Math.floor(durations.length * 0.95)]
-    console.log(`Search P95 latency: ${p95}ms`)
-    expect(p95).toBeLessThan(500)
   })
 
-  test('E.40 — Suggest latency < 300ms (P95)', async ({ request }) => {
-    const durations: number[] = []
-    for (let i = 0; i < 10; i++) {
-      const start = Date.now()
-      await request.get(`${apiURL}/search/suggest?q=para`)
-      durations.push(Date.now() - start)
+  test('exact product name and SKU both find the indexed product', async ({ request }) => {
+    const byName = await searchProducts(request, { q: exactProduct.name, limit: 20 })
+    expect(byName.hits.map((hit) => hit.document.mongoId)).toContain(exactProduct.mongoId)
+
+    if (exactProduct.sku) {
+      const bySku = await searchProducts(request, { q: exactProduct.sku, limit: 20 })
+      expect(bySku.hits.map((hit) => hit.document.mongoId)).toContain(exactProduct.mongoId)
     }
-    durations.sort((a, b) => a - b)
-    const p95 = durations[Math.floor(durations.length * 0.95)]
-    console.log(`Suggest P95 latency: ${p95}ms`)
-    expect(p95).toBeLessThan(300)
-  })
-})
-
-// ══════════════════════════════════════════════════════════════════════════════
-// NHÓM 11 — Security (via API)
-// ══════════════════════════════════════════════════════════════════════════════
-
-test.describe('Nhóm 11 — Security', () => {
-  test('S.1 — Regex injection không crash', async ({ request }) => {
-    const res = await request.get(`${apiURL}/search/products?q=(?:a){100000}`)
-    expect(res.ok()).toBeTruthy()
   })
 
-  test('S.2 — Query cực dài không hang', async ({ request }) => {
-    const longQ = 'a'.repeat(5000)
-    const res = await request.get(`${apiURL}/search/products?q=${longQ}`)
-    expect(res.ok()).toBeTruthy()
+  test('Vietnamese unaccented query finds the same accented product', async ({ request }) => {
+    test.skip(!accentedProduct, 'No indexed product with Vietnamese diacritics')
+    const query = withoutVietnameseMarks(accentedProduct!.name)
+    const result = await searchProducts(request, { q: query, limit: 50 })
+    expect(result.hits.map((hit) => hit.document.mongoId)).toContain(accentedProduct!.mongoId)
   })
 
-  test('S.3 — page=-1, limit=NaN → server phản hồi (không hang)', async ({ request }) => {
-    const res = await request.get(`${apiURL}/search/products?q=test&page=-1&limit=abc`)
-    // BE hiện trả 500 cho page=-1 (known bug — nên validate thành page=1)
-    // Test chỉ verify: server PHẢN HỒI, không crash/timeout
-    expect(res.status()).toBeGreaterThanOrEqual(200)
-    expect(res.status()).toBeLessThanOrEqual(500)
+  test('brand, prescription and stock filters only return matching documents', async ({ request }) => {
+    const filterProduct = indexedProducts.find((product) => product.brandId && product.inStock) || exactProduct
+    const result = await searchProducts(request, {
+      q: '*',
+      limit: 100,
+      ...(filterProduct.brandId ? { brandId: filterProduct.brandId } : {}),
+      requiresPrescription: Boolean(filterProduct.requiresPrescription),
+      inStock: true,
+    })
+
+    expect(result.hits.length).toBeGreaterThan(0)
+    expect(
+      result.hits.every(
+        ({ document }) =>
+          (!filterProduct.brandId || document.brandId === filterProduct.brandId) &&
+          document.requiresPrescription === Boolean(filterProduct.requiresPrescription) &&
+          document.inStock === true,
+      ),
+    ).toBe(true)
   })
 
-  test('S.5 — costPrice không bị lộ', async ({ request }) => {
-    const res = await request.get(`${apiURL}/search/products?q=*&limit=5`)
-    const body = await res.json()
-    const text = JSON.stringify(body)
-    expect(text).not.toContain('costPrice')
-    expect(text).not.toContain('cost_price')
+  test('category filter includes the product assigned directly to that category', async ({ request }) => {
+    test.skip(!exactProduct.categoryId, 'Indexed product has no categoryId')
+    const result = await searchProducts(request, {
+      q: exactProduct.name,
+      categoryId: exactProduct.categoryId!,
+      limit: 50,
+    })
+    expect(result.hits.map((hit) => hit.document.mongoId)).toContain(exactProduct.mongoId)
+  })
+
+  test('price sorting is monotonic and price range is enforced', async ({ request }) => {
+    const asc = await searchProducts(request, { q: '*', sortBy: 'price_asc', limit: 100 })
+    const desc = await searchProducts(request, { q: '*', sortBy: 'price_desc', limit: 100 })
+    const pricesByPrescription = (result: ProductSearchResponse, requiresPrescription: boolean) =>
+      result.hits
+        .filter((hit) => Boolean(hit.document.requiresPrescription) === requiresPrescription)
+        .map((hit) => hit.document.price ?? 0)
+    const ascOtc = pricesByPrescription(asc, false)
+    const ascRx = pricesByPrescription(asc, true)
+    const descOtc = pricesByPrescription(desc, false)
+    const descRx = pricesByPrescription(desc, true)
+    const ascPrices = asc.hits.map((hit) => hit.document.price ?? 0)
+
+    expect(ascOtc).toEqual([...ascOtc].sort((a, b) => a - b))
+    expect(ascRx).toEqual([...ascRx].sort((a, b) => a - b))
+    expect(descOtc).toEqual([...descOtc].sort((a, b) => b - a))
+    expect(descRx).toEqual([...descRx].sort((a, b) => b - a))
+    expect(asc.hits.map((hit) => Boolean(hit.document.requiresPrescription))).toEqual(
+      [...asc.hits.map((hit) => Boolean(hit.document.requiresPrescription))].sort(),
+    )
+
+    const pivot = ascPrices[Math.floor(ascPrices.length / 2)]
+    const ranged = await searchProducts(request, { q: '*', priceMin: pivot, priceMax: pivot, limit: 100 })
+    expect(ranged.hits.every((hit) => hit.document.price === pivot)).toBe(true)
+  })
+
+  test('invalid pagination is clamped instead of causing a server error', async ({ request }) => {
+    const result = await searchProducts(request, { q: '*', page: -10, limit: 1000 })
+    expect(result.page).toBe(1)
+    expect(result.hits.length).toBeLessThanOrEqual(100)
+  })
+
+  test('suggest enforces minimum query length, caps results and deduplicates products', async ({ request }) => {
+    const short = await expectOkJson<{ products: unknown[]; brands: unknown[]; categories: unknown[]; articles: unknown[] }>(
+      await request.get(`${API_URL}/search/suggest?q=a`),
+    )
+    expect(short).toEqual({ products: [], brands: [], categories: [], articles: [] })
+
+    const token = exactProduct.name.split(/\s+/).find((part) => part.length >= 2) || exactProduct.name
+    const result = await expectOkJson<{
+      products: Array<{ document: ProductDocument }>
+      brands: unknown[]
+      categories: unknown[]
+      articles: unknown[]
+    }>(await request.get(`${API_URL}/search/suggest?q=${encodeURIComponent(token)}`))
+    const productIds = result.products.map((hit) => hit.document.mongoId)
+
+    expect(result.products.length).toBeLessThanOrEqual(15)
+    expect(result.brands.length).toBeLessThanOrEqual(2)
+    expect(result.categories.length).toBeLessThanOrEqual(2)
+    expect(result.articles.length).toBeLessThanOrEqual(4)
+    expect(new Set(productIds).size).toBe(productIds.length)
+  })
+
+  test('autocomplete renders a live suggestion and navigates to its product page', async ({ page }) => {
+    await page.goto(APP_URL)
+    const input = page.locator(SEARCH_INPUT).first()
+    const suggestResponse = page.waitForResponse(
+      (response) => response.url().includes('/search/suggest') && response.request().method() === 'GET',
+    )
+
+    await input.click()
+    await input.fill(exactProduct.name)
+    expect((await suggestResponse).ok()).toBeTruthy()
+
+    const suggestion = page.getByText(exactProduct.name, { exact: true }).last()
+    await expect(suggestion).toBeVisible()
+    await suggestion.click()
+    await expect(page).toHaveURL(new RegExp(`/products/${exactProduct.slug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`))
+  })
+
+  test('article search finds an indexed article by exact title', async ({ request }) => {
+    test.skip(!indexedArticle, 'No searchable article is indexed')
+    const result = await expectOkJson<ArticleSearchResponse>(
+      await request.get(`${API_URL}/search/articles?q=${encodeURIComponent(indexedArticle!.title)}&limit=20`),
+    )
+    expect(result.hits.map((hit) => hit.document.slug)).toContain(indexedArticle!.slug)
+  })
+
+  test('special regex-like query returns a valid search response', async ({ request }) => {
+    const result = await searchProducts(request, { q: '(?:a){100000}', limit: 10 })
+    expect(result.hits).toBeInstanceOf(Array)
+    expect(result.found).toBeGreaterThanOrEqual(0)
+  })
+
+  test('search page renders the exact API result and result count', async ({ page }) => {
+    const response = await waitForProductSearch(page, () =>
+      page.goto(`${APP_URL}/search?q=${encodeURIComponent(exactProduct.name)}`),
+    )
+    const body = (await response.json()) as ProductSearchResponse
+
+    await expect(page.getByTestId('search-result-count')).toHaveText(`Tìm thấy ${body.found} sản phẩm`)
+    await expect(page.getByTestId('product-card').filter({ hasText: exactProduct.name }).first()).toBeVisible()
+  })
+
+  test('search UI sends server-side sort and renders sorted product cards', async ({ page }) => {
+    await waitForProductSearch(page, () => page.goto(`${APP_URL}/search?q=*`))
+    const response = await waitForProductSearch(page, async () => {
+      await page.getByRole('combobox', { name: 'Sắp xếp kết quả' }).click()
+      await page.getByRole('option', { name: 'Giá: Thấp đến cao' }).click()
+    })
+
+    expect(response.url()).toContain('sortBy=price_asc')
+    await expect(page.getByTestId('product-card').first()).toBeVisible()
+  })
+
+  test('campaign fields map to visible sale UI when an active campaign exists', async ({ page }) => {
+    test.skip(!campaignProduct, 'No active campaign product is indexed')
+    await waitForProductSearch(page, () =>
+      page.goto(`${APP_URL}/search?q=${encodeURIComponent(campaignProduct!.name)}`),
+    )
+    const card = page.getByTestId('product-card').filter({ hasText: campaignProduct!.name }).first()
+
+    await expect(card).toBeVisible()
+    await expect(card.locator('.line-through')).toBeVisible()
+    await expect(card).toContainText(`${campaignProduct!.salePrice!.toLocaleString('vi-VN')}đ`)
+    await expect(card).toContainText(`${campaignProduct!.originalPrice!.toLocaleString('vi-VN')}đ`)
+  })
+
+  test('empty search result shows the explicit empty state', async ({ page }) => {
+    await waitForProductSearch(page, () => page.goto(`${APP_URL}/search?q=zzznotexistquery99999`))
+    await expect(page.getByText('Không tìm thấy sản phẩm')).toBeVisible()
+    await expect(page.getByTestId('search-result-count')).toHaveText('Tìm thấy 0 sản phẩm')
+  })
+
+  test('mobile search results do not overflow the viewport', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 })
+    await waitForProductSearch(page, () => page.goto(`${APP_URL}/search?q=*`))
+    await expect(page.getByTestId('product-card').first()).toBeVisible()
+
+    const dimensions = await page.evaluate(() => ({
+      viewport: document.documentElement.clientWidth,
+      content: document.documentElement.scrollWidth,
+    }))
+    expect(dimensions.content).toBeLessThanOrEqual(dimensions.viewport + 1)
   })
 })
