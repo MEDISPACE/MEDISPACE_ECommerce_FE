@@ -87,6 +87,10 @@ export function ProductsListingPage() {
           params.sortBy = 'rating'
           params.sortOrder = 'desc'
           break
+        case 'bestseller':
+          params.sortBy = 'reviewCount'
+          params.sortOrder = 'desc'
+          break
       }
 
       // Add filters

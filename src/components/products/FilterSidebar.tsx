@@ -104,9 +104,8 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
   }
 
   const handleBrandChange = (brand: string, checked: boolean) => {
-    const currentBrands = filters.brands || []
-    const newBrands = checked ? [...currentBrands, brand] : currentBrands.filter((b) => b !== brand)
-
+    // Single-select: backend only supports one brandId at a time
+    const newBrands = checked ? [brand] : []
     onFiltersChange({ ...filters, brands: newBrands })
   }
 
