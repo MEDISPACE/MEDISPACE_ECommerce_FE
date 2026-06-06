@@ -254,6 +254,7 @@ export function CheckoutPage() {
   }
 
   const shippingFee = bgShippingFee
+  const pointsRedeemBaseAmount = Math.max(0, subtotal - couponDiscount)
   const total = Math.max(0, subtotal - couponDiscount - pointsDiscount + shippingFee)
 
   const handlePlaceOrder = async () => {
@@ -697,10 +698,10 @@ export function CheckoutPage() {
                     {pointsDiscount > 0 && (
                       <div className='flex justify-between'>
                         <span className='text-gray-600 flex items-center gap-1'>
-                          <Sparkles className='w-3.5 h-3.5 text-purple-500' />
+                          <Sparkles className='w-3.5 h-3.5 text-blue-500' />
                           Điểm thưởng
                         </span>
-                        <span className='text-purple-600'>-{new Intl.NumberFormat('vi-VN').format(pointsDiscount)}đ</span>
+                        <span className='text-blue-600'>-{new Intl.NumberFormat('vi-VN').format(pointsDiscount)}đ</span>
                       </div>
                     )}
                   </div>
@@ -712,6 +713,13 @@ export function CheckoutPage() {
                     <CouponInput
                       subtotal={subtotal}
                       hasPrescriptionItems={cartItems.some(i => i.prescriptionRequired)}
+                      items={cartItems.map(item => ({
+                        productId: item.productId,
+                        unit: item.unit,
+                        quantity: item.quantity,
+                        totalPrice: item.totalPrice,
+                        prescriptionRequired: item.prescriptionRequired
+                      }))}
                       isDirectBuy={isBuyNow}
                       initialCoupons={appliedCoupons}
                       onCouponsChange={(coupons, discount, hasFreeship) => {
@@ -721,7 +729,7 @@ export function CheckoutPage() {
                       }}
                     />
                     <PointsRedeemInput
-                      subtotal={subtotal}
+                      subtotal={pointsRedeemBaseAmount}
                       onRedeemChange={(pts, amount) => {
                         setPointsToRedeem(pts)
                         setPointsDiscount(amount)

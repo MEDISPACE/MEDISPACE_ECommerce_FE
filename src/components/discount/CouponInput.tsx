@@ -16,13 +16,20 @@ interface AppliedCoupon {
 interface CouponInputProps {
   subtotal: number
   hasPrescriptionItems?: boolean
+  items?: Array<{
+    productId: string
+    unit?: string
+    quantity?: number
+    totalPrice: number
+    prescriptionRequired?: boolean
+  }>
   initialCoupons?: AppliedCoupon[]
   isDirectBuy?: boolean
   onCouponsChange?: (coupons: AppliedCoupon[], totalDiscount: number, freeShipping: boolean) => void
   className?: string
 }
 
-export function CouponInput({ subtotal, hasPrescriptionItems = false, initialCoupons = [], isDirectBuy = false, onCouponsChange, className }: CouponInputProps) {
+export function CouponInput({ subtotal, hasPrescriptionItems = false, items = [], initialCoupons = [], isDirectBuy = false, onCouponsChange, className }: CouponInputProps) {
   const { refreshCart } = useCart()
   const [inputCode, setInputCode] = useState('')
   const [appliedCoupons, setAppliedCoupons] = useState<AppliedCoupon[]>(initialCoupons)
@@ -60,7 +67,12 @@ export function CouponInput({ subtotal, hasPrescriptionItems = false, initialCou
     try {
       if (isDirectBuy) {
         // Direct buy just previews the coupon without saving to cart
-        const res = await apiClient.post<any>('/coupons/validate', { code, cartSubtotal: subtotal, hasPrescriptionItems })
+        const res = await apiClient.post<any>('/coupons/validate', {
+          code,
+          cartSubtotal: subtotal,
+          hasPrescriptionItems,
+          items
+        })
         const data = res.data.result
 
         if (!data.isValid) {
@@ -105,7 +117,11 @@ export function CouponInput({ subtotal, hasPrescriptionItems = false, initialCou
 
       } else {
         // Normal cart flow — truyền subtotal của items đang được chọn
-        const res = await apiClient.post<any>('/coupons/apply', { code, selectedSubtotal: subtotal })
+        const res = await apiClient.post<any>('/coupons/apply', {
+          code,
+          selectedSubtotal: subtotal,
+          selectedItems: items.map(item => ({ productId: item.productId, unit: item.unit }))
+        })
         const data = res.data.result
 
         const newCoupon: AppliedCoupon = data.addedCoupon

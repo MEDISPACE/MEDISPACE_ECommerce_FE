@@ -1,13 +1,15 @@
-import { Heart, Brain, Stethoscope, Eye, Bone, Clock, User, ArrowRight } from 'lucide-react'
+import { Heart, Brain, Stethoscope, Eye, Bone, Clock, User, Search, Sparkles, ClipboardCheck } from 'lucide-react'
 import { Button } from '../ui/button'
+import { Input } from '../ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Badge } from '../ui/badge'
 import { useState, useEffect } from 'react'
 import { ImageWithFallback } from '../shared/ImageWithFallback'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import articleService from '@/services/articleService'
 import type { Article, HealthCategory } from '@/types/article'
+import { useAuth } from '~/contexts/AuthContext'
 
 // Icon mapping for categories
 const iconMap: Record<string, React.ElementType> = {
@@ -18,30 +20,55 @@ const iconMap: Record<string, React.ElementType> = {
   Bone,
 }
 
+const hubAxes = [
+  {
+    title: 'Bệnh & triệu chứng',
+    items: ['cảm cúm', 'ho trẻ em', 'dị ứng thời tiết', 'tiêu hóa', 'da liễu', 'huyết áp'],
+  },
+  {
+    title: 'Thuốc & hoạt chất',
+    items: ['paracetamol', 'ibuprofen', 'vitamin c', 'kháng histamine', 'kháng sinh', 'men vi sinh'],
+  },
+  {
+    title: 'Chăm sóc theo nhóm người',
+    items: ['trẻ em', 'người cao tuổi', 'phụ nữ mang thai', 'bệnh nền', 'dùng thuốc dài ngày'],
+  },
+  {
+    title: 'Dịch vụ liên quan',
+    items: ['hỏi dược sĩ', 'gửi đơn thuốc', 'kiểm tra sản phẩm', 'nhắc mua lại'],
+  },
+]
+
 export function HealthCornerPage() {
+  const navigate = useNavigate()
+  const { isAuthenticated } = useAuth()
   const [categories, setCategories] = useState<HealthCategory[]>([])
+  const [personalizedArticles, setPersonalizedArticles] = useState<Article[]>([])
   const [featuredArticles, setFeaturedArticles] = useState<Article[]>([])
   const [latestArticles, setLatestArticles] = useState<Article[]>([])
   const [popularArticles, setPopularArticles] = useState<Article[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     loadData()
-  }, [])
+  }, [isAuthenticated])
 
   const loadData = async () => {
     setLoading(true)
     try {
-      const [cats, featured, latest, popular] = await Promise.all([
+      const [cats, featured, latest, popular, personalized] = await Promise.all([
         articleService.getHealthCategories({ isActive: true }),
         articleService.getFeaturedArticles(3),
         articleService.getLatestArticles(6),
         articleService.getPopularArticles(5),
+        isAuthenticated ? articleService.getPersonalizedArticles(6) : Promise.resolve(null),
       ])
       setCategories(cats)
       setFeaturedArticles(featured)
       setLatestArticles(latest)
       setPopularArticles(popular)
+      setPersonalizedArticles(personalized?.articles || [])
     } catch (error) {
       console.error('Error loading health corner data:', error)
     } finally {
@@ -60,6 +87,16 @@ export function HealthCornerPage() {
   const getIconForCategory = (iconName?: string) => {
     if (!iconName) return Heart
     return iconMap[iconName] || Heart
+  }
+
+  const getReadTime = (article: Article) =>
+    article.readTime || Math.max(1, Math.ceil(article.content.split(/\s+/).length / 200))
+
+  const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const query = searchQuery.trim()
+    if (!query) return
+    navigate(`/health/search?q=${encodeURIComponent(query)}`)
   }
 
   if (loading) {
@@ -88,11 +125,64 @@ export function HealthCornerPage() {
             Góc sức khỏe
           </h1>
           <p className='text-gray-700 mt-2'>Chia sẻ kiến thức y khoa và sống khỏe mỗi ngày</p>
+          <form onSubmit={handleSearch} className='mt-6 max-w-2xl'>
+            <div className='relative flex items-center gap-3 rounded-lg bg-white p-2 shadow-sm border border-blue-100'>
+              <Search className='absolute left-5 h-5 w-5 text-blue-500' />
+              <Input
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder='Tìm bệnh, triệu chứng, thuốc hoặc chủ đề sức khỏe'
+                className='h-11 pl-11 border-0 focus-visible:ring-0'
+              />
+              <Button type='submit' className='h-11 bg-blue-600 hover:bg-blue-700 text-white'>
+                Tìm kiếm
+              </Button>
+            </div>
+          </form>
+          <Button
+            type='button'
+            variant='outline'
+            className='mt-4 border-blue-200 bg-white text-blue-700 hover:bg-blue-50'
+            onClick={() => navigate('/health/checker')}
+          >
+            <ClipboardCheck className='h-4 w-4 mr-2' />
+            Kiểm tra nhanh trước khi đọc hoặc mua
+          </Button>
         </div>
       </div>
 
       <div className='container mx-auto px-4 py-8'>
         {/* Health Categories */}
+        <section className='mb-12'>
+          <div className='mb-6'>
+            <h2 className='text-3xl font-bold text-gray-900'>Health A-Z</h2>
+            <p className='text-sm text-gray-600 mt-1'>Đi nhanh theo triệu chứng, hoạt chất, nhóm người đọc hoặc dịch vụ cần dùng.</p>
+          </div>
+          <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4'>
+            {hubAxes.map((axis) => (
+              <Card key={axis.title} className='border-blue-100 bg-white/90'>
+                <CardContent className='p-5'>
+                  <h3 className='font-semibold text-gray-900 mb-3'>{axis.title}</h3>
+                  <div className='flex flex-wrap gap-2'>
+                    {axis.items.map((item) => (
+                      <Button
+                        key={item}
+                        type='button'
+                        variant='outline'
+                        size='sm'
+                        className='h-8 border-blue-100 bg-white text-blue-700 hover:bg-blue-50'
+                        onClick={() => navigate(`/health/search?q=${encodeURIComponent(item)}`)}
+                      >
+                        {item}
+                      </Button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+
         <section className='mb-12'>
           <h2 className='text-3xl font-bold bg-gradient-to-r from-blue-800 to-cyan-600 bg-clip-text text-transparent mb-6'>
             Danh mục sức khỏe
@@ -119,6 +209,61 @@ export function HealthCornerPage() {
             })}
           </div>
         </section>
+
+        {personalizedArticles.length > 0 && (
+          <section className='mb-12'>
+            <div className='mb-6 flex items-center gap-3'>
+              <div className='rounded-full bg-cyan-100 p-2 text-cyan-700'>
+                <Sparkles className='h-5 w-5' />
+              </div>
+              <div>
+                <h2 className='text-3xl font-bold bg-gradient-to-r from-blue-800 to-cyan-600 bg-clip-text text-transparent'>
+                  Dành cho bạn
+                </h2>
+                <p className='text-sm text-gray-600 mt-1'>Gợi ý theo hồ sơ sức khỏe và lịch sử mua hàng hiện có.</p>
+              </div>
+            </div>
+            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+              {personalizedArticles.map((article) => (
+                <Link key={article._id} to={`/health/article/${article.slug}`}>
+                  <Card className='overflow-hidden hover:shadow-xl transition-all duration-300 h-full border-cyan-100 hover:border-cyan-300 bg-white/80 backdrop-blur-sm'>
+                    <div className='aspect-video relative overflow-hidden bg-gradient-to-br from-cyan-100 to-blue-100'>
+                      {article.featuredImage && (
+                        <ImageWithFallback
+                          src={article.featuredImage}
+                          alt={article.title}
+                          className='w-full h-full object-cover hover:scale-105 transition-transform duration-300'
+                        />
+                      )}
+                      <Badge className='absolute top-2 right-2 bg-cyan-600'>Gợi ý</Badge>
+                    </div>
+                    <CardContent className='p-6'>
+                      <div className='flex items-center gap-2 text-sm text-gray-600 mb-2'>
+                        <Badge variant='outline' className='border-cyan-300 text-cyan-700'>
+                          {article.category?.name}
+                        </Badge>
+                        <span>•</span>
+                        <div className='flex items-center gap-1'>
+                          <Clock className='h-3 w-3' />
+                          <span>{getReadTime(article)} phút đọc</span>
+                        </div>
+                      </div>
+                      <h3 className='text-lg font-semibold text-gray-900 mb-2 line-clamp-2'>{article.title}</h3>
+                      <p className='text-sm text-gray-600 mb-4 line-clamp-2'>{article.excerpt}</p>
+                      <div className='flex items-center justify-between text-xs text-gray-500'>
+                        <div className='flex items-center gap-1'>
+                          <User className='h-3 w-3' />
+                          <span>{article.authorName}</span>
+                        </div>
+                        <span>{formatDate(article.publishedAt || article.createdAt)}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Featured Articles */}
         {featuredArticles.length > 0 && (
@@ -150,7 +295,7 @@ export function HealthCornerPage() {
                         <span>•</span>
                         <div className='flex items-center gap-1'>
                           <Clock className='h-3 w-3' />
-                          <span>{article.readTime} phút đọc</span>
+                          <span>{getReadTime(article)} phút đọc</span>
                         </div>
                       </div>
                       <h3 className='text-lg font-semibold text-gray-900 mb-2 line-clamp-2'>{article.title}</h3>
@@ -209,7 +354,7 @@ export function HealthCornerPage() {
                             </div>
                             <div className='flex items-center gap-1'>
                               <Clock className='h-3 w-3' />
-                              <span>{article.readTime} phút</span>
+                              <span>{getReadTime(article)} phút</span>
                             </div>
                             <span>{article.viewCount} lượt xem</span>
                           </div>
@@ -241,7 +386,7 @@ export function HealthCornerPage() {
                           <div className='flex items-center gap-2 text-xs text-gray-600'>
                             <span>{article.viewCount} lượt xem</span>
                             <span>•</span>
-                            <span>{article.readTime} phút</span>
+                            <span>{getReadTime(article)} phút</span>
                           </div>
                         </div>
                       </div>

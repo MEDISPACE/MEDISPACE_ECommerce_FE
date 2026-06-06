@@ -59,6 +59,9 @@ export function CategoryArticlesPage() {
     })
   }
 
+  const getReadTime = (article: Article) =>
+    article.readTime || Math.max(1, Math.ceil(article.content.split(/\s+/).length / 200))
+
   if (loading) {
     return (
       <div className='flex justify-center items-center min-h-screen'>
@@ -132,7 +135,7 @@ export function CategoryArticlesPage() {
                       <div className='flex items-center gap-2 text-sm text-gray-500 mb-2'>
                         <div className='flex items-center gap-1'>
                           <Clock className='h-3 w-3' />
-                          <span>{article.readTime} phút đọc</span>
+                          <span>{getReadTime(article)} phút đọc</span>
                         </div>
                         <span>•</span>
                         <div className='flex items-center gap-1'>

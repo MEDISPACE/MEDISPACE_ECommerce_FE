@@ -283,9 +283,17 @@ export function Header() {
 
             <Link
               to='/health'
-              className='relative px-2 py-3 text-gray-700 font-medium hover:text-blue-600 transition-colors duration-200 group'
+              className='relative flex items-center px-1 py-3 text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors duration-200 group'
             >
-              Bệnh & Góc sức khỏe
+              <span className='text-center leading-tight'>Bệnh & Góc sức khỏe</span>
+              <span className='absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-cyan-500 group-hover:w-full transition-all duration-300'></span>
+            </Link>
+
+            <Link
+              to='/community'
+              className='relative flex items-center px-1 py-3 text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors duration-200 group'
+            >
+              <span className='text-center leading-tight'>Cộng đồng</span>
               <span className='absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-cyan-500 group-hover:w-full transition-all duration-300'></span>
             </Link>
 

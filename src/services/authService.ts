@@ -138,12 +138,14 @@ class AuthService {
 
   saveTokens(accessToken: string): void {
     localStorage.setItem('medispace_access_token', accessToken)
+    localStorage.setItem('medispace_session_hint', '1')
     // Refresh token is now stored in httpOnly cookie by the server
   }
 
   clearTokens(): void {
     localStorage.removeItem('medispace_access_token')
     localStorage.removeItem('medispace_user_data')
+    localStorage.removeItem('medispace_session_hint')
   }
 
   getAccessToken(): string | null {

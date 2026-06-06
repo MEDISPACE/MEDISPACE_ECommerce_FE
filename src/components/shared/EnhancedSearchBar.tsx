@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Search, X, Mic, History, TrendingUp, Loader2, Camera, Tag, FolderOpen } from 'lucide-react'
+import { Search, X, Mic, History, TrendingUp, Loader2, Camera, Tag, FolderOpen, Newspaper } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Card, CardContent } from '../ui/card'
@@ -31,7 +31,7 @@ export function EnhancedSearchBar({
   const { recentSearches, addToHistory, removeFromHistory } = useSearchHistory()
 
   // Use multi-collection search hook
-  const { products, brands, categories, querySuggestions, all: suggestions, isLoading } = useSearchSuggestions(searchQuery)
+  const { products, brands, categories, articles, querySuggestions, all: suggestions, isLoading } = useSearchSuggestions(searchQuery)
 
   // Trending searches
   const trendingSearches = ['Paracetamol', 'Vitamin D3', 'Kem dưỡng da', 'Thuốc ho', 'Canxi']
@@ -82,6 +82,8 @@ export function EnhancedSearchBar({
       navigate(`/categories/${suggestion.slug}`)
     } else if (suggestion.type === 'brand' && suggestion.slug) {
       navigate(`/search?brandSlug=${suggestion.slug}`)
+    } else if (suggestion.type === 'article' && suggestion.slug) {
+      navigate(`/health/article/${suggestion.slug}`)
     } else {
       handleSearch(suggestion.text)
     }
@@ -316,10 +318,53 @@ export function EnhancedSearchBar({
                     </div>
                   )}
 
+                  {/* ── BÀI VIẾT SỨC KHỎE ── */}
+                  {articles.length > 0 && (
+                    <div className='mb-2'>
+                      {(brands.length > 0 || categories.length > 0) && <Separator className='mb-2' />}
+                      <div className='flex items-center gap-1.5 text-xs font-semibold text-cyan-600 uppercase tracking-wider px-2 py-1.5'>
+                        <Newspaper className='w-3 h-3' />
+                        Bài viết sức khỏe
+                      </div>
+                      {articles.map((suggestion, index) => (
+                        <button
+                          key={suggestion.id}
+                          onClick={() => handleSuggestionClick(suggestion)}
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left ${
+                            selectedIndex === brands.length + categories.length + index
+                              ? 'bg-cyan-50 border border-cyan-200'
+                              : 'hover:bg-gray-50'
+                          }`}
+                        >
+                          {suggestion.image ? (
+                            <img
+                              src={suggestion.image}
+                              alt={suggestion.text}
+                              className='w-10 h-10 object-cover rounded-lg border border-gray-100 shrink-0'
+                            />
+                          ) : (
+                            <div className='w-10 h-10 bg-cyan-50 rounded-lg flex items-center justify-center shrink-0'>
+                              <Newspaper className='w-4 h-4 text-cyan-600' />
+                            </div>
+                          )}
+                          <div className='flex-1 min-w-0'>
+                            <div className='font-medium text-sm truncate'>{suggestion.text}</div>
+                            {suggestion.excerpt && (
+                              <div className='text-xs text-gray-400 truncate'>{suggestion.excerpt}</div>
+                            )}
+                          </div>
+                          <Badge variant='secondary' className='text-xs bg-cyan-50 text-cyan-700 shrink-0'>
+                            Blog
+                          </Badge>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
                   {/* ── SẢN PHẨM ── */}
                   {products.length > 0 && (
                     <div>
-                      {(brands.length > 0 || categories.length > 0) && <Separator className='mb-2' />}
+                      {(brands.length > 0 || categories.length > 0 || articles.length > 0) && <Separator className='mb-2' />}
                       <div className='flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider px-2 py-1.5'>
                         <Search className='w-3 h-3' />
                         Sản phẩm
@@ -329,7 +374,7 @@ export function EnhancedSearchBar({
                           key={suggestion.id}
                           onClick={() => handleSuggestionClick(suggestion)}
                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left ${
-                            selectedIndex === brands.length + categories.length + index
+                            selectedIndex === brands.length + categories.length + articles.length + index
                               ? 'bg-blue-50 border border-blue-200'
                               : 'hover:bg-gray-50'
                           }`}

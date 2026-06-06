@@ -9,12 +9,15 @@ export interface SearchSuggestHit {
   document: {
     mongoId: string
     name: string
+    title?: string
     slug: string
+    excerpt?: string
     featuredImage?: string
     price?: number
     rating?: number
     brandName?: string
     categoryName?: string
+    requiresPrescription?: boolean
     logo?: string
     productCount?: number
     level?: number
@@ -29,6 +32,7 @@ export interface SearchSuggestResult {
   products: SearchSuggestHit[]
   brands: SearchSuggestHit[]
   categories: SearchSuggestHit[]
+  articles: SearchArticlesHit[]
 }
 
 export interface SearchProductsHit {
@@ -67,7 +71,8 @@ export interface SearchProductsResult {
 
 export interface SearchArticlesHit {
   document: {
-    mongoId: string
+    mongoId?: string
+    _id?: string
     title: string
     slug: string
     excerpt?: string
@@ -105,9 +110,9 @@ export const searchService = {
       const response = await apiClient.get<SearchSuggestResult>('/search/suggest', {
         params: { q },
       })
-      return response.data || { products: [], brands: [], categories: [] }
+      return response.data || { products: [], brands: [], categories: [], articles: [] }
     } catch {
-      return { products: [], brands: [], categories: [] }
+      return { products: [], brands: [], categories: [], articles: [] }
     }
   },
 
