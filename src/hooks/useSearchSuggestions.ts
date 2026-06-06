@@ -20,6 +20,7 @@ export interface GroupedSuggestions {
   brands: SearchSuggestion[]
   categories: SearchSuggestion[]
   articles: SearchSuggestion[]
+  querySuggestions: string[]   // text completions: ["Paracetamol", "Panadol", ...]
   all: SearchSuggestion[]
   isLoading: boolean
 }
@@ -46,8 +47,11 @@ export function useSearchSuggestions(query: string): GroupedSuggestions {
     },
     enabled: debouncedQuery.length >= 2,
     staleTime: 30 * 1000, // 30s cache
-    placeholderData: { products: [], brands: [], categories: [], articles: [] },
+    placeholderData: { products: [], brands: [], categories: [], articles: [], querySuggestions: [] },
   })
+
+  // Query text completions (max 5)
+  const querySuggestions: string[] = (data?.querySuggestions || []).slice(0, 5)
 
   // Map products (max 5)
   const products: SearchSuggestion[] = (data?.products || []).slice(0, 7).map((hit) => ({
@@ -97,6 +101,7 @@ export function useSearchSuggestions(query: string): GroupedSuggestions {
     brands,
     categories,
     articles,
+    querySuggestions,
     all,
     isLoading,
   }
