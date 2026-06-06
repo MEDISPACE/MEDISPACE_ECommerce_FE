@@ -457,7 +457,9 @@ export function SearchResultsPage() {
           <h1 className='text-xl font-bold text-gray-900'>
             {searchQuery ? `Kết quả cho "${searchQuery}"` : 'Tất cả sản phẩm'}
           </h1>
-          <p className='text-gray-600'>Tìm thấy {totalResults} sản phẩm</p>
+          <p className='text-gray-600' data-testid='search-result-count'>
+            Tìm thấy {totalResults} sản phẩm
+          </p>
         </div>
       </div>
 
@@ -535,7 +537,10 @@ export function SearchResultsPage() {
             <div className='flex items-center gap-3'>
               {/* Sort */}
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className='w-[180px] border-blue-200 border rounded-lg border-blue-300'>
+                <SelectTrigger
+                  aria-label='Sắp xếp kết quả'
+                  className='w-[180px] border-blue-200 border rounded-lg border-blue-300'
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -583,6 +588,7 @@ export function SearchResultsPage() {
           ) : allProducts.length > 0 ? (
             <>
               <div
+                data-testid='search-results'
                 className={`grid gap-6 ${
                   viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'
                 }`}
