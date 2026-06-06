@@ -1,6 +1,24 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { Clock, User, Eye, Calendar, ArrowLeft, Share2 } from 'lucide-react'
+import {
+  Clock,
+  User,
+  Eye,
+  Calendar,
+  ArrowLeft,
+  Share2,
+  MessageCircle,
+  FileText,
+  ShoppingBag,
+  ShieldCheck,
+  BookOpen,
+	  Bot,
+	  Send,
+	  AlertTriangle,
+	  Loader2,
+	  Bookmark,
+	  Bell,
+	} from 'lucide-react'
 import { Button } from '../ui/button'
 import { Card, CardContent } from '../ui/card'
 import { Badge } from '../ui/badge'
@@ -8,13 +26,24 @@ import { ImageWithFallback } from '../shared/ImageWithFallback'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
 import articleService from '@/services/articleService'
 import type { Article } from '@/types/article'
+import type { Product } from '@/types/product'
+import { useAuth } from '~/contexts/AuthContext'
 
 export function ArticleDetailPage() {
-  const { slug } = useParams<{ slug: string }>()
+	  const { slug } = useParams<{ slug: string }>()
+	  const { isAuthenticated } = useAuth()
   const [article, setArticle] = useState<Article | null>(null)
   const [relatedArticles, setRelatedArticles] = useState<Article[]>([])
-  const [loading, setLoading] = useState(true)
-  const viewCountedRef = useRef<string | null>(null)
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
+  const [aiQuestion, setAiQuestion] = useState('')
+  const [aiAnswer, setAiAnswer] = useState('')
+  const [aiSuggestions, setAiSuggestions] = useState<string[]>([])
+	  const [aiEscalated, setAiEscalated] = useState(false)
+	  const [aiLoading, setAiLoading] = useState(false)
+	  const [isSaved, setIsSaved] = useState(false)
+	  const [isFollowingTopic, setIsFollowingTopic] = useState(false)
+	  const [loading, setLoading] = useState(true)
+	  const viewCountedRef = useRef<string | null>(null)
 
   useEffect(() => {
     if (slug) {
@@ -23,24 +52,46 @@ export function ArticleDetailPage() {
   }, [slug])
 
   // Separate effect for incrementing view count to avoid double counting
-  useEffect(() => {
-    if (article && slug && viewCountedRef.current !== slug) {
+	  useEffect(() => {
+	    if (article && slug && viewCountedRef.current !== slug) {
       viewCountedRef.current = slug
       articleService.incrementViewCount(slug)
-    }
-  }, [article, slug])
+	    }
+	  }, [article, slug])
+
+	  useEffect(() => {
+	    if (!article) return
+	    const syncPreferences = async () => {
+	      const topic = article.category?.slug || article.categoryId
+	      if (isAuthenticated) {
+	        const preferences = await articleService.getArticlePreferences()
+	        if (preferences) {
+	          setIsSaved(preferences.savedArticleIds.some((id) => id.toString() === article._id.toString()))
+	          setIsFollowingTopic(Boolean(topic && preferences.followedHealthTopics.includes(topic)))
+	          return
+	        }
+	      }
+	      const savedArticles = JSON.parse(localStorage.getItem('medispace_saved_articles') || '[]') as string[]
+	      const followedTopics = JSON.parse(localStorage.getItem('medispace_followed_health_topics') || '[]') as string[]
+	      setIsSaved(savedArticles.includes(article._id))
+	      setIsFollowingTopic(Boolean(topic && followedTopics.includes(topic)))
+	    }
+	    syncPreferences()
+	  }, [article, isAuthenticated])
 
   const loadArticle = async (articleSlug: string) => {
     setLoading(true)
     try {
-      const [articleData, related] = await Promise.all([
+      const [articleData, related, products] = await Promise.all([
         articleService.getArticle(articleSlug),
         articleService.getRelatedArticles(articleSlug, 3),
+        articleService.getRelatedProducts(articleSlug, 4),
       ])
 
       if (articleData) {
         setArticle(articleData)
         setRelatedArticles(related)
+        setRelatedProducts(products)
         // View count increment moved to separate useEffect
       }
     } catch (error) {
@@ -58,17 +109,129 @@ export function ArticleDetailPage() {
     })
   }
 
-  const handleShare = () => {
-    if (navigator.share && article) {
-      navigator.share({
+  const getReadTime = (item: Article) => item.readTime || Math.max(1, Math.ceil(item.content.split(/\s+/).length / 200))
+
+  const getProductPrice = (product: Product) => {
+    const variant = product.priceVariants?.find((item) => item.isDefault) || product.priceVariants?.[0]
+    return variant?.salePrice || variant?.price || product.salePrice || product.price || 0
+  }
+
+  const getProductUnit = (product: Product) => {
+    const variant = product.priceVariants?.find((item) => item.isDefault) || product.priceVariants?.[0]
+    return variant?.unit || product.unit || 'Sản phẩm'
+  }
+
+  const getProductBrand = (product: Product) => product.brand?.name || 'Medispace'
+
+  const handleShare = async () => {
+    if (!article) return
+
+    articleService.trackJourneyEvent(article.slug, {
+      eventType: 'article_share',
+      targetType: 'article',
+      targetId: article._id,
+    })
+
+    if (navigator.share) {
+      await navigator.share({
         title: article.title,
         text: article.excerpt,
         url: window.location.href,
       })
-    } else {
-      // Fallback: copy to clipboard
-      navigator.clipboard.writeText(window.location.href)
+      return
+    }
+
+    if (navigator.clipboard) {
+      await navigator.clipboard.writeText(window.location.href)
       alert('Đã sao chép link bài viết!')
+    }
+  }
+
+	  const trackArticleCta = (
+	    eventType: 'cta_chat' | 'cta_prescription_upload' | 'cta_product_search' | 'article_save' | 'topic_follow',
+	    targetType: 'chat' | 'prescription' | 'search' | 'article',
+	    targetUrl: string,
+	  ) => {
+    if (!article) return
+    articleService.trackJourneyEvent(article.slug, {
+      eventType,
+      targetType,
+      targetUrl,
+      metadata: {
+        category: article.category?.name,
+        tags: article.tags,
+      },
+	    })
+	  }
+
+	  const toggleSavedArticle = async () => {
+	    if (!article) return
+	    const nextSaved = !isSaved
+	    if (isAuthenticated) {
+	      const saved = await articleService.setSavedArticle(article.slug, nextSaved)
+	      setIsSaved(saved)
+	    } else {
+	      const key = 'medispace_saved_articles'
+	      const savedArticles = JSON.parse(localStorage.getItem(key) || '[]') as string[]
+	      const next = nextSaved ? [...savedArticles, article._id] : savedArticles.filter((id) => id !== article._id)
+	      localStorage.setItem(key, JSON.stringify(Array.from(new Set(next))))
+	      setIsSaved(nextSaved)
+	    }
+	    articleService.trackJourneyEvent(article.slug, {
+	      eventType: 'article_save',
+	      targetType: 'article',
+	      targetId: article._id,
+	      metadata: { saved: nextSaved, persisted: isAuthenticated },
+	    })
+	  }
+
+	  const toggleFollowTopic = async () => {
+	    if (!article) return
+	    const topic = article.category?.slug || article.categoryId
+	    if (!topic) return
+	    const nextFollowing = !isFollowingTopic
+	    if (isAuthenticated) {
+	      const following = await articleService.setFollowedHealthTopic(topic, nextFollowing)
+	      setIsFollowingTopic(following)
+	    } else {
+	      const key = 'medispace_followed_health_topics'
+	      const followedTopics = JSON.parse(localStorage.getItem(key) || '[]') as string[]
+	      const next = nextFollowing ? [...followedTopics, topic] : followedTopics.filter((id) => id !== topic)
+	      localStorage.setItem(key, JSON.stringify(Array.from(new Set(next))))
+	      setIsFollowingTopic(nextFollowing)
+	    }
+	    articleService.trackJourneyEvent(article.slug, {
+	      eventType: 'topic_follow',
+	      targetType: 'article',
+	      targetId: article._id,
+	      metadata: { topic, following: nextFollowing, persisted: isAuthenticated },
+	    })
+	  }
+
+  const askArticleAssistant = async (question?: string) => {
+    if (!article || aiLoading) return
+    const finalQuestion = (question || aiQuestion).trim()
+    if (!finalQuestion) return
+
+    setAiLoading(true)
+    setAiQuestion(finalQuestion)
+    try {
+      const result = await articleService.askArticleAssistant(article.slug, finalQuestion)
+      if (result) {
+        setAiAnswer(result.answer)
+        setAiSuggestions(result.suggested_questions || [])
+        setAiEscalated(result.is_escalated)
+        articleService.trackJourneyEvent(article.slug, {
+          eventType: 'article_ai_ask',
+          targetType: 'ai',
+          metadata: {
+            question: finalQuestion,
+            escalated: result.is_escalated,
+          },
+        })
+      }
+    } finally {
+      setAiLoading(false)
     }
   }
 
@@ -161,17 +324,28 @@ export function ArticleDetailPage() {
               </div>
               <div className='flex items-center gap-2'>
                 <Clock className='h-4 w-4' />
-                <span>{article.readTime} phút đọc</span>
+                <span>{getReadTime(article)} phút đọc</span>
               </div>
               <div className='flex items-center gap-2'>
                 <Eye className='h-4 w-4' />
                 <span>{article.viewCount} lượt xem</span>
               </div>
-              <Button variant='outline' size='sm' className='ml-auto gap-2' onClick={handleShare}>
-                <Share2 className='h-4 w-4' />
-                Chia sẻ
-              </Button>
-            </div>
+	              <Button variant='outline' size='sm' className='ml-auto gap-2' onClick={handleShare}>
+	                <Share2 className='h-4 w-4' />
+	                Chia sẻ
+	              </Button>
+	            </div>
+
+	            <div className='mt-4 flex flex-wrap gap-3'>
+	              <Button type='button' variant='outline' size='sm' className='gap-2' onClick={toggleSavedArticle}>
+	                <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-blue-600 text-blue-600' : ''}`} />
+	                {isSaved ? 'Đã lưu' : 'Lưu bài'}
+	              </Button>
+	              <Button type='button' variant='outline' size='sm' className='gap-2' onClick={toggleFollowTopic}>
+	                <Bell className={`h-4 w-4 ${isFollowingTopic ? 'fill-cyan-600 text-cyan-600' : ''}`} />
+	                {isFollowingTopic ? 'Đang theo dõi chủ đề' : 'Theo dõi chủ đề'}
+	              </Button>
+	            </div>
 
             {/* Featured Image */}
             {article.featuredImage && (
@@ -180,11 +354,159 @@ export function ArticleDetailPage() {
               </div>
             )}
 
+            {(article.reviewedBy || article.lastMedicallyReviewedAt || article.references?.length) && (
+              <div className='mb-8 rounded-lg border border-emerald-100 bg-emerald-50/70 p-5'>
+                <div className='flex items-start gap-3'>
+                  <div className='mt-1 rounded-full bg-emerald-100 p-2 text-emerald-700'>
+                    <ShieldCheck className='h-5 w-5' />
+                  </div>
+                  <div className='space-y-2'>
+                    <h2 className='text-lg font-semibold text-emerald-950'>Thông tin kiểm duyệt y khoa</h2>
+                    {article.reviewedBy && (
+                      <p className='text-sm text-emerald-900'>
+                        Được kiểm duyệt bởi <span className='font-semibold'>{article.reviewedBy}</span>
+                        {article.reviewedByTitle ? `, ${article.reviewedByTitle}` : ''}.
+                      </p>
+                    )}
+                    <div className='flex flex-wrap gap-x-4 gap-y-1 text-sm text-emerald-800'>
+                      {article.reviewedAt && <span>Ngày kiểm duyệt: {formatDate(article.reviewedAt)}</span>}
+                      {article.lastMedicallyReviewedAt && (
+                        <span>Cập nhật chuyên môn: {formatDate(article.lastMedicallyReviewedAt)}</span>
+                      )}
+                      {article.references?.length ? <span>{article.references.length} nguồn tham khảo</span> : null}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Article Content */}
             <div
               className='prose prose-lg max-w-none overflow-hidden prose-headings:font-bold prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4 prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3 prose-p:mb-4 prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2'
               dangerouslySetInnerHTML={{ __html: article.content }}
             />
+
+            <div className='mt-8 rounded-lg border border-cyan-100 bg-cyan-50/70 p-5'>
+              <div className='flex items-start gap-3 mb-4'>
+                <div className='mt-1 rounded-full bg-cyan-100 p-2 text-cyan-700'>
+                  <Bot className='h-5 w-5' />
+                </div>
+                <div>
+                  <h2 className='text-lg font-semibold text-cyan-950'>Trợ lý AI theo bài viết</h2>
+                  <p className='text-sm text-cyan-800 mt-1'>
+                    Hỏi nhanh về nội dung bài này. Câu trả lời AI chỉ để tham khảo và nên được dược sĩ xác nhận khi dùng thuốc.
+                  </p>
+                </div>
+              </div>
+
+	              <div className='flex flex-wrap gap-2 mb-4'>
+	                {[
+	                  'Tóm tắt ngắn bài này trong 3 ý',
+	                  'Giải thích bài này thật dễ hiểu',
+	                  'Tóm tắt chuyên sâu kèm điểm cần thận trọng',
+	                  'Tôi nên lưu ý điều gì?',
+	                  'Khi nào cần hỏi dược sĩ?',
+	                ].map((suggestion) => (
+                  <Button
+                    key={suggestion}
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    className='border-cyan-200 text-cyan-800 hover:bg-white'
+                    onClick={() => askArticleAssistant(suggestion)}
+                    disabled={aiLoading}
+                  >
+                    {suggestion}
+                  </Button>
+                ))}
+              </div>
+
+              <form
+                className='flex flex-col sm:flex-row gap-3'
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  askArticleAssistant()
+                }}
+              >
+                <input
+                  value={aiQuestion}
+                  onChange={(event) => setAiQuestion(event.target.value)}
+                  placeholder='Nhập câu hỏi về bài viết'
+                  className='h-11 flex-1 rounded-md border border-cyan-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-cyan-500'
+                />
+                <Button type='submit' className='h-11 bg-cyan-700 hover:bg-cyan-800 text-white' disabled={aiLoading}>
+                  {aiLoading ? <Loader2 className='h-4 w-4 mr-2 animate-spin' /> : <Send className='h-4 w-4 mr-2' />}
+                  Hỏi AI
+                </Button>
+              </form>
+
+              {aiAnswer && (
+                <div className='mt-4 rounded-lg bg-white border border-cyan-100 p-4'>
+                  {aiEscalated && (
+                    <div className='mb-3 flex items-start gap-2 rounded-md bg-amber-50 p-3 text-sm text-amber-800'>
+                      <AlertTriangle className='h-4 w-4 mt-0.5 flex-shrink-0' />
+                      <span>Nội dung này có dấu hiệu cần dược sĩ hoặc bác sĩ tư vấn trực tiếp.</span>
+                    </div>
+                  )}
+                  <p className='text-sm leading-6 text-gray-800 whitespace-pre-line'>{aiAnswer}</p>
+                  {aiSuggestions.length > 0 && (
+                    <div className='mt-4 flex flex-wrap gap-2'>
+                      {aiSuggestions.map((suggestion) => (
+                        <Button
+                          key={suggestion}
+                          type='button'
+                          variant='ghost'
+                          size='sm'
+                          className='text-cyan-800 hover:bg-cyan-50'
+                          onClick={() => askArticleAssistant(suggestion)}
+                          disabled={aiLoading}
+                        >
+                          {suggestion}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className='mt-8 rounded-lg border border-blue-100 bg-blue-50/70 p-5'>
+              <div className='mb-4'>
+                <h2 className='text-lg font-semibold text-blue-950'>Cần hỗ trợ sau khi đọc?</h2>
+                <p className='text-sm text-blue-800 mt-1'>
+                  Dược sĩ Medispace có thể giúp bạn kiểm tra thông tin thuốc, đơn thuốc và sản phẩm phù hợp.
+                </p>
+              </div>
+              <div className='flex flex-wrap gap-3'>
+                <Button asChild className='bg-blue-600 hover:bg-blue-700 text-white'>
+                  <Link
+                    to='/community'
+                    onClick={() => trackArticleCta('cta_chat', 'chat', '/community')}
+                  >
+                    <MessageCircle className='h-4 w-4 mr-2' />
+                    Hỏi dược sĩ
+                  </Link>
+                </Button>
+                <Button asChild variant='outline' className='border-blue-200 text-blue-700 hover:bg-white'>
+                  <Link
+                    to='/upload-prescription'
+                    onClick={() => trackArticleCta('cta_prescription_upload', 'prescription', '/upload-prescription')}
+                  >
+                    <FileText className='h-4 w-4 mr-2' />
+                    Gửi đơn thuốc
+                  </Link>
+                </Button>
+                <Button asChild variant='outline' className='border-blue-200 text-blue-700 hover:bg-white'>
+                  <Link
+                    to={`/search?q=${encodeURIComponent(article.tags?.[0] || article.category?.name || article.title)}`}
+                    onClick={() => trackArticleCta('cta_product_search', 'search', '/search')}
+                  >
+                    <ShoppingBag className='h-4 w-4 mr-2' />
+                    Tìm sản phẩm liên quan
+                  </Link>
+                </Button>
+              </div>
+            </div>
 
             {/* Tags Footer */}
             {article.tags && article.tags.length > 0 && (
@@ -199,7 +521,136 @@ export function ArticleDetailPage() {
                 </div>
               </div>
             )}
+
+            {article.references && article.references.length > 0 && (
+              <div className='mt-8 pt-6 border-t'>
+                <div className='flex items-center gap-2 mb-3'>
+                  <BookOpen className='h-4 w-4 text-blue-600' />
+                  <h3 className='text-sm font-semibold text-gray-700'>Nguồn tham khảo:</h3>
+                </div>
+                <ol className='list-decimal pl-5 space-y-2 text-sm text-gray-600'>
+                  {article.references.map((reference, index) => (
+                    <li key={`${reference.title}-${index}`}>
+                      {reference.url ? (
+                        <a
+                          href={reference.url}
+                          target='_blank'
+                          rel='noreferrer'
+                          onClick={() =>
+                            articleService.trackJourneyEvent(article.slug, {
+                              eventType: 'source_click',
+                              targetType: 'source',
+                              targetUrl: reference.url,
+                              metadata: { title: reference.title },
+                            })
+                          }
+                          className='text-blue-600 hover:text-blue-700 hover:underline'
+                        >
+                          {reference.title}
+                        </a>
+                      ) : (
+                        reference.title
+                      )}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
           </article>
+
+          {relatedProducts.length > 0 && (
+            <section className='mb-12'>
+              <div className='flex items-center justify-between gap-4 mb-6'>
+                <div>
+                  <h2 className='text-2xl font-bold text-gray-900'>Sản phẩm liên quan</h2>
+                  <p className='text-sm text-gray-600 mt-1'>Gợi ý dựa trên chủ đề bài viết và dữ liệu sản phẩm hiện có.</p>
+                </div>
+                <Button asChild variant='outline' className='hidden sm:inline-flex'>
+                  <Link
+                    to={`/search?q=${encodeURIComponent(article.tags?.[0] || article.category?.name || article.title)}`}
+                    onClick={() => trackArticleCta('cta_product_search', 'search', '/search')}
+                  >
+                    Xem thêm
+                  </Link>
+                </Button>
+              </div>
+              <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4'>
+                {relatedProducts.map((product) => {
+                  const price = getProductPrice(product)
+                  return (
+                    <Card key={product._id} className='overflow-hidden hover:shadow-lg transition-shadow h-full bg-white'>
+                      <CardContent className='p-4 flex flex-col h-full'>
+                        <Link
+                          to={`/products/${product.slug}`}
+                          className='block'
+                          onClick={() =>
+                            articleService.trackJourneyEvent(article.slug, {
+                              eventType: 'related_product_click',
+                              targetType: 'product',
+                              targetId: product._id,
+                              targetUrl: `/products/${product.slug}`,
+                              metadata: { productName: product.name, requiresPrescription: product.requiresPrescription },
+                            })
+                          }
+                        >
+                          <div className='aspect-square rounded-lg bg-gray-50 border border-gray-100 p-3 mb-4'>
+                            <ImageWithFallback
+                              src={product.featuredImage || product.image || '/placeholder-product.jpg'}
+                              alt={product.name}
+                              className='w-full h-full object-contain'
+                            />
+                          </div>
+                          <div className='flex items-center gap-2 mb-2'>
+                            {product.requiresPrescription && (
+                              <Badge variant='outline' className='text-orange-600 border-orange-200 bg-orange-50'>
+                                Kê đơn
+                              </Badge>
+                            )}
+                            {!product.requiresPrescription && (
+                              <Badge variant='outline' className='text-emerald-600 border-emerald-200 bg-emerald-50'>
+                                OTC
+                              </Badge>
+                            )}
+                          </div>
+                          <h3 className='font-semibold text-gray-900 line-clamp-2 min-h-12'>{product.name}</h3>
+                          <p className='text-xs text-gray-500 mt-1 line-clamp-1'>{getProductBrand(product)}</p>
+                        </Link>
+                        <div className='mt-auto pt-4'>
+                          {product.requiresPrescription ? (
+                            <p className='text-sm text-gray-500 mb-3'>Cần dược sĩ tư vấn trước khi mua</p>
+                          ) : (
+                            <p className='font-semibold text-blue-600 mb-3'>
+                              {price.toLocaleString('vi-VN')}đ / {getProductUnit(product)}
+                            </p>
+                          )}
+                          <Button asChild className='w-full bg-blue-600 hover:bg-blue-700 text-white'>
+                            <Link
+                              to={`/products/${product.slug}`}
+                              onClick={() =>
+                                articleService.trackJourneyEvent(article.slug, {
+                                  eventType: 'related_product_click',
+                                  targetType: 'product',
+                                  targetId: product._id,
+                                  targetUrl: `/products/${product.slug}`,
+                                  metadata: {
+                                    productName: product.name,
+                                    requiresPrescription: product.requiresPrescription,
+                                    source: 'product_cta',
+                                  },
+                                })
+                              }
+                            >
+                              Xem chi tiết
+                            </Link>
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )
+                })}
+              </div>
+            </section>
+          )}
 
           {/* Related Articles */}
           {relatedArticles.length > 0 && (
@@ -225,7 +676,7 @@ export function ArticleDetailPage() {
                         <h3 className='text-sm font-semibold text-gray-900 mb-2 line-clamp-2'>{related.title}</h3>
                         <div className='flex items-center gap-2 text-xs text-gray-500'>
                           <Clock className='h-3 w-3' />
-                          <span>{related.readTime} phút</span>
+                          <span>{getReadTime(related)} phút</span>
                           <span>•</span>
                           <span>{related.viewCount} lượt xem</span>
                         </div>

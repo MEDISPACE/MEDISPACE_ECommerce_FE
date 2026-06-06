@@ -284,6 +284,28 @@ export default function ReturnRequestDetail() {
                     {item.quantity} ={' '}
                     <span className='font-medium text-blue-600'>{(item.totalPrice ?? 0).toLocaleString()}đ</span>
                   </p>
+                  {((item.discountAllocation || 0) > 0 || (item.pointsAllocation || 0) > 0 || item.netRefundAmount !== undefined) && (
+                    <div className='mt-2 rounded-lg bg-white border border-blue-100 p-3 text-sm space-y-1'>
+                      {(item.discountAllocation || 0) > 0 && (
+                        <div className='flex justify-between text-green-700'>
+                          <span>Coupon đã dùng</span>
+                          <span>-{(item.discountAllocation || 0).toLocaleString()}đ</span>
+                        </div>
+                      )}
+                      {(item.pointsAllocation || 0) > 0 && (
+                        <div className='flex justify-between text-purple-700'>
+                          <span>Điểm đã đổi</span>
+                          <span>-{(item.pointsAllocation || 0).toLocaleString()}đ</span>
+                        </div>
+                      )}
+                      {item.netRefundAmount !== undefined && (
+                        <div className='flex justify-between font-semibold pt-1 border-t border-blue-100'>
+                          <span>Hoàn thực nhận cho sản phẩm</span>
+                          <span className='text-blue-600'>{(item.netRefundAmount || 0).toLocaleString()}đ</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <p className='text-sm mt-1'>
                     <span className='text-muted-foreground'>Lý do: </span>
                     {returnReasonLabels[item.returnReason]}

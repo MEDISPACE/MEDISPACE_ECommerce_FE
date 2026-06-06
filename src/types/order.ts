@@ -17,6 +17,7 @@ export enum PaymentStatus {
   Paid = 'paid',
   Failed = 'failed',
   Refunded = 'refunded',
+  PartiallyRefunded = 'partially_refunded',
 }
 
 export enum PaymentMethod {
@@ -29,6 +30,7 @@ export enum PaymentMethod {
 export interface OrderItem {
   id: string
   productId: string
+  categoryId?: string
   product: Product
   quantity: number
   price: number
@@ -36,6 +38,13 @@ export interface OrderItem {
   prescriptionId?: string
   prescriptionVerified?: boolean
   notes?: string
+  discountAllocation?: number
+  pointsAllocation?: number
+  couponAllocations?: {
+    code: string
+    type: string
+    amount: number
+  }[]
 }
 
 export interface ShippingAddress {
@@ -70,6 +79,10 @@ export interface Order {
   // Coupon
   couponCode?: string
   couponDiscount?: number
+  appliedCoupons?: AppliedCoupon[]
+  pointsRedeemed?: number
+  pointsRedeemAmount?: number
+  shippingDiscountAmount?: number
 
   // Shipping
   shippingAddress: ShippingAddress
@@ -102,6 +115,16 @@ export interface Order {
   cancelledAt?: string
 }
 
+export interface AppliedCoupon {
+  code: string
+  name?: string
+  type: string
+  discountAmount: number
+  eligibleSubtotal?: number
+  applicableProductIds?: string[]
+  applicableCategoryIds?: string[]
+}
+
 export interface CreateOrderRequest {
   items?: {
     productId: string
@@ -112,6 +135,8 @@ export interface CreateOrderRequest {
   shippingAddress: ShippingAddress
   paymentMethod: string
   couponCode?: string
+  couponCodes?: string[]
+  pointsToRedeem?: number
   notes?: string
   isDirectBuy?: boolean
 }

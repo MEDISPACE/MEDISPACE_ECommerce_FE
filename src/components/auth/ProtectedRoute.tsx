@@ -57,7 +57,7 @@ export function ProtectedRoute({
   }
 
   // Check role requirement
-  if (requiredRole && user.role !== requiredRole) {
+  if (requiredRole !== undefined && user.role !== requiredRole) {
     return (
       <div className='min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 flex items-center justify-center p-4'>
         <div className='max-w-md w-full bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-8 text-center'>

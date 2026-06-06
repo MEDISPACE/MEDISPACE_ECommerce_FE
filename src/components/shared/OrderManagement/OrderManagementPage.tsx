@@ -60,9 +60,60 @@ const mapApiOrderToOrder = (apiOrder: ApiOrder): Order => {
     products: apiOrder.itemCount,
     total: apiOrder.totalAmount,
     status: apiOrder.orderStatus as OrderStatus,
-    paymentStatus: apiOrder.paymentStatus as 'pending' | 'paid' | 'failed',
+    paymentStatus: apiOrder.paymentStatus as PaymentStatus,
     date: formatDate(apiOrder.createdAt),
   }
+}
+
+const ORDER_STATUS_OPTIONS: Array<{ value: OrderStatus; label: string }> = [
+  { value: 'pending', label: 'Chờ xử lý' },
+  { value: 'confirmed', label: 'Đã xác nhận' },
+  { value: 'processing', label: 'Đang chuẩn bị' },
+  { value: 'shipping', label: 'Đang giao' },
+  { value: 'delivered', label: 'Đã giao' },
+  { value: 'cancelled', label: 'Đã hủy' },
+  { value: 'returned', label: 'Đã trả hàng' },
+]
+
+const PAYMENT_STATUS_OPTIONS: Array<{ value: PaymentStatus; label: string }> = [
+  { value: 'pending', label: 'Chờ thanh toán' },
+  { value: 'paid', label: 'Đã thanh toán' },
+  { value: 'failed', label: 'Thanh toán thất bại' },
+  { value: 'refunded', label: 'Đã hoàn tiền' },
+  { value: 'partially_refunded', label: 'Hoàn tiền một phần' },
+]
+
+const TERMINAL_ORDER_STATUSES: OrderStatus[] = ['delivered', 'cancelled', 'returned']
+const TERMINAL_PAYMENT_STATUSES: PaymentStatus[] = ['refunded']
+
+const getAllowedOrderStatuses = (order: Order): OrderStatus[] => {
+  if (TERMINAL_ORDER_STATUSES.includes(order.status)) return [order.status]
+
+  const transitions: Record<OrderStatus, OrderStatus[]> = {
+    pending: ['pending', 'confirmed', 'cancelled'],
+    confirmed: ['confirmed', 'processing', 'shipping', 'cancelled'],
+    processing: ['processing', 'shipping', 'cancelled'],
+    shipping: ['shipping', 'delivered', 'cancelled'],
+    shipped: ['shipped', 'delivered', 'cancelled'],
+    delivered: ['delivered'],
+    cancelled: ['cancelled'],
+    returned: ['returned'],
+  }
+
+  return transitions[order.status] || [order.status]
+}
+
+const getAllowedPaymentStatuses = (order: Order): PaymentStatus[] => {
+  if (TERMINAL_PAYMENT_STATUSES.includes(order.paymentStatus)) return [order.paymentStatus]
+  if (order.paymentStatus === 'partially_refunded') return ['partially_refunded', 'refunded']
+
+  if (order.paymentStatus === 'paid') {
+    return order.status === 'cancelled' || order.status === 'returned' ? ['paid', 'refunded'] : ['paid']
+  }
+
+  if (order.paymentStatus === 'failed') return ['failed', 'pending', 'paid']
+
+  return ['pending', 'paid', 'failed']
 }
 
 // Helper function to check if order is in date range
@@ -264,16 +315,17 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
       // Send payment status (only if different from current)
       const paymentStatusToSend = newPaymentStatus !== currentOrder.paymentStatus ? newPaymentStatus : undefined
 
+      let updatedOrder: any
       if (role === 'pharmacist') {
         // Use pharmacist-specific API - backend expects 'status' not 'orderStatus'
-        await pharmacistOrderService.updateStatus(currentOrder.id, {
+        updatedOrder = await pharmacistOrderService.updateStatus(currentOrder.id, {
           status: newStatus,
           paymentStatus: paymentStatusToSend,
           notes: notes || undefined,
         })
       } else if (role === 'admin') {
         // Use admin-specific API
-        await adminService.updateOrderStatus(currentOrder.id, {
+        updatedOrder = await adminService.updateOrderStatus(currentOrder.id, {
           status: newStatus,
           paymentStatus: paymentStatusToSend,
           notes: notes || undefined,
@@ -291,16 +343,24 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
           cancelled: OrderStatusEnum.Cancelled,
           returned: OrderStatusEnum.Returned,
         }
-        await generalOrderService.updateOrderStatus(currentOrder.id, statusMap[newStatus])
+        updatedOrder = await generalOrderService.updateOrderStatus(currentOrder.id, statusMap[newStatus])
       }
 
-      // Update local state
-      const updatedPaymentStatus = newPaymentStatus as PaymentStatus
-      setOrders(
-        orders.map((o) =>
-          o.id === currentOrder.id ? { ...o, status: newStatus, paymentStatus: updatedPaymentStatus } : o,
-        ),
-      )
+      const normalizedOrder =
+        updatedOrder?._id
+          ? mapApiOrderToOrder(updatedOrder)
+          : updatedOrder?.id
+            ? {
+                ...currentOrder,
+                status: updatedOrder.status as OrderStatus,
+                paymentStatus: updatedOrder.paymentStatus as PaymentStatus,
+                total: updatedOrder.total ?? currentOrder.total,
+              }
+            : null
+
+      if (normalizedOrder) {
+        setOrders(orders.map((o) => (o.id === currentOrder.id ? { ...o, ...normalizedOrder } : o)))
+      }
 
       // Show specific message for paid orders cancellation
       if (newStatus === 'cancelled' && currentOrder.paymentStatus === 'paid') {
@@ -320,7 +380,7 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
       setNewPaymentStatus('')
     } catch (error) {
       toast.error('Cập nhật thất bại', {
-        description: 'Vui lòng thử lại sau',
+        description: (error as any)?.response?.data?.message || 'Vui lòng thử lại sau',
       })
     }
   }
@@ -460,14 +520,25 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value='pending'>Chờ xử lý</SelectItem>
-                  <SelectItem value='confirmed'>Đã xác nhận</SelectItem>
-                  <SelectItem value='processing'>Đang chuẩn bị</SelectItem>
-                  <SelectItem value='shipping'>Đang giao</SelectItem>
-                  <SelectItem value='delivered'>Đã giao</SelectItem>
-                  <SelectItem value='cancelled'>Đã hủy</SelectItem>
+                  {ORDER_STATUS_OPTIONS.map((option) => (
+                    <SelectItem
+                      key={option.value}
+                      value={option.value}
+                      disabled={currentOrder ? !getAllowedOrderStatuses(currentOrder).includes(option.value) : false}
+                    >
+                      {option.label}
+                      {currentOrder?.status === option.value && (
+                        <span className='ml-2 text-xs text-blue-600'>(Hiện tại)</span>
+                      )}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
+              {currentOrder && TERMINAL_ORDER_STATUSES.includes(currentOrder.status) && (
+                <p className='text-xs text-amber-600'>
+                  Đơn ở trạng thái cuối, không thể chuyển ngược để tránh sai refund/coupon/points.
+                </p>
+              )}
             </div>
             <div className='space-y-2'>
               <Label>Trạng thái thanh toán</Label>
@@ -476,32 +547,25 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
                   <SelectValue placeholder='Giữ nguyên' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value='pending'>
-                    Chờ thanh toán{' '}
-                    {currentOrder?.paymentStatus === 'pending' && (
-                      <span className='ml-2 text-xs text-blue-600'>(Hiện tại)</span>
-                    )}
-                  </SelectItem>
-                  <SelectItem value='paid'>
-                    Đã thanh toán{' '}
-                    {currentOrder?.paymentStatus === 'paid' && (
-                      <span className='ml-2 text-xs text-blue-600'>(Hiện tại)</span>
-                    )}
-                  </SelectItem>
-                  <SelectItem value='failed'>
-                    Thanh toán thất bại{' '}
-                    {currentOrder?.paymentStatus === 'failed' && (
-                      <span className='ml-2 text-xs text-blue-600'>(Hiện tại)</span>
-                    )}
-                  </SelectItem>
-                  <SelectItem value='refunded'>
-                    Đã hoàn tiền{' '}
-                    {currentOrder?.paymentStatus === 'refunded' && (
-                      <span className='ml-2 text-xs text-blue-600'>(Hiện tại)</span>
-                    )}
-                  </SelectItem>
+                  {PAYMENT_STATUS_OPTIONS.map((option) => (
+                    <SelectItem
+                      key={option.value}
+                      value={option.value}
+                      disabled={currentOrder ? !getAllowedPaymentStatuses(currentOrder).includes(option.value) : false}
+                    >
+                      {option.label}
+                      {currentOrder?.paymentStatus === option.value && (
+                        <span className='ml-2 text-xs text-blue-600'>(Hiện tại)</span>
+                      )}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
+              {currentOrder?.paymentStatus === 'paid' && currentOrder.status !== 'cancelled' && currentOrder.status !== 'returned' && (
+                <p className='text-xs text-gray-500'>
+                  Hoàn tiền nên đi qua luồng đổi/trả hoặc hủy đơn để BE xử lý points/coupon đúng.
+                </p>
+              )}
             </div>
             <div className='space-y-2'>
               <Label>Ghi chú</Label>

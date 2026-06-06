@@ -1,10 +1,11 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { authService } from '../services/authService'
 import { logger } from '../utils/logger'
 import type { User } from '../types/user'
 import type { RegisterRequest, RegisterResponse } from '../types/api'
 
 type ReactNode = React.ReactNode
+const AUTH_SESSION_EXPIRED_EVENT = 'medispace:auth-session-expired'
 
 interface AuthContextType {
   isAuthenticated: boolean
@@ -37,6 +38,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const sessionExpiredHandledRef = useRef(false)
 
   // Check for existing auth on mount
   useEffect(() => {
@@ -44,24 +46,53 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         const token = authService.getAccessToken()
         const userData = localStorage.getItem('medispace_user_data')
+        const hasSessionHint = localStorage.getItem('medispace_session_hint') === '1'
 
-        if (token && userData) {
-          const parsedUser = JSON.parse(userData) as User
-          setUser(parsedUser)
-          setIsAuthenticated(true)
+        if (token) {
+          if (userData) {
+            const parsedUser = JSON.parse(userData) as User
+            setUser(parsedUser)
+            setIsAuthenticated(true)
+          }
 
-          // Optionally verify token by fetching user profile
           try {
             const currentUser = await authService.getMe()
             setUser(currentUser)
+            setIsAuthenticated(true)
+            sessionExpiredHandledRef.current = false
             localStorage.setItem('medispace_user_data', JSON.stringify(currentUser))
           } catch {
-            // Failed to fetch current user, using cached data
-            logger.warn('Failed to fetch current user from API, using cached data')
+            logger.warn('Failed to fetch current user from API, clearing cached session')
+            authService.clearTokens()
+            setUser(null)
+            setIsAuthenticated(false)
           }
+        } else if (userData || hasSessionHint) {
+          try {
+            const refreshResponse = await authService.refreshToken()
+            const accessToken = refreshResponse.result?.accessToken
+            if (!accessToken) {
+              throw new Error('Refresh did not return an access token')
+            }
+            authService.saveTokens(accessToken)
+            const currentUser = await authService.getMe()
+            setUser(currentUser)
+            setIsAuthenticated(true)
+            sessionExpiredHandledRef.current = false
+            localStorage.setItem('medispace_user_data', JSON.stringify(currentUser))
+          } catch {
+            authService.clearTokens()
+            setUser(null)
+            setIsAuthenticated(false)
+          }
+        } else {
+          setUser(null)
+          setIsAuthenticated(false)
         }
       } catch {
         authService.clearTokens()
+        setUser(null)
+        setIsAuthenticated(false)
       } finally {
         setLoading(false)
       }
@@ -70,6 +101,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Small delay to prevent immediate flashing
     const timeoutId = setTimeout(checkAuth, 100)
     return () => clearTimeout(timeoutId)
+  }, [])
+
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      if (sessionExpiredHandledRef.current) return
+      sessionExpiredHandledRef.current = true
+
+      authService.clearTokens()
+      setUser(null)
+      setIsAuthenticated(false)
+      window.dispatchEvent(new CustomEvent('auth-changed'))
+    }
+
+    window.addEventListener(AUTH_SESSION_EXPIRED_EVENT, handleSessionExpired)
+    return () => window.removeEventListener(AUTH_SESSION_EXPIRED_EVENT, handleSessionExpired)
   }, [])
 
   const login = async (email: string, password: string, rememberMe: boolean = false): Promise<User | null> => {
@@ -87,6 +133,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           const userProfile = await authService.getMe()
           setUser(userProfile)
           setIsAuthenticated(true)
+          sessionExpiredHandledRef.current = false
           localStorage.setItem('medispace_user_data', JSON.stringify(userProfile))
           // Dispatch custom event for cart reload
           window.dispatchEvent(new CustomEvent('auth-changed'))
@@ -136,10 +183,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } finally {
       setUser(null)
       setIsAuthenticated(false)
-      // Navigate to home page after logout
-      window.location.href = '/'
+      sessionExpiredHandledRef.current = false
       // Dispatch custom event for cart reload
       window.dispatchEvent(new CustomEvent('auth-changed'))
+      // Replace instead of push so Back does not revisit a protected page/login flash.
+      window.location.replace('/')
     }
   }
 

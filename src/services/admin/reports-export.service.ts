@@ -24,7 +24,7 @@ export const downloadExportFile = async (
   endDate?: string,
 ) => {
   try {
-    const response = await apiClient.get('/admin/reports/export', {
+    const response = await apiClient.get<Blob>('/admin/reports/export', {
       params: { format, timeRange, startDate, endDate },
       responseType: 'blob',
     })
@@ -40,9 +40,15 @@ export const downloadExportFile = async (
       }
     }
 
-    const blob = new Blob([response.data as BlobPart], {
-      type: format === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    })
+    const blob =
+      response.data instanceof Blob
+        ? response.data
+        : new Blob([response.data as BlobPart], {
+            type:
+              format === 'pdf'
+                ? 'application/pdf'
+                : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          })
 
     downloadBlob(blob, filename)
   } catch (error) {

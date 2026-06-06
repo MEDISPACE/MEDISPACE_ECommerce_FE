@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Save, ArrowLeft } from 'lucide-react'
+import { Save, ArrowLeft, Wand2, Loader2, FileCheck, ListTree, HelpCircle, SearchCheck } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
@@ -11,8 +11,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~
 import { Switch } from '~/components/ui/switch'
 import { RichTextEditor } from '~/components/ui/rich-text-editor'
 import apiClient from '~/services/apiClient'
+import articleService, { type ArticleAiAssistResult } from '~/services/articleService'
 import type { HealthCategory } from '@/types/article'
 import { useAuth } from '~/contexts/AuthContext'
+import { UserRole } from '~/types/user'
 
 interface ArticleFormData {
   title: string
@@ -28,6 +30,17 @@ interface ArticleFormData {
   metaTitle: string
   metaDescription: string
   metaKeywords: string
+  reviewedBy: string
+  reviewedByTitle: string
+  reviewedAt: string
+  lastMedicallyReviewedAt: string
+  references: string
+  contentVersion: string
+  riskLevel: 'general' | 'medication' | 'disease' | 'emergency-sensitive'
+  targetAudiences: string
+  symptoms: string
+  activeIngredients: string
+  healthTopics: string
 }
 
 interface AdminArticleFormProps {
@@ -36,13 +49,15 @@ interface AdminArticleFormProps {
 
 export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleFormProps) {
   const { user } = useAuth()
-  const isAdmin = user?.role === 0
+  const isAdmin = user?.role === UserRole.Admin
 
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const isEdit = !!id
 
   const [loading, setLoading] = useState(false)
+  const [aiLoadingAction, setAiLoadingAction] = useState<string | null>(null)
+  const [aiResult, setAiResult] = useState<ArticleAiAssistResult | null>(null)
   const [categories, setCategories] = useState<HealthCategory[]>([])
   const [formData, setFormData] = useState<ArticleFormData>({
     title: '',
@@ -58,6 +73,17 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
     metaTitle: '',
     metaDescription: '',
     metaKeywords: '',
+    reviewedBy: '',
+    reviewedByTitle: '',
+    reviewedAt: '',
+    lastMedicallyReviewedAt: '',
+    references: '',
+    contentVersion: '1',
+    riskLevel: 'general',
+    targetAudiences: '',
+    symptoms: '',
+    activeIngredients: '',
+    healthTopics: '',
   })
 
   useEffect(() => {
@@ -94,6 +120,17 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
         metaTitle: article.metaTitle || '',
         metaDescription: article.metaDescription || '',
         metaKeywords: article.metaKeywords?.join(', ') || '',
+        reviewedBy: article.reviewedBy || '',
+        reviewedByTitle: article.reviewedByTitle || '',
+        reviewedAt: formatDateInput(article.reviewedAt),
+        lastMedicallyReviewedAt: formatDateInput(article.lastMedicallyReviewedAt),
+        references: formatReferences(article.references),
+        contentVersion: String(article.contentVersion || 1),
+        riskLevel: article.riskLevel || 'general',
+        targetAudiences: article.targetAudiences?.join(', ') || '',
+        symptoms: article.symptoms?.join(', ') || '',
+        activeIngredients: article.activeIngredients?.join(', ') || '',
+        healthTopics: article.healthTopics?.join(', ') || '',
       })
     } catch (error) {
       console.error('Error loading article:', error)
@@ -113,12 +150,148 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
       .replace(/-+/g, '-')
   }
 
+  const formatDateInput = (date?: string) => {
+    if (!date) return ''
+    return new Date(date).toISOString().slice(0, 10)
+  }
+
+  const formatReferences = (references?: Array<{ title: string; url?: string }>) => {
+    if (!references?.length) return ''
+    return references.map((reference) => [reference.title, reference.url].filter(Boolean).join(' | ')).join('\n')
+  }
+
+  const parseReferences = (value: string) => {
+    return value
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const [title, url] = line.split('|').map((part) => part.trim())
+        return { title, url: url || undefined }
+      })
+      .filter((reference) => reference.title)
+  }
+
+  const parseCommaList = (value: string) =>
+    value
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean)
+
+  const getValidFaqItems = (faq?: Array<{ question?: unknown; answer?: unknown }>) =>
+    Array.isArray(faq)
+      ? faq
+          .map((item) => ({
+            question: typeof item.question === 'string' ? item.question.trim() : '',
+            answer: typeof item.answer === 'string' ? item.answer.trim() : '',
+          }))
+          .filter((item) => item.question.length > 0 && item.answer.length > 0)
+      : []
+
+  const canInsertAiResult = () => {
+    if (!aiResult) return false
+    const { action, result } = aiResult
+    if (action === 'outline') return Boolean(result.outline?.length)
+    if (action === 'faq') return getValidFaqItems(result.faq).length > 0
+    if (action === 'sources') return Boolean(result.sourceTopics?.length)
+    return false
+  }
+
   const handleTitleChange = (title: string) => {
     setFormData({
       ...formData,
       title,
       slug: generateSlug(title),
     })
+  }
+
+  const selectedCategoryName = categories.find((category) => category._id === formData.categoryId)?.name
+
+  const appendHtmlToContent = (html: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      content: `${prev.content || ''}${prev.content ? '<p><br></p>' : ''}${html}`,
+    }))
+  }
+
+  const runAiAssist = async (action: 'outline' | 'seo' | 'excerpt' | 'faq' | 'quality_check' | 'sources') => {
+    if (!formData.title.trim()) {
+      toast.error('Nhập tiêu đề trước khi dùng AI')
+      return
+    }
+
+    setAiLoadingAction(action)
+    try {
+      const result = await articleService.generateAiAssistance({
+        action,
+        title: formData.title,
+        excerpt: formData.excerpt,
+        content: formData.content,
+        categoryName: selectedCategoryName,
+        tags: formData.tags
+          ? formData.tags
+              .split(',')
+              .map((tag) => tag.trim())
+              .filter(Boolean)
+          : [],
+      })
+
+      if (!result) {
+        toast.error('Không thể tạo gợi ý AI')
+        return
+      }
+
+      setAiResult(result)
+      if (action === 'seo') {
+        setFormData((prev) => ({
+          ...prev,
+          metaTitle: result.result.metaTitle || prev.metaTitle,
+          metaDescription: result.result.metaDescription || prev.metaDescription,
+          metaKeywords: result.result.keywords?.join(', ') || prev.metaKeywords,
+        }))
+        toast.success('Đã áp dụng gợi ý SEO')
+      }
+      if (action === 'excerpt' && result.result.excerpt) {
+        setFormData((prev) => ({ ...prev, excerpt: result.result.excerpt || prev.excerpt }))
+        toast.success('Đã áp dụng tóm tắt AI')
+      }
+    } finally {
+      setAiLoadingAction(null)
+    }
+  }
+
+  const insertAiResult = () => {
+    if (!aiResult) return
+    const { result, action } = aiResult
+
+    if (action === 'outline' && result.outline?.length) {
+      appendHtmlToContent(
+        `<h2>Dàn ý đề xuất</h2><ul>${result.outline.map((item) => `<li>${item}</li>`).join('')}</ul>`,
+      )
+      toast.success('Đã chèn dàn ý vào nội dung')
+      return
+    }
+
+    const faqItems = getValidFaqItems(result.faq)
+    if (action === 'faq' && faqItems.length) {
+      appendHtmlToContent(
+        `<h2>Câu hỏi thường gặp</h2>${faqItems
+          .map((item) => `<h3>${item.question}</h3><p>${item.answer}</p>`)
+          .join('')}`,
+      )
+      toast.success('Đã chèn FAQ vào nội dung')
+      return
+    }
+
+    if (action === 'sources' && result.sourceTopics?.length) {
+      setFormData((prev) => ({
+        ...prev,
+        references: `${prev.references ? `${prev.references}\n` : ''}${result.sourceTopics
+          ?.map((item) => `${item} | `)
+          .join('\n')}`,
+      }))
+      toast.success('Đã chèn gợi ý nguồn vào danh sách nguồn')
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -140,19 +313,30 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
 
     try {
       const payload = {
-        ...formData,
-        tags: formData.tags
-          ? formData.tags
-              .split(',')
-              .map((t) => t.trim())
-              .filter(Boolean)
-          : [],
-        metaKeywords: formData.metaKeywords
-          ? formData.metaKeywords
-              .split(',')
-              .map((k) => k.trim())
-              .filter(Boolean)
-          : [],
+        title: formData.title,
+        slug: formData.slug,
+        excerpt: formData.excerpt,
+        content: formData.content,
+        categoryId: formData.categoryId,
+        featuredImage: formData.featuredImage || undefined,
+        tags: parseCommaList(formData.tags),
+        status: formData.status,
+        isFeatured: isAdmin ? formData.isFeatured : undefined,
+        isPinned: isAdmin ? formData.isPinned : undefined,
+        metaTitle: formData.metaTitle || undefined,
+        metaDescription: formData.metaDescription || undefined,
+        metaKeywords: parseCommaList(formData.metaKeywords),
+        reviewedBy: formData.reviewedBy || undefined,
+        reviewedByTitle: formData.reviewedByTitle || undefined,
+        references: parseReferences(formData.references),
+        reviewedAt: formData.reviewedAt || undefined,
+        lastMedicallyReviewedAt: formData.lastMedicallyReviewedAt || undefined,
+        contentVersion: Number(formData.contentVersion || 1),
+        riskLevel: formData.riskLevel,
+        targetAudiences: parseCommaList(formData.targetAudiences),
+        symptoms: parseCommaList(formData.symptoms),
+        activeIngredients: parseCommaList(formData.activeIngredients),
+        healthTopics: parseCommaList(formData.healthTopics),
       }
 
       if (isEdit) {
@@ -313,6 +497,191 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                 className='h-11 border-2 border-blue-200 focus:border-blue-500'
               />
             </div>
+
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t'>
+              <div className='space-y-2'>
+                <Label htmlFor='healthTopics' className='text-base font-medium'>
+                  Chủ đề Health A-Z
+                </Label>
+                <Input
+                  id='healthTopics'
+                  value={formData.healthTopics}
+                  onChange={(e) => setFormData({ ...formData, healthTopics: e.target.value })}
+                  placeholder='cảm cúm, dị ứng, huyết áp'
+                  className='h-11 border-2 border-blue-200 focus:border-blue-500'
+                />
+              </div>
+
+              <div className='space-y-2'>
+                <Label htmlFor='targetAudiences' className='text-base font-medium'>
+                  Nhóm người đọc
+                </Label>
+                <Input
+                  id='targetAudiences'
+                  value={formData.targetAudiences}
+                  onChange={(e) => setFormData({ ...formData, targetAudiences: e.target.value })}
+                  placeholder='trẻ em, người cao tuổi, phụ nữ mang thai'
+                  className='h-11 border-2 border-blue-200 focus:border-blue-500'
+                />
+              </div>
+
+              <div className='space-y-2'>
+                <Label htmlFor='symptoms' className='text-base font-medium'>
+                  Triệu chứng liên quan
+                </Label>
+                <Input
+                  id='symptoms'
+                  value={formData.symptoms}
+                  onChange={(e) => setFormData({ ...formData, symptoms: e.target.value })}
+                  placeholder='ho, sốt, đau họng'
+                  className='h-11 border-2 border-blue-200 focus:border-blue-500'
+                />
+              </div>
+
+              <div className='space-y-2'>
+                <Label htmlFor='activeIngredients' className='text-base font-medium'>
+                  Hoạt chất/thuốc
+                </Label>
+                <Input
+                  id='activeIngredients'
+                  value={formData.activeIngredients}
+                  onChange={(e) => setFormData({ ...formData, activeIngredients: e.target.value })}
+                  placeholder='paracetamol, ibuprofen, vitamin c'
+                  className='h-11 border-2 border-blue-200 focus:border-blue-500'
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* AI Author Assistant */}
+        <Card className='bg-white backdrop-blur-lg border-cyan-100'>
+          <CardHeader>
+            <CardTitle className='text-xl text-cyan-800 flex items-center gap-2'>
+              <Wand2 className='h-5 w-5' />
+              AI hỗ trợ tác giả
+            </CardTitle>
+          </CardHeader>
+          <CardContent className='space-y-5'>
+            <div className='grid grid-cols-2 md:grid-cols-5 gap-3'>
+              {[
+                { action: 'outline' as const, label: 'Dàn ý', icon: ListTree },
+                { action: 'seo' as const, label: 'SEO', icon: SearchCheck },
+                { action: 'excerpt' as const, label: 'Tóm tắt', icon: FileCheck },
+                { action: 'faq' as const, label: 'FAQ', icon: HelpCircle },
+                { action: 'quality_check' as const, label: 'Kiểm tra', icon: Wand2 },
+              ].map((item) => {
+                const Icon = item.icon
+                const isLoading = aiLoadingAction === item.action
+                return (
+                  <Button
+                    key={item.action}
+                    type='button'
+                    variant='outline'
+                    onClick={() => runAiAssist(item.action)}
+                    disabled={!!aiLoadingAction}
+                    className='border-cyan-200 text-cyan-700 hover:bg-cyan-50'
+                  >
+                    {isLoading ? <Loader2 className='h-4 w-4 mr-2 animate-spin' /> : <Icon className='h-4 w-4 mr-2' />}
+                    {item.label}
+                  </Button>
+                )
+              })}
+            </div>
+
+            <Button
+              type='button'
+              variant='ghost'
+              onClick={() => runAiAssist('sources')}
+              disabled={!!aiLoadingAction}
+              className='text-cyan-700 hover:bg-cyan-50'
+            >
+              {aiLoadingAction === 'sources' ? (
+                <Loader2 className='h-4 w-4 mr-2 animate-spin' />
+              ) : (
+                <SearchCheck className='h-4 w-4 mr-2' />
+              )}
+              Gợi ý nhóm nguồn tham khảo cần tra cứu
+            </Button>
+
+            {aiResult && (
+              <div className='rounded-lg border border-cyan-100 bg-cyan-50/60 p-4 space-y-4'>
+                <div className='flex items-start justify-between gap-4'>
+                  <div>
+                    <h3 className='font-semibold text-cyan-950'>Kết quả AI: {aiResult.action}</h3>
+                    <p className='text-sm text-cyan-800 mt-1'>Kiểm tra lại nội dung trước khi đăng, đặc biệt với khuyến nghị y tế.</p>
+                  </div>
+                  {['outline', 'faq', 'sources'].includes(aiResult.action) && (
+                    <Button type='button' size='sm' onClick={insertAiResult} disabled={!canInsertAiResult()} className='bg-cyan-700 hover:bg-cyan-800 text-white'>
+                      Chèn vào bài
+                    </Button>
+                  )}
+                </div>
+
+                {aiResult.result.suggestions?.length ? (
+                  <div>
+                    <p className='text-sm font-medium text-gray-700 mb-2'>Gợi ý:</p>
+                    <ul className='list-disc pl-5 text-sm text-gray-700 space-y-1'>
+                      {aiResult.result.suggestions.map((item, index) => (
+                        <li key={`${item}-${index}`}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+
+                {aiResult.result.excerpt ? (
+                  <div className='rounded-md border border-cyan-100 bg-white/80 p-3'>
+                    <p className='text-sm font-medium text-gray-700 mb-2'>Tóm tắt đã áp dụng:</p>
+                    <p className='text-sm text-gray-700 leading-relaxed'>{aiResult.result.excerpt}</p>
+                  </div>
+                ) : null}
+
+                {aiResult.result.outline?.length ? (
+                  <div>
+                    <p className='text-sm font-medium text-gray-700 mb-2'>Dàn ý:</p>
+                    <ul className='list-disc pl-5 text-sm text-gray-700 space-y-1'>
+                      {aiResult.result.outline.map((item, index) => (
+                        <li key={`${item}-${index}`}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+
+                {getValidFaqItems(aiResult.result.faq).length ? (
+                  <div className='space-y-2'>
+                    <p className='text-sm font-medium text-gray-700'>FAQ:</p>
+                    {getValidFaqItems(aiResult.result.faq).map((item, index) => (
+                      <div key={`${item.question}-${index}`} className='text-sm text-gray-700'>
+                        <p className='font-medium'>{item.question}</p>
+                        <p>{item.answer}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+
+                {aiResult.result.warnings?.length ? (
+                  <div>
+                    <p className='text-sm font-medium text-red-700 mb-2'>Cảnh báo cần rà soát:</p>
+                    <ul className='list-disc pl-5 text-sm text-red-700 space-y-1'>
+                      {aiResult.result.warnings.map((item, index) => (
+                        <li key={`${item}-${index}`}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+
+                {aiResult.result.sourceTopics?.length ? (
+                  <div>
+                    <p className='text-sm font-medium text-gray-700 mb-2'>Nguồn nên tra cứu:</p>
+                    <ul className='list-disc pl-5 text-sm text-gray-700 space-y-1'>
+                      {aiResult.result.sourceTopics.map((item, index) => (
+                        <li key={`${item}-${index}`}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -362,6 +731,109 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
               />
             </div>
 
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t'>
+              <div className='space-y-2'>
+                <Label htmlFor='riskLevel' className='text-base font-medium'>
+                  Mức rủi ro nội dung
+                </Label>
+                <Select
+                  value={formData.riskLevel}
+                  onValueChange={(value: ArticleFormData['riskLevel']) => setFormData({ ...formData, riskLevel: value })}
+                >
+                  <SelectTrigger className='h-11 bg-white border-2 border-blue-200'>
+                    <SelectValue placeholder='Chọn mức rủi ro' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='general'>Kiến thức chung</SelectItem>
+                    <SelectItem value='medication'>Liên quan thuốc</SelectItem>
+                    <SelectItem value='disease'>Liên quan bệnh</SelectItem>
+                    <SelectItem value='emergency-sensitive'>Nhạy cảm cấp cứu</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className='space-y-2'>
+                <Label htmlFor='contentVersion' className='text-base font-medium'>
+                  Phiên bản nội dung
+                </Label>
+                <Input
+                  id='contentVersion'
+                  type='number'
+                  min='1'
+                  value={formData.contentVersion}
+                  onChange={(e) => setFormData({ ...formData, contentVersion: e.target.value })}
+                  className='h-11 border-2 border-blue-200 focus:border-blue-500'
+                />
+              </div>
+
+              <div className='space-y-2'>
+                <Label htmlFor='reviewedBy' className='text-base font-medium'>
+                  Người kiểm duyệt chuyên môn
+                </Label>
+                <Input
+                  id='reviewedBy'
+                  value={formData.reviewedBy}
+                  onChange={(e) => setFormData({ ...formData, reviewedBy: e.target.value })}
+                  placeholder='VD: DS. Nguyễn Văn A'
+                  className='h-11 border-2 border-blue-200 focus:border-blue-500'
+                />
+              </div>
+
+              <div className='space-y-2'>
+                <Label htmlFor='reviewedByTitle' className='text-base font-medium'>
+                  Chức danh người kiểm duyệt
+                </Label>
+                <Input
+                  id='reviewedByTitle'
+                  value={formData.reviewedByTitle}
+                  onChange={(e) => setFormData({ ...formData, reviewedByTitle: e.target.value })}
+                  placeholder='VD: Dược sĩ lâm sàng'
+                  className='h-11 border-2 border-blue-200 focus:border-blue-500'
+                />
+              </div>
+
+              <div className='space-y-2'>
+                <Label htmlFor='reviewedAt' className='text-base font-medium'>
+                  Ngày kiểm duyệt
+                </Label>
+                <Input
+                  id='reviewedAt'
+                  type='date'
+                  value={formData.reviewedAt}
+                  onChange={(e) => setFormData({ ...formData, reviewedAt: e.target.value })}
+                  className='h-11 border-2 border-blue-200 focus:border-blue-500'
+                />
+              </div>
+
+              <div className='space-y-2'>
+                <Label htmlFor='lastMedicallyReviewedAt' className='text-base font-medium'>
+                  Cập nhật chuyên môn gần nhất
+                </Label>
+                <Input
+                  id='lastMedicallyReviewedAt'
+                  type='date'
+                  value={formData.lastMedicallyReviewedAt}
+                  onChange={(e) => setFormData({ ...formData, lastMedicallyReviewedAt: e.target.value })}
+                  className='h-11 border-2 border-blue-200 focus:border-blue-500'
+                />
+              </div>
+            </div>
+
+            <div className='space-y-2'>
+              <Label htmlFor='references' className='text-base font-medium'>
+                Nguồn tham khảo
+              </Label>
+              <Textarea
+                id='references'
+                value={formData.references}
+                onChange={(e) => setFormData({ ...formData, references: e.target.value })}
+                rows={4}
+                placeholder={'Mỗi dòng một nguồn, định dạng: Tiêu đề nguồn | https://example.com'}
+                className='resize-none border-2 border-blue-200 focus:border-blue-500'
+              />
+              <p className='text-xs text-gray-500'>Nguồn rõ ràng giúp bài viết sức khỏe đáng tin cậy hơn.</p>
+            </div>
+
             <div className='flex items-start justify-between gap-6 pt-4 border-t'>
               <div className='w-1/3 space-y-2'>
                 <Label htmlFor='status' className='text-base font-medium'>
@@ -392,29 +864,31 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                 </p>
               </div>
 
-              <div className='flex items-center gap-8 pt-6'>
-                <div className='flex items-center space-x-2'>
-                  <Switch
-                    id='isFeatured'
-                    checked={formData.isFeatured}
-                    onCheckedChange={(checked) => setFormData({ ...formData, isFeatured: checked })}
-                  />
-                  <Label htmlFor='isFeatured' className='cursor-pointer'>
-                    Nổi bật
-                  </Label>
-                </div>
+              {isAdmin && (
+                <div className='flex items-center gap-8 pt-6'>
+                  <div className='flex items-center space-x-2'>
+                    <Switch
+                      id='isFeatured'
+                      checked={formData.isFeatured}
+                      onCheckedChange={(checked) => setFormData({ ...formData, isFeatured: checked })}
+                    />
+                    <Label htmlFor='isFeatured' className='cursor-pointer'>
+                      Nổi bật
+                    </Label>
+                  </div>
 
-                <div className='flex items-center space-x-2'>
-                  <Switch
-                    id='isPinned'
-                    checked={formData.isPinned}
-                    onCheckedChange={(checked) => setFormData({ ...formData, isPinned: checked })}
-                  />
-                  <Label htmlFor='isPinned' className='cursor-pointer'>
-                    Ghim bài viết
-                  </Label>
+                  <div className='flex items-center space-x-2'>
+                    <Switch
+                      id='isPinned'
+                      checked={formData.isPinned}
+                      onCheckedChange={(checked) => setFormData({ ...formData, isPinned: checked })}
+                    />
+                    <Label htmlFor='isPinned' className='cursor-pointer'>
+                      Ghim bài viết
+                    </Label>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -430,7 +904,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
             className='bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8] text-white'
           >
             <Save className='h-4 w-4 mr-2' />
-            {loading ? 'Đang lưu...' : isEdit ? 'Cập nhật bài viết' : 'Xuất bản bài mới'}
+            {loading ? 'Đang lưu...' : isEdit ? 'Cập nhật bài viết' : 'Lưu bài viết'}
           </Button>
         </div>
       </form>

@@ -24,6 +24,7 @@ import {
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { apiClient } from '../../services/apiClient'
+import { Link } from 'react-router'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -53,7 +54,7 @@ interface AccountInfo {
 
 interface LoyaltyTransaction {
   _id: string
-  type: 'earn' | 'redeem' | 'expire' | 'revoke'
+  type: 'earn' | 'redeem' | 'expire' | 'revoke' | 'adjust'
   points: number
   balanceAfter: number
   description: string
@@ -107,6 +108,7 @@ const TRANSACTION_ICONS: Record<string, React.ReactNode> = {
   redeem: <Gift className='w-5 h-5' />,
   expire: <Clock className='w-5 h-5' />,
   revoke: <TrendingDown className='w-5 h-5' />,
+  adjust: <RefreshCw className='w-5 h-5' />,
 }
 
 const TRANSACTION_COLORS: Record<string, string> = {
@@ -114,6 +116,7 @@ const TRANSACTION_COLORS: Record<string, string> = {
   redeem: 'bg-blue-100 text-blue-600',
   expire: 'bg-gray-100 text-gray-500',
   revoke: 'bg-red-100 text-red-600',
+  adjust: 'bg-purple-100 text-purple-600',
 }
 
 const TRANSACTION_LABELS: Record<string, string> = {
@@ -121,6 +124,7 @@ const TRANSACTION_LABELS: Record<string, string> = {
   redeem: 'Đổi điểm',
   expire: 'Hết hạn',
   revoke: 'Thu hồi',
+  adjust: 'Điều chỉnh',
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -523,7 +527,20 @@ export function RewardsPage() {
                               </div>
                               <div>
                                 <p className='font-medium text-sm'>{tx.description}</p>
-                                <p className='text-xs text-gray-400'>{formatDate(tx.createdAt)}</p>
+                                <div className='flex items-center gap-2 text-xs text-gray-400'>
+                                  <span>{formatDate(tx.createdAt)}</span>
+                                  {tx.orderId && (
+                                    <>
+                                      <span>•</span>
+                                      <Link
+                                        to={`/account/orders/${tx.orderId}`}
+                                        className='text-blue-600 hover:underline'
+                                      >
+                                        Xem đơn hàng
+                                      </Link>
+                                    </>
+                                  )}
+                                </div>
                               </div>
                             </div>
                             <div className='text-right'>

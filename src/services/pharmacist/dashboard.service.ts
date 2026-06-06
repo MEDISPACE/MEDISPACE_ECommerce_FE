@@ -95,12 +95,21 @@ export interface Order {
     postalCode?: string
   }
   paymentMethod: string
-  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded'
-  orderStatus: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
+  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded' | 'partially_refunded'
+  orderStatus: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'returned'
   subtotal: number
   taxAmount: number
   shippingFee: number
   discountAmount: number
+  appliedCoupons?: Array<{
+    code: string
+    name?: string
+    type: string
+    discountAmount: number
+  }>
+  pointsRedeemed?: number
+  pointsRedeemAmount?: number
+  shippingDiscountAmount?: number
   totalAmount: number
   notes?: string
   trackingNumber?: string
