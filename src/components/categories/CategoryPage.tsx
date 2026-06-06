@@ -63,7 +63,7 @@ export function CategoryPage() {
 
   const [filters, setFilters] = useState<ProductFilter>({
     categories: [],
-    priceRange: [0, 5000000],
+    priceRange: [0, 10000000],
     brands: [],
     rating: 0,
     inStock: false,
@@ -190,7 +190,7 @@ export function CategoryPage() {
       (product.shortDescription?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false)
     const productPrice = getPriceFromVariants(product)
     const matchesPrice =
-      productPrice >= (filters.priceRange?.[0] ?? 0) && productPrice <= (filters.priceRange?.[1] ?? 5000000)
+      productPrice >= (filters.priceRange?.[0] ?? 0) && productPrice <= (filters.priceRange?.[1] ?? 10000000)
     const matchesRating = (product.rating ?? 0) >= (filters.rating ?? 0)
     const matchesStock = !filters.inStock || product.stockQuantity > 0
     const matchesBrands =
@@ -205,9 +205,9 @@ export function CategoryPage() {
   // Apply sorting
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     switch (sortBy) {
-      case 'price_asc':
+      case 'price-asc':
         return getPriceFromVariants(a) - getPriceFromVariants(b)
-      case 'price_desc':
+      case 'price-desc':
         return getPriceFromVariants(b) - getPriceFromVariants(a)
       case 'rating':
         return (b.rating ?? 0) - (a.rating ?? 0)
@@ -619,8 +619,8 @@ export function CategoryPage() {
                     <SelectItem value='relevance'>Liên quan</SelectItem>
                     <SelectItem value='newest'>Mới nhất</SelectItem>
                     <SelectItem value='bestseller'>Bán chạy</SelectItem>
-                    <SelectItem value='price_asc'>Giá thấp đến cao</SelectItem>
-                    <SelectItem value='price_desc'>Giá cao đến thấp</SelectItem>
+                    <SelectItem value='price-asc'>Giá thấp đến cao</SelectItem>
+                    <SelectItem value='price-desc'>Giá cao đến thấp</SelectItem>
                     <SelectItem value='rating'>Đánh giá cao</SelectItem>
                   </SelectContent>
                 </Select>
