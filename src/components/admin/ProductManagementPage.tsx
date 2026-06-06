@@ -482,7 +482,7 @@ export function ProductManagementPage() {
   const paginatedProducts = allProducts
 
   // Calculate total pages from server pagination response (accurate for filtered results)
-  const totalPages = paginationInfo?.totalPages || (dashboardStats ? Math.ceil(dashboardStats.total / itemsPerPage) : 1)
+  const totalPages = paginationInfo?.totalPages ?? (dashboardStats ? Math.ceil(dashboardStats.total / itemsPerPage) : 1)
   const filteredTotalCount = paginationInfo?.totalCount ?? dashboardStats?.total ?? 0
 
   // Reset to page 1 when filters change
