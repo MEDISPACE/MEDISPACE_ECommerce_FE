@@ -30,7 +30,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
   const [facetCounts, setFacetCounts] = useState<Record<string, number>>({}) // categoryId/brandId → count
 
   // Local state for price range to allow smooth slider movement
-  const [localPriceRange, setLocalPriceRange] = useState<number[]>(filters.priceRange || [0, 1000000])
+  const [localPriceRange, setLocalPriceRange] = useState<number[]>(filters.priceRange || [0, 10000000])
 
   // Debounce the price range to prevent excessive re-renders during slider drag
   const debouncedPriceRange = useDebounce(localPriceRange, 300)
@@ -98,11 +98,8 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
   }
 
   const handleCategoryChange = (categorySlug: string, checked: boolean) => {
-    const currentCategories = filters.categories || []
-    const newCategories = checked
-      ? [...currentCategories, categorySlug]
-      : currentCategories.filter((c) => c !== categorySlug)
-
+    // Single-select: backend only supports one categoryId at a time
+    const newCategories = checked ? [categorySlug] : []
     onFiltersChange({ ...filters, categories: newCategories })
   }
 
@@ -124,7 +121,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
   }
 
   const clearFilters = () => {
-    const defaultPriceRange: [number, number] = [0, 1000000]
+    const defaultPriceRange: [number, number] = [0, 10000000]
     setLocalPriceRange(defaultPriceRange)
     onFiltersChange({
       categories: [],
@@ -164,7 +161,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
     (filters.categories?.length || 0) > 0 ||
     (filters.brands?.length || 0) > 0 ||
     (filters.priceRange?.[0] || 0) > 0 ||
-    (filters.priceRange?.[1] || 1000000) < 1000000 ||
+    (filters.priceRange?.[1] || 10000000) < 10000000 ||
     (filters.rating || 0) > 0
 
   return (
@@ -306,9 +303,9 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
               <Slider
                 value={localPriceRange}
                 onValueChange={handlePriceRangeChange}
-                max={1000000}
+                max={10000000}
                 min={0}
-                step={10000}
+                step={50000}
                 className='w-full'
               />
               <div className='grid grid-cols-2 gap-1'>
@@ -317,14 +314,14 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
                   value={new Intl.NumberFormat('vi-VN').format(localPriceRange[0] || 0)}
                   onChange={(e) => {
                     const value = parseInt(e.target.value.replace(/\./g, '')) || 0
-                    handlePriceRangeChange([value, localPriceRange[1] || 1000000])
+                    handlePriceRangeChange([value, localPriceRange[1] || 10000000])
                   }}
                   placeholder='Từ'
                   className='h-8 text-xs border-blue-200 focus:border-blue-500'
                 />
                 <Input
                   type='text'
-                  value={new Intl.NumberFormat('vi-VN').format(localPriceRange[1] || 1000000)}
+                  value={new Intl.NumberFormat('vi-VN').format(localPriceRange[1] || 10000000)}
                   onChange={(e) => {
                     const value = parseInt(e.target.value.replace(/\./g, '')) || 0
                     handlePriceRangeChange([localPriceRange[0] || 0, value])
@@ -402,9 +399,6 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
 
           {/* Filter Actions */}
           <div className='pt-2 space-y-2'>
-            <Button className='w-full h-8 text-xs bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'>
-              Áp dụng bộ lọc
-            </Button>
             {hasActiveFilters && (
               <Button
                 variant='outline'

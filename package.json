@@ -21,6 +21,9 @@
     "test:blog:article": "playwright test --config=playwright.blog.config.ts article-detail",
     "test:blog:admin": "playwright test --config=playwright.blog.config.ts admin-article",
     "test:blog:corner": "playwright test --config=playwright.blog.config.ts health-corner",
+    "test:product": "playwright test --config=playwright.product.config.ts",
+    "test:product:headed": "playwright test --config=playwright.product.config.ts --headed",
+    "test:product:report": "playwright show-report playwright-report-product",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
