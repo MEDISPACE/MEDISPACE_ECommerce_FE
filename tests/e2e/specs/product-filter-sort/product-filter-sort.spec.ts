@@ -563,7 +563,7 @@ test.describe('Admin Products Page (/admin/products)', () => {
   test('TC25 — Admin: Search sản phẩm', async ({ page }) => {
     await snap(page, '25a-before-admin-search')
 
-    const searchInput = page.locator('input[placeholder*="Tìm kiếm"]')
+    const searchInput = page.locator('input[placeholder="Tìm kiếm sản phẩm, SKU..."]')
     await searchInput.fill('vitamin')
     await waitForPageReady(page)
 
@@ -624,7 +624,7 @@ test.describe('Admin Products Page (/admin/products)', () => {
 
   test('TC28 — Admin: Clear all filters', async ({ page }) => {
     // Apply filter trước
-    const searchInput = page.locator('input[placeholder*="Tìm kiếm"]')
+    const searchInput = page.locator('input[placeholder="Tìm kiếm sản phẩm, SKU..."]')
     await searchInput.fill('test')
     await waitForPageReady(page)
     await snap(page, '28a-admin-filter-active')
