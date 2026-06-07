@@ -161,7 +161,9 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
     (filters.brands?.length || 0) > 0 ||
     (filters.priceRange?.[0] || 0) > 0 ||
     (filters.priceRange?.[1] || 10000000) < 10000000 ||
-    (filters.rating || 0) > 0
+    (filters.rating || 0) > 0 ||
+    filters.inStock === true ||
+    filters.isPrescription === true
 
   return (
     <div className='space-y-4'>
@@ -452,6 +454,65 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
                     </Button>
                   </Badge>
                 ))}
+                {(filters.rating || 0) > 0 && (
+                  <Badge variant='secondary' className='bg-amber-100 text-amber-700 text-xs px-1.5 py-0.5 h-auto'>
+                    <span>Từ {filters.rating} sao</span>
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => handleRatingChange(0)}
+                      className='ml-1 h-auto p-0 text-amber-700 hover:text-red-500'
+                    >
+                      <X className='w-2.5 h-2.5' />
+                    </Button>
+                  </Badge>
+                )}
+                {filters.inStock === true && (
+                  <Badge variant='secondary' className='bg-green-100 text-green-700 text-xs px-1.5 py-0.5 h-auto'>
+                    <span>Còn hàng</span>
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => onFiltersChange({ ...filters, inStock: undefined })}
+                      className='ml-1 h-auto p-0 text-green-700 hover:text-red-500'
+                    >
+                      <X className='w-2.5 h-2.5' />
+                    </Button>
+                  </Badge>
+                )}
+                {filters.isPrescription === true && (
+                  <Badge variant='secondary' className='bg-purple-100 text-purple-700 text-xs px-1.5 py-0.5 h-auto'>
+                    <span>Thuốc kê đơn</span>
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => onFiltersChange({ ...filters, isPrescription: undefined })}
+                      className='ml-1 h-auto p-0 text-purple-700 hover:text-red-500'
+                    >
+                      <X className='w-2.5 h-2.5' />
+                    </Button>
+                  </Badge>
+                )}
+                {((filters.priceRange?.[0] || 0) > 0 || (filters.priceRange?.[1] || 10000000) < 10000000) && (
+                  <Badge variant='secondary' className='bg-cyan-100 text-cyan-700 text-xs px-1.5 py-0.5 h-auto'>
+                    <span>
+                      {new Intl.NumberFormat('vi-VN').format(filters.priceRange?.[0] || 0)}đ –{' '}
+                      {new Intl.NumberFormat('vi-VN').format(filters.priceRange?.[1] || 10000000)}đ
+                    </span>
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => {
+                        const defaultRange: [number, number] = [0, 10000000]
+                        setLocalPriceRange(defaultRange)
+                        onFiltersChange({ ...filters, priceRange: defaultRange })
+                      }}
+                      className='ml-1 h-auto p-0 text-cyan-700 hover:text-red-500'
+                    >
+                      <X className='w-2.5 h-2.5' />
+                    </Button>
+                  </Badge>
+                )}
               </div>
             </div>
           )}
