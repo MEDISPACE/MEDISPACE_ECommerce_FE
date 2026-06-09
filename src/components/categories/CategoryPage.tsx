@@ -22,6 +22,7 @@ import { categoryService } from '../../services/categoryService'
 import { useCart } from '../../contexts/CartContext'
 import { useWishlist } from '../../hooks/product/useWishlist'
 import { useInfiniteProducts } from '../../hooks/useInfiniteProducts'
+import { useDebounce } from '../../hooks/useDebounce'
 import { RecommendationCarousel } from '../products/RecommendationCarousel'
 import { useTrending } from '../../hooks/product/useRecommendations'
 import {
@@ -99,6 +100,8 @@ export function CategoryPage() {
     fetchCategory()
   }, [slug])
 
+  const debouncedSearchQuery = useDebounce(searchQuery, 500)
+
   // Use infinite query for products
   const {
     data: productsData,
@@ -110,6 +113,9 @@ export function CategoryPage() {
   } = useInfiniteProducts({
     categoryId: currentCategory?._id,
     enabled: !!currentCategory?._id,
+    search: debouncedSearchQuery,
+    filters,
+    sortBy,
   })
 
   // Trigger load more when scrolling
@@ -183,42 +189,7 @@ export function CategoryPage() {
 
   const breadcrumbItems = buildCategoryBreadcrumb()
 
-  // Apply filters and search (client-side for better UX)
-  const filteredProducts = allProducts.filter((product: Product) => {
-    const matchesSearch =
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (product.shortDescription?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false)
-    const productPrice = getPriceFromVariants(product)
-    const matchesPrice =
-      productPrice >= (filters.priceRange?.[0] ?? 0) && productPrice <= (filters.priceRange?.[1] ?? 10000000)
-    const matchesRating = (product.rating ?? 0) >= (filters.rating ?? 0)
-    const matchesStock = !filters.inStock || product.stockQuantity > 0
-    const matchesBrands =
-      (filters.brands?.length ?? 0) === 0 ||
-      filters.brands?.some((brand: string) => product.brand?.name?.toLowerCase().includes(brand.toLowerCase())) ||
-      false
-    const matchesPrescription = !filters.isPrescription || product.requiresPrescription === true
-
-    return matchesSearch && matchesPrice && matchesRating && matchesStock && matchesBrands && matchesPrescription
-  })
-
-  // Apply sorting
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
-    switch (sortBy) {
-      case 'price-asc':
-        return getPriceFromVariants(a) - getPriceFromVariants(b)
-      case 'price-desc':
-        return getPriceFromVariants(b) - getPriceFromVariants(a)
-      case 'rating':
-        return (b.rating ?? 0) - (a.rating ?? 0)
-      case 'newest':
-        return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
-      case 'bestseller':
-        return (b.reviewCount ?? 0) - (a.reviewCount ?? 0)
-      default:
-        return 0
-    }
-  })
+  const sortedProducts = allProducts
 
   // Transform products for ProductCard component
   const transformedProducts = sortedProducts.map((product: Product) => ({
