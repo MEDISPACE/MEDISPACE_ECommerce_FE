@@ -106,12 +106,11 @@ export function ProductsListingPage() {
       if (filters.inStock) {
         params.inStock = true
       }
-      if (filters.priceRange[0] > 0 || filters.priceRange[1] < 10000000) {
+      if (filters.priceRange[0] > 0) {
         params.minPrice = filters.priceRange[0]
-        params.maxPrice = filters.priceRange[1]
       }
-      if (filters.rating > 0) {
-        params.ratingMin = filters.rating
+      if (filters.priceRange[1] < 10000000) {
+        params.maxPrice = filters.priceRange[1]
       }
 
       return productService.getProducts(params)

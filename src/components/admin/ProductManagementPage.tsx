@@ -55,6 +55,7 @@ import brandService from '../../services/brandService'
 import { PaginationComponent } from '../shared/PaginationComponent'
 import { toast } from 'sonner'
 import { HybridPriceEditor, type PriceVariant } from './HybridPriceEditor'
+import { useDebounce } from '../../hooks/useDebounce'
 
 // Use Product type from types/product.ts
 import type { Product } from '../../types/product'
@@ -67,6 +68,7 @@ const formatCurrency = (amount: number) => {
 export function ProductManagementPage() {
   const queryClient = useQueryClient()
   const [searchQuery, setSearchQuery] = useState('')
+  const debouncedSearchQuery = useDebounce(searchQuery, 500)
   const [filterCategory, setFilterCategory] = useState<string>('all')
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [filterPrescription, setFilterPrescription] = useState<string>('all')
@@ -117,7 +119,7 @@ export function ProductManagementPage() {
       'products',
       currentPage,
       itemsPerPage,
-      searchQuery,
+      debouncedSearchQuery,
       filterCategory,
       filterStatus,
       filterPrescription,
@@ -128,7 +130,7 @@ export function ProductManagementPage() {
         limit: itemsPerPage,
         sortBy: 'createdAt',
         sortOrder: 'desc',
-        search: searchQuery || undefined,
+        search: debouncedSearchQuery || undefined,
         categoryId: filterCategory !== 'all' ? filterCategory : undefined,
         status: filterStatus !== 'all' ? filterStatus : undefined,
         requiresPrescription: filterPrescription === 'rx' ? 'true' : filterPrescription === 'otc' ? 'false' : undefined,
@@ -488,7 +490,7 @@ export function ProductManagementPage() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchQuery, filterCategory, filterStatus, filterPrescription])
+  }, [debouncedSearchQuery, filterCategory, filterStatus, filterPrescription])
 
   // Show error state
   if (error) {

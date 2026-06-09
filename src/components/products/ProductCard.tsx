@@ -68,6 +68,7 @@ export function ProductCard({
     ? currentVariant.price // Giá gốc khi có campaign
     : (currentVariant?.originalPrice || product.originalPrice)
   const hasDiscount = currentOriginalPrice && currentOriginalPrice > currentPrice
+  const campaignDiscountPercent = currentVariant?.discountPercent || product.discountPercentage
   const hasCampaign = !!product.campaign
 
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -99,8 +100,6 @@ export function ProductCard({
     return (
       <Link to={`/products/${product.slug}`} className='block'>
         <Card
-            data-testid='product-card'
-            data-product-id={product.id}
             className={`group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm border hover:border-blue-300 ${
               isConsultationRequired ? 'border-2 border-blue-300' : 'border-blue-100'
             } ${!product.inStock ? 'opacity-75' : ''}`}
@@ -249,8 +248,6 @@ export function ProductCard({
   return (
     <Link to={`/products/${product.slug}`} className='block h-full'>
       <Card
-        data-testid='product-card'
-        data-product-id={product.id}
         className={`group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm relative overflow-hidden h-full ${
           isConsultationRequired ? 'border-2 border-blue-300' : 'border border-blue-100 hover:border-blue-300'
         } ${!product.inStock ? 'opacity-75' : ''}`}

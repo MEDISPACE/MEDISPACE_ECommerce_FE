@@ -43,7 +43,14 @@ export function useSearchSuggestions(query: string): GroupedSuggestions {
       if (!debouncedQuery.trim() || debouncedQuery.length < 2) {
         return { products: [], brands: [], categories: [], articles: [] }
       }
-      return searchService.suggest(debouncedQuery)
+      const [suggestions, articleResult] = await Promise.all([
+        searchService.suggest(debouncedQuery),
+        searchService.searchArticles({ q: debouncedQuery, limit: 3 }),
+      ])
+      return {
+        ...suggestions,
+        articles: articleResult.hits || [],
+      }
     },
     enabled: debouncedQuery.length >= 2,
     staleTime: 30 * 1000, // 30s cache
