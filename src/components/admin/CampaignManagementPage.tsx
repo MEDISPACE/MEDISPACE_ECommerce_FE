@@ -121,11 +121,11 @@ export function AdminCampaignPage() {
 
   useEffect(() => {
     if (!searchProductTerm) {
-      productService.getProductsPaginated({ limit: 10 }).then(res => setSearchedProducts(res.products))
+      productService.getProductsPaginated({ limit: 10, bypassTypesense: 'true' }).then(res => setSearchedProducts(res.products))
       return
     }
     const timer = setTimeout(() => {
-      productService.searchProducts(searchProductTerm).then(res => setSearchedProducts(res))
+      productService.searchProducts(searchProductTerm, { bypassTypesense: 'true' } as any).then(res => setSearchedProducts(res))
     }, 400)
     return () => clearTimeout(timer)
   }, [searchProductTerm])

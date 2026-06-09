@@ -18,6 +18,7 @@ import { useTrending, useRelated } from '../../hooks/product/useRecommendations'
 import { productService } from '../../services/productService'
 import { categoryService } from '../../services/categoryService'
 import { brandService } from '../../services/brandService'
+import { searchService } from '../../services/searchService'
 import { useCart } from '../../contexts/CartContext'
 import { useWishlist } from '../../hooks/product/useWishlist'
 import type { Category, Brand } from '../../types/product'
@@ -85,7 +86,7 @@ export function SearchResultsPage() {
     fetchFilters()
   }, [])
 
-  // Infinite query for products with server-side filtering
+  // Infinite query for products with server-side filtering using Typesense Search
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
     queryKey: [
       'search',
@@ -97,42 +98,20 @@ export function SearchResultsPage() {
       inStockOnly,
       sortBy,
     ],
-    queryFn: ({ pageParam = 1 }) => {
-      const params: Record<string, unknown> = {
+    queryFn: async ({ pageParam = 1 }) => {
+      const params: any = {
+        q: searchQuery || '*',
         page: pageParam,
         limit: 100,
       }
 
-      // Add search query
-      if (searchQuery) {
-        params.search = searchQuery
-      }
-
       // Add sorting
-      switch (sortBy) {
-        case 'price_asc':
-          params.sortBy = 'price'
-          params.sortOrder = 'asc'
-          break
-        case 'price_desc':
-          params.sortBy = 'price'
-          params.sortOrder = 'desc'
-          break
-        case 'rating':
-          params.sortBy = 'rating'
-          params.sortOrder = 'desc'
-          break
-        case 'newest':
-          params.sortBy = 'createdAt'
-          params.sortOrder = 'desc'
-          break
-        case 'bestseller':
-          params.sortBy = 'reviewCount'
-          params.sortOrder = 'desc'
-          break
-        default: // relevance
-          params.sortBy = 'createdAt'
-          params.sortOrder = 'desc'
+      if (sortBy === 'price_asc' || sortBy === 'price_desc' || sortBy === 'rating' || sortBy === 'newest' || sortBy === 'relevance') {
+        params.sortBy = sortBy
+      } else if (sortBy === 'bestseller') {
+        params.sortBy = 'rating'
+      } else {
+        params.sortBy = 'relevance'
       }
 
       // Add filters
@@ -150,14 +129,41 @@ export function SearchResultsPage() {
         params.inStock = true
       }
       if (priceRange[0] > 0 || priceRange[1] < 10000000) {
-        params.minPrice = priceRange[0]
-        params.maxPrice = priceRange[1]
+        params.priceMin = priceRange[0]
+        params.priceMax = priceRange[1]
       }
 
-      return productService.getProducts(params)
+      const res = await searchService.searchProducts(params)
+      const products = (res?.hits || []).map((hit) => {
+        const doc = hit.document
+        let priceVariants = []
+        if (doc.priceVariantsJson) {
+          try {
+            priceVariants = JSON.parse(doc.priceVariantsJson)
+          } catch {
+            // ignore
+          }
+        }
+        return {
+          ...doc,
+          id: doc.mongoId,
+          _id: doc.mongoId,
+          brand: doc.brandName || 'Unknown',
+          category: { name: doc.categoryName || '' },
+          priceVariants,
+          image: doc.featuredImage,
+          isPrescription: doc.requiresPrescription,
+        } as unknown as Product
+      })
+
+      return {
+        products,
+        found: res?.found ?? 0,
+      }
     },
     getNextPageParam: (lastPage, allPages) => {
-      return lastPage.length === 100 ? allPages.length + 1 : undefined
+      const totalLoaded = allPages.flatMap((page) => page.products).length
+      return totalLoaded < lastPage.found ? allPages.length + 1 : undefined
     },
     initialPageParam: 1,
     staleTime: 2 * 60 * 1000,
@@ -188,7 +194,7 @@ export function SearchResultsPage() {
 
   // All products from server — sort OTC before prescription when no explicit filter
   const allProducts = useMemo(() => {
-    const products = data?.pages.flatMap((page) => page) ?? []
+    const products = data?.pages.flatMap((page) => page.products) ?? []
     // Only apply OTC priority when user hasn't filtered by prescription type explicitly
     if (prescriptionType === 'all') {
       // Stable sort: OTC (requiresPrescription=false) trước kê đơn (true)
@@ -211,7 +217,7 @@ export function SearchResultsPage() {
     setFirstResultId(id)
   }, [allProducts])
 
-  const totalResults = allProducts.length
+  const totalResults = data?.pages[0]?.found ?? 0
 
   const clearFilters = () => {
     setSelectedCategories([])
@@ -379,7 +385,7 @@ export function SearchResultsPage() {
           <h1 className='text-xl font-bold text-gray-900'>
             {searchQuery ? `Kết quả cho "${searchQuery}"` : 'Tất cả sản phẩm'}
           </h1>
-          <p className='text-gray-600'>Tìm thấy {totalResults} sản phẩm</p>
+          <p className='text-gray-600' data-testid='search-result-count'>Tìm thấy {totalResults} sản phẩm</p>
         </div>
       </div>
 
@@ -457,7 +463,7 @@ export function SearchResultsPage() {
             <div className='flex items-center gap-3'>
               {/* Sort */}
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className='w-[180px] border-blue-200 border rounded-lg border-blue-300'>
+                <SelectTrigger aria-label='Sắp xếp kết quả' className='w-[180px] border-blue-200 border rounded-lg border-blue-300'>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

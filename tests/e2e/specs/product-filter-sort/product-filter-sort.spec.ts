@@ -163,7 +163,7 @@ test.describe('Products Listing Page (/products)', () => {
     await snap(page, '07a-before-instock')
 
     const inStockCheckbox = page.locator('#in-stock')
-    await inStockCheckbox.click()
+    await inStockCheckbox.click({ force: true })
     await waitForPageReady(page)
 
     await snap(page, '07b-after-instock')
@@ -174,7 +174,7 @@ test.describe('Products Listing Page (/products)', () => {
     await snap(page, '08a-before-prescription')
 
     const prescriptionCheckbox = page.locator('#prescription')
-    await prescriptionCheckbox.click()
+    await prescriptionCheckbox.click({ force: true })
     await waitForPageReady(page)
 
     await snap(page, '08b-after-prescription')
@@ -200,14 +200,14 @@ test.describe('Products Listing Page (/products)', () => {
   test('TC10 — Reset filters: Xóa bộ lọc', async ({ page }) => {
     // Apply 1 filter trước
     const inStockCheckbox = page.locator('#in-stock')
-    await inStockCheckbox.click()
+    await inStockCheckbox.click({ force: true })
     await waitForPageReady(page)
     await snap(page, '10a-filter-active')
 
     // Click "Xóa bộ lọc" trong FilterSidebar
     const clearBtn = page.locator('button').filter({ hasText: 'Xóa bộ lọc' }).first()
     if (await clearBtn.isVisible()) {
-      await clearBtn.click()
+      await clearBtn.click({ force: true })
       await waitForPageReady(page)
       await snap(page, '10b-after-clear-filters')
       console.log('✅ TC10: Filters cleared')

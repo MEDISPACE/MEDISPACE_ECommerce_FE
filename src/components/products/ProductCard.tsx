@@ -98,7 +98,7 @@ export function ProductCard({
   // ==================== LIST VARIANT ====================
   if (variant === 'list') {
     return (
-      <Link to={`/products/${product.slug}`} className='block'>
+      <Link to={`/products/${product.slug}`} className='block' data-testid='product-card'>
         <Card
             className={`group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm border hover:border-blue-300 ${
               isConsultationRequired ? 'border-2 border-blue-300' : 'border-blue-100'
@@ -246,7 +246,7 @@ export function ProductCard({
 
   // ==================== GRID VARIANT ====================
   return (
-    <Link to={`/products/${product.slug}`} className='block h-full'>
+    <Link to={`/products/${product.slug}`} className='block h-full' data-testid='product-card'>
       <Card
         className={`group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm relative overflow-hidden h-full ${
           isConsultationRequired ? 'border-2 border-blue-300' : 'border border-blue-100 hover:border-blue-300'
