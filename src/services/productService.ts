@@ -29,10 +29,14 @@ export const productService = {
    * Get all products with optional filtering (DEPRECATED - use getProductsPaginated instead)
    */
   async getProducts(
-    filters?: Partial<ProductFilter> & { limit?: number; sortBy?: string; sortOrder?: string },
+    filters?: Partial<ProductFilter> & { limit?: number; sortBy?: string; sortOrder?: string; categoryId?: string; bypassTypesense?: string },
   ): Promise<Product[]> {
     // Real API call - use backend API endpoints
-    const response = await apiClient.get(API_ENDPOINTS.PRODUCTS.BASE, { params: filters })
+    const params = { ...filters } as any
+    if (filters?.categories && filters.categories.length > 0) {
+      params.categoryId = filters.categories[0]
+    }
+    const response = await apiClient.get(API_ENDPOINTS.PRODUCTS.BASE, { params })
     if (response && response.data) {
       const data = response.data as ProductsResponse
       if (
@@ -60,6 +64,7 @@ export const productService = {
       sortBy?: string
       sortOrder?: string
       categoryId?: string
+      bypassTypesense?: string
     },
   ): Promise<{
     products: Product[]

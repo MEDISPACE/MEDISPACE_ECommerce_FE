@@ -32,7 +32,8 @@ export interface SearchSuggestResult {
   products: SearchSuggestHit[]
   brands: SearchSuggestHit[]
   categories: SearchSuggestHit[]
-  articles: SearchArticlesHit[]
+  articles?: SearchArticlesHit[]
+  querySuggestions?: string[]
 }
 
 export interface SearchProductsHit {

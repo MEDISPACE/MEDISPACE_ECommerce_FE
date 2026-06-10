@@ -21,7 +21,7 @@ import { brandService } from '../../services/brandService'
 import { searchService } from '../../services/searchService'
 import { useCart } from '../../contexts/CartContext'
 import { useWishlist } from '../../hooks/product/useWishlist'
-import type { Category, Brand } from '../../types/product'
+import type { Category, Brand, Product, PriceVariant } from '../../types/product'
 import {
   getProductId,
   getProductImage,
@@ -135,7 +135,7 @@ export function SearchResultsPage() {
 
       const res = await searchService.searchProducts(params)
       const products = (res?.hits || []).map((hit) => {
-        const doc = hit.document
+        const doc = hit.document as any
         let priceVariants = []
         if (doc.priceVariantsJson) {
           try {
@@ -537,7 +537,7 @@ export function SearchResultsPage() {
                     }}
                     variant={viewMode}
                     onAddToCart={(selectedUnit) => {
-                      const variant = product.priceVariants?.find((v) => v.unit === selectedUnit)
+                      const variant = product.priceVariants?.find((v: PriceVariant) => v.unit === selectedUnit)
                       const price = variant?.price || product.priceVariants?.[0]?.price
                       addToCart(product, 1, selectedUnit, price)
                     }}

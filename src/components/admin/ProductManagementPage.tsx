@@ -133,7 +133,7 @@ export function ProductManagementPage() {
         search: debouncedSearchQuery || undefined,
         categoryId: filterCategory !== 'all' ? filterCategory : undefined,
         status: filterStatus !== 'all' ? filterStatus : undefined,
-        requiresPrescription: filterPrescription === 'rx' ? 'true' : filterPrescription === 'otc' ? 'false' : undefined,
+        requiresPrescription: filterPrescription === 'rx' ? true : filterPrescription === 'otc' ? false : undefined,
         bypassTypesense: 'true',
       })
       return result
