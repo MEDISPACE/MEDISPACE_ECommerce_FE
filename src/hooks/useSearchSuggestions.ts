@@ -41,7 +41,7 @@ export function useSearchSuggestions(query: string): GroupedSuggestions {
     queryKey: ['ts-suggest-multi', debouncedQuery],
     queryFn: async () => {
       if (!debouncedQuery.trim() || debouncedQuery.length < 2) {
-        return { products: [], brands: [], categories: [], articles: [] }
+        return { products: [], brands: [], categories: [], articles: [], querySuggestions: [] }
       }
       return searchService.suggest(debouncedQuery)
     },
