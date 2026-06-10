@@ -57,6 +57,7 @@ import { searchService } from '~/services/searchService'
 import { ghnService } from '~/services/ghnService'
 import { recommendationService } from '~/services/recommendationService'
 import type { RecommendedProduct } from '~/services/recommendationService'
+import { patientService, type PatientMedicalInfo } from '~/services/pharmacist/patient.service'
 
 interface Product {
   id: string
@@ -140,6 +141,7 @@ export function CreateOrderPage() {
   })
   const [searchPhone, setSearchPhone] = useState('')
   const [openCustomerDropdown, setOpenCustomerDropdown] = useState(false)
+  const [patientMedicalInfo, setPatientMedicalInfo] = useState<PatientMedicalInfo | null>(null)
   const debouncedSearchPhone = useDebounce(searchPhone, 300)
 
   const { data: customerSearchResults = [], isFetching: isSearchingCustomer } = useQuery({
@@ -627,7 +629,12 @@ export function CreateOrderPage() {
 
     setMlLoading(true)
     recommendationService
-      .getPharmacistSuggestions({ prescriptionProductIds }, 6)
+      .getPharmacistSuggestions({
+        prescriptionProductIds,
+        chronicDiseases: patientMedicalInfo?.chronicDiseases ?? [],
+        allergies: patientMedicalInfo?.allergies ?? [],
+        currentMedications: patientMedicalInfo?.currentMedications?.map((medication) => medication.name) ?? [],
+      }, 6)
       .then((res) => {
         if (!cancelled) {
           // Lọc bỏ sản phẩm đã có trong đơn
@@ -643,7 +650,7 @@ export function CreateOrderPage() {
     return () => {
       cancelled = true
     }
-  }, [orderItems.map((i) => i.product.id).join(',')])
+  }, [orderItems.map((i) => i.product.id).join(','), patientMedicalInfo])
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleProductInfo = (product: Product) => {
@@ -680,10 +687,16 @@ export function CreateOrderPage() {
     }))
 
     setOpenCustomerDropdown(false)
+    setPatientMedicalInfo(null)
+    const patientId = patient.customerId || patient._id
+    if (patientId) {
+      patientService.getMedicalInfo(patientId).then(setPatientMedicalInfo).catch(() => setPatientMedicalInfo(null))
+    }
     toast.success(`Đã chọn khách hàng: ${patient.fullName}`)
   }
 
   const handleClearCustomer = () => {
+    setPatientMedicalInfo(null)
     setCustomerInfo((prev) => ({
       ...prev,
       phone: '',
@@ -1092,6 +1105,12 @@ export function CreateOrderPage() {
                 <span className='text-xs text-violet-200 ml-1'>Dựa trên các thuốc trong đơn</span>
               </div>
               <CardContent className='p-4'>
+                <Alert className='mb-3 border-amber-200 bg-amber-50'>
+                  <AlertTriangle className='h-4 w-4 text-amber-600' />
+                  <AlertDescription className='text-xs text-amber-800'>
+                    Gợi ý ML chỉ hỗ trợ tham khảo. Dược sĩ phải kiểm tra tương tác thuốc, chống chỉ định và liều dùng trước khi thêm vào đơn.
+                  </AlertDescription>
+                </Alert>
                 {mlLoading ? (
                   <div className='flex items-center gap-3 text-gray-500 text-sm py-2'>
                     <Loader2 className='w-4 h-4 animate-spin text-violet-500' />
