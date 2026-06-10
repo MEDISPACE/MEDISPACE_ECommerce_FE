@@ -189,8 +189,8 @@ export function ProductDetailPage() {
 
   // ML Recommendation hooks
   const mlProductId = product?._id ?? ''
-  const { products: relatedProducts, loading: relatedLoading } = useRelated(mlProductId, 8)
-  const { products: boughtTogetherProducts, loading: boughtTogetherLoading } = useBoughtTogether(mlProductId, 6)
+  const { products: relatedProducts, loading: relatedLoading, algorithm: relatedAlgorithm } = useRelated(mlProductId, 8)
+  const { products: boughtTogetherProducts, loading: boughtTogetherLoading, algorithm: boughtTogetherAlgorithm } = useBoughtTogether(mlProductId, 6)
 
   const carousel = useCarousel({
     itemsCount: relatedProducts.length,
@@ -924,6 +924,7 @@ export function ProductDetailPage() {
             badge='bundle'
             products={boughtTogetherProducts}
             loading={boughtTogetherLoading}
+            algorithm={boughtTogetherAlgorithm}
             viewAllLink='/products'
           />
 
@@ -931,9 +932,10 @@ export function ProductDetailPage() {
           <RecommendationCarousel
             title='Sản Phẩm Liên Quan'
             subtitle='Dựa trên thành phần và công dụng tương tự'
-            badge='trending'
+            badge='related'
             products={relatedProducts}
             loading={relatedLoading}
+            algorithm={relatedAlgorithm}
             viewAllLink='/products'
             className='bg-transparent'
           />

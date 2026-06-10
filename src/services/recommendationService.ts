@@ -34,6 +34,13 @@ export interface RecommendationResult {
   products: RecommendedProduct[]
 }
 
+export interface RecommendationEvent {
+  productId: string
+  algorithm: string
+  section: string
+  position: number
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 async function safeGet<T>(url: string, params?: Record<string, unknown>): Promise<T | null> {
@@ -138,6 +145,10 @@ export const recommendationService = {
   async getReplenishment(limit = 5): Promise<RecommendationResult> {
     const data = await safeGet<RecommendationResult>('/recommendations/replenishment', { limit })
     return data ?? { algorithm: 'unavailable', products: [] }
+  },
+
+  async trackClick(event: RecommendationEvent): Promise<void> {
+    await safePost('/recommendations/track', event)
   },
 }
 

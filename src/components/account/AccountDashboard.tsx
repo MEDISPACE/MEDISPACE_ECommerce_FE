@@ -12,6 +12,7 @@ import { orderService } from '../../services/orderService'
 import { RecommendationCarousel } from '../products/RecommendationCarousel'
 import { useForYou, useReplenishment } from '../../hooks/product/useRecommendations'
 import type { RecommendedProduct } from '../../services/recommendationService'
+import { recommendationService } from '../../services/recommendationService'
 import type { User as AccountUser, Notification, Order } from '../../types/account'
 
 export function AccountDashboard() {
@@ -24,8 +25,8 @@ export function AccountDashboard() {
 
   // ML Recommendations (isAuthenticated = !!user)
   const isAuth = !!user
-  const { products: forYouProducts, loading: forYouLoading } = useForYou(8, isAuth)
-  const { products: replenishProducts, loading: replenishLoading } = useReplenishment(4, isAuth)
+  const { products: forYouProducts, loading: forYouLoading, algorithm: forYouAlgorithm } = useForYou(8, isAuth)
+  const { products: replenishProducts, loading: replenishLoading, algorithm: replenishAlgorithm } = useReplenishment(4, isAuth)
 
   const [orders, setOrders] = useState<Order[]>([])
   // const [loading, setLoading] = useState(true) // TODO: Add loading state if needed
@@ -354,13 +355,21 @@ export function AccountDashboard() {
           </CardHeader>
           <CardContent>
             <div className='grid grid-cols-2 md:grid-cols-4 gap-3'>
-              {replenishProducts.map((product: RecommendedProduct) => {
+              {replenishProducts.map((product: RecommendedProduct, index) => {
                 const defaultVariant = product.priceVariants?.find((v) => v.isDefault) ?? product.priceVariants?.[0]
                 const price = defaultVariant?.salePrice || defaultVariant?.price || 0
                 return (
                   <Link
                     key={product._id}
                     to={`/products/${product.slug || product._id}`}
+                    onClick={() => {
+                      void recommendationService.trackClick({
+                        productId: product._id,
+                        algorithm: replenishAlgorithm,
+                        section: 'replenishment',
+                        position: index,
+                      })
+                    }}
                     className='group p-3 bg-white rounded-lg border border-amber-200 hover:border-amber-400 hover:shadow-md transition-all'
                   >
                     <img
@@ -389,6 +398,7 @@ export function AccountDashboard() {
         badge='for-you'
         products={forYouProducts}
         loading={forYouLoading}
+        algorithm={forYouAlgorithm}
         viewAllLink='/products'
       />
     </div>

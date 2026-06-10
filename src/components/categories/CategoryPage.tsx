@@ -59,7 +59,7 @@ export function CategoryPage() {
   const [notFound, setNotFound] = useState(false)
 
   // Trending trong danh mục này
-  const { products: trendingProducts, loading: trendingLoading } = useTrending(8, currentCategory?._id)
+  const { products: trendingProducts, loading: trendingLoading, algorithm: trendingAlgorithm } = useTrending(8, currentCategory?._id)
 
   const [filters, setFilters] = useState<ProductFilter>({
     categories: [],
@@ -378,6 +378,7 @@ export function CategoryPage() {
               badge='trending'
               products={trendingProducts}
               loading={trendingLoading}
+              algorithm={trendingAlgorithm}
               viewAllLink={`/categories/${slug}`}
             />
           </div>

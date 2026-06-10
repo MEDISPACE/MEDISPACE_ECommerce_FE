@@ -42,8 +42,8 @@ export function HomePage() {
   const { isAuthenticated } = useAuth()
 
   // ML Recommendation hooks
-  const { products: forYouProducts, loading: forYouLoading } = useForYou(8, isAuthenticated)
-  const { products: trendingProducts, loading: trendingLoading } = useTrending(8)
+  const { products: forYouProducts, loading: forYouLoading, algorithm: forYouAlgorithm } = useForYou(8, isAuthenticated)
+  const { products: trendingProducts, loading: trendingLoading, algorithm: trendingAlgorithm } = useTrending(8)
 
   // Categories state
   const { categories: realCategories, loading: categoriesLoading } = useCategories()
@@ -373,6 +373,7 @@ export function HomePage() {
           badge='for-you'
           products={forYouProducts}
           loading={forYouLoading}
+          algorithm={forYouAlgorithm}
           viewAllLink='/products'
           itemsPerPage={4}
           layout='centered'
@@ -382,11 +383,12 @@ export function HomePage() {
       {/* Xu Hướng Hôm Nay — NMF Trending */}
       <div className='bg-gradient-to-br from-gray-50 to-blue-50/50'>
         <RecommendationCarousel
-          title='Xu Hướng Hôm Nay'
-          subtitle='Những sản phẩm đang được mua nhiều nhất'
+          title='Sản Phẩm Nổi Bật'
+          subtitle='Những sản phẩm được quan tâm và đánh giá cao gần đây'
           badge='trending'
           products={trendingProducts}
           loading={trendingLoading}
+          algorithm={trendingAlgorithm}
           viewAllLink='/products'
           itemsPerPage={4}
           layout='centered'
