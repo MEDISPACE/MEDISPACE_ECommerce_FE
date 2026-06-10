@@ -3,8 +3,8 @@
  * Design đồng bộ với hệ thống: blue gradient header, ProductCard, ScrollReveal animation
  */
 
-import React, { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import React, { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Sparkles, TrendingUp, ShoppingBag, ArrowRight } from 'lucide-react'
 import { Link } from 'react-router'
 import { Button } from '../ui/button'
@@ -13,6 +13,7 @@ import { ScrollReveal } from '../shared/ScrollReveal'
 import { useCart } from '../../contexts/CartContext'
 import { useWishlist } from '../../hooks/product/useWishlist'
 import type { RecommendedProduct } from '../../services/recommendationService'
+import { recommendationService } from '../../services/recommendationService'
 import {
   getProductSalePrice,
   getProductOriginalPrice,
@@ -35,6 +36,8 @@ interface RecommendationCarouselProps {
   itemsPerPage?: number
   className?: string
   layout?: 'compact' | 'centered'
+  algorithm?: string
+  section?: string
 }
 
 // ─── Badge config ─────────────────────────────────────────────────────────────
@@ -140,6 +143,8 @@ export function RecommendationCarousel({
   itemsPerPage = 4,
   className = '',
   layout = 'compact',
+  algorithm = 'unknown',
+  section,
 }: RecommendationCarouselProps) {
   const { addToCart } = useCart()
   const { toggleWishlist, isInWishlist } = useWishlist()
@@ -148,6 +153,11 @@ export function RecommendationCarousel({
   const totalPages = Math.ceil(products.length / itemsPerPage)
   const badgeConfig = badge ? BADGE_CONFIG[badge] : null
   const BadgeIcon = badgeConfig?.icon
+  const trackingSection = section ?? badge ?? 'recommendation'
+
+  useEffect(() => {
+    setCurrentPage(0)
+  }, [products, itemsPerPage])
 
   // Ẩn section nếu không loading và không có data
   if (!loading && products.length === 0) return null
@@ -296,6 +306,14 @@ export function RecommendationCarousel({
                               transition={{ delay: productIndex * 0.1, duration: 0.5, ease: 'easeOut' }}
                               whileHover={{ y: -5, transition: { duration: 0.2 } }}
                               className='h-full'
+                              onClick={() => {
+                                void recommendationService.trackClick({
+                                  productId: rawProduct._id,
+                                  algorithm,
+                                  section: trackingSection,
+                                  position: pageIndex * itemsPerPage + productIndex,
+                                })
+                              }}
                             >
                               <ProductCard
                                 product={product}

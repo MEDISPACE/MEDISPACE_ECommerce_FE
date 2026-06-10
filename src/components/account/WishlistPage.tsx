@@ -51,8 +51,8 @@ export function WishlistPage() {
 
   // Related dựa trên sản phẩm đầu tiên trong wishlist
   const firstWishlistId = useMemo(() => wishlistProducts[0]?.id || '', [wishlistProducts])
-  const { products: relatedProducts, loading: relatedLoading } = useRelated(firstWishlistId, 8)
-  const { products: trendingProducts, loading: trendingLoading } = useTrending(8)
+  const { products: relatedProducts, loading: relatedLoading, algorithm: relatedAlgorithm } = useRelated(firstWishlistId, 8)
+  const { products: trendingProducts, loading: trendingLoading, algorithm: trendingAlgorithm } = useTrending(8)
 
   // Fetch wishlist products
   useEffect(() => {
@@ -546,6 +546,7 @@ export function WishlistPage() {
           badge='related'
           products={relatedProducts}
           loading={relatedLoading}
+          algorithm={relatedAlgorithm}
           viewAllLink='/products'
         />
       ) : (
@@ -555,6 +556,7 @@ export function WishlistPage() {
           badge='trending'
           products={trendingProducts}
           loading={trendingLoading}
+          algorithm={trendingAlgorithm}
           viewAllLink='/products'
         />
       )}

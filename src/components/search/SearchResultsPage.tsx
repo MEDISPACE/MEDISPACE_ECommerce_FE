@@ -44,11 +44,11 @@ export function SearchResultsPage() {
   const appliedBrandSlugRef = useRef<string | null>(null)
 
   // Trending fallback khi 0 kết quả
-  const { products: trendingProducts, loading: trendingLoading } = useTrending(8)
+  const { products: trendingProducts, loading: trendingLoading, algorithm: trendingAlgorithm } = useTrending(8)
 
   // Related khi 1–5 kết quả — firstResultId cập nhật sau khi query resolve
   const [firstResultId, setFirstResultId] = useState('')
-  const { products: relatedProducts, loading: relatedLoading } = useRelated(firstResultId, 8)
+  const { products: relatedProducts, loading: relatedLoading, algorithm: relatedAlgorithm } = useRelated(firstResultId, 8)
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [isFilterOpen, setIsFilterOpen] = useState(false)
@@ -652,6 +652,7 @@ export function SearchResultsPage() {
                     badge='related'
                     products={relatedProducts}
                     loading={relatedLoading}
+                    algorithm={relatedAlgorithm}
                     viewAllLink='/products'
                   />
                 </div>
@@ -679,6 +680,7 @@ export function SearchResultsPage() {
                   badge='trending'
                   products={trendingProducts}
                   loading={trendingLoading}
+                  algorithm={trendingAlgorithm}
                   viewAllLink='/products'
                 />
               </div>
