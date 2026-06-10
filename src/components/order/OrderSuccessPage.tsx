@@ -23,7 +23,7 @@ export function OrderSuccessPage() {
 
   // Extract productIds from order for post-purchase recommendations
   const orderProductIds = order?.items?.map((item: any) => item.productId || item.product?._id || '').filter(Boolean) ?? []
-  const { products: postPurchaseProducts, loading: postPurchaseLoading } = usePostPurchase(orderProductIds)
+  const { products: postPurchaseProducts, loading: postPurchaseLoading, algorithm: postPurchaseAlgorithm } = usePostPurchase(orderProductIds)
 
   useEffect(() => {
     // Scroll to top on mount
@@ -290,6 +290,7 @@ export function OrderSuccessPage() {
             badge='post-purchase'
             products={postPurchaseProducts}
             loading={postPurchaseLoading}
+            algorithm={postPurchaseAlgorithm}
             viewAllLink='/products'
           />
         </div>

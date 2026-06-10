@@ -39,7 +39,7 @@ export function ShoppingCartPage() {
 
   // Cart product IDs for cross-sell recommendations
   const cartProductIds = cart?.items?.map((item) => item.productId).filter(Boolean) ?? []
-  const { products: crossSellProducts, loading: crossSellLoading } = usePostPurchase(cartProductIds, 8)
+  const { products: crossSellProducts, loading: crossSellLoading, algorithm: crossSellAlgorithm } = usePostPurchase(cartProductIds, 8)
 
   const [addresses, setAddresses] = useState<Address[]>([])
   const [defaultAddress, setDefaultAddress] = useState<Address | null>(null)
@@ -565,6 +565,7 @@ export function ShoppingCartPage() {
             badge='bundle'
             products={crossSellProducts}
             loading={crossSellLoading}
+            algorithm={crossSellAlgorithm}
             viewAllLink='/products'
           />
         </div>

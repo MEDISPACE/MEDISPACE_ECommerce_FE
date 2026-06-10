@@ -123,7 +123,7 @@ export function OrderDetailPage() {
 
   // Product IDs từ đơn hàng — dùng cho post-purchase carousel
   const orderProductIds = useMemo(() => order?.items.map((i) => i.productId) ?? [], [order])
-  const { products: crossSellProducts, loading: crossSellLoading } = usePostPurchase(orderProductIds, 8)
+  const { products: crossSellProducts, loading: crossSellLoading, algorithm: crossSellAlgorithm } = usePostPurchase(orderProductIds, 8)
 
   const fetchOrder = useCallback(async () => {
     if (!orderId) return
@@ -644,6 +644,7 @@ export function OrderDetailPage() {
         badge='post-purchase'
         products={crossSellProducts}
         loading={crossSellLoading}
+        algorithm={crossSellAlgorithm}
         viewAllLink='/products'
       />
 

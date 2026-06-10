@@ -82,6 +82,8 @@ export function useRelated(productId: string, limit = 8): UseRecommendationResul
 
   useEffect(() => {
     if (!productId) {
+      setProducts([])
+      setAlgorithm('')
       setLoading(false)
       return
     }
@@ -109,6 +111,8 @@ export function useBoughtTogether(productId: string, limit = 6): UseRecommendati
 
   useEffect(() => {
     if (!productId) {
+      setProducts([])
+      setAlgorithm('')
       setLoading(false)
       return
     }
@@ -138,6 +142,8 @@ export function usePostPurchase(productIds: string[], limit = 8): UseRecommendat
 
   useEffect(() => {
     if (!productIds || productIds.length === 0) {
+      setProducts([])
+      setAlgorithm('')
       setLoading(false)
       return
     }
