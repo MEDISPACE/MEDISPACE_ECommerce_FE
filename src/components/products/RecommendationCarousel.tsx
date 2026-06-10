@@ -5,7 +5,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { ChevronLeft, ChevronRight, Sparkles, TrendingUp, ShoppingBag, ArrowRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Sparkles, TrendingUp, ShoppingBag, ArrowRight, EyeOff, Clock3, Info } from 'lucide-react'
 import { Link } from 'react-router'
 import { Button } from '../ui/button'
 import { ProductCard } from './ProductCard'
@@ -149,8 +149,10 @@ export function RecommendationCarousel({
   const { addToCart } = useCart()
   const { toggleWishlist, isInWishlist } = useWishlist()
   const [currentPage, setCurrentPage] = useState(0)
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set())
 
-  const totalPages = Math.ceil(products.length / itemsPerPage)
+  const visibleProducts = products.filter((product) => !dismissed.has(product._id))
+  const totalPages = Math.ceil(visibleProducts.length / itemsPerPage)
   const badgeConfig = badge ? BADGE_CONFIG[badge] : null
   const BadgeIcon = badgeConfig?.icon
   const trackingSection = section ?? badge ?? 'recommendation'
@@ -158,6 +160,28 @@ export function RecommendationCarousel({
   useEffect(() => {
     setCurrentPage(0)
   }, [products, itemsPerPage])
+
+  useEffect(() => {
+    if (loading) return
+    visibleProducts
+      .slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage)
+      .forEach((product, index) => {
+        void recommendationService.trackEvent({
+          productId: product._id,
+          algorithm,
+          section: trackingSection,
+          position: currentPage * itemsPerPage + index,
+          eventType: 'impression',
+          requestId: product.attribution?.requestId,
+          attributionToken: product.attribution?.attributionToken,
+          modelVersion: product.attribution?.modelVersion,
+          experimentId: product.attribution?.experimentId,
+          experimentVariant: product.attribution?.experimentVariant,
+        })
+      })
+  // Tracking only when the visible recommendation page changes.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, loading, visibleProducts.map((product) => product._id).join(',')])
 
   // Ẩn section nếu không loading và không có data
   if (!loading && products.length === 0) return null
@@ -294,7 +318,7 @@ export function RecommendationCarousel({
                       key={pageIndex}
                       className='w-full flex-shrink-0 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 px-1 pt-2'
                     >
-                      {products
+                      {visibleProducts
                         .slice(pageIndex * itemsPerPage, (pageIndex + 1) * itemsPerPage)
                         .map((rawProduct, productIndex) => {
                           const product = toProductCardFormat(rawProduct)
@@ -305,27 +329,76 @@ export function RecommendationCarousel({
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ delay: productIndex * 0.1, duration: 0.5, ease: 'easeOut' }}
                               whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                              className='h-full'
-                              onClick={() => {
+                              className='h-full relative'
+                              onClick={(event) => {
+                                if ((event.target as HTMLElement).closest('button')) return
                                 void recommendationService.trackClick({
                                   productId: rawProduct._id,
                                   algorithm,
                                   section: trackingSection,
                                   position: pageIndex * itemsPerPage + productIndex,
+                                  requestId: rawProduct.attribution?.requestId,
+                                  attributionToken: rawProduct.attribution?.attributionToken,
+                                  modelVersion: rawProduct.attribution?.modelVersion,
+                                  experimentId: rawProduct.attribution?.experimentId,
+                                  experimentVariant: rawProduct.attribution?.experimentVariant,
                                 })
                               }}
                             >
+                              <div className='absolute right-2 top-2 z-30 flex gap-1'>
+                                <button
+                                  type='button'
+                                  className='rounded-full bg-white/95 p-1.5 text-gray-500 shadow hover:text-red-600'
+                                  title={trackingSection === 'replenishment' ? 'Nhắc lại sau' : 'Không quan tâm'}
+                                  onClick={() => {
+                                    setDismissed((previous) => new Set(previous).add(rawProduct._id))
+                                    void recommendationService.trackEvent({
+                                      productId: rawProduct._id,
+                                      algorithm,
+                                      section: trackingSection,
+                                      position: pageIndex * itemsPerPage + productIndex,
+                                      eventType: trackingSection === 'replenishment' ? 'snooze' : 'dismiss',
+                                      requestId: rawProduct.attribution?.requestId,
+                                      attributionToken: rawProduct.attribution?.attributionToken,
+                                      modelVersion: rawProduct.attribution?.modelVersion,
+                                      experimentId: rawProduct.attribution?.experimentId,
+                                      experimentVariant: rawProduct.attribution?.experimentVariant,
+                                    })
+                                  }}
+                                >
+                                  {trackingSection === 'replenishment' ? <Clock3 className='h-4 w-4' /> : <EyeOff className='h-4 w-4' />}
+                                </button>
+                              </div>
                               <ProductCard
                                 product={product}
                                 variant='grid'
                                 onAddToCart={(selectedUnit) => {
                                   const variant = rawProduct.priceVariants?.find((v) => v.unit === selectedUnit)
                                   const price = variant?.price ?? rawProduct.priceVariants?.[0]?.price
-                                  addToCart(rawProduct as any, 1, selectedUnit, price)
+                                  void addToCart(rawProduct as any, 1, selectedUnit, price)
+                                  void recommendationService.trackEvent({
+                                    productId: rawProduct._id,
+                                    algorithm,
+                                    section: trackingSection,
+                                    position: pageIndex * itemsPerPage + productIndex,
+                                    eventType: 'add_to_cart',
+                                    requestId: rawProduct.attribution?.requestId,
+                                    attributionToken: rawProduct.attribution?.attributionToken,
+                                    modelVersion: rawProduct.attribution?.modelVersion,
+                                    experimentId: rawProduct.attribution?.experimentId,
+                                    experimentVariant: rawProduct.attribution?.experimentVariant,
+                                    value: price,
+                                  })
                                 }}
                                 onToggleWishlist={() => toggleWishlist(rawProduct._id)}
                                 isInWishlist={isInWishlist(rawProduct._id)}
                               />
+                              {rawProduct.recommendation?.reason && (
+                                <div className='mt-2 flex items-start gap-1.5 px-1 text-xs text-slate-500' title={rawProduct.recommendation.evidence.join(', ')}>
+                                  <Info className='mt-0.5 h-3.5 w-3.5 flex-shrink-0' />
+                                  <span>{rawProduct.recommendation.reason}</span>
+                                </div>
+                              )}
                             </motion.div>
                           )
                         })}
