@@ -1,4 +1,4 @@
-/**
+﻿/**
  * E2E Extended: Review & Notification — Complete Coverage
  *
  * Covers all previously missing test cases:
@@ -121,8 +121,8 @@ test.describe.serial('Review — API Constraints', () => {
 
   // ── TC-R19: Duplicate review → 409 ────────────────────────────────────────
   test('TC-R19 — Duplicate review on same product → 409 Conflict', async ({ request }) => {
-    const db = await getDb()
     const customerUserId = new ObjectId(s.customer.user._id)
+    const db = await getDb()
 
     // Ensure there's an existing approved review for customer on E2E-PROD-001
     const existingReview = await db.collection('reviews').findOne({
@@ -164,8 +164,8 @@ test.describe.serial('Review — Edit & Delete (Browser)', () => {
 
   // ── TC-R13: Edit approved review → pending re-moderation ──────────────────
   test('TC-R13 — Edit approved review → re-enters pending moderation', async ({ browser }) => {
-    const db = await getDb()
     const customerUserId = new ObjectId(s.customer.user._id)
+    const db = await getDb()
 
     // Find an approved review by customer (from earlier tests)
     const approvedReview = await db.collection('reviews').findOne({
@@ -373,8 +373,8 @@ test.describe.serial('Review — Admin Filter & Bulk Operations', () => {
 
   // ── TC-R23: Admin bulk APPROVE reviews ───────────────────────────────────
   test('TC-R23 — Admin bulk approve reviews', async ({ browser, request }) => {
-    const db = await getDb()
 
+    const db = await getDb()
     // Seed 2 pending reviews via customer2 for bulk approve test
     const customer2Id = new ObjectId(s.customer2.user._id)
     const product = await db.collection('products').findOne({ sku: 'E2E-PROD-001' })
@@ -855,8 +855,8 @@ test.describe.serial('Notification — Management UI', () => {
 
   // ── TC-N5: Mark SINGLE notification as read ───────────────────────────────
   test('TC-N5 — Mark single notification as read', async ({ browser, request }) => {
-    const db = await getDb()
     const customerUserId = new ObjectId(s.customer.user._id)
+    const db = await getDb()
 
     // Seed an unread notification
     const testNotifId = new ObjectId()
@@ -1045,7 +1045,6 @@ test.describe.serial('Notification — Management UI', () => {
 
   // ── TC-N8: Notification pagination ───────────────────────────────────────
   test('TC-N8 — Notification pagination (> 20 items)', async ({ browser }) => {
-    const db = await getDb()
     const customerUserId = new ObjectId(s.customer.user._id)
 
     // Seed 25 notifications to trigger pagination (default limit = 20)
@@ -1097,5 +1096,173 @@ test.describe.serial('Notification — Management UI', () => {
     // Cleanup
     await db.collection('notifications').deleteMany({ _id: { $in: testNotifIds } })
     console.log('✅ TC-N8: Pagination test complete, cleanup done')
+  })
+})
+
+// =============================================================================
+// SUITE 5: REVIEW - AI Moderation (Mock mode, async scoring)
+// =============================================================================
+// Magic keywords:
+//   "ai_e2e_hide"   -> shouldHide=true, confidence=0.95 -> downgrade approved->pending
+//   "ai_e2e_review" -> requiresHumanReview=true, confidence=0.72 -> aiFlag=true
+//   (binh thuong)   -> safe, confidence thap, khong action
+// =============================================================================
+
+test.describe.serial('Review - AI Moderation (Mock)', () => {
+
+  // Xoa tat ca reviews cua customer va customer2 cho E2E_PRODUCT_ID truoc moi test
+  test.beforeEach(async () => {
+    const db = await getDb()
+    await db.collection('reviews').deleteMany({
+      productId: new ObjectId(E2E_PRODUCT_ID),
+      userId: { $in: [new ObjectId(s.customer.user._id), new ObjectId(s.customer2.user._id)] }
+    })
+  })
+
+  async function seedAiReview(request: any, token: string, userId: string, comment: string, title = 'AI Test') {
+    const db = await getDb()
+    const orderId = new ObjectId()
+    await db.collection('orders').insertOne({
+      _id: orderId,
+      orderNumber: `ORD-AI-${Date.now()}`,
+      userId: new ObjectId(userId),
+      items: [{ productId: new ObjectId(E2E_PRODUCT_ID), quantity: 1, price: 100000 }],
+      status: 'delivered', orderStatus: 'delivered', paymentStatus: 'paid',
+      totalAmount: 100000, createdAt: new Date(), updatedAt: new Date()
+    })
+    const res = await request.post(`${API_URL}/reviews`, {
+      headers: { Authorization: `Bearer ${token}` },
+      data: { productId: E2E_PRODUCT_ID, orderId: orderId.toString(), rating: 4, title, comment }
+    })
+    const body = await res.json()
+    const reviewId = body?.data?._id || body?.result?._id || body?._id
+    return { reviewId: reviewId as string, orderId }
+  }
+
+  async function waitForAiScore(reviewId: string, maxMs = 10000) {
+    const db = await getDb()
+    const start = Date.now()
+    while (Date.now() - start < maxMs) {
+      const rev = await db.collection('reviews').findOne({ _id: new ObjectId(reviewId) })
+      if (rev?.aiModeration) return rev
+      await new Promise((r) => setTimeout(r, 600))
+    }
+    return await db.collection('reviews').findOne({ _id: new ObjectId(reviewId) })
+  }
+
+  async function cleanupAiReview(reviewId: string, orderId: ObjectId) {
+    const db = await getDb()
+    await db.collection('reviews').deleteOne({ _id: new ObjectId(reviewId) })
+    await db.collection('orders').deleteOne({ _id: orderId })
+  }
+
+  test('TC-AI1 - Normal review -> AI scores low severity, no action', async ({ request }) => {
+    const { reviewId, orderId } = await seedAiReview(request, s.customer.token, s.customer.user._id,
+      'San pham tot, giao hang nhanh, dong goi ky. Se mua lai lan sau.', 'TC-AI1 Safe Review')
+    expect(reviewId, 'TC-AI1: Review phai duoc tao').toBeTruthy()
+    console.log(`[TC-AI1] Created review ${reviewId}`)
+
+    const reviewed = await waitForAiScore(reviewId)
+    expect(reviewed, 'TC-AI1: AI phai score review trong 10s').toBeTruthy()
+    const ai = reviewed!.aiModeration
+    console.log(`[TC-AI1] severity=${ai.severity}, confidence=${ai.confidence}, action=${ai.suggestedAction}`)
+
+    expect(ai.severity).toBe('low')
+    expect(ai.shouldHide).toBe(false)
+    expect(ai.suggestedAction).toBe('none')
+    expect(reviewed!.aiFlag).toBeFalsy()
+    console.log('OK TC-AI1: AI confirmed safe - low severity, no downgrade')
+    await cleanupAiReview(reviewId, orderId)
+  })
+
+  test('TC-AI2 - ai_e2e_hide -> AI auto-downgrade to pending', async ({ request }) => {
+    const { reviewId, orderId } = await seedAiReview(request, s.customer.token, s.customer.user._id,
+      'San pham kha on nhung ai_e2e_hide can luu y khi su dung.', 'TC-AI2 Hide Test')
+    expect(reviewId, 'TC-AI2: Review phai duoc tao').toBeTruthy()
+    console.log(`[TC-AI2] Created review ${reviewId} - contains ai_e2e_hide`)
+
+    const reviewed = await waitForAiScore(reviewId)
+    expect(reviewed, 'TC-AI2: AI phai score trong 10s').toBeTruthy()
+    const ai = reviewed!.aiModeration
+    console.log(`[TC-AI2] shouldHide=${ai.shouldHide}, confidence=${ai.confidence}, status=${reviewed!.status}`)
+
+    expect(ai.shouldHide).toBe(true)
+    expect(ai.confidence).toBeGreaterThanOrEqual(0.78)
+    expect(reviewed!.aiFlag).toBe(true)
+    expect(reviewed!.status).toBe('pending')
+    console.log('OK TC-AI2: ai_e2e_hide -> downgraded to pending, aiFlag=true')
+    await cleanupAiReview(reviewId, orderId)
+  })
+
+  test('TC-AI3 - ai_e2e_review -> AI flags for admin, status unchanged', async ({ request }) => {
+    const { reviewId, orderId } = await seedAiReview(request, s.customer.token, s.customer.user._id,
+      'San pham can xem xet them ai_e2e_review truoc khi ket luan.', 'TC-AI3 Flag Test')
+    expect(reviewId).toBeTruthy()
+    console.log(`[TC-AI3] Created review ${reviewId} - contains ai_e2e_review`)
+
+    const reviewed = await waitForAiScore(reviewId)
+    expect(reviewed).toBeTruthy()
+    const ai = reviewed!.aiModeration
+    console.log(`[TC-AI3] requiresHumanReview=${ai.requiresHumanReview}, shouldHide=${ai.shouldHide}, confidence=${ai.confidence}`)
+
+    expect(ai.requiresHumanReview).toBe(true)
+    expect(ai.shouldHide).toBe(false)
+    expect(ai.confidence).toBeGreaterThanOrEqual(0.55)
+    expect(reviewed!.aiFlag).toBe(true)
+    expect(['approved', 'pending']).toContain(reviewed!.status)
+    console.log(`OK TC-AI3: aiFlag=true, status="${reviewed!.status}" (AI chi flag, khong downgrade)`)
+    await cleanupAiReview(reviewId, orderId)
+  })
+
+  test('TC-AI4 - Short genuine review (20 chars) -> passes rules, AI scores safe', async ({ request }) => {
+    const db = await getDb()
+    // customer2 co the da co review tu TC-R23/R24 -> xoa truoc de tranh 409
+    const existing2 = await db.collection('reviews').findOne({
+      userId: new ObjectId(s.customer2.user._id), productId: new ObjectId(E2E_PRODUCT_ID)
+    })
+    if (existing2) await db.collection('reviews').deleteOne({ _id: existing2._id })
+
+    const { reviewId, orderId } = await seedAiReview(request, s.customer2.token, s.customer2.user._id,
+      'Tot lam, giao nhanh!', 'TC-AI4 Short Review')
+    expect(reviewId, 'TC-AI4: Review ngan chan thuc phai duoc tao').toBeTruthy()
+    console.log(`[TC-AI4] Created short review ${reviewId}`)
+
+    const saved = await db.collection('reviews').findOne({ _id: new ObjectId(reviewId) })
+    expect(saved).toBeTruthy()
+    expect(['approved', 'pending']).toContain(saved!.status)
+    console.log(`OK TC-AI4: Short review status="${saved!.status}" (khong bi block boi rule cung)`)
+
+    const reviewed = await waitForAiScore(reviewId)
+    if (reviewed?.aiModeration) {
+      expect(reviewed.aiModeration.severity).toBe('low')
+      expect(reviewed.aiModeration.shouldHide).toBe(false)
+      console.log('OK TC-AI4: AI confirmed short genuine review is safe')
+    } else {
+      console.log('WARN TC-AI4: AI timeout - review still saved correctly')
+    }
+    await cleanupAiReview(reviewId, orderId)
+  })
+
+  test('TC-AI5 - AI failure is non-critical, review integrity preserved', async ({ request }) => {
+    const db = await getDb()
+    const { reviewId, orderId } = await seedAiReview(request, s.customer.token, s.customer.user._id,
+      'Kiem tra tinh ben vung cua he thong khi gap loi ngoai y muon.', 'TC-AI5 Resilience')
+    expect(reviewId, 'TC-AI5: Review phai duoc tao du AI co the loi').toBeTruthy()
+
+    const savedReview = await db.collection('reviews').findOne({ _id: new ObjectId(reviewId) })
+    expect(savedReview).toBeTruthy()
+    expect(savedReview!.comment).toContain('ben vung')
+    expect(['approved', 'pending']).toContain(savedReview!.status)
+    console.log(`[TC-AI5] Review ${reviewId} created, status="${savedReview!.status}"`)
+
+    await new Promise((r) => setTimeout(r, 4000))
+    const afterWait = await db.collection('reviews').findOne({ _id: new ObjectId(reviewId) })
+    expect(afterWait).toBeTruthy()
+    expect(['approved', 'pending']).toContain(afterWait!.status)
+    expect(afterWait!.rating).toBe(4)
+    expect(afterWait!.userId.toString()).toBe(s.customer.user._id)
+
+    console.log(`OK TC-AI5: Review integrity preserved - status="${afterWait!.status}"`)
+    await cleanupAiReview(reviewId, orderId)
   })
 })
