@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Bell, Check, Settings } from 'lucide-react'
+import { Bell, Check, Settings, Star } from 'lucide-react'
 
 import { NotificationItem } from './NotificationItem'
 import { Button } from '../ui/button'
@@ -24,7 +24,7 @@ import { useNotifications, useUnreadNotificationCount } from '~/hooks/useNotific
 
 type UiNotification = {
   id: string
-  type: 'order' | 'prescription' | 'promotion' | 'health' | 'system'
+  type: 'order' | 'prescription' | 'promotion' | 'health' | 'system' | 'review'
   title: string
   message: string
   timestamp: string
@@ -65,7 +65,7 @@ export function NotificationsPage() {
   // Use real hook with live data
   const filter = activeTab === 'all' || activeTab === 'unread' || activeTab === 'settings'
     ? activeTab === 'settings' ? 'all' : activeTab as 'all' | 'unread'
-    : activeTab as 'order' | 'prescription' | 'promotion' | 'system'
+    : activeTab as 'order' | 'prescription' | 'promotion' | 'system' | 'review'
 
   const { notifications: rawNotifications, pagination, markAsRead, markAllAsRead, deleteNotification } = useNotifications(filter, page)
   const unreadCount = useUnreadNotificationCount()
@@ -190,6 +190,20 @@ export function NotificationsPage() {
                 </span>
               </TabsTrigger>
               <TabsTrigger
+                value='review'
+                className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-amber-500 data-[state=active]:!text-white data-[state=active]:!shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+              >
+                <span className='whitespace-nowrap flex items-center gap-1'>
+                  <Star className='w-3.5 h-3.5' />
+                  Đánh giá
+                  {getTabCount('review') > 0 && (
+                    <span className='ml-1 rounded-full px-2 py-0.5 text-xs font-medium bg-white text-amber-600'>
+                      {getTabCount('review')}
+                    </span>
+                  )}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger
                 value='promotion'
                 className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:!shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
               >
@@ -277,6 +291,26 @@ export function NotificationsPage() {
                 onAction={handleNotificationAction}
               />
             ))}
+          </TabsContent>
+
+          {/* Review notifications tab — approved & rejected */}
+          <TabsContent value='review' className='p-6 space-y-4'>
+            {filteredNotifications.length === 0 ? (
+              <div className='text-center py-12'>
+                <Star className='w-16 h-16 mx-auto text-amber-200 mb-4' />
+                <h3 className='text-lg font-medium text-gray-900 mb-2'>Chưa có thông báo đánh giá</h3>
+                <p className='text-gray-500'>Thông báo khi đánh giá được duyệt hoặc từ chối sẽ xuất hiện tại đây</p>
+              </div>
+            ) : (
+              filteredNotifications.map((notification) => (
+                <NotificationItem
+                  key={notification.id}
+                  notification={notification}
+                  onMarkAsRead={handleMarkAsRead}
+                  onAction={handleNotificationAction}
+                />
+              ))
+            )}
           </TabsContent>
 
           <TabsContent value='promotion' className='p-6 space-y-4'>

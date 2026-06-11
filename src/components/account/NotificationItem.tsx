@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { Package, Bell, Gift, Heart, Pill, Clock, CheckCircle } from 'lucide-react'
+import { Package, Bell, Gift, Heart, Pill, Clock, CheckCircle, Star } from 'lucide-react'
 import { Card, CardContent } from '../ui/card'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
 
 interface Notification {
   id: string
-  type: 'order' | 'prescription' | 'promotion' | 'health' | 'system'
+  type: 'order' | 'prescription' | 'promotion' | 'health' | 'system' | 'review'
   title: string
   message: string
   timestamp: string
@@ -34,6 +34,8 @@ export function NotificationItem({ notification, onMarkAsRead, onAction }: Notif
         return <Gift className='w-5 h-5 text-purple-600' />
       case 'health':
         return <Heart className='w-5 h-5 text-red-500' />
+      case 'review':
+        return <Star className='w-5 h-5 text-amber-500' />
       case 'system':
         return <Bell className='w-5 h-5 text-gray-600' />
       default:
@@ -51,6 +53,8 @@ export function NotificationItem({ notification, onMarkAsRead, onAction }: Notif
         return 'Khuyến mãi'
       case 'health':
         return 'Sức khỏe'
+      case 'review':
+        return 'Đánh giá'
       case 'system':
         return 'Hệ thống'
       default:
@@ -68,6 +72,8 @@ export function NotificationItem({ notification, onMarkAsRead, onAction }: Notif
         return 'bg-purple-100 text-purple-800'
       case 'health':
         return 'bg-red-100 text-red-800'
+      case 'review':
+        return 'bg-amber-100 text-amber-800'
       case 'system':
         return 'bg-gray-100 text-gray-800'
       default:
