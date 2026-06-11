@@ -1,4 +1,4 @@
-﻿/**
+/**
  * E2E Extended: Review & Notification — Complete Coverage
  *
  * Covers all previously missing test cases:
@@ -1140,13 +1140,13 @@ test.describe.serial('Review - AI Moderation (Mock)', () => {
     return { reviewId: reviewId as string, orderId }
   }
 
-  async function waitForAiScore(reviewId: string, maxMs = 10000) {
+  async function waitForAiScore(reviewId: string, maxMs = 30000) {
     const db = await getDb()
     const start = Date.now()
     while (Date.now() - start < maxMs) {
       const rev = await db.collection('reviews').findOne({ _id: new ObjectId(reviewId) })
       if (rev?.aiModeration) return rev
-      await new Promise((r) => setTimeout(r, 600))
+      await new Promise((r) => setTimeout(r, 800))
     }
     return await db.collection('reviews').findOne({ _id: new ObjectId(reviewId) })
   }
@@ -1164,7 +1164,7 @@ test.describe.serial('Review - AI Moderation (Mock)', () => {
     console.log(`[TC-AI1] Created review ${reviewId}`)
 
     const reviewed = await waitForAiScore(reviewId)
-    expect(reviewed, 'TC-AI1: AI phai score review trong 10s').toBeTruthy()
+    expect(reviewed, 'TC-AI1: AI phai score review trong 30s').toBeTruthy()
     const ai = reviewed!.aiModeration
     console.log(`[TC-AI1] severity=${ai.severity}, confidence=${ai.confidence}, action=${ai.suggestedAction}`)
 
@@ -1177,13 +1177,16 @@ test.describe.serial('Review - AI Moderation (Mock)', () => {
   })
 
   test('TC-AI2 - ai_e2e_hide -> AI auto-downgrade to pending', async ({ request }) => {
+    // Content: magic keyword (mock mode) + real medical misinformation (real LLM mode)
+    // Dùng duoc trong ca hai che do: mock bắt keyword, real LLM bắt medical_harm
     const { reviewId, orderId } = await seedAiReview(request, s.customer.token, s.customer.user._id,
-      'San pham kha on nhung ai_e2e_hide can luu y khi su dung.', 'TC-AI2 Hide Test')
+      'ai_e2e_hide Thuoc nay chua khoi ung thu giai doan 4 trong 30 ngay, khong can hoa tri hay xa tri!',
+      'TC-AI2 Hide Test')
     expect(reviewId, 'TC-AI2: Review phai duoc tao').toBeTruthy()
     console.log(`[TC-AI2] Created review ${reviewId} - contains ai_e2e_hide`)
 
     const reviewed = await waitForAiScore(reviewId)
-    expect(reviewed, 'TC-AI2: AI phai score trong 10s').toBeTruthy()
+    expect(reviewed, 'TC-AI2: AI phai score trong 30s').toBeTruthy()
     const ai = reviewed!.aiModeration
     console.log(`[TC-AI2] shouldHide=${ai.shouldHide}, confidence=${ai.confidence}, status=${reviewed!.status}`)
 
@@ -1196,8 +1199,10 @@ test.describe.serial('Review - AI Moderation (Mock)', () => {
   })
 
   test('TC-AI3 - ai_e2e_review -> AI flags for admin, status unchanged', async ({ request }) => {
+    // Content: magic keyword (mock mode) + real harassment/spam (real LLM mode)
     const { reviewId, orderId } = await seedAiReview(request, s.customer.token, s.customer.user._id,
-      'San pham can xem xet them ai_e2e_review truoc khi ket luan.', 'TC-AI3 Flag Test')
+      'ai_e2e_review San pham nay la hang gia mao thuong hieu, nguoi ban lua dao khach hang!',
+      'TC-AI3 Flag Test')
     expect(reviewId).toBeTruthy()
     console.log(`[TC-AI3] Created review ${reviewId} - contains ai_e2e_review`)
 
