@@ -164,7 +164,7 @@ export interface SearchResult {
 export interface Notification {
   id: string
   userId: string
-  type: 'order' | 'prescription' | 'promotion' | 'reminder' | 'system'
+  type: 'order' | 'prescription' | 'promotion' | 'reminder' | 'system' | 'review'
   title: string
   message: string
   isRead: boolean

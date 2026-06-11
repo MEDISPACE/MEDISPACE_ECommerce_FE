@@ -119,28 +119,34 @@ export function OrderDetailsDrawer({ isOpen, onClose, order }: OrderDetailsDrawe
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className='bg-gradient-to-br from-blue-50 to-white p-4 rounded-xl border border-blue-100 space-y-2'>
-                <p className='font-semibold text-gray-900 text-lg'>
-                  {order.shippingAddress.firstName} {order.shippingAddress.lastName}
-                </p>
-                <div className='flex items-center gap-2 text-gray-600'>
-                  <Phone className='w-4 h-4' />
-                  <span>{order.shippingAddress.phone}</span>
-                </div>
-                {order.shippingAddress.email && (
+              {order.shippingAddress ? (
+                <div className='bg-gradient-to-br from-blue-50 to-white p-4 rounded-xl border border-blue-100 space-y-2'>
+                  <p className='font-semibold text-gray-900 text-lg'>
+                    {order.shippingAddress.firstName} {order.shippingAddress.lastName}
+                  </p>
                   <div className='flex items-center gap-2 text-gray-600'>
-                    <span className='text-sm'>✉️</span>
-                    <span>{order.shippingAddress.email}</span>
+                    <Phone className='w-4 h-4' />
+                    <span>{order.shippingAddress.phone}</span>
                   </div>
-                )}
-                <div className='flex items-start gap-2 text-gray-600 pt-2 border-t border-blue-100'>
-                  <MapPin className='w-4 h-4 mt-0.5 flex-shrink-0' />
-                  <span className='text-sm'>
-                    {order.shippingAddress.address}, {order.shippingAddress.ward}, {order.shippingAddress.district},{' '}
-                    {order.shippingAddress.province}
-                  </span>
+                  {order.shippingAddress.email && (
+                    <div className='flex items-center gap-2 text-gray-600'>
+                      <span className='text-sm'>✉️</span>
+                      <span>{order.shippingAddress.email}</span>
+                    </div>
+                  )}
+                  <div className='flex items-start gap-2 text-gray-600 pt-2 border-t border-blue-100'>
+                    <MapPin className='w-4 h-4 mt-0.5 flex-shrink-0' />
+                    <span className='text-sm'>
+                      {order.shippingAddress.address}, {order.shippingAddress.ward}, {order.shippingAddress.district},{' '}
+                      {order.shippingAddress.province}
+                    </span>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className='bg-gradient-to-br from-blue-50 to-white p-4 rounded-xl border border-blue-100 text-gray-500 text-sm'>
+                  Không có thông tin địa chỉ giao hàng
+                </div>
+              )}
             </CardContent>
           </Card>
 
