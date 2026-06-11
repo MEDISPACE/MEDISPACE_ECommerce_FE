@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Bell, Check, Trash2, Package, FileText, Tag, Heart, Settings, AlertCircle } from 'lucide-react'
+import { Bell, Check, Trash2, Package, FileText, Tag, Heart, Settings, AlertCircle, Star } from 'lucide-react'
 import { Link, useNavigate } from 'react-router'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '../ui/button'
@@ -20,6 +20,7 @@ const typeIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   health: Heart,
   reminder: Heart,
   system: AlertCircle,
+  review: Star,
 }
 
 const typeColors: Record<string, string> = {
@@ -29,6 +30,7 @@ const typeColors: Record<string, string> = {
   health: 'text-pink-500 bg-pink-500/10',
   reminder: 'text-purple-500 bg-purple-500/10',
   system: 'text-gray-500 bg-gray-500/10',
+  review: 'text-amber-500 bg-amber-500/10',
 }
 
 function NotificationListItem({
