@@ -44,6 +44,7 @@ export interface SearchSuggestResult {
   brands: SearchSuggestHit[]
   categories: SearchSuggestHit[]
   articles: SearchArticlesHit[]
+  querySuggestions: string[]
 }
 
 export interface SearchProductsHit {
@@ -136,9 +137,9 @@ export const searchService = {
       const response = await apiClient.get<SearchSuggestResult>('/search/suggest', {
         params: { q },
       })
-      return response.data || { products: [], brands: [], categories: [], articles: [] }
+      return response.data || { products: [], brands: [], categories: [], articles: [], querySuggestions: [] }
     } catch {
-      return { products: [], brands: [], categories: [], articles: [] }
+      return { products: [], brands: [], categories: [], articles: [], querySuggestions: [] }
     }
   },
 

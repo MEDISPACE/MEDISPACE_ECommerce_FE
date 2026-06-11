@@ -1145,6 +1145,7 @@ export function CreateOrderPage() {
                             </p>
                           </div>
                           <button
+                            disabled={p.requiresPrescription}
                             onClick={() => {
                               handleProductAdd(
                                 {
@@ -1161,8 +1162,8 @@ export function CreateOrderPage() {
                                 1,
                               )
                             }}
-                            className='flex-shrink-0 w-8 h-8 rounded-full bg-violet-100 hover:bg-violet-600 text-violet-600 hover:text-white transition-all flex items-center justify-center group-hover:scale-110'
-                            title='Thêm vào đơn hàng'
+                            className='flex-shrink-0 w-8 h-8 rounded-full bg-violet-100 hover:bg-violet-600 text-violet-600 hover:text-white transition-all flex items-center justify-center group-hover:scale-110 disabled:cursor-not-allowed disabled:opacity-40'
+                            title={p.requiresPrescription ? 'Thuốc kê đơn phải được chọn và rà soát thủ công' : 'Thêm vào đơn hàng'}
                           >
                             <Plus className='w-4 h-4' />
                           </button>
@@ -1850,12 +1851,6 @@ export function CreateOrderPage() {
         }))}
         isOpen={showInteractionChecker}
         onClose={() => setShowInteractionChecker(false)}
-        onAccept={(notes) => {
-          if (notes) {
-            setPharmacistNotes((prev) => prev + (prev ? '\n' : '') + notes)
-          }
-          toast.success('Đã xác nhận kiểm tra tương tác thuốc')
-        }}
       />
 
       {/* Product Note Modal */}

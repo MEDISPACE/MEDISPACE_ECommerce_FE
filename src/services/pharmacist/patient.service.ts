@@ -5,7 +5,7 @@ import type { AxiosResponse } from 'axios'
 
 export interface PatientMedicalInfo {
   _id: string
-  patientId: string
+  customerId: string
   bloodType?: string
   allergies: string[]
   chronicDiseases: string[]
