@@ -1045,6 +1045,7 @@ test.describe.serial('Notification — Management UI', () => {
 
   // ── TC-N8: Notification pagination ───────────────────────────────────────
   test('TC-N8 — Notification pagination (> 20 items)', async ({ browser }) => {
+    const db = await getDb()
     const customerUserId = new ObjectId(s.customer.user._id)
 
     // Seed 25 notifications to trigger pagination (default limit = 20)
