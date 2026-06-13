@@ -119,6 +119,7 @@ export function OrderDetailPage() {
   const [loading, setLoading] = useState(true)
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false)
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
+  const [retryingPayment, setRetryingPayment] = useState(false)
   const [selectedProductForReview, setSelectedProductForReview] = useState<OrderItem | null>(null)
 
   // Product IDs từ đơn hàng — dùng cho post-purchase carousel
@@ -554,14 +555,18 @@ export function OrderDetailPage() {
               {order.paymentStatus === 'pending' && order.paymentMethod !== 'cod' && (
                 <Button
                   className='w-full text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:!bg-gradient-to-r hover:from-blue-700 hover:to-cyan-600'
-                  onClick={() => {
-                    toast.info('Tính năng thanh toán lại đang được phát triển', {
-                      description: 'Vui lòng liên hệ hỗ trợ để được trợ giúp thanh toán',
-                      duration: 4000,
-                    })
+                  disabled={retryingPayment}
+                  onClick={async () => {
+                    try {
+                      setRetryingPayment(true)
+                      window.location.href = await orderService.getPaymentUrl(order.id)
+                    } catch (error) {
+                      toast.error('Không thể tạo lại liên kết thanh toán')
+                      setRetryingPayment(false)
+                    }
                   }}
                 >
-                  Thanh toán ngay
+                  {retryingPayment ? 'Đang tạo liên kết...' : 'Thanh toán ngay'}
                 </Button>
               )}
 

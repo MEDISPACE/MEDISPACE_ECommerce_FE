@@ -75,8 +75,8 @@ export function OrderSuccessPage() {
 
   const breadcrumbItems = [
     { label: 'Trang chủ', href: '/' },
-    { label: 'Thanh toán', href: '/cart/checkout' },
-    { label: 'Đặt hàng thành công' },
+    { label: 'Đơn hàng của tôi', href: '/account/orders' },
+    { label: paymentStatus === 'failed' ? 'Thanh toán thất bại' : 'Đặt hàng thành công' },
   ]
 
   if (loading) {
@@ -107,7 +107,7 @@ export function OrderSuccessPage() {
           </p>
           <div className='flex flex-col sm:flex-row gap-4 justify-center'>
             <Button asChild>
-              <Link to='/cart/checkout'>Thử lại</Link>
+              <Link to={orderId ? `/account/orders/${orderId}` : '/account/orders'}>Xem đơn hàng</Link>
             </Button>
             <Button asChild variant='outline'>
               <Link to='/'>Về trang chủ</Link>
