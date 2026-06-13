@@ -30,7 +30,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
   const [facetCounts, setFacetCounts] = useState<Record<string, number>>({}) // categoryId/brandId → count
 
   // Local state for price range to allow smooth slider movement
-  const [localPriceRange, setLocalPriceRange] = useState<number[]>(filters.priceRange || [0, 1000000])
+  const [localPriceRange, setLocalPriceRange] = useState<number[]>(filters.priceRange || [0, 10000000])
 
   // Debounce the price range to prevent excessive re-renders during slider drag
   const debouncedPriceRange = useDebounce(localPriceRange, 300)
@@ -98,18 +98,14 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
   }
 
   const handleCategoryChange = (categorySlug: string, checked: boolean) => {
-    const currentCategories = filters.categories || []
-    const newCategories = checked
-      ? [...currentCategories, categorySlug]
-      : currentCategories.filter((c) => c !== categorySlug)
-
+    // Single-select: backend only supports one categoryId at a time
+    const newCategories = checked ? [categorySlug] : []
     onFiltersChange({ ...filters, categories: newCategories })
   }
 
   const handleBrandChange = (brand: string, checked: boolean) => {
-    const currentBrands = filters.brands || []
-    const newBrands = checked ? [...currentBrands, brand] : currentBrands.filter((b) => b !== brand)
-
+    // Single-select: backend only supports one brandId at a time
+    const newBrands = checked ? [brand] : []
     onFiltersChange({ ...filters, brands: newBrands })
   }
 
@@ -124,7 +120,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
   }
 
   const clearFilters = () => {
-    const defaultPriceRange: [number, number] = [0, 1000000]
+    const defaultPriceRange: [number, number] = [0, 10000000]
     setLocalPriceRange(defaultPriceRange)
     onFiltersChange({
       categories: [],
@@ -164,8 +160,10 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
     (filters.categories?.length || 0) > 0 ||
     (filters.brands?.length || 0) > 0 ||
     (filters.priceRange?.[0] || 0) > 0 ||
-    (filters.priceRange?.[1] || 1000000) < 1000000 ||
-    (filters.rating || 0) > 0
+    (filters.priceRange?.[1] || 10000000) < 10000000 ||
+    (filters.rating || 0) > 0 ||
+    filters.inStock === true ||
+    filters.isPrescription === true
 
   return (
     <div className='space-y-4'>
@@ -306,9 +304,9 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
               <Slider
                 value={localPriceRange}
                 onValueChange={handlePriceRangeChange}
-                max={1000000}
+                max={10000000}
                 min={0}
-                step={10000}
+                step={50000}
                 className='w-full'
               />
               <div className='grid grid-cols-2 gap-1'>
@@ -317,14 +315,14 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
                   value={new Intl.NumberFormat('vi-VN').format(localPriceRange[0] || 0)}
                   onChange={(e) => {
                     const value = parseInt(e.target.value.replace(/\./g, '')) || 0
-                    handlePriceRangeChange([value, localPriceRange[1] || 1000000])
+                    handlePriceRangeChange([value, localPriceRange[1] || 10000000])
                   }}
                   placeholder='Từ'
                   className='h-8 text-xs border-blue-200 focus:border-blue-500'
                 />
                 <Input
                   type='text'
-                  value={new Intl.NumberFormat('vi-VN').format(localPriceRange[1] || 1000000)}
+                  value={new Intl.NumberFormat('vi-VN').format(localPriceRange[1] || 10000000)}
                   onChange={(e) => {
                     const value = parseInt(e.target.value.replace(/\./g, '')) || 0
                     handlePriceRangeChange([localPriceRange[0] || 0, value])
@@ -402,9 +400,6 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
 
           {/* Filter Actions */}
           <div className='pt-2 space-y-2'>
-            <Button className='w-full h-8 text-xs bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'>
-              Áp dụng bộ lọc
-            </Button>
             {hasActiveFilters && (
               <Button
                 variant='outline'
@@ -459,6 +454,65 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
                     </Button>
                   </Badge>
                 ))}
+                {(filters.rating || 0) > 0 && (
+                  <Badge variant='secondary' className='bg-amber-100 text-amber-700 text-xs px-1.5 py-0.5 h-auto'>
+                    <span>Từ {filters.rating} sao</span>
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => handleRatingChange(0)}
+                      className='ml-1 h-auto p-0 text-amber-700 hover:text-red-500'
+                    >
+                      <X className='w-2.5 h-2.5' />
+                    </Button>
+                  </Badge>
+                )}
+                {filters.inStock === true && (
+                  <Badge variant='secondary' className='bg-green-100 text-green-700 text-xs px-1.5 py-0.5 h-auto'>
+                    <span>Còn hàng</span>
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => onFiltersChange({ ...filters, inStock: undefined })}
+                      className='ml-1 h-auto p-0 text-green-700 hover:text-red-500'
+                    >
+                      <X className='w-2.5 h-2.5' />
+                    </Button>
+                  </Badge>
+                )}
+                {filters.isPrescription === true && (
+                  <Badge variant='secondary' className='bg-purple-100 text-purple-700 text-xs px-1.5 py-0.5 h-auto'>
+                    <span>Thuốc kê đơn</span>
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => onFiltersChange({ ...filters, isPrescription: undefined })}
+                      className='ml-1 h-auto p-0 text-purple-700 hover:text-red-500'
+                    >
+                      <X className='w-2.5 h-2.5' />
+                    </Button>
+                  </Badge>
+                )}
+                {((filters.priceRange?.[0] || 0) > 0 || (filters.priceRange?.[1] || 10000000) < 10000000) && (
+                  <Badge variant='secondary' className='bg-cyan-100 text-cyan-700 text-xs px-1.5 py-0.5 h-auto'>
+                    <span>
+                      {new Intl.NumberFormat('vi-VN').format(filters.priceRange?.[0] || 0)}đ –{' '}
+                      {new Intl.NumberFormat('vi-VN').format(filters.priceRange?.[1] || 10000000)}đ
+                    </span>
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => {
+                        const defaultRange: [number, number] = [0, 10000000]
+                        setLocalPriceRange(defaultRange)
+                        onFiltersChange({ ...filters, priceRange: defaultRange })
+                      }}
+                      className='ml-1 h-auto p-0 text-cyan-700 hover:text-red-500'
+                    >
+                      <X className='w-2.5 h-2.5' />
+                    </Button>
+                  </Badge>
+                )}
               </div>
             </div>
           )}

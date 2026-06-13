@@ -191,7 +191,7 @@ export function CouponManagementPage() {
 
   const searchProducts = async () => {
     if (productSearch.trim().length < 2) return
-    const products = await productService.getProducts({ search: productSearch.trim(), limit: 8 } as any)
+    const products = await productService.getProducts({ search: productSearch.trim(), limit: 8, bypassTypesense: 'true' } as any)
     setProductOptions(products || [])
   }
 

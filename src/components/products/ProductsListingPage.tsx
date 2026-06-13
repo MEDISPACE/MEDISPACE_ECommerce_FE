@@ -23,6 +23,7 @@ import {
 
 import { FilterSidebar } from './FilterSidebar'
 import { ProductCard } from './ProductCard'
+import { ProductCardSkeleton } from './ProductCardSkeleton'
 import { EnhancedPageTransition } from '../shared/EnhancedPageTransition'
 import { StaggerContainer, StaggerItem } from '../shared/StaggerContainer'
 import { ScrollReveal } from '../shared/ScrollReveal'
@@ -87,6 +88,10 @@ export function ProductsListingPage() {
           params.sortBy = 'rating'
           params.sortOrder = 'desc'
           break
+        case 'bestseller':
+          params.sortBy = 'reviewCount'
+          params.sortOrder = 'desc'
+          break
       }
 
       // Add filters
@@ -102,12 +107,11 @@ export function ProductsListingPage() {
       if (filters.inStock) {
         params.inStock = true
       }
-      if (filters.priceRange[0] > 0 || filters.priceRange[1] < 10000000) {
+      if (filters.priceRange[0] > 0) {
         params.minPrice = filters.priceRange[0]
-        params.maxPrice = filters.priceRange[1]
       }
-      if (filters.rating > 0) {
-        params.ratingMin = filters.rating
+      if (filters.priceRange[1] < 10000000) {
+        params.maxPrice = filters.priceRange[1]
       }
 
       return productService.getProducts(params)
@@ -118,6 +122,7 @@ export function ProductsListingPage() {
     },
     initialPageParam: 1,
     staleTime: 2 * 60 * 1000,
+    placeholderData: (previousData) => previousData,
   })
 
   // Intersection Observer for infinite scroll
@@ -196,30 +201,50 @@ export function ProductsListingPage() {
   // Show full loading screen only on initial load (no data yet)
   const isInitialLoading = isLoading && !data
 
-  // Loading state - only show full screen on initial load
+  // Loading state - show skeleton loader on initial load
   if (isInitialLoading) {
     return (
       <EnhancedPageTransition variant='slide' direction='up'>
         <UniversalBreadcrumb items={breadcrumbItems} />
         <div className='max-w-7xl mx-auto px-4 py-6'>
           <div className='flex flex-col xl:flex-row gap-6'>
+            {/* Sidebar */}
             <ScrollReveal direction='left' delay={0.2}>
               <div className='w-full xl:w-80 lg:w-72 xl:sticky xl:top-4 xl:self-start shrink-0'>
                 <FilterSidebar filters={filters} onFiltersChange={handleFiltersChange} resultCount={0} />
               </div>
             </ScrollReveal>
 
+            {/* Skeleton Content */}
             <ScrollReveal direction='right' delay={0.3} className='flex-1 w-full'>
-              <div className='w-full'>
-                <Card className='border-blue-100 bg-white w-full'>
-                  <CardContent className='p-12 text-center flex flex-col items-center justify-center min-h-[400px]'>
-                    <div className='flex flex-col items-center gap-4'>
-                      <div className='w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin'></div>
-                      <h3 className='text-xl font-medium text-gray-900'>Đang tải sản phẩm...</h3>
-                      <p className='text-gray-600'>Vui lòng đợi trong giây lát</p>
-                    </div>
+              <div className='w-full space-y-6'>
+                {/* Header Skeleton */}
+                <div className='animate-pulse space-y-2'>
+                  <div className='h-8 bg-gray-200 rounded w-48'></div>
+                  <div className='h-4 bg-gray-200 rounded w-3/4'></div>
+                  <div className='h-4 bg-gray-200 rounded w-32'></div>
+                </div>
+
+                {/* Search Bar Skeleton */}
+                <Card className='border-blue-100 bg-white'>
+                  <CardContent className='p-4 animate-pulse flex gap-3'>
+                    <div className='flex-1 h-10 bg-gray-200 rounded'></div>
+                    <div className='w-24 h-10 bg-gray-200 rounded'></div>
                   </CardContent>
                 </Card>
+
+                {/* Toolbar Skeleton */}
+                <div className='flex items-center justify-between p-4 bg-white rounded-lg border border-blue-100 animate-pulse'>
+                  <div className='h-8 bg-gray-200 rounded w-48'></div>
+                  <div className='h-8 bg-gray-200 rounded w-24'></div>
+                </div>
+
+                {/* Products Grid Skeleton */}
+                <div className={viewMode === 'grid' ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4' : 'space-y-4 w-full'}>
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                    <ProductCardSkeleton key={i} variant={viewMode} />
+                  ))}
+                </div>
               </div>
             </ScrollReveal>
           </div>
@@ -290,7 +315,7 @@ export function ProductsListingPage() {
         <div className='flex flex-col xl:flex-row gap-6'>
           {/* Sidebar */}
           <ScrollReveal direction='left' delay={0.2}>
-            <div className='w-full xl:w-80 lg:w-72 xl:sticky xl:top-4 xl:self-start shrink-0'>
+            <div className='w-full xl:w-80 lg:w-72 xl:sticky xl:top-4 xl:self-start shrink-0 max-h-[calc(100vh-2rem)] overflow-y-auto scrollbar-thin'>
               <FilterSidebar filters={filters} onFiltersChange={handleFiltersChange} resultCount={totalProducts} />
             </div>
           </ScrollReveal>
@@ -403,6 +428,11 @@ export function ProductsListingPage() {
 
                 {/* Products Grid/List */}
                 <StaggerItem>
+                  {isFetching && !isInitialLoading && (
+                    <div className='w-full h-0.5 bg-blue-50 overflow-hidden relative mb-4 rounded'>
+                      <div className='absolute h-full bg-gradient-to-r from-blue-600 to-cyan-400 w-1/3 rounded animate-[progressLoop_1.5s_infinite_ease-in-out]' />
+                    </div>
+                  )}
                   <StaggerContainer direction='up' staggerDelay={0.05}>
                     <div
                       className={`
@@ -412,6 +442,8 @@ export function ProductsListingPage() {
                             : 'space-y-4 w-full max-w-5xl'
                         }
                         mb-8
+                        transition-all duration-300
+                        ${isFetching && !isInitialLoading ? 'opacity-50 pointer-events-none' : ''}
                       `}
                     >
                       {allProducts.map((product) => (

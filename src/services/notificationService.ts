@@ -20,7 +20,7 @@ export const notificationService = {
   async getNotifications(
     page = 1,
     limit = 20,
-    filter: 'all' | 'unread' | 'order' | 'prescription' | 'promotion' | 'system' | 'reminder' = 'all'
+    filter: 'all' | 'unread' | 'order' | 'prescription' | 'promotion' | 'system' | 'reminder' | 'review' = 'all'
   ): Promise<NotificationsResponse> {
     const res = await apiClient.get<{ result: Notification[]; pagination: NotificationPagination }>(
       `/notifications?page=${page}&limit=${limit}&filter=${filter}`

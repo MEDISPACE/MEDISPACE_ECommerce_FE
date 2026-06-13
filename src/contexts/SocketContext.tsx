@@ -5,6 +5,7 @@ import apiClient from '../services/apiClient'
 import { AuthContext } from './AuthContext'
 import type { Message, ProductRef } from '../types/chat'
 import type { CommunityMessage } from '../types/community'
+import { toast } from 'sonner'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -220,7 +221,14 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     s.on('community:moderation:queued', (data: Record<string, unknown>) =>
       broadcast('onCommunityModerationQueued', data),
     )
-    s.on('notification:new', (notification: Record<string, unknown>) => broadcast('onNewNotification', notification))
+    s.on('notification:new', (notification: Record<string, unknown>) => {
+      broadcast('onNewNotification', notification)
+      const title = notification?.title as string | undefined
+      const message = notification?.message as string | undefined
+      if (title) {
+        toast.info(title, { description: message, duration: 5000 })
+      }
+    })
     s.on('error', (err: { message: string }) => broadcast('onError', err))
     s.on('message:stream:start', (data: { conversationId: string }) => broadcast('onMessageStreamStart', data))
     s.on('message:stream:chunk', (data: { conversationId: string; content: string }) => broadcast('onMessageStreamChunk', data))

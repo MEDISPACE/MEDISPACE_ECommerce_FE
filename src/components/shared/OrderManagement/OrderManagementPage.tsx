@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router'
 import { Download, ShoppingCart, Plus, AlertTriangle } from 'lucide-react'
 import {
@@ -52,11 +52,12 @@ const formatDate = (dateValue: string | Date | undefined): string => {
 
 // Map API order to component order format
 const mapApiOrderToOrder = (apiOrder: ApiOrder): Order => {
+  const addr = apiOrder.shippingAddress
   return {
     id: apiOrder._id,
     orderNumber: apiOrder.orderNumber,
-    customerName: `${apiOrder.shippingAddress.firstName} ${apiOrder.shippingAddress.lastName}`,
-    customerPhone: apiOrder.shippingAddress.phone,
+    customerName: addr ? `${addr.firstName ?? ''} ${addr.lastName ?? ''}`.trim() : 'Không có địa chỉ',
+    customerPhone: addr?.phone ?? '',
     products: apiOrder.itemCount,
     total: apiOrder.totalAmount,
     status: apiOrder.orderStatus as OrderStatus,
@@ -209,8 +210,10 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
           const apiOrders = await generalOrderService.getOrders()
           const mappedOrders: Order[] = apiOrders.map((order) => ({
             id: order.id,
-            customerName: `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`,
-            customerPhone: order.shippingAddress.phone,
+            customerName: order.shippingAddress
+              ? `${order.shippingAddress.firstName ?? ''} ${order.shippingAddress.lastName ?? ''}`.trim()
+              : 'Không có địa chỉ',
+            customerPhone: order.shippingAddress?.phone ?? '',
             products: order.items.length,
             total: order.total,
             status: order.status.toLowerCase() as OrderStatus,

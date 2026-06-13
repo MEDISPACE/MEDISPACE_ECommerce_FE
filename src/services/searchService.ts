@@ -14,17 +14,6 @@ export interface SearchSuggestHit {
     excerpt?: string
     featuredImage?: string
     price?: number
-    originalPrice?: number
-    salePrice?: number
-    discountPercentage?: number
-    defaultUnit?: string
-    priceVariantsJson?: string
-    maxOrderQuantity?: number
-    campaignId?: string
-    campaignName?: string
-    campaignBadgeText?: string
-    campaignBadgeColor?: string
-    campaignEndDate?: number
     rating?: number
     brandName?: string
     categoryName?: string
@@ -54,17 +43,6 @@ export interface SearchProductsHit {
     slug: string
     featuredImage?: string
     price?: number
-    originalPrice?: number
-    salePrice?: number
-    discountPercentage?: number
-    defaultUnit?: string
-    priceVariantsJson?: string
-    maxOrderQuantity?: number
-    campaignId?: string
-    campaignName?: string
-    campaignBadgeText?: string
-    campaignBadgeColor?: string
-    campaignEndDate?: number
     rating?: number
     categoryId?: string
     categoryName?: string
@@ -72,10 +50,6 @@ export interface SearchProductsHit {
     brandName?: string
     requiresPrescription?: boolean
     inStock?: boolean
-    stockQuantity?: number
-    isActive?: boolean
-    shortDescription?: string
-    sku?: string
   }
   highlight?: {
     name?: { snippet?: string }

@@ -47,7 +47,13 @@ export function useSearchSuggestions(query: string): GroupedSuggestions {
     },
     enabled: debouncedQuery.length >= 2,
     staleTime: 30 * 1000, // 30s cache
-    placeholderData: { products: [], brands: [], categories: [], articles: [], querySuggestions: [] },
+    placeholderData: {
+      products: [] as any[],
+      brands: [] as any[],
+      categories: [] as any[],
+      articles: [] as any[],
+      querySuggestions: [] as string[]
+    },
   })
 
   // Query text completions (max 5)

@@ -12,7 +12,7 @@ export const UNREAD_COUNT_QUERY_KEY = ['notifications-unread-count'] as const
  * Main hook: fetch notification list + real-time socket integration
  */
 export function useNotifications(
-  filter: 'all' | 'unread' | 'order' | 'prescription' | 'promotion' | 'system' | 'reminder' = 'all',
+  filter: 'all' | 'unread' | 'order' | 'prescription' | 'promotion' | 'system' | 'reminder' | 'review' = 'all',
   page = 1
 ) {
   const queryClient = useQueryClient()
@@ -65,13 +65,6 @@ export function useNotifications(
         // Invalidate queries to refresh counts and lists
         queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_QUERY_KEY })
         queryClient.invalidateQueries({ queryKey: UNREAD_COUNT_QUERY_KEY })
-
-        // Show toast for the incoming notification
-        const title = notification?.title as string | undefined
-        const message = notification?.message as string | undefined
-        if (title) {
-          toast.info(title, { description: message, duration: 5000 })
-        }
       },
     })
 

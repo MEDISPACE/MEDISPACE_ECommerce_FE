@@ -27,6 +27,7 @@ src/tests/
 /test-results/
 /playwright-report/
 /playwright-report-blog/
+/playwright-report-product/
 /blob-report/
 /playwright/.cache/
 tests/e2e/.auth/

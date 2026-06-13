@@ -37,7 +37,7 @@ import { getProductPrice } from '../../utils/priceUtils'
 import type { Category, Product } from '../../types/product'
 
 export function SubCategoryPage() {
-  const { categorySlug, subCategorySlug } = useParams()
+  const { slug: categorySlug, subSlug: subCategorySlug } = useParams()
   const { addToCart } = useCart()
   const { toggleWishlist, isInWishlist } = useWishlist()
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
@@ -82,7 +82,7 @@ export function SubCategoryPage() {
 
         // Fetch products for this category/subcategory
         const categoryId = foundSubCategory ? foundSubCategory._id : categoryData._id
-        const productsData = await productService.getProducts({ categories: [categoryId] })
+        const productsData = await productService.getProducts({ categoryId })
         setProducts(productsData)
       } catch (error) {
         setError('Không thể tải dữ liệu danh mục')

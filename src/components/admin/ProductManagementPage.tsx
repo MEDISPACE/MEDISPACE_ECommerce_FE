@@ -55,6 +55,7 @@ import brandService from '../../services/brandService'
 import { PaginationComponent } from '../shared/PaginationComponent'
 import { toast } from 'sonner'
 import { HybridPriceEditor, type PriceVariant } from './HybridPriceEditor'
+import { useDebounce } from '../../hooks/useDebounce'
 
 // Use Product type from types/product.ts
 import type { Product } from '../../types/product'
@@ -67,6 +68,7 @@ const formatCurrency = (amount: number) => {
 export function ProductManagementPage() {
   const queryClient = useQueryClient()
   const [searchQuery, setSearchQuery] = useState('')
+  const debouncedSearchQuery = useDebounce(searchQuery, 500)
   const [filterCategory, setFilterCategory] = useState<string>('all')
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [filterPrescription, setFilterPrescription] = useState<string>('all')
@@ -117,25 +119,23 @@ export function ProductManagementPage() {
       'products',
       currentPage,
       itemsPerPage,
-      searchQuery,
+      debouncedSearchQuery,
       filterCategory,
       filterStatus,
       filterPrescription,
     ],
     queryFn: async () => {
-      // console.log(`Fetching products page ${currentPage}...`)
-      const result = await productService.getProducts({
+      const result = await productService.getProductsPaginated({
         page: currentPage,
         limit: itemsPerPage,
         sortBy: 'createdAt',
         sortOrder: 'desc',
-        search: searchQuery || undefined,
+        search: debouncedSearchQuery || undefined,
         categoryId: filterCategory !== 'all' ? filterCategory : undefined,
         status: filterStatus !== 'all' ? filterStatus : undefined,
         requiresPrescription: filterPrescription === 'rx' ? true : filterPrescription === 'otc' ? false : undefined,
+        bypassTypesense: 'true',
       })
-      // console.log(`✅ Loaded ${result.length} products for page ${currentPage}`)
-      // console.log('Sample product with brand:', result[0])
       return result
     },
     staleTime: 60000,
@@ -144,7 +144,8 @@ export function ProductManagementPage() {
     placeholderData: (previousData) => previousData, // Keep previous data while loading new page
   })
 
-  const allProducts = useMemo(() => productsResponse || [], [productsResponse])
+  const allProducts = useMemo(() => productsResponse?.products || [], [productsResponse])
+  const paginationInfo = productsResponse?.pagination
 
   // No need for client-side filtering - server handles it
 
@@ -483,13 +484,14 @@ export function ProductManagementPage() {
   // Server-side pagination - use products directly (no client-side slicing)
   const paginatedProducts = allProducts
 
-  // Calculate total pages from dashboard stats
-  const totalPages = dashboardStats ? Math.ceil(dashboardStats.total / itemsPerPage) : Math.ceil(3238 / itemsPerPage)
+  // Calculate total pages from server pagination response (accurate for filtered results)
+  const totalPages = paginationInfo?.totalPages ?? (dashboardStats ? Math.ceil(dashboardStats.total / itemsPerPage) : 1)
+  const filteredTotalCount = paginationInfo?.totalCount ?? dashboardStats?.total ?? 0
 
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchQuery, filterCategory, filterStatus, filterPrescription])
+  }, [debouncedSearchQuery, filterCategory, filterStatus, filterPrescription])
 
   // Show error state
   if (error) {
@@ -536,9 +538,9 @@ export function ProductManagementPage() {
           </h1>
           <p className='text-gray-600 mt-2'>
             Quản lý danh mục sản phẩm và tồn kho
-            {dashboardStats && (
+            {(paginationInfo || dashboardStats) && (
               <span className='ml-2 text-sm font-medium text-blue-600'>
-                (Trang {currentPage}/{totalPages} - Tổng: {dashboardStats.total} sản phẩm)
+                (Trang {currentPage}/{totalPages} - Tổng: {filteredTotalCount} sản phẩm)
               </span>
             )}
           </p>
@@ -906,7 +908,7 @@ export function ProductManagementPage() {
             <div className='mt-6 flex items-center justify-between border-t border-blue-400 pt-4'>
               <div className='text-sm text-gray-600'>
                 Trang {currentPage}/{totalPages} - Hiển thị {allProducts.length} sản phẩm
-                {dashboardStats && <span> (Tổng: {dashboardStats.total} sản phẩm)</span>}
+                {filteredTotalCount > 0 && <span> (Tổng: {filteredTotalCount} sản phẩm)</span>}
               </div>
               <PaginationComponent currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
             </div>

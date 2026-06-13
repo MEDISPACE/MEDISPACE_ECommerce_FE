@@ -329,15 +329,32 @@ class ArticleService {
 
   // Helper: Search articles
   async searchArticles(query: string, limit = 20): Promise<Article[]> {
-    const result = await this.getArticles({
-      search: query,
-      isPublished: true,
-      status: 'published',
-      limit,
-      sortBy: 'publishedAt',
-      sortOrder: 'desc',
-    })
-    return result.articles
+    try {
+      const response = await apiClient.get('/search/articles', {
+        params: { q: query, limit }
+      })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const hits = (response.data as any)?.hits || []
+      return hits.map((hit: any) => {
+        const doc = hit.document
+        return {
+          ...doc,
+          _id: doc.mongoId,
+          id: doc.mongoId
+        }
+      })
+    } catch (error) {
+      console.error('[articleService] Typesense searchArticles failed, falling back to MongoDB:', error)
+      const result = await this.getArticles({
+        search: query,
+        isPublished: true,
+        status: 'published',
+        limit,
+        sortBy: 'publishedAt',
+        sortOrder: 'desc',
+      })
+      return result.articles
+    }
   }
 }
 

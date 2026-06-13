@@ -15,12 +15,13 @@ import { EmptyState } from '../shared/EmptyState'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
 import { RecommendationCarousel } from '../products/RecommendationCarousel'
 import { useTrending, useRelated } from '../../hooks/product/useRecommendations'
-import { searchService } from '../../services/searchService'
+import { productService } from '../../services/productService'
 import { categoryService } from '../../services/categoryService'
 import { brandService } from '../../services/brandService'
+import { searchService } from '../../services/searchService'
 import { useCart } from '../../contexts/CartContext'
 import { useWishlist } from '../../hooks/product/useWishlist'
-import type { Category, Brand, Product } from '../../types/product'
+import type { Category, Brand, Product, PriceVariant } from '../../types/product'
 import {
   getProductId,
   getProductImage,
@@ -41,7 +42,6 @@ export function SearchResultsPage() {
   const { addToCart } = useCart()
   const { toggleWishlist, isInWishlist } = useWishlist()
   const observerTarget = useRef<HTMLDivElement>(null)
-  const appliedBrandSlugRef = useRef<string | null>(null)
 
   // Trending fallback khi 0 kết quả
   const { products: trendingProducts, loading: trendingLoading, algorithm: trendingAlgorithm } = useTrending(8)
@@ -59,7 +59,6 @@ export function SearchResultsPage() {
 
   // Search filters state
   const searchQuery = searchParams.get('q') || ''
-  const brandSlug = searchParams.get('brandSlug') || ''
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [selectedBrands, setSelectedBrands] = useState<string[]>([])
   const [priceRange, setPriceRange] = useState([0, 10000000])
@@ -87,100 +86,7 @@ export function SearchResultsPage() {
     fetchFilters()
   }, [])
 
-  useEffect(() => {
-    if (!brandSlug || brands.length === 0 || appliedBrandSlugRef.current === brandSlug) return
-    const brand = brands.find((item) => item.slug === brandSlug)
-    if (brand) {
-      setSelectedBrands([brand._id])
-      appliedBrandSlugRef.current = brandSlug
-    }
-  }, [brandSlug, brands])
-
-  const mapSearchHitToProduct = (hit: {
-    document?: Partial<Product> & {
-      mongoId?: string
-      categoryName?: string
-      brandName?: string
-      price?: number
-      originalPrice?: number
-      salePrice?: number
-      discountPercentage?: number
-      defaultUnit?: string
-      priceVariantsJson?: string
-      campaignId?: string
-      campaignName?: string
-      campaignBadgeText?: string
-      campaignBadgeColor?: string
-      campaignEndDate?: number
-      inStock?: boolean
-      createdBy?: string
-    }
-  }): Product => {
-    const document = hit.document || {}
-    const id = document.mongoId || document._id || ''
-    const price = document.originalPrice || document.price || 0
-    let indexedPriceVariants: Product['priceVariants'] = []
-    try {
-      indexedPriceVariants = document.priceVariantsJson ? JSON.parse(document.priceVariantsJson) : []
-    } catch {
-      indexedPriceVariants = []
-    }
-    const priceVariants =
-      document.priceVariants && document.priceVariants.length > 0
-        ? document.priceVariants
-        : indexedPriceVariants.length > 0
-          ? indexedPriceVariants
-          : [{
-            unit: document.defaultUnit || 'Sản phẩm',
-            price,
-            salePrice: document.salePrice,
-            originalPrice: document.salePrice && document.salePrice < price ? price : undefined,
-            discountPercent: document.discountPercentage,
-            isDefault: true,
-            quantityPerUnit: 1,
-          }]
-
-    return {
-      ...document,
-      _id: id,
-      id,
-      name: document.name || '',
-      slug: document.slug || '',
-      sku: document.sku || '',
-      shortDescription: document.shortDescription || '',
-      categoryId: document.categoryId || '',
-      brandId: document.brandId || '',
-      priceVariants,
-      stockQuantity: document.stockQuantity ?? (document.inStock ? 1 : 0),
-      maxOrderQuantity: document.maxOrderQuantity || 10,
-      status: document.isActive === false ? 'discontinued' : document.inStock === false ? 'out_of_stock' : 'active',
-      isActive: document.isActive !== false,
-      requiresPrescription: Boolean(document.requiresPrescription),
-      featuredImage: document.featuredImage,
-      createdAt: document.createdAt ? new Date(document.createdAt).toISOString() : new Date().toISOString(),
-      updatedAt: document.updatedAt ? new Date(document.updatedAt).toISOString() : new Date().toISOString(),
-      createdBy: document.createdBy || '',
-      brand: document.brandName ? { _id: document.brandId || '', name: document.brandName, slug: '', isActive: true, productCount: 0, createdAt: '' } : undefined,
-      category: document.categoryName ? { _id: document.categoryId || '', name: document.categoryName, slug: '', level: 0, path: '', productCount: 0, sortOrder: 0, isActive: true, createdAt: '', updatedAt: '' } : undefined,
-      price,
-      originalPrice: price,
-      salePrice: document.salePrice,
-      discountPercentage: document.discountPercentage,
-      onSale: Boolean(document.salePrice && document.salePrice < price),
-      campaign: document.campaignName ? {
-        _id: document.campaignId || '',
-        name: document.campaignName,
-        badgeText: document.campaignBadgeText || `-${document.discountPercentage || 0}%`,
-        badgeColor: document.campaignBadgeColor || '#FF5722',
-        endDate: document.campaignEndDate ? new Date(document.campaignEndDate).toISOString() : '',
-      } : undefined,
-      inStock: document.inStock,
-      rating: document.rating || 0,
-      reviewCount: document.reviewCount || 0,
-    } as Product
-  }
-
-  // Infinite query for products with server-side filtering
+  // Infinite query for products with server-side filtering using Typesense Search
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
     queryKey: [
       'search',
@@ -193,31 +99,19 @@ export function SearchResultsPage() {
       sortBy,
     ],
     queryFn: async ({ pageParam = 1 }) => {
-      const params: Parameters<typeof searchService.searchProducts>[0] = {
+      const params: any = {
+        q: searchQuery || '*',
         page: pageParam,
         limit: 100,
-        q: searchQuery || '*',
       }
 
       // Add sorting
-      switch (sortBy) {
-        case 'price_asc':
-          params.sortBy = 'price_asc'
-          break
-        case 'price_desc':
-          params.sortBy = 'price_desc'
-          break
-        case 'rating':
-          params.sortBy = 'rating'
-          break
-        case 'newest':
-          params.sortBy = 'newest'
-          break
-        case 'bestseller':
-          params.sortBy = 'rating'
-          break
-        default: // relevance
-          params.sortBy = 'relevance'
+      if (sortBy === 'price_asc' || sortBy === 'price_desc' || sortBy === 'rating' || sortBy === 'newest' || sortBy === 'relevance') {
+        params.sortBy = sortBy
+      } else if (sortBy === 'bestseller') {
+        params.sortBy = 'rating'
+      } else {
+        params.sortBy = 'relevance'
       }
 
       // Add filters
@@ -239,14 +133,37 @@ export function SearchResultsPage() {
         params.priceMax = priceRange[1]
       }
 
-      const result = await searchService.searchProducts(params)
+      const res = await searchService.searchProducts(params)
+      const products = (res?.hits || []).map((hit) => {
+        const doc = hit.document as any
+        let priceVariants = []
+        if (doc.priceVariantsJson) {
+          try {
+            priceVariants = JSON.parse(doc.priceVariantsJson)
+          } catch {
+            // ignore
+          }
+        }
+        return {
+          ...doc,
+          id: doc.mongoId,
+          _id: doc.mongoId,
+          brand: doc.brandName || 'Unknown',
+          category: { name: doc.categoryName || '' },
+          priceVariants,
+          image: doc.featuredImage,
+          isPrescription: doc.requiresPrescription,
+        } as unknown as Product
+      })
+
       return {
-        products: (result.hits || []).map(mapSearchHitToProduct),
-        found: result.found || 0,
+        products,
+        found: res?.found ?? 0,
       }
     },
     getNextPageParam: (lastPage, allPages) => {
-      return lastPage.products.length === 100 ? allPages.length + 1 : undefined
+      const totalLoaded = allPages.flatMap((page) => page.products).length
+      return totalLoaded < lastPage.found ? allPages.length + 1 : undefined
     },
     initialPageParam: 1,
     staleTime: 2 * 60 * 1000,
@@ -275,9 +192,20 @@ export function SearchResultsPage() {
     }
   }, [fetchNextPage, hasNextPage, isFetchingNextPage])
 
+  // All products from server — sort OTC before prescription when no explicit filter
   const allProducts = useMemo(() => {
-    return data?.pages.flatMap((page) => page.products) ?? []
-  }, [data])
+    const products = data?.pages.flatMap((page) => page.products) ?? []
+    // Only apply OTC priority when user hasn't filtered by prescription type explicitly
+    if (prescriptionType === 'all') {
+      // Stable sort: OTC (requiresPrescription=false) trước kê đơn (true)
+      return [...products].sort((a, b) => {
+        const aRx = a.requiresPrescription ? 1 : 0
+        const bRx = b.requiresPrescription ? 1 : 0
+        return aRx - bRx
+      })
+    }
+    return products
+  }, [data, prescriptionType])
 
   // Cập nhật firstResultId khi kết quả thay đổi
   useEffect(() => {
@@ -289,7 +217,7 @@ export function SearchResultsPage() {
     setFirstResultId(id)
   }, [allProducts])
 
-  const totalResults = data?.pages[0]?.found ?? allProducts.length
+  const totalResults = data?.pages[0]?.found ?? 0
 
   const clearFilters = () => {
     setSelectedCategories([])
@@ -457,9 +385,7 @@ export function SearchResultsPage() {
           <h1 className='text-xl font-bold text-gray-900'>
             {searchQuery ? `Kết quả cho "${searchQuery}"` : 'Tất cả sản phẩm'}
           </h1>
-          <p className='text-gray-600' data-testid='search-result-count'>
-            Tìm thấy {totalResults} sản phẩm
-          </p>
+          <p className='text-gray-600' data-testid='search-result-count'>Tìm thấy {totalResults} sản phẩm</p>
         </div>
       </div>
 
@@ -537,10 +463,7 @@ export function SearchResultsPage() {
             <div className='flex items-center gap-3'>
               {/* Sort */}
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger
-                  aria-label='Sắp xếp kết quả'
-                  className='w-[180px] border-blue-200 border rounded-lg border-blue-300'
-                >
+                <SelectTrigger aria-label='Sắp xếp kết quả' className='w-[180px] border-blue-200 border rounded-lg border-blue-300'>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -588,7 +511,6 @@ export function SearchResultsPage() {
           ) : allProducts.length > 0 ? (
             <>
               <div
-                data-testid='search-results'
                 className={`grid gap-6 ${
                   viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'
                 }`}
@@ -615,7 +537,7 @@ export function SearchResultsPage() {
                     }}
                     variant={viewMode}
                     onAddToCart={(selectedUnit) => {
-                      const variant = product.priceVariants?.find((v) => v.unit === selectedUnit)
+                      const variant = product.priceVariants?.find((v: PriceVariant) => v.unit === selectedUnit)
                       const price = variant?.price || product.priceVariants?.[0]?.price
                       addToCart(product, 1, selectedUnit, price)
                     }}
