@@ -2,9 +2,9 @@ name: Frontend Pipeline
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
-    branches: [main]
+    branches: [main, develop]
 
 concurrency:
   group: frontend-${{ github.ref }}
@@ -30,6 +30,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run lint || true   # warn only — pre-existing issues
+      - run: npm run typecheck
+      - run: npm test
       - run: npm run build
         env:
           VITE_API_URL: https://placeholder.test

@@ -14,7 +14,6 @@ README.txt
 
 # Vitest
 src/tests/
-vitest.config.ts
 /coverage/
 *.test.ts
 *.test.tsx

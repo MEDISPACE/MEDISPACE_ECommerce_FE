@@ -27,10 +27,21 @@ export interface RecommendedProduct {
   requiresPrescription: boolean
   category?: Array<{ name: string }>
   brand?: Array<{ name: string }>
+  recommendation?: {
+    score: number | null
+    reason: string
+    evidence: string[]
+    requiresIndependentReview?: boolean
+  }
+  attribution?: RecommendationAttribution
 }
 
 export interface RecommendationResult {
+  requestId: string
+  attributionToken: string
   algorithm: string
+  modelVersion: string
+  experiment: { id: string; variant: string }
   products: RecommendedProduct[]
 }
 
@@ -39,6 +50,53 @@ export interface RecommendationEvent {
   algorithm: string
   section: string
   position: number
+  eventType: 'impression' | 'click' | 'add_to_cart' | 'purchase' | 'dismiss' | 'snooze'
+  requestId?: string
+  attributionToken?: string
+  modelVersion?: string
+  experimentId?: string
+  experimentVariant?: string
+  value?: number
+}
+
+export interface RecommendationAttribution {
+  requestId: string
+  attributionToken: string
+  modelVersion: string
+  experimentId: string
+  experimentVariant: string
+}
+
+const unavailable = (): RecommendationResult => ({
+  requestId: '',
+  attributionToken: '',
+  algorithm: 'unavailable',
+  modelVersion: 'unavailable',
+  experiment: { id: 'none', variant: 'control' },
+  products: [],
+})
+
+const attachAttribution = (result: RecommendationResult): RecommendationResult => ({
+  ...result,
+  products: result.products.map((product) => ({
+    ...product,
+    attribution: {
+      requestId: result.requestId,
+      attributionToken: result.attributionToken,
+      modelVersion: result.modelVersion,
+      experimentId: result.experiment.id,
+      experimentVariant: result.experiment.variant,
+    },
+  })),
+})
+
+const ATTRIBUTION_STORAGE_KEY = 'medispace_recommendation_attribution'
+
+const rememberAttribution = (event: RecommendationEvent) => {
+  if (typeof window === 'undefined' || event.eventType !== 'add_to_cart' || !event.attributionToken) return
+  const stored = JSON.parse(localStorage.getItem(ATTRIBUTION_STORAGE_KEY) || '{}')
+  stored[event.productId] = { ...event, rememberedAt: Date.now() }
+  localStorage.setItem(ATTRIBUTION_STORAGE_KEY, JSON.stringify(stored))
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -72,7 +130,7 @@ export const recommendationService = {
     const params: Record<string, unknown> = { limit }
     if (categoryId) params.categoryId = categoryId
     const data = await safeGet<RecommendationResult>('/recommendations/trending', params)
-    return data ?? { algorithm: 'unavailable', products: [] }
+    return data ? attachAttribution(data) : unavailable()
   },
 
   /**
@@ -81,7 +139,7 @@ export const recommendationService = {
    */
   async getForYou(limit = 12): Promise<RecommendationResult> {
     const data = await safeGet<RecommendationResult>('/recommendations/for-you', { limit })
-    return data ?? { algorithm: 'unavailable', products: [] }
+    return data ? attachAttribution(data) : unavailable()
   },
 
   /**
@@ -90,7 +148,7 @@ export const recommendationService = {
    */
   async getRelated(productId: string, limit = 8): Promise<RecommendationResult> {
     const data = await safeGet<RecommendationResult>(`/recommendations/related/${productId}`, { limit })
-    return data ?? { algorithm: 'unavailable', products: [] }
+    return data ? attachAttribution(data) : unavailable()
   },
 
   /**
@@ -99,7 +157,7 @@ export const recommendationService = {
    */
   async getBoughtTogether(productId: string, limit = 6): Promise<RecommendationResult> {
     const data = await safeGet<RecommendationResult>(`/recommendations/bought-together/${productId}`, { limit })
-    return data ?? { algorithm: 'unavailable', products: [] }
+    return data ? attachAttribution(data) : unavailable()
   },
 
   /**
@@ -107,9 +165,9 @@ export const recommendationService = {
    * Dùng trên: OrderSuccessPage
    */
   async getPostPurchase(productIds: string[], limit = 8): Promise<RecommendationResult> {
-    if (!productIds || productIds.length === 0) return { algorithm: 'unavailable', products: [] }
+    if (!productIds || productIds.length === 0) return unavailable()
     const data = await safePost<RecommendationResult>('/recommendations/post-purchase', { productIds }, { limit })
-    return data ?? { algorithm: 'unavailable', products: [] }
+    return data ? attachAttribution(data) : unavailable()
   },
 
   /**
@@ -135,7 +193,7 @@ export const recommendationService = {
       { chronicDiseases, allergies, currentMedications, prescriptionProductIds },
       { limit },
     )
-    return data ?? { algorithm: 'unavailable', products: [] }
+    return data ? attachAttribution(data) : unavailable()
   },
 
   /**
@@ -144,11 +202,28 @@ export const recommendationService = {
    */
   async getReplenishment(limit = 5): Promise<RecommendationResult> {
     const data = await safeGet<RecommendationResult>('/recommendations/replenishment', { limit })
-    return data ?? { algorithm: 'unavailable', products: [] }
+    return data ? attachAttribution(data) : unavailable()
   },
 
-  async trackClick(event: RecommendationEvent): Promise<void> {
+  async trackEvent(event: RecommendationEvent): Promise<void> {
+    rememberAttribution(event)
     await safePost('/recommendations/track', event)
+  },
+
+  async trackClick(event: Omit<RecommendationEvent, 'eventType'>): Promise<void> {
+    await this.trackEvent({ ...event, eventType: 'click' })
+  },
+
+  async trackPurchases(productIds: string[]): Promise<void> {
+    if (typeof window === 'undefined') return
+    const stored = JSON.parse(localStorage.getItem(ATTRIBUTION_STORAGE_KEY) || '{}')
+    await Promise.all(productIds.map(async (productId) => {
+      const attribution = stored[productId] as RecommendationEvent | undefined
+      if (!attribution) return
+      await this.trackEvent({ ...attribution, productId, eventType: 'purchase' })
+      delete stored[productId]
+    }))
+    localStorage.setItem(ATTRIBUTION_STORAGE_KEY, JSON.stringify(stored))
   },
 }
 
