@@ -49,6 +49,7 @@
 
 import { test, expect } from '@playwright/test'
 import crypto from 'node:crypto'
+import path from 'node:path'
 import type { APIRequestContext } from '@playwright/test'
 
 import {
@@ -1906,7 +1907,7 @@ test.describe.serial('13. FE Regression — UI displays correct coupon & points 
   test('13a. Checkout page: apply coupon shows discount breakdown in UI', async ({ browser }) => {
     const { context, page } = await (async () => {
       const ctx = await browser.newContext({
-        storageState: require('path').join(require('path').resolve('tests/e2e/.auth'), 'customer.json'),
+        storageState: path.join(path.resolve('tests/e2e/.auth'), 'customer.json'),
       })
       return { context: ctx, page: await ctx.newPage() }
     })()
@@ -1978,7 +1979,7 @@ test.describe.serial('13. FE Regression — UI displays correct coupon & points 
 
     const { context, page } = await (async () => {
       const ctx = await browser.newContext({
-        storageState: require('path').join(require('path').resolve('tests/e2e/.auth'), 'customer.json'),
+        storageState: path.join(path.resolve('tests/e2e/.auth'), 'customer.json'),
       })
       return { context: ctx, page: await ctx.newPage() }
     })()
@@ -2013,7 +2014,7 @@ test.describe.serial('13. FE Regression — UI displays correct coupon & points 
 
     const { context, page } = await (async () => {
       const ctx = await browser.newContext({
-        storageState: require('path').join(require('path').resolve('tests/e2e/.auth'), 'customer.json'),
+        storageState: path.join(path.resolve('tests/e2e/.auth'), 'customer.json'),
       })
       return { context: ctx, page: await ctx.newPage() }
     })()
