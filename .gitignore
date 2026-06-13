@@ -22,6 +22,7 @@ src/tests/
 !src/tests/chat/AdminChatPage.test.tsx
 !src/tests/chat/ProductPicker.test.tsx
 !src/tests/chat/FloatingChatButton.test.tsx
+!src/tests/orderService.test.ts
 
 # Playwright E2E
 /test-results/
