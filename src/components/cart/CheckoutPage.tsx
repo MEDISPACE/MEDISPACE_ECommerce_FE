@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { Shield, ChevronRight, MapPin, CreditCard, Truck, Clock, Smartphone, Plus, RotateCcw } from 'lucide-react'
 import { Button } from '../ui/button'
@@ -24,6 +24,7 @@ import { ghnService } from '../../services/ghnService'
 import { CouponInput } from '../discount/CouponInput'
 import { PointsRedeemInput } from '../discount/PointsRedeemInput'
 import { Sparkles } from 'lucide-react'
+import { prescriptionsAPI } from '../../lib/api/prescriptions'
 
 const GLOBAL_DEFAULT_SHIPPING_METHODS: ShippingMethod[] = [
   {
@@ -91,6 +92,7 @@ export function CheckoutPage() {
   const [agreeToTerms, setAgreeToTerms] = useState(false)
   const [orderNotes, setOrderNotes] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
+  const isSubmittingRef = useRef(false)
   // Sau khi đặt hàng thành công, disable guard vĩnh viễn
   const [orderPlaced, setOrderPlaced] = useState(false)
 
@@ -102,6 +104,8 @@ export function CheckoutPage() {
   // Loyalty points states
   const [pointsToRedeem, setPointsToRedeem] = useState(0)
   const [pointsDiscount, setPointsDiscount] = useState(0)
+  const [verifiedPrescriptions, setVerifiedPrescriptions] = useState<Array<{ _id: string; prescriptionNumber: string }>>([])
+  const [selectedPrescriptionId, setSelectedPrescriptionId] = useState('')
 
   // Sync cart coupons on initial load for normal cart flow
   useEffect(() => {
@@ -197,6 +201,27 @@ export function CheckoutPage() {
       ? [buyNowItem]
       : []
     : state.cart?.items.filter((item) => state.selectedItems.has(createSelectionKey(item.productId, item.unit))) || []
+  const requiresPrescription = cartItems.some((item) => item.prescriptionRequired)
+
+  useEffect(() => {
+    if (!requiresPrescription) {
+      setSelectedPrescriptionId('')
+      return
+    }
+
+    prescriptionsAPI
+      .getPrescriptions()
+      .then((response: any) => {
+        const prescriptions = (response.result?.prescriptions || []).filter(
+          (prescription: any) =>
+            prescription.status === 'verified' &&
+            (!prescription.validUntil || new Date(prescription.validUntil) >= new Date()),
+        )
+        setVerifiedPrescriptions(prescriptions)
+        if (prescriptions.length === 1) setSelectedPrescriptionId(prescriptions[0]._id)
+      })
+      .catch(() => setVerifiedPrescriptions([]))
+  }, [requiresPrescription])
 
   const addressObj = addresses.find((a) => a.id === selectedAddress)
 
@@ -258,6 +283,7 @@ export function CheckoutPage() {
   const total = Math.max(0, subtotal - couponDiscount - pointsDiscount + shippingFee)
 
   const handlePlaceOrder = async () => {
+    if (isSubmittingRef.current) return
     if (!user) {
       alert('Không thể lấy thông tin người dùng. Vui lòng đăng nhập lại.')
       return
@@ -271,6 +297,10 @@ export function CheckoutPage() {
 
     if (!selectedAddress) {
       alert('Vui lòng chọn địa chỉ giao hàng')
+      return
+    }
+    if (requiresPrescription && !selectedPrescriptionId) {
+      alert('Vui lòng chọn đơn thuốc đã được dược sĩ xác nhận.')
       return
     }
 
@@ -287,6 +317,7 @@ export function CheckoutPage() {
       setSelectedAddress(validSelectedAddress)
     }
 
+    isSubmittingRef.current = true
     setIsProcessing(true)
 
     try {
@@ -349,14 +380,14 @@ export function CheckoutPage() {
         shippingAddress: addressObj,
         paymentMethod: paymentMethodMap[paymentMethod] || 'cod',
         shippingMethod: shippingMethod,
-        shippingFee: shippingFee, // Pass calculated shipping fee to backend
         estimatedDeliveryDate,
         notes: orderNotes,
         couponCodes: appliedCoupons.map(c => c.code),
-        pointsToRedeem: pointsToRedeem > 0 ? pointsToRedeem : undefined
+        pointsToRedeem: pointsToRedeem > 0 ? pointsToRedeem : undefined,
+        prescriptionId: selectedPrescriptionId || undefined,
       }
 
-      const { order, paymentUrl } = await orderService.createOrder(orderData)
+      const { order, paymentUrl, paymentUrlError } = await orderService.createOrder(orderData)
 
       // Refresh cart to sync with backend (backend removed selected items for COD)
       await refreshCart()
@@ -364,6 +395,9 @@ export function CheckoutPage() {
       // Redirect logic
       if (paymentUrl) {
         window.location.href = paymentUrl
+      } else if (paymentUrlError) {
+        alert('Đơn hàng đã được tạo nhưng chưa thể tạo liên kết thanh toán. Vui lòng thử thanh toán lại trong chi tiết đơn hàng.')
+        navigate(`/account/orders/${order.id}`, { replace: true })
       } else {
         // COD: set orderPlaced TRƯỚC để disable guard, rồi navigate
         setOrderPlaced(true)
@@ -374,6 +408,7 @@ export function CheckoutPage() {
     } catch (error) {
       alert('Đặt hàng thất bại. Vui lòng thử lại.')
     } finally {
+      isSubmittingRef.current = false
       setIsProcessing(false)
     }
   }
@@ -576,6 +611,36 @@ export function CheckoutPage() {
                 </RadioGroup>
               </CardContent>
             </Card>
+
+            {/* Payment Method */}
+            {requiresPrescription && (
+              <Card className='border-amber-200'>
+                <CardHeader>
+                  <CardTitle className='text-amber-800'>Đơn thuốc đã xác nhận</CardTitle>
+                </CardHeader>
+                <CardContent className='space-y-2'>
+                  <Label htmlFor='prescription-select'>Chọn đơn thuốc áp dụng cho các sản phẩm kê đơn</Label>
+                  <select
+                    id='prescription-select'
+                    value={selectedPrescriptionId}
+                    onChange={(event) => setSelectedPrescriptionId(event.target.value)}
+                    className='w-full rounded-md border border-gray-200 bg-white px-3 py-2'
+                  >
+                    <option value=''>Chọn đơn thuốc</option>
+                    {verifiedPrescriptions.map((prescription) => (
+                      <option key={prescription._id} value={prescription._id}>
+                        {prescription.prescriptionNumber}
+                      </option>
+                    ))}
+                  </select>
+                  {verifiedPrescriptions.length === 0 && (
+                    <p className='text-sm text-amber-700'>
+                      Bạn chưa có đơn thuốc còn hiệu lực đã được dược sĩ xác nhận.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* Payment Method */}
             <Card className='border-gray-200'>

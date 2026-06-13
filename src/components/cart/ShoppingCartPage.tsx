@@ -23,7 +23,7 @@ import { useAuth } from '../../contexts/AuthContext'
 
 export function ShoppingCartPage() {
   const {
-    state: { cart, selectedItems },
+    state: { cart, selectedItems, isLoading },
     updateQuantity,
     updateUnit,
     removeFromCart,
@@ -349,7 +349,7 @@ export function ShoppingCartPage() {
                               variant='ghost'
                               size='sm'
                               onClick={() => handleQuantityChange(item.productId, item.quantity - 1)}
-                              disabled={item.quantity <= 1}
+                              disabled={item.quantity <= 1 || isLoading}
                               className='h-8 w-8 rounded-none hover:bg-blue-50'
                             >
                               <Minus className='w-3 h-3' />
@@ -359,7 +359,7 @@ export function ShoppingCartPage() {
                               variant='ghost'
                               size='sm'
                               onClick={() => handleQuantityChange(item.productId, item.quantity + 1)}
-                              disabled={item.quantity >= 10} // Max 10 items
+                              disabled={item.quantity >= 10 || isLoading} // Max 10 items
                               className='h-8 w-8 rounded-none hover:bg-blue-50'
                             >
                               <Plus className='w-3 h-3' />
