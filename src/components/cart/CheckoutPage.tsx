@@ -25,6 +25,7 @@ import { CouponInput } from '../discount/CouponInput'
 import { PointsRedeemInput } from '../discount/PointsRedeemInput'
 import { Sparkles } from 'lucide-react'
 import { prescriptionsAPI } from '../../lib/api/prescriptions'
+import { toast } from 'sonner'
 
 const GLOBAL_DEFAULT_SHIPPING_METHODS: ShippingMethod[] = [
   {
@@ -396,7 +397,7 @@ export function CheckoutPage() {
       if (paymentUrl) {
         window.location.href = paymentUrl
       } else if (paymentUrlError) {
-        alert('Đơn hàng đã được tạo nhưng chưa thể tạo liên kết thanh toán. Vui lòng thử thanh toán lại trong chi tiết đơn hàng.')
+        toast.error('Chưa thể tạo liên kết thanh toán. Bạn có thể thử lại trong chi tiết đơn hàng.')
         navigate(`/account/orders/${order.id}`, { replace: true })
       } else {
         // COD: set orderPlaced TRƯỚC để disable guard, rồi navigate
@@ -634,9 +635,12 @@ export function CheckoutPage() {
                     ))}
                   </select>
                   {verifiedPrescriptions.length === 0 && (
-                    <p className='text-sm text-amber-700'>
-                      Bạn chưa có đơn thuốc còn hiệu lực đã được dược sĩ xác nhận.
-                    </p>
+                    <div className='space-y-2 text-sm text-amber-700'>
+                      <p>Bạn chưa có đơn thuốc còn hiệu lực đã được dược sĩ xác nhận.</p>
+                      <Button asChild variant='outline' size='sm'>
+                        <Link to='/upload-prescription'>Tải đơn thuốc lên để xác nhận</Link>
+                      </Button>
+                    </div>
                   )}
                 </CardContent>
               </Card>
@@ -838,7 +842,7 @@ export function CheckoutPage() {
 
                   <Button
                     onClick={handlePlaceOrder}
-                    disabled={!agreeToTerms || isProcessing}
+                    disabled={!agreeToTerms || isProcessing || (requiresPrescription && !selectedPrescriptionId)}
                     className='w-full text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 h-12 text-lg font-semibold'
                   >
                     {isProcessing ? (
@@ -852,6 +856,12 @@ export function CheckoutPage() {
                       </>
                     )}
                   </Button>
+
+                  {requiresPrescription && !selectedPrescriptionId && (
+                    <p className='text-sm text-amber-700 text-center'>
+                      Chọn đơn thuốc đã xác nhận trước khi đặt hàng.
+                    </p>
+                  )}
 
                   <div className='text-xs text-gray-500 text-center leading-relaxed'>
                     Bằng cách đặt hàng, bạn đồng ý với các điều khoản và chính sách của MediSpace
