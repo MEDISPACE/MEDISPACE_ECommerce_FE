@@ -39,11 +39,12 @@ export const ChatTextarea = forwardRef<HTMLTextAreaElement, ChatTextareaProps>(
     const adjustHeight = useCallback(() => {
       const el = textareaRef.current
       if (!el) return
-      // Reset về 0px để đo chính xác scrollHeight thực tế của content (minHeight sẽ giữ nó không bị sập)
-      el.style.height = '0px'
-      const next = Math.max(MIN_HEIGHT, Math.min(el.scrollHeight, MAX_HEIGHT))
-      el.style.height = `${next}px`
-      el.style.overflowY = el.scrollHeight > MAX_HEIGHT ? 'auto' : 'hidden'
+      // Đặt height về auto để trình duyệt tính lại kích thước thật (khi xóa text)
+      el.style.height = 'auto'
+      const scrollHeight = el.scrollHeight
+      const nextHeight = Math.max(MIN_HEIGHT, Math.min(scrollHeight, MAX_HEIGHT))
+      el.style.height = `${nextHeight}px`
+      el.style.overflowY = scrollHeight > MAX_HEIGHT ? 'auto' : 'hidden'
     }, [textareaRef])
 
     useEffect(() => { adjustHeight() }, [value, adjustHeight])
@@ -90,6 +91,7 @@ export const ChatTextarea = forwardRef<HTMLTextAreaElement, ChatTextareaProps>(
           ref={textareaRef}
           value={value}
           onChange={handleChange}
+          onInput={adjustHeight}
           onKeyDown={handleKeyDown}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
