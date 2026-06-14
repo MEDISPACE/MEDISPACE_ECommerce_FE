@@ -39,8 +39,9 @@ export const ChatTextarea = forwardRef<HTMLTextAreaElement, ChatTextareaProps>(
     const adjustHeight = useCallback(() => {
       const el = textareaRef.current
       if (!el) return
-      el.style.height = `${MIN_HEIGHT}px`
-      const next = Math.min(el.scrollHeight, MAX_HEIGHT)
+      // Reset về 0px để đo chính xác scrollHeight thực tế của content (minHeight sẽ giữ nó không bị sập)
+      el.style.height = '0px'
+      const next = Math.max(MIN_HEIGHT, Math.min(el.scrollHeight, MAX_HEIGHT))
       el.style.height = `${next}px`
       el.style.overflowY = el.scrollHeight > MAX_HEIGHT ? 'auto' : 'hidden'
     }, [textareaRef])
