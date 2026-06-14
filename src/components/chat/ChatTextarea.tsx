@@ -103,13 +103,13 @@ export const ChatTextarea = forwardRef<HTMLTextAreaElement, ChatTextareaProps>(
               ? 'border-blue-400 bg-white ring-[3px] ring-blue-500/15 shadow-sm'
               : 'hover:border-gray-300',
             'disabled:cursor-not-allowed disabled:opacity-50',
-            '[&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent',
-            '[&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300',
+            // Ẩn scrollbar như Zalo/Messenger — vẫn scroll được, không hiển thị thanh cuộn
+            '[&::-webkit-scrollbar]:hidden [scrollbar-width:none]',
             // Padding-bottom nhường chỗ cho counter nằm absolute bên dưới
             showCounter ? 'pb-5' : 'pb-2.5',
             className,
           )}
-          style={{ minHeight: MIN_HEIGHT, maxHeight: MAX_HEIGHT, overflowY: 'hidden' }}
+          style={{ minHeight: MIN_HEIGHT, maxHeight: MAX_HEIGHT, overflowY: 'hidden', scrollbarWidth: 'none' }}
           {...props}
         />
 
