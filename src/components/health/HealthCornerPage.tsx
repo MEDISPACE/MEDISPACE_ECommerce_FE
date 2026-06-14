@@ -101,7 +101,7 @@ export function HealthCornerPage() {
 
   if (loading) {
     return (
-      <div className='flex justify-center items-center min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50'>
+      <div className='flex justify-center items-center min-h-screen bg-white'>
         <div className='text-center'>
           <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4'></div>
           <p className='text-gray-600 dark:text-gray-400'>Đang tải...</p>
@@ -111,10 +111,10 @@ export function HealthCornerPage() {
   }
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50'>
+    <div className='min-h-screen bg-white'>
       {/* Header */}
-      <div className='bg-gradient-to-r from-blue-100 to-cyan-50 py-8 border-b border-blue-200'>
-        <div className='container mx-auto px-4'>
+      <div className='px-4 pt-6'>
+        <div className='max-w-7xl mx-auto rounded-lg bg-gradient-to-r from-blue-100 to-cyan-50 px-4 sm:px-6 lg:px-8 py-8 border border-blue-200'>
           <UniversalBreadcrumb
             items={[
               { label: 'Trang chủ', href: '/' },
@@ -151,7 +151,7 @@ export function HealthCornerPage() {
         </div>
       </div>
 
-      <div className='container mx-auto px-4 py-8'>
+      <div className='max-w-7xl mx-auto px-4 py-8'>
         {/* Health Categories */}
         <section className='mb-12'>
           <div className='mb-6'>

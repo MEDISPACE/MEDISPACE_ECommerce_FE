@@ -75,7 +75,7 @@ export function CategoryArticlesPage() {
 
   if (!category) {
     return (
-      <div className='container mx-auto px-4 py-16 text-center'>
+      <div className='max-w-7xl mx-auto px-4 py-16 text-center'>
         <h1 className='text-2xl font-bold text-gray-900 mb-4'>Không tìm thấy danh mục</h1>
         <Link to='/health'>
           <Button variant='outline' className='gap-2'>
@@ -88,10 +88,10 @@ export function CategoryArticlesPage() {
   }
 
   return (
-    <div className='min-h-screen bg-gray-50'>
+    <div className='min-h-screen bg-white'>
       {/* Header */}
-      <div className='bg-gradient-to-r from-primary/10 to-accent/10 py-8 border-b'>
-        <div className='container mx-auto px-4'>
+      <div className='px-4 pt-6'>
+        <div className='max-w-7xl mx-auto rounded-lg bg-gradient-to-r from-primary/10 to-accent/10 px-4 sm:px-6 lg:px-8 py-8 border border-blue-100'>
           <UniversalBreadcrumb
             items={[
               { label: 'Trang chủ', href: '/' },
@@ -105,7 +105,7 @@ export function CategoryArticlesPage() {
         </div>
       </div>
 
-      <div className='container mx-auto px-4 py-8'>
+      <div className='max-w-7xl mx-auto px-4 py-8'>
         {/* Back Button */}
         <Link to='/health' className='inline-block mb-6'>
           <Button variant='ghost' className='gap-2'>

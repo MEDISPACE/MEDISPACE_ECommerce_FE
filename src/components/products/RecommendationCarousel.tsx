@@ -5,7 +5,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { ChevronLeft, ChevronRight, Sparkles, TrendingUp, ShoppingBag, ArrowRight, EyeOff, Clock3, Info } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Sparkles, TrendingUp, ShoppingBag, ArrowRight, Info } from 'lucide-react'
 import { Link } from 'react-router'
 import { Button } from '../ui/button'
 import { ProductCard } from './ProductCard'
@@ -13,6 +13,7 @@ import { ScrollReveal } from '../shared/ScrollReveal'
 import { useCart } from '../../contexts/CartContext'
 import { useWishlist } from '../../hooks/product/useWishlist'
 import type { RecommendedProduct } from '../../services/recommendationService'
+import type { Product } from '../../types/product'
 import { recommendationService } from '../../services/recommendationService'
 import {
   getProductSalePrice,
@@ -46,27 +47,27 @@ const BADGE_CONFIG: Record<BadgeVariant, { icon: React.ElementType; label: strin
   trending: {
     icon: TrendingUp,
     label: 'Xu Hướng',
-    color: 'from-orange-500 to-red-500',
+    color: 'bg-[#FFF7ED] text-[#C2410C]',
   },
   'for-you': {
     icon: Sparkles,
     label: 'Dành Cho Bạn',
-    color: 'from-purple-500 to-pink-500',
+    color: 'bg-[#F0F6FF] text-[#0A2463]',
   },
   bundle: {
     icon: ShoppingBag,
     label: 'Mua Kèm',
-    color: 'from-emerald-500 to-teal-500',
+    color: 'bg-[#ECFDF5] text-[#059669]',
   },
   'post-purchase': {
     icon: Sparkles,
     label: 'Gợi Ý',
-    color: 'from-blue-500 to-cyan-500',
+    color: 'bg-[#F0F6FF] text-[#1E40AF]',
   },
   related: {
     icon: Sparkles,
     label: 'Liên Quan',
-    color: 'from-indigo-500 to-blue-500',
+    color: 'bg-[#EEF2FF] text-[#1E40AF]',
   },
 }
 
@@ -74,14 +75,14 @@ const BADGE_CONFIG: Record<BadgeVariant, { icon: React.ElementType; label: strin
 
 function ProductSkeleton() {
   return (
-    <div className='bg-white rounded-xl border border-blue-100 shadow-sm overflow-hidden animate-pulse'>
-      <div className='aspect-square bg-gradient-to-br from-blue-50 to-slate-100' />
+    <div className='overflow-hidden rounded-xl border border-[#E8EDF5] bg-white animate-pulse'>
+      <div className='aspect-[3/4] bg-[#F0F6FF]' />
       <div className='p-4 space-y-3'>
-        <div className='h-3 bg-blue-100 rounded-full w-1/3' />
+        <div className='h-3 bg-[#DBEAFE] rounded-full w-1/3' />
         <div className='h-4 bg-slate-200 rounded-full w-full' />
         <div className='h-4 bg-slate-200 rounded-full w-3/4' />
-        <div className='h-5 bg-blue-100 rounded-full w-1/2' />
-        <div className='h-9 bg-blue-100 rounded-lg w-full mt-2' />
+        <div className='h-5 bg-[#DBEAFE] rounded-full w-1/2' />
+        <div className='h-9 bg-[#DBEAFE] rounded-lg w-full mt-2' />
       </div>
     </div>
   )
@@ -149,9 +150,8 @@ export function RecommendationCarousel({
   const { addToCart } = useCart()
   const { toggleWishlist, isInWishlist } = useWishlist()
   const [currentPage, setCurrentPage] = useState(0)
-  const [dismissed, setDismissed] = useState<Set<string>>(new Set())
-
-  const visibleProducts = products.filter((product) => !dismissed.has(product._id))
+  const availableProducts = products.filter((product) => product.stockQuantity > 0)
+  const visibleProducts = availableProducts
   const totalPages = Math.ceil(visibleProducts.length / itemsPerPage)
   const badgeConfig = badge ? BADGE_CONFIG[badge] : null
   const BadgeIcon = badgeConfig?.icon
@@ -184,29 +184,40 @@ export function RecommendationCarousel({
   }, [currentPage, loading, visibleProducts.map((product) => product._id).join(',')])
 
   // Ẩn section nếu không loading và không có data
-  if (!loading && products.length === 0) return null
+  if (!loading && availableProducts.length === 0) return null
 
   const handlePrev = () => setCurrentPage((p) => (p === 0 ? totalPages - 1 : p - 1))
   const handleNext = () => setCurrentPage((p) => (p === totalPages - 1 ? 0 : p + 1))
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
+    if (totalPages <= 1) return
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault()
+      handlePrev()
+    }
+    if (event.key === 'ArrowRight') {
+      event.preventDefault()
+      handleNext()
+    }
+  }
 
   return (
     <ScrollReveal direction='up' delay={0.2}>
-      <section className={`py-16 ${className}`}>
+      <section className={`py-12 ${className}`} tabIndex={0} onKeyDown={handleKeyDown} aria-label={title}>
         <div className='max-w-7xl mx-auto px-4'>
           {/* Header */}
           {layout === 'compact' ? (
             <div className='flex items-center justify-between mb-8'>
               <div className='flex items-center gap-4'>
                 {badgeConfig && BadgeIcon && (
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${badgeConfig.color} flex items-center justify-center shadow-lg flex-shrink-0`}>
-                    <BadgeIcon className='w-6 h-6 text-white' />
+                  <div className={`w-12 h-12 rounded-xl ${badgeConfig.color} flex items-center justify-center flex-shrink-0`}>
+                    <BadgeIcon className='w-6 h-6' />
                   </div>
                 )}
                 <div>
-                  <h2 className='text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-800 to-cyan-600 bg-clip-text text-transparent pb-1'>
+                  <h2 className='font-display text-2xl font-bold text-[#0A2463] lg:text-3xl'>
                     {title}
                   </h2>
-                  {subtitle && <p className='text-gray-500 text-sm mt-1'>{subtitle}</p>}
+                  {subtitle && <p className='text-[#4B5E7A] text-sm mt-1'>{subtitle}</p>}
                 </div>
               </div>
 
@@ -218,7 +229,7 @@ export function RecommendationCarousel({
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={handlePrev}
-                      className='h-10 w-10 rounded-full border-2 border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 bg-white shadow-md transition-all flex items-center justify-center'
+                      className='h-10 w-10 rounded-full border border-[#BFDBFE] text-[#0A2463] hover:bg-[#F0F6FF] bg-white transition-all flex items-center justify-center'
                       aria-label='Previous'
                     >
                       <ChevronLeft className='w-5 h-5' />
@@ -227,7 +238,7 @@ export function RecommendationCarousel({
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={handleNext}
-                      className='h-10 w-10 rounded-full border-2 border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 bg-white shadow-md transition-all flex items-center justify-center'
+                      className='h-10 w-10 rounded-full border border-[#BFDBFE] text-[#0A2463] hover:bg-[#F0F6FF] bg-white transition-all flex items-center justify-center'
                       aria-label='Next'
                     >
                       <ChevronRight className='w-5 h-5' />
@@ -237,7 +248,7 @@ export function RecommendationCarousel({
 
                 {viewAllLink && (
                   <Link to={viewAllLink}>
-                    <Button variant='outline' size='sm' className='border-2 border-blue-200 text-blue-700 hover:bg-blue-50 hidden sm:flex'>
+                    <Button variant='outline' size='sm' className='hidden border-[#BFDBFE] text-[#0A2463] hover:bg-[#F0F6FF] sm:flex'>
                       Xem tất cả
                       <ArrowRight className='w-3.5 h-3.5 ml-1.5' />
                     </Button>
@@ -250,22 +261,22 @@ export function RecommendationCarousel({
             <div className='text-center mb-8'>
               <div className='flex items-center justify-center gap-3 mb-4'>
                 {badgeConfig && BadgeIcon && (
-                  <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${badgeConfig.color} flex items-center justify-center shadow-md flex-shrink-0`}>
-                    <BadgeIcon className='w-5 h-5 text-white' />
+                  <div className={`w-10 h-10 rounded-lg ${badgeConfig.color} flex items-center justify-center flex-shrink-0`}>
+                    <BadgeIcon className='w-5 h-5' />
                   </div>
                 )}
-                <h2 className='text-4xl font-bold bg-gradient-to-r from-blue-800 to-cyan-600 bg-clip-text text-transparent pb-2'>
+                <h2 className='font-display text-3xl font-bold text-[#0A2463] md:text-4xl'>
                   {title}
                 </h2>
               </div>
               {subtitle && (
-                <p className='text-xl text-gray-600 max-w-2xl mx-auto mb-6'>
+                <p className='text-lg text-[#4B5E7A] max-w-2xl mx-auto mb-6'>
                   {subtitle}
                 </p>
               )}
               {viewAllLink && (
                 <Link to={viewAllLink}>
-                  <Button variant='outline' className='border-2 border-blue-200 text-blue-700 hover:bg-blue-50 px-6'>
+                  <Button variant='outline' className='border-[#BFDBFE] text-[#0A2463] hover:bg-[#F0F6FF] px-6'>
                     Xem tất cả sản phẩm
                     <ArrowRight className='w-4 h-4 ml-2' />
                   </Button>
@@ -276,13 +287,13 @@ export function RecommendationCarousel({
 
           {/* Products Grid / Skeleton */}
           {loading ? (
-            <div className={`grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 ${layout === 'centered' ? 'px-16 lg:px-20' : ''}`}>
+            <div className={`grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 ${layout === 'centered' ? 'px-0 sm:px-12 lg:px-20' : ''}`}>
               {Array.from({ length: itemsPerPage }).map((_, i) => (
                 <ProductSkeleton key={i} />
               ))}
             </div>
           ) : (
-            <div className={`relative ${layout === 'centered' ? 'px-16 lg:px-20 py-[10px]' : ''}`}>
+            <div className={`relative ${layout === 'centered' ? 'px-0 sm:px-12 lg:px-20 py-[10px]' : ''}`}>
               {/* Centered Layout Navigation Arrows */}
               {layout === 'centered' && totalPages > 1 && (
                 <>
@@ -290,7 +301,7 @@ export function RecommendationCarousel({
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={handlePrev}
-                    className='absolute left-2 lg:left-6 top-[130px] md:top-[160px] lg:top-[170px] -translate-y-1/2 z-20 h-12 w-12 rounded-full border-2 border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 bg-white/90 backdrop-blur-sm shadow-lg transition-all duration-300 hover:shadow-xl flex items-center justify-center'
+                    className='absolute left-2 lg:left-6 top-1/2 -translate-y-1/2 z-20 hidden h-12 w-12 rounded-full border border-[#BFDBFE] text-[#0A2463] hover:bg-[#F0F6FF] bg-white/90 backdrop-blur-sm shadow transition-all duration-300 sm:flex items-center justify-center'
                     aria-label='Previous'
                   >
                     <ChevronLeft className='w-6 h-6' />
@@ -299,7 +310,7 @@ export function RecommendationCarousel({
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={handleNext}
-                    className='absolute right-2 lg:right-6 top-[130px] md:top-[160px] lg:top-[170px] -translate-y-1/2 z-20 h-12 w-12 rounded-full border-2 border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 bg-white/90 backdrop-blur-sm shadow-lg transition-all duration-300 hover:shadow-xl flex items-center justify-center'
+                    className='absolute right-2 lg:right-6 top-1/2 -translate-y-1/2 z-20 hidden h-12 w-12 rounded-full border border-[#BFDBFE] text-[#0A2463] hover:bg-[#F0F6FF] bg-white/90 backdrop-blur-sm shadow transition-all duration-300 sm:flex items-center justify-center'
                     aria-label='Next'
                   >
                     <ChevronRight className='w-6 h-6' />
@@ -328,7 +339,7 @@ export function RecommendationCarousel({
                               initial={{ opacity: 0, y: 20 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ delay: productIndex * 0.1, duration: 0.5, ease: 'easeOut' }}
-                              whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                              whileHover={{ y: -2, transition: { duration: 0.18 } }}
                               className='h-full relative'
                               onClick={(event) => {
                                 if ((event.target as HTMLElement).closest('button')) return
@@ -345,37 +356,13 @@ export function RecommendationCarousel({
                                 })
                               }}
                             >
-                              <div className='absolute right-2 top-2 z-30 flex gap-1'>
-                                <button
-                                  type='button'
-                                  className='rounded-full bg-white/95 p-1.5 text-gray-500 shadow hover:text-red-600'
-                                  title={trackingSection === 'replenishment' ? 'Nhắc lại sau' : 'Không quan tâm'}
-                                  onClick={() => {
-                                    setDismissed((previous) => new Set(previous).add(rawProduct._id))
-                                    void recommendationService.trackEvent({
-                                      productId: rawProduct._id,
-                                      algorithm,
-                                      section: trackingSection,
-                                      position: pageIndex * itemsPerPage + productIndex,
-                                      eventType: trackingSection === 'replenishment' ? 'snooze' : 'dismiss',
-                                      requestId: rawProduct.attribution?.requestId,
-                                      attributionToken: rawProduct.attribution?.attributionToken,
-                                      modelVersion: rawProduct.attribution?.modelVersion,
-                                      experimentId: rawProduct.attribution?.experimentId,
-                                      experimentVariant: rawProduct.attribution?.experimentVariant,
-                                    })
-                                  }}
-                                >
-                                  {trackingSection === 'replenishment' ? <Clock3 className='h-4 w-4' /> : <EyeOff className='h-4 w-4' />}
-                                </button>
-                              </div>
                               <ProductCard
                                 product={product}
                                 variant='grid'
                                 onAddToCart={(selectedUnit) => {
                                   const variant = rawProduct.priceVariants?.find((v) => v.unit === selectedUnit)
                                   const price = variant?.price ?? rawProduct.priceVariants?.[0]?.price
-                                  void addToCart(rawProduct as any, 1, selectedUnit, price)
+                                  void addToCart(rawProduct as unknown as Product, 1, selectedUnit, price)
                                   void recommendationService.trackEvent({
                                     productId: rawProduct._id,
                                     algorithm,
@@ -409,15 +396,15 @@ export function RecommendationCarousel({
             </div>
           )}
 
-          {/* Page dots */}
+          {/* Page progress */}
           {!loading && totalPages > 1 && (
-            <div className='flex justify-center gap-2 mt-6'>
+            <div className='mx-auto mt-6 flex max-w-xs gap-1.5'>
               {Array.from({ length: totalPages }).map((_, i) => (
                 <motion.button
                   key={i}
                   onClick={() => setCurrentPage(i)}
-                  className={`h-2.5 rounded-full transition-all duration-300 ${
-                    i === currentPage ? 'w-8 bg-blue-600 shadow-md' : 'w-2.5 bg-blue-200 hover:bg-blue-300'
+                  className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
+                    i === currentPage ? 'bg-[#0A2463]' : 'bg-[#D8E3F5] hover:bg-[#BFDBFE]'
                   }`}
                   whileHover={{ scale: 1.2 }}
                   whileTap={{ scale: 0.9 }}

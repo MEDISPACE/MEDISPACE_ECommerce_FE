@@ -62,6 +62,10 @@ export default [
     route('health/article/:slug', 'routes/health/article.$slug.tsx'),
     route('health/category/:slug', 'routes/health/category.$slug.tsx'),
 
+    // Health needs
+    route('health-needs', 'routes/health-needs/_index.tsx'),
+    route('health-needs/:slug', 'routes/health-needs/$slug.tsx'),
+
     // Community
     route('community', 'routes/community/_index.tsx'),
     route('community/:roomId', 'routes/community/$roomId.tsx'),
