@@ -1,6 +1,17 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { Shield, ChevronRight, MapPin, CreditCard, Truck, Clock, Smartphone, Plus, RotateCcw } from 'lucide-react'
+import {
+  AlertTriangle,
+  Shield,
+  ChevronRight,
+  MapPin,
+  CreditCard,
+  Truck,
+  Clock,
+  Smartphone,
+  Plus,
+  RotateCcw,
+} from 'lucide-react'
 import { Button } from '../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Label } from '../ui/label'
@@ -75,6 +86,11 @@ const paymentMethods: PaymentMethod[] = [
   },
 ]
 
+type OrderSubmitError = {
+  response?: { data?: { message?: string } }
+  message?: string
+}
+
 export function CheckoutPage() {
   const { state, getSelectedItemsTotal, getSelectedItemsCount, clearCart, refreshCart, selectAllItems } = useCart()
   const [searchParams] = useSearchParams()
@@ -105,7 +121,9 @@ export function CheckoutPage() {
   // Loyalty points states
   const [pointsToRedeem, setPointsToRedeem] = useState(0)
   const [pointsDiscount, setPointsDiscount] = useState(0)
-  const [verifiedPrescriptions, setVerifiedPrescriptions] = useState<Array<{ _id: string; prescriptionNumber: string }>>([])
+  const [verifiedPrescriptions, setVerifiedPrescriptions] = useState<
+    Array<{ _id: string; prescriptionNumber: string }>
+  >([])
   const [selectedPrescriptionId, setSelectedPrescriptionId] = useState('')
 
   // Sync cart coupons on initial load for normal cart flow
@@ -135,9 +153,10 @@ export function CheckoutPage() {
           const unit = searchParams.get('unit')
 
           // Check for unit price variant (enriched by campaign from backend)
-          const selectedVariant = unit && product.priceVariants
-            ? product.priceVariants.find((v: any) => v.unit === unit)
-            : (product.priceVariants?.find((v: any) => v.isDefault) || product.priceVariants?.[0])
+          const selectedVariant =
+            unit && product.priceVariants
+              ? product.priceVariants.find((v: any) => v.unit === unit)
+              : product.priceVariants?.find((v: any) => v.isDefault) || product.priceVariants?.[0]
 
           // Use campaign salePrice if available, fallback to original price
           const originalPrice = selectedVariant?.price || product.price || 0
@@ -187,7 +206,7 @@ export function CheckoutPage() {
   // Guard: redirect về /cart nếu chưa chọn sản phẩm nào
   // Chỉ chạy khi chưa đặt hàng (orderPlaced = false)
   useEffect(() => {
-    if (orderPlaced) return  // Đã đặt hàng xong, tắt guard
+    if (orderPlaced) return // Đã đặt hàng xong, tắt guard
     if (!loading && !isBuyNow && state.cart !== undefined) {
       const selectedCount = state.selectedItems.size
       const cartHasItems = (state.cart?.items?.length ?? 0) > 0
@@ -268,9 +287,7 @@ export function CheckoutPage() {
   }, [addressObj])
 
   // Calculate totals
-  const subtotal = isBuyNow
-    ? (buyNowItem ? buyNowItem.totalPrice : 0)
-    : getSelectedItemsTotal()
+  const subtotal = isBuyNow ? (buyNowItem ? buyNowItem.totalPrice : 0) : getSelectedItemsTotal()
   const selectedShipping = shippingMethods.find((method) => method.id === shippingMethod)
   let bgShippingFee = selectedShipping?.price || 0
 
@@ -286,28 +303,28 @@ export function CheckoutPage() {
   const handlePlaceOrder = async () => {
     if (isSubmittingRef.current) return
     if (!user) {
-      alert('Không thể lấy thông tin người dùng. Vui lòng đăng nhập lại.')
+      toast.error('Không thể lấy thông tin người dùng. Vui lòng đăng nhập lại.')
       return
     }
 
     // Validate Cart / Selection
     if (!isBuyNow && state.selectedItems.size === 0) {
-      alert('Vui lòng chọn sản phẩm để thanh toán')
+      toast.error('Vui lòng chọn sản phẩm để thanh toán')
       return
     }
 
     if (!selectedAddress) {
-      alert('Vui lòng chọn địa chỉ giao hàng')
+      toast.error('Vui lòng chọn địa chỉ giao hàng')
       return
     }
     if (requiresPrescription && !selectedPrescriptionId) {
-      alert('Vui lòng chọn đơn thuốc đã được dược sĩ xác nhận.')
+      toast.error('Vui lòng chọn đơn thuốc đã được dược sĩ xác nhận.')
       return
     }
 
     // Validate that we have addresses and a valid selected address
     if (!addresses || addresses.length === 0) {
-      alert('Vui lòng thêm địa chỉ giao hàng trước khi thanh toán')
+      toast.error('Vui lòng thêm địa chỉ giao hàng trước khi thanh toán')
       return
     }
 
@@ -383,7 +400,7 @@ export function CheckoutPage() {
         shippingMethod: shippingMethod,
         estimatedDeliveryDate,
         notes: orderNotes,
-        couponCodes: appliedCoupons.map(c => c.code),
+        couponCodes: appliedCoupons.map((c) => c.code),
         pointsToRedeem: pointsToRedeem > 0 ? pointsToRedeem : undefined,
         prescriptionId: selectedPrescriptionId || undefined,
       }
@@ -406,8 +423,9 @@ export function CheckoutPage() {
         sessionStorage.removeItem('medispace_selected_items')
         navigate(`/order/success?orderId=${order.id}`, { replace: true })
       }
-    } catch (error) {
-      alert('Đặt hàng thất bại. Vui lòng thử lại.')
+    } catch (error: unknown) {
+      const submitError = error as OrderSubmitError
+      toast.error(submitError.response?.data?.message || submitError.message || 'Đặt hàng thất bại. Vui lòng thử lại.')
     } finally {
       isSubmittingRef.current = false
       setIsProcessing(false)
@@ -461,6 +479,23 @@ export function CheckoutPage() {
         <div className='grid grid-cols-1 lg:grid-cols-5 gap-6'>
           {/* Checkout Form - 60% width */}
           <div className='lg:col-span-3 space-y-6'>
+            {requiresPrescription && (
+              <Card className='border-amber-200 bg-amber-50'>
+                <CardContent className='p-4'>
+                  <div className='flex items-start gap-3'>
+                    <AlertTriangle className='mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600' />
+                    <div className='space-y-1'>
+                      <p className='font-medium text-amber-900'>Đơn hàng có thuốc kê đơn</p>
+                      <p className='text-sm text-amber-800'>
+                        Vui lòng chọn đơn thuốc còn hiệu lực đã được dược sĩ xác nhận. Nút đặt hàng sẽ mở sau khi thông
+                        tin này đầy đủ.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Shipping Address */}
             <Card className='border-gray-200'>
               <CardHeader>
@@ -758,10 +793,12 @@ export function CheckoutPage() {
                     </div>
 
                     {couponDiscount > 0 && (
-                        <div className='flex justify-between'>
-                          <span className='text-gray-600'>Giảm giá Coupon</span>
-                          <span className='text-green-600'>-{new Intl.NumberFormat('vi-VN').format(couponDiscount)}đ</span>
-                        </div>
+                      <div className='flex justify-between'>
+                        <span className='text-gray-600'>Giảm giá Coupon</span>
+                        <span className='text-green-600'>
+                          -{new Intl.NumberFormat('vi-VN').format(couponDiscount)}đ
+                        </span>
+                      </div>
                     )}
 
                     {pointsDiscount > 0 && (
@@ -781,13 +818,13 @@ export function CheckoutPage() {
                   <div className='py-2 space-y-3'>
                     <CouponInput
                       subtotal={subtotal}
-                      hasPrescriptionItems={cartItems.some(i => i.prescriptionRequired)}
-                      items={cartItems.map(item => ({
+                      hasPrescriptionItems={cartItems.some((i) => i.prescriptionRequired)}
+                      items={cartItems.map((item) => ({
                         productId: item.productId,
                         unit: item.unit,
                         quantity: item.quantity,
                         totalPrice: item.totalPrice,
-                        prescriptionRequired: item.prescriptionRequired
+                        prescriptionRequired: item.prescriptionRequired,
                       }))}
                       isDirectBuy={isBuyNow}
                       initialCoupons={appliedCoupons}
@@ -858,9 +895,7 @@ export function CheckoutPage() {
                   </Button>
 
                   {requiresPrescription && !selectedPrescriptionId && (
-                    <p className='text-sm text-amber-700 text-center'>
-                      Chọn đơn thuốc đã xác nhận trước khi đặt hàng.
-                    </p>
+                    <p className='text-sm text-amber-700 text-center'>Chọn đơn thuốc đã xác nhận trước khi đặt hàng.</p>
                   )}
 
                   <div className='text-xs text-gray-500 text-center leading-relaxed'>

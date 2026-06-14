@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router'
-import { ShoppingCart, Trash2, Heart, Plus, Minus, Gift, Truck, Shield, RotateCcw } from 'lucide-react'
+import { AlertTriangle, ShoppingCart, Trash2, Heart, Plus, Minus, Gift, Truck, Shield, RotateCcw } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Checkbox } from '../ui/checkbox'
@@ -39,7 +39,11 @@ export function ShoppingCartPage() {
 
   // Cart product IDs for cross-sell recommendations
   const cartProductIds = cart?.items?.map((item) => item.productId).filter(Boolean) ?? []
-  const { products: crossSellProducts, loading: crossSellLoading, algorithm: crossSellAlgorithm } = usePostPurchase(cartProductIds, 8)
+  const {
+    products: crossSellProducts,
+    loading: crossSellLoading,
+    algorithm: crossSellAlgorithm,
+  } = usePostPurchase(cartProductIds, 8)
 
   const [addresses, setAddresses] = useState<Address[]>([])
   const [defaultAddress, setDefaultAddress] = useState<Address | null>(null)
@@ -56,11 +60,12 @@ export function ShoppingCartPage() {
     if (cart?.appliedCoupons) {
       setAppliedCoupons(cart.appliedCoupons)
       // Dùng cart.discountAmount từ DB làm nguồn chính xác nhất
-      const totalDisc = (cart as any).discountAmount > 0
-        ? (cart as any).discountAmount
-        : cart.appliedCoupons
-            .filter((c: any) => c.type !== 'free_shipping')
-            .reduce((sum: number, c: any) => sum + (c.discountAmount || 0), 0)
+      const totalDisc =
+        (cart as any).discountAmount > 0
+          ? (cart as any).discountAmount
+          : cart.appliedCoupons
+              .filter((c: any) => c.type !== 'free_shipping')
+              .reduce((sum: number, c: any) => sum + (c.discountAmount || 0), 0)
       setCouponDiscount(totalDisc)
       setFreeShippingFromCoupon(cart.appliedCoupons.some((c: any) => c.type === 'free_shipping'))
     }
@@ -137,10 +142,11 @@ export function ShoppingCartPage() {
   // Calculate totals
   const subtotal = getSelectedItemsTotal()
   const selectedCartItems = (cart?.items || []).filter((item) =>
-    selectedItems.has(createSelectionKey(item.productId, item.unit))
+    selectedItems.has(createSelectionKey(item.productId, item.unit)),
   )
+  const hasPrescriptionItems = (cart?.items || []).some((item) => item.prescriptionRequired)
   const discount = couponDiscount
-  const shippingFee = getSelectedItemsCount() === 0 ? 0 : (subtotal >= 300000 || freeShippingFromCoupon ? 0 : 30000)
+  const shippingFee = getSelectedItemsCount() === 0 ? 0 : subtotal >= 300000 || freeShippingFromCoupon ? 0 : 30000
   const total = Math.max(0, subtotal - discount + shippingFee)
 
   // Handle select all
@@ -205,6 +211,22 @@ export function ShoppingCartPage() {
           {cart?.itemCount || 0} sản phẩm
         </Badge>
       </div>
+
+      {hasPrescriptionItems && (
+        <Card className='mb-6 border-amber-200 bg-amber-50'>
+          <CardContent className='p-4'>
+            <div className='flex items-start gap-3'>
+              <AlertTriangle className='mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600' />
+              <div className='space-y-1'>
+                <p className='font-medium text-amber-900'>Giỏ hàng có thuốc kê đơn</p>
+                <p className='text-sm text-amber-800'>
+                  Bạn cần chọn đơn thuốc còn hiệu lực đã được dược sĩ xác nhận trước khi đặt hàng các sản phẩm này.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className='grid grid-cols-1 lg:grid-cols-10 gap-6'>
         {/* Cart Items - 70% width */}
@@ -300,6 +322,11 @@ export function ShoppingCartPage() {
                       </Link>
                       <p className='text-sm text-gray-500 mb-2'>MediSpace Pharmacy</p>
                       <p className='text-xs text-gray-400 mb-2'>SKU: {item.sku}</p>
+                      {item.prescriptionRequired && (
+                        <Badge variant='outline' className='mb-2 border-amber-300 bg-amber-50 text-amber-700'>
+                          Cần đơn thuốc đã xác nhận
+                        </Badge>
+                      )}
 
                       {/* Unit selector - show dropdown when multiple variants */}
                       {item.priceVariants && item.priceVariants.length > 1 ? (
@@ -407,7 +434,9 @@ export function ShoppingCartPage() {
           </div>
 
           {/* Promotion Section */}
-          <Card className={`bg-white border-blue-100 hover:shadow-md transition-shadow ${getSelectedItemsCount() === 0 ? 'opacity-60' : ''}`}>
+          <Card
+            className={`bg-white border-blue-100 hover:shadow-md transition-shadow ${getSelectedItemsCount() === 0 ? 'opacity-60' : ''}`}
+          >
             <CardHeader>
               <CardTitle className='text-blue-800 flex items-center gap-2'>
                 <Gift className='w-5 h-5' />
@@ -420,13 +449,13 @@ export function ShoppingCartPage() {
               ) : (
                 <CouponInput
                   subtotal={subtotal}
-                  hasPrescriptionItems={selectedCartItems.some(i => i.prescriptionRequired)}
-                  items={selectedCartItems.map(item => ({
+                  hasPrescriptionItems={selectedCartItems.some((i) => i.prescriptionRequired)}
+                  items={selectedCartItems.map((item) => ({
                     productId: item.productId,
                     unit: item.unit,
                     quantity: item.quantity,
                     totalPrice: item.totalPrice,
-                    prescriptionRequired: item.prescriptionRequired
+                    prescriptionRequired: item.prescriptionRequired,
                   }))}
                   initialCoupons={appliedCoupons}
                   onCouponsChange={(coupons, discount, hasFreeship) => {
