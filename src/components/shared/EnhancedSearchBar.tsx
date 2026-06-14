@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Search, X, Mic, History, TrendingUp, Loader2, Camera, Tag, FolderOpen, Newspaper } from 'lucide-react'
+import { Search, X, History, TrendingUp, Loader2, Camera, Tag, FolderOpen, Newspaper } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Card, CardContent } from '../ui/card'
@@ -97,13 +97,6 @@ export function EnhancedSearchBar({
     inputRef.current?.focus()
   }
 
-  const handleVoiceSearch = () => {
-    // Voice search implementation would go here
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      // Implement speech recognition here
-    }
-  }
-
   const handlePrescriptionUpload = () => {
     // Navigate directly to prescription upload page
     navigate('/upload-prescription')
@@ -150,7 +143,7 @@ export function EnhancedSearchBar({
   }
 
   return (
-    <div ref={searchRef} className={`relative flex-1 max-w-2xl mx-8 ${className}`}>
+    <div ref={searchRef} className={`relative flex-1 max-w-2xl mx-2 md:mx-6 ${className}`}>
       <form
         onSubmit={(e) => {
           e.preventDefault()
@@ -172,7 +165,8 @@ export function EnhancedSearchBar({
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className='pl-12 pr-20 py-3 w-full border-2 border-gray-200 focus:border-blue-500 rounded-xl bg-gray-50 focus:bg-white transition-all'
+          aria-label='Tìm kiếm thuốc và sản phẩm'
+          className='h-12 rounded-lg border-2 border-[#BFDBFE] bg-white pl-12 pr-14 text-[#1C2B4A] transition-all placeholder:text-[#8094AE] focus:border-[#0A2463] focus:bg-white'
           autoComplete='off'
         />
 
@@ -183,8 +177,9 @@ export function EnhancedSearchBar({
               size='sm'
               variant='ghost'
               onClick={clearSearch}
-              className='w-6 h-6 p-0 text-gray-400 hover:text-gray-600'
+              className='w-7 h-7 p-0 text-gray-400 hover:text-gray-600 focus-visible:ring-2 focus-visible:ring-blue-500'
               title='Xóa (Esc)'
+              aria-label='Xóa nội dung tìm kiếm'
             >
               <X className='w-4 h-4' />
             </Button>
@@ -194,20 +189,10 @@ export function EnhancedSearchBar({
             type='button'
             size='sm'
             variant='ghost'
-            onClick={handleVoiceSearch}
-            className='w-6 h-6 p-0 text-gray-400 hover:text-blue-600'
-            title='Tìm kiếm bằng giọng nói'
-          >
-            <Mic className='w-4 h-4' />
-          </Button>
-
-          <Button
-            type='button'
-            size='sm'
-            variant='ghost'
             onClick={handlePrescriptionUpload}
-            className='w-6 h-6 p-0 text-gray-400 hover:text-medical-consultation transition-colors'
+            className='w-7 h-7 p-0 text-gray-400 hover:text-medical-consultation transition-colors focus-visible:ring-2 focus-visible:ring-blue-500'
             title='Upload đơn thuốc'
+            aria-label='Upload đơn thuốc'
           >
             <Camera className='w-4 h-4' />
           </Button>

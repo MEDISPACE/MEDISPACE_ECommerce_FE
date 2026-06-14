@@ -1,9 +1,9 @@
 /**
  * useRecommendations — Custom hooks for ML Recommendation data
- * Mỗi hook tự quản lý loading state và error, trả về products[]
+ * Recommendation hooks backed by TanStack Query cache.
  */
 
-import { useState, useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { recommendationService } from '../../services/recommendationService'
 import type { RecommendedProduct } from '../../services/recommendationService'
 
@@ -13,184 +13,105 @@ interface UseRecommendationResult {
   algorithm: string
 }
 
+function availableOnly(products: RecommendedProduct[]): RecommendedProduct[] {
+  return products.filter((product) => product.stockQuantity > 0)
+}
+
 // ─── useTrending ──────────────────────────────────────────────────────────────
 
 export function useTrending(limit = 12, categoryId?: string): UseRecommendationResult {
-  const [products, setProducts] = useState<RecommendedProduct[]>([])
-  const [loading, setLoading] = useState(true)
-  const [algorithm, setAlgorithm] = useState('')
+  const query = useQuery({
+    queryKey: ['recommendations', 'trending', limit, categoryId ?? null],
+    queryFn: () => recommendationService.getTrending(limit, categoryId),
+  })
 
-  useEffect(() => {
-    let cancelled = false
-    setLoading(true)
-    recommendationService.getTrending(limit, categoryId).then((res) => {
-      if (!cancelled) {
-        setProducts(res.products)
-        setAlgorithm(res.algorithm)
-        setLoading(false)
-      }
-    })
-    return () => { cancelled = true }
-  }, [limit, categoryId])
-
-  return { products, loading, algorithm }
+  return {
+    products: availableOnly(query.data?.products ?? []),
+    loading: query.isLoading,
+    algorithm: query.data?.algorithm ?? '',
+  }
 }
 
 // ─── useForYou ────────────────────────────────────────────────────────────────
 
 export function useForYou(limit = 12, isAuthenticated = false): UseRecommendationResult {
-  const [products, setProducts] = useState<RecommendedProduct[]>([])
-  const [loading, setLoading] = useState(true)
-  const [algorithm, setAlgorithm] = useState('')
+  const query = useQuery({
+    queryKey: ['recommendations', isAuthenticated ? 'for-you' : 'for-you-trending-fallback', limit],
+    queryFn: async () => {
+      if (isAuthenticated) return recommendationService.getForYou(limit)
+      const res = await recommendationService.getTrending(limit)
+      return { ...res, algorithm: 'trending_fallback' }
+    },
+  })
 
-  useEffect(() => {
-    let cancelled = false
-    setLoading(true)
-
-    const fetch = async () => {
-      if (isAuthenticated) {
-        // Personalized — requires auth token
-        const res = await recommendationService.getForYou(limit)
-        if (!cancelled) {
-          setProducts(res.products)
-          setAlgorithm(res.algorithm)
-        }
-      } else {
-        // Fallback: show trending for guest users
-        const res = await recommendationService.getTrending(limit)
-        if (!cancelled) {
-          setProducts(res.products)
-          setAlgorithm('trending_fallback')
-        }
-      }
-      if (!cancelled) setLoading(false)
-    }
-
-    fetch()
-    return () => { cancelled = true }
-  }, [limit, isAuthenticated])
-
-  return { products, loading, algorithm }
+  return {
+    products: availableOnly(query.data?.products ?? []),
+    loading: query.isLoading,
+    algorithm: query.data?.algorithm ?? '',
+  }
 }
 
 // ─── useRelated ───────────────────────────────────────────────────────────────
 
 export function useRelated(productId: string, limit = 8): UseRecommendationResult {
-  const [products, setProducts] = useState<RecommendedProduct[]>([])
-  const [loading, setLoading] = useState(true)
-  const [algorithm, setAlgorithm] = useState('')
+  const query = useQuery({
+    queryKey: ['recommendations', 'related', productId, limit],
+    queryFn: () => recommendationService.getRelated(productId, limit),
+    enabled: Boolean(productId),
+  })
 
-  useEffect(() => {
-    if (!productId) {
-      setProducts([])
-      setAlgorithm('')
-      setLoading(false)
-      return
-    }
-    let cancelled = false
-    setLoading(true)
-    recommendationService.getRelated(productId, limit).then((res) => {
-      if (!cancelled) {
-        setProducts(res.products)
-        setAlgorithm(res.algorithm)
-        setLoading(false)
-      }
-    })
-    return () => { cancelled = true }
-  }, [productId, limit])
-
-  return { products, loading, algorithm }
+  return {
+    products: availableOnly(query.data?.products ?? []),
+    loading: query.isLoading,
+    algorithm: query.data?.algorithm ?? '',
+  }
 }
 
 // ─── useBoughtTogether ────────────────────────────────────────────────────────
 
 export function useBoughtTogether(productId: string, limit = 6): UseRecommendationResult {
-  const [products, setProducts] = useState<RecommendedProduct[]>([])
-  const [loading, setLoading] = useState(true)
-  const [algorithm, setAlgorithm] = useState('')
+  const query = useQuery({
+    queryKey: ['recommendations', 'bought-together', productId, limit],
+    queryFn: () => recommendationService.getBoughtTogether(productId, limit),
+    enabled: Boolean(productId),
+  })
 
-  useEffect(() => {
-    if (!productId) {
-      setProducts([])
-      setAlgorithm('')
-      setLoading(false)
-      return
-    }
-    let cancelled = false
-    setLoading(true)
-    recommendationService.getBoughtTogether(productId, limit).then((res) => {
-      if (!cancelled) {
-        setProducts(res.products)
-        setAlgorithm(res.algorithm)
-        setLoading(false)
-      }
-    })
-    return () => { cancelled = true }
-  }, [productId, limit])
-
-  return { products, loading, algorithm }
+  return {
+    products: availableOnly(query.data?.products ?? []),
+    loading: query.isLoading,
+    algorithm: query.data?.algorithm ?? '',
+  }
 }
 
 // ─── usePostPurchase ──────────────────────────────────────────────────────────
 
 export function usePostPurchase(productIds: string[], limit = 8): UseRecommendationResult {
-  const [products, setProducts] = useState<RecommendedProduct[]>([])
-  const [loading, setLoading] = useState(true)
-  const [algorithm, setAlgorithm] = useState('')
-
   const key = productIds.join(',')
+  const query = useQuery({
+    queryKey: ['recommendations', 'post-purchase', key, limit],
+    queryFn: () => recommendationService.getPostPurchase(productIds, limit),
+    enabled: productIds.length > 0,
+  })
 
-  useEffect(() => {
-    if (!productIds || productIds.length === 0) {
-      setProducts([])
-      setAlgorithm('')
-      setLoading(false)
-      return
-    }
-    let cancelled = false
-    setLoading(true)
-    recommendationService.getPostPurchase(productIds, limit).then((res) => {
-      if (!cancelled) {
-        setProducts(res.products)
-        setAlgorithm(res.algorithm)
-        setLoading(false)
-      }
-    })
-    return () => { cancelled = true }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, limit])
-
-  return { products, loading, algorithm }
+  return {
+    products: availableOnly(query.data?.products ?? []),
+    loading: query.isLoading,
+    algorithm: query.data?.algorithm ?? '',
+  }
 }
 
 // ─── useReplenishment ─────────────────────────────────────────────────────────
 
 export function useReplenishment(limit = 5, isAuthenticated = false): UseRecommendationResult {
-  const [products, setProducts] = useState<RecommendedProduct[]>([])
-  const [loading, setLoading] = useState(true)
-  const [algorithm, setAlgorithm] = useState('')
+  const query = useQuery({
+    queryKey: ['recommendations', 'replenishment', limit],
+    queryFn: () => recommendationService.getReplenishment(limit),
+    enabled: isAuthenticated,
+  })
 
-  useEffect(() => {
-    let cancelled = false
-    setLoading(true)
-
-    const fetch = async () => {
-      if (isAuthenticated) {
-        const res = await recommendationService.getReplenishment(limit)
-        if (!cancelled) {
-          setProducts(res.products)
-          setAlgorithm(res.algorithm)
-        }
-      } else {
-        // Guest: không có lịch sử → trả rỗng, không hiện carousel
-        if (!cancelled) setProducts([])
-      }
-      if (!cancelled) setLoading(false)
-    }
-
-    fetch()
-    return () => { cancelled = true }
-  }, [limit, isAuthenticated])
-
-  return { products, loading, algorithm }
+  return {
+    products: availableOnly(query.data?.products ?? []),
+    loading: isAuthenticated ? query.isLoading : false,
+    algorithm: query.data?.algorithm ?? '',
+  }
 }

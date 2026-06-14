@@ -30,7 +30,7 @@ export const links: LinksFunction = () => [
   },
   {
     rel: 'stylesheet',
-    href: 'https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap',
+    href: 'https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap',
   },
 ]
 
@@ -48,12 +48,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     <meta name='viewport' content='width=device-width, initial-scale=1' />
                     <meta name='color-scheme' content='only light' />
                     <meta name='theme-color' content='rgba(255, 255, 255, 0.999)' />
-                    <meta name='title' content='MEDISPACE - Nền tảng mua thuốc trực tuyến' />
                     <meta name='description' content='Nền tảng mua thuốc trực tuyến uy tín, an toàn và tiện lợi' />
                     <Meta />
                     <Links />
                   </head>
-                  <body style={{ backgroundColor: '#eefaff', colorScheme: 'light' }}>
+                  <body style={{ backgroundColor: '#F8FAFB', colorScheme: 'light' }}>
                     {children}
                     <Toaster position='top-right' />
                     <ScrollRestoration />

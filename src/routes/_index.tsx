@@ -4,32 +4,58 @@ import { useAuth } from '~/contexts/AuthContext'
 import { UserRole } from '~/types/user'
 
 export function meta() {
+  const title = 'MEDISPACE - Nhà thuốc trực tuyến #1 Việt Nam'
+  const description = 'Mua thuốc trực tuyến an toàn, tiện lợi. Giao hàng nhanh, tư vấn miễn phí từ dược sĩ chuyên nghiệp.'
+
   return [
-    { title: 'MEDISPACE - Nhà thuốc trực tuyến #1 Việt Nam' },
+    { title },
     {
       name: 'description',
-      content: 'Mua thuốc trực tuyến an toàn, tiện lợi. Giao hàng nhanh, tư vấn miễn phí từ dược sĩ chuyên nghiệp.',
+      content: description,
     },
+    { property: 'og:title', content: title },
+    { property: 'og:description', content: description },
+    { property: 'og:image', content: 'https://medispace.vn/og-cover.jpg' },
+    { property: 'og:type', content: 'website' },
+    { property: 'og:url', content: 'https://medispace.vn' },
+    { property: 'og:site_name', content: 'MEDISPACE' },
+    { name: 'twitter:card', content: 'summary_large_image' },
+    { tagName: 'link', rel: 'canonical', href: 'https://medispace.vn' },
   ]
+}
+
+const homeStructuredData = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': ['Organization', 'Pharmacy'],
+      '@id': 'https://medispace.vn/#organization',
+      name: 'MEDISPACE',
+      url: 'https://medispace.vn',
+      telephone: '1800 6928',
+      areaServed: 'VN',
+      slogan: 'Sức khỏe trong tầm tay',
+    },
+    {
+      '@type': 'WebSite',
+      '@id': 'https://medispace.vn/#website',
+      url: 'https://medispace.vn',
+      name: 'MEDISPACE',
+      publisher: { '@id': 'https://medispace.vn/#organization' },
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: 'https://medispace.vn/search?q={search_term_string}',
+        'query-input': 'required name=search_term_string',
+      },
+    },
+  ],
 }
 
 export default function Index() {
   const { user, loading, isAuthenticated } = useAuth()
 
-  // Show loading state while checking authentication
-  if (loading) {
-    return (
-      <div className='min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 flex items-center justify-center'>
-        <div className='text-center'>
-          <div className='w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4'></div>
-          <p className='text-blue-600'>Đang tải...</p>
-        </div>
-      </div>
-    )
-  }
-
   // Redirect authenticated users based on their role
-  if (isAuthenticated && user) {
+  if (!loading && isAuthenticated && user) {
     // Admin users go to admin dashboard
     if (user.role === UserRole.Admin) {
       return <Navigate to='/admin/dashboard' replace />
@@ -46,5 +72,10 @@ export default function Index() {
   }
 
   // Unauthenticated users and customers see the normal homepage
-  return <HomePage />
+  return (
+    <>
+      <script type='application/ld+json' dangerouslySetInnerHTML={{ __html: JSON.stringify(homeStructuredData) }} />
+      <HomePage />
+    </>
+  )
 }

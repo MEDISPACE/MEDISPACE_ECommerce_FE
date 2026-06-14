@@ -12,6 +12,8 @@ import {
   FileText,
   Heart,
   Home,
+  X,
+  BadgeCheck,
 } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
@@ -36,14 +38,18 @@ import { useCategories } from '~/hooks/product'
 import type { Category } from '../../types/product'
 import medispaceLogo from '../../assets/MEDISPACE_Logo_Final.svg'
 import { NotificationDropdown } from '../shared/NotificationDropdown'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from '../ui/sheet'
 
 export function Header() {
   const navigate = useNavigate()
   const { categories } = useCategories()
   const { user, isAuthenticated, logout } = useAuth()
   const { getCartItemsCount } = useCart()
+  const cartCount = getCartItemsCount()
   const [activeMegaMenuCategory, setActiveMegaMenuCategory] = useState<Category | null>(null)
   const [isMegaMenuVisible, setIsMegaMenuVisible] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const mainCategories = categories.filter((cat) => cat.level === 0)
 
   const handleSearch = (query: string) => {
     if (query.trim()) {
@@ -66,14 +72,14 @@ export function Header() {
     setActiveMegaMenuCategory(null)
   }
   return (
-    <header className='bg-white border-b border-gray-200 sticky top-0 z-50'>
+    <header className='sticky top-0 z-50 border-b border-[#E8EDF5] bg-white'>
       {/* Top bar */}
-      <div className='bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 text-white py-2'>
+      <div className='hidden bg-[#0A2463] py-2 text-white md:block'>
         <div className='max-w-7xl mx-auto px-4 flex justify-between items-center text-sm'>
           <div className='flex items-center gap-4'>
             <div className='flex items-center gap-1'>
               <Phone className='w-4 h-4' />
-              <span>Hotline: 1800 6928</span>
+              <span className='font-semibold'>Hotline: 1800 6928</span>
             </div>
             <div className='flex items-center gap-1'>
               <MapPin className='w-4 h-4' />
@@ -81,6 +87,10 @@ export function Header() {
             </div>
           </div>
           <div className='hidden md:flex items-center gap-4'>
+            <span className='inline-flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 font-semibold'>
+              <BadgeCheck className='h-3.5 w-3.5 text-emerald-300' />
+              GPP Certified
+            </span>
             <span>Miễn phí giao hàng từ 300.000đ</span>
             <span>•</span>
             <span>Giao hàng nhanh 2h</span>
@@ -89,9 +99,9 @@ export function Header() {
       </div>
 
       {/* Main header */}
-      <div className='max-w-7xl mx-auto px-4 py-4'>
-        <div className='flex items-center justify-between'>
-          <Link to='/' className='flex items-center group'>
+      <div className='max-w-7xl mx-auto px-4 py-3 md:py-4'>
+        <div className='flex items-center justify-between gap-2'>
+          <Link to='/' className='flex items-center group flex-shrink-0'>
             <img
               src={medispaceLogo}
               alt='MEDISPACE - Sức khỏe trong tầm tay'
@@ -100,18 +110,20 @@ export function Header() {
           </Link>
 
           {/* Enhanced Search */}
-          <EnhancedSearchBar onSearch={handleSearch} />
+          <EnhancedSearchBar onSearch={handleSearch} className='hidden md:block md:max-w-[56%]' />
 
           {/* Actions */}
-          <div className='flex items-center gap-4'>
+          <div className='flex items-center gap-2 md:gap-4 flex-shrink-0'>
             {/* Cart */}
             <Link to='/cart' className='relative'>
-              <Button variant='ghost' size='sm' className='flex items-center gap-2 hover:!bg-blue-50'>
+              <Button variant='ghost' size='sm' className='flex items-center gap-2 text-[#1C2B4A] hover:!bg-[#F0F6FF]'>
                 <ShoppingCart className='w-5 h-5' />
                 <span className='hidden md:inline'>Giỏ hàng</span>
-                <Badge className='absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center'>
-                  {getCartItemsCount()}
-                </Badge>
+                {cartCount > 0 && (
+                  <Badge className='absolute -top-2 -right-2 bg-[#DC2626] text-white text-xs w-5 h-5 rounded-full flex items-center justify-center'>
+                    {cartCount}
+                  </Badge>
+                )}
               </Button>
             </Link>
 
@@ -124,7 +136,7 @@ export function Header() {
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant='ghost' size='sm' className='flex items-center gap-2 hover:bg-blue-50'>
+                  <Button variant='ghost' size='sm' className='flex items-center gap-2 hover:bg-[#F0F6FF]'>
                     <Avatar className='h-6 w-6'>
                       <AvatarImage src={user?.avatar} />
                       <AvatarFallback className='bg-blue-100 text-blue-600 text-xs'>
@@ -224,7 +236,7 @@ export function Header() {
               </DropdownMenu>
             ) : (
               <Link to='/login' className='flex items-center gap-2'>
-                <Button variant='ghost' size='sm' className='flex items-center gap-2 hover:!bg-blue-50'>
+                <Button variant='ghost' size='sm' className='flex items-center gap-2 hover:!bg-[#F0F6FF]'>
                   <User className='w-5 h-5' />
                   <span className='hidden md:inline'>Đăng nhập</span>
                 </Button>
@@ -232,22 +244,98 @@ export function Header() {
             )}
 
             {/* Mobile menu */}
-            <Button variant='ghost' size='sm' className='md:hidden'>
-              <Menu className='w-5 h-5' />
-            </Button>
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant='ghost' size='sm' className='md:hidden' aria-label='Mở menu điều hướng'>
+                  <Menu className='w-5 h-5' />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side='right' className='w-[88vw] max-w-sm overflow-y-auto p-0'>
+                <SheetHeader className='border-b border-blue-100 p-4'>
+                  <div className='flex items-center justify-between pr-8'>
+                    <SheetTitle className='text-blue-900'>Menu</SheetTitle>
+                    <SheetClose asChild>
+                      <Button variant='ghost' size='sm' aria-label='Đóng menu'>
+                        <X className='h-4 w-4' />
+                      </Button>
+                    </SheetClose>
+                  </div>
+                </SheetHeader>
+
+                <div className='space-y-5 p-4'>
+                  <div className='grid gap-2'>
+                    <SheetClose asChild>
+                      <Link to='/' className='rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-blue-50'>
+                        Trang chủ
+                      </Link>
+                    </SheetClose>
+                    <SheetClose asChild>
+                      <Link to='/products' className='rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-blue-50'>
+                        Sản phẩm
+                      </Link>
+                    </SheetClose>
+                    <SheetClose asChild>
+                      <Link to='/health' className='rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-blue-50'>
+                        Bệnh & Góc sức khỏe
+                      </Link>
+                    </SheetClose>
+                    <SheetClose asChild>
+                      <Link to='/community' className='rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-blue-50'>
+                        Cộng đồng
+                      </Link>
+                    </SheetClose>
+                    <SheetClose asChild>
+                      <Link to='/contact' className='rounded-lg px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50'>
+                        Tư vấn dược sĩ
+                      </Link>
+                    </SheetClose>
+                  </div>
+
+                  <div className='border-t border-blue-100 pt-4'>
+                    <div className='mb-2 px-3 text-xs font-semibold uppercase tracking-wide text-gray-500'>Danh mục</div>
+                    <div className='grid gap-1'>
+                      {mainCategories.map((category) => (
+                        <SheetClose key={category._id} asChild>
+                          <Link
+                            to={`/categories/${category.slug}`}
+                            className='flex items-center justify-between rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700'
+                          >
+                            <span>{category.name}</span>
+                            <ChevronRight className='h-4 w-4 text-gray-400' />
+                          </Link>
+                        </SheetClose>
+                      ))}
+                      <SheetClose asChild>
+                        <Link to='/categories' className='rounded-lg px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50'>
+                          Xem tất cả danh mục
+                        </Link>
+                      </SheetClose>
+                    </div>
+                  </div>
+
+                  <div className='rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900'>
+                    <div className='font-semibold'>Cần tư vấn khẩn cấp?</div>
+                    <a href='tel:18006928' className='mt-1 inline-flex items-center gap-2 font-bold text-blue-700'>
+                      <Phone className='h-4 w-4' />
+                      1800 6928
+                    </a>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </div>
 
       {/* Navigation */}
-      <div className='border-t border-gray-200 relative'>
+      <div className='relative border-t border-[#E8EDF5]'>
         <div className='max-w-7xl mx-auto px-4'>
-          <nav className='flex items-center gap-8 py-3 relative' onMouseLeave={handleNavigationMouseLeave}>
+          <nav className='relative flex items-center gap-6 overflow-x-auto py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden' onMouseLeave={handleNavigationMouseLeave}>
             {/* Mobile menu button */}
             <div className='lg:hidden'>
               <Link
                 to='/categories'
-                className='flex items-center px-3 py-2 text-primary-500 font-medium hover:text-primary-600 transition-colors duration-200'
+                className='flex items-center px-3 py-2 text-[#0A2463] font-medium hover:text-[#1E40AF] transition-colors duration-200'
               >
                 <Menu className='w-4 h-4 mr-2' />
                 Danh mục
@@ -256,23 +344,22 @@ export function Header() {
 
             {/* Desktop Categories with unified mega menu - Only show main categories (level 0) */}
             <div className='hidden lg:flex items-center gap-4'>
-              {categories
-                .filter((cat) => cat.level === 0)
-                .map((category) => (
+              {mainCategories.map((category) => (
                   <div key={category._id} className='relative' onMouseEnter={() => handleCategoryHover(category)}>
                     <Link
                       to={`/categories/${category.slug}`}
-                      className={`relative flex items-center px-1 py-3 text-sm font-medium transition-colors duration-200 group ${
+                      className={`relative flex items-center gap-1.5 px-1 py-3 text-sm font-medium transition-colors duration-200 group ${
                         activeMegaMenuCategory?._id === category._id
-                          ? 'text-blue-600'
-                          : 'text-gray-700 hover:text-blue-600'
+                          ? 'text-[#0A2463]'
+                          : 'text-[#1C2B4A] hover:text-[#0A2463]'
                       }`}
                       title={category.name}
                     >
+                      <span className='flex h-6 w-6 items-center justify-center rounded-full bg-[#F0F6FF] text-xs'>•</span>
                       <span className='text-center leading-tight'>{category.name}</span>
                       <ChevronDown className='w-3 h-3 ml-1 opacity-60 flex-shrink-0' />
                       <span
-                        className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-blue-600 to-cyan-500 transition-all duration-300 ${
+                        className={`absolute bottom-0 left-0 h-0.5 bg-[#0A2463] transition-all duration-300 ${
                           activeMegaMenuCategory?._id === category._id ? 'w-full' : 'w-0 group-hover:w-full'
                         }`}
                       ></span>
@@ -283,18 +370,18 @@ export function Header() {
 
             <Link
               to='/health'
-              className='relative flex items-center px-1 py-3 text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors duration-200 group'
+              className='relative flex shrink-0 items-center px-1 py-3 text-sm font-medium text-[#1C2B4A] hover:text-[#0A2463] transition-colors duration-200 group'
             >
               <span className='text-center leading-tight'>Bệnh & Góc sức khỏe</span>
-              <span className='absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-cyan-500 group-hover:w-full transition-all duration-300'></span>
+              <span className='absolute bottom-0 left-0 w-0 h-0.5 bg-[#0A2463] group-hover:w-full transition-all duration-300'></span>
             </Link>
 
             <Link
               to='/community'
-              className='relative flex items-center px-1 py-3 text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors duration-200 group'
+              className='relative flex shrink-0 items-center px-1 py-3 text-sm font-medium text-[#1C2B4A] hover:text-[#0A2463] transition-colors duration-200 group'
             >
               <span className='text-center leading-tight'>Cộng đồng</span>
-              <span className='absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-cyan-500 group-hover:w-full transition-all duration-300'></span>
+              <span className='absolute bottom-0 left-0 w-0 h-0.5 bg-[#0A2463] group-hover:w-full transition-all duration-300'></span>
             </Link>
 
             {/* Unified Mega Menu */}
