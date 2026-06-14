@@ -99,7 +99,7 @@ export const ChatTextarea = forwardRef<HTMLTextAreaElement, ChatTextareaProps>(
             'text-sm text-gray-900 placeholder:text-gray-400',
             'px-4 py-2.5 rounded-2xl',
             'border border-gray-200 bg-gray-50',
-            'transition-[border-color,box-shadow,height] duration-150 ease-out',
+            'transition-[border-color,box-shadow] duration-150 ease-out',
             isFocused
               ? 'border-blue-400 bg-white ring-[3px] ring-blue-500/15 shadow-sm'
               : 'hover:border-gray-300',
