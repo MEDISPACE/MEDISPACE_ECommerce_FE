@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams, useNavigate } from 'react-router'
-import { CheckCircle, Package, MapPin, CreditCard, ArrowRight, Home, FileText, Loader2 } from 'lucide-react'
+import { CheckCircle, Package, MapPin, CreditCard, ArrowRight, Home, FileText, Loader2, Clock } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Separator } from '../ui/separator'
@@ -23,22 +23,25 @@ export function OrderSuccessPage() {
   const [error, setError] = useState<string | null>(null)
 
   // Extract productIds from order for post-purchase recommendations
-  const orderProductIds = order?.items?.map((item: any) => item.productId || item.product?._id || '').filter(Boolean) ?? []
-  const { products: postPurchaseProducts, loading: postPurchaseLoading, algorithm: postPurchaseAlgorithm } = usePostPurchase(orderProductIds)
+  const orderProductIds =
+    order?.items?.map((item: any) => item.productId || item.product?._id || '').filter(Boolean) ?? []
+  const {
+    products: postPurchaseProducts,
+    loading: postPurchaseLoading,
+    algorithm: postPurchaseAlgorithm,
+  } = usePostPurchase(orderProductIds)
 
   useEffect(() => {
     if (orderProductIds.length > 0) {
       void recommendationService.trackPurchases(orderProductIds)
     }
-  // Track purchase attribution once order items are loaded.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Track purchase attribution once order items are loaded.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderProductIds.join(',')])
 
   useEffect(() => {
     // Scroll to top on mount
     window.scrollTo(0, 0)
-
-
 
     // Clear selectedItems from sessionStorage on successful payment
     if (paymentStatus === 'success') {
@@ -75,8 +78,8 @@ export function OrderSuccessPage() {
 
   const breadcrumbItems = [
     { label: 'Trang chủ', href: '/' },
-    { label: 'Thanh toán', href: '/cart/checkout' },
-    { label: 'Đặt hàng thành công' },
+    { label: 'Đơn hàng của tôi', href: '/account/orders' },
+    { label: paymentStatus === 'failed' ? 'Thanh toán thất bại' : 'Đặt hàng thành công' },
   ]
 
   if (loading) {
@@ -103,14 +106,15 @@ export function OrderSuccessPage() {
           </div>
           <h1 className='text-xl text-red-600 mb-4'>Thanh toán thất bại!</h1>
           <p className='text-gray-500 mb-6'>
-            Giao dịch thanh toán của bạn không thành công. Vui lòng thử lại hoặc chọn phương thức thanh toán khác.
+            Giao dịch thanh toán không thành công hoặc liên kết thanh toán đã hết hạn. Đơn hàng vẫn được lưu để bạn có
+            thể mở chi tiết đơn hàng và thử thanh toán lại.
           </p>
           <div className='flex flex-col sm:flex-row gap-4 justify-center'>
             <Button asChild>
-              <Link to='/cart/checkout'>Thử lại</Link>
+              <Link to={orderId ? `/account/orders/${orderId}` : '/account/orders'}>Thử thanh toán lại</Link>
             </Button>
             <Button asChild variant='outline'>
-              <Link to='/'>Về trang chủ</Link>
+              <Link to='/cart'>Quay lại giỏ hàng</Link>
             </Button>
           </div>
         </div>
@@ -169,23 +173,56 @@ export function OrderSuccessPage() {
     }
   }
 
+  const isPaymentPending = paymentStatus === 'pending' || order.paymentStatus === 'pending'
+  const isPaymentSuccess =
+    paymentStatus === 'success' || paymentStatus === 'vnpay_success' || order.paymentStatus === 'paid'
+
   return (
     <div className='max-w-4xl mx-auto px-4 py-12'>
       <UniversalBreadcrumb items={breadcrumbItems} />
       {/* Success Animation */}
       <div className='text-center mb-8 animate-slide-in-up'>
-        <div className='inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-green-400 to-green-600 shadow-lg mb-6 animate-float'>
-          <CheckCircle className='w-14 h-14 text-white' />
+        <div
+          className={`inline-flex items-center justify-center w-24 h-24 rounded-full shadow-lg mb-6 animate-float ${
+            isPaymentPending
+              ? 'bg-gradient-to-br from-amber-400 to-amber-600'
+              : 'bg-gradient-to-br from-green-400 to-green-600'
+          }`}
+        >
+          {isPaymentPending ? (
+            <Clock className='w-14 h-14 text-white' />
+          ) : (
+            <CheckCircle className='w-14 h-14 text-white' />
+          )}
         </div>
         <h1 className='bg-gradient-to-r from-green-600 via-green-500 to-emerald-500 bg-clip-text text-transparent mb-3'>
-          {paymentStatus === 'success' || paymentStatus === 'vnpay_success'
-            ? 'Thanh toán thành công!'
-            : 'Đặt hàng thành công!'}
+          {isPaymentPending
+            ? 'Đang xác nhận thanh toán'
+            : isPaymentSuccess
+              ? 'Thanh toán thành công!'
+              : 'Đặt hàng thành công!'}
         </h1>
         <p className='text-xl text-gray-600'>
-          Cảm ơn bạn đã tin tưởng và mua sắm tại <span className='text-blue-600'>MEDISPACE</span>
+          {isPaymentPending ? (
+            'Nếu bạn đã thanh toán, hệ thống sẽ cập nhật đơn hàng ngay khi cổng thanh toán xác nhận.'
+          ) : (
+            <>
+              Cảm ơn bạn đã tin tưởng và mua sắm tại <span className='text-blue-600'>MEDISPACE</span>
+            </>
+          )}
         </p>
       </div>
+
+      {isPaymentPending && (
+        <Card className='mb-6 border-amber-200 bg-amber-50'>
+          <CardContent className='p-4'>
+            <p className='text-sm text-amber-800'>
+              Trạng thái thanh toán đang chờ xác nhận. Nếu trạng thái không đổi sau vài phút, hãy mở chi tiết đơn hàng
+              để tạo lại liên kết thanh toán hoặc liên hệ hỗ trợ.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Removed QR Code Section */}
 
@@ -249,7 +286,6 @@ export function OrderSuccessPage() {
           </div>
         </CardContent>
       </Card>
-
 
       {/* Action Buttons */}
       <div className='flex flex-col sm:flex-row gap-4 justify-center animate-fade-in'>

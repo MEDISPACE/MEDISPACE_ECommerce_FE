@@ -183,7 +183,7 @@ export async function getCart(api: APIRequestContext, session: Session) {
 }
 
 export async function clearCart(api: APIRequestContext, session: Session) {
-  const res = await api.delete(`${API_URL}/cart`, { headers: auth(session.token) })
+  const res = await api.delete(`${API_URL}/cart/clear`, { headers: auth(session.token) })
   // OK or not-found are both fine
   return res
 }
@@ -213,7 +213,7 @@ export async function addToCart(
 ) {
   const body: any = { productId, quantity }
   if (unit) body.unit = unit
-  const res = await api.post(`${API_URL}/cart/items`, {
+  const res = await api.post(`${API_URL}/cart/add`, {
     headers: auth(session.token),
     data: body,
   })
