@@ -276,7 +276,12 @@ export function MessageList({
                     )}
 
                     <div
-                      className={`rounded-2xl px-4 py-2 ${
+                      className={`rounded-2xl ${
+                        // Ảnh thuần (không có text): không cần padding — ảnh fit khít bubble
+                        message.type === 'image' && !message.content
+                          ? 'p-0 overflow-hidden'
+                          : 'px-4 py-2'
+                      } ${
                         isOwnMessage
                           ? 'bg-blue-600 text-white rounded-tr-none'
                           : message.isAI
@@ -289,30 +294,23 @@ export function MessageList({
                         <ProductCard product={message.productRef} isOwnMessage={isOwnMessage} />
                       )}
 
-                      {/* Image message */}
+                      {/* Image message — giới hạn kích thước như Zalo/Messenger */}
                       {message.type === 'image' && message.imageUrl && (
                         <div
-                          className='relative group cursor-pointer'
+                          className='relative group cursor-pointer rounded-xl overflow-hidden'
+                          style={{ maxWidth: 200, maxHeight: 200 }}
                           onClick={() => setSelectedImage(message.imageUrl || null)}
                         >
                           <img
                             src={message.imageUrl}
                             alt='Sent image'
-                            className={`max-w-xs rounded-lg hover:opacity-90 transition-opacity ${message.content ? 'mb-2' : ''}`}
+                            className={`w-full h-full object-cover transition-opacity group-hover:opacity-90 ${message.content ? 'mb-2' : ''}`}
+                            style={{ maxWidth: 200, maxHeight: 200, display: 'block' }}
                           />
-                          <div className='absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded-lg'>
-                            <div className='bg-black/50 p-2 rounded-full text-white'>
-                              <svg
-                                xmlns='http://www.w3.org/2000/svg'
-                                width='20'
-                                height='20'
-                                viewBox='0 0 24 24'
-                                fill='none'
-                                stroke='currentColor'
-                                strokeWidth='2'
-                                strokeLinecap='round'
-                                strokeLinejoin='round'
-                              >
+                          {/* Zoom hint on hover */}
+                          <div className='absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/25 rounded-xl'>
+                            <div className='bg-black/50 p-1.5 rounded-full text-white'>
+                              <svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'>
                                 <circle cx='11' cy='11' r='8'></circle>
                                 <line x1='21' y1='21' x2='16.65' y2='16.65'></line>
                                 <line x1='11' y1='8' x2='11' y2='14'></line>

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Send, Image as ImageIcon, Loader2, X, Pill } from 'lucide-react'
 import { Button } from '../ui/button'
-import { Textarea } from '../ui/textarea'
+import { ChatTextarea } from './ChatTextarea'
 import { ProductPicker } from './ProductPicker'
 import { toast } from 'sonner'
 import type { ProductRef } from '~/types/chat'
@@ -53,10 +53,8 @@ export function ChatInput({
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSend()
-    }
+    // Shift+Enter được xử lý bởi ChatTextarea — chỉ cần handle các phím đặc biệt khác
+    // Enter-to-send được pass qua onSend prop của ChatTextarea
   }
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -99,20 +97,34 @@ export function ChatInput({
         <ProductPicker onSelect={handleProductSelect} onClose={() => setShowProductPicker(false)} />
       )}
 
-      {/* Image preview */}
+      {/* Image preview — hiển thị ảnh chờ gửi kiểu Messenger */}
       {imageUrl && (
-        <div className='mb-3 relative inline-block'>
-          <img src={imageUrl} alt='Preview' className='h-20 w-20 object-cover rounded-lg border-2 border-blue-200' />
+        <div className='mx-1 mb-2 flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-xl px-3 py-2 animate-in slide-in-from-bottom-2 duration-200'>
+          {/* Thumbnail */}
+          <div className='relative flex-shrink-0'>
+            <img
+              src={imageUrl}
+              alt='Preview'
+              className='h-12 w-12 object-cover rounded-lg border border-blue-200 shadow-sm'
+            />
+          </div>
+          {/* Info */}
+          <div className='flex-1 min-w-0'>
+            <p className='text-xs font-medium text-blue-700 truncate'>Ảnh đã chọn</p>
+            <p className='text-[10px] text-blue-500 mt-0.5'>Nhấn gửi để chia sẻ ảnh này</p>
+          </div>
+          {/* Remove button */}
           <button
             onClick={() => setImageUrl('')}
-            className='absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors'
+            className='flex-shrink-0 w-6 h-6 flex items-center justify-center bg-white border border-gray-200 hover:bg-red-50 hover:border-red-200 rounded-full transition-colors shadow-sm'
+            title='Xoá ảnh'
           >
-            <X className='w-3 h-3' />
+            <X className='w-3 h-3 text-gray-500 hover:text-red-500' />
           </button>
         </div>
       )}
 
-      <div className='flex items-end gap-2'>
+      <div className='flex items-end gap-1.5'>
         {/* Image upload button */}
         <label className='cursor-pointer'>
           <input
@@ -146,25 +158,28 @@ export function ChatInput({
           </button>
         )}
 
-        {/* Message input */}
-        <Textarea
+        {/* Message input — ChatTextarea auto-resize như Zalo/Messenger */}
+        <ChatTextarea
           ref={textareaRef}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={handleKeyDown}
+          onSend={handleSend}
           placeholder={placeholder}
           disabled={disabled}
-          className='flex-1 min-h-[40px] max-h-24 resize-none border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm'
-          rows={1}
+          className='flex-1'
         />
 
         {/* Send button */}
         <Button
           onClick={handleSend}
           disabled={disabled || (!message.trim() && !imageUrl)}
-          className='bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 h-[40px]'
+          className={`self-end mb-[18px] h-9 w-9 p-0 rounded-full transition-all duration-200 ${
+            message.trim() || imageUrl
+              ? 'bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-blue-300/50 hover:scale-105'
+              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+          }`}
         >
-          <Send className='w-5 h-5' />
+          <Send className='w-4 h-4' />
         </Button>
       </div>
     </div>

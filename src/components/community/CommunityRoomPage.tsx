@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Flag, Info, Loader2, RefreshCw, Send, ShieldAlert, Users } from 'lucide-react'
+import { ArrowLeft, Flag, Image as ImageIcon, Info, Loader2, RefreshCw, Send, ShieldAlert, Users, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Card, CardContent } from '~/components/ui/card'
 import { Button } from '~/components/ui/button'
 import { Badge } from '~/components/ui/badge'
-import { Textarea } from '~/components/ui/textarea'
+import { ChatTextarea } from '~/components/chat/ChatTextarea'
 import {
   Dialog,
   DialogContent,
@@ -123,6 +123,8 @@ export function CommunityRoomPage() {
   const [needsJoin, setNeedsJoin] = useState(false)
   const [messageText, setMessageText] = useState('')
   const [sending, setSending] = useState(false)
+  const [imageUrl, setImageUrl] = useState('')
+  const [isUploading, setIsUploading] = useState(false)
 
   const [reportOpen, setReportOpen] = useState(false)
   const [reportReason, setReportReason] = useState('')
@@ -330,7 +332,7 @@ export function CommunityRoomPage() {
 
   const handleSend = async () => {
     const trimmed = messageText.trim()
-    if (!trimmed || sending) return
+    if ((!trimmed && !imageUrl) || sending) return
     setSending(true)
     try {
       const res = await communityService.sendMessage({ roomId, content: trimmed })
@@ -348,6 +350,7 @@ export function CommunityRoomPage() {
         }
       }
       setMessageText('')
+      setImageUrl('')
     } catch (err: any) {
       const status = err?.response?.status
       if (status === 403) {
@@ -357,6 +360,33 @@ export function CommunityRoomPage() {
       }
     } finally {
       setSending(false)
+    }
+  }
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      toast.error('Vui lòng chọn file ảnh')
+      return
+    }
+    const maxSize = 2 * 1024 * 1024
+    if (file.size > maxSize) {
+      toast.error('Ảnh quá lớn. Vui lòng chọn ảnh nhỏ hơn 2MB')
+      return
+    }
+    setIsUploading(true)
+    try {
+      const { uploadImage } = await import('~/services/mediaService')
+      const uploadedUrl = await uploadImage(file)
+      setImageUrl(uploadedUrl)
+      toast.success('Tải ảnh lên thành công')
+    } catch (error: any) {
+      toast.error(error?.message || 'Không thể tải ảnh lên')
+    } finally {
+      setIsUploading(false)
+      // Reset input để có thể chọn lại cùng file
+      e.target.value = ''
     }
   }
 
@@ -515,11 +545,42 @@ export function CommunityRoomPage() {
               )}
             </div>
 
-            <div className='border-t border-blue-100 p-3 bg-white'>
-              <div className='flex items-end gap-2'>
-                <Textarea
+            <div className='border-t border-blue-100 bg-white'>
+              {/* Image preview strip */}
+              {imageUrl && (
+                <div className='mx-3 mt-2 flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-xl px-3 py-2 animate-in slide-in-from-bottom-2 duration-200'>
+                  <img src={imageUrl} alt='Preview' className='h-10 w-10 object-cover rounded-lg border border-blue-200 shadow-sm flex-shrink-0' />
+                  <div className='flex-1 min-w-0'>
+                    <p className='text-xs font-medium text-blue-700'>Ảnh đã chọn</p>
+                    <p className='text-[10px] text-blue-500 mt-0.5'>Nhấn gửi để chia sẻ</p>
+                  </div>
+                  <button
+                    onClick={() => setImageUrl('')}
+                    className='w-6 h-6 flex items-center justify-center bg-white border border-gray-200 hover:bg-red-50 hover:border-red-200 rounded-full transition-colors shadow-sm flex-shrink-0'
+                  >
+                    <X className='w-3 h-3 text-gray-500' />
+                  </button>
+                </div>
+              )}
+
+              {/* Input row */}
+              <div className='flex items-end gap-1.5 p-3'>
+                {/* Image upload */}
+                <label className='cursor-pointer flex-shrink-0 self-end mb-[18px]'>
+                  <input type='file' accept='image/*' onChange={handleImageUpload} className='hidden' disabled={!canSend || isUploading} />
+                  <div className='p-2 rounded-xl hover:bg-gray-100 transition-colors'>
+                    {isUploading ? (
+                      <Loader2 className='w-5 h-5 text-gray-400 animate-spin' />
+                    ) : (
+                      <ImageIcon className='w-5 h-5 text-gray-400 hover:text-blue-600' />
+                    )}
+                  </div>
+                </label>
+
+                <ChatTextarea
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
+                  onSend={handleSend}
                   placeholder={
                     isPending
                       ? 'Yêu cầu tham gia đang chờ duyệt'
@@ -532,18 +593,23 @@ export function CommunityRoomPage() {
                             : 'Nhập tin nhắn...'
                   }
                   disabled={!canSend || sending}
-                  rows={2}
                 />
+
                 <Button
-                  className='bg-gradient-to-r from-blue-600 to-cyan-500 text-white h-10 px-4'
+                  className={`self-end mb-[18px] h-9 w-9 p-0 flex-shrink-0 rounded-full transition-all duration-200 ${
+                    (messageText.trim() || imageUrl) && canSend
+                      ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-md hover:shadow-blue-300/50 hover:scale-105'
+                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  }`}
                   onClick={handleSend}
-                  disabled={!canSend || sending || !messageText.trim()}
+                  disabled={!canSend || sending || (!messageText.trim() && !imageUrl)}
                 >
                   {sending ? <Loader2 className='w-4 h-4 animate-spin' /> : <Send className='w-4 h-4' />}
                 </Button>
               </div>
+
               {!isAuthenticated && (
-                <p className='text-xs text-gray-500 mt-2'>Vui lòng đăng nhập để tham gia trò chuyện.</p>
+                <p className='text-xs text-gray-500 px-3 pb-2'>Vui lòng đăng nhập để tham gia trò chuyện.</p>
               )}
             </div>
           </CardContent>
