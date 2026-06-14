@@ -399,12 +399,12 @@ export function HomePage() {
 
       <section className='bg-[#0A2463] py-12'>
         <div className='mx-auto max-w-4xl px-4 text-center'>
-          <div className='mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white'>
+          <div className='mb-4 inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/15 px-4 py-2 text-sm font-semibold text-white shadow-sm'>
             <MessageCircle className='h-4 w-4' />
             Tư vấn miễn phí 24/7
           </div>
           <h2 className='font-display text-3xl font-bold text-white md:text-4xl'>Không chắc nên mua gì?</h2>
-          <p className='mx-auto mt-3 max-w-2xl text-lg leading-8 text-blue-100'>Hỏi dược sĩ MediSpace để được hướng dẫn chọn sản phẩm, đọc đơn thuốc và dùng thuốc đúng cách.</p>
+          <p className='mx-auto mt-4 max-w-3xl text-lg leading-8 text-white/85'>Hỏi dược sĩ MediSpace để được hướng dẫn chọn sản phẩm, đọc đơn thuốc và dùng thuốc đúng cách.</p>
           <Button onClick={openConsultation} className='mt-7 h-12 rounded-lg bg-white px-8 text-[#0A2463] hover:bg-[#F0F6FF]'>
             Hỏi dược sĩ ngay
             <ArrowRight className='ml-2 h-4 w-4' />
