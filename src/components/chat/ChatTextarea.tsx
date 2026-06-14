@@ -22,20 +22,18 @@ const WARN_CHARS = 400
 export interface ChatTextareaProps
   extends Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, 'rows' | 'style'> {
   onSend?: () => void
-  hideHint?: boolean
   wrapperClassName?: string
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export const ChatTextarea = forwardRef<HTMLTextAreaElement, ChatTextareaProps>(
-  ({ className, wrapperClassName, onSend, hideHint = false, value, onChange, onKeyDown, disabled, ...props }, forwardedRef) => {
+  ({ className, wrapperClassName, onSend, value, onChange, onKeyDown, disabled, ...props }, forwardedRef) => {
     const innerRef = useRef<HTMLTextAreaElement>(null)
     const textareaRef = (forwardedRef as React.RefObject<HTMLTextAreaElement>) || innerRef
 
     const [isFocused, setIsFocused] = useState(false)
     const charCount = typeof value === 'string' ? value.length : 0
     const showCounter = charCount >= WARN_CHARS
-    const showHint    = !hideHint && isFocused && charCount === 0
 
     // ── Auto-resize ──────────────────────────────────────────────────────────
     const adjustHeight = useCallback(() => {
@@ -107,20 +105,13 @@ export const ChatTextarea = forwardRef<HTMLTextAreaElement, ChatTextareaProps>(
             'disabled:cursor-not-allowed disabled:opacity-50',
             '[&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent',
             '[&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300',
-            // Padding-bottom nhường chỗ cho hint/counter nằm absolute bên dưới
-            (showHint || showCounter) ? 'pb-5' : 'pb-2.5',
+            // Padding-bottom nhường chỗ cho counter nằm absolute bên dưới
+            showCounter ? 'pb-5' : 'pb-2.5',
             className,
           )}
           style={{ minHeight: MIN_HEIGHT, maxHeight: MAX_HEIGHT, overflowY: 'hidden' }}
           {...props}
         />
-
-        {/* Hint "Shift+Enter" — absolute bottom-left, KHÔNG ảnh hưởng layout */}
-        {showHint && (
-          <span className='absolute bottom-1.5 left-4 text-[10px] text-gray-400 select-none pointer-events-none leading-none animate-in fade-in duration-200'>
-            Shift+Enter để xuống dòng
-          </span>
-        )}
 
         {/* Counter — absolute bottom-right */}
         {showCounter && (
