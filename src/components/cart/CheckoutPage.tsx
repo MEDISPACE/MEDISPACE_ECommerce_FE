@@ -31,7 +31,7 @@ import { useSearchParams } from 'react-router-dom'
 import type { User, Address } from '../../types/user'
 import type { CartItem } from '../../types/cart'
 import { productService } from '../../services/productService'
-import { ghnService } from '../../services/ghnService'
+import { shippingService } from '../../services/shippingService'
 import { CouponInput } from '../discount/CouponInput'
 import { PointsRedeemInput } from '../discount/PointsRedeemInput'
 import { Sparkles } from 'lucide-react'
@@ -243,31 +243,44 @@ export function CheckoutPage() {
       .catch(() => setVerifiedPrescriptions([]))
   }, [requiresPrescription])
 
+  // Calculate selected items subtotal before shipping quote requests.
+  const subtotal = isBuyNow ? (buyNowItem ? buyNowItem.totalPrice : 0) : getSelectedItemsTotal()
   const addressObj = addresses.find((a) => a.id === selectedAddress)
+  const packageWeight = Math.max(
+    500,
+    cartItems.reduce((sum, item) => sum + item.quantity * 250, 0),
+  )
 
   // Calculate Shipping Fee & Options
   useEffect(() => {
     const fetchOptions = async () => {
-      // Reset to default if no address or missing IDs
-      if (!addressObj?.districtId || !addressObj?.wardCode) {
+      // Reset to default if no usable address text. GHN needs districtId/wardCode,
+      // but GHTK can quote from the textual ward/district/province fields.
+      if (!addressObj?.address || !addressObj?.district || !addressObj?.province) {
         setShippingMethods(GLOBAL_DEFAULT_SHIPPING_METHODS)
         return
       }
 
       try {
-        const options = await ghnService.getShippingOptions({
-          to_district_id: addressObj.districtId,
-          to_ward_code: addressObj.wardCode,
-          weight: 500, // Estimated 500g
+        const options = await shippingService.getRates({
+          toAddress: addressObj.address,
+          toWard: addressObj.ward,
+          toDistrict: addressObj.district || '',
+          toProvince: addressObj.province,
+          toDistrictId: addressObj.districtId,
+          toWardCode: addressObj.wardCode,
+          weight: packageWeight,
+          orderValue: subtotal,
         })
 
         if (options && options.length > 0) {
           const mappedOptions: ShippingMethod[] = options.map((opt) => ({
-            id: opt.id.toString(),
+            id: opt.id,
             name: opt.name,
-            description: `Giao hàng bởi GHN`,
+            description: opt.description,
             price: opt.price,
             estimatedDays: opt.estimatedDays,
+            supportsCod: opt.supportsCod,
           }))
           setShippingMethods(mappedOptions)
           // Auto-select cheapest/first optio
@@ -284,10 +297,9 @@ export function CheckoutPage() {
     }
 
     fetchOptions()
-  }, [addressObj])
+  }, [addressObj, packageWeight, subtotal])
 
   // Calculate totals
-  const subtotal = isBuyNow ? (buyNowItem ? buyNowItem.totalPrice : 0) : getSelectedItemsTotal()
   const selectedShipping = shippingMethods.find((method) => method.id === shippingMethod)
   let bgShippingFee = selectedShipping?.price || 0
 

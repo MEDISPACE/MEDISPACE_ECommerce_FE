@@ -52,7 +52,7 @@ export function OrderDetailsDrawer({ isOpen, onClose, order }: OrderDetailsDrawe
     )
   }
 
-  const getPaymentStatusBadge = (status: PaymentStatus) => {
+  const getPaymentStatusBadge = (status: PaymentStatus, paymentMethod?: string) => {
     const statusConfig = {
       pending: { label: 'Chờ thanh toán', className: 'bg-yellow-100 text-yellow-700' },
       paid: { label: 'Đã thanh toán', className: 'bg-green-100 text-green-700' },
@@ -62,9 +62,11 @@ export function OrderDetailsDrawer({ isOpen, onClose, order }: OrderDetailsDrawe
     }
 
     const config = statusConfig[status] || statusConfig.pending
+    const label =
+      status === 'pending' && paymentMethod?.toLowerCase() === 'cod' ? 'Chờ thu tiền khi nhận hàng' : config.label
     return (
       <Badge variant='secondary' className={config.className}>
-        {config.label}
+        {label}
       </Badge>
     )
   }
@@ -105,7 +107,7 @@ export function OrderDetailsDrawer({ isOpen, onClose, order }: OrderDetailsDrawe
               </div>
               <div className='flex justify-between items-center p-3 bg-white rounded-lg'>
                 <span className='text-sm text-gray-600'>Thanh toán:</span>
-                {getPaymentStatusBadge(order.paymentStatus as PaymentStatus)}
+                {getPaymentStatusBadge(order.paymentStatus as PaymentStatus, order.paymentMethod)}
               </div>
             </CardContent>
           </Card>
