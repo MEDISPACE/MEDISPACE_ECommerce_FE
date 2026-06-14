@@ -124,7 +124,8 @@ export function ChatInput({
         </div>
       )}
 
-      <div className='flex items-end gap-1.5'>
+      {/* ─── Input row: items-center như Facebook Messenger ─── */}
+      <div className='flex items-center gap-1.5'>
         {/* Image upload button */}
         <label className='cursor-pointer'>
           <input
@@ -134,11 +135,11 @@ export function ChatInput({
             className='hidden'
             disabled={disabled || isUploading}
           />
-          <div className='p-2 rounded-lg hover:bg-gray-100 transition-colors'>
+          <div className='w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors cursor-pointer'>
             {isUploading ? (
               <Loader2 className='w-5 h-5 text-gray-400 animate-spin' />
             ) : (
-              <ImageIcon className='w-5 h-5 text-gray-400 hover:text-blue-600' />
+              <ImageIcon className='w-5 h-5 text-gray-400 group-hover:text-blue-500' />
             )}
           </div>
         </label>
@@ -150,7 +151,7 @@ export function ChatInput({
             onClick={() => setShowProductPicker((v) => !v)}
             disabled={disabled}
             title='Gửi sản phẩm'
-            className={`p-2 rounded-lg transition-colors ${
+            className={`w-9 h-9 flex items-center justify-center flex-shrink-0 rounded-full transition-colors ${
               showProductPicker ? 'bg-blue-100 text-blue-600' : 'hover:bg-gray-100 text-gray-400 hover:text-blue-600'
             }`}
           >
@@ -169,11 +170,11 @@ export function ChatInput({
           className='flex-1'
         />
 
-        {/* Send button */}
+        {/* Send button — tròn, sáng khi có nội dung */}
         <Button
           onClick={handleSend}
           disabled={disabled || (!message.trim() && !imageUrl)}
-          className={`self-end mb-[18px] h-9 w-9 p-0 rounded-full transition-all duration-200 ${
+          className={`flex-shrink-0 w-9 h-9 p-0 rounded-full transition-all duration-200 ${
             message.trim() || imageUrl
               ? 'bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-blue-300/50 hover:scale-105'
               : 'bg-gray-200 text-gray-400 cursor-not-allowed'

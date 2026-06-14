@@ -564,11 +564,11 @@ export function CommunityRoomPage() {
               )}
 
               {/* Input row */}
-              <div className='flex items-end gap-1.5 p-3'>
+              <div className='flex items-center gap-1.5 p-3'>
                 {/* Image upload */}
-                <label className='cursor-pointer flex-shrink-0 self-end mb-[18px]'>
+                <label className='cursor-pointer flex-shrink-0'>
                   <input type='file' accept='image/*' onChange={handleImageUpload} className='hidden' disabled={!canSend || isUploading} />
-                  <div className='p-2 rounded-xl hover:bg-gray-100 transition-colors'>
+                  <div className='w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors cursor-pointer'>
                     {isUploading ? (
                       <Loader2 className='w-5 h-5 text-gray-400 animate-spin' />
                     ) : (
@@ -596,7 +596,7 @@ export function CommunityRoomPage() {
                 />
 
                 <Button
-                  className={`self-end mb-[18px] h-9 w-9 p-0 flex-shrink-0 rounded-full transition-all duration-200 ${
+                  className={`flex-shrink-0 w-9 h-9 p-0 rounded-full transition-all duration-200 ${
                     (messageText.trim() || imageUrl) && canSend
                       ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-md hover:shadow-blue-300/50 hover:scale-105'
                       : 'bg-gray-200 text-gray-400 cursor-not-allowed'
