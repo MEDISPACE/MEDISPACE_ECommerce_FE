@@ -143,7 +143,7 @@ export function EnhancedSearchBar({
   }
 
   return (
-    <div ref={searchRef} className={`relative flex-1 max-w-2xl mx-2 md:mx-8 ${className}`}>
+    <div ref={searchRef} className={`relative flex-1 max-w-2xl mx-2 md:mx-6 ${className}`}>
       <form
         onSubmit={(e) => {
           e.preventDefault()
@@ -166,7 +166,7 @@ export function EnhancedSearchBar({
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           aria-label='Tìm kiếm thuốc và sản phẩm'
-          className='pl-12 pr-14 py-3 w-full border-2 border-gray-200 focus:border-blue-500 rounded-xl bg-gray-50 focus:bg-white transition-all'
+          className='h-12 rounded-lg border-2 border-[#BFDBFE] bg-white pl-12 pr-14 text-[#1C2B4A] transition-all placeholder:text-[#8094AE] focus:border-[#0A2463] focus:bg-white'
           autoComplete='off'
         />
 

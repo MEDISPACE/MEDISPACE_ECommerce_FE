@@ -1,25 +1,31 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { EnhancedPageTransition } from '../shared/EnhancedPageTransition'
 import { ScrollReveal } from '../shared/ScrollReveal'
-import { StaggerContainer, StaggerItem } from '../shared/StaggerContainer'
-import { InteractiveCard } from '../shared/InteractiveCard'
 import { Button } from '../ui/button'
-import { Card, CardContent } from '../ui/card'
 import {
-  Search,
-  Truck,
-  Shield,
-  Users,
-  Pill,
-  Stethoscope,
-  Clock,
-  MessageCircle,
+  Activity,
   ArrowRight,
   Award,
-  HeartHandshake,
-  User,
+  BookOpen,
+  Bone,
+  CalendarDays,
+  CheckCircle2,
+  Clock,
   Droplets,
+  HeartPulse,
+  Leaf,
+  MessageCircle,
+  Pill,
   RefreshCw,
+  Search,
+  Shield,
+  Star,
+  Stethoscope,
+  Thermometer,
+  Truck,
+  Upload,
+  User,
+  Users,
 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router'
 import { useCategories } from '../../hooks/product'
@@ -27,352 +33,284 @@ import { RecommendationCarousel } from '../products/RecommendationCarousel'
 import { useTrending, useForYou } from '../../hooks/product/useRecommendations'
 import { useAuth } from '../../contexts/AuthContext'
 
-// Now using proper Product type from service
+const heroImage =
+  'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1200&q=82'
 
-// Category icon mapping cho hệ thống MediSpace
 const categoryIcons = {
-  thuoc: Pill, // 💊 Thuốc - Icon viên thuốc hoàn hảo
-  'thuc-pham-chuc-nang': Shield, // 🛡️ Thực phẩm chức năng - Bảo vệ sức khỏe
-  'cham-soc-ca-nhan': User, // 👤 Chăm sóc cá nhân - Icon người dùng
-  'thiet-bi-y-te': Stethoscope, // 🩺 Thiết bị y tế - Ống nghe y tế
-  'duoc-my-pham': Droplets, // 💧 Dược mỹ phẩm - Serum/kem dưỡng
+  thuoc: Pill,
+  'thuc-pham-chuc-nang': Leaf,
+  'cham-soc-ca-nhan': User,
+  'thiet-bi-y-te': Stethoscope,
+  'duoc-my-pham': Droplets,
 }
+
+const popularSearches = ['Paracetamol', 'Vitamin C', 'Omega 3', 'Cảm cúm']
+
+const healthNeeds = [
+  { label: 'Cảm cúm', slug: 'cam-cum', icon: Thermometer, count: '420+' },
+  { label: 'Đau đầu', slug: 'dau-dau', icon: Activity, count: '180+' },
+  { label: 'Tiểu đường', slug: 'tieu-duong', icon: HeartPulse, count: '260+' },
+  { label: 'Huyết áp', slug: 'huyet-ap', icon: HeartPulse, count: '310+' },
+  { label: 'Tim mạch', slug: 'tim-mach', icon: HeartPulse, count: '240+' },
+  { label: 'Xương khớp', slug: 'xuong-khop', icon: Bone, count: '390+' },
+  { label: 'Vitamin', slug: 'vitamin', icon: Leaf, count: '520+' },
+  { label: 'Phụ nữ', slug: 'phu-nu', icon: User, count: '210+' },
+]
+
+const pharmacists = [
+  {
+    name: 'DS. Minh Anh',
+    role: 'Dược sĩ tư vấn',
+    experience: '8 năm kinh nghiệm',
+    image: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=320&q=80',
+  },
+  {
+    name: 'DS. Lan Hương',
+    role: 'Kiểm tra đơn thuốc',
+    experience: '6 năm kinh nghiệm',
+    image: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=crop&w=320&q=80',
+  },
+  {
+    name: 'DS. Tuấn Minh',
+    role: 'Dược lâm sàng',
+    experience: '10 năm kinh nghiệm',
+    image: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=320&q=80',
+  },
+]
+
+const healthArticles = [
+  {
+    title: 'Cách chọn thuốc cảm cúm an toàn khi tự chăm sóc tại nhà',
+    category: 'Sức khỏe hô hấp',
+    excerpt: 'Những dấu hiệu cần lưu ý, khi nào nên hỏi dược sĩ và khi nào cần đi khám.',
+    date: '14/06/2026',
+    readTime: '5 phút đọc',
+    image: 'https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80',
+  },
+  {
+    title: 'Vitamin D3, Canxi và những lưu ý khi dùng cho người lớn tuổi',
+    category: 'Xương khớp',
+    excerpt: 'Hướng dẫn đọc liều dùng, thời điểm uống và các tương tác thường gặp.',
+    date: '12/06/2026',
+    readTime: '4 phút đọc',
+    image: 'https://images.unsplash.com/photo-1612531386530-97286d97c2d2?auto=format&fit=crop&w=800&q=80',
+  },
+  {
+    title: 'Đơn thuốc online: quy trình dược sĩ kiểm tra trước khi giao',
+    category: 'An toàn thuốc',
+    excerpt: 'MediSpace xác minh đơn, đối chiếu tương tác và tư vấn trước khi hoàn tất.',
+    date: '10/06/2026',
+    readTime: '6 phút đọc',
+    image: 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&w=800&q=80',
+  },
+]
 
 export function HomePage() {
   const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
-
-  // ML Recommendation hooks
+  const [heroSearch, setHeroSearch] = useState('')
   const { products: forYouProducts, loading: forYouLoading, algorithm: forYouAlgorithm } = useForYou(8, isAuthenticated)
   const { products: trendingProducts, loading: trendingLoading, algorithm: trendingAlgorithm } = useTrending(8)
-
-  // Categories state
   const { categories: realCategories, loading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useCategories()
 
+  const submitHeroSearch = (query = heroSearch) => {
+    const trimmed = query.trim()
+    if (!trimmed) return
+    navigate(`/search?q=${encodeURIComponent(trimmed)}`)
+  }
+
+  const openConsultation = () => {
+    const chatBtn = document.querySelector('button[aria-label="Chat với dược sĩ"]') as HTMLButtonElement | null
+    if (chatBtn) chatBtn.click()
+    else navigate('/contact')
+  }
+
   return (
-    <EnhancedPageTransition variant='scale' duration={0.8}>
-      {/* Hero Section - Modern blue gradient background */}
-      <section className='relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-cyan-50'>
-        <div
-          className='absolute inset-0 opacity-40'
-          style={{
-            backgroundImage: 'radial-gradient(circle at 25px 25px, rgb(0 102 204 / 0.05) 2px, transparent 2px)',
-            backgroundSize: '50px 50px',
-          }}
-        ></div>
-
-        <div className='relative max-w-7xl mx-auto px-4 py-20'>
-          <div className='grid grid-cols-1 lg:grid-cols-2 gap-12 items-center'>
-            <StaggerContainer direction='up' staggerDelay={0.15}>
-              <StaggerItem>
-                <div className='inline-flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-full px-5 py-2.5 mb-6'>
-                  <Shield className='w-4 h-4 text-blue-600' />
-                  <span className='text-sm font-medium text-blue-600'>Nhà thuốc trực tuyến #1 Việt Nam</span>
-                </div>
-              </StaggerItem>
-
-              <StaggerItem>
-                <h1 className='text-6xl lg:text-7xl font-bold mb-4 leading-tight tracking-wide'>
-                  <span className='bg-gradient-to-r from-blue-600 via-cyan-600 to-blue-800 bg-clip-text text-transparent'>
-                    MEDISPACE
-                  </span>
-                </h1>
-              </StaggerItem>
-
-              <StaggerItem>
-                <p className='text-xl lg:text-2xl text-gray-600 mb-6 font-medium tracking-wide'>
-                  Sức khỏe trong tầm tay
-                </p>
-              </StaggerItem>
-
-              <StaggerItem>
-                <p className='text-xl text-gray-600 mb-8 leading-relaxed'>
-                  Nền tảng dược phẩm hiện đại, giao hàng siêu tốc và tư vấn dược sĩ 24/7 cho nhu cầu chăm sóc sức khỏe
-                  hằng ngày.
-                </p>
-              </StaggerItem>
-
-              <StaggerItem>
-                <div className='flex flex-col sm:flex-row gap-4 mb-8'>
-                  <Link to='/products'>
-                    <Button
-                      size='lg'
-                      className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 shadow-lg shadow-blue-500/25 px-8 h-14 text-white w-full sm:w-auto'
-                    >
-                      <Search className='w-5 h-5 mr-2' />
-                      Tìm thuốc ngay
-                      <ArrowRight className='w-5 h-5 ml-2' />
-                    </Button>
-                  </Link>
-                  <Link to='/contact'>
-                    <Button
-                      variant='outline'
-                      size='lg'
-                      className='border-2 border-blue-200 text-blue-700 hover:!bg-[#eff6ff] hover:border-blue-400 hover:text-blue-500 transition-all duration-300 backdrop-blur-sm h-14 w-full sm:w-auto'
-                    >
-                      <MessageCircle className='w-5 h-5 mr-2' />
-                      Tư vấn miễn phí
-                    </Button>
-                  </Link>
-                </div>
-              </StaggerItem>
-
-            </StaggerContainer>
-
-            <ScrollReveal direction='right' delay={0.3}>
-              <div className='relative'>
-                {/* Decorative background elements */}
-                <div className='absolute top-1/4 -right-12 w-64 h-64 bg-gradient-to-br from-blue-400/20 to-cyan-400/20 rounded-full blur-3xl animate-float-slow'></div>
-                <div className='absolute bottom-1/4 -left-12 w-48 h-48 bg-gradient-to-br from-cyan-400/20 to-blue-400/20 rounded-full blur-3xl animate-float-pattern'></div>
-
-                {/* Quick Actions Grid */}
-                <div className='max-w-4xl mx-auto'>
-                  {/* Core Action Cards - 3 Cards */}
-                  <div className='grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto'>
-                    {/* Tư vấn dược sĩ */}
-                    <Link to='/contact'>
-                      <div
-                        className='rounded-xl p-6 text-white hover:shadow-xl hover:scale-[1.02] transition-all group cursor-pointer'
-                        style={{
-                          background: 'var(--gradient-consultation)',
-                        }}
-                      >
-                        <div className='w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform'>
-                          <MessageCircle className='w-6 h-6' />
-                        </div>
-                        <h3 className='font-semibold mb-2'>Tư vấn dược sĩ</h3>
-                        <p className='text-sm text-white/80 mb-4'>Hỏi đáp miễn phí 24/7</p>
-                        <div className='flex items-center justify-between'>
-                          <span className='font-medium'>Chat ngay</span>
-                          <ArrowRight className='w-5 h-5 group-hover:translate-x-1 transition-transform' />
-                        </div>
-                      </div>
-                    </Link>
-
-                    {/* Mua thuốc OTC */}
-                    <Link to='/products'>
-                      <div
-                        className='rounded-xl p-6 text-white hover:shadow-xl hover:scale-[1.02] transition-all group cursor-pointer'
-                        style={{
-                          background: 'var(--gradient-otc)',
-                        }}
-                      >
-                        <div className='w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform'>
-                          <Pill className='w-6 h-6' />
-                        </div>
-                        <h3 className='font-semibold mb-2'>Mua thuốc</h3>
-                        <p className='text-sm text-white/80 mb-4'>5,000+ sản phẩm chính hãng</p>
-                        <div className='flex items-center justify-between'>
-                          <span className='font-medium'>Mua ngay</span>
-                          <ArrowRight className='w-5 h-5 group-hover:translate-x-1 transition-transform' />
-                        </div>
-                      </div>
-                    </Link>
-
-                    {/* Thuốc kê đơn Rx */}
-                    <Link to='/upload-prescription'>
-                      <div
-                        className='rounded-xl p-6 text-white hover:shadow-xl hover:scale-[1.02] transition-all group cursor-pointer'
-                        style={{
-                          background: 'var(--gradient-rx)',
-                        }}
-                      >
-                        <div className='w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform'>
-                          <Stethoscope className='w-6 h-6' />
-                        </div>
-                        <h3 className='font-semibold mb-2'>Thuốc kê đơn</h3>
-                        <p className='text-sm text-white/80 mb-4'>Đặt thuốc theo đơn bác sĩ</p>
-                        <div className='flex items-center justify-between'>
-                          <span className='font-medium'>Đặt ngay</span>
-                          <ArrowRight className='w-5 h-5 group-hover:translate-x-1 transition-transform' />
-                        </div>
-                      </div>
-                    </Link>
-                  </div>
-                </div>
+    <EnhancedPageTransition variant='default' duration={0.35}>
+      <section className='bg-[#F8FAFB]'>
+        <div className='mx-auto grid max-w-7xl grid-cols-1 overflow-hidden lg:min-h-[520px] lg:grid-cols-[55%_45%]'>
+          <div className='flex items-center px-4 py-12 md:px-8 lg:px-10 lg:py-16'>
+            <div className='max-w-2xl'>
+              <div className='mb-5 inline-flex items-center gap-2 rounded-full border border-[#BFDBFE] bg-white px-4 py-2 text-sm font-semibold text-[#0A2463]'>
+                <Shield className='h-4 w-4 text-[#059669]' />
+                Nhà thuốc trực tuyến có phép hoạt động
               </div>
-            </ScrollReveal>
-          </div>
-        </div>
-      </section>
 
-      <section className='border-y border-blue-100 bg-white' aria-label='Thông tin pháp lý nhà thuốc'>
-        <div className='max-w-7xl mx-auto grid gap-4 px-4 py-5 md:grid-cols-3'>
-          <div className='flex items-center gap-3'>
-            <div className='flex h-11 w-11 items-center justify-center rounded-lg bg-blue-50 text-blue-700'>
-              <Shield className='h-5 w-5' />
-            </div>
-            <div>
-              <div className='font-semibold text-gray-900'>Nhà thuốc đạt chuẩn GPP</div>
-              <div className='text-sm text-gray-600'>Giấy phép: GPP-MS-2026-001</div>
+              <h1 className='font-display text-4xl font-extrabold leading-[1.1] text-[#0A2463] md:text-5xl'>
+                Nhà thuốc trực tuyến đáng tin cậy cho gia đình Việt
+              </h1>
+
+              <p className='mt-5 text-lg leading-8 text-[#4B5E7A]'>
+                Hơn 10,000 sản phẩm chính hãng, dược sĩ tư vấn 24/7 và giao hàng trong 2 giờ tại khu vực hỗ trợ.
+              </p>
+
+              <form
+                className='mt-8 rounded-xl border-2 border-[#BFDBFE] bg-white p-2 shadow-[0_8px_24px_rgba(10,36,99,0.08)] focus-within:border-[#0A2463]'
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  submitHeroSearch()
+                }}
+              >
+                <div className='flex flex-col gap-2 sm:flex-row'>
+                  <div className='flex min-h-12 flex-1 items-center gap-3 px-3'>
+                    <Search className='h-5 w-5 text-[#8094AE]' />
+                    <input
+                      value={heroSearch}
+                      onChange={(event) => setHeroSearch(event.target.value)}
+                      className='h-12 w-full bg-transparent text-base text-[#1C2B4A] outline-none placeholder:text-[#8094AE]'
+                      placeholder='Tìm thuốc, bệnh lý, thương hiệu...'
+                      aria-label='Tìm thuốc, bệnh lý, thương hiệu'
+                    />
+                  </div>
+                  <Button type='submit' className='h-12 rounded-lg bg-[#0A2463] px-6 text-white hover:bg-[#1E40AF]'>
+                    Tìm kiếm
+                    <ArrowRight className='ml-2 h-4 w-4' />
+                  </Button>
+                </div>
+              </form>
+
+              <div className='mt-4 flex flex-wrap items-center gap-2 text-sm text-[#4B5E7A]'>
+                <span>Tìm kiếm phổ biến:</span>
+                {popularSearches.map((term) => (
+                  <button
+                    key={term}
+                    type='button'
+                    onClick={() => submitHeroSearch(term)}
+                    className='rounded-full bg-white px-3 py-1 font-medium text-[#1E40AF] ring-1 ring-[#E8EDF5] transition hover:ring-[#BFDBFE]'
+                  >
+                    {term}
+                  </button>
+                ))}
+              </div>
+
+              <div className='mt-7 flex flex-col gap-3 sm:flex-row'>
+                <Link to='/upload-prescription'>
+                  <Button variant='outline' className='h-12 w-full rounded-lg border-[#BFDBFE] bg-white text-[#0A2463] hover:bg-[#F0F6FF] sm:w-auto'>
+                    <Upload className='mr-2 h-4 w-4' />
+                    Đặt theo đơn thuốc
+                  </Button>
+                </Link>
+                <Button onClick={openConsultation} variant='outline' className='h-12 rounded-lg border-[#BFDBFE] bg-white text-[#0A2463] hover:bg-[#F0F6FF]'>
+                  <MessageCircle className='mr-2 h-4 w-4' />
+                  Tư vấn dược sĩ ngay
+                </Button>
+              </div>
             </div>
           </div>
-          <div className='flex items-center gap-3'>
-            <div className='flex h-11 w-11 items-center justify-center rounded-lg bg-cyan-50 text-cyan-700'>
-              <Award className='h-5 w-5' />
-            </div>
-            <div>
-              <div className='font-semibold text-gray-900'>Dược sĩ phụ trách chuyên môn</div>
-              <div className='text-sm text-gray-600'>Kiểm tra đơn và tư vấn trước khi giao</div>
-            </div>
-          </div>
-          <div className='flex items-center gap-3'>
-            <div className='flex h-11 w-11 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700'>
-              <Clock className='h-5 w-5' />
-            </div>
-            <div>
-              <div className='font-semibold text-gray-900'>Hotline tư vấn 24/7</div>
-              <a href='tel:18006928' className='text-sm font-semibold text-blue-700'>1800 6928</a>
+
+          <div className='relative hidden min-h-[520px] lg:block'>
+            <img src={heroImage} alt='Dược sĩ MediSpace tư vấn tại quầy thuốc' className='h-full w-full object-cover' />
+            <div className='absolute bottom-8 left-8 max-w-xs rounded-2xl bg-white/95 p-5 shadow-[0_24px_48px_rgba(10,36,99,0.18)] backdrop-blur'>
+              <div className='flex items-center gap-2 text-[#0A2463]'>
+                <Star className='h-5 w-5 fill-[#F59E0B] text-[#F59E0B]' />
+                <span className='font-display text-xl font-bold'>4.8/5</span>
+                <span className='text-sm text-[#4B5E7A]'>(125,000 đánh giá)</span>
+              </div>
+              <p className='mt-2 text-sm leading-6 text-[#4B5E7A]'>Được tin dùng bởi 500,000+ khách hàng cần tư vấn và mua thuốc an toàn.</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Trust Indicators - Glassmorphism cards */}
-      <ScrollReveal direction='up' delay={0.2}>
-        <section className='py-16 bg-gradient-to-r from-slate-50 to-blue-50'>
-          <div className='max-w-7xl mx-auto px-4'>
-            <StaggerContainer direction='up' staggerDelay={0.2}>
-              <div className='grid grid-cols-1 md:grid-cols-3 gap-8'>
-                <StaggerItem>
-                  <InteractiveCard hoverScale={1.02} glowEffect floatEffect>
-                    <div className='flex items-center gap-6 p-8 bg-white/80 backdrop-blur-lg rounded-2xl border border-blue-100 shadow-lg'>
-                      <div className='w-16 h-16 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center'>
-                        <Truck className='w-8 h-8 text-white' />
-                      </div>
-                      <div>
-                        <h3 className='font-bold text-gray-900 text-lg'>Giao hàng siêu tốc</h3>
-                        <p className='text-gray-600'>Trong 2H, miễn phí từ 300K</p>
-                      </div>
-                    </div>
-                  </InteractiveCard>
-                </StaggerItem>
-
-                <StaggerItem>
-                  <InteractiveCard hoverScale={1.02} glowEffect floatEffect>
-                    <div className='flex items-center gap-6 p-8 bg-white/80 backdrop-blur-lg rounded-2xl border border-blue-100 shadow-lg'>
-                      <div className='w-16 h-16 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center'>
-                        <Shield className='w-8 h-8 text-white' />
-                      </div>
-                      <div>
-                        <h3 className='font-bold text-gray-900 text-lg'>Chính hãng 100%</h3>
-                        <p className='text-gray-600'>Đảm bảo nguồn gốc rõ ràng</p>
-                      </div>
-                    </div>
-                  </InteractiveCard>
-                </StaggerItem>
-
-                <StaggerItem>
-                  <InteractiveCard hoverScale={1.02} glowEffect floatEffect>
-                    <div className='flex items-center gap-6 p-8 bg-white/80 backdrop-blur-lg rounded-2xl border border-blue-100 shadow-lg'>
-                      <div className='w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center'>
-                        <HeartHandshake className='w-8 h-8 text-white' />
-                      </div>
-                      <div>
-                        <h3 className='font-bold text-gray-900 text-lg'>Tư vấn 24/7</h3>
-                        <p className='text-gray-600'>Dược sĩ chuyên nghiệp</p>
-                      </div>
-                    </div>
-                  </InteractiveCard>
-                </StaggerItem>
+      <section className='border-y border-[#BFDBFE] bg-[#E8EDF5]' aria-label='Thông tin tin cậy nhà thuốc'>
+        <div className='mx-auto grid max-w-7xl grid-cols-2 gap-y-4 px-4 py-4 md:grid-cols-5'>
+          {[
+            { icon: Shield, title: 'GPP Certified', text: 'GCN: GPP-MS-2026-001', mono: true },
+            { icon: Users, title: '50+ Dược sĩ', text: 'Kiểm tra 24/7' },
+            { icon: CheckCircle2, title: '100% Chính hãng', text: 'Nguồn gốc rõ ràng' },
+            { icon: Truck, title: 'Giao 2H', text: 'Nội thành HCM' },
+            { icon: Clock, title: 'Đổi trả 30 ngày', text: 'Theo chính sách' },
+          ].map((item, index) => {
+            const Icon = item.icon
+            return (
+              <div key={item.title} className={`flex items-start gap-3 px-2 md:px-4 ${index > 0 ? 'md:border-l md:border-[#BFDBFE]' : ''}`}>
+                <Icon className='mt-0.5 h-4 w-4 flex-shrink-0 text-[#0A2463]' />
+                <div>
+                  <div className='text-sm font-bold text-[#1C2B4A]'>{item.title}</div>
+                  <div className={`text-xs text-[#4B5E7A] ${item.mono ? 'font-mono' : ''}`}>{item.text}</div>
+                </div>
               </div>
-            </StaggerContainer>
+            )
+          })}
+        </div>
+      </section>
+
+      <ScrollReveal direction='up' delay={0.1}>
+        <section className='bg-white py-8' aria-labelledby='categories-heading'>
+          <div className='mx-auto max-w-7xl px-4'>
+            <div className='mb-5 flex items-end justify-between gap-4'>
+              <div>
+                <h2 id='categories-heading' className='font-display text-2xl font-bold text-[#0A2463] md:text-3xl'>Danh mục sản phẩm</h2>
+                <p className='mt-1 text-sm text-[#4B5E7A]'>Đi nhanh đến nhóm sản phẩm bạn cần.</p>
+              </div>
+              <Link to='/categories' className='hidden text-sm font-semibold text-[#1E40AF] hover:text-[#0A2463] sm:inline-flex'>Xem tất cả</Link>
+            </div>
+
+            {categoriesLoading ? (
+              <div className='flex gap-4 overflow-hidden'>
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <div key={index} className='h-28 min-w-28 animate-pulse rounded-xl bg-[#F0F6FF]' />
+                ))}
+              </div>
+            ) : categoriesError ? (
+              <div className='rounded-xl border border-[#BFDBFE] bg-[#F0F6FF] p-6 text-center'>
+                <p className='font-semibold text-[#0A2463]'>Không thể tải danh mục, vui lòng thử lại</p>
+                <Button type='button' variant='outline' className='mt-4 border-[#BFDBFE] text-[#0A2463]' onClick={() => refetchCategories()}>
+                  <RefreshCw className='mr-2 h-4 w-4' />
+                  Tải lại danh mục
+                </Button>
+              </div>
+            ) : (
+              <div className='flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
+                {realCategories.map((category) => {
+                  const Icon = categoryIcons[category.slug as keyof typeof categoryIcons] || Pill
+                  return (
+                    <Link key={category._id} to={`/categories/${category.slug}`} className='group min-w-28 text-center' aria-label={`Xem danh mục ${category.name}`}>
+                      <div className='mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-[#E8EDF5] bg-[#F0F6FF] text-[#0A2463] transition group-hover:border-[#0A2463] group-hover:bg-white'>
+                        <Icon className='h-7 w-7' />
+                      </div>
+                      <div className='mt-2 line-clamp-2 text-sm font-semibold text-[#1C2B4A] group-hover:text-[#0A2463]'>{category.name}</div>
+                      <div className='text-xs text-[#8094AE]'>{category.productCount?.toLocaleString() || '---'} sản phẩm</div>
+                    </Link>
+                  )
+                })}
+              </div>
+            )}
           </div>
         </section>
       </ScrollReveal>
 
-      {/* Categories - Modern grid with hover effects */}
-      <ScrollReveal direction='up' delay={0.3}>
-        <section className='bg-white px-[0px] py-[60px]' aria-labelledby='categories-heading'>
-          <div className='max-w-7xl mx-auto px-4'>
-            <StaggerContainer direction='up' staggerDelay={0.1}>
-              <StaggerItem>
-                <div className='text-center mb-16'>
-                  <h2 id='categories-heading' className='text-4xl font-bold bg-gradient-to-r from-blue-800 to-cyan-600 bg-clip-text text-transparent inline-block mb-4 pb-2'>
-                    Danh mục sản phẩm
-                  </h2>
-                  <p className='text-xl text-gray-600 max-w-2xl mx-auto'>
-                    Khám phá hàng nghìn sản phẩm chăm sóc sức khỏe được phân loại chi tiết
-                  </p>
-                </div>
-              </StaggerItem>
+      <section className='bg-[#F0F6FF] py-12' aria-labelledby='health-needs-heading'>
+        <div className='mx-auto max-w-7xl px-4'>
+          <div className='mb-7 flex flex-col justify-between gap-3 md:flex-row md:items-end'>
+            <div>
+              <h2 id='health-needs-heading' className='font-display text-3xl font-bold text-[#0A2463]'>Mua theo nhu cầu sức khỏe</h2>
+              <p className='mt-2 text-[#4B5E7A]'>Tìm sản phẩm phù hợp với tình trạng của bạn mà không cần nhớ tên thuốc.</p>
+            </div>
+            <Link to='/products' className='inline-flex items-center text-sm font-semibold text-[#1E40AF] hover:text-[#0A2463]'>Xem tất cả nhu cầu <ArrowRight className='ml-1 h-4 w-4' /></Link>
+          </div>
 
-              <StaggerItem>
-                <StaggerContainer direction='up' staggerDelay={0.1}>
-                  <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6'>
-                    {categoriesLoading ? (
-                      <div className='col-span-full text-center py-12'>
-                        <div className='inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600'></div>
-                        <p className='mt-4 text-gray-600'>Đang tải danh mục...</p>
-                      </div>
-                    ) : categoriesError ? (
-                      <div className='col-span-full rounded-xl border border-blue-100 bg-blue-50 p-8 text-center'>
-                        <p className='font-semibold text-blue-900'>Không thể tải danh mục, vui lòng thử lại</p>
-                        <Button
-                          type='button'
-                          variant='outline'
-                          className='mt-4 border-blue-200 text-blue-700 hover:bg-white'
-                          onClick={() => refetchCategories()}
-                        >
-                          <RefreshCw className='mr-2 h-4 w-4' />
-                          Tải lại danh mục
-                        </Button>
-                      </div>
-                    ) : (
-                      realCategories.map((category) => {
-                        const IconComponent = categoryIcons[category.slug as keyof typeof categoryIcons] || Pill
-
-                        return (
-                          <StaggerItem key={category._id}>
-                            <Link to={`/categories/${category.slug}`} className='group' aria-label={`Xem danh mục ${category.name}`}>
-                              <InteractiveCard hoverScale={1.05} glowEffect floatEffect>
-                                <Card className='border-0 shadow-lg bg-gradient-to-br from-white to-gray-50'>
-                                  <CardContent className='p-6 text-center'>
-                                    <div className='w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:shadow-xl transition-all duration-300 text-white bg-gradient-to-r from-blue-600 to-cyan-500 group-hover:from-blue-700 group-hover:to-cyan-600'>
-                                      <IconComponent className='w-10 h-10' />
-                                    </div>
-                                    <h3 className='font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors'>
-                                      {category.name}
-                                    </h3>
-                                    <p className='text-sm text-gray-500'>
-                                      {category.productCount?.toLocaleString() || 0} sản phẩm
-                                    </p>
-                                  </CardContent>
-                                </Card>
-                              </InteractiveCard>
-                            </Link>
-                          </StaggerItem>
-                        )
-                      })
-                    )}
+          <div className='grid grid-cols-2 gap-4 md:grid-cols-4'>
+            {healthNeeds.map((need) => {
+              const Icon = need.icon
+              return (
+                <Link key={need.slug} to={`/products?condition=${need.slug}`} className='group rounded-xl border border-[#E8EDF5] bg-white p-4 transition hover:-translate-y-0.5 hover:border-[#BFDBFE] hover:shadow-[0_8px_24px_rgba(10,36,99,0.12)]'>
+                  <div className='flex h-12 w-12 items-center justify-center rounded-xl bg-[#F0F6FF] text-[#0A2463]'>
+                    <Icon className='h-6 w-6' />
                   </div>
-                </StaggerContainer>
-              </StaggerItem>
-
-              <StaggerItem>
-                <div className='text-center mt-8'>
-                  <Link to='/categories'>
-                    <Button variant='outline' className='border-2 border-blue-200 text-blue-700 hover:bg-blue-50 px-8'>
-                      Xem tất cả danh mục
-                      <ArrowRight className='w-4 h-4 ml-2' />
-                    </Button>
-                  </Link>
-                </div>
-              </StaggerItem>
-            </StaggerContainer>
+                  <div className='mt-4 font-display text-lg font-semibold text-[#1C2B4A] group-hover:text-[#0A2463]'>{need.label}</div>
+                  <div className='text-sm text-[#8094AE]'>{need.count} sản phẩm</div>
+                </Link>
+              )
+            })}
           </div>
-        </section>
-      </ScrollReveal>
+        </div>
+      </section>
 
-      {/* Dành Cho Bạn — SVD/NMF personalized (login) | Trending fallback (guest) */}
       <div className='bg-white'>
         <RecommendationCarousel
           title={isAuthenticated ? 'Dành Cho Bạn' : 'Gợi Ý Hôm Nay'}
-          subtitle={
-            isAuthenticated
-              ? 'Được cá nhân hoá dựa trên lịch sử của bạn'
-              : 'Những sản phẩm được nhiều khách hàng yêu thích'
-          }
+          subtitle={isAuthenticated ? 'Được cá nhân hoá dựa trên lịch sử của bạn' : 'Những sản phẩm được nhiều khách hàng yêu thích'}
           badge='for-you'
           products={forYouProducts}
           loading={forYouLoading}
@@ -383,8 +321,7 @@ export function HomePage() {
         />
       </div>
 
-      {/* Xu Hướng Hôm Nay — NMF Trending */}
-      <div className='bg-gradient-to-br from-gray-50 to-blue-50/50'>
+      <div className='bg-[#F8FAFB]'>
         <RecommendationCarousel
           title='Sản Phẩm Nổi Bật'
           subtitle='Những sản phẩm được quan tâm và đánh giá cao gần đây'
@@ -398,128 +335,82 @@ export function HomePage() {
         />
       </div>
 
-
-      {/* Consultation CTA - Enhanced blue gradient */}
-      <ScrollReveal direction='up' delay={0.6}>
-        <section className='py-20 bg-gradient-to-r from-blue-600 via-cyan-600 to-blue-800 relative overflow-hidden'>
-          <div
-            className='absolute inset-0 opacity-20'
-            style={{
-              backgroundImage:
-                'repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(255,255,255,0.1) 35px, rgba(255,255,255,0.1) 70px)',
-            }}
-          ></div>
-
-          <div className='relative max-w-7xl mx-auto px-4 text-center'>
-            <div className='max-w-4xl mx-auto'>
-              <StaggerContainer direction='up' staggerDelay={0.2}>
-                <StaggerItem>
-                  <div className='inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 mb-8'>
-                    <Award className='w-5 h-5 text-white' />
-                    <span className='text-white font-medium'>Dược sĩ chuyên nghiệp</span>
-                  </div>
-                </StaggerItem>
-
-                <StaggerItem>
-                  <h2 className='text-4xl lg:text-5xl font-bold text-white mb-6'>
-                    Cần tư vấn sức khỏe?
-                    <br />
-                    <span className='text-cyan-300'>Hoàn toàn miễn phí!</span>
-                  </h2>
-                </StaggerItem>
-
-                <StaggerItem>
-                  <p className='text-xl text-blue-100 mb-10 leading-relaxed'>
-                    Đội ngũ dược sĩ với hơn 10 năm kinh nghiệm sẵn sàng tư vấn 24/7. Chat ngay để nhận lời khuyên phù
-                    hợp nhất cho tình trạng sức khỏe của bạn.
-                  </p>
-                </StaggerItem>
-
-                <StaggerItem>
-                  <div className='flex flex-col sm:flex-row gap-6 justify-center'>
-                    <Button
-                      size='lg'
-                      onClick={() => {
-                        const chatBtn = document.querySelector(
-                          'button[aria-label="Chat với dược sĩ"]',
-                        ) as HTMLButtonElement | null
-                        if (chatBtn) {
-                          chatBtn.click()
-                        } else {
-                          navigate('/contact')
-                        }
-                      }}
-                      className='bg-white text-blue-700 hover:bg-blue-50 hover:text-blue-800 shadow-2xl px-10 h-16 text-lg font-semibold'
-                    >
-                      <MessageCircle className='w-6 h-6 mr-3' />
-                      Chat ngay với dược sĩ
-                    </Button>
-                    {/* <Button
-                      size='lg'
-                      variant='outline'
-                      className='border-2 border-white text-white hover:bg-white hover:text-blue-700 backdrop-blur-sm bg-white/10 px-10 h-16 text-lg font-semibold'
-                    >
-                      <Clock className='w-6 h-6 mr-3' />
-                      Đặt lịch tư vấn
-                    </Button> */}
-                  </div>
-                </StaggerItem>
-              </StaggerContainer>
+      <section className='bg-white py-12' aria-labelledby='pharmacists-heading'>
+        <div className='mx-auto grid max-w-7xl gap-8 px-4 lg:grid-cols-[38%_62%] lg:items-center'>
+          <div>
+            <div className='mb-4 inline-flex items-center gap-2 rounded-full bg-[#ECFDF5] px-4 py-2 text-sm font-semibold text-[#059669]'>
+              <Award className='h-4 w-4' />
+              Dược sĩ phụ trách chuyên môn
             </div>
+            <h2 id='pharmacists-heading' className='font-display text-3xl font-bold leading-tight text-[#0A2463] md:text-4xl'>Mọi đơn hàng được dược sĩ kiểm tra trước khi giao</h2>
+            <p className='mt-4 leading-7 text-[#4B5E7A]'>Đội ngũ MediSpace hỗ trợ đọc đơn, kiểm tra tương tác thuốc và tư vấn cách dùng phù hợp cho từng tình huống.</p>
+            <Button onClick={openConsultation} className='mt-6 rounded-lg bg-[#0A2463] text-white hover:bg-[#1E40AF]'>
+              <MessageCircle className='mr-2 h-4 w-4' />
+              Chat với dược sĩ ngay
+            </Button>
           </div>
-        </section>
-      </ScrollReveal>
 
-      {/* Enhanced Stats */}
-      <ScrollReveal direction='up' delay={0.7}>
-        <section className='py-20 bg-white'>
-          <div className='max-w-7xl mx-auto px-4'>
-            <StaggerContainer direction='up' staggerDelay={0.15}>
-              <div className='grid grid-cols-2 md:grid-cols-4 gap-8'>
-                <StaggerItem>
-                  <InteractiveCard hoverScale={1.05} glowEffect floatEffect className='text-center group'>
-                    <div className='w-20 h-20 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg'>
-                      <Users className='w-10 h-10 text-white' />
-                    </div>
-                    <div className='text-3xl font-bold text-blue-600 mb-2'>500K+</div>
-                    <div className='text-gray-600 font-medium'>Khách hàng tin dùng</div>
-                  </InteractiveCard>
-                </StaggerItem>
-
-                <StaggerItem>
-                  <InteractiveCard hoverScale={1.05} glowEffect floatEffect className='text-center group'>
-                    <div className='w-20 h-20 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg'>
-                      <Pill className='w-10 h-10 text-white' />
-                    </div>
-                    <div className='text-3xl font-bold text-emerald-600 mb-2'>10K+</div>
-                    <div className='text-gray-600 font-medium'>Sản phẩm chất lượng</div>
-                  </InteractiveCard>
-                </StaggerItem>
-
-                <StaggerItem>
-                  <InteractiveCard hoverScale={1.05} glowEffect floatEffect className='text-center group'>
-                    <div className='w-20 h-20 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg'>
-                      <Shield className='w-10 h-10 text-white' />
-                    </div>
-                    <div className='text-3xl font-bold text-purple-600 mb-2'>200+</div>
-                    <div className='text-gray-600 font-medium'>Nhà thuốc đối tác</div>
-                  </InteractiveCard>
-                </StaggerItem>
-
-                <StaggerItem>
-                  <InteractiveCard hoverScale={1.05} glowEffect floatEffect className='text-center group'>
-                    <div className='w-20 h-20 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg'>
-                      <Clock className='w-10 h-10 text-white' />
-                    </div>
-                    <div className='text-3xl font-bold text-orange-600 mb-2'>24/7</div>
-                    <div className='text-gray-600 font-medium'>Hỗ trợ khách hàng</div>
-                  </InteractiveCard>
-                </StaggerItem>
+          <div className='grid gap-4 sm:grid-cols-3'>
+            {pharmacists.map((pharmacist) => (
+              <div key={pharmacist.name} className='rounded-xl border border-[#E8EDF5] bg-[#F8FAFB] p-5 text-center'>
+                <img src={pharmacist.image} alt={pharmacist.name} className='mx-auto h-24 w-24 rounded-full object-cover ring-4 ring-white' />
+                <div className='mt-4 font-display text-base font-bold text-[#1C2B4A]'>{pharmacist.name}</div>
+                <div className='text-sm text-[#1E40AF]'>{pharmacist.role}</div>
+                <div className='mt-1 text-sm text-[#8094AE]'>{pharmacist.experience}</div>
               </div>
-            </StaggerContainer>
+            ))}
           </div>
-        </section>
-      </ScrollReveal>
+        </div>
+      </section>
+
+      <section className='bg-[#F8FAFB] py-12' aria-labelledby='health-corner-heading'>
+        <div className='mx-auto max-w-7xl px-4'>
+          <div className='mb-7 flex items-end justify-between gap-4'>
+            <div>
+              <h2 id='health-corner-heading' className='font-display text-3xl font-bold text-[#0A2463]'>Góc Sức Khỏe</h2>
+              <p className='mt-2 text-[#4B5E7A]'>Kiến thức y tế được kiểm chứng bởi dược sĩ.</p>
+            </div>
+            <Link to='/health' className='hidden items-center text-sm font-semibold text-[#1E40AF] hover:text-[#0A2463] sm:inline-flex'>Xem tất cả <ArrowRight className='ml-1 h-4 w-4' /></Link>
+          </div>
+
+          <div className='grid gap-5 md:grid-cols-3'>
+            {healthArticles.map((article) => (
+              <Link key={article.title} to='/health' className='group overflow-hidden rounded-xl border border-[#E8EDF5] bg-white transition hover:border-[#BFDBFE] hover:shadow-[0_8px_24px_rgba(10,36,99,0.12)]'>
+                <div className='aspect-video overflow-hidden bg-[#F0F6FF]'>
+                  <img src={article.image} alt={article.title} className='h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]' loading='lazy' />
+                </div>
+                <div className='p-5'>
+                  <div className='inline-flex items-center gap-1 rounded-full bg-[#F0F6FF] px-3 py-1 text-xs font-semibold text-[#1E40AF]'>
+                    <BookOpen className='h-3 w-3' />
+                    {article.category}
+                  </div>
+                  <h3 className='mt-3 line-clamp-2 font-display text-lg font-semibold leading-7 text-[#1C2B4A] group-hover:text-[#0A2463]'>{article.title}</h3>
+                  <p className='mt-2 line-clamp-2 text-sm leading-6 text-[#4B5E7A]'>{article.excerpt}</p>
+                  <div className='mt-4 flex items-center gap-3 text-xs text-[#8094AE]'>
+                    <span className='inline-flex items-center gap-1'><CalendarDays className='h-3.5 w-3.5' />{article.date}</span>
+                    <span>{article.readTime}</span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className='bg-[#0A2463] py-12'>
+        <div className='mx-auto max-w-4xl px-4 text-center'>
+          <div className='mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white'>
+            <MessageCircle className='h-4 w-4' />
+            Tư vấn miễn phí 24/7
+          </div>
+          <h2 className='font-display text-3xl font-bold text-white md:text-4xl'>Không chắc nên mua gì?</h2>
+          <p className='mx-auto mt-3 max-w-2xl text-lg leading-8 text-blue-100'>Hỏi dược sĩ MediSpace để được hướng dẫn chọn sản phẩm, đọc đơn thuốc và dùng thuốc đúng cách.</p>
+          <Button onClick={openConsultation} className='mt-7 h-12 rounded-lg bg-white px-8 text-[#0A2463] hover:bg-[#F0F6FF]'>
+            Hỏi dược sĩ ngay
+            <ArrowRight className='ml-2 h-4 w-4' />
+          </Button>
+        </div>
+      </section>
     </EnhancedPageTransition>
   )
 }
