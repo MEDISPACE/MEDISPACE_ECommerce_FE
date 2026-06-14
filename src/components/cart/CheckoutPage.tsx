@@ -1,6 +1,17 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { Shield, ChevronRight, MapPin, CreditCard, Truck, Clock, Smartphone, Plus, RotateCcw } from 'lucide-react'
+import {
+  AlertTriangle,
+  Shield,
+  ChevronRight,
+  MapPin,
+  CreditCard,
+  Truck,
+  Clock,
+  Smartphone,
+  Plus,
+  RotateCcw,
+} from 'lucide-react'
 import { Button } from '../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Label } from '../ui/label'
@@ -20,10 +31,12 @@ import { useSearchParams } from 'react-router-dom'
 import type { User, Address } from '../../types/user'
 import type { CartItem } from '../../types/cart'
 import { productService } from '../../services/productService'
-import { ghnService } from '../../services/ghnService'
+import { shippingService } from '../../services/shippingService'
 import { CouponInput } from '../discount/CouponInput'
 import { PointsRedeemInput } from '../discount/PointsRedeemInput'
 import { Sparkles } from 'lucide-react'
+import { prescriptionsAPI } from '../../lib/api/prescriptions'
+import { toast } from 'sonner'
 
 const GLOBAL_DEFAULT_SHIPPING_METHODS: ShippingMethod[] = [
   {
@@ -73,6 +86,11 @@ const paymentMethods: PaymentMethod[] = [
   },
 ]
 
+type OrderSubmitError = {
+  response?: { data?: { message?: string } }
+  message?: string
+}
+
 export function CheckoutPage() {
   const { state, getSelectedItemsTotal, getSelectedItemsCount, clearCart, refreshCart, selectAllItems } = useCart()
   const [searchParams] = useSearchParams()
@@ -91,6 +109,7 @@ export function CheckoutPage() {
   const [agreeToTerms, setAgreeToTerms] = useState(false)
   const [orderNotes, setOrderNotes] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
+  const isSubmittingRef = useRef(false)
   // Sau khi đặt hàng thành công, disable guard vĩnh viễn
   const [orderPlaced, setOrderPlaced] = useState(false)
 
@@ -102,6 +121,10 @@ export function CheckoutPage() {
   // Loyalty points states
   const [pointsToRedeem, setPointsToRedeem] = useState(0)
   const [pointsDiscount, setPointsDiscount] = useState(0)
+  const [verifiedPrescriptions, setVerifiedPrescriptions] = useState<
+    Array<{ _id: string; prescriptionNumber: string }>
+  >([])
+  const [selectedPrescriptionId, setSelectedPrescriptionId] = useState('')
 
   // Sync cart coupons on initial load for normal cart flow
   useEffect(() => {
@@ -130,9 +153,10 @@ export function CheckoutPage() {
           const unit = searchParams.get('unit')
 
           // Check for unit price variant (enriched by campaign from backend)
-          const selectedVariant = unit && product.priceVariants
-            ? product.priceVariants.find((v: any) => v.unit === unit)
-            : (product.priceVariants?.find((v: any) => v.isDefault) || product.priceVariants?.[0])
+          const selectedVariant =
+            unit && product.priceVariants
+              ? product.priceVariants.find((v: any) => v.unit === unit)
+              : product.priceVariants?.find((v: any) => v.isDefault) || product.priceVariants?.[0]
 
           // Use campaign salePrice if available, fallback to original price
           const originalPrice = selectedVariant?.price || product.price || 0
@@ -182,7 +206,7 @@ export function CheckoutPage() {
   // Guard: redirect về /cart nếu chưa chọn sản phẩm nào
   // Chỉ chạy khi chưa đặt hàng (orderPlaced = false)
   useEffect(() => {
-    if (orderPlaced) return  // Đã đặt hàng xong, tắt guard
+    if (orderPlaced) return // Đã đặt hàng xong, tắt guard
     if (!loading && !isBuyNow && state.cart !== undefined) {
       const selectedCount = state.selectedItems.size
       const cartHasItems = (state.cart?.items?.length ?? 0) > 0
@@ -197,32 +221,66 @@ export function CheckoutPage() {
       ? [buyNowItem]
       : []
     : state.cart?.items.filter((item) => state.selectedItems.has(createSelectionKey(item.productId, item.unit))) || []
+  const requiresPrescription = cartItems.some((item) => item.prescriptionRequired)
 
+  useEffect(() => {
+    if (!requiresPrescription) {
+      setSelectedPrescriptionId('')
+      return
+    }
+
+    prescriptionsAPI
+      .getPrescriptions()
+      .then((response: any) => {
+        const prescriptions = (response.result?.prescriptions || []).filter(
+          (prescription: any) =>
+            prescription.status === 'verified' &&
+            (!prescription.validUntil || new Date(prescription.validUntil) >= new Date()),
+        )
+        setVerifiedPrescriptions(prescriptions)
+        if (prescriptions.length === 1) setSelectedPrescriptionId(prescriptions[0]._id)
+      })
+      .catch(() => setVerifiedPrescriptions([]))
+  }, [requiresPrescription])
+
+  // Calculate selected items subtotal before shipping quote requests.
+  const subtotal = isBuyNow ? (buyNowItem ? buyNowItem.totalPrice : 0) : getSelectedItemsTotal()
   const addressObj = addresses.find((a) => a.id === selectedAddress)
+  const packageWeight = Math.max(
+    500,
+    cartItems.reduce((sum, item) => sum + item.quantity * 250, 0),
+  )
 
   // Calculate Shipping Fee & Options
   useEffect(() => {
     const fetchOptions = async () => {
-      // Reset to default if no address or missing IDs
-      if (!addressObj?.districtId || !addressObj?.wardCode) {
+      // Reset to default if no usable address text. GHN needs districtId/wardCode,
+      // but GHTK can quote from the textual ward/district/province fields.
+      if (!addressObj?.address || !addressObj?.district || !addressObj?.province) {
         setShippingMethods(GLOBAL_DEFAULT_SHIPPING_METHODS)
         return
       }
 
       try {
-        const options = await ghnService.getShippingOptions({
-          to_district_id: addressObj.districtId,
-          to_ward_code: addressObj.wardCode,
-          weight: 500, // Estimated 500g
+        const options = await shippingService.getRates({
+          toAddress: addressObj.address,
+          toWard: addressObj.ward,
+          toDistrict: addressObj.district || '',
+          toProvince: addressObj.province,
+          toDistrictId: addressObj.districtId,
+          toWardCode: addressObj.wardCode,
+          weight: packageWeight,
+          orderValue: subtotal,
         })
 
         if (options && options.length > 0) {
           const mappedOptions: ShippingMethod[] = options.map((opt) => ({
-            id: opt.id.toString(),
+            id: opt.id,
             name: opt.name,
-            description: `Giao hàng bởi GHN`,
+            description: opt.description,
             price: opt.price,
             estimatedDays: opt.estimatedDays,
+            supportsCod: opt.supportsCod,
           }))
           setShippingMethods(mappedOptions)
           // Auto-select cheapest/first optio
@@ -239,12 +297,9 @@ export function CheckoutPage() {
     }
 
     fetchOptions()
-  }, [addressObj])
+  }, [addressObj, packageWeight, subtotal])
 
   // Calculate totals
-  const subtotal = isBuyNow
-    ? (buyNowItem ? buyNowItem.totalPrice : 0)
-    : getSelectedItemsTotal()
   const selectedShipping = shippingMethods.find((method) => method.id === shippingMethod)
   let bgShippingFee = selectedShipping?.price || 0
 
@@ -258,25 +313,30 @@ export function CheckoutPage() {
   const total = Math.max(0, subtotal - couponDiscount - pointsDiscount + shippingFee)
 
   const handlePlaceOrder = async () => {
+    if (isSubmittingRef.current) return
     if (!user) {
-      alert('Không thể lấy thông tin người dùng. Vui lòng đăng nhập lại.')
+      toast.error('Không thể lấy thông tin người dùng. Vui lòng đăng nhập lại.')
       return
     }
 
     // Validate Cart / Selection
     if (!isBuyNow && state.selectedItems.size === 0) {
-      alert('Vui lòng chọn sản phẩm để thanh toán')
+      toast.error('Vui lòng chọn sản phẩm để thanh toán')
       return
     }
 
     if (!selectedAddress) {
-      alert('Vui lòng chọn địa chỉ giao hàng')
+      toast.error('Vui lòng chọn địa chỉ giao hàng')
+      return
+    }
+    if (requiresPrescription && !selectedPrescriptionId) {
+      toast.error('Vui lòng chọn đơn thuốc đã được dược sĩ xác nhận.')
       return
     }
 
     // Validate that we have addresses and a valid selected address
     if (!addresses || addresses.length === 0) {
-      alert('Vui lòng thêm địa chỉ giao hàng trước khi thanh toán')
+      toast.error('Vui lòng thêm địa chỉ giao hàng trước khi thanh toán')
       return
     }
 
@@ -287,6 +347,7 @@ export function CheckoutPage() {
       setSelectedAddress(validSelectedAddress)
     }
 
+    isSubmittingRef.current = true
     setIsProcessing(true)
 
     try {
@@ -349,14 +410,14 @@ export function CheckoutPage() {
         shippingAddress: addressObj,
         paymentMethod: paymentMethodMap[paymentMethod] || 'cod',
         shippingMethod: shippingMethod,
-        shippingFee: shippingFee, // Pass calculated shipping fee to backend
         estimatedDeliveryDate,
         notes: orderNotes,
-        couponCodes: appliedCoupons.map(c => c.code),
-        pointsToRedeem: pointsToRedeem > 0 ? pointsToRedeem : undefined
+        couponCodes: appliedCoupons.map((c) => c.code),
+        pointsToRedeem: pointsToRedeem > 0 ? pointsToRedeem : undefined,
+        prescriptionId: selectedPrescriptionId || undefined,
       }
 
-      const { order, paymentUrl } = await orderService.createOrder(orderData)
+      const { order, paymentUrl, paymentUrlError } = await orderService.createOrder(orderData)
 
       // Refresh cart to sync with backend (backend removed selected items for COD)
       await refreshCart()
@@ -364,6 +425,9 @@ export function CheckoutPage() {
       // Redirect logic
       if (paymentUrl) {
         window.location.href = paymentUrl
+      } else if (paymentUrlError) {
+        toast.error('Chưa thể tạo liên kết thanh toán. Bạn có thể thử lại trong chi tiết đơn hàng.')
+        navigate(`/account/orders/${order.id}`, { replace: true })
       } else {
         // COD: set orderPlaced TRƯỚC để disable guard, rồi navigate
         setOrderPlaced(true)
@@ -371,9 +435,11 @@ export function CheckoutPage() {
         sessionStorage.removeItem('medispace_selected_items')
         navigate(`/order/success?orderId=${order.id}`, { replace: true })
       }
-    } catch (error) {
-      alert('Đặt hàng thất bại. Vui lòng thử lại.')
+    } catch (error: unknown) {
+      const submitError = error as OrderSubmitError
+      toast.error(submitError.response?.data?.message || submitError.message || 'Đặt hàng thất bại. Vui lòng thử lại.')
     } finally {
+      isSubmittingRef.current = false
       setIsProcessing(false)
     }
   }
@@ -425,6 +491,23 @@ export function CheckoutPage() {
         <div className='grid grid-cols-1 lg:grid-cols-5 gap-6'>
           {/* Checkout Form - 60% width */}
           <div className='lg:col-span-3 space-y-6'>
+            {requiresPrescription && (
+              <Card className='border-amber-200 bg-amber-50'>
+                <CardContent className='p-4'>
+                  <div className='flex items-start gap-3'>
+                    <AlertTriangle className='mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600' />
+                    <div className='space-y-1'>
+                      <p className='font-medium text-amber-900'>Đơn hàng có thuốc kê đơn</p>
+                      <p className='text-sm text-amber-800'>
+                        Vui lòng chọn đơn thuốc còn hiệu lực đã được dược sĩ xác nhận. Nút đặt hàng sẽ mở sau khi thông
+                        tin này đầy đủ.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Shipping Address */}
             <Card className='border-gray-200'>
               <CardHeader>
@@ -578,6 +661,39 @@ export function CheckoutPage() {
             </Card>
 
             {/* Payment Method */}
+            {requiresPrescription && (
+              <Card className='border-amber-200'>
+                <CardHeader>
+                  <CardTitle className='text-amber-800'>Đơn thuốc đã xác nhận</CardTitle>
+                </CardHeader>
+                <CardContent className='space-y-2'>
+                  <Label htmlFor='prescription-select'>Chọn đơn thuốc áp dụng cho các sản phẩm kê đơn</Label>
+                  <select
+                    id='prescription-select'
+                    value={selectedPrescriptionId}
+                    onChange={(event) => setSelectedPrescriptionId(event.target.value)}
+                    className='w-full rounded-md border border-gray-200 bg-white px-3 py-2'
+                  >
+                    <option value=''>Chọn đơn thuốc</option>
+                    {verifiedPrescriptions.map((prescription) => (
+                      <option key={prescription._id} value={prescription._id}>
+                        {prescription.prescriptionNumber}
+                      </option>
+                    ))}
+                  </select>
+                  {verifiedPrescriptions.length === 0 && (
+                    <div className='space-y-2 text-sm text-amber-700'>
+                      <p>Bạn chưa có đơn thuốc còn hiệu lực đã được dược sĩ xác nhận.</p>
+                      <Button asChild variant='outline' size='sm'>
+                        <Link to='/upload-prescription'>Tải đơn thuốc lên để xác nhận</Link>
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Payment Method */}
             <Card className='border-gray-200'>
               <CardHeader>
                 <CardTitle className='text-blue-800 flex items-center gap-2'>
@@ -689,10 +805,12 @@ export function CheckoutPage() {
                     </div>
 
                     {couponDiscount > 0 && (
-                        <div className='flex justify-between'>
-                          <span className='text-gray-600'>Giảm giá Coupon</span>
-                          <span className='text-green-600'>-{new Intl.NumberFormat('vi-VN').format(couponDiscount)}đ</span>
-                        </div>
+                      <div className='flex justify-between'>
+                        <span className='text-gray-600'>Giảm giá Coupon</span>
+                        <span className='text-green-600'>
+                          -{new Intl.NumberFormat('vi-VN').format(couponDiscount)}đ
+                        </span>
+                      </div>
                     )}
 
                     {pointsDiscount > 0 && (
@@ -712,13 +830,13 @@ export function CheckoutPage() {
                   <div className='py-2 space-y-3'>
                     <CouponInput
                       subtotal={subtotal}
-                      hasPrescriptionItems={cartItems.some(i => i.prescriptionRequired)}
-                      items={cartItems.map(item => ({
+                      hasPrescriptionItems={cartItems.some((i) => i.prescriptionRequired)}
+                      items={cartItems.map((item) => ({
                         productId: item.productId,
                         unit: item.unit,
                         quantity: item.quantity,
                         totalPrice: item.totalPrice,
-                        prescriptionRequired: item.prescriptionRequired
+                        prescriptionRequired: item.prescriptionRequired,
                       }))}
                       isDirectBuy={isBuyNow}
                       initialCoupons={appliedCoupons}
@@ -773,7 +891,7 @@ export function CheckoutPage() {
 
                   <Button
                     onClick={handlePlaceOrder}
-                    disabled={!agreeToTerms || isProcessing}
+                    disabled={!agreeToTerms || isProcessing || (requiresPrescription && !selectedPrescriptionId)}
                     className='w-full text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 h-12 text-lg font-semibold'
                   >
                     {isProcessing ? (
@@ -787,6 +905,10 @@ export function CheckoutPage() {
                       </>
                     )}
                   </Button>
+
+                  {requiresPrescription && !selectedPrescriptionId && (
+                    <p className='text-sm text-amber-700 text-center'>Chọn đơn thuốc đã xác nhận trước khi đặt hàng.</p>
+                  )}
 
                   <div className='text-xs text-gray-500 text-center leading-relaxed'>
                     Bằng cách đặt hàng, bạn đồng ý với các điều khoản và chính sách của MediSpace

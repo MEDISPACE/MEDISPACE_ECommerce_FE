@@ -112,6 +112,28 @@ export const createSelectionKey = (productId: string, unit?: string) => {
   return unit ? `${productId}-${unit}` : productId
 }
 
+const getCartSelectionKeys = (cart: Cart | null) => {
+  return cart?.items.map((item) => createSelectionKey(item.productId, item.unit)) ?? []
+}
+
+const getInitialSelectionsForCart = (cart: Cart | null) => {
+  const allKeys = getCartSelectionKeys(cart)
+  if (allKeys.length === 0) return []
+
+  const savedSelections = sessionStorage.getItem('medispace_selected_items')
+  if (savedSelections) {
+    try {
+      const selections = JSON.parse(savedSelections) as string[]
+      const validSelections = selections.filter((key) => allKeys.includes(key))
+      if (validSelections.length > 0) return validSelections
+    } catch {
+      // Fall back to selecting all items when saved selection data is invalid.
+    }
+  }
+
+  return allKeys
+}
+
 // Cart context interface
 interface CartContextType {
   state: CartState
@@ -158,23 +180,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
         dispatch({ type: 'SET_LOADING', payload: true })
         const cart = await cartService.getCart()
         dispatch({ type: 'SET_CART', payload: cart })
-
-        // Restore selectedItems from sessionStorage if available
-        const savedSelections = sessionStorage.getItem('medispace_selected_items')
-        if (savedSelections && cart && cart.items.length > 0) {
-          try {
-            const selections = JSON.parse(savedSelections) as string[]
-            // Filter to only include items that still exist in cart
-            const validSelections = selections.filter((key) =>
-              cart.items.some((item) => createSelectionKey(item.productId, item.unit) === key),
-            )
-            if (validSelections.length > 0) {
-              dispatch({ type: 'SET_SELECTED_ITEMS', payload: validSelections })
-            }
-          } catch {
-            // Ignore parse errors
-          }
-        }
+        const initialSelections = getInitialSelectionsForCart(cart)
+        dispatch({ type: 'SET_SELECTED_ITEMS', payload: initialSelections })
+        sessionStorage.setItem('medispace_selected_items', JSON.stringify(initialSelections))
       } catch (error) {
         // For guest users or when API fails, set empty cart
 
@@ -205,7 +213,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
             dispatch({ type: 'SET_LOADING', payload: true })
             const cart = await cartService.getCart()
             dispatch({ type: 'SET_CART', payload: cart })
-            // Don't auto-select items
+            const initialSelections = getInitialSelectionsForCart(cart)
+            dispatch({ type: 'SET_SELECTED_ITEMS', payload: initialSelections })
+            sessionStorage.setItem('medispace_selected_items', JSON.stringify(initialSelections))
           } catch (error) {
             dispatch({ type: 'SET_CART', payload: null })
           } finally {
@@ -234,7 +244,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
           dispatch({ type: 'SET_LOADING', payload: true })
           const cart = await cartService.getCart()
           dispatch({ type: 'SET_CART', payload: cart })
-          // Don't auto-select items
+          const initialSelections = getInitialSelectionsForCart(cart)
+          dispatch({ type: 'SET_SELECTED_ITEMS', payload: initialSelections })
+          sessionStorage.setItem('medispace_selected_items', JSON.stringify(initialSelections))
         } catch (error) {
           dispatch({ type: 'SET_CART', payload: null })
         } finally {

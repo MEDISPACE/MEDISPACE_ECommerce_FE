@@ -71,7 +71,9 @@ export function OrderTable({ orders, onUpdateStatus, onViewDetails, config }: Or
                 <p className={`font-semibold text-${config.themeColor}-600`}>{formatCurrency(order.total)}</p>
                 <p className='text-xs text-gray-500'>{order.paymentMethod}</p>
               </TableCell>
-              <TableCell>{getPaymentStatusBadge(order.paymentStatus)}</TableCell>
+              <TableCell>
+                {getPaymentStatusBadge(order.paymentStatus, { paymentMethod: order.paymentMethod })}
+              </TableCell>
               <TableCell>{getOrderStatusBadge(order.status)}</TableCell>
               <TableCell>
                 <div className='flex items-center gap-2 text-sm text-gray-600'>

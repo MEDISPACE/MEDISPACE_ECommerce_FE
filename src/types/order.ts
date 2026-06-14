@@ -137,6 +137,7 @@ export interface CreateOrderRequest {
   couponCode?: string
   couponCodes?: string[]
   pointsToRedeem?: number
+  prescriptionId?: string
   notes?: string
   isDirectBuy?: boolean
 }

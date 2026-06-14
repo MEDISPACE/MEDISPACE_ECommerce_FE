@@ -248,7 +248,7 @@ export function ArticleDetailPage() {
 
   if (!article) {
     return (
-      <div className='container mx-auto px-4 py-16 text-center'>
+      <div className='max-w-7xl mx-auto px-4 py-16 text-center'>
         <h1 className='text-2xl font-bold text-gray-900 mb-4'>Không tìm thấy bài viết</h1>
         <Link to='/health'>
           <Button variant='outline' className='gap-2'>
@@ -261,10 +261,10 @@ export function ArticleDetailPage() {
   }
 
   return (
-    <div className='min-h-screen bg-gray-50'>
+    <div className='min-h-screen bg-white'>
       {/* Header */}
       <div className='bg-white border-b'>
-        <div className='container mx-auto px-4 py-4'>
+        <div className='max-w-7xl mx-auto px-4 py-4'>
           <UniversalBreadcrumb
             items={[
               { label: 'Trang chủ', href: '/' },
@@ -276,7 +276,7 @@ export function ArticleDetailPage() {
         </div>
       </div>
 
-      <div className='container mx-auto px-4 py-8'>
+      <div className='max-w-7xl mx-auto px-4 py-8'>
         <div className='max-w-4xl mx-auto'>
           {/* Back Button */}
           <Link to='/health' className='inline-block mb-6'>

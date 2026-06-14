@@ -89,9 +89,9 @@ export function HealthCheckerPage() {
   }
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50'>
+    <div className='min-h-screen bg-white'>
       <div className='bg-white border-b'>
-        <div className='container mx-auto px-4 py-4'>
+        <div className='max-w-7xl mx-auto px-4 py-4'>
           <UniversalBreadcrumb
             items={[
               { label: 'Trang chủ', href: '/' },
@@ -102,7 +102,7 @@ export function HealthCheckerPage() {
         </div>
       </div>
 
-      <main className='container mx-auto px-4 py-8'>
+      <main className='max-w-7xl mx-auto px-4 py-8'>
         <Link to='/health' className='inline-block mb-6'>
           <Button variant='ghost' className='gap-2'>
             <ArrowLeft className='h-4 w-4' />

@@ -68,7 +68,6 @@ export function ProductCard({
     ? currentVariant.price // Giá gốc khi có campaign
     : (currentVariant?.originalPrice || product.originalPrice)
   const hasDiscount = currentOriginalPrice && currentOriginalPrice > currentPrice
-  const campaignDiscountPercent = currentVariant?.discountPercent || product.discountPercentage
   const hasCampaign = !!product.campaign
 
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -100,15 +99,15 @@ export function ProductCard({
     return (
       <Link to={`/products/${product.slug}`} className='block' data-testid='product-card'>
         <Card
-            className={`group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm border hover:border-blue-300 ${
-              isConsultationRequired ? 'border-2 border-blue-300' : 'border-blue-100'
+            className={`group border bg-white transition-all duration-200 hover:border-[#BFDBFE] hover:shadow-[0_8px_24px_rgba(10,36,99,0.12)] ${
+              isConsultationRequired ? 'border-2 border-[#BFDBFE]' : 'border-[#E8EDF5]'
             } ${!product.inStock ? 'opacity-75' : ''}`}
           >
             <CardContent className='p-4'>
               <div className='flex gap-4'>
                 {/* Image Section */}
                 <div className='relative flex-shrink-0'>
-                  <div className='w-32 h-32 overflow-hidden bg-gray-50 rounded-xl flex items-center justify-center p-3 border border-gray-100'>
+                  <div className='w-28 h-36 overflow-hidden bg-[#F8FAFB] rounded-lg flex items-center justify-center p-3 border border-[#E8EDF5]'>
                     <ImageWithFallback
                       src={product.image}
                       alt={product.name}
@@ -145,8 +144,8 @@ export function ProductCard({
                 <div className='flex-1 min-w-0 flex flex-col'>
                   {/* Title & Brand */}
                   <div className='mb-2'>
-                    <h3 className='line-clamp-2 group-hover:text-blue-600 transition-colors mb-1'>{product.name}</h3>
-                    <p className='text-sm text-gray-500'>{product.brand}</p>
+                    <p className='mb-1 text-xs font-medium uppercase tracking-wide text-[#8094AE]'>{product.brand}</p>
+                    <h3 className='mb-1 line-clamp-2 min-h-[44px] overflow-hidden font-semibold leading-[22px] text-[#1C2B4A] transition-colors group-hover:text-[#0A2463]'>{product.name}</h3>
                   </div>
 
                   {/* Unit selector - only show when multiple variants */}
@@ -180,7 +179,7 @@ export function ProductCard({
                       ) : (
                         <>
                           <div className='flex items-baseline gap-2 mb-1'>
-                            <span className={`font-semibold ${!product.inStock ? 'text-gray-400' : 'text-blue-600'}`}>
+                            <span className={`font-semibold ${!product.inStock ? 'text-gray-400' : 'text-[#1E40AF]'}`}>
                               {currentPrice.toLocaleString('vi-VN')}đ
                             </span>
                             <span className='text-sm text-gray-500'>/ {selectedUnit}</span>
@@ -220,7 +219,7 @@ export function ProductCard({
                             window.location.href = `/products/${product.slug}`
                           }}
                           variant='outline'
-                          className='border-blue-500 text-blue-600 hover:bg-blue-50 h-9 px-4'
+                          className='border-[#BFDBFE] text-[#0A2463] hover:bg-[#F0F6FF] h-9 px-4'
                         >
                           Xem chi tiết
                         </Button>
@@ -228,7 +227,7 @@ export function ProductCard({
                         <Button
                           size='sm'
                           onClick={handleAddToCart}
-                          className='bg-blue-600 hover:bg-blue-700 text-white h-9 px-4 gap-1'
+                          className='bg-[#0A2463] hover:bg-[#1E40AF] text-white h-9 px-4 gap-1'
                         >
                           <ShoppingCart className='w-4 h-4' />
                           <span>Chọn mua</span>
@@ -248,14 +247,14 @@ export function ProductCard({
   return (
     <Link to={`/products/${product.slug}`} className='block h-full' data-testid='product-card'>
       <Card
-        className={`group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm relative overflow-hidden h-full ${
-          isConsultationRequired ? 'border-2 border-blue-300' : 'border border-blue-100 hover:border-blue-300'
+        className={`group relative h-full overflow-hidden bg-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(10,36,99,0.12)] ${
+          isConsultationRequired ? 'border-2 border-[#BFDBFE]' : 'border border-[#E8EDF5] hover:border-[#BFDBFE]'
         } ${!product.inStock ? 'opacity-75' : ''}`}
       >
         <CardContent className='p-0 flex flex-col h-full'>
           {/* Image Section */}
           <div className='relative'>
-            <div className='aspect-square overflow-hidden bg-gray-50 flex items-center justify-center p-4'>
+            <div className='aspect-[3/4] overflow-hidden bg-[#F8FAFB] flex items-center justify-center p-4'>
               <ImageWithFallback
                 src={product.image}
                 alt={product.name}
@@ -282,7 +281,7 @@ export function ProductCard({
               <div className='absolute top-3 right-3'>
                 <Badge
                   className='text-white text-xs px-2 py-1 rounded-full'
-                  style={{ backgroundColor: product.campaign?.badgeColor || '#f97316' }}
+                  style={{ backgroundColor: product.campaign?.badgeColor || '#059669' }}
                 >
                   {hasCampaign ? product.campaign!.badgeText : `-${product.discountPercentage}%`}
                 </Badge>
@@ -294,16 +293,16 @@ export function ProductCard({
               variant='ghost'
               size='sm'
               onClick={handleToggleWishlist}
-              className='absolute bottom-3 right-3 text-gray-400 hover:text-red-500 bg-white/80 backdrop-blur-sm w-8 h-8 p-0 rounded-full shadow-md hover:shadow-lg transition-all'
+              className='absolute bottom-3 right-3 text-gray-400 hover:text-red-500 bg-white/90 backdrop-blur-sm w-8 h-8 p-0 rounded-full shadow-sm transition-all'
             >
               <Heart className={`w-4 h-4 ${isInWishlist ? 'fill-red-500 text-red-500' : ''}`} />
             </Button>
           </div>
 
           {/* Content Section */}
-          <div className='p-3 flex flex-col flex-1'>
-            {/* Product title */}
-            <h3 className='mb-2 group-hover:text-blue-600 transition-colors line-clamp-2 text-sm leading-tight'>
+          <div className='p-4 flex flex-col flex-1'>
+            <p className='mb-1 min-h-4 truncate text-xs font-medium uppercase tracking-wide text-[#8094AE]'>{product.brand}</p>
+            <h3 className='mb-2 line-clamp-2 h-[40px] overflow-hidden text-sm font-semibold leading-5 text-[#1C2B4A] transition-colors group-hover:text-[#0A2463]'>
               {product.name}
             </h3>
 
@@ -316,8 +315,8 @@ export function ProductCard({
                     onClick={(e) => handleUnitSelect(e, variant.unit)}
                     className={`flex-1 px-2 py-1.5 text-xs font-medium transition-all ${
                       selectedUnit === variant.unit
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-white text-gray-600 hover:bg-gray-50'
+                        ? 'bg-[#0A2463] text-white'
+                        : 'bg-white text-[#4B5E7A] hover:bg-[#F0F6FF]'
                     } ${index > 0 ? 'border-l border-gray-300' : ''}`}
                   >
                     {variant.unit}
@@ -333,7 +332,7 @@ export function ProductCard({
               ) : (
                 <>
                   <div className='flex items-baseline gap-1'>
-                    <span className={`font-semibold ${!product.inStock ? 'text-gray-400' : 'text-blue-600'}`}>
+                    <span className={`text-lg font-bold ${!product.inStock ? 'text-gray-400' : 'text-[#1E40AF]'}`}>
                       {currentPrice.toLocaleString('vi-VN')}đ
                     </span>
                     <span className='text-sm text-gray-500'>/ {selectedUnit}</span>
@@ -364,14 +363,14 @@ export function ProductCard({
                     window.location.href = `/products/${product.slug}`
                   }}
                   variant='outline'
-                  className='w-full border-blue-500 text-blue-600 hover:bg-blue-50 text-sm h-8'
+                  className='w-full border-[#BFDBFE] text-[#0A2463] hover:bg-[#F0F6FF] text-sm h-9'
                 >
                   Xem chi tiết
                 </Button>
               ) : (
                 <Button
                   onClick={handleAddToCart}
-                  className='w-full text-sm h-8 bg-blue-600 hover:bg-blue-700 text-white'
+                  className='w-full text-sm h-9 border border-[#0A2463] bg-white text-[#0A2463] hover:bg-[#0A2463] hover:text-white'
                 >
                   Chọn mua
                 </Button>

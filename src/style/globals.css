@@ -25,41 +25,41 @@ button {
 
 :root {
   --font-size: 16px;
-  --background: rgba(255, 255, 255, 0.999);
-  --foreground: #0f172a;
+  --background: #f8fafb;
+  --foreground: #1c2b4a;
   --card: rgba(255, 255, 255, 0.999);
   --card-foreground: #0f172a;
   --popover: rgba(255, 255, 255, 0.999);
   --popover-foreground: #0f172a;
-  --primary: #0066cc;
+  --primary: #0a2463;
   --primary-foreground: rgba(255, 255, 255, 0.999);
-  --secondary: #f0f9ff;
-  --secondary-foreground: #0f172a;
-  --muted: #f8fafc;
-  --muted-foreground: #64748b;
+  --secondary: #f0f6ff;
+  --secondary-foreground: #1c2b4a;
+  --muted: #f0f6ff;
+  --muted-foreground: #4b5e7a;
   --accent: #eff6ff;
-  --accent-foreground: #0066cc;
-  --destructive: #ef4444;
+  --accent-foreground: #1e40af;
+  --destructive: #dc2626;
   --destructive-foreground: rgba(255, 255, 255, 0.999);
-  --border: rgba(15, 23, 42, 0.12);
+  --border: #e8edf5;
   --input: transparent;
   --input-background: #f8fafc;
   --switch-background: #e2e8f0;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --ring: #0066cc;
-  --chart-1: #0066cc;
-  --chart-2: #4a90e2;
-  --chart-3: #00bfff;
-  --chart-4: #10b981;
+  --ring: #0a2463;
+  --chart-1: #0a2463;
+  --chart-2: #1e40af;
+  --chart-3: #0891b2;
+  --chart-4: #059669;
   --chart-5: #f59e0b;
   --radius: 0.625rem;
   --sidebar: rgba(255, 255, 255, 0.999);
   --sidebar-foreground: #0f172a;
-  --sidebar-primary: #0066cc;
+  --sidebar-primary: #0a2463;
   --sidebar-primary-foreground: rgba(255, 255, 255, 0.999);
   --sidebar-accent: #eff6ff;
-  --sidebar-accent-foreground: #0066cc;
+  --sidebar-accent-foreground: #1e40af;
   --sidebar-border: rgba(15, 23, 42, 0.12);
   --sidebar-ring: #0066cc;
 
@@ -95,25 +95,25 @@ button {
   --primary-100: #dbeafe;
   --primary-200: #bfdbfe;
   --primary-300: #93c5fd;
-  --primary-400: #4a90e2;
-  --primary-500: #0066cc;
-  --primary-600: #0066cc;
-  --primary-700: #1d4ed8;
-  --primary-800: #1e40af;
-  --primary-900: #1e3a8a;
+  --primary-400: #3b82f6;
+  --primary-500: #1e40af;
+  --primary-600: #1e40af;
+  --primary-700: #0a2463;
+  --primary-800: #0a2463;
+  --primary-900: #071a49;
 
   /* Medical Semantic Colors */
-  --medical-consultation: #0066cc;
+  --medical-consultation: #0a2463;
   /* Primary blue - consultation, main brand */
-  --medical-consultation-light: #4a90e2;
+  --medical-consultation-light: #1e40af;
   --medical-consultation-bg: #eff6ff;
 
-  --medical-otc: #10b981;
+  --medical-otc: #059669;
   /* Green - Over-the-counter, safe, approved */
   --medical-otc-light: #34d399;
   --medical-otc-bg: #ecfdf5;
 
-  --medical-rx: #ef4444;
+  --medical-rx: #dc2626;
   /* Red - Prescription required, caution */
   --medical-rx-light: #f87171;
   --medical-rx-bg: #fef2f2;
@@ -136,28 +136,28 @@ button {
   --danger-light: #f87171;
   --danger-bg: #fef2f2;
 
-  --info: #0066cc;
-  --info-light: #4a90e2;
+  --info: #0a2463;
+  --info-light: #1e40af;
   --info-bg: #eff6ff;
 
   /* Neutral Palette */
-  --gray-50: #f8fafc;
-  --gray-100: #f1f5f9;
-  --gray-200: #e2e8f0;
-  --gray-300: #cbd5e1;
-  --gray-400: #94a3b8;
-  --gray-500: #64748b;
-  --gray-600: #475569;
-  --gray-700: #334155;
-  --gray-800: #1e293b;
-  --gray-900: #0f172a;
+  --gray-50: #f8fafb;
+  --gray-100: #f0f6ff;
+  --gray-200: #e8edf5;
+  --gray-300: #bfdbfe;
+  --gray-400: #8094ae;
+  --gray-500: #4b5e7a;
+  --gray-600: #334766;
+  --gray-700: #1c2b4a;
+  --gray-800: #13213b;
+  --gray-900: #0a2463;
 
   /* Gradient Definitions */
-  --gradient-consultation: linear-gradient(135deg, #0066cc 0%, #4a90e2 100%);
+  --gradient-consultation: linear-gradient(135deg, #0a2463 0%, #1e40af 100%);
   --gradient-otc: linear-gradient(135deg, #10b981 0%, #34d399 100%);
   --gradient-rx: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
   --gradient-pharmacy: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  --gradient-primary: linear-gradient(135deg, #0066cc 0%, #1d4ed8 100%);
+  --gradient-primary: linear-gradient(135deg, #0a2463 0%, #1e40af 100%);
   --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
   --gradient-warning: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
   --gradient-danger: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
@@ -297,6 +297,10 @@ button {
 
 html {
   font-size: var(--font-size);
+}
+
+.font-display {
+  font-family: 'Plus Jakarta Sans', Inter, ui-sans-serif, system-ui, sans-serif;
 }
 
 /* Simple transitions only */

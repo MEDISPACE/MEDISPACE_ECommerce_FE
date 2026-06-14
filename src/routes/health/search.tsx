@@ -43,9 +43,9 @@ export default function HealthSearchPage() {
   }
 
   return (
-    <div className='min-h-screen bg-gray-50'>
+    <div className='min-h-screen bg-white'>
       <div className='bg-white border-b'>
-        <div className='container mx-auto px-4 py-4'>
+        <div className='max-w-7xl mx-auto px-4 py-4'>
           <UniversalBreadcrumb
             items={[
               { label: 'Trang chủ', href: '/' },
@@ -56,7 +56,7 @@ export default function HealthSearchPage() {
         </div>
       </div>
 
-      <div className='container mx-auto px-4 py-8'>
+      <div className='max-w-7xl mx-auto px-4 py-8'>
         <div className='mb-6'>
           <h1 className='text-2xl font-bold text-gray-900'>Kết quả tìm kiếm cho "{query}"</h1>
           <p className='text-gray-600 mt-2'>Tìm thấy {articles.length} bài viết</p>

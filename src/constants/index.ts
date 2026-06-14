@@ -96,6 +96,7 @@ export const API_ENDPOINTS = {
     CREATE: '/orders',
     UPDATE_STATUS: (id: string) => `/orders/${id}/status`,
     CANCEL: (id: string) => `/orders/${id}/cancel`,
+    PAYMENT_URL: (id: string) => `/orders/${id}/payment-url`,
   },
 
   // Cart endpoints

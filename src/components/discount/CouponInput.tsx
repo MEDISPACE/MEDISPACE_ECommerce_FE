@@ -47,6 +47,62 @@ export function CouponInput({ subtotal, hasPrescriptionItems = false, items = []
     }
   }, [initialCoupons])
 
+  const selectionSignature = `${subtotal}:${items
+    .map(item => `${item.productId}:${item.unit || ''}:${item.quantity || 0}:${item.totalPrice}`)
+    .join('|')}`
+
+  useEffect(() => {
+    if (appliedCoupons.length === 0) return
+
+    const timeout = window.setTimeout(async () => {
+      try {
+        const validations = await Promise.all(
+          appliedCoupons.map(async coupon => {
+            const res = await apiClient.post<any>('/coupons/validate', {
+              code: coupon.code,
+              cartSubtotal: subtotal,
+              hasPrescriptionItems,
+              items,
+            })
+            return { coupon, validation: res.data.result }
+          }),
+        )
+
+        const invalidCodes = validations
+          .filter(({ validation }) => !validation.isValid)
+          .map(({ coupon }) => coupon.code)
+
+        if (!isDirectBuy && invalidCodes.length > 0) {
+          await Promise.all(invalidCodes.map(code => apiClient.delete('/coupons/remove', { data: { code } })))
+          await refreshCart()
+        }
+
+        const updated = validations
+          .filter(({ validation }) => validation.isValid)
+          .map(({ coupon, validation }) => ({
+            ...coupon,
+            discountAmount: validation.discountAmount,
+            type: validation.discountType,
+          }))
+        const currentKey = appliedCoupons.map(c => `${c.code}:${c.discountAmount}`).join('|')
+        const updatedKey = updated.map(c => `${c.code}:${c.discountAmount}`).join('|')
+
+        if (currentKey !== updatedKey) setAppliedCoupons(updated)
+        const totalDiscount = updated
+          .filter(c => c.type !== 'free_shipping')
+          .reduce((sum, c) => sum + c.discountAmount, 0)
+        onCouponsChange?.(updated, totalDiscount, updated.some(c => c.type === 'free_shipping'))
+        if (invalidCodes.length > 0) setError('Một mã giảm giá không còn áp dụng cho các sản phẩm đã chọn.')
+      } catch {
+        // Keep the last confirmed preview when re-validation is temporarily unavailable.
+      }
+    }, 300)
+
+    return () => window.clearTimeout(timeout)
+    // Revalidate only when the selected cart contents change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectionSignature])
+
   const handleApply = async () => {
     const code = inputCode.trim().toUpperCase()
     if (!code) {
