@@ -10,7 +10,6 @@ import {
   Truck,
   Shield,
   Users,
-  Star,
   Pill,
   Stethoscope,
   Clock,
@@ -20,8 +19,9 @@ import {
   HeartHandshake,
   User,
   Droplets,
+  RefreshCw,
 } from 'lucide-react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { useCategories } from '../../hooks/product'
 import { RecommendationCarousel } from '../products/RecommendationCarousel'
 import { useTrending, useForYou } from '../../hooks/product/useRecommendations'
@@ -40,13 +40,14 @@ const categoryIcons = {
 
 export function HomePage() {
   const { isAuthenticated } = useAuth()
+  const navigate = useNavigate()
 
   // ML Recommendation hooks
   const { products: forYouProducts, loading: forYouLoading, algorithm: forYouAlgorithm } = useForYou(8, isAuthenticated)
   const { products: trendingProducts, loading: trendingLoading, algorithm: trendingAlgorithm } = useTrending(8)
 
   // Categories state
-  const { categories: realCategories, loading: categoriesLoading } = useCategories()
+  const { categories: realCategories, loading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useCategories()
 
   return (
     <EnhancedPageTransition variant='scale' duration={0.8}>
@@ -86,52 +87,36 @@ export function HomePage() {
 
               <StaggerItem>
                 <p className='text-xl text-gray-600 mb-8 leading-relaxed'>
-                  Nền tảng dược phẩm hiện đại với
-                  <span className='font-semibold text-blue-600'> 10,000+ sản phẩm chính hãng</span>, giao hàng siêu tốc
-                  và tư vấn dược sĩ 24/7.
+                  Nền tảng dược phẩm hiện đại, giao hàng siêu tốc và tư vấn dược sĩ 24/7 cho nhu cầu chăm sóc sức khỏe
+                  hằng ngày.
                 </p>
               </StaggerItem>
 
               <StaggerItem>
                 <div className='flex flex-col sm:flex-row gap-4 mb-8'>
-                  <Button
-                    size='lg'
-                    onClick={() => (window.location.href = '/products')}
-                    className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 shadow-lg shadow-blue-500/25 px-8 h-14 text-white'
-                  >
-                    <Search className='w-5 h-5 mr-2' />
-                    Tìm thuốc ngay
-                    <ArrowRight className='w-5 h-5 ml-2' />
-                  </Button>
-                  <Button
-                    variant='outline'
-                    size='lg'
-                    onClick={() => (window.location.href = '/contact')}
-                    className='border-2 border-blue-200 text-blue-700 hover:!bg-[#eff6ff] hover:border-blue-400 hover:text-blue-500transition-all duration-300 backdrop-blur-sm h-14'
-                  >
-                    <MessageCircle className='w-5 h-5 mr-2' />
-                    Tư vấn miễn phí
-                  </Button>
+                  <Link to='/products'>
+                    <Button
+                      size='lg'
+                      className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 shadow-lg shadow-blue-500/25 px-8 h-14 text-white w-full sm:w-auto'
+                    >
+                      <Search className='w-5 h-5 mr-2' />
+                      Tìm thuốc ngay
+                      <ArrowRight className='w-5 h-5 ml-2' />
+                    </Button>
+                  </Link>
+                  <Link to='/contact'>
+                    <Button
+                      variant='outline'
+                      size='lg'
+                      className='border-2 border-blue-200 text-blue-700 hover:!bg-[#eff6ff] hover:border-blue-400 hover:text-blue-500 transition-all duration-300 backdrop-blur-sm h-14 w-full sm:w-auto'
+                    >
+                      <MessageCircle className='w-5 h-5 mr-2' />
+                      Tư vấn miễn phí
+                    </Button>
+                  </Link>
                 </div>
               </StaggerItem>
 
-              {/* Stats */}
-              <StaggerItem>
-                <div className='grid grid-cols-3 gap-6'>
-                  <div className='text-center'>
-                    <div className='text-2xl font-bold text-blue-600'>500K+</div>
-                    <div className='text-sm text-gray-600'>Khách hàng</div>
-                  </div>
-                  <div className='text-center'>
-                    <div className='text-2xl font-bold text-cyan-600'>10K+</div>
-                    <div className='text-sm text-gray-600'>Sản phẩm</div>
-                  </div>
-                  <div className='text-center'>
-                    <div className='text-2xl font-bold text-blue-800'>200+</div>
-                    <div className='text-sm text-gray-600'>Nhà thuốc</div>
-                  </div>
-                </div>
-              </StaggerItem>
             </StaggerContainer>
 
             <ScrollReveal direction='right' delay={0.3}>
@@ -142,33 +127,6 @@ export function HomePage() {
 
                 {/* Quick Actions Grid */}
                 <div className='max-w-4xl mx-auto'>
-                  {/* Clean Stats Row - 3 Cards */}
-                  <div className='grid grid-cols-1 md:grid-cols-3 gap-8 mb-12'>
-                    <div className='bg-white/80 backdrop-blur-lg rounded-xl border border-blue-100 shadow-lg p-6 text-center'>
-                      <div className='w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4'>
-                        <Users className='w-7 h-7 text-blue-600' />
-                      </div>
-                      <div className='text-3xl font-bold text-blue-600 mb-2'>500K+</div>
-                      <p className='text-gray-600'>Khách hàng tin tưởng</p>
-                    </div>
-
-                    <div className='bg-white/80 backdrop-blur-lg rounded-xl border border-blue-100 shadow-lg p-6 text-center'>
-                      <div className='w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4'>
-                        <Star className='w-7 h-7 text-amber-600' />
-                      </div>
-                      <div className='text-3xl font-bold text-amber-600 mb-2'>98%</div>
-                      <p className='text-gray-600'>Khách hàng hài lòng</p>
-                    </div>
-
-                    <div className='bg-white/80 backdrop-blur-lg rounded-xl border border-blue-100 shadow-lg p-6 text-center'>
-                      <div className='w-14 h-14 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4'>
-                        <Clock className='w-7 h-7 text-purple-600' />
-                      </div>
-                      <div className='text-3xl font-bold text-purple-600 mb-2'>24/7</div>
-                      <p className='text-gray-600'>Hỗ trợ tư vấn</p>
-                    </div>
-                  </div>
-
                   {/* Core Action Cards - 3 Cards */}
                   <div className='grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto'>
                     {/* Tư vấn dược sĩ */}
@@ -238,6 +196,38 @@ export function HomePage() {
         </div>
       </section>
 
+      <section className='border-y border-blue-100 bg-white' aria-label='Thông tin pháp lý nhà thuốc'>
+        <div className='max-w-7xl mx-auto grid gap-4 px-4 py-5 md:grid-cols-3'>
+          <div className='flex items-center gap-3'>
+            <div className='flex h-11 w-11 items-center justify-center rounded-lg bg-blue-50 text-blue-700'>
+              <Shield className='h-5 w-5' />
+            </div>
+            <div>
+              <div className='font-semibold text-gray-900'>Nhà thuốc đạt chuẩn GPP</div>
+              <div className='text-sm text-gray-600'>Giấy phép: GPP-MS-2026-001</div>
+            </div>
+          </div>
+          <div className='flex items-center gap-3'>
+            <div className='flex h-11 w-11 items-center justify-center rounded-lg bg-cyan-50 text-cyan-700'>
+              <Award className='h-5 w-5' />
+            </div>
+            <div>
+              <div className='font-semibold text-gray-900'>Dược sĩ phụ trách chuyên môn</div>
+              <div className='text-sm text-gray-600'>Kiểm tra đơn và tư vấn trước khi giao</div>
+            </div>
+          </div>
+          <div className='flex items-center gap-3'>
+            <div className='flex h-11 w-11 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700'>
+              <Clock className='h-5 w-5' />
+            </div>
+            <div>
+              <div className='font-semibold text-gray-900'>Hotline tư vấn 24/7</div>
+              <a href='tel:18006928' className='text-sm font-semibold text-blue-700'>1800 6928</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Trust Indicators - Glassmorphism cards */}
       <ScrollReveal direction='up' delay={0.2}>
         <section className='py-16 bg-gradient-to-r from-slate-50 to-blue-50'>
@@ -293,12 +283,12 @@ export function HomePage() {
 
       {/* Categories - Modern grid with hover effects */}
       <ScrollReveal direction='up' delay={0.3}>
-        <section className='py-20 bg-white px-[0px] py-[60px]'>
+        <section className='bg-white px-[0px] py-[60px]' aria-labelledby='categories-heading'>
           <div className='max-w-7xl mx-auto px-4'>
             <StaggerContainer direction='up' staggerDelay={0.1}>
               <StaggerItem>
                 <div className='text-center mb-16'>
-                  <h2 className='text-4xl font-bold bg-gradient-to-r from-blue-800 to-cyan-600 bg-clip-text text-transparent inline-block mb-4 pb-2'>
+                  <h2 id='categories-heading' className='text-4xl font-bold bg-gradient-to-r from-blue-800 to-cyan-600 bg-clip-text text-transparent inline-block mb-4 pb-2'>
                     Danh mục sản phẩm
                   </h2>
                   <p className='text-xl text-gray-600 max-w-2xl mx-auto'>
@@ -315,13 +305,26 @@ export function HomePage() {
                         <div className='inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600'></div>
                         <p className='mt-4 text-gray-600'>Đang tải danh mục...</p>
                       </div>
+                    ) : categoriesError ? (
+                      <div className='col-span-full rounded-xl border border-blue-100 bg-blue-50 p-8 text-center'>
+                        <p className='font-semibold text-blue-900'>Không thể tải danh mục, vui lòng thử lại</p>
+                        <Button
+                          type='button'
+                          variant='outline'
+                          className='mt-4 border-blue-200 text-blue-700 hover:bg-white'
+                          onClick={() => refetchCategories()}
+                        >
+                          <RefreshCw className='mr-2 h-4 w-4' />
+                          Tải lại danh mục
+                        </Button>
+                      </div>
                     ) : (
                       realCategories.map((category) => {
                         const IconComponent = categoryIcons[category.slug as keyof typeof categoryIcons] || Pill
 
                         return (
                           <StaggerItem key={category._id}>
-                            <Link to={`/categories/${category.slug}`} className='group'>
+                            <Link to={`/categories/${category.slug}`} className='group' aria-label={`Xem danh mục ${category.name}`}>
                               <InteractiveCard hoverScale={1.05} glowEffect floatEffect>
                                 <Card className='border-0 shadow-lg bg-gradient-to-br from-white to-gray-50'>
                                   <CardContent className='p-6 text-center'>
@@ -442,6 +445,8 @@ export function HomePage() {
                         ) as HTMLButtonElement | null
                         if (chatBtn) {
                           chatBtn.click()
+                        } else {
+                          navigate('/contact')
                         }
                       }}
                       className='bg-white text-blue-700 hover:bg-blue-50 hover:text-blue-800 shadow-2xl px-10 h-16 text-lg font-semibold'

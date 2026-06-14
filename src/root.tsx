@@ -48,7 +48,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     <meta name='viewport' content='width=device-width, initial-scale=1' />
                     <meta name='color-scheme' content='only light' />
                     <meta name='theme-color' content='rgba(255, 255, 255, 0.999)' />
-                    <meta name='title' content='MEDISPACE - Nền tảng mua thuốc trực tuyến' />
                     <meta name='description' content='Nền tảng mua thuốc trực tuyến uy tín, an toàn và tiện lợi' />
                     <Meta />
                     <Links />

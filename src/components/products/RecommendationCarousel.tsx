@@ -13,6 +13,7 @@ import { ScrollReveal } from '../shared/ScrollReveal'
 import { useCart } from '../../contexts/CartContext'
 import { useWishlist } from '../../hooks/product/useWishlist'
 import type { RecommendedProduct } from '../../services/recommendationService'
+import type { Product } from '../../types/product'
 import { recommendationService } from '../../services/recommendationService'
 import {
   getProductSalePrice,
@@ -151,7 +152,8 @@ export function RecommendationCarousel({
   const [currentPage, setCurrentPage] = useState(0)
   const [dismissed, setDismissed] = useState<Set<string>>(new Set())
 
-  const visibleProducts = products.filter((product) => !dismissed.has(product._id))
+  const availableProducts = products.filter((product) => product.stockQuantity > 0)
+  const visibleProducts = availableProducts.filter((product) => !dismissed.has(product._id))
   const totalPages = Math.ceil(visibleProducts.length / itemsPerPage)
   const badgeConfig = badge ? BADGE_CONFIG[badge] : null
   const BadgeIcon = badgeConfig?.icon
@@ -184,14 +186,25 @@ export function RecommendationCarousel({
   }, [currentPage, loading, visibleProducts.map((product) => product._id).join(',')])
 
   // Ẩn section nếu không loading và không có data
-  if (!loading && products.length === 0) return null
+  if (!loading && availableProducts.length === 0) return null
 
   const handlePrev = () => setCurrentPage((p) => (p === 0 ? totalPages - 1 : p - 1))
   const handleNext = () => setCurrentPage((p) => (p === totalPages - 1 ? 0 : p + 1))
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
+    if (totalPages <= 1) return
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault()
+      handlePrev()
+    }
+    if (event.key === 'ArrowRight') {
+      event.preventDefault()
+      handleNext()
+    }
+  }
 
   return (
     <ScrollReveal direction='up' delay={0.2}>
-      <section className={`py-16 ${className}`}>
+      <section className={`py-16 ${className}`} tabIndex={0} onKeyDown={handleKeyDown} aria-label={title}>
         <div className='max-w-7xl mx-auto px-4'>
           {/* Header */}
           {layout === 'compact' ? (
@@ -290,7 +303,7 @@ export function RecommendationCarousel({
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={handlePrev}
-                    className='absolute left-2 lg:left-6 top-[130px] md:top-[160px] lg:top-[170px] -translate-y-1/2 z-20 h-12 w-12 rounded-full border-2 border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 bg-white/90 backdrop-blur-sm shadow-lg transition-all duration-300 hover:shadow-xl flex items-center justify-center'
+                    className='absolute left-2 lg:left-6 top-1/2 -translate-y-1/2 z-20 h-12 w-12 rounded-full border-2 border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 bg-white/90 backdrop-blur-sm shadow-lg transition-all duration-300 hover:shadow-xl flex items-center justify-center'
                     aria-label='Previous'
                   >
                     <ChevronLeft className='w-6 h-6' />
@@ -299,7 +312,7 @@ export function RecommendationCarousel({
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={handleNext}
-                    className='absolute right-2 lg:right-6 top-[130px] md:top-[160px] lg:top-[170px] -translate-y-1/2 z-20 h-12 w-12 rounded-full border-2 border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 bg-white/90 backdrop-blur-sm shadow-lg transition-all duration-300 hover:shadow-xl flex items-center justify-center'
+                    className='absolute right-2 lg:right-6 top-1/2 -translate-y-1/2 z-20 h-12 w-12 rounded-full border-2 border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 bg-white/90 backdrop-blur-sm shadow-lg transition-all duration-300 hover:shadow-xl flex items-center justify-center'
                     aria-label='Next'
                   >
                     <ChevronRight className='w-6 h-6' />
@@ -375,7 +388,7 @@ export function RecommendationCarousel({
                                 onAddToCart={(selectedUnit) => {
                                   const variant = rawProduct.priceVariants?.find((v) => v.unit === selectedUnit)
                                   const price = variant?.price ?? rawProduct.priceVariants?.[0]?.price
-                                  void addToCart(rawProduct as any, 1, selectedUnit, price)
+                                  void addToCart(rawProduct as unknown as Product, 1, selectedUnit, price)
                                   void recommendationService.trackEvent({
                                     productId: rawProduct._id,
                                     algorithm,
