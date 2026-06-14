@@ -19,7 +19,6 @@ import {
   RefreshCw,
   Search,
   Shield,
-  Star,
   Stethoscope,
   Thermometer,
   Truck,
@@ -32,9 +31,10 @@ import { useCategories } from '../../hooks/product'
 import { RecommendationCarousel } from '../products/RecommendationCarousel'
 import { useTrending, useForYou } from '../../hooks/product/useRecommendations'
 import { useAuth } from '../../contexts/AuthContext'
+import { healthNeeds } from '../../data/healthNeeds'
 
 const heroImage =
-  'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1200&q=82'
+  'https://images.unsplash.com/photo-1576602976047-174e57a47881?auto=format&fit=crop&w=1200&q=82'
 
 const categoryIcons = {
   thuoc: Pill,
@@ -46,16 +46,16 @@ const categoryIcons = {
 
 const popularSearches = ['Paracetamol', 'Vitamin C', 'Omega 3', 'Cảm cúm']
 
-const healthNeeds = [
-  { label: 'Cảm cúm', slug: 'cam-cum', icon: Thermometer, count: '420+' },
-  { label: 'Đau đầu', slug: 'dau-dau', icon: Activity, count: '180+' },
-  { label: 'Tiểu đường', slug: 'tieu-duong', icon: HeartPulse, count: '260+' },
-  { label: 'Huyết áp', slug: 'huyet-ap', icon: HeartPulse, count: '310+' },
-  { label: 'Tim mạch', slug: 'tim-mach', icon: HeartPulse, count: '240+' },
-  { label: 'Xương khớp', slug: 'xuong-khop', icon: Bone, count: '390+' },
-  { label: 'Vitamin', slug: 'vitamin', icon: Leaf, count: '520+' },
-  { label: 'Phụ nữ', slug: 'phu-nu', icon: User, count: '210+' },
-]
+const healthNeedIcons = {
+  activity: Activity,
+  bone: Bone,
+  droplets: Droplets,
+  heartPulse: HeartPulse,
+  leaf: Leaf,
+  shield: Shield,
+  thermometer: Thermometer,
+  user: User,
+}
 
 const pharmacists = [
   {
@@ -199,14 +199,13 @@ export function HomePage() {
           </div>
 
           <div className='relative hidden min-h-[520px] lg:block'>
-            <img src={heroImage} alt='Dược sĩ MediSpace tư vấn tại quầy thuốc' className='h-full w-full object-cover' />
+            <img src={heroImage} alt='Không gian nhà thuốc và cửa hàng sức khỏe hiện đại' className='h-full w-full object-cover' />
             <div className='absolute bottom-8 left-8 max-w-xs rounded-2xl bg-white/95 p-5 shadow-[0_24px_48px_rgba(10,36,99,0.18)] backdrop-blur'>
               <div className='flex items-center gap-2 text-[#0A2463]'>
-                <Star className='h-5 w-5 fill-[#F59E0B] text-[#F59E0B]' />
-                <span className='font-display text-xl font-bold'>4.8/5</span>
-                <span className='text-sm text-[#4B5E7A]'>(125,000 đánh giá)</span>
+                <Shield className='h-5 w-5' />
+                <span className='font-display text-xl font-bold'>Mua thuốc an toàn hơn</span>
               </div>
-              <p className='mt-2 text-sm leading-6 text-[#4B5E7A]'>Được tin dùng bởi 500,000+ khách hàng cần tư vấn và mua thuốc an toàn.</p>
+              <p className='mt-2 text-sm leading-6 text-[#4B5E7A]'>Tra cứu sản phẩm, gửi đơn thuốc và hỏi dược sĩ trước khi chọn mua.</p>
             </div>
           </div>
         </div>
@@ -287,19 +286,19 @@ export function HomePage() {
               <h2 id='health-needs-heading' className='font-display text-3xl font-bold text-[#0A2463]'>Mua theo nhu cầu sức khỏe</h2>
               <p className='mt-2 text-[#4B5E7A]'>Tìm sản phẩm phù hợp với tình trạng của bạn mà không cần nhớ tên thuốc.</p>
             </div>
-            <Link to='/products' className='inline-flex items-center text-sm font-semibold text-[#1E40AF] hover:text-[#0A2463]'>Xem tất cả nhu cầu <ArrowRight className='ml-1 h-4 w-4' /></Link>
+            <Link to='/health-needs' className='inline-flex items-center text-sm font-semibold text-[#1E40AF] hover:text-[#0A2463]'>Xem tất cả nhu cầu <ArrowRight className='ml-1 h-4 w-4' /></Link>
           </div>
 
           <div className='grid grid-cols-2 gap-4 md:grid-cols-4'>
             {healthNeeds.map((need) => {
-              const Icon = need.icon
+              const Icon = healthNeedIcons[need.icon]
               return (
-                <Link key={need.slug} to={`/products?condition=${need.slug}`} className='group rounded-xl border border-[#E8EDF5] bg-white p-4 transition hover:-translate-y-0.5 hover:border-[#BFDBFE] hover:shadow-[0_8px_24px_rgba(10,36,99,0.12)]'>
+                <Link key={need.slug} to={`/health-needs/${need.slug}`} className='group rounded-xl border border-[#E8EDF5] bg-white p-4 transition hover:-translate-y-0.5 hover:border-[#BFDBFE] hover:shadow-[0_8px_24px_rgba(10,36,99,0.12)]'>
                   <div className='flex h-12 w-12 items-center justify-center rounded-xl bg-[#F0F6FF] text-[#0A2463]'>
                     <Icon className='h-6 w-6' />
                   </div>
-                  <div className='mt-4 font-display text-lg font-semibold text-[#1C2B4A] group-hover:text-[#0A2463]'>{need.label}</div>
-                  <div className='text-sm text-[#8094AE]'>{need.count} sản phẩm</div>
+                  <div className='mt-4 font-display text-lg font-semibold text-[#1C2B4A] group-hover:text-[#0A2463]'>{need.shortLabel}</div>
+                  <div className='mt-1 line-clamp-2 min-h-[40px] text-sm text-[#8094AE]'>{need.summary}</div>
                 </Link>
               )
             })}

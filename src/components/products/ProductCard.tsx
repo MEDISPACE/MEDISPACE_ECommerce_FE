@@ -145,7 +145,7 @@ export function ProductCard({
                   {/* Title & Brand */}
                   <div className='mb-2'>
                     <p className='mb-1 text-xs font-medium uppercase tracking-wide text-[#8094AE]'>{product.brand}</p>
-                    <h3 className='line-clamp-2 font-semibold text-[#1C2B4A] group-hover:text-[#0A2463] transition-colors mb-1'>{product.name}</h3>
+                    <h3 className='mb-1 line-clamp-2 min-h-[44px] overflow-hidden font-semibold leading-[22px] text-[#1C2B4A] transition-colors group-hover:text-[#0A2463]'>{product.name}</h3>
                   </div>
 
                   {/* Unit selector - only show when multiple variants */}
@@ -302,7 +302,7 @@ export function ProductCard({
           {/* Content Section */}
           <div className='p-4 flex flex-col flex-1'>
             <p className='mb-1 min-h-4 truncate text-xs font-medium uppercase tracking-wide text-[#8094AE]'>{product.brand}</p>
-            <h3 className='mb-2 min-h-[40px] font-semibold text-[#1C2B4A] group-hover:text-[#0A2463] transition-colors line-clamp-2 text-sm leading-tight'>
+            <h3 className='mb-2 line-clamp-2 h-[40px] overflow-hidden text-sm font-semibold leading-5 text-[#1C2B4A] transition-colors group-hover:text-[#0A2463]'>
               {product.name}
             </h3>
 
