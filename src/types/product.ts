@@ -218,6 +218,7 @@ export interface ShippingMethod {
   description: string
   price: number
   estimatedDays: string
+  supportsCod?: boolean
 }
 
 export interface PaymentMethod {
