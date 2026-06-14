@@ -124,7 +124,11 @@ export function OrderDetailPage() {
 
   // Product IDs từ đơn hàng — dùng cho post-purchase carousel
   const orderProductIds = useMemo(() => order?.items.map((i) => i.productId) ?? [], [order])
-  const { products: crossSellProducts, loading: crossSellLoading, algorithm: crossSellAlgorithm } = usePostPurchase(orderProductIds, 8)
+  const {
+    products: crossSellProducts,
+    loading: crossSellLoading,
+    algorithm: crossSellAlgorithm,
+  } = usePostPurchase(orderProductIds, 8)
 
   const fetchOrder = useCallback(async () => {
     if (!orderId) return
@@ -538,7 +542,7 @@ export function OrderDetailPage() {
               </div>
               <div>
                 <p className='text-sm font-medium'>Trạng thái thanh toán:</p>
-                {getPaymentStatusBadge(order.paymentStatus)}
+                {getPaymentStatusBadge(order.paymentStatus, { paymentMethod: order.paymentMethod })}
               </div>
               {order.notes && (
                 <div>

@@ -379,9 +379,19 @@ export function getOrderStatusBadge(status: string, options?: { showIcon?: boole
 /**
  * PAYMENT STATUS BADGE HELPER
  */
-export function getPaymentStatusBadge(status: string, options?: { showIcon?: boolean }): ReactElement {
+export function getPaymentStatusBadge(
+  status: string,
+  options?: { showIcon?: boolean; paymentMethod?: string },
+): ReactElement {
   const config = PAYMENT_STATUS_BADGES[status]
-  return renderBadge(config, options) || <Badge variant='outline'>{status}</Badge>
+  const isCodPending = status === 'pending' && options?.paymentMethod?.toLowerCase() === 'cod'
+
+  return (
+    renderBadge(config, {
+      ...options,
+      customLabel: isCodPending ? 'Chờ thu tiền khi nhận hàng' : undefined,
+    }) || <Badge variant='outline'>{status}</Badge>
+  )
 }
 
 /**

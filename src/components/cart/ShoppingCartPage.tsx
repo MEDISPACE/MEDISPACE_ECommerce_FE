@@ -127,6 +127,12 @@ export function ShoppingCartPage() {
       navigate('/login', { state: { returnUrl: '/cart/checkout' } })
       return
     }
+
+    if (getSelectedItemsCount() === 0) {
+      toast.error('Vui lòng chọn ít nhất 1 sản phẩm để thanh toán')
+      return
+    }
+
     navigate('/cart/checkout')
   }
 
