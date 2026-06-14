@@ -13,7 +13,7 @@ import { useRef, useEffect, useState, useCallback, forwardRef } from 'react'
 import { cn } from '~/utils/lib'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const MIN_HEIGHT = 40    // px — 1 dòng
+const MIN_HEIGHT = 36    // px — 1 dòng (Messenger style)
 const MAX_HEIGHT = 120   // px — ~5 dòng
 const MAX_CHARS  = 500
 const WARN_CHARS = 400
@@ -22,12 +22,13 @@ const WARN_CHARS = 400
 export interface ChatTextareaProps
   extends Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, 'rows' | 'style'> {
   onSend?: () => void
+  onPasteFiles?: (files: File[]) => void
   wrapperClassName?: string
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export const ChatTextarea = forwardRef<HTMLTextAreaElement, ChatTextareaProps>(
-  ({ className, wrapperClassName, onSend, value, onChange, onKeyDown, disabled, ...props }, forwardedRef) => {
+  ({ className, wrapperClassName, onSend, onPasteFiles, value, onChange, onKeyDown, disabled, ...props }, forwardedRef) => {
     const innerRef = useRef<HTMLTextAreaElement>(null)
     const textareaRef = (forwardedRef as React.RefObject<HTMLTextAreaElement>) || innerRef
 
@@ -68,7 +69,28 @@ export const ChatTextarea = forwardRef<HTMLTextAreaElement, ChatTextareaProps>(
       onKeyDown?.(e)
     }
 
-    // ── Change ───────────────────────────────────────────────────────────────
+    // ── Paste (Clipboard) ────────────────────────────────────────────────────
+    const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+      if (!onPasteFiles) return
+      
+      const items = e.clipboardData.items
+      const files: File[] = []
+      
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          const file = items[i].getAsFile()
+          if (file) files.push(file)
+        }
+      }
+      
+      if (files.length > 0) {
+        // Prevent default to avoid pasting string representations like "[object File]" or file names
+        e.preventDefault()
+        onPasteFiles(files)
+      }
+    }
+
+    // ── Render ───────────────────────────────────────────────────────────────
     const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       if (e.target.value.length > MAX_CHARS) {
         e.target.value = e.target.value.slice(0, MAX_CHARS)
@@ -90,16 +112,19 @@ export const ChatTextarea = forwardRef<HTMLTextAreaElement, ChatTextareaProps>(
         <textarea
           ref={textareaRef}
           value={value}
+          rows={1}
           onChange={handleChange}
           onInput={adjustHeight}
           onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           disabled={disabled}
           className={cn(
             'block w-full resize-none outline-none',
             'text-sm text-gray-900 placeholder:text-gray-400',
-            'px-4 py-2.5 rounded-2xl',
+            // py-2 (16px) + text-sm (20px) = 36px. Bo góc xl (12px) cho cảm giác chuyên nghiệp hơn
+            'px-4 py-2 rounded-xl',
             'border border-gray-200 bg-gray-50',
             'transition-[border-color,box-shadow] duration-150 ease-out',
             isFocused
@@ -109,7 +134,7 @@ export const ChatTextarea = forwardRef<HTMLTextAreaElement, ChatTextareaProps>(
             // Ẩn scrollbar như Zalo/Messenger — vẫn scroll được, không hiển thị thanh cuộn
             '[&::-webkit-scrollbar]:hidden [scrollbar-width:none]',
             // Padding-bottom nhường chỗ cho counter nằm absolute bên dưới
-            showCounter ? 'pb-5' : 'pb-2.5',
+            showCounter ? 'pb-6' : 'pb-2',
             className,
           )}
           style={{ minHeight: MIN_HEIGHT, maxHeight: MAX_HEIGHT, overflowY: 'hidden', scrollbarWidth: 'none' }}

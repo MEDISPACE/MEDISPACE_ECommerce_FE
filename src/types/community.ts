@@ -51,6 +51,7 @@ export interface CommunityMessage {
   roomId: string
   senderId: string
   content: string
+  imageUrl?: string
   status: CommunityMessageStatus
   createdAt: string
   updatedAt?: string

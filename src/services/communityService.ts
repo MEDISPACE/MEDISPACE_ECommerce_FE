@@ -56,10 +56,10 @@ export const communityService = {
     return unwrap(res.data)
   },
 
-  async sendMessage(params: { roomId: string; content: string }) {
+  async sendMessage(params: { roomId: string; content: string; imageUrl?: string }) {
     const res = await apiClient.post<
       Envelope<{ message: CommunityMessage; moderation: any; memberRole?: string }>
-    >(`/community/rooms/${params.roomId}/messages`, { content: params.content })
+    >(`/community/rooms/${params.roomId}/messages`, { content: params.content, imageUrl: params.imageUrl })
     return unwrap(res.data)
   },
 

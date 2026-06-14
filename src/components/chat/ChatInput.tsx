@@ -24,7 +24,7 @@ export function ChatInput({
   currentUserRole,
 }: ChatInputProps) {
   const [message, setMessage] = useState('')
-  const [imageUrl, setImageUrl] = useState<string>('')
+  const [imageUrls, setImageUrls] = useState<string[]>([])
   const [isUploading, setIsUploading] = useState(false)
   const [showProductPicker, setShowProductPicker] = useState(false)
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -44,10 +44,21 @@ export function ChatInput({
 
   const handleSend = () => {
     const trimmedMessage = message.trim()
-    if (!trimmedMessage && !imageUrl) return
-    onSendMessage(trimmedMessage, imageUrl)
+    if (!trimmedMessage && imageUrls.length === 0) return
+
+    if (imageUrls.length > 0) {
+      // Gửi ảnh đầu tiên kèm text (nếu có)
+      onSendMessage(trimmedMessage, imageUrls[0])
+      // Gửi các ảnh còn lại thành tin nhắn rời rạc (không text)
+      for (let i = 1; i < imageUrls.length; i++) {
+        onSendMessage('', imageUrls[i])
+      }
+    } else if (trimmedMessage) {
+      onSendMessage(trimmedMessage)
+    }
+
     setMessage('')
-    setImageUrl('')
+    setImageUrls([])
     onStopTyping?.()
     textareaRef.current?.focus()
   }
@@ -57,30 +68,48 @@ export function ChatInput({
     // Enter-to-send được pass qua onSend prop của ChatTextarea
   }
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    if (!file.type.startsWith('image/')) {
-      toast.error('Vui lòng chọn file ảnh')
-      return
-    }
+  const handleFilesUpload = async (filesToUpload: File[]) => {
+    if (!filesToUpload || filesToUpload.length === 0) return
     const maxSize = 2 * 1024 * 1024
-    if (file.size > maxSize) {
-      toast.error(`Ảnh quá lớn (${(file.size / 1024 / 1024).toFixed(2)}MB). Vui lòng chọn ảnh nhỏ hơn 2MB`)
-      return
-    }
+
+    const validFiles = filesToUpload.filter((file) => {
+      if (!file.type.startsWith('image/')) {
+        toast.error(`File ${file.name} không phải là ảnh`)
+        return false
+      }
+      if (file.size > maxSize) {
+        toast.error(`Ảnh ${file.name} quá lớn. Vui lòng chọn ảnh nhỏ hơn 2MB`)
+        return false
+      }
+      return true
+    })
+
+    if (validFiles.length === 0) return
+
     setIsUploading(true)
     try {
       const { uploadImage } = await import('../../services/mediaService')
-      const uploadedUrl = await uploadImage(file)
-      setImageUrl(uploadedUrl)
-      toast.success('Tải ảnh lên thành công')
+      const uploadPromises = validFiles.map((file) => uploadImage(file))
+      const uploadedUrls = await Promise.all(uploadPromises)
+      setImageUrls((prev) => [...prev, ...uploadedUrls])
+      // Chỉ hiện toast success nếu upload nhiều hơn 1 ảnh hoặc người dùng paste
+      if (validFiles.length > 1) {
+        toast.success(`Tải lên thành công ${uploadedUrls.length} ảnh`)
+      }
     } catch (error: any) {
       const errorMsg = error?.message || 'Không thể tải ảnh lên'
-      toast.error(errorMsg.includes('maxFileSize') ? 'Ảnh quá lớn. Vui lòng chọn ảnh nhỏ hơn 2MB' : errorMsg)
+      toast.error(errorMsg.includes('maxFileSize') ? 'Có ảnh quá lớn. Vui lòng chọn ảnh nhỏ hơn 2MB' : errorMsg)
     } finally {
       setIsUploading(false)
     }
+  }
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      handleFilesUpload(Array.from(e.target.files))
+    }
+    // Reset input file value để có thể chọn lại cùng 1 file nếu vừa xóa
+    e.target.value = ''
   }
 
   // Dược sĩ gửi product card
@@ -97,30 +126,25 @@ export function ChatInput({
         <ProductPicker onSelect={handleProductSelect} onClose={() => setShowProductPicker(false)} />
       )}
 
-      {/* Image preview — hiển thị ảnh chờ gửi kiểu Messenger */}
-      {imageUrl && (
-        <div className='mx-1 mb-2 flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-xl px-3 py-2 animate-in slide-in-from-bottom-2 duration-200'>
-          {/* Thumbnail */}
-          <div className='relative flex-shrink-0'>
-            <img
-              src={imageUrl}
-              alt='Preview'
-              className='h-12 w-12 object-cover rounded-lg border border-blue-200 shadow-sm'
-            />
-          </div>
-          {/* Info */}
-          <div className='flex-1 min-w-0'>
-            <p className='text-xs font-medium text-blue-700 truncate'>Ảnh đã chọn</p>
-            <p className='text-[10px] text-blue-500 mt-0.5'>Nhấn gửi để chia sẻ ảnh này</p>
-          </div>
-          {/* Remove button */}
-          <button
-            onClick={() => setImageUrl('')}
-            className='flex-shrink-0 w-6 h-6 flex items-center justify-center bg-white border border-gray-200 hover:bg-red-50 hover:border-red-200 rounded-full transition-colors shadow-sm'
-            title='Xoá ảnh'
-          >
-            <X className='w-3 h-3 text-gray-500 hover:text-red-500' />
-          </button>
+      {/* Image previews — hiển thị ảnh chờ gửi kiểu Messenger */}
+      {imageUrls.length > 0 && (
+        <div className='mx-1 mb-2 flex overflow-x-auto gap-3 pb-2 pt-2 pr-2 scrollbar-thin scrollbar-thumb-gray-300'>
+          {imageUrls.map((url, idx) => (
+            <div key={idx} className='relative flex-shrink-0 animate-in zoom-in duration-200'>
+              <img
+                src={url}
+                alt='Preview'
+                className='h-16 w-16 object-cover rounded-xl border border-gray-200 shadow-sm'
+              />
+              <button
+                onClick={() => setImageUrls((prev) => prev.filter((_, i) => i !== idx))}
+                className='absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center bg-white border border-gray-200 hover:bg-red-50 rounded-full shadow-sm transition-colors z-10'
+                title='Xoá ảnh'
+              >
+                <X className='w-3 h-3 text-gray-500 hover:text-red-500' />
+              </button>
+            </div>
+          ))}
         </div>
       )}
 
@@ -131,6 +155,7 @@ export function ChatInput({
           <input
             type='file'
             accept='image/*'
+            multiple
             onChange={handleImageUpload}
             className='hidden'
             disabled={disabled || isUploading}
@@ -165,6 +190,7 @@ export function ChatInput({
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onSend={handleSend}
+          onPasteFiles={handleFilesUpload}
           placeholder={placeholder}
           disabled={disabled}
           className='flex-1'
@@ -173,9 +199,9 @@ export function ChatInput({
         {/* Send button — tròn, sáng khi có nội dung */}
         <Button
           onClick={handleSend}
-          disabled={disabled || (!message.trim() && !imageUrl)}
+          disabled={disabled || (!message.trim() && imageUrls.length === 0)}
           className={`flex-shrink-0 w-9 h-9 p-0 rounded-full transition-all duration-200 ${
-            message.trim() || imageUrl
+            message.trim() || imageUrls.length > 0
               ? 'bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-blue-300/50 hover:scale-105'
               : 'bg-gray-200 text-gray-400 cursor-not-allowed'
           }`}

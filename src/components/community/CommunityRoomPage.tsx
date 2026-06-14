@@ -77,7 +77,17 @@ function MessageBubble({
               <span>Tin nhắn của bạn đã bị ẩn do vi phạm.</span>
             </div>
           ) : (
-            <p className='whitespace-pre-wrap break-words'>{message.content}</p>
+            <div className='flex flex-col gap-1'>
+              {message.imageUrl && (
+                <img
+                  src={message.imageUrl}
+                  alt='Attachment'
+                  className='max-w-[200px] sm:max-w-[250px] max-h-[300px] object-cover rounded-lg'
+                  loading='lazy'
+                />
+              )}
+              {message.content && <p className='whitespace-pre-wrap break-words'>{message.content}</p>}
+            </div>
           )}
         </div>
 
@@ -124,7 +134,7 @@ export function CommunityRoomPage() {
   const [needsJoin, setNeedsJoin] = useState(false)
   const [messageText, setMessageText] = useState('')
   const [sending, setSending] = useState(false)
-  const [imageUrl, setImageUrl] = useState('')
+  const [imageUrls, setImageUrls] = useState<string[]>([])
   const [isUploading, setIsUploading] = useState(false)
 
   const [reportOpen, setReportOpen] = useState(false)
@@ -333,25 +343,26 @@ export function CommunityRoomPage() {
 
   const handleSend = async () => {
     const trimmed = messageText.trim()
-    if ((!trimmed && !imageUrl) || sending) return
+    if ((!trimmed && imageUrls.length === 0) || sending) return
     setSending(true)
     try {
-      const res = await communityService.sendMessage({ roomId, content: trimmed })
-      const next = res.message
-      if (next) {
-        if (next.status === 'hidden') {
-          toast.info('Tin nhắn của bạn có thể vi phạm và đã bị ẩn.')
+      if (imageUrls.length > 0) {
+        // Gửi ảnh đầu tiên kèm text (nếu có)
+        const res1 = await communityService.sendMessage({ roomId, content: trimmed, imageUrl: imageUrls[0] })
+        handleNewMessageResponse(res1)
+        
+        // Gửi các ảnh còn lại thành tin nhắn rời
+        for (let i = 1; i < imageUrls.length; i++) {
+          const res = await communityService.sendMessage({ roomId, content: '', imageUrl: imageUrls[i] })
+          handleNewMessageResponse(res)
         }
-        setMessages((prev) => {
-          if (prev.some((item) => item._id === next._id)) return prev
-          return [...prev, next]
-        })
-        if (next.status === 'visible') {
-          applyMessageMetric(next, 0)
-        }
+      } else if (trimmed) {
+        const res = await communityService.sendMessage({ roomId, content: trimmed })
+        handleNewMessageResponse(res)
       }
+
       setMessageText('')
-      setImageUrl('')
+      setImageUrls([])
     } catch (err: any) {
       const status = err?.response?.status
       if (status === 403) {
@@ -364,31 +375,61 @@ export function CommunityRoomPage() {
     }
   }
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    if (!file.type.startsWith('image/')) {
-      toast.error('Vui lòng chọn file ảnh')
-      return
+  const handleNewMessageResponse = (res: any) => {
+    const next = res.message
+    if (next) {
+      if (next.status === 'hidden') {
+        toast.info('Tin nhắn của bạn có thể vi phạm và đã bị ẩn.')
+      }
+      setMessages((prev) => {
+        if (prev.some((item) => item._id === next._id)) return prev
+        return [...prev, next]
+      })
+      if (next.status === 'visible') {
+        applyMessageMetric(next, 0)
+      }
     }
+  }
+
+  const handleFilesUpload = async (filesToUpload: File[]) => {
+    if (!filesToUpload || filesToUpload.length === 0) return
     const maxSize = 2 * 1024 * 1024
-    if (file.size > maxSize) {
-      toast.error('Ảnh quá lớn. Vui lòng chọn ảnh nhỏ hơn 2MB')
-      return
-    }
+
+    const validFiles = filesToUpload.filter((file) => {
+      if (!file.type.startsWith('image/')) {
+        toast.error(`File ${file.name} không phải là ảnh`)
+        return false
+      }
+      if (file.size > maxSize) {
+        toast.error(`Ảnh ${file.name} quá lớn. Vui lòng chọn nhỏ hơn 2MB`)
+        return false
+      }
+      return true
+    })
+
+    if (validFiles.length === 0) return
+
     setIsUploading(true)
     try {
       const { uploadImage } = await import('~/services/mediaService')
-      const uploadedUrl = await uploadImage(file)
-      setImageUrl(uploadedUrl)
-      toast.success('Tải ảnh lên thành công')
+      const uploadPromises = validFiles.map((file) => uploadImage(file))
+      const uploadedUrls = await Promise.all(uploadPromises)
+      setImageUrls((prev) => [...prev, ...uploadedUrls])
+      if (validFiles.length > 1) {
+        toast.success(`Tải lên thành công ${uploadedUrls.length} ảnh`)
+      }
     } catch (error: any) {
       toast.error(error?.message || 'Không thể tải ảnh lên')
     } finally {
       setIsUploading(false)
-      // Reset input để có thể chọn lại cùng file
-      e.target.value = ''
     }
+  }
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      handleFilesUpload(Array.from(e.target.files))
+    }
+    e.target.value = ''
   }
 
   const openReportDialog = (message: CommunityMessage) => {
@@ -548,19 +589,24 @@ export function CommunityRoomPage() {
 
             <div className='border-t border-blue-100 bg-white'>
               {/* Image preview strip */}
-              {imageUrl && (
-                <div className='mx-3 mt-2 flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-xl px-3 py-2 animate-in slide-in-from-bottom-2 duration-200'>
-                  <img src={imageUrl} alt='Preview' className='h-10 w-10 object-cover rounded-lg border border-blue-200 shadow-sm flex-shrink-0' />
-                  <div className='flex-1 min-w-0'>
-                    <p className='text-xs font-medium text-blue-700'>Ảnh đã chọn</p>
-                    <p className='text-[10px] text-blue-500 mt-0.5'>Nhấn gửi để chia sẻ</p>
-                  </div>
-                  <button
-                    onClick={() => setImageUrl('')}
-                    className='w-6 h-6 flex items-center justify-center bg-white border border-gray-200 hover:bg-red-50 hover:border-red-200 rounded-full transition-colors shadow-sm flex-shrink-0'
-                  >
-                    <X className='w-3 h-3 text-gray-500' />
-                  </button>
+              {imageUrls.length > 0 && (
+                <div className='mx-3 mt-2 flex overflow-x-auto gap-3 pb-2 pt-2 pr-2 scrollbar-thin scrollbar-thumb-gray-300'>
+                  {imageUrls.map((url, idx) => (
+                    <div key={idx} className='relative flex-shrink-0 animate-in zoom-in duration-200'>
+                      <img
+                        src={url}
+                        alt='Preview'
+                        className='h-16 w-16 object-cover rounded-xl border border-gray-200 shadow-sm'
+                      />
+                      <button
+                        onClick={() => setImageUrls((prev) => prev.filter((_, i) => i !== idx))}
+                        className='absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center bg-white border border-gray-200 hover:bg-red-50 rounded-full shadow-sm transition-colors z-10'
+                        title='Xoá ảnh'
+                      >
+                        <X className='w-3 h-3 text-gray-500 hover:text-red-500' />
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
 
@@ -568,7 +614,7 @@ export function CommunityRoomPage() {
               <div className='flex items-center gap-1.5 p-3'>
                 {/* Image upload */}
                 <label className='cursor-pointer flex-shrink-0'>
-                  <input type='file' accept='image/*' onChange={handleImageUpload} className='hidden' disabled={!canSend || isUploading} />
+                  <input type='file' accept='image/*' multiple onChange={handleImageUpload} className='hidden' disabled={!canSend || isUploading} />
                   <div className='w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors cursor-pointer'>
                     {isUploading ? (
                       <Loader2 className='w-5 h-5 text-gray-400 animate-spin' />
@@ -582,6 +628,7 @@ export function CommunityRoomPage() {
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
                   onSend={handleSend}
+                  onPasteFiles={handleFilesUpload}
                   placeholder={
                     isPending
                       ? 'Yêu cầu tham gia đang chờ duyệt'
@@ -598,12 +645,12 @@ export function CommunityRoomPage() {
 
                 <Button
                   className={`flex-shrink-0 w-9 h-9 p-0 rounded-full transition-all duration-200 ${
-                    (messageText.trim() || imageUrl) && canSend
+                    (messageText.trim() || imageUrls.length > 0) && canSend
                       ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-md hover:shadow-blue-300/50 hover:scale-105'
                       : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                   }`}
                   onClick={handleSend}
-                  disabled={!canSend || sending || (!messageText.trim() && !imageUrl)}
+                  disabled={!canSend || sending || (!messageText.trim() && imageUrls.length === 0)}
                 >
                   {sending ? <Loader2 className='w-4 h-4 animate-spin' /> : <Send className='w-4 h-4' />}
                 </Button>
