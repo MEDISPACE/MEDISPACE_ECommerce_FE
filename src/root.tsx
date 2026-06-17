@@ -36,29 +36,35 @@ export const links: LinksFunction = () => [
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
+    <html lang='vi'>
+      <head>
+        <meta charSet='utf-8' />
+        <meta name='viewport' content='width=device-width, initial-scale=1' />
+        <meta name='color-scheme' content='only light' />
+        <meta name='theme-color' content='rgba(255, 255, 255, 0.999)' />
+        <meta name='description' content='Nền tảng mua thuốc trực tuyến uy tín, an toàn và tiện lợi' />
+        <Meta />
+        <Links />
+      </head>
+      <body style={{ backgroundColor: '#F8FAFB', colorScheme: 'light' }}>
+        {children}
+        <ScrollRestoration />
+        <Scripts />
+      </body>
+    </html>
+  )
+}
+
+export default function Root() {
+  return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <SocketProvider>
           <CartProvider>
             <WishlistProvider>
               <BreadcrumbProvider>
-                <html lang='vi'>
-                  <head>
-                    <meta charSet='utf-8' />
-                    <meta name='viewport' content='width=device-width, initial-scale=1' />
-                    <meta name='color-scheme' content='only light' />
-                    <meta name='theme-color' content='rgba(255, 255, 255, 0.999)' />
-                    <meta name='description' content='Nền tảng mua thuốc trực tuyến uy tín, an toàn và tiện lợi' />
-                    <Meta />
-                    <Links />
-                  </head>
-                  <body style={{ backgroundColor: '#F8FAFB', colorScheme: 'light' }}>
-                    {children}
-                    <Toaster position='top-right' />
-                    <ScrollRestoration />
-                    <Scripts />
-                  </body>
-                </html>
+                <Outlet />
+                <Toaster position='top-right' />
               </BreadcrumbProvider>
             </WishlistProvider>
           </CartProvider>
@@ -66,8 +72,4 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </AuthProvider>
     </QueryClientProvider>
   )
-}
-
-export default function Root() {
-  return <Outlet />
 }
