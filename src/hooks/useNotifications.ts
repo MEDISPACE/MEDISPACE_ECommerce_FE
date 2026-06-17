@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { notificationService } from '../services/notificationService'
 import { useSocketContext } from '../contexts/SocketContext'
 import { useAuth } from '../contexts/AuthContext'
+import { UserStatus } from '../types/user'
 
 export const NOTIFICATIONS_QUERY_KEY = ['notifications'] as const
 export const UNREAD_COUNT_QUERY_KEY = ['notifications-unread-count'] as const
@@ -16,14 +17,16 @@ export function useNotifications(
   page = 1
 ) {
   const queryClient = useQueryClient()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
   const { subscribe, unsubscribe } = useSocketContext()
   const subscriberId = useId()
+  const canUseNotifications = isAuthenticated && user?.status === UserStatus.Verified
 
   const query = useQuery({
     queryKey: [...NOTIFICATIONS_QUERY_KEY, filter, page],
     queryFn: () => notificationService.getNotifications(page, 20, filter),
-    enabled: isAuthenticated,
+    enabled: canUseNotifications,
+    retry: (failureCount, error: any) => error?.response?.status !== 403 && failureCount < 2,
     staleTime: 1000 * 30, // 30s
   })
 
@@ -58,7 +61,7 @@ export function useNotifications(
 
   // Listen for real-time notifications via Socket.IO
   useEffect(() => {
-    if (!isAuthenticated) return
+    if (!canUseNotifications) return
 
     subscribe(subscriberId, {
       onNewNotification: (notification) => {
@@ -71,7 +74,7 @@ export function useNotifications(
     return () => {
       unsubscribe(subscriberId)
     }
-  }, [isAuthenticated, subscriberId, subscribe, unsubscribe, queryClient])
+  }, [canUseNotifications, subscriberId, subscribe, unsubscribe, queryClient])
 
   return {
     ...query,
@@ -91,21 +94,23 @@ export function useNotifications(
  */
 export function useUnreadNotificationCount() {
   const queryClient = useQueryClient()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
   const { subscribe, unsubscribe } = useSocketContext()
   const subscriberId = useId()
+  const canUseNotifications = isAuthenticated && user?.status === UserStatus.Verified
 
   const query = useQuery({
     queryKey: UNREAD_COUNT_QUERY_KEY,
     queryFn: () => notificationService.getUnreadCount(),
-    enabled: isAuthenticated,
+    enabled: canUseNotifications,
+    retry: (failureCount, error: any) => error?.response?.status !== 403 && failureCount < 2,
     staleTime: 1000 * 60, // 60s
     refetchInterval: 1000 * 60, // poll every 60s as socket fallback
   })
 
   // Also listen to socket for instant count update
   useEffect(() => {
-    if (!isAuthenticated) return
+    if (!canUseNotifications) return
 
     subscribe(subscriberId, {
       onNewNotification: () => {
@@ -116,7 +121,7 @@ export function useUnreadNotificationCount() {
     return () => {
       unsubscribe(subscriberId)
     }
-  }, [isAuthenticated, subscriberId, subscribe, unsubscribe, queryClient])
+  }, [canUseNotifications, subscriberId, subscribe, unsubscribe, queryClient])
 
   return query.data ?? 0
 }
