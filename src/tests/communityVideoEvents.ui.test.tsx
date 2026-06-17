@@ -56,6 +56,7 @@ vi.mock('sonner', () => ({
 import { CommunityVideoEventsPage } from '~/components/community/CommunityVideoEventsPage'
 import { CommunityVideoEventDetailPage } from '~/components/community/CommunityVideoEventDetailPage'
 import { AdminCommunityVideoEventsPage } from '~/components/admin/AdminCommunityVideoEventsPage'
+import { toast } from 'sonner'
 
 function makeQueryClient() {
   return new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
@@ -168,6 +169,27 @@ describe('Community Video Events UI component tests', () => {
 
     expect(await screen.findByTestId('livekit-room')).toBeInTheDocument()
     expect(screen.getByTestId('video-conference')).toBeInTheDocument()
+  })
+
+  it('blocks placeholder LiveKit server URLs before mounting LiveKit', async () => {
+    const user = userEvent.setup()
+    mockCommunityService.getVideoEvent.mockResolvedValue({ ...event, status: 'live', viewerRegistration: { status: 'registered' } })
+    mockCommunityService.joinVideoEvent.mockResolvedValue({
+      token: 'mock-token',
+      wsUrl: 'wss://your-livekit-server.com',
+      provider: 'livekit',
+      role: 'attendee',
+      expiresAt: new Date().toISOString(),
+    })
+
+    renderDetail()
+
+    await screen.findByText('Diabetes care workshop')
+    await user.click(screen.getByRole('checkbox'))
+    await user.click(screen.getByRole('button', { name: /tham gia hội thảo/i }))
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('LiveKit chưa được cấu hình đúng')))
+    expect(screen.queryByTestId('livekit-room')).not.toBeInTheDocument()
   })
 
   it('submits a valid question and clears the input', async () => {

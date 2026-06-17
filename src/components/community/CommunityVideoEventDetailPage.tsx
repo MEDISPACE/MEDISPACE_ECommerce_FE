@@ -24,6 +24,16 @@ function statusLabel(status?: string) {
   return labels[status || ''] || status
 }
 
+function isValidLiveKitJoinPayload(payload: CommunityVideoJoinPayload) {
+  try {
+    const url = new URL(payload.wsUrl)
+    const host = url.hostname.toLowerCase()
+    return ['ws:', 'wss:'].includes(url.protocol) && !host.includes('your-livekit-server.com') && Boolean(payload.token)
+  } catch {
+    return false
+  }
+}
+
 export function CommunityVideoEventDetailPage() {
   const { eventId = '' } = useParams()
   const navigate = useNavigate()
@@ -74,7 +84,14 @@ export function CommunityVideoEventDetailPage() {
 
   const joinMutation = useMutation({
     mutationFn: () => communityService.joinVideoEvent(eventId),
-    onSuccess: (payload) => setJoinPayload(payload),
+    onSuccess: (payload) => {
+      if (!isValidLiveKitJoinPayload(payload)) {
+        setJoinPayload(null)
+        toast.error('LiveKit chưa được cấu hình đúng. Vui lòng kiểm tra LIVEKIT_WS_URL trên backend.')
+        return
+      }
+      setJoinPayload(payload)
+    },
     onError: (error: any) => toast.error(error?.response?.data?.message || 'Không thể tham gia hội thảo'),
   })
 
