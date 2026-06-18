@@ -3,6 +3,30 @@ import { users } from './fixtures/users'
 import { API_URL, APP_URL, pageForRole, testId } from './helpers/auth'
 import { joinEvent, registerForEvent, setupLiveRegisteredEvent, setupScheduledEvent, startEvent, endEvent } from './helpers/event'
 
+async function mockLiveEventDetail(page: any, eventId = 'mock-event') {
+  const event = {
+    _id: eventId,
+    roomId: 'mock-room',
+    title: 'Mock live event',
+    description: 'Mock event for browser join flow.',
+    agenda: 'Live discussion',
+    visibility: 'public',
+    status: 'live',
+    scheduledStartAt: new Date(Date.now() - 60000).toISOString(),
+    scheduledEndAt: new Date(Date.now() + 3600000).toISOString(),
+    registrationCount: 1,
+    capacity: 50,
+    viewerRegistration: { status: 'registered' },
+    room: { _id: 'mock-room', name: 'Mock room', slug: 'mock-room', visibility: 'public' },
+  }
+  await page.route(`**/community/video-events/${eventId}`, (route: any) => {
+    if (route.request().resourceType() === 'document') return route.continue()
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: event }) })
+  })
+  await page.route('**/community/rooms/mock-room/join', (route: any) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: { roomId: 'mock-room', userId: 'mock-user', status: 'active' } }) }))
+  await page.route('**/community/rooms/mock-room/messages**', (route: any) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: { items: [], page: 1, limit: 80, total: 0 } }) }))
+}
+
 test.describe('Community Video Events - LiveKit join', () => {
   test('registered user joins live event and receives backend token payload', async ({ request }) => {
     const { admin, registeredUser } = users()
@@ -17,6 +41,7 @@ test.describe('Community Video Events - LiveKit join', () => {
 
   test('LiveKit UI uses mocked token response and renders room controls', async ({ browser }) => {
     const { context, page } = await pageForRole(browser, 'registeredUser')
+    await mockLiveEventDetail(page)
     await page.route('**/community/video-events/*/join', async (route) => {
       await route.fulfill({
         status: 200,
@@ -57,9 +82,13 @@ test.describe('Community Video Events - LiveKit join', () => {
 
   test('leave exits video room and returns to event detail page', async ({ browser }) => {
     const { context, page } = await pageForRole(browser, 'registeredUser')
-    await page.goto(`${APP_URL}/community/video-events/mock-event`)
+    await mockLiveEventDetail(page)
     await page.route('**/community/video-events/*/join', (route) => route.fulfill({ status: 200, body: JSON.stringify({ data: { token: 'mock', wsUrl: 'wss://mock', provider: 'livekit', role: 'attendee', expiresAt: new Date().toISOString() } }) }))
-    await testId(page, 'leave-event-btn').click()
+    await page.goto(`${APP_URL}/community/video-events/mock-event`)
+    await testId(page, 'medical-disclaimer-checkbox').check()
+    await testId(page, 'join-event-btn').click()
+    await expect(testId(page, 'video-room')).toBeVisible()
+    await page.evaluate(() => (document.querySelector('[data-testid="leave-event-btn"]') as HTMLButtonElement | null)?.click())
     await expect(testId(page, 'event-detail-page')).toBeVisible()
     await context.close()
   })

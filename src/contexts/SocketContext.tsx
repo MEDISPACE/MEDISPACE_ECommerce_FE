@@ -36,8 +36,6 @@ interface SocketCallbacks {
   onCommunityModerationQueued?: (data: Record<string, unknown>) => void
   onCommunityVideoEventUpdated?: (data: Record<string, unknown>) => void
   onCommunityVideoEventRegistered?: (registration: CommunityVideoEventRegistration) => void
-  onCommunityVideoEventQuestionNew?: (data: Record<string, unknown>) => void
-  onCommunityVideoEventQuestionUpdated?: (data: Record<string, unknown>) => void
   onNewNotification?: (notification: Record<string, unknown>) => void
   onError?: (error: { message: string }) => void
   onMessageStreamStart?: (data: { conversationId: string }) => void
@@ -240,12 +238,6 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     s.on(COMMUNITY_VIDEO_EVENT_SOCKET_EVENTS.ENDED, broadcastVideoEventUpdated)
     s.on(COMMUNITY_VIDEO_EVENT_SOCKET_EVENTS.REGISTERED, (registration: CommunityVideoEventRegistration) =>
       broadcast('onCommunityVideoEventRegistered', registration),
-    )
-    s.on(COMMUNITY_VIDEO_EVENT_SOCKET_EVENTS.QUESTION_NEW, (data: Record<string, unknown>) =>
-      broadcast('onCommunityVideoEventQuestionNew', data),
-    )
-    s.on(COMMUNITY_VIDEO_EVENT_SOCKET_EVENTS.QUESTION_UPDATED, (data: Record<string, unknown>) =>
-      broadcast('onCommunityVideoEventQuestionUpdated', data),
     )
     s.on('notification:new', (notification: Record<string, unknown>) => {
       broadcast('onNewNotification', notification)

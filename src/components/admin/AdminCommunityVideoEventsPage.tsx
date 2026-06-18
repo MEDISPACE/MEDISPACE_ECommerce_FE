@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { CalendarPlus, Check, EyeOff, Pin, Play, Search, Square, Video, X } from 'lucide-react'
+import { CalendarPlus, Copy, ExternalLink, Link as LinkIcon, MessageSquare, Play, Search, Square, Video, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { adminCommunityService } from '~/services/communityService'
 import type { CommunityRoom, CommunityVideoEvent } from '~/types/community'
@@ -24,6 +24,20 @@ function formatDateTime(value?: string) {
 function statusLabel(status?: string) {
   const labels: Record<string, string> = { draft: 'Nháp', scheduled: 'Sắp diễn ra', live: 'Live', ended: 'Đã kết thúc', cancelled: 'Đã hủy' }
   return labels[status || ''] || status
+}
+
+function getMeetingHref(event?: CommunityVideoEvent | null) {
+  if (!event?._id) return ''
+  const path = event.meetingUrl || `/community/video-events/${event._id}`
+  if (/^https?:\/\//i.test(path)) return path
+  if (typeof window === 'undefined') return path
+  return new URL(path, window.location.origin).toString()
+}
+
+function meetingCode(event?: CommunityVideoEvent | null) {
+  if (!event?._id) return '----'
+  const compact = event._id.replace(/[^a-zA-Z0-9]/g, '').slice(-12) || event._id.slice(-12)
+  return compact.match(/.{1,4}/g)?.join('-').toLowerCase() || event._id
 }
 
 export function AdminCommunityVideoEventsPage() {
@@ -53,17 +67,10 @@ export function AdminCommunityVideoEventsPage() {
     queryFn: () => adminCommunityService.listVideoEventRegistrations({ eventId: selectedEvent!._id, page: 1, limit: 50 }),
     enabled: Boolean(selectedEvent?._id),
   })
-  const questionsQuery = useQuery({
-    queryKey: ['admin-community-video-event-questions', selectedEvent?._id],
-    queryFn: () => adminCommunityService.listVideoEventQuestions({ eventId: selectedEvent!._id, page: 1, limit: 80 }),
-    enabled: Boolean(selectedEvent?._id),
-  })
-
   const invalidateEvents = () => {
     queryClient.invalidateQueries({ queryKey: ['admin-community-video-events'] })
     if (selectedEvent?._id) {
       queryClient.invalidateQueries({ queryKey: ['admin-community-video-event-registrations', selectedEvent._id] })
-      queryClient.invalidateQueries({ queryKey: ['admin-community-video-event-questions', selectedEvent._id] })
     }
   }
 
@@ -74,16 +81,18 @@ export function AdminCommunityVideoEventsPage() {
     if (Number.isNaN(scheduledEndAt.getTime())) throw new Error('Thời gian kết thúc không hợp lệ')
     if (scheduledEndAt <= scheduledStartAt) throw new Error('Thời gian kết thúc phải sau thời gian bắt đầu')
 
+    const agenda = form.agenda.trim()
+    const tags = form.tags.split(',').map((tag) => tag.trim()).filter(Boolean)
     return {
       roomId: form.roomId,
       title: form.title.trim(),
       description: form.description.trim(),
-      agenda: form.agenda.trim(),
+      ...(agenda ? { agenda } : {}),
       visibility: form.visibility,
       scheduledStartAt: scheduledStartAt.toISOString(),
       scheduledEndAt: scheduledEndAt.toISOString(),
       capacity: Number(form.capacity) || null,
-      tags: form.tags.split(',').map((tag) => tag.trim()).filter(Boolean),
+      ...(tags.length ? { tags } : {}),
       registrationRequired: true,
       provider: 'livekit',
     }
@@ -92,7 +101,7 @@ export function AdminCommunityVideoEventsPage() {
   const createMutation = useMutation({
     mutationFn: () => adminCommunityService.createVideoEvent(buildCreatePayload()),
     onSuccess: (event) => {
-      toast.success('Đã tạo hội thảo')
+      toast.success('Đã tạo link cuộc họp')
       setSelectedEvent(event)
       setForm((current) => ({ ...current, title: '', description: '', agenda: '', tags: '' }))
       invalidateEvents()
@@ -114,24 +123,28 @@ export function AdminCommunityVideoEventsPage() {
     onError: (error: any) => toast.error(error?.response?.data?.message || 'Không thể cập nhật hội thảo'),
   })
 
-  const updateQuestionMutation = useMutation({
-    mutationFn: ({ questionId, data }: { questionId: string; data: { status?: string; pinned?: boolean; answerSummary?: string } }) =>
-      adminCommunityService.updateVideoEventQuestion(selectedEvent!._id, questionId, data),
-    onSuccess: () => {
-      toast.success('Đã cập nhật câu hỏi')
-      invalidateEvents()
-    },
-    onError: (error: any) => toast.error(error?.response?.data?.message || 'Không thể cập nhật câu hỏi'),
-  })
+  const copyMeetingLink = async (event: CommunityVideoEvent) => {
+    const href = getMeetingHref(event)
+    if (!href) return
+    await navigator.clipboard.writeText(href)
+    toast.success('Đã copy link cuộc họp')
+  }
 
   const events = eventsQuery.data?.items || []
 
+  useEffect(() => {
+    const firstRoom = roomsQuery.data?.[0]
+    if (!form.roomId && firstRoom?._id) {
+      setForm((current) => ({ ...current, roomId: firstRoom._id }))
+    }
+  }, [form.roomId, roomsQuery.data])
+
   return (
-    <main className='space-y-6'>
+    <main data-testid='admin-video-events-page' className='space-y-6'>
       <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
         <div>
           <h1 className='text-2xl font-bold text-gray-950'>Hội thảo cộng đồng</h1>
-          <p className='text-sm text-gray-600'>Tạo lịch, vận hành live session và kiểm duyệt Q&A.</p>
+          <p className='text-sm text-gray-600'>Tạo link họp, vận hành live session và để cộng đồng trao đổi ngay bằng chat trong phòng.</p>
         </div>
         <div className='relative w-full md:w-80'>
           <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400' />
@@ -140,8 +153,30 @@ export function AdminCommunityVideoEventsPage() {
       </div>
 
       <section className='grid gap-6 xl:grid-cols-[420px_minmax(0,1fr)]'>
-        <form className='space-y-4 rounded-lg border border-gray-200 bg-white p-5' onSubmit={(event) => { event.preventDefault(); createMutation.mutate() }}>
-          <div className='flex items-center gap-2 font-semibold text-gray-950'><CalendarPlus className='h-4 w-4' />Tạo hội thảo</div>
+        <form className='space-y-4 rounded-lg border border-gray-200 bg-white p-5 shadow-sm' onSubmit={(event) => { event.preventDefault(); createMutation.mutate() }}>
+          <div>
+            <div className='flex items-center gap-2 font-semibold text-gray-950'><CalendarPlus className='h-4 w-4 text-blue-600' />Tạo link cuộc họp</div>
+            <p className='mt-1 text-sm text-gray-600'>Nhập thông tin buổi chia sẻ, bấm tạo là có ngay link phòng giống Google Meet.</p>
+          </div>
+
+          {selectedEvent && (
+            <div className='rounded-lg border border-blue-200 bg-blue-50 p-4'>
+              <div className='mb-2 flex items-center justify-between gap-2'>
+                <div>
+                  <div className='text-sm font-semibold text-blue-950'>Link cuộc họp đã sẵn sàng</div>
+                  <div className='text-xs text-blue-700'>Mã phòng: {meetingCode(selectedEvent)}</div>
+                </div>
+                <Button type='button' size='sm' onClick={() => copyMeetingLink(selectedEvent)}><Copy />Copy</Button>
+              </div>
+              <div className='flex items-center gap-2 rounded-md bg-white px-3 py-2 text-sm text-gray-700'>
+                <LinkIcon className='h-4 w-4 shrink-0 text-blue-600' />
+                <span className='truncate font-mono'>{getMeetingHref(selectedEvent)}</span>
+              </div>
+              <Button type='button' variant='outline' className='mt-3 w-full bg-white' asChild>
+                <a href={getMeetingHref(selectedEvent)} target='_blank' rel='noreferrer'><ExternalLink />Mở giao diện phòng họp</a>
+              </Button>
+            </div>
+          )}
           <div className='space-y-2'>
             <Label>Phòng cộng đồng</Label>
           {roomsQuery.isError && <p className='text-sm text-red-600'>Không thể tải danh sách phòng.</p>}
@@ -150,19 +185,19 @@ export function AdminCommunityVideoEventsPage() {
               <SelectContent>{(roomsQuery.data || []).map((room: CommunityRoom) => <SelectItem key={room._id} value={room._id}>{room.name}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          <div className='space-y-2'><Label>Tiêu đề</Label><Input value={form.title} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} /></div>
-          <div className='space-y-2'><Label>Mô tả</Label><Textarea value={form.description} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} /></div>
-          <div className='space-y-2'><Label>Agenda</Label><Textarea value={form.agenda} onChange={(event) => setForm((current) => ({ ...current, agenda: event.target.value }))} /></div>
+          <div className='space-y-2'><Label>Tiêu đề</Label><Input data-testid='event-title-input' value={form.title} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} /></div>
+          <div className='space-y-2'><Label>Mô tả</Label><Textarea data-testid='event-description-input' value={form.description} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} /></div>
+          <div className='space-y-2'><Label>Agenda</Label><Textarea data-testid='event-agenda-input' value={form.agenda} onChange={(event) => setForm((current) => ({ ...current, agenda: event.target.value }))} /></div>
           <div className='grid gap-3 md:grid-cols-2'>
-            <div className='space-y-2'><Label>Bắt đầu</Label><Input type='datetime-local' value={form.scheduledStartAt} onChange={(event) => setForm((current) => ({ ...current, scheduledStartAt: event.target.value }))} /></div>
-            <div className='space-y-2'><Label>Kết thúc</Label><Input type='datetime-local' value={form.scheduledEndAt} onChange={(event) => setForm((current) => ({ ...current, scheduledEndAt: event.target.value }))} /></div>
+            <div className='space-y-2'><Label>Bắt đầu</Label><Input data-testid='event-start-input' type='datetime-local' value={form.scheduledStartAt} onChange={(event) => setForm((current) => ({ ...current, scheduledStartAt: event.target.value }))} /></div>
+            <div className='space-y-2'><Label>Kết thúc</Label><Input data-testid='event-end-input' type='datetime-local' value={form.scheduledEndAt} onChange={(event) => setForm((current) => ({ ...current, scheduledEndAt: event.target.value }))} /></div>
           </div>
           <div className='grid gap-3 md:grid-cols-2'>
             <div className='space-y-2'><Label>Visibility</Label><Select value={form.visibility} onValueChange={(visibility: 'public' | 'private') => setForm((current) => ({ ...current, visibility }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value='public'>Công khai</SelectItem><SelectItem value='private'>Riêng tư</SelectItem></SelectContent></Select></div>
-            <div className='space-y-2'><Label>Sức chứa</Label><Input type='number' min='1' value={form.capacity} onChange={(event) => setForm((current) => ({ ...current, capacity: event.target.value }))} /></div>
+            <div className='space-y-2'><Label>Sức chứa</Label><Input data-testid='event-capacity-input' type='number' min='1' value={form.capacity} onChange={(event) => setForm((current) => ({ ...current, capacity: event.target.value }))} /></div>
           </div>
           <div className='space-y-2'><Label>Tags</Label><Input value={form.tags} onChange={(event) => setForm((current) => ({ ...current, tags: event.target.value }))} placeholder='ho-hap, phong-ngua' /></div>
-          <Button className='w-full' disabled={!form.roomId || !form.title.trim() || createMutation.isPending}><CalendarPlus />Tạo hội thảo</Button>
+          <Button data-testid='create-event-submit' className='w-full bg-blue-600 hover:bg-blue-700' disabled={!form.roomId || !form.title.trim() || createMutation.isPending}><CalendarPlus />Tạo link Meet</Button>
         </form>
 
         <div className='space-y-4'>
@@ -171,12 +206,16 @@ export function AdminCommunityVideoEventsPage() {
           ) : eventsQuery.isLoading ? (
             <div className='rounded-lg border border-gray-200 bg-white p-6 text-center text-gray-600'>Đang tải hội thảo...</div>
           ) : (
-          <div className='grid gap-3 lg:grid-cols-2'>
+          <div data-testid='admin-event-list' className='grid gap-3 lg:grid-cols-2'>
             {events.map((event) => (
               <button key={event._id} className={`rounded-lg border bg-white p-4 text-left shadow-sm ${selectedEvent?._id === event._id ? 'border-blue-500' : 'border-gray-200'}`} onClick={() => setSelectedEvent(event)}>
-                <div className='mb-2 flex flex-wrap gap-2'><Badge>{statusLabel(event.status)}</Badge><Badge variant='outline'>{event.visibility}</Badge></div>
+                <div className='mb-2 flex flex-wrap gap-2'><Badge data-testid={`event-status-${event.status}`}>{statusLabel(event.status)}</Badge><Badge variant='outline'>{event.visibility}</Badge></div>
                 <div className='font-semibold text-gray-950'>{event.title}</div>
                 <div className='mt-2 text-sm text-gray-600'>{formatDateTime(event.scheduledStartAt)}</div>
+                <div className='mt-3 flex items-center gap-2 rounded-md bg-blue-50 px-3 py-2 text-xs text-blue-800'>
+                  <LinkIcon className='h-3.5 w-3.5' />
+                  <span className='truncate'>{getMeetingHref(event)}</span>
+                </div>
               </button>
             ))}
           </div>
@@ -187,9 +226,19 @@ export function AdminCommunityVideoEventsPage() {
               <div className='flex flex-col gap-3 md:flex-row md:items-start md:justify-between'>
                 <div><h2 className='text-xl font-semibold text-gray-950'>{selectedEvent.title}</h2><p className='text-sm text-gray-600'>{formatDateTime(selectedEvent.scheduledStartAt)} - {formatDateTime(selectedEvent.scheduledEndAt)}</p></div>
                 <div className='flex flex-wrap gap-2'>
+                  <Button size='sm' variant='outline' onClick={() => copyMeetingLink(selectedEvent)}><Copy />Copy link</Button>
+                  <Button size='sm' variant='outline' asChild><a href={getMeetingHref(selectedEvent)} target='_blank' rel='noreferrer'><ExternalLink />Mở link</a></Button>
                   <Button size='sm' disabled={selectedEvent.status === 'live'} onClick={() => actionMutation.mutate({ eventId: selectedEvent._id, action: 'start' })}><Play />Start</Button>
                   <Button size='sm' variant='outline' disabled={selectedEvent.status !== 'live'} onClick={() => actionMutation.mutate({ eventId: selectedEvent._id, action: 'end' })}><Square />End</Button>
                   <Button size='sm' variant='destructive' disabled={selectedEvent.status === 'ended' || selectedEvent.status === 'cancelled'} onClick={() => actionMutation.mutate({ eventId: selectedEvent._id, action: 'cancel' })}><X />Cancel</Button>
+                </div>
+              </div>
+
+              <div className='mt-4 rounded-lg border border-blue-100 bg-blue-50 p-4'>
+                <div className='mb-2 flex items-center gap-2 text-sm font-semibold text-blue-950'><LinkIcon className='h-4 w-4' />Link cuộc họp</div>
+                <div className='flex flex-col gap-2 sm:flex-row'>
+                  <Input readOnly value={getMeetingHref(selectedEvent)} className='bg-white font-mono text-sm' />
+                  <Button type='button' onClick={() => copyMeetingLink(selectedEvent)}><Copy />Copy</Button>
                 </div>
               </div>
 
@@ -202,22 +251,9 @@ export function AdminCommunityVideoEventsPage() {
                   </div>
                 </div>
                 <div>
-                  <div className='mb-3 font-semibold'>Q&A</div>
-                  <div className='max-h-96 space-y-2 overflow-auto'>
-                    {questionsQuery.isError ? <p className='text-sm text-red-600'>Không thể tải Q&A.</p> : questionsQuery.data?.items?.map((item) => (
-                      <div key={item._id} className='rounded-md border border-gray-100 p-3 text-sm'>
-                        <div className='mb-2 flex flex-wrap items-center gap-2'><Badge variant='outline'>{item.status}</Badge>{item.pinned && <Badge>Ghim</Badge>}</div>
-                        <p className='text-gray-800'>{item.content}</p>
-                        {item.moderated?.autoHidden && <p className='mt-2 text-xs text-red-600'>Câu hỏi bị ẩn tự động bởi moderation.</p>}
-                        <div className='mt-3 flex flex-wrap gap-2'>
-                          <Button size='sm' variant='outline' onClick={() => updateQuestionMutation.mutate({ questionId: item._id, data: { status: 'approved' } })}><Check />Duyệt</Button>
-                          <Button size='sm' variant='outline' onClick={() => updateQuestionMutation.mutate({ questionId: item._id, data: { pinned: !item.pinned } })}><Pin />Ghim</Button>
-                          <Button size='sm' variant='outline' onClick={() => updateQuestionMutation.mutate({ questionId: item._id, data: { status: 'hidden' } })}><EyeOff />Ẩn</Button>
-                          <Button size='sm' onClick={() => updateQuestionMutation.mutate({ questionId: item._id, data: { status: 'answered' } })}>Answered</Button>
-                        </div>
-                      </div>
-                    ))}
-                    {!questionsQuery.isError && !questionsQuery.data?.items?.length && <p className='text-sm text-gray-500'>Chưa có câu hỏi.</p>}
+                  <div className='mb-3 flex items-center gap-2 font-semibold'><MessageSquare className='h-4 w-4' />Chat trực tiếp</div>
+                  <div className='rounded-md border border-blue-100 bg-blue-50 p-4 text-sm text-blue-950'>
+                    Người tham gia nhắn tin ngay trong phòng họp bằng chat realtime. Host/dược sĩ phản hồi trực tiếp trong cuộc gọi, không cần quy trình duyệt chờ xử lý.
                   </div>
                 </div>
               </div>

@@ -23,8 +23,8 @@ The backend seed must provide these accounts:
 
 | Fixture | Default email | Purpose |
 |---|---|---|
-| `admin` | `e2e.admin@medispace.local` | Creates rooms/events, starts/ends/cancels sessions, moderates Q&A. |
-| `registeredUser` | `e2e.customer@medispace.local` | Registers, joins, submits questions. |
+| `admin` | `e2e.admin@medispace.local` | Creates rooms/events and starts/ends/cancels sessions. |
+| `registeredUser` | `e2e.customer@medispace.local` | Registers, joins, and sends meeting chat messages. |
 | `host` | `e2e.customer2@medispace.local` | Secondary user for capacity, visibility, realtime and negative auth cases. |
 | `guest` | none | Anonymous browser/API requests. |
 
@@ -118,23 +118,21 @@ The suite intentionally uses test IDs, not CSS classes or translated text. The U
 | Public listing | `video-events-list`, `register-event-btn`, `attendee-count` |
 | Event detail | `event-detail-page`, `event-title`, `medical-disclaimer-checkbox`, `join-event-btn`, `leave-event-btn`, `session-ended-message`, `event-live-notification` |
 | LiveKit room shell | `video-room`, `mic-toggle-btn`, `camera-toggle-btn`, `reconnection-indicator` |
-| Q&A | `qa-panel`, `question-input`, `question-character-count`, `submit-question-btn`, `question-status-pending`, `question-<questionId>` |
-| Admin Q&A | `approve-question-btn`, `hide-question-btn`, `answer-question-btn`, `pin-question-btn` |
+| Meeting chat | `Chat cuộc họp`, message textbox placeholder `Nhắn tin cho mọi người...`, `Gửi tin nhắn` button |
 
 ## Files
 
 - `fixtures/users.ts` loads seeded users from `tests/e2e/.auth/sessions.json`.
 - `fixtures/events.ts` builds scheduled/draft/live/cancelled/ended event payloads.
-- `fixtures/questions.ts` builds question payloads.
 - `helpers/auth.ts` creates authenticated browser contexts.
-- `helpers/event.ts` contains API setup and action helpers.
+- `helpers/event.ts` contains API setup and action helpers, including room chat helpers.
 - `helpers/socket.ts` contains realtime wait helpers.
 
 ## Test Pyramid Coverage
 
 | Layer | Files | Purpose |
 |---|---|---|
-| Backend functional/service | `MEDISPACE_ECommerce_BE/src/tests/communityVideoEvents.services.test.ts` | Business rules: create validation, capacity race guard, registration, LiveKit token payload, Q&A moderation fallback, visibility filtering, reminders. |
-| Frontend component/UI | `MEDISPACE_ECommerce_FE/src/tests/communityVideoEvents.ui.test.tsx` | Fast jsdom validation of listing/detail/admin UI states, Q&A controls, LiveKit shell rendering. |
-| Playwright E2E/API | `tests/community-events/01-10.*.spec.ts` | Browser + API coverage for roles, lifecycle, registration, Q&A, realtime, reminders, access control, edge cases. |
+| Backend functional/service | `MEDISPACE_ECommerce_BE/src/tests/communityVideoEvents.services.test.ts` | Business rules: create validation, capacity race guard, registration, LiveKit token payload, visibility filtering, reminders. |
+| Frontend component/UI | `MEDISPACE_ECommerce_FE/src/tests/communityVideoEvents.ui.test.tsx` | Fast jsdom validation of listing/detail/admin UI states, meeting chat, and LiveKit shell rendering. |
+| Playwright E2E/API | `tests/community-events/01-10.*.spec.ts` | Browser + API coverage for roles, lifecycle, registration, meeting chat, realtime, reminders, access control, edge cases. |
 | Playwright visual UI/UX | `tests/community-events/11.visual-ui-ux.spec.ts` | Screenshot verification for desktop/mobile listing, event detail, live pre-join, and admin dashboard. |

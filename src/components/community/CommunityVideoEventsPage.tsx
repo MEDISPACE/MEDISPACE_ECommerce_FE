@@ -39,7 +39,7 @@ function EventCard({ event, onRegister }: { event: CommunityVideoEvent; onRegist
 
       <div className='mt-4 flex flex-wrap items-center gap-4 text-sm text-gray-600'>
         <span className='inline-flex items-center gap-2'><CalendarDays className='h-4 w-4' />{formatDateTime(event.scheduledStartAt)}</span>
-        <span className='inline-flex items-center gap-2'><Users className='h-4 w-4' />{event.registrationCount || 0}{event.capacity ? `/${event.capacity}` : ''}</span>
+        <span data-testid='attendee-count' className='inline-flex items-center gap-2'><Users className='h-4 w-4' />{event.registrationCount || 0}{event.capacity ? `/${event.capacity}` : ''}</span>
       </div>
 
       <div className='mt-5 flex flex-wrap gap-2'>
@@ -47,7 +47,7 @@ function EventCard({ event, onRegister }: { event: CommunityVideoEvent; onRegist
           <Link to={`/community/video-events/${event._id}`}>Xem chi tiết</Link>
         </Button>
         {event.status !== 'ended' && event.status !== 'cancelled' && !registered && (
-          <Button onClick={() => onRegister(event._id)}>Đăng ký</Button>
+          <Button data-testid='register-event-btn' onClick={() => onRegister(event._id)}>Đăng ký</Button>
         )}
         {registered && <Badge className='self-center bg-emerald-600 text-white'>Đã đăng ký</Badge>}
       </div>
@@ -90,7 +90,7 @@ export function CommunityVideoEventsPage() {
   }
 
   return (
-    <main className='mx-auto w-full max-w-6xl px-4 py-8'>
+    <main data-testid='video-events-list' className='mx-auto w-full max-w-6xl px-4 py-8'>
       <div className='mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between'>
         <div>
           <h1 className='text-2xl font-bold text-gray-950'>Hội thảo cộng đồng</h1>
