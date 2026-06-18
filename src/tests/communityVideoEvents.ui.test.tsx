@@ -10,19 +10,18 @@ const { mockCommunityService, mockAdminCommunityService, mockUseAuth, mockUseSoc
     getVideoEvent: vi.fn(),
     registerVideoEvent: vi.fn(),
     joinVideoEvent: vi.fn(),
-    listVideoEventQuestions: vi.fn(),
-    submitVideoEventQuestion: vi.fn(),
+    joinRoom: vi.fn(),
+    listMessages: vi.fn(),
+    sendMessage: vi.fn(),
   },
   mockAdminCommunityService: {
     listRooms: vi.fn(),
     listVideoEvents: vi.fn(),
     listVideoEventRegistrations: vi.fn(),
-    listVideoEventQuestions: vi.fn(),
     createVideoEvent: vi.fn(),
     startVideoEvent: vi.fn(),
     endVideoEvent: vi.fn(),
     cancelVideoEvent: vi.fn(),
-    updateVideoEventQuestion: vi.fn(),
   },
   mockUseAuth: vi.fn(),
   mockUseSocketContext: vi.fn(),
@@ -88,7 +87,7 @@ const event = {
   roomId: 'room-1',
   title: 'Diabetes care workshop',
   description: 'Community knowledge sharing.',
-  agenda: 'Intro and Q&A',
+  agenda: 'Intro and live chat',
   visibility: 'public',
   status: 'scheduled',
   scheduledStartAt: new Date(Date.now() + 3_600_000).toISOString(),
@@ -105,18 +104,24 @@ describe('Community Video Events UI component tests', () => {
     mockUseSocketContext.mockReturnValue({
       joinCommunityVideoEvent: vi.fn(),
       leaveCommunityVideoEvent: vi.fn(),
+      joinCommunityRoom: vi.fn(),
+      leaveCommunityRoom: vi.fn(),
       subscribe: vi.fn(),
       unsubscribe: vi.fn(),
     })
     mockCommunityService.listVideoEvents.mockResolvedValue({ items: [event], page: 1, limit: 30, total: 1 })
     mockCommunityService.getVideoEvent.mockResolvedValue(event)
-    mockCommunityService.listVideoEventQuestions.mockResolvedValue({ items: [], page: 1, limit: 50, total: 0 })
+    mockCommunityService.joinRoom.mockResolvedValue({ roomId: 'room-1', userId: 'user-1', status: 'active' })
+    mockCommunityService.listMessages.mockResolvedValue({ items: [], page: 1, limit: 80, total: 0 })
+    mockCommunityService.sendMessage.mockResolvedValue({
+      message: { _id: 'm1', roomId: 'room-1', senderId: 'user-1', content: 'Can I take this medicine with food?', status: 'visible', createdAt: new Date().toISOString() },
+      moderation: {},
+    })
     mockCommunityService.registerVideoEvent.mockResolvedValue({ eventId: event._id, status: 'registered' })
     mockCommunityService.joinVideoEvent.mockResolvedValue({ token: 'mock-token', wsUrl: 'wss://livekit.test', provider: 'livekit', role: 'attendee', expiresAt: new Date().toISOString() })
     mockAdminCommunityService.listRooms.mockResolvedValue([{ _id: 'room-1', name: 'Diabetes Room', status: 'active' }])
     mockAdminCommunityService.listVideoEvents.mockResolvedValue({ items: [event], page: 1, limit: 50, total: 1 })
     mockAdminCommunityService.listVideoEventRegistrations.mockResolvedValue({ items: [], page: 1, limit: 50, total: 0 })
-    mockAdminCommunityService.listVideoEventQuestions.mockResolvedValue({ items: [], page: 1, limit: 80, total: 0 })
   })
 
   it('renders public listing with event details, search input, and register action', async () => {
@@ -150,12 +155,12 @@ describe('Community Video Events UI component tests', () => {
     expect(screen.getByText('Bạn cần đăng nhập để xem hội thảo')).toBeInTheDocument()
   })
 
-  it('renders event detail, Q&A panel, disclaimer, and disabled join before live', async () => {
+  it('renders Meet-style prejoin with preview and disabled join before live', async () => {
     renderDetail()
 
     expect(await screen.findByText('Diabetes care workshop')).toBeInTheDocument()
-    expect(screen.getByText('Q&A đã kiểm duyệt')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /chưa live/i })).toBeDisabled()
+    expect(screen.getByText('Camera preview')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /cuộc họp chưa bắt đầu/i })).toBeDisabled()
   })
 
   it('renders LiveKit shell after accepting disclaimer and joining live event', async () => {
@@ -165,7 +170,7 @@ describe('Community Video Events UI component tests', () => {
 
     await screen.findByText('Diabetes care workshop')
     await user.click(screen.getByRole('checkbox'))
-    await user.click(screen.getByRole('button', { name: /tham gia hội thảo/i }))
+    await user.click(screen.getByRole('button', { name: /tham gia ngay/i }))
 
     expect(await screen.findByTestId('livekit-room')).toBeInTheDocument()
     expect(screen.getByTestId('video-conference')).toBeInTheDocument()
@@ -186,38 +191,38 @@ describe('Community Video Events UI component tests', () => {
 
     await screen.findByText('Diabetes care workshop')
     await user.click(screen.getByRole('checkbox'))
-    await user.click(screen.getByRole('button', { name: /tham gia hội thảo/i }))
+    await user.click(screen.getByRole('button', { name: /tham gia ngay/i }))
 
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('LiveKit chưa được cấu hình đúng')))
     expect(screen.queryByTestId('livekit-room')).not.toBeInTheDocument()
   })
 
-  it('submits a valid question and clears the input', async () => {
+  it('sends live chat messages inside the meeting room', async () => {
     const user = userEvent.setup()
-    mockCommunityService.submitVideoEventQuestion.mockResolvedValue({ question: { _id: 'q1', status: 'pending' }, moderation: {} })
+    mockCommunityService.getVideoEvent.mockResolvedValue({ ...event, status: 'live', viewerRegistration: { status: 'registered' } })
     renderDetail()
 
-    const input = await screen.findByPlaceholderText('Nhập câu hỏi cho dược sĩ...')
-    await user.type(input, 'Can I take this medicine with food?')
-    await user.click(screen.getByRole('button', { name: /gửi câu hỏi/i }))
+    await screen.findByText('Diabetes care workshop')
+    await user.click(screen.getByRole('checkbox'))
+    await user.click(screen.getByRole('button', { name: /tham gia ngay/i }))
 
-    await waitFor(() => expect(mockCommunityService.submitVideoEventQuestion).toHaveBeenCalled())
+    expect(await screen.findByText('Chat cuộc họp')).toBeInTheDocument()
+    const input = await screen.findByPlaceholderText('Nhắn tin cho mọi người...')
+    await user.type(input, 'Can I take this medicine with food?')
+    await user.click(screen.getByRole('button', { name: /gửi tin nhắn/i }))
+
+    await waitFor(() => expect(mockCommunityService.sendMessage).toHaveBeenCalledWith({ roomId: 'room-1', content: 'Can I take this medicine with food?' }))
   })
 
-  it('renders admin event dashboard with lifecycle and Q&A controls', async () => {
-    mockAdminCommunityService.listVideoEventQuestions.mockResolvedValue({
-      items: [{ _id: 'q1', content: 'Question to moderate', status: 'pending', pinned: false }],
-      page: 1,
-      limit: 80,
-      total: 1,
-    })
+  it('renders admin event dashboard with lifecycle controls and direct chat guidance', async () => {
     renderWithProviders(<AdminCommunityVideoEventsPage />, '/admin/video-events')
 
     expect(await screen.findByText('Hội thảo cộng đồng')).toBeInTheDocument()
     expect(await screen.findByText('Diabetes care workshop')).toBeInTheDocument()
     await userEvent.click(screen.getByText('Diabetes care workshop'))
     expect(await screen.findByRole('button', { name: /start/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /duyệt/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /ẩn/i })).toBeInTheDocument()
+    expect(screen.getByText('Chat trực tiếp')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /duyệt/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /ẩn/i })).not.toBeInTheDocument()
   })
 })

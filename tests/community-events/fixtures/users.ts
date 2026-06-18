@@ -40,6 +40,6 @@ export function users(): TestUsers {
   }
 }
 
-export function authHeader(user?: TestUser) {
+export function authHeader(user?: TestUser): Record<string, string> {
   return user?.token ? { Authorization: `Bearer ${user.token}` } : {}
 }

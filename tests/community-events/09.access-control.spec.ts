@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 import { eventPayload } from './fixtures/events'
 import { authHeader, users, type TestUser } from './fixtures/users'
 import { API_URL } from './helpers/auth'
-import { createCommunityRoom, registerForEvent, setupLiveRegisteredEvent, setupScheduledEvent, submitQuestion } from './helpers/event'
+import { createCommunityRoom, joinCommunityRoom, registerForEvent, setupLiveRegisteredEvent, setupScheduledEvent } from './helpers/event'
 
 test.describe('Community Video Events - access control', () => {
   test('endpoint role matrix is enforced', async ({ request }) => {
@@ -11,7 +11,7 @@ test.describe('Community Video Events - access control', () => {
     const eventSetup = await setupScheduledEvent(request, admin)
     await registerForEvent(request, registeredUser, eventSetup.event._id)
     const live = await setupLiveRegisteredEvent(request, admin, registeredUser)
-    const question = await submitQuestion(request, registeredUser, live.event._id, `ACL question ${Date.now()}`)
+    await joinCommunityRoom(request, registeredUser, live.room._id)
 
     const cases: Array<{ name: string; method: 'get' | 'post' | 'patch'; url: string; actor: TestUser; data?: Record<string, unknown>; ok: number[]; denied: number[] }> = [
       { name: 'POST event admin', method: 'post', url: '/admin/community/video-events', actor: admin, data: { roomId: room._id, ...eventPayload() }, ok: [201], denied: [] },
@@ -21,10 +21,8 @@ test.describe('Community Video Events - access control', () => {
       { name: 'start user denied', method: 'post', url: `/admin/community/video-events/${eventSetup.event._id}/start`, actor: registeredUser, data: {}, ok: [], denied: [401, 403] },
       { name: 'join registered ok', method: 'post', url: `/community/video-events/${live.event._id}/join`, actor: registeredUser, data: {}, ok: [200], denied: [] },
       { name: 'join guest denied', method: 'post', url: `/community/video-events/${live.event._id}/join`, actor: guest, data: {}, ok: [], denied: [401] },
-      { name: 'question registered ok', method: 'post', url: `/community/video-events/${live.event._id}/questions`, actor: registeredUser, data: { content: `ACL OK ${Date.now()}` }, ok: [201], denied: [] },
-      { name: 'question guest denied', method: 'post', url: `/community/video-events/${live.event._id}/questions`, actor: guest, data: { content: 'denied' }, ok: [], denied: [401] },
-      { name: 'approve admin ok', method: 'patch', url: `/admin/community/video-events/${live.event._id}/questions/${question.question._id}`, actor: admin, data: { status: 'approved' }, ok: [200], denied: [] },
-      { name: 'hide user denied', method: 'patch', url: `/admin/community/video-events/${live.event._id}/questions/${question.question._id}`, actor: host, data: { status: 'hidden' }, ok: [], denied: [401, 403] },
+      { name: 'meeting chat registered ok', method: 'post', url: `/community/rooms/${live.room._id}/messages`, actor: registeredUser, data: { content: `ACL chat ${Date.now()}` }, ok: [201], denied: [] },
+      { name: 'meeting chat guest denied', method: 'post', url: `/community/rooms/${live.room._id}/messages`, actor: guest, data: { content: 'denied' }, ok: [], denied: [401] },
     ]
 
     for (const item of cases) {

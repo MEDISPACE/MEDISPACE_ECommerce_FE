@@ -8,17 +8,23 @@ test.describe('Community Video Events - event creation', () => {
   test('admin creates scheduled event from management UI', async ({ browser }) => {
     const { context, page } = await pageForRole(browser, 'admin')
     await page.goto(`${APP_URL}/admin/video-events`)
+    const title = `E2E UI event ${Date.now()}`
 
     await expect(testId(page, 'admin-video-events-page')).toBeVisible()
-    await testId(page, 'event-title-input').fill(`E2E UI event ${Date.now()}`)
+    await testId(page, 'event-title-input').fill(title)
     await testId(page, 'event-description-input').fill('Knowledge sharing for MediSpace community.')
     await testId(page, 'event-start-input').fill('2099-06-17T09:00')
     await testId(page, 'event-end-input').fill('2099-06-17T10:00')
     await testId(page, 'event-capacity-input').fill('120')
+    const createResponse = page.waitForResponse((response) =>
+      response.url().includes('/admin/community/video-events') && response.request().method() === 'POST',
+    )
     await testId(page, 'create-event-submit').click()
+    await expect.poll(async () => (await createResponse).status()).toBeLessThan(400)
+    await page.getByPlaceholder('Tìm hội thảo').fill(title)
 
-    await expect(testId(page, 'event-status-scheduled')).toBeVisible()
-    await expect(testId(page, 'admin-event-list')).toContainText('E2E UI event')
+    await expect(testId(page, 'admin-event-list')).toContainText(title)
+    await expect(testId(page, 'admin-event-list').getByRole('button', { name: new RegExp(title) })).toContainText('Sắp diễn ra')
     await context.close()
   })
 

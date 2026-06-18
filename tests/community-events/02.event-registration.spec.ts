@@ -28,11 +28,16 @@ test.describe('Community Video Events - registration', () => {
     const registration = await registerForEvent(request, registeredUser, event._id)
     expect(registration.status).toBe('registered')
 
-    const myEvents = await request.get(`${API_URL}/community/video-events/my`, {
-      headers: { Authorization: `Bearer ${registeredUser.token}` },
-    })
-    expect(myEvents.ok()).toBeTruthy()
-    expect(JSON.stringify(await myEvents.json())).toContain(event._id)
+    let found = false
+    for (let page = 1; page <= 5 && !found; page += 1) {
+      const myEvents = await request.get(`${API_URL}/community/video-events/my`, {
+        headers: { Authorization: `Bearer ${registeredUser.token}` },
+        params: { page, limit: 50 },
+      })
+      expect(myEvents.ok()).toBeTruthy()
+      found = JSON.stringify(await myEvents.json()).includes(event._id)
+    }
+    expect(found).toBeTruthy()
   })
 
   test('register twice is idempotent and returns active registration', async ({ request }) => {

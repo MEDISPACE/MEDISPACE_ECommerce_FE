@@ -107,38 +107,31 @@ export async function joinEvent(api: APIRequestContext, user: TestUser, eventId:
   return response.ok() ? pickData(await response.json()) : response
 }
 
-export async function submitQuestion(api: APIRequestContext, user: TestUser, eventId: string, content: string, expectedStatus = 201) {
-  const response = await api.post(`${API_URL}/community/video-events/${eventId}/questions`, {
+export async function joinCommunityRoom(api: APIRequestContext, user: TestUser, roomId: string, expectedStatus = 200) {
+  const response = await api.post(`${API_URL}/community/rooms/${roomId}/join`, {
+    headers: authHeader(user),
+    data: {},
+  })
+  expect(response.status(), `join room response: ${await response.text()}`).toBe(expectedStatus)
+  return response.ok() ? pickData(await response.json()) : response
+}
+
+export async function sendRoomMessage(api: APIRequestContext, user: TestUser, roomId: string, content: string, expectedStatus = 201) {
+  const response = await api.post(`${API_URL}/community/rooms/${roomId}/messages`, {
     headers: authHeader(user),
     data: { content },
   })
-  expect(response.status(), `submit question response: ${await response.text()}`).toBe(expectedStatus)
+  expect(response.status(), `send room message response: ${await response.text()}`).toBe(expectedStatus)
   return response.ok() ? pickData(await response.json()) : response
 }
 
-export async function listQuestions(api: APIRequestContext, user: TestUser, eventId: string) {
-  const response = await api.get(`${API_URL}/community/video-events/${eventId}/questions`, {
+export async function listRoomMessages(api: APIRequestContext, user: TestUser, roomId: string) {
+  const response = await api.get(`${API_URL}/community/rooms/${roomId}/messages`, {
     headers: authHeader(user),
     params: { page: 1, limit: 50 },
   })
-  expect(response.ok()).toBeTruthy()
+  expect(response.ok(), `list room messages failed: ${response.status()} ${await response.text()}`).toBeTruthy()
   return pickData(await response.json()).items
-}
-
-export async function updateQuestion(
-  api: APIRequestContext,
-  admin: TestUser,
-  eventId: string,
-  questionId: string,
-  data: Record<string, unknown>,
-  expectedStatus = 200,
-) {
-  const response = await api.patch(`${API_URL}/admin/community/video-events/${eventId}/questions/${questionId}`, {
-    headers: authHeader(admin),
-    data,
-  })
-  expect(response.status(), `update question response: ${await response.text()}`).toBe(expectedStatus)
-  return response.ok() ? pickData(await response.json()) : response
 }
 
 export async function setupScheduledEvent(api: APIRequestContext, admin: TestUser, overrides: Record<string, unknown> = {}) {
