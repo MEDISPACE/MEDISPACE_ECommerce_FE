@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, Link } from 'react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Users, Lock, Globe, RefreshCw, LogIn, MessageCircle, ShieldAlert } from 'lucide-react'
+import { Users, Lock, Globe, RefreshCw, LogIn, MessageCircle, ShieldAlert, Video } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Card, CardContent } from '~/components/ui/card'
@@ -19,7 +19,7 @@ import {
 } from '~/components/ui/dialog'
 import { useAuth } from '~/contexts/AuthContext'
 import { useSocketContext } from '~/contexts/SocketContext'
-import { UserRole } from '~/types/user'
+import { UserRole, UserStatus } from '~/types/user'
 import communityService from '~/services/communityService'
 import type { CommunityRoom } from '~/types/community'
 
@@ -155,14 +155,15 @@ export function CommunityRoomsPage() {
   const [appealReason, setAppealReason] = useState('')
   const [appealedRoomIds, setAppealedRoomIds] = useState<Set<string>>(new Set())
   const [realtimeJoinedRoomIds, setRealtimeJoinedRoomIds] = useState<Set<string>>(new Set())
+  const canUseMemberRooms = isAuthenticated && user?.status === UserStatus.Verified
 
-  const roomsQueryKey = useMemo(() => ['community', 'rooms', isAuthenticated] as const, [isAuthenticated])
+  const roomsQueryKey = useMemo(() => ['community', 'rooms', canUseMemberRooms] as const, [canUseMemberRooms])
 
   const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: roomsQueryKey,
-    queryFn: () => (isAuthenticated ? communityService.listMyRooms() : communityService.listRooms()),
+    queryFn: () => (canUseMemberRooms ? communityService.listMyRooms() : communityService.listRooms()),
     staleTime: 30_000,
-    retry: 2,
+    retry: (failureCount, error: any) => error?.response?.status !== 403 && failureCount < 2,
   })
 
   const rooms = useMemo(() => data || [], [data])
@@ -462,6 +463,10 @@ export function CommunityRoomsPage() {
               Đăng nhập
             </Button>
           )}
+          <Button variant='outline' className='border-blue-200 gap-2' onClick={() => navigate('/community/video-events')}>
+            <Video className='w-4 h-4' />
+            Hội thảo
+          </Button>
           <Button variant='outline' className='border-blue-200 gap-2' onClick={() => refetch()} disabled={isFetching}>
             <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
             Tải lại
