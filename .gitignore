@@ -25,6 +25,7 @@ src/tests/
 !src/tests/orderService.test.ts
 !src/tests/CouponInput.test.tsx
 !src/tests/paymentStatusBadge.test.tsx
+!src/tests/communityVideoEvents.ui.test.tsx
 
 # Playwright E2E
 /test-results/
@@ -38,3 +39,4 @@ tests/e2e/screenshots/
 *.spec.ts
 *.spec.tsx
 !tests/e2e/specs/**/*.spec.ts
+!tests/community-events/**/*.spec.ts

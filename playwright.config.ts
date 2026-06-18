@@ -11,7 +11,7 @@ const baseURL = process.env.E2E_BASE_URL || 'http://localhost:3000'
 const apiURL = process.env.E2E_API_URL || 'http://localhost:8000'
 
 export default defineConfig({
-  testDir: './tests/e2e/specs',
+  testDir: './tests',
   globalSetup: './tests/e2e/global-setup.ts',
   timeout: 120_000,
   expect: {
@@ -30,4 +30,3 @@ export default defineConfig({
     },
   },
 })
-

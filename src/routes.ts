@@ -9,6 +9,7 @@ export default [
   route('forgot-password', 'routes/forgot-password.tsx'),
   route('reset-password/:token', 'routes/reset-password.$token.tsx'),
   route('verify-email/:token', 'routes/verify-email.$token.tsx'),
+  route('community/video-events/:eventId', 'routes/community/video-events.$eventId.tsx'),
 
   // Main layout for all other routes
   layout('routes/_layout.tsx', [
@@ -68,6 +69,7 @@ export default [
 
     // Community
     route('community', 'routes/community/_index.tsx'),
+    route('community/video-events', 'routes/community/video-events._index.tsx'),
     route('community/:roomId', 'routes/community/$roomId.tsx'),
 
     // Search
@@ -144,6 +146,7 @@ export default [
     route('users', 'routes/admin/users.tsx'),
     route('chat', 'routes/admin/chat.tsx'),
     route('community', 'routes/admin/community.tsx'),
+    route('video-events', 'routes/admin/video-events.tsx'),
     route('moderation', 'routes/admin/moderation.tsx'),
     route('coupons', 'routes/admin/coupons.tsx'),
     route('campaigns', 'routes/admin/campaigns.tsx'),

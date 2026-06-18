@@ -28,6 +28,7 @@ import {
   Zap,
   Sparkles,
   Archive,
+  Video,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { Button } from '../ui/button'
@@ -131,6 +132,11 @@ const navigationItems: NavItem[] = [
     label: 'Quản lý cộng đồng',
     href: '/admin/community',
     icon: Users,
+  },
+  {
+    label: 'Hội thảo cộng đồng',
+    href: '/admin/video-events',
+    icon: Video,
   },
   {
     label: 'Quản lý nội dung',

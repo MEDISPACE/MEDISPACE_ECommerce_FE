@@ -1,11 +1,12 @@
-import { createContext, useContext, useEffect, useRef, useState, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useMemo, useRef, useState, useCallback, type ReactNode } from 'react'
 import { io, type Socket } from 'socket.io-client'
 import { authService } from '../services/authService'
 import apiClient from '../services/apiClient'
 import { AuthContext } from './AuthContext'
 import type { Message, ProductRef } from '../types/chat'
-import type { CommunityMessage } from '../types/community'
+import type { CommunityMessage, CommunityVideoEventRegistration } from '../types/community'
 import { toast } from 'sonner'
+import { COMMUNITY_VIDEO_EVENT_SOCKET_EVENTS } from '~/constants/communityVideoEvents'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -33,6 +34,8 @@ interface SocketCallbacks {
   onCommunityMemberLeft?: (data: Record<string, unknown>) => void
   onCommunityRoomRead?: (data: Record<string, unknown>) => void
   onCommunityModerationQueued?: (data: Record<string, unknown>) => void
+  onCommunityVideoEventUpdated?: (data: Record<string, unknown>) => void
+  onCommunityVideoEventRegistered?: (registration: CommunityVideoEventRegistration) => void
   onNewNotification?: (notification: Record<string, unknown>) => void
   onError?: (error: { message: string }) => void
   onMessageStreamStart?: (data: { conversationId: string }) => void
@@ -57,6 +60,8 @@ interface SocketContextType {
   markAsRead: (conversationId: string) => void
   joinCommunityRoom: (roomId: string, onAck?: (payload: { ok: boolean; roomId?: string; message?: string }) => void) => void
   leaveCommunityRoom: (roomId: string) => void
+  joinCommunityVideoEvent: (eventId: string, onAck?: (payload: { ok: boolean; eventId?: string; message?: string }) => void) => void
+  leaveCommunityVideoEvent: (eventId: string) => void
   requestHuman: (conversationId: string) => void
   // Subscribe/unsubscribe pattern to allow multiple components to listen
   subscribe: (id: string, callbacks: SocketCallbacks) => void
@@ -110,7 +115,11 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     payload: Parameters<NonNullable<SocketCallbacks[K]>>[0],
   ) => {
     subscribersRef.current.forEach((cbs) => {
-      ;(cbs[event] as ((p: typeof payload) => void) | undefined)?.(payload)
+      try {
+        ;(cbs[event] as ((p: typeof payload) => void) | undefined)?.(payload)
+      } catch (error) {
+        console.error('[SocketContext] subscriber callback failed', { event, error })
+      }
     })
   }
 
@@ -221,6 +230,15 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     s.on('community:moderation:queued', (data: Record<string, unknown>) =>
       broadcast('onCommunityModerationQueued', data),
     )
+    const broadcastVideoEventUpdated = (data: Record<string, unknown>) => broadcast('onCommunityVideoEventUpdated', data)
+    s.on(COMMUNITY_VIDEO_EVENT_SOCKET_EVENTS.CREATED, broadcastVideoEventUpdated)
+    s.on(COMMUNITY_VIDEO_EVENT_SOCKET_EVENTS.UPDATED, broadcastVideoEventUpdated)
+    s.on(COMMUNITY_VIDEO_EVENT_SOCKET_EVENTS.CANCELLED, broadcastVideoEventUpdated)
+    s.on(COMMUNITY_VIDEO_EVENT_SOCKET_EVENTS.LIVE, broadcastVideoEventUpdated)
+    s.on(COMMUNITY_VIDEO_EVENT_SOCKET_EVENTS.ENDED, broadcastVideoEventUpdated)
+    s.on(COMMUNITY_VIDEO_EVENT_SOCKET_EVENTS.REGISTERED, (registration: CommunityVideoEventRegistration) =>
+      broadcast('onCommunityVideoEventRegistered', registration),
+    )
     s.on('notification:new', (notification: Record<string, unknown>) => {
       broadcast('onNewNotification', notification)
       const title = notification?.title as string | undefined
@@ -281,7 +299,10 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 
   const joinCommunityRoom = useCallback(
     (roomId: string, onAck?: (payload: { ok: boolean; roomId?: string; message?: string }) => void) => {
-      if (!socketRef.current?.connected) return
+      if (!socketRef.current?.connected) {
+        onAck?.({ ok: false, message: 'Realtime chưa kết nối.' })
+        return
+      }
       if (onAck) {
         socketRef.current.emit('community:room:join', roomId, onAck)
       } else {
@@ -293,6 +314,22 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 
   const leaveCommunityRoom = useCallback((roomId: string) => {
     socketRef.current?.connected && socketRef.current.emit('community:room:leave', roomId)
+  }, [])
+
+  const joinCommunityVideoEvent = useCallback(
+    (eventId: string, onAck?: (payload: { ok: boolean; eventId?: string; message?: string }) => void) => {
+      if (!socketRef.current?.connected) {
+        onAck?.({ ok: false, message: 'Realtime chưa kết nối.' })
+        return
+      }
+      if (onAck) socketRef.current.emit(COMMUNITY_VIDEO_EVENT_SOCKET_EVENTS.JOIN_ROOM, eventId, onAck)
+      else socketRef.current.emit(COMMUNITY_VIDEO_EVENT_SOCKET_EVENTS.JOIN_ROOM, eventId)
+    },
+    [],
+  )
+
+  const leaveCommunityVideoEvent = useCallback((eventId: string) => {
+    socketRef.current?.connected && socketRef.current.emit(COMMUNITY_VIDEO_EVENT_SOCKET_EVENTS.LEAVE_ROOM, eventId)
   }, [])
 
   const requestHuman = useCallback((conversationId: string) => {
@@ -341,24 +378,45 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     return () => disconnect()
   }, []) // eslint-disable-line
 
+  const value = useMemo(
+    () => ({
+      isConnected,
+      isConnecting,
+      joinConversation,
+      leaveConversation,
+      sendMessage,
+      startTyping,
+      stopTyping,
+      markAsRead,
+      joinCommunityRoom,
+      leaveCommunityRoom,
+      joinCommunityVideoEvent,
+      leaveCommunityVideoEvent,
+      subscribe,
+      unsubscribe,
+      requestHuman,
+    }),
+    [
+      isConnected,
+      isConnecting,
+      joinConversation,
+      leaveConversation,
+      sendMessage,
+      startTyping,
+      stopTyping,
+      markAsRead,
+      joinCommunityRoom,
+      leaveCommunityRoom,
+      joinCommunityVideoEvent,
+      leaveCommunityVideoEvent,
+      subscribe,
+      unsubscribe,
+      requestHuman,
+    ],
+  )
+
   return (
-    <SocketContext.Provider
-      value={{
-        isConnected,
-        isConnecting,
-        joinConversation,
-        leaveConversation,
-        sendMessage,
-        startTyping,
-        stopTyping,
-        markAsRead,
-        joinCommunityRoom,
-        leaveCommunityRoom,
-        subscribe,
-        unsubscribe,
-        requestHuman,
-      }}
-    >
+    <SocketContext.Provider value={value}>
       {children}
     </SocketContext.Provider>
   )
