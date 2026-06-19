@@ -79,7 +79,6 @@ export interface PaginatedResult<T> {
 export type CommunityVideoEventStatus = 'draft' | 'scheduled' | 'live' | 'ended' | 'cancelled'
 export type CommunityVideoEventVisibility = 'public' | 'private'
 export type CommunityVideoRegistrationStatus = 'registered' | 'cancelled' | 'attended' | 'no_show' | 'removed'
-export type CommunityVideoQuestionStatus = 'pending' | 'approved' | 'answered' | 'hidden' | 'deleted'
 
 export interface CommunityVideoEvent {
   _id: string
@@ -125,28 +124,6 @@ export interface CommunityVideoEventRegistration {
   lastSeenAt?: string | null
   reminder15mSentAt?: string | null
   user?: CommunityUserSummary
-}
-
-export interface CommunityVideoEventQuestion {
-  _id: string
-  eventId: string
-  roomId: string
-  userId: string
-  content: string
-  status: CommunityVideoQuestionStatus
-  pinned?: boolean
-  answerSummary?: string | null
-  answeredBy?: string | null
-  answeredAt?: string | null
-  moderated?: {
-    autoHidden?: boolean
-    severity?: string
-    categories?: string[]
-    confidence?: string | number
-    reasons?: string[]
-  }
-  createdAt: string
-  updatedAt?: string
 }
 
 export interface CommunityModerationResult {

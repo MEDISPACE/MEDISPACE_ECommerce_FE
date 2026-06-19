@@ -5,7 +5,6 @@ import type {
   CommunityMember,
   CommunityModerationResult,
   CommunityVideoEvent,
-  CommunityVideoEventQuestion,
   CommunityVideoEventRegistration,
   CommunityVideoJoinPayload,
   PaginatedResult,
@@ -121,21 +120,6 @@ export const communityService = {
     return unwrap(res.data)
   },
 
-  async listVideoEventQuestions(params: { eventId: string; page?: number; limit?: number; status?: string }) {
-    const res = await apiClient.get<Envelope<PaginatedResult<CommunityVideoEventQuestion>>>(
-      `/community/video-events/${params.eventId}/questions`,
-      { params: { page: params.page || 1, limit: params.limit || 20, status: params.status } },
-    )
-    return unwrap(res.data)
-  },
-
-  async submitVideoEventQuestion(params: { eventId: string; content: string }) {
-    const res = await apiClient.post<Envelope<{ question: CommunityVideoEventQuestion; moderation: CommunityModerationResult }>>(
-      `/community/video-events/${params.eventId}/questions`,
-      { content: params.content },
-    )
-    return unwrap(res.data)
-  },
 }
 
 export default communityService
@@ -248,19 +232,4 @@ export const adminCommunityService = {
     return unwrap(res.data)
   },
 
-  async listVideoEventQuestions(params: { eventId: string; page?: number; limit?: number; status?: string }) {
-    const res = await apiClient.get<Envelope<PaginatedResult<CommunityVideoEventQuestion>>>(
-      `/admin/community/video-events/${params.eventId}/questions`,
-      { params: { page: params.page || 1, limit: params.limit || 20, status: params.status } },
-    )
-    return unwrap(res.data)
-  },
-
-  async updateVideoEventQuestion(eventId: string, questionId: string, data: { status?: string; pinned?: boolean; answerSummary?: string }) {
-    const res = await apiClient.patch<Envelope<CommunityVideoEventQuestion>>(
-      `/admin/community/video-events/${eventId}/questions/${questionId}`,
-      data,
-    )
-    return unwrap(res.data)
-  },
 }

@@ -6,7 +6,7 @@ const event = {
   roomId: 'visual-room-1',
   title: 'Chăm sóc sức khỏe tim mạch cho cộng đồng',
   description: 'Buổi chia sẻ kiến thức, kỹ năng và kinh nghiệm sử dụng thuốc an toàn từ dược sĩ MEDISPACE.',
-  agenda: '1. Kiến thức nền\n2. Tình huống thường gặp\n3. Q&A trực tiếp',
+  agenda: '1. Kiến thức nền\n2. Tình huống thường gặp\n3. Chat trao đổi trực tiếp',
   visibility: 'public',
   status: 'scheduled',
   scheduledStartAt: '2099-06-17T09:00:00.000Z',
@@ -27,11 +27,19 @@ async function seedAuth(page: Page) {
     window.localStorage.setItem('medispace_session_hint', '1')
     window.localStorage.setItem('medispace_user_data', JSON.stringify({ _id: 'visual-user', email: 'visual@medispace.local', firstName: 'Visual', lastName: 'Admin', role: 2 }))
   })
-  await page.route('**/users/me', (route) => {
+  const visualUser = { _id: 'visual-user', email: 'visual@medispace.local', firstName: 'Visual', lastName: 'Admin', role: 2 }
+  await page.route('**/users/me**', (route) => {
     route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({ message: 'OK', user: { _id: 'visual-user', email: 'visual@medispace.local', firstName: 'Visual', lastName: 'Admin', role: 2 } }),
+      body: JSON.stringify({ message: 'OK', user: visualUser }),
+    })
+  })
+  await page.route('**/users/refresh-token**', (route) => {
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ message: 'OK', result: { accessToken: 'visual-token' } }),
     })
   })
 }
@@ -46,20 +54,21 @@ async function mockCommunityVideoApis(page: Page, variant: 'scheduled' | 'live' 
     })
   })
   await page.route('**/community/video-events/visual-event-1', (route) => {
+    if (route.request().resourceType() === 'document') return route.continue()
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: selected }) })
   })
-  await page.route('**/community/video-events/visual-event-1/questions**', (route) => {
+  await page.route('**/community/rooms/visual-room-1/messages**', (route) => {
     route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
         data: {
           items: [
-            { _id: 'q-pinned', eventId: selected._id, roomId: selected.roomId, userId: 'u1', content: 'Người cao tuổi nên chuẩn bị câu hỏi gì trước khi dùng thuốc tim mạch?', status: 'approved', pinned: true, createdAt: '2099-06-17T08:00:00.000Z' },
-            { _id: 'q-answered', eventId: selected._id, roomId: selected.roomId, userId: 'u2', content: 'Có nên uống thuốc cùng bữa sáng không?', status: 'answered', answerSummary: 'Dược sĩ khuyến nghị tuân thủ đơn và hỏi bác sĩ khi có bệnh nền.', createdAt: '2099-06-17T08:05:00.000Z' },
+            { _id: 'm1', roomId: selected.roomId, senderId: 'u1', content: 'Người cao tuổi nên lưu ý gì trước khi dùng thuốc tim mạch?', status: 'visible', createdAt: '2099-06-17T08:00:00.000Z', sender: { firstName: 'Minh' } },
+            { _id: 'm2', roomId: selected.roomId, senderId: 'visual-user', content: 'Dược sĩ sẽ phản hồi trực tiếp trong phần trao đổi.', status: 'visible', createdAt: '2099-06-17T08:05:00.000Z', sender: { firstName: 'Visual' } },
           ],
           page: 1,
-          limit: 50,
+          limit: 80,
           total: 2,
         },
       }),
@@ -76,7 +85,19 @@ async function mockCommunityVideoApis(page: Page, variant: 'scheduled' | 'live' 
 
 async function mockAdminVideoApis(page: Page) {
   await page.route('**/admin/dashboard/stats', (route) => {
-    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ result: { revenue: {}, orders: {}, users: {}, products: {}, prescriptions: {} } }) })
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        result: {
+          revenue: { total: 0, today: 0 },
+          orders: { total: 0, todayCount: 0, pending: 0 },
+          users: { total: 1, newToday: 0 },
+          products: { total: 0, lowStock: 0 },
+          prescriptions: { total: 0, pending: 0 },
+        },
+      }),
+    })
   })
   await page.route('**/notifications**', (route) => {
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: { items: [], total: 0 } }) })
@@ -89,9 +110,6 @@ async function mockAdminVideoApis(page: Page) {
   })
   await page.route('**/admin/community/video-events/*/registrations**', (route) => {
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: { items: [{ _id: 'reg-1', userId: 'u1', status: 'registered', user: { firstName: 'Minh', email: 'minh@example.test' } }], page: 1, limit: 50, total: 1 } }) })
-  })
-  await page.route('**/admin/community/video-events/*/questions**', (route) => {
-    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: { items: [{ _id: 'q1', content: 'Câu hỏi cần host duyệt', status: 'pending', pinned: false }], page: 1, limit: 80, total: 1 } }) })
   })
 }
 
@@ -111,11 +129,11 @@ test.describe('Community Video Events - visual UI/UX screenshots', () => {
     await expect(page).toHaveScreenshot('community-video-events-list-mobile.png', { fullPage: true, maxDiffPixelRatio: 0.02 })
   })
 
-  test('event detail scheduled visual with Q&A', async ({ page }) => {
+  test('event detail scheduled Meet prejoin visual', async ({ page }) => {
     await seedAuth(page)
     await mockCommunityVideoApis(page)
     await page.goto(`${APP_URL}/community/video-events/visual-event-1`)
-    await page.waitForLoadState('networkidle')
+    await expect(page.getByText('Sẵn sàng tham gia?')).toBeVisible()
     await expect(page).toHaveScreenshot('community-video-event-detail-scheduled.png', { fullPage: true, maxDiffPixelRatio: 0.02 })
   })
 
@@ -123,7 +141,7 @@ test.describe('Community Video Events - visual UI/UX screenshots', () => {
     await seedAuth(page)
     await mockCommunityVideoApis(page, 'live')
     await page.goto(`${APP_URL}/community/video-events/visual-event-1`)
-    await page.waitForLoadState('networkidle')
+    await expect(page.getByRole('button', { name: /tham gia ngay/i })).toBeVisible()
     await expect(page).toHaveScreenshot('community-video-event-live-prejoin.png', { fullPage: true, maxDiffPixelRatio: 0.02 })
   })
 
@@ -131,8 +149,7 @@ test.describe('Community Video Events - visual UI/UX screenshots', () => {
     await seedAuth(page)
     await mockAdminVideoApis(page)
     await page.goto(`${APP_URL}/admin/video-events`)
-    await page.waitForLoadState('load')
-    await page.waitForTimeout(500)
+    await expect(page.getByText('Tạo link cuộc họp')).toBeVisible()
     await expect(page).toHaveScreenshot('admin-community-video-events-dashboard.png', { fullPage: true, maxDiffPixelRatio: 0.02 })
   })
 })

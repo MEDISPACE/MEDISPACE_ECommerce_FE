@@ -33,8 +33,10 @@ test.describe('Community Video Events - reminder notifications', () => {
 
     const cancelledDetail = await request.get(`${API_URL}/community/video-events/${cancelled.event._id}`, { headers: { Authorization: `Bearer ${registeredUser.token}` } })
     const endedDetail = await request.get(`${API_URL}/community/video-events/${ended.event._id}`, { headers: { Authorization: `Bearer ${registeredUser.token}` } })
-    expect(cancelledDetail.status()).toBeGreaterThanOrEqual(400)
     expect(endedDetail.ok()).toBeTruthy()
+    expect(cancelledDetail.ok()).toBeTruthy()
+    expect(JSON.stringify(await cancelledDetail.json())).toContain('cancelled')
+    expect(JSON.stringify(await endedDetail.json())).toContain('ended')
   })
 
   test('duplicate reminder job firing is idempotent at event level', async ({ request }) => {

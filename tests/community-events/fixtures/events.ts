@@ -9,7 +9,7 @@ export function eventPayload(overrides: Record<string, unknown> = {}) {
   return {
     title: `E2E Community Video Event ${stamp}`,
     description: `Automation event ${stamp}`,
-    agenda: 'Opening, pharmacist knowledge sharing, Q&A, closing.',
+    agenda: 'Opening, pharmacist knowledge sharing, meeting chat, closing.',
     visibility: 'public',
     status: 'scheduled',
     scheduledStartAt: futureDate(60),

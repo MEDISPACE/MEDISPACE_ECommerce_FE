@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { users } from './fixtures/users'
 import { API_URL, APP_URL, pageForRole, testId } from './helpers/auth'
-import { createVideoEvent, endEvent, registerForEvent, setupLiveRegisteredEvent, setupScheduledEvent, startEvent, submitQuestion } from './helpers/event'
+import { createVideoEvent, endEvent, joinCommunityRoom, registerForEvent, sendRoomMessage, setupLiveRegisteredEvent, setupScheduledEvent, startEvent } from './helpers/event'
 
 test.describe('Community Video Events - edge cases', () => {
   test('mobile viewport renders event detail without layout break', async ({ browser, request }) => {
@@ -16,12 +16,13 @@ test.describe('Community Video Events - edge cases', () => {
     await context.close()
   })
 
-  test('script tags in questions are stored/displayed safely as text', async ({ request }) => {
+  test('script tags in meeting chat are stored/displayed safely as text', async ({ request }) => {
     const { admin, registeredUser } = users()
-    const { event } = await setupLiveRegisteredEvent(request, admin, registeredUser)
+    const { room } = await setupLiveRegisteredEvent(request, admin, registeredUser)
+    await joinCommunityRoom(request, registeredUser, room._id)
     const content = '<script>window.__pwned=true</script> Is this safe?'
-    const result = await submitQuestion(request, registeredUser, event._id, content)
-    expect(result.question.content).toContain('<script>')
+    const result = await sendRoomMessage(request, registeredUser, room._id, content)
+    expect(result.message.content).toContain('<script>')
   })
 
   test('admin creates two events at the same time and they remain independent', async ({ request }) => {
@@ -58,7 +59,30 @@ test.describe('Community Video Events - edge cases', () => {
 
   test('network loss shows reconnecting state and recovers', async ({ browser }) => {
     const { context, page } = await pageForRole(browser, 'registeredUser')
+    await page.route('**/community/video-events/mock-live-event', (route) => {
+      if (route.request().resourceType() === 'document') return route.continue()
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          data: {
+            _id: 'mock-live-event',
+            roomId: 'mock-live-room',
+            title: 'Mock live event',
+            visibility: 'public',
+            status: 'live',
+            scheduledStartAt: new Date(Date.now() - 60000).toISOString(),
+            scheduledEndAt: new Date(Date.now() + 3600000).toISOString(),
+            registrationCount: 1,
+            capacity: 50,
+            viewerRegistration: { status: 'registered' },
+            room: { _id: 'mock-live-room', name: 'Mock room', slug: 'mock-room', visibility: 'public' },
+          },
+        }),
+      })
+    })
     await page.goto(`${APP_URL}/community/video-events/mock-live-event`)
+    await expect(testId(page, 'event-detail-page')).toBeVisible({ timeout: 10_000 })
     await context.setOffline(true)
     await expect(testId(page, 'reconnection-indicator')).toBeVisible({ timeout: 5_000 })
     await context.setOffline(false)
