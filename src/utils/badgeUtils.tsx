@@ -29,12 +29,12 @@ export interface BadgeConfig {
 export const USER_ROLE_BADGES: Record<string, BadgeConfig> = {
   admin: {
     label: 'Admin',
-    className: 'bg-blue-100 text-[#0066CC] border-blue-200',
+    className: 'bg-[#E8EDF5] text-[#0A2463] border-[#BFDBFE]',
     icon: Shield,
   },
   pharmacist: {
     label: 'Dược sĩ',
-    className: 'bg-blue-100 text-blue-700 border-blue-200',
+    className: 'bg-[#E8EDF5] text-[#0A2463] border-[#BFDBFE]',
     icon: Stethoscope,
   },
   customer: {
@@ -144,27 +144,27 @@ export const ORDER_STATUS_BADGES: Record<string, BadgeConfig> = {
   },
   confirmed: {
     label: 'Đã xác nhận',
-    className: 'bg-blue-100 text-blue-800 border-blue-200',
+    className: 'bg-[#E8EDF5] text-blue-800 border-[#BFDBFE]',
     icon: CheckCircle,
   },
   processing: {
     label: 'Đang xử lý',
-    className: 'bg-blue-100 text-blue-800 border-blue-200',
+    className: 'bg-[#E8EDF5] text-blue-800 border-[#BFDBFE]',
     icon: Activity,
   },
   preparing: {
     label: 'Đang chuẩn bị',
-    className: 'bg-cyan-100 text-cyan-800 border-cyan-200',
+    className: 'bg-[#E8EDF5] text-[#0A2463] border-[#BFDBFE]',
     icon: Package,
   },
   shipped: {
     label: 'Đang giao',
-    className: 'bg-purple-100 text-purple-800 border-purple-200',
+    className: 'bg-[#E8EDF5] text-[#0A2463] border-[#BFDBFE]',
     icon: Package,
   },
   shipping: {
     label: 'Đang giao',
-    className: 'bg-purple-100 text-purple-800 border-purple-200',
+    className: 'bg-[#E8EDF5] text-[#0A2463] border-[#BFDBFE]',
     icon: Package,
   },
   delivered: {
@@ -266,7 +266,7 @@ export const CHAT_STATUS_BADGES: Record<string, BadgeConfig> = {
   },
   resolved: {
     label: 'Đã giải quyết',
-    className: 'bg-blue-100 text-blue-700 border-blue-200',
+    className: 'bg-[#E8EDF5] text-[#0A2463] border-[#BFDBFE]',
     icon: CheckCircle,
   },
   closed: {
@@ -286,7 +286,7 @@ export const PRIORITY_BADGES: Record<string, BadgeConfig> = {
   },
   normal: {
     label: 'Bình thường',
-    className: 'bg-blue-100 text-blue-700 border-blue-200',
+    className: 'bg-[#E8EDF5] text-[#0A2463] border-[#BFDBFE]',
   },
   high: {
     label: 'Cao',
@@ -456,7 +456,7 @@ export function createCustomBadge(
     success: 'bg-green-100 text-green-700 border-green-200',
     warning: 'bg-yellow-100 text-yellow-700 border-yellow-200',
     error: 'bg-red-100 text-red-700 border-red-200',
-    info: 'bg-blue-100 text-blue-700 border-blue-200',
+    info: 'bg-[#E8EDF5] text-[#0A2463] border-[#BFDBFE]',
   }
 
   return (

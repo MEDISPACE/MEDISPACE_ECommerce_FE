@@ -110,7 +110,7 @@ export function ImageUploadField({
 
         {/* Upload Button */}
         {!preview && (
-          <div className='border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors'>
+          <div className='border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#1E40AF] transition-colors'>
             <input
               ref={fileInputRef}
               type='file'
@@ -133,7 +133,7 @@ export function ImageUploadField({
                   </>
                 ) : (
                   <>
-                    <div className='w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center'>
+                    <div className='w-12 h-12 bg-[#F0F6FF] rounded-full flex items-center justify-center'>
                       <ImageIcon className='w-6 h-6 text-blue-500' />
                     </div>
                     <div>

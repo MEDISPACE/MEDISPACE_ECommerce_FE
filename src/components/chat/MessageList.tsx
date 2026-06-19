@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from 'react'
 import { format, isToday, isYesterday } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import type { Message } from '../../types/chat'
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
-import { ThumbsUp, ThumbsDown } from 'lucide-react'
+import { Avatar, AvatarFallback } from '../ui/avatar'
+import { ThumbsUp, ThumbsDown, Bot, Stethoscope, Info, AlertTriangle, ArrowRight, MessageCircle, X, ZoomIn } from 'lucide-react'
 import { ProductCard } from './ProductCard'
+import { MarkdownMessage } from './MarkdownMessage'
 
 interface MessageListProps {
   messages: Message[]
@@ -24,10 +25,10 @@ interface MessageListProps {
 
 // Default suggestions — dùng khi API không trả về hoặc lỗi
 const DEFAULT_SUGGESTIONS = [
-  { label: 'Tư vấn bệnh cảm cúm 🤒', text: 'Tôi muốn tư vấn về triệu chứng và thuốc điều trị cảm cúm' },
-  { label: 'Kiểm tra tác dụng phụ thuốc 💊', text: 'Paracetamol liều lượng dùng thế nào và có tác dụng phụ gì không?' },
-  { label: 'Quy trình chăm sóc da mụn 🧴', text: 'Tư vấn các bước chăm sóc da mụn và sản phẩm phù hợp' },
-  { label: 'Bổ sung vitamin nào tốt nhất? 💪', text: 'Tôi nên bổ sung vitamin và khoáng chất nào cho người trưởng thành?' },
+  { label: 'Tư vấn bệnh cảm cúm', text: 'Tôi muốn tư vấn về triệu chứng và thuốc điều trị cảm cúm' },
+  { label: 'Kiểm tra tác dụng phụ thuốc', text: 'Paracetamol liều lượng dùng thế nào và có tác dụng phụ gì không?' },
+  { label: 'Quy trình chăm sóc da mụn', text: 'Tư vấn các bước chăm sóc da mụn và sản phẩm phù hợp' },
+  { label: 'Bổ sung vitamin nào tốt nhất?', text: 'Tôi nên bổ sung vitamin và khoáng chất nào cho người trưởng thành?' },
 ]
 
 // Skeleton Loading Component (Task 2.5)
@@ -47,7 +48,7 @@ function MessageSkeleton() {
       <div className='flex items-end gap-2 max-w-[60%] ml-auto flex-row-reverse'>
         <div className='w-8 h-8 rounded-full bg-gray-200 flex-shrink-0' />
         <div className='flex flex-col gap-1.5 items-end flex-1'>
-          <div className='h-4 bg-blue-100 rounded-xl w-full' />
+          <div className='h-4 bg-[#BFDBFE] rounded-xl w-full' />
           <div className='h-3 bg-gray-100 rounded w-[40%] mt-1' />
         </div>
       </div>
@@ -139,9 +140,9 @@ export function MessageList({
       return (
         <div className='flex-1 flex flex-col items-center justify-center bg-gray-50 p-4 overflow-y-auto min-h-0'>
           <div className='text-center w-full max-w-[320px] my-auto'>
-            <div className='w-16 h-16 bg-teal-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 relative shadow-lg shadow-teal-100/30 animate-pulse-soft'>
-              <span className='text-3xl'>🤖</span>
-              <span className='absolute inset-0 rounded-full bg-teal-400 opacity-20 animate-ping' />
+            <div className='w-16 h-16 bg-[#0A2463] text-white rounded-full flex items-center justify-center mx-auto mb-4 relative shadow-lg shadow-[#0A2463]/15 animate-pulse-soft'>
+              <Bot className='w-8 h-8' />
+              <span className='absolute inset-0 rounded-full bg-[#1E40AF] opacity-20 animate-ping' />
             </div>
             <h3 className='text-lg font-bold text-gray-900 mb-1.5'>Trợ lý Sức khỏe AI</h3>
             <p className='text-xs text-gray-500 mb-5 leading-relaxed'>
@@ -154,10 +155,10 @@ export function MessageList({
                 <button
                   key={idx}
                   onClick={() => onSuggestClick(s.text)}
-                  className='text-xs bg-white hover:bg-teal-50/40 border border-gray-200 hover:border-teal-200 text-gray-700 hover:text-teal-700 px-4 py-2.5 rounded-xl transition-all duration-200 font-medium text-left shadow-sm active:scale-[0.98] flex items-center justify-between group'
+                  className='text-xs bg-white hover:bg-[#F0F6FF] border border-gray-200 hover:border-[#BFDBFE] text-gray-700 hover:text-[#0A2463] px-4 py-2.5 rounded-xl transition-all duration-200 font-medium text-left shadow-sm active:scale-[0.98] flex items-center justify-between group'
                 >
                   <span className='truncate mr-2'>{s.label}</span>
-                  <span className='text-gray-300 group-hover:text-teal-500 transition-colors flex-shrink-0'>→</span>
+                  <ArrowRight className='w-3.5 h-3.5 text-gray-300 group-hover:text-[#1E40AF] transition-colors flex-shrink-0' />
                 </button>
               ))}
             </div>
@@ -166,9 +167,9 @@ export function MessageList({
               <div className='pt-4 border-t border-gray-200/60'>
                 <button
                   onClick={onRequestHuman}
-                  className='inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-blue-200 hover:border-blue-400 rounded-full text-xs font-semibold text-blue-600 hover:text-blue-700 transition-all duration-300 shadow-sm active:scale-95'
+                  className='inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-[#BFDBFE] hover:border-[#1E40AF] rounded-full text-xs font-semibold text-[#0A2463] hover:text-[#1E40AF] transition-all duration-300 shadow-sm active:scale-95'
                 >
-                  <span className='text-sm'>👨‍⚕️</span> Gặp Dược sĩ chuyên môn ngay
+                  <Stethoscope className='w-3.5 h-3.5' /> Gặp Dược sĩ chuyên môn ngay
                 </button>
               </div>
             )}
@@ -181,15 +182,8 @@ export function MessageList({
     return (
       <div className='flex-1 flex flex-col items-center justify-center bg-gray-50 p-6 overflow-y-auto min-h-0'>
         <div className='text-center w-full max-w-[280px] my-auto'>
-          <div className='w-16 h-16 bg-blue-50 border border-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner'>
-            <svg className='w-8 h-8 text-blue-600' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
-              <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                strokeWidth={2}
-                d='M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z'
-              />
-            </svg>
+          <div className='w-16 h-16 bg-[#F0F6FF] border border-[#BFDBFE] rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner'>
+            <MessageCircle className='w-8 h-8 text-[#0A2463]' />
           </div>
           <h3 className='text-lg font-bold text-gray-900 mb-1'>Tư vấn Dược sĩ</h3>
           <p className='text-xs text-gray-500 leading-relaxed'>
@@ -210,7 +204,7 @@ export function MessageList({
       {/* Load more indicator */}
       {hasMore && (
         <div className='text-center py-2'>
-          <button onClick={onLoadMore} className='text-sm text-blue-600 hover:text-blue-700 font-medium'>
+          <button onClick={onLoadMore} className='text-sm text-[#1E40AF] hover:text-[#0A2463] font-medium'>
             Tải thêm tin nhắn
           </button>
         </div>
@@ -249,8 +243,8 @@ export function MessageList({
             {/* System message */}
             {message.type === 'system' ? (
               <div className='flex items-center justify-center my-3'>
-                <div className='bg-blue-50 border border-blue-200 text-blue-800 text-xs px-4 py-2 rounded-2xl max-w-[85%] text-center shadow-sm flex items-center justify-center gap-2 font-medium'>
-                  <span className='animate-pulse text-blue-500 text-sm'>ℹ️</span>
+                <div className='bg-[#F0F6FF] border border-[#BFDBFE] text-[#0A2463] text-xs px-4 py-2 rounded-2xl max-w-[85%] text-center shadow-sm flex items-center justify-center gap-2 font-medium'>
+                  <Info className='w-3.5 h-3.5 text-[#1E40AF] flex-shrink-0' />
                   <span>{message.content}</span>
                 </div>
               </div>
@@ -264,12 +258,12 @@ export function MessageList({
                     {/* AI Badge */}
                     {!isOwnMessage && message.isAI && (
                       <div className="flex items-center gap-1 mb-1 px-1">
-                        <span className="text-[10px] bg-teal-50 border border-teal-100 text-teal-700 px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
-                          🤖 Trợ lý Sức khỏe AI
+                        <span className="text-[10px] bg-[#F0F6FF] border border-[#BFDBFE] text-[#0A2463] px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
+                          <Bot className='w-3 h-3' /> Trợ lý Sức khỏe AI
                         </span>
                         {message.aiClassification === 'emergency' && (
-                          <span className="text-[10px] bg-red-50 border border-red-200 text-red-600 px-2 py-0.5 rounded-full font-semibold animate-pulse">
-                            ⚠️ Cảnh báo khẩn cấp
+                          <span className="text-[10px] bg-red-50 border border-red-200 text-red-600 px-2 py-0.5 rounded-full font-semibold animate-pulse flex items-center gap-1">
+                            <AlertTriangle className='w-3 h-3' /> Cảnh báo khẩn cấp
                           </span>
                         )}
                       </div>
@@ -283,9 +277,9 @@ export function MessageList({
                           : 'px-4 py-2'
                       } ${
                         isOwnMessage
-                          ? 'bg-blue-600 text-white rounded-tr-none'
+                          ? 'bg-[#0A2463] text-white rounded-tr-none'
                           : message.isAI
-                            ? 'bg-teal-50 border border-teal-100 text-gray-800 rounded-tl-none'
+                            ? 'bg-[#F0F6FF] border border-[#BFDBFE] text-gray-800 rounded-tl-none'
                             : 'bg-white border border-gray-200 text-gray-900 rounded-tl-none'
                       } shadow-sm`}
                     >
@@ -310,12 +304,7 @@ export function MessageList({
                           {/* Zoom hint on hover */}
                           <div className='absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/25 rounded-xl'>
                             <div className='bg-black/50 p-1.5 rounded-full text-white'>
-                              <svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'>
-                                <circle cx='11' cy='11' r='8'></circle>
-                                <line x1='21' y1='21' x2='16.65' y2='16.65'></line>
-                                <line x1='11' y1='8' x2='11' y2='14'></line>
-                                <line x1='8' y1='11' x2='14' y2='11'></line>
-                              </svg>
+                              <ZoomIn className='w-4 h-4' />
                             </div>
                           </div>
                         </div>
@@ -323,7 +312,18 @@ export function MessageList({
 
                       {/* Text content – ẩn nếu là product card (đã hiển thị trong card) */}
                       {message.content && message.type !== 'product' && (
-                        <p className='text-sm whitespace-pre-wrap break-words'>{cleanMessageContent(message.content)}</p>
+                        message.isAI ? (
+                          // AI messages: render markdown đẹp với cấu trúc rõ ràng
+                          <MarkdownMessage
+                            content={cleanMessageContent(message.content)}
+                            className='py-0.5'
+                          />
+                        ) : (
+                          // User messages: plain text
+                          <p className='text-sm whitespace-pre-wrap break-words'>
+                            {message.content}
+                          </p>
+                        )
                       )}
                     </div>
 
@@ -334,17 +334,17 @@ export function MessageList({
                         {onRequestHuman && (
                           <button
                             onClick={onRequestHuman}
-                            className='text-[10px] text-teal-600 hover:text-teal-700 underline font-semibold transition-colors duration-200'
+                            className='text-[10px] text-[#1E40AF] hover:text-[#0A2463] underline font-semibold transition-colors duration-200'
                           >
-                            Chuyển cho Dược sĩ thật →
+                            Chuyển cho Dược sĩ thật
                           </button>
                         )}
                         {onFeedbackClick && (
                           <div className='flex items-center gap-1.5 ml-auto sm:ml-2'>
                             <button
                               onClick={() => onFeedbackClick(message._id, 'up')}
-                              className={`p-1 rounded-md hover:bg-teal-100/50 transition-all duration-200 active:scale-90 ${
-                                message.feedback === 'up' ? 'text-blue-600 bg-blue-50/80 border border-blue-100' : 'text-gray-400 hover:text-blue-600'
+                              className={`p-1 rounded-md hover:bg-[#F0F6FF] transition-all duration-200 active:scale-90 ${
+                                message.feedback === 'up' ? 'text-[#1E40AF] bg-[#F0F6FF] border border-[#BFDBFE]' : 'text-gray-400 hover:text-[#1E40AF]'
                               }`}
                               title='Hữu ích'
                             >
@@ -395,7 +395,7 @@ export function MessageList({
                         <button
                           key={qIdx}
                           onClick={() => onSuggestClick(question)}
-                          className='text-xs bg-white hover:bg-teal-50 border border-teal-100 hover:border-teal-200 text-teal-700 px-3.5 py-1.5 rounded-full transition-all duration-200 font-semibold shadow-sm hover:shadow active:scale-95'
+                          className='text-xs bg-white hover:bg-[#F0F6FF] border border-[#BFDBFE] hover:border-[#1E40AF] text-[#0A2463] px-3.5 py-1.5 rounded-full transition-all duration-200 font-semibold shadow-sm hover:shadow active:scale-95'
                         >
                           {question}
                         </button>
@@ -427,22 +427,24 @@ export function MessageList({
       {/* AI Typing indicator / Streaming Message */}
       {(isAiTyping || streamingMessageText) && (
         <div className='flex items-end gap-2 slide-up-animation'>
-          <div className='relative flex items-center justify-center w-8 h-8 bg-teal-600 text-white rounded-full flex-shrink-0 shadow-sm'>
-            <span className="text-sm">🤖</span>
+          <div className='relative flex items-center justify-center w-8 h-8 bg-[#0A2463] text-white rounded-full flex-shrink-0 shadow-sm'>
+            <Bot className='w-4 h-4' />
           </div>
-          <div className='bg-teal-50 border border-teal-100 rounded-2xl px-4 py-2.5 shadow-sm max-w-[85%]'>
+          <div className='bg-[#F0F6FF] border border-[#BFDBFE] rounded-2xl px-4 py-2.5 shadow-sm max-w-[85%]'>
             {streamingMessageText ? (
-              <p className='text-sm whitespace-pre-wrap break-words text-gray-800'>
-                {cleanMessageContent(streamingMessageText)}
-                <span className='inline-block w-1.5 h-4 ml-1 bg-teal-600 animate-pulse align-middle'></span>
-              </p>
+              <div className='py-0.5'>
+                <MarkdownMessage
+                  content={cleanMessageContent(streamingMessageText)}
+                />
+                <span className='inline-block w-1.5 h-3.5 ml-0.5 bg-[#1E40AF] animate-pulse align-middle rounded-sm' />
+              </div>
             ) : (
               <div className='flex items-center gap-2'>
-                <span className='text-xs text-teal-800 font-medium'>Trợ lý AI đang soạn câu trả lời</span>
+                <span className='text-xs text-[#0A2463] font-medium'>Trợ lý AI đang soạn câu trả lời</span>
                 <div className='flex gap-1 items-center h-3'>
-                  <span className='w-1.5 h-1.5 bg-teal-500 rounded-full animate-bounce' style={{ animationDelay: '0ms' }} />
-                  <span className='w-1.5 h-1.5 bg-teal-500 rounded-full animate-bounce' style={{ animationDelay: '150ms' }} />
-                  <span className='w-1.5 h-1.5 bg-teal-500 rounded-full animate-bounce' style={{ animationDelay: '300ms' }} />
+                  <span className='w-1.5 h-1.5 bg-[#1E40AF] rounded-full animate-bounce' style={{ animationDelay: '0ms' }} />
+                  <span className='w-1.5 h-1.5 bg-[#1E40AF] rounded-full animate-bounce' style={{ animationDelay: '150ms' }} />
+                  <span className='w-1.5 h-1.5 bg-[#1E40AF] rounded-full animate-bounce' style={{ animationDelay: '300ms' }} />
                 </div>
               </div>
             )}
@@ -463,20 +465,7 @@ export function MessageList({
             className='absolute top-4 right-4 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 p-2 rounded-full transition-colors'
             onClick={() => setSelectedImage(null)}
           >
-            <svg
-              xmlns='http://www.w3.org/2000/svg'
-              width='24'
-              height='24'
-              viewBox='0 0 24 24'
-              fill='none'
-              stroke='currentColor'
-              strokeWidth='2'
-              strokeLinecap='round'
-              strokeLinejoin='round'
-            >
-              <line x1='18' y1='6' x2='6' y2='18'></line>
-              <line x1='6' y1='6' x2='18' y2='18'></line>
-            </svg>
+            <X className='w-6 h-6' />
           </button>
           <img
             src={selectedImage}

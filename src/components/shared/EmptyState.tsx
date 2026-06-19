@@ -12,8 +12,8 @@ interface EmptyStateProps {
 
 export function EmptyState({ icon, title, description, actionLabel, actionUrl, onAction }: EmptyStateProps) {
   return (
-    <Card className='border-blue-100 bg-white shadow-sm'>
-      <CardContent className='text-center py-12 px-6 border-blue-100'>
+    <Card className='border-[#E8EDF5] bg-white shadow-sm'>
+      <CardContent className='text-center py-12 px-6 border-[#E8EDF5]'>
         <div className='text-blue-300 mb-4 flex justify-center'>{icon}</div>
         <h3 className='text-xl font-medium text-gray-900 mb-2'>{title}</h3>
         <p className='text-gray-600 mb-6 max-w-md mx-auto'>{description}</p>
@@ -22,14 +22,14 @@ export function EmptyState({ icon, title, description, actionLabel, actionUrl, o
           <div>
             {actionUrl ? (
               <a href={actionUrl}>
-                <Button className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600'>
+                <Button className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463]'>
                   {actionLabel}
                 </Button>
               </a>
             ) : (
               <Button
                 onClick={onAction}
-                className='bg-gradient-to-r text-white from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600'
+                className='bg-gradient-to-r text-white from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463]'
               >
                 {actionLabel}
               </Button>

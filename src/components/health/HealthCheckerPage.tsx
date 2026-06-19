@@ -95,7 +95,7 @@ export function HealthCheckerPage() {
           <UniversalBreadcrumb
             items={[
               { label: 'Trang chủ', href: '/' },
-              { label: 'Góc sức khỏe', href: '/health' },
+              { label: 'Bệnh & Góc sức khỏe', href: '/health' },
               { label: 'Kiểm tra nhanh' },
             ]}
           />
@@ -119,14 +119,14 @@ export function HealthCheckerPage() {
           </div>
 
           <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
-            <Card className='lg:col-span-2 border-blue-100 bg-white/90'>
+            <Card className='lg:col-span-2 border-[#E8EDF5] bg-white/90'>
               <CardContent className='p-6'>
                 <h2 className='text-lg font-semibold text-gray-900 mb-4'>Bạn đang gặp vấn đề gì?</h2>
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-3 mb-6'>
                   {symptomOptions.map((option) => (
                     <label
                       key={option.id}
-                      className='flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 cursor-pointer hover:border-blue-300'
+                      className='flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 cursor-pointer hover:border-[#BFDBFE]'
                     >
                       <Checkbox checked={selected.has(option.id)} onCheckedChange={() => toggle(option.id)} />
                       <span className='text-sm text-gray-800'>{option.label}</span>
@@ -139,7 +139,7 @@ export function HealthCheckerPage() {
                   {riskOptions.map((option) => (
                     <label
                       key={option.id}
-                      className='flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 cursor-pointer hover:border-blue-300'
+                      className='flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 cursor-pointer hover:border-[#BFDBFE]'
                     >
                       <Checkbox checked={selected.has(option.id)} onCheckedChange={() => toggle(option.id)} />
                       <span className='text-sm text-gray-800'>{option.label}</span>
@@ -148,7 +148,7 @@ export function HealthCheckerPage() {
                 </div>
 
                 <Button
-                  className='mt-6 bg-blue-600 hover:bg-blue-700 text-white'
+                  className='mt-6 bg-[#0A2463] hover:bg-[#071A49] text-white'
                   onClick={evaluate}
                   disabled={selected.size === 0}
                 >
@@ -159,13 +159,13 @@ export function HealthCheckerPage() {
             </Card>
 
             <div className='space-y-6'>
-              <Card className='border-blue-100 bg-white/90'>
+              <Card className='border-[#E8EDF5] bg-white/90'>
                 <CardContent className='p-6'>
                   <h2 className='text-lg font-semibold text-gray-900 mb-3'>Thông tin đã chọn</h2>
                   {selectedLabels.length > 0 ? (
                     <div className='flex flex-wrap gap-2'>
                       {selectedLabels.map((label) => (
-                        <Badge key={label} variant='outline' className='border-blue-200 text-blue-700'>
+                        <Badge key={label} variant='outline' className='border-[#BFDBFE] text-[#0A2463]'>
                           {label}
                         </Badge>
                       ))}
@@ -187,7 +187,7 @@ export function HealthCheckerPage() {
                       </div>
                     </div>
                     <div className='mt-5 space-y-2'>
-                      <Button asChild className='w-full bg-blue-600 hover:bg-blue-700 text-white'>
+                      <Button asChild className='w-full bg-[#0A2463] hover:bg-[#071A49] text-white'>
                         <Link to='/community'>
                           <MessageCircle className='h-4 w-4 mr-2' />
                           Hỏi dược sĩ
@@ -215,7 +215,7 @@ export function HealthCheckerPage() {
           {result && (
             <section className='mt-8'>
               <div className='flex items-center gap-2 mb-4'>
-                <Search className='h-5 w-5 text-blue-600' />
+                <Search className='h-5 w-5 text-[#1E40AF]' />
                 <h2 className='text-2xl font-bold text-gray-900'>Bài viết nên đọc</h2>
               </div>
               {loadingArticles ? (
@@ -224,9 +224,9 @@ export function HealthCheckerPage() {
                 <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
                   {articles.map((article) => (
                     <Link key={article._id} to={`/health/article/${article.slug}`}>
-                      <Card className='h-full border-blue-100 bg-white hover:shadow-md transition-shadow'>
+                      <Card className='h-full border-[#E8EDF5] bg-white hover:shadow-md transition-shadow'>
                         <CardContent className='p-5'>
-                          <Badge variant='outline' className='mb-3 border-blue-200 text-blue-700'>
+                          <Badge variant='outline' className='mb-3 border-[#BFDBFE] text-[#0A2463]'>
                             {article.category?.name || 'Sức khỏe'}
                           </Badge>
                           <h3 className='font-semibold text-gray-900 line-clamp-2 mb-2'>{article.title}</h3>

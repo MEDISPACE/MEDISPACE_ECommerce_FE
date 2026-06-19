@@ -61,10 +61,10 @@ export function ProductCard({ product, isOwnMessage }: ProductCardProps) {
         {/* Info */}
         <div className={`p-2.5 flex-1 flex flex-col justify-between ${isOwnMessage ? 'text-white' : 'text-slate-800'}`}>
           <div>
-            <p className='text-xs font-semibold leading-tight line-clamp-2 mb-1 hover:text-blue-600 transition-colors' title={product.name}>{product.name}</p>
+            <p className='text-xs font-semibold leading-tight line-clamp-2 mb-1 hover:text-[#0A2463] transition-colors' title={product.name}>{product.name}</p>
             <p className={`text-[10px] mb-1 font-medium ${isOwnMessage ? 'text-white/70' : 'text-slate-400'}`}>{product.unit}</p>
           </div>
-          <p className={`text-sm font-bold mt-1 ${isOwnMessage ? 'text-cyan-200' : 'text-blue-600'}`}>{formattedPrice}</p>
+          <p className={`text-sm font-bold mt-1 ${isOwnMessage ? 'text-[#BFDBFE]' : 'text-[#0A2463]'}`}>{formattedPrice}</p>
         </div>
       </a>
 
@@ -76,8 +76,8 @@ export function ProductCard({ product, isOwnMessage }: ProductCardProps) {
           onClick={handleAddToCart}
           className={`w-full text-[10px] h-7 gap-1 font-semibold transition-all duration-200 active:scale-95 ${
             isOwnMessage
-              ? 'bg-white text-blue-600 hover:bg-blue-50'
-              : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-sm hover:shadow'
+              ? 'bg-white text-[#0A2463] hover:bg-[#F0F6FF]'
+              : 'bg-[#0A2463] hover:bg-[#1E40AF] text-white shadow-sm hover:shadow'
           }`}
         >
           {isAdding ? (

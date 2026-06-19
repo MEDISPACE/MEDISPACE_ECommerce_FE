@@ -30,7 +30,7 @@ export function OrderFilters({
   const hasActiveFilters = searchQuery || filterStatus !== 'all' || filterPayment !== 'all' || filterDate !== 'all'
 
   return (
-    <Card className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+    <Card className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
       <CardContent className='p-6'>
         <div className='space-y-4'>
           {/* Search Bar */}
@@ -40,14 +40,14 @@ export function OrderFilters({
               placeholder='Tìm kiếm theo mã đơn, tên khách hàng, số điện thoại...'
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              className='pl-12 pr-4 h-12 border-2 border-blue-200 focus:border-blue-500 rounded-xl text-base placeholder:text-gray-400 bg-white shadow-sm'
+              className='pl-12 pr-4 h-12 border-2 border-[#BFDBFE] focus:border-[#1E40AF] rounded-xl text-base placeholder:text-gray-400 bg-white shadow-sm'
             />
           </div>
 
           {/* Filters Row */}
           <div className='flex flex-wrap items-center gap-3'>
             <Select value={filterStatus} onValueChange={onStatusChange}>
-              <SelectTrigger className='w-full sm:w-[200px] border-2 border-blue-200 rounded-xl h-11 bg-white hover:bg-blue-50 transition-colors'>
+              <SelectTrigger className='w-full sm:w-[200px] border-2 border-[#BFDBFE] rounded-xl h-11 bg-white hover:bg-[#F0F6FF] transition-colors'>
                 <SelectValue placeholder='🔄 Trạng thái' />
               </SelectTrigger>
               <SelectContent className='rounded-xl'>
@@ -64,7 +64,7 @@ export function OrderFilters({
             </Select>
 
             <Select value={filterPayment} onValueChange={onPaymentChange}>
-              <SelectTrigger className='w-full sm:w-[200px] border-2 border-blue-200 rounded-xl h-11 bg-white hover:bg-blue-50 transition-colors'>
+              <SelectTrigger className='w-full sm:w-[200px] border-2 border-[#BFDBFE] rounded-xl h-11 bg-white hover:bg-[#F0F6FF] transition-colors'>
                 <SelectValue placeholder='💳 Thanh toán' />
               </SelectTrigger>
               <SelectContent className='rounded-xl'>
@@ -78,7 +78,7 @@ export function OrderFilters({
             </Select>
 
             <Select value={filterDate} onValueChange={onDateChange}>
-              <SelectTrigger className='w-full sm:w-[200px] border-2 border-blue-200 rounded-xl h-11 bg-white hover:bg-blue-50 transition-colors'>
+              <SelectTrigger className='w-full sm:w-[200px] border-2 border-[#BFDBFE] rounded-xl h-11 bg-white hover:bg-[#F0F6FF] transition-colors'>
                 <SelectValue placeholder='📅 Thời gian' />
               </SelectTrigger>
               <SelectContent className='rounded-xl'>

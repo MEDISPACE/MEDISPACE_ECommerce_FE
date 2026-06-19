@@ -295,7 +295,7 @@ export function PrescriptionManagementPage() {
           <h1
             className='text-3xl font-bold bg-clip-text text-transparent'
             style={{
-              backgroundImage: `linear-gradient(to right, #0066CC, #4A90E2)`,
+              backgroundImage: `linear-gradient(to right, #0A2463, #1E40AF)`,
             }}
           >
             Quản lý đơn thuốc
@@ -310,7 +310,7 @@ export function PrescriptionManagementPage() {
 
       {/* Stats Cards */}
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4'>
-        <Card className='bg-white backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
@@ -322,7 +322,7 @@ export function PrescriptionManagementPage() {
           </CardContent>
         </Card>
 
-        <Card className='bg-white backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
@@ -340,7 +340,7 @@ export function PrescriptionManagementPage() {
           </CardContent>
         </Card>
 
-        <Card className='bg-white backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
@@ -352,7 +352,7 @@ export function PrescriptionManagementPage() {
           </CardContent>
         </Card>
 
-        <Card className='bg-white backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
@@ -364,29 +364,29 @@ export function PrescriptionManagementPage() {
           </CardContent>
         </Card>
 
-        <Card className='bg-white backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-xs text-gray-600'>Hoàn thành</p>
-                <p className='text-2xl font-semibold text-cyan-600'>{stats.fulfilled}</p>
+                <p className='text-2xl font-semibold text-[#1E40AF]'>{stats.fulfilled}</p>
               </div>
-              <Package className='w-8 h-8 text-cyan-400' />
+              <Package className='w-8 h-8 text-[#1E40AF]' />
             </div>
           </CardContent>
         </Card>
 
-        <Card className='bg-white backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-xs text-gray-600'>Duyệt hôm nay</p>
-                <p className='text-2xl font-semibold text-blue-600'>{stats.approvedToday}</p>
+                <p className='text-2xl font-semibold text-[#1E40AF]'>{stats.approvedToday}</p>
               </div>
               <TrendingUp className='w-8 h-8 text-blue-400' />
             </div>
             {stats.approvedToday > 0 && (
-              <div className='mt-2 flex items-center gap-1 text-xs text-blue-700 bg-blue-50 px-2 py-1 rounded'>
+              <div className='mt-2 flex items-center gap-1 text-xs text-[#0A2463] bg-[#F0F6FF] px-2 py-1 rounded'>
                 Hiệu quả
               </div>
             )}
@@ -395,7 +395,7 @@ export function PrescriptionManagementPage() {
       </div>
 
       {/* Filters */}
-      <div className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-4'>
+      <div className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-4'>
         <div className='flex flex-col lg:flex-row gap-4'>
           <div className='flex-1'>
             <div className='relative'>
@@ -405,13 +405,13 @@ export function PrescriptionManagementPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder='Tìm theo mã đơn, khách hàng, dược sĩ, thuốc...'
-                className='pl-10 border-2 border-blue-200 focus:border-blue-500'
+                className='pl-10 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
               />
             </div>
           </div>
 
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className='w-40 border-2 border-blue-200 focus:border-blue-500'>
+            <SelectTrigger className='w-40 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'>
               <SelectValue placeholder='Trạng thái' />
             </SelectTrigger>
             <SelectContent>
@@ -424,7 +424,7 @@ export function PrescriptionManagementPage() {
           </Select>
 
           <Select value={dateRange} onValueChange={setDateRange}>
-            <SelectTrigger className='w-40 border-2 border-blue-200 focus:border-blue-500'>
+            <SelectTrigger className='w-40 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'>
               <SelectValue placeholder='Thời gian' />
             </SelectTrigger>
             <SelectContent>
@@ -438,7 +438,7 @@ export function PrescriptionManagementPage() {
 
         {/* Bulk Actions */}
         {selectedPrescriptions.length > 0 && (
-          <div className='flex items-center gap-3 mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg'>
+          <div className='flex items-center gap-3 mt-4 p-3 bg-[#F0F6FF] border border-[#BFDBFE] rounded-lg'>
             <span className='text-sm text-blue-800'>Đã chọn {selectedPrescriptions.length} đơn thuốc</span>
             <div className='flex gap-2 ml-auto'>
               <Button
@@ -463,7 +463,7 @@ export function PrescriptionManagementPage() {
                 size='sm'
                 variant='outline'
                 onClick={() => handleBulkAction('export')}
-                className='!bg-blue-50 !text-blue-700 !border-blue-200 hover:!bg-blue-100 hover:!text-blue-800 hover:!border-blue-100'
+                className='!bg-[#F0F6FF] !text-[#0A2463] !border-[#BFDBFE] hover:!bg-[#E8EDF5] hover:!text-blue-800 hover:!border-[#E8EDF5]'
               >
                 <Download className='w-4 h-4 mr-1' />
                 Xuất
@@ -474,10 +474,10 @@ export function PrescriptionManagementPage() {
       </div>
 
       {/* Prescriptions Table */}
-      <div className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 overflow-hidden'>
+      <div className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] overflow-hidden'>
         <div className='overflow-x-auto'>
           <table className='w-full'>
-            <thead className='bg-gradient-to-r from-blue-50 to-cyan-50 border-b border-blue-200'>
+            <thead className='bg-gradient-to-r from-[#F8FAFB] to-[#F0F6FF] border-b border-[#BFDBFE]'>
               <tr>
                 <th className='p-4 text-left'>
                   <Checkbox
@@ -501,7 +501,7 @@ export function PrescriptionManagementPage() {
               {isLoading ? (
                 <tr>
                   <td colSpan={9} className='p-12 text-center'>
-                    <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto'></div>
+                    <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-[#1E40AF] mx-auto'></div>
                     <p className='mt-4 text-gray-600'>Đang tải dữ liệu...</p>
                   </td>
                 </tr>
@@ -529,7 +529,7 @@ export function PrescriptionManagementPage() {
                 </tr>
               ) : (
                 filteredPrescriptions.map((prescription: any) => (
-                  <tr key={prescription._id || prescription.id} className='hover:bg-blue-50/50 transition-colors'>
+                  <tr key={prescription._id || prescription.id} className='hover:bg-[#F0F6FF]/50 transition-colors'>
                     <td className='p-4'>
                       <Checkbox
                         checked={selectedPrescriptions.includes(prescription._id || prescription.id)}
@@ -556,7 +556,7 @@ export function PrescriptionManagementPage() {
                     <td className='p-4'>
                       {prescription.pharmacistName ? (
                         <div className='flex items-center gap-2'>
-                          <UserCheck className='w-4 h-4 text-blue-600' />
+                          <UserCheck className='w-4 h-4 text-[#1E40AF]' />
                           <span className='text-sm text-gray-700'>{prescription.pharmacistName}</span>
                         </div>
                       ) : (
@@ -647,7 +647,7 @@ export function PrescriptionManagementPage() {
             <div className='space-y-6 overflow-y-auto flex-1 px-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-blue-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-blue-400'>
               {/* Customer & Pharmacist Info */}
               <div className='grid grid-cols-2 gap-4'>
-                <div className='p-4 bg-blue-50 rounded-lg border border-blue-200'>
+                <div className='p-4 bg-[#F0F6FF] rounded-lg border border-[#BFDBFE]'>
                   <h4 className='text-sm text-blue-800 mb-3'>Thông tin khách hàng</h4>
                   <div className='flex items-center gap-3 mb-3'>
                     <Avatar>
@@ -729,9 +729,9 @@ export function PrescriptionManagementPage() {
                   <h4 className='mb-3'>Danh sách thuốc</h4>
                   <div className='space-y-2'>
                     {selectedPrescription.medications.map((medication, index) => (
-                      <div key={index} className='p-3 bg-blue-50 border border-blue-200 rounded-lg'>
+                      <div key={index} className='p-3 bg-[#F0F6FF] border border-[#BFDBFE] rounded-lg'>
                         <div className='flex items-start gap-2'>
-                          <Pill className='w-4 h-4 text-blue-600 mt-0.5' />
+                          <Pill className='w-4 h-4 text-[#1E40AF] mt-0.5' />
                           <div className='flex-1'>
                             <p className='text-sm font-medium text-blue-900'>
                               {medication.productName || medication.name || 'Không rõ tên thuốc'}
@@ -771,17 +771,17 @@ export function PrescriptionManagementPage() {
 
               {/* Order Link */}
               {selectedPrescription.orderId && (
-                <div className='p-4 bg-blue-50 border border-blue-200 rounded-lg'>
+                <div className='p-4 bg-[#F0F6FF] border border-[#BFDBFE] rounded-lg'>
                   <div className='flex items-center justify-between'>
                     <div>
-                      <h4 className='text-sm text-[#0066CC] mb-1'>Đơn hàng liên kết</h4>
+                      <h4 className='text-sm text-[#0A2463] mb-1'>Đơn hàng liên kết</h4>
                       <p className='text-sm'>Mã đơn: {selectedPrescription.orderId}</p>
                     </div>
                     <Button
                       size='sm'
                       variant='outline'
                       onClick={() => (window.location.href = `/admin/orders?orderId=${selectedPrescription.orderId}`)}
-                      className='border-blue-300 text-[#0066CC] hover:bg-blue-100'
+                      className='border-[#BFDBFE] text-[#0A2463] hover:bg-[#E8EDF5]'
                     >
                       <Package className='w-4 h-4 mr-1' />
                       Xem đơn hàng

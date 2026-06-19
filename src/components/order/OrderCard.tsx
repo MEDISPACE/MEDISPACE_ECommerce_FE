@@ -68,11 +68,11 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
 
   if (variant === 'compact') {
     return (
-      <Card className='border-blue-100 hover:shadow-md transition-all duration-300'>
+      <Card className='border-[#E8EDF5] hover:shadow-md transition-all duration-300'>
         <CardContent className='p-4'>
           <div className='flex items-center justify-between mb-3'>
             <div className='flex items-center gap-3'>
-              <Package className='w-5 h-5 text-blue-600' />
+              <Package className='w-5 h-5 text-[#1E40AF]' />
               <div>
                 <h3 className='font-medium'>#{order.orderNumber}</h3>
                 <p className='text-sm text-gray-500'>{formatDate(order.createdAt)}</p>
@@ -86,11 +86,11 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
               <p className='text-sm text-gray-600'>
                 {order.items.reduce((total, item) => total + item.quantity, 0)} sản phẩm
               </p>
-              <p className='font-medium text-blue-600'>{formatPrice(order.total)}</p>
+              <p className='font-medium text-[#1E40AF]'>{formatPrice(order.total)}</p>
             </div>
 
             <Link to={`/account/orders/${order.id}`}>
-              <Button size='sm' variant='outline' className='text-blue-600 border-blue-200'>
+              <Button size='sm' variant='outline' className='text-[#1E40AF] border-[#BFDBFE]'>
                 <Eye className='w-4 h-4 mr-1' />
                 Xem
               </Button>
@@ -102,12 +102,12 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
   }
 
   return (
-    <Card className='border-blue-100 hover:shadow-md transition-all duration-300'>
+    <Card className='border-[#E8EDF5] hover:shadow-md transition-all duration-300'>
       <CardContent className='p-6'>
         <div className='flex justify-between items-start mb-4'>
           <div>
             <div className='flex items-center gap-3 mb-2'>
-              <Package className='w-5 h-5 text-blue-600' />
+              <Package className='w-5 h-5 text-[#1E40AF]' />
               <h3 className='font-medium'>Đơn hàng #{order.orderNumber}</h3>
             </div>
             <div className='flex items-center gap-4 text-sm text-gray-600'>
@@ -121,7 +121,7 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
           {getOrderStatusBadge(order.status)}
         </div>
 
-        <div className='border-t border-b py-4 my-4 border-blue-300'>
+        <div className='border-t border-b py-4 my-4 border-[#BFDBFE]'>
           {order.items && order.items.length > 0 && (
             <div className='space-y-3'>
               {order.items.slice(0, 2).map((item: OrderItem) => (
@@ -141,7 +141,7 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
                   <div className='flex-1 min-w-0'>
                     <Link
                       to={`/products/${item.productId}`}
-                      className='font-medium text-sm line-clamp-1 hover:text-blue-600 transition-colors'
+                      className='font-medium text-sm line-clamp-1 hover:text-[#1E40AF] transition-colors'
                     >
                       {item.productName}
                     </Link>
@@ -150,7 +150,7 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
                     </p>
                   </div>
                   <div className='text-right'>
-                    <p className='font-medium text-blue-600'>
+                    <p className='font-medium text-[#1E40AF]'>
                       {formatPrice(item.subtotal || item.unitPrice * item.quantity)}
                     </p>
                   </div>
@@ -172,7 +172,7 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
               </span>
             </p>
             <p className='text-sm text-gray-600'>
-              Tổng thanh toán: <span className='font-medium text-blue-600'>{formatPrice(order.total)}</span>
+              Tổng thanh toán: <span className='font-medium text-[#1E40AF]'>{formatPrice(order.total)}</span>
             </p>
             {order.estimatedDelivery && <p className='text-sm text-gray-600'>{getEstimatedDelivery()}</p>}
           </div>
@@ -182,7 +182,7 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
           <Link to={`/account/orders/${order.id}`} className='flex-1'>
             <Button
               variant='outline'
-              className='w-full text-blue-600 !border-blue-200 hover:!bg-blue-50 hover:!text-blue-700'
+              className='w-full text-[#1E40AF] !border-[#BFDBFE] hover:!bg-[#F0F6FF] hover:!text-[#0A2463]'
             >
               <Eye className='w-4 h-4 mr-2' />
               Xem chi tiết
@@ -190,7 +190,7 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
           </Link>
 
           {order.status === 'delivered' && (
-            <Button variant='outline' className='text-blue-600 !border-blue-200 hover:!bg-blue-50 hover:!text-blue-700'>
+            <Button variant='outline' className='text-[#1E40AF] !border-[#BFDBFE] hover:!bg-[#F0F6FF] hover:!text-[#0A2463]'>
               <RotateCcw className='w-4 h-4 mr-2' />
               Mua lại
             </Button>
@@ -207,7 +207,7 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
                 </Link>
               ) : (
                 <Button
-                  className='flex-1 bg-blue-600 hover:bg-blue-700 text-white'
+                  className='flex-1 bg-[#0A2463] hover:bg-[#071A49] text-white'
                   onClick={() => setShowProductSelection(true)}
                 >
                   <Star className='w-4 h-4 mr-2' />
@@ -235,7 +235,7 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
                     className={`flex items-center gap-4 p-4 border rounded-lg transition-colors ${
                       isReviewed
                         ? 'border-green-200 bg-green-50 cursor-not-allowed opacity-60'
-                        : 'border-blue-200 hover:bg-blue-50 cursor-pointer'
+                        : 'border-[#BFDBFE] hover:bg-[#F0F6FF] cursor-pointer'
                     }`}
                     onClick={() => {
                       if (isReviewed) {
@@ -268,7 +268,7 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
                         <span className='text-white text-xs'>✓</span>
                       </div>
                     ) : (
-                      <Star className='w-5 h-5 text-blue-600' />
+                      <Star className='w-5 h-5 text-[#1E40AF]' />
                     )}
                   </div>
                 )

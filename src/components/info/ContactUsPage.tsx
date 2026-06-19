@@ -57,14 +57,14 @@ export function ContactUsPage() {
       icon: MapPin,
       title: 'Địa chỉ văn phòng',
       content: '123 Nguyễn Văn Linh, Phường Tân Phú, Quận 7, TP. Hồ Chí Minh',
-      color: 'from-red-500 to-pink-500',
+      color: 'from-[#0A2463] to-[#1E40AF]',
       link: 'https://maps.google.com',
     },
     {
       icon: Phone,
       title: 'Điện thoại',
       content: 'Hotline: 1900 1234\nHỗ trợ: 028 1234 5678',
-      color: 'from-blue-500 to-cyan-500',
+      color: 'from-[#0A2463] to-[#1E40AF]',
       link: 'tel:19001234',
     },
     {
@@ -78,7 +78,7 @@ export function ContactUsPage() {
       icon: Clock,
       title: 'Giờ làm việc',
       content: 'Thứ 2 - Thứ 7: 8:00 - 20:00\nChủ nhật: 8:00 - 18:00',
-      color: 'from-purple-500 to-pink-500',
+      color: 'from-[#0A2463] to-[#1E40AF]',
     },
   ]
 
@@ -108,7 +108,7 @@ export function ContactUsPage() {
       <UniversalBreadcrumb items={breadcrumbItems} />
       {/* Hero Section */}
       <div className='text-center space-y-4 animate-slide-in-up'>
-        <h1 className='bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 bg-clip-text text-transparent'>
+        <h1 className='bg-gradient-to-r from-[#0A2463] via-[#1E40AF] to-[#3B82F6] bg-clip-text text-transparent'>
           Liên hệ với chúng tôi
         </h1>
         <p className='text-xl text-gray-600 max-w-2xl mx-auto'>
@@ -121,7 +121,7 @@ export function ContactUsPage() {
         {contactInfo.map((info, index) => (
           <Card
             key={index}
-            className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 hover:shadow-xl transition-all group animate-slide-in-up'
+            className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] hover:shadow-xl transition-all group animate-slide-in-up'
             style={{ animationDelay: `${index * 0.1}s` }}
           >
             <CardContent className='p-6 text-center space-y-4'>
@@ -139,7 +139,7 @@ export function ContactUsPage() {
                   href={info.link}
                   target='_blank'
                   rel='noopener noreferrer'
-                  className='inline-block text-sm text-blue-600 hover:text-blue-700 hover:underline'
+                  className='inline-block text-sm text-[#1E40AF] hover:text-[#0A2463] hover:underline'
                 >
                   Xem chi tiết →
                 </a>
@@ -152,8 +152,8 @@ export function ContactUsPage() {
       {/* Main Content: Form + Map */}
       <div className='grid lg:grid-cols-2 gap-8'>
         {/* Contact Form */}
-        <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 animate-slide-in-left'>
-          <CardHeader className='bg-gradient-to-r from-blue-50 to-cyan-50'>
+        <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] animate-slide-in-left'>
+          <CardHeader className='bg-gradient-to-r from-[#F8FAFB] to-[#F0F6FF]'>
             <CardTitle className='flex items-center gap-3 text-blue-900'>
               <MessageCircle className='w-6 h-6' />
               Gửi tin nhắn cho chúng tôi
@@ -169,7 +169,7 @@ export function ContactUsPage() {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder='Nhập họ và tên của bạn'
-                  className='border-2 border-blue-200 focus:border-blue-500'
+                  className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                 />
               </div>
 
@@ -182,7 +182,7 @@ export function ContactUsPage() {
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder='your@email.com'
-                    className='border-2 border-blue-200 focus:border-blue-500'
+                    className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                   />
                 </div>
 
@@ -194,7 +194,7 @@ export function ContactUsPage() {
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     placeholder='0901234567'
-                    className='border-2 border-blue-200 focus:border-blue-500'
+                    className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                   />
                 </div>
               </div>
@@ -205,7 +205,7 @@ export function ContactUsPage() {
                   value={formData.subject}
                   onValueChange={(value) => setFormData({ ...formData, subject: value })}
                 >
-                  <SelectTrigger className='border-2 border-blue-200 focus:border-blue-500'>
+                  <SelectTrigger className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'>
                     <SelectValue placeholder='Chọn chủ đề' />
                   </SelectTrigger>
                   <SelectContent>
@@ -227,13 +227,13 @@ export function ContactUsPage() {
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                   placeholder='Nhập nội dung tin nhắn của bạn...'
                   rows={6}
-                  className='border-2 border-blue-200 focus:border-blue-500'
+                  className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                 />
               </div>
 
               <Button
                 type='submit'
-                className='w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white shadow-lg gap-2'
+                className='w-full bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white shadow-lg gap-2'
               >
                 <Send className='w-5 h-5' />
                 Gửi tin nhắn
@@ -243,10 +243,10 @@ export function ContactUsPage() {
             </form>
 
             {/* Chat Section */}
-            <div className='mt-8 pt-6 border-t border-blue-100'>
-              <div className='flex items-start gap-4 p-4 bg-blue-50 rounded-xl'>
+            <div className='mt-8 pt-6 border-t border-[#E8EDF5]'>
+              <div className='flex items-start gap-4 p-4 bg-[#F0F6FF] rounded-xl'>
                 <div className='p-2 bg-white rounded-full shadow-sm'>
-                  <MessageCircle className='w-6 h-6 text-blue-600' />
+                  <MessageCircle className='w-6 h-6 text-[#1E40AF]' />
                 </div>
                 <div>
                   <h4 className='font-semibold text-blue-900 mb-1'>Cần hỗ trợ ngay?</h4>
@@ -255,7 +255,7 @@ export function ContactUsPage() {
                   </p>
                   <Button
                     variant='outline'
-                    className='bg-white border-blue-200 text-blue-600 hover:bg-blue-600 hover:text-white transition-colors'
+                    className='bg-white border-[#BFDBFE] text-[#1E40AF] hover:bg-[#0A2463] hover:text-white transition-colors'
                     onClick={() => {
                       // Trigger global event or just direct user
                       const chatBtn = document.querySelector(
@@ -279,7 +279,7 @@ export function ContactUsPage() {
         {/* Map & Quick Links */}
         <div className='space-y-6 animate-slide-in-right'>
           {/* Map */}
-          <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 overflow-hidden'>
+          <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] overflow-hidden'>
             <div className='relative h-96'>
               <ImageWithFallback
                 src='https://images.unsplash.com/photo-1553267570-2df1b89ba855?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080'
@@ -305,7 +305,7 @@ export function ContactUsPage() {
           </Card>
 
           {/* Social Media */}
-          <Card className='bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200'>
+          <Card className='bg-gradient-to-r from-[#F8FAFB] to-[#F0F6FF] border border-[#BFDBFE]'>
             <CardHeader>
               <CardTitle className='text-blue-900'>Kết nối với chúng tôi</CardTitle>
             </CardHeader>
@@ -318,7 +318,7 @@ export function ContactUsPage() {
                   href='https://facebook.com'
                   target='_blank'
                   rel='noopener noreferrer'
-                  className='flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
+                  className='flex items-center gap-2 px-4 py-2 bg-[#0A2463] text-white rounded-lg hover:bg-[#071A49] transition-colors'
                 >
                   <Facebook className='w-5 h-5' />
                   Facebook
@@ -327,7 +327,7 @@ export function ContactUsPage() {
                   href='https://instagram.com'
                   target='_blank'
                   rel='noopener noreferrer'
-                  className='flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-pink-500 to-orange-500 text-white rounded-lg hover:from-pink-600 hover:to-orange-600 transition-colors'
+                  className='flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white rounded-lg hover:from-[#071A49] hover:to-[#0A2463] transition-colors'
                 >
                   <Instagram className='w-5 h-5' />
                   Instagram
@@ -350,7 +350,7 @@ export function ContactUsPage() {
       {/* Branches */}
       <div className='space-y-6'>
         <div className='text-center'>
-          <h2 className='bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent mb-4'>
+          <h2 className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text text-transparent mb-4'>
             Hệ thống chi nhánh
           </h2>
           <p className='text-gray-600'>Ghé thăm các cửa hàng MEDISPACE gần bạn</p>
@@ -360,24 +360,24 @@ export function ContactUsPage() {
           {branches.map((branch, index) => (
             <Card
               key={index}
-              className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 hover:shadow-xl transition-all animate-slide-in-up'
+              className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] hover:shadow-xl transition-all animate-slide-in-up'
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               <CardContent className='p-6 space-y-3'>
                 <h3 className='text-blue-900'>{branch.name}</h3>
                 <div className='space-y-2 text-sm text-gray-600'>
                   <div className='flex items-start gap-2'>
-                    <MapPin className='w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0' />
+                    <MapPin className='w-4 h-4 text-[#1E40AF] mt-0.5 flex-shrink-0' />
                     <span>{branch.address}</span>
                   </div>
                   <div className='flex items-center gap-2'>
                     <Phone className='w-4 h-4 text-green-600 flex-shrink-0' />
-                    <a href={`tel:${branch.phone}`} className='hover:text-blue-600 hover:underline'>
+                    <a href={`tel:${branch.phone}`} className='hover:text-[#1E40AF] hover:underline'>
                       {branch.phone}
                     </a>
                   </div>
                   <div className='flex items-center gap-2'>
-                    <Clock className='w-4 h-4 text-purple-600 flex-shrink-0' />
+                    <Clock className='w-4 h-4 text-[#1E40AF] flex-shrink-0' />
                     <span>{branch.hours}</span>
                   </div>
                 </div>
@@ -385,7 +385,7 @@ export function ContactUsPage() {
                   asChild
                   variant='outline'
                   size='sm'
-                  className='w-full border-2 border-blue-200 text-blue-600 hover:bg-blue-50'
+                  className='w-full border-2 border-[#BFDBFE] text-[#1E40AF] hover:bg-[#F0F6FF]'
                 >
                   <a href='https://maps.google.com' target='_blank' rel='noopener noreferrer'>
                     <MapPin className='w-4 h-4 mr-2' />
@@ -399,13 +399,13 @@ export function ContactUsPage() {
       </div>
 
       {/* FAQ Link */}
-      <Card className='bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 text-white text-center'>
+      <Card className='bg-gradient-to-r from-[#0A2463] via-[#1E40AF] to-[#3B82F6] text-white text-center'>
         <CardContent className='p-8 space-y-4'>
           <h2 className='text-white'>Có thắc mắc?</h2>
           <p className='text-blue-50 text-lg max-w-2xl mx-auto'>
             Tham khảo trang Câu hỏi thường gặp để tìm câu trả lời nhanh chóng
           </p>
-          <Button asChild className='bg-white text-blue-600 hover:bg-blue-50'>
+          <Button asChild className='bg-white text-[#1E40AF] hover:bg-[#F0F6FF]'>
             <a href='/faq'>Xem câu hỏi thường gặp →</a>
           </Button>
         </CardContent>

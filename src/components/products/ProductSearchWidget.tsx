@@ -52,9 +52,9 @@ interface ProductSearchWidgetProps {
 const categoryFilters = [
   { id: 'all', label: 'Tất cả', icon: '📋', color: 'text-gray-700' },
   { id: 'rx', label: 'Thuốc kê đơn', icon: '💊', color: 'text-red-600' },
-  { id: 'otc', label: 'OTC', icon: '🏥', color: 'text-blue-600' },
+  { id: 'otc', label: 'OTC', icon: '🏥', color: 'text-[#1E40AF]' },
   { id: 'supplement', label: 'TPCN', icon: '🌿', color: 'text-green-600' },
-  { id: 'medical_device', label: 'Thiết bị y tế', icon: '🩺', color: 'text-purple-600' },
+  { id: 'medical_device', label: 'Thiết bị y tế', icon: '🩺', color: 'text-[#1E40AF]' },
   { id: 'cosmetic', label: 'Mỹ phẩm', icon: '💄', color: 'text-pink-600' },
 ]
 
@@ -162,7 +162,7 @@ export function ProductSearchWidget({ onProductAdd, onProductInfo, className = '
       case 'rx':
         return { badge: '🔴 Rx', color: 'bg-red-100 text-red-700' }
       case 'otc':
-        return { badge: '💊 OTC', color: 'bg-blue-100 text-blue-700' }
+        return { badge: '💊 OTC', color: 'bg-[#E8EDF5] text-[#0A2463]' }
       case 'supplement':
         return { badge: '🌿 TPCN', color: 'bg-green-100 text-green-700' }
       case 'cosmetic':
@@ -190,7 +190,7 @@ export function ProductSearchWidget({ onProductAdd, onProductInfo, className = '
         onAddToCart={onProductAdd}
       />
       <div className={`space-y-4 ${className} w-full`}>
-        <div className='relative w-full flex items-center bg-white rounded-xl border border-gray-200 px-4 hover:border-blue-300 transition-colors focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-400 shadow-sm'>
+        <div className='relative w-full flex items-center bg-white rounded-xl border border-gray-200 px-4 hover:border-[#BFDBFE] transition-colors focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-400 shadow-sm'>
           <Search className='text-blue-400 w-4 h-4 flex-shrink-0 mr-2' />
           <Input
             ref={searchInputRef}
@@ -213,8 +213,8 @@ export function ProductSearchWidget({ onProductAdd, onProductInfo, className = '
                 onClick={() => handleCategoryFilter(category.id)}
                 className={`whitespace-nowrap flex-shrink-0 rounded-full border px-4 h-9 text-xs font-medium transition-all ${
                   isSelected
-                    ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700 shadow-sm'
-                    : `bg-white border-gray-200 ${category.color} hover:bg-gray-50 hover:border-blue-300`
+                    ? 'bg-[#0A2463] text-white border-[#1E40AF] hover:bg-[#071A49] shadow-sm'
+                    : `bg-white border-gray-200 ${category.color} hover:bg-gray-50 hover:border-[#BFDBFE]`
                 }`}
               >
                 <span className='mr-1.5 text-sm opacity-80'>{category.icon}</span>
@@ -225,8 +225,8 @@ export function ProductSearchWidget({ onProductAdd, onProductInfo, className = '
         </div>
 
         {/* Search Results */}
-        <Card className='border-blue-100'>
-          <div className='p-3 border-b border-blue-100 flex items-center justify-between'>
+        <Card className='border-[#E8EDF5]'>
+          <div className='p-3 border-b border-[#E8EDF5] flex items-center justify-between'>
             <h4 className='font-medium text-blue-900 flex items-center gap-2'>
               <ClipboardList className='w-4 h-4' />
               KẾT QUẢ TÌM KIẾM
@@ -253,7 +253,7 @@ export function ProductSearchWidget({ onProductAdd, onProductInfo, className = '
             <div className='p-3 space-y-3'>
               {loading ? (
                 <div className='text-center py-8 text-gray-500'>
-                  <div className='inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mb-2'></div>
+                  <div className='inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-[#1E40AF] mb-2'></div>
                   <p>Đang tìm kiếm...</p>
                 </div>
               ) : searchResults.length === 0 ? (
@@ -268,7 +268,7 @@ export function ProductSearchWidget({ onProductAdd, onProductInfo, className = '
                   return (
                     <Card
                       key={product.id}
-                      className='p-3 border border-transparent hover:border-blue-300 hover:shadow-lg hover:-translate-y-0.5 transition-all bg-white relative overflow-hidden group cursor-pointer'
+                      className='p-3 border border-transparent hover:border-[#BFDBFE] hover:shadow-lg hover:-translate-y-0.5 transition-all bg-white relative overflow-hidden group cursor-pointer'
                     >
                       {/* Decorative gradient blur on hover */}
                       <div className='absolute inset-0 bg-gradient-to-r from-blue-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none' />
@@ -322,7 +322,7 @@ export function ProductSearchWidget({ onProductAdd, onProductInfo, className = '
                             <Button
                               size='sm'
                               onClick={() => onProductAdd(product, 1)}
-                              className='bg-blue-600 hover:bg-blue-700 text-white h-7 px-3 text-xs'
+                              className='bg-[#0A2463] hover:bg-[#071A49] text-white h-7 px-3 text-xs'
                             >
                               <Plus className='w-3 h-3 mr-1' />
                               Thêm
@@ -332,7 +332,7 @@ export function ProductSearchWidget({ onProductAdd, onProductInfo, className = '
                               variant='outline'
                               size='sm'
                               onClick={() => handleProductInfoClick(product)}
-                              className='border-blue-200 text-blue-700 hover:bg-blue-50 h-7 px-3 text-xs'
+                              className='border-[#BFDBFE] text-[#0A2463] hover:bg-[#F0F6FF] h-7 px-3 text-xs'
                             >
                               <Info className='w-3 h-3 mr-1' />
                               Chi tiết

@@ -27,11 +27,11 @@ export function NotificationItem({ notification, onMarkAsRead, onAction }: Notif
   const getIcon = () => {
     switch (notification.type) {
       case 'order':
-        return <Package className='w-5 h-5 text-blue-600' />
+        return <Package className='w-5 h-5 text-[#1E40AF]' />
       case 'prescription':
         return <Pill className='w-5 h-5 text-green-600' />
       case 'promotion':
-        return <Gift className='w-5 h-5 text-purple-600' />
+        return <Gift className='w-5 h-5 text-[#1E40AF]' />
       case 'health':
         return <Heart className='w-5 h-5 text-red-500' />
       case 'review':
@@ -65,11 +65,11 @@ export function NotificationItem({ notification, onMarkAsRead, onAction }: Notif
   const getTypeColor = () => {
     switch (notification.type) {
       case 'order':
-        return 'bg-blue-100 text-blue-800'
+        return 'bg-[#E8EDF5] text-blue-800'
       case 'prescription':
         return 'bg-green-100 text-green-800'
       case 'promotion':
-        return 'bg-purple-100 text-purple-800'
+        return 'bg-[#E8EDF5] text-[#0A2463]'
       case 'health':
         return 'bg-red-100 text-red-800'
       case 'review':
@@ -122,8 +122,8 @@ export function NotificationItem({ notification, onMarkAsRead, onAction }: Notif
     <Card
       className={`transition-all duration-200 hover:shadow-md ${
         !notification.isRead
-          ? 'border-blue-200 border-l-4 border-l-blue-500 bg-gradient-to-r from-blue-50/50 to-transparent'
-          : 'border-blue-200'
+          ? 'border-[#BFDBFE] border-l-4 border-l-blue-500 bg-gradient-to-r from-blue-50/50 to-transparent'
+          : 'border-[#BFDBFE]'
       }`}
     >
       <CardContent className='p-4'>
@@ -136,7 +136,7 @@ export function NotificationItem({ notification, onMarkAsRead, onAction }: Notif
                 <Badge variant='secondary' className={`text-xs ${getTypeColor()}`}>
                   {getTypeLabel()}
                 </Badge>
-                {!notification.isRead && <div className='w-2 h-2 bg-blue-500 rounded-full'></div>}
+                {!notification.isRead && <div className='w-2 h-2 bg-[#1E40AF] rounded-full'></div>}
               </div>
 
               <div className='flex items-center gap-2 text-xs text-gray-500'>
@@ -156,7 +156,7 @@ export function NotificationItem({ notification, onMarkAsRead, onAction }: Notif
                     variant='outline'
                     size='sm'
                     onClick={handleAction}
-                    className='text-blue-600 border-blue-200 hover:bg-blue-50'
+                    className='text-[#1E40AF] border-[#BFDBFE] hover:bg-[#F0F6FF]'
                   >
                     {notification.actionText}
                   </Button>

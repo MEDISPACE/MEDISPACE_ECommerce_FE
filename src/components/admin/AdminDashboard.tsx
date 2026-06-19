@@ -179,13 +179,13 @@ export function AdminDashboard() {
   return (
     <div className='space-y-6'>
       {/* Header */}
-      <div className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
+      <div className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-6'>
         <div className='flex items-center justify-between'>
           <div>
             <h1
               className='text-3xl font-bold bg-clip-text text-transparent'
               style={{
-                backgroundImage: `linear-gradient(to right, #0066CC, #4A90E2)`,
+                backgroundImage: `linear-gradient(to right, #0A2463, #1E40AF)`,
               }}
             >
               Dashboard Tổng quan
@@ -205,7 +205,7 @@ export function AdminDashboard() {
       {statsLoading ? (
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
           {[1, 2, 3, 4].map((i) => (
-            <Card key={i} className='bg-white backdrop-blur-lg border-blue-100 animate-pulse'>
+            <Card key={i} className='bg-white backdrop-blur-lg border-[#E8EDF5] animate-pulse'>
               <CardContent className='p-6'>
                 <div className='h-20 bg-gray-200 rounded'></div>
               </CardContent>
@@ -222,10 +222,10 @@ export function AdminDashboard() {
 
       <div className='grid grid-cols-1 gap-8'>
         {/* Recent Activities */}
-        <Card className='bg-white backdrop-blur-lg shadow-lg border border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg shadow-lg border border-[#E8EDF5]'>
           <CardHeader>
             <CardTitle className='flex items-center gap-2'>
-              <Clock className='w-5 h-5 text-blue-600' />
+              <Clock className='w-5 h-5 text-[#1E40AF]' />
               Hoạt động gần đây
             </CardTitle>
           </CardHeader>
@@ -248,7 +248,7 @@ export function AdminDashboard() {
                             ? 'bg-yellow-500'
                             : activity.severity === 'error'
                               ? 'bg-red-500'
-                              : 'bg-blue-500'
+                              : 'bg-[#1E40AF]'
                       }`}
                     />
                     <div className='flex-1'>
@@ -271,7 +271,7 @@ export function AdminDashboard() {
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
           {quickActions.map((action, index) => (
             <Link key={index} to={action.href}>
-              <Card className='bg-white backdrop-blur-lg shadow-lg border border-blue-100 hover:shadow-xl transition-all duration-300 cursor-pointer group h-full'>
+              <Card className='bg-white backdrop-blur-lg shadow-lg border border-[#E8EDF5] hover:shadow-xl transition-all duration-300 cursor-pointer group h-full'>
                 <CardContent className='p-6 text-center'>
                   <div
                     className={`w-16 h-16 mx-auto mb-4 rounded-lg bg-${action.color}-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}
@@ -289,10 +289,10 @@ export function AdminDashboard() {
 
       {/* User Statistics */}
       <div className='mt-8'>
-        <Card className='bg-white backdrop-blur-lg shadow-lg border border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg shadow-lg border border-[#E8EDF5]'>
           <CardHeader>
             <CardTitle className='flex items-center gap-2'>
-              <Users className='w-5 h-5 text-blue-600' />
+              <Users className='w-5 h-5 text-[#1E40AF]' />
               Thống kê người dùng
             </CardTitle>
           </CardHeader>
@@ -306,7 +306,7 @@ export function AdminDashboard() {
             ) : dashboardStats ? (
               <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6'>
                 <div className='text-center'>
-                  <div className='text-2xl font-medium text-blue-600'>{dashboardStats.users.total}</div>
+                  <div className='text-2xl font-medium text-[#1E40AF]'>{dashboardStats.users.total}</div>
                   <div className='text-sm text-gray-600'>Tổng cộng</div>
                 </div>
                 <div className='text-center'>
@@ -314,7 +314,7 @@ export function AdminDashboard() {
                   <div className='text-sm text-gray-600'>Khách hàng</div>
                 </div>
                 <div className='text-center'>
-                  <div className='text-2xl font-medium text-[#4A90E2]'>{dashboardStats.users.pharmacists}</div>
+                  <div className='text-2xl font-medium text-[#1E40AF]'>{dashboardStats.users.pharmacists}</div>
                   <div className='text-sm text-gray-600'>Dược sĩ</div>
                 </div>
                 <div className='text-center'>

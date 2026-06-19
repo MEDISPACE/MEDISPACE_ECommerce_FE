@@ -30,6 +30,7 @@ import { productService } from '../../services/productService'
 import { ProductCard } from '../products/ProductCard'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
 import type { Category, Product } from '../../types/product'
+import { getCategoryIcon } from '../../utils/categoryIcons'
 
 type CategoryIconType = React.ComponentType<React.SVGProps<SVGSVGElement>>
 
@@ -105,7 +106,7 @@ export function CategoriesOverviewPage() {
     return (
       <div className='min-h-screen flex items-center justify-center'>
         <div className='text-center'>
-          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4'></div>
+          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-[#1E40AF] mx-auto mb-4'></div>
           <p className='text-gray-600'>Đang tải danh mục sản phẩm...</p>
         </div>
       </div>
@@ -127,17 +128,17 @@ export function CategoriesOverviewPage() {
     <div className='min-h-screen'>
       <UniversalBreadcrumb items={breadcrumbItems} />
       {/* Hero Section */}
-      <section className='relative bg-gradient-to-br from-blue-50 via-white to-cyan-50 overflow-hidden'>
+      <section className='relative bg-gradient-to-br from-[#F8FAFB] via-white to-[#F0F6FF] overflow-hidden'>
         {/* Floating Elements */}
         <div className='absolute inset-0 overflow-hidden pointer-events-none'>
-          <div className='absolute top-20 left-10 w-20 h-20 bg-blue-200/30 rounded-full' />
-          <div className='absolute top-32 right-20 w-16 h-16 bg-cyan-200/30 rounded-full' />
+          <div className='absolute top-20 left-10 w-20 h-20 bg-[#BFDBFE]/30 rounded-full' />
+          <div className='absolute top-32 right-20 w-16 h-16 bg-[#BFDBFE]/30 rounded-full' />
           <div className='absolute bottom-32 left-1/4 w-12 h-12 bg-blue-300/20 rounded-full' />
         </div>
 
         <div className='max-w-7xl mx-auto px-4 py-16'>
           <div className='text-center mt-8'>
-            <h1 className='text-5xl font-bold bg-gradient-to-r from-blue-800 via-blue-600 to-cyan-600 bg-clip-text text-transparent mb-4 px-[0px] py-[12px]'>
+            <h1 className='text-5xl font-bold bg-gradient-to-r from-[#0A2463] via-[#1E40AF] to-[#3B82F6] bg-clip-text text-transparent mb-4 px-[0px] py-[12px]'>
               Khám phá thế giới sức khỏe
             </h1>
             <p className='text-xl text-gray-600 mb-8 max-w-2xl mx-auto'>
@@ -153,7 +154,7 @@ export function CategoriesOverviewPage() {
           <div className='grid grid-cols-2 md:grid-cols-4 gap-8'>
             {stats.map((stat, index) => (
               <div key={index} className='text-center group'>
-                <div className='bg-gradient-to-br from-blue-500 to-cyan-500 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 hover:scale-110 transition-transform duration-300'>
+                <div className='bg-gradient-to-br from-[#0A2463] to-[#1E40AF] w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 hover:scale-110 transition-transform duration-300'>
                   <stat.icon className='w-8 h-8 text-white' />
                 </div>
                 <h3 className='text-3xl font-bold text-blue-800 mb-2'>{stat.value}</h3>
@@ -168,7 +169,7 @@ export function CategoriesOverviewPage() {
         {/* Main Categories Grid */}
         <section className='mb-16'>
           <div className='text-center mb-12'>
-            <h2 className='text-4xl font-bold bg-gradient-to-r from-blue-800 to-cyan-600 bg-clip-text text-transparent mb-4'>
+            <h2 className='text-4xl font-bold bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text text-transparent mb-4'>
               Danh mục sản phẩm
             </h2>
             <p className='text-xl text-gray-600'>Tìm kiếm sản phẩm phù hợp với nhu cầu của bạn</p>
@@ -176,22 +177,22 @@ export function CategoriesOverviewPage() {
 
           <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6'>
             {filteredCategories.map((category) => {
-              const IconComponent = categoryIcons[category.slug] || ShoppingBag
+              const IconComponent = getCategoryIcon(category)
               // Get child categories for this parent
               const childCategories = categories.filter((cat) => cat.parentId === category._id)
 
               return (
                 <Card
                   key={category._id}
-                  className='bg-white border border-gray-200 hover:border-blue-300 hover:shadow-xl transition-all duration-300 h-full flex flex-col overflow-hidden'
+                  className='bg-white border border-gray-200 hover:border-[#BFDBFE] hover:shadow-xl transition-all duration-300 h-full flex flex-col overflow-hidden'
                 >
                   {/* Header with Icon and Badge */}
                   <CardHeader className='pb-3'>
                     <div className='flex items-center justify-between mb-4'>
-                      <div className='w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg'>
+                      <div className='w-14 h-14 rounded-2xl bg-gradient-to-br from-[#0A2463] to-[#1E40AF] flex items-center justify-center shadow-lg'>
                         <IconComponent className='w-7 h-7 text-white' />
                       </div>
-                      <Badge className='bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-0 px-3 py-1 text-sm font-semibold'>
+                      <Badge className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white border-0 px-3 py-1 text-sm font-semibold'>
                         {category.productCount?.toLocaleString() || 0} SP
                       </Badge>
                     </div>
@@ -209,7 +210,7 @@ export function CategoriesOverviewPage() {
                       {childCategories.slice(0, 3).map((sub) => (
                         <div key={sub._id} className='flex items-center justify-between text-sm'>
                           <span className='text-gray-700'>{sub.name}</span>
-                          <span className='text-blue-600 font-medium'>({sub.productCount || 0})</span>
+                          <span className='text-[#1E40AF] font-medium'>({sub.productCount || 0})</span>
                         </div>
                       ))}
                       {childCategories.length > 3 && (
@@ -222,7 +223,7 @@ export function CategoriesOverviewPage() {
 
                     {/* Full-width Button */}
                     <Button
-                      className='w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-medium'
+                      className='w-full bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white font-medium'
                       onClick={() => navigate(`/categories/${category.slug}`)}
                     >
                       Khám phá ngay
@@ -238,7 +239,7 @@ export function CategoriesOverviewPage() {
         {/* Featured Products Section */}
         <section className='mb-16'>
           <div className='text-center mb-12'>
-            <h2 className='text-4xl font-bold bg-gradient-to-r from-blue-800 to-cyan-600 bg-clip-text text-transparent mb-4'>
+            <h2 className='text-4xl font-bold bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text text-transparent mb-4'>
               Sản phẩm nổi bật
             </h2>
             <p className='text-xl text-gray-600'>
@@ -248,7 +249,7 @@ export function CategoriesOverviewPage() {
             {/* View All Products Button */}
             <div className='text-center mt-6'>
               <Link to='/products'>
-                <Button variant='outline' size='lg' className='border-2 border-blue-300 text-blue-600 hover:bg-blue-50'>
+                <Button variant='outline' size='lg' className='border-2 border-[#BFDBFE] text-[#1E40AF] hover:bg-[#F0F6FF]'>
                   Xem tất cả sản phẩm
                   <ArrowRight className='ml-2 w-4 h-4' />
                 </Button>
@@ -266,7 +267,7 @@ export function CategoriesOverviewPage() {
                     variant='outline'
                     size='icon'
                     onClick={() => scrollFeatured('left')}
-                    className='h-12 w-12 rounded-full border-2 border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 bg-white/90 backdrop-blur-sm shadow-lg transition-all duration-300 hover:shadow-xl'
+                    className='h-12 w-12 rounded-full border-2 border-[#BFDBFE] text-[#0A2463] hover:bg-[#F0F6FF] hover:border-[#BFDBFE] bg-white/90 backdrop-blur-sm shadow-lg transition-all duration-300 hover:shadow-xl'
                   >
                     <ChevronLeft className='w-6 h-6' />
                   </Button>
@@ -277,7 +278,7 @@ export function CategoriesOverviewPage() {
                     variant='outline'
                     size='icon'
                     onClick={() => scrollFeatured('right')}
-                    className='h-12 w-12 rounded-full border-2 border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 bg-white/90 backdrop-blur-sm shadow-lg transition-all duration-300 hover:shadow-xl'
+                    className='h-12 w-12 rounded-full border-2 border-[#BFDBFE] text-[#0A2463] hover:bg-[#F0F6FF] hover:border-[#BFDBFE] bg-white/90 backdrop-blur-sm shadow-lg transition-all duration-300 hover:shadow-xl'
                   >
                     <ChevronRight className='w-6 h-6' />
                   </Button>
@@ -358,7 +359,7 @@ export function CategoriesOverviewPage() {
                     key={index}
                     onClick={() => setFeaturedCurrentIndex(index)}
                     className={`h-3 rounded-full transition-all duration-300 ${
-                      index === featuredCurrentIndex ? 'bg-blue-600 w-8 shadow-lg' : 'bg-blue-200 hover:bg-blue-300 w-3'
+                      index === featuredCurrentIndex ? 'bg-[#0A2463] w-8 shadow-lg' : 'bg-[#BFDBFE] hover:bg-blue-300 w-3'
                     }`}
                   />
                 ))}
@@ -380,7 +381,7 @@ export function CategoriesOverviewPage() {
             </div>
 
             <div className='relative z-10'>
-              <div className='w-24 h-24 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center mx-auto mb-8'>
+              <div className='w-24 h-24 bg-gradient-to-br from-[#0A2463] to-[#1E40AF] rounded-full flex items-center justify-center mx-auto mb-8'>
                 <Stethoscope className='w-12 h-12 text-white' />
               </div>
 
@@ -394,7 +395,7 @@ export function CategoriesOverviewPage() {
                 <Link to='/contact'>
                   <Button
                     size='lg'
-                    className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-8 py-4 text-lg'
+                    className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white px-8 py-4 text-lg'
                   >
                     <MessageCircle className='mr-2 w-5 h-5' />
                     Tư vấn ngay
@@ -404,7 +405,7 @@ export function CategoriesOverviewPage() {
                   <Button
                     variant='outline'
                     size='lg'
-                    className='border-2 border-blue-300 text-blue-600 hover:bg-blue-50 px-8 py-4 text-lg'
+                    className='border-2 border-[#BFDBFE] text-[#1E40AF] hover:bg-[#F0F6FF] px-8 py-4 text-lg'
                   >
                     <FileText className='mr-2 w-5 h-5' />
                     Gửi đơn thuốc
@@ -418,7 +419,7 @@ export function CategoriesOverviewPage() {
         {/* Health Tips Section */}
         <section className='mb-16'>
           <div className='text-center mb-12'>
-            <h2 className='text-4xl font-bold bg-gradient-to-r from-blue-800 to-cyan-600 bg-clip-text text-transparent mb-4'>
+            <h2 className='text-4xl font-bold bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text text-transparent mb-4'>
               Góc sức khỏe
             </h2>
             <p className='text-xl text-gray-600'>Kiến thức và mẹo hay để bảo vệ sức khỏe gia đình</p>
@@ -442,23 +443,23 @@ export function CategoriesOverviewPage() {
                 title: 'Chăm sóc sức khỏe gia đình',
                 description: 'Những điều cần biết để bảo vệ sức khỏe cho mọi thành viên',
                 icon: Heart,
-                color: 'from-pink-500 to-purple-500',
+                color: 'from-[#0A2463] to-[#1E40AF]',
               },
             ].map((tip, index) => (
               <div key={index}>
-                <Card className='group hover:shadow-xl transition-all duration-500 bg-white/80 backdrop-blur-sm border border-gray-100 hover:border-blue-200 h-full'>
+                <Card className='group hover:shadow-xl transition-all duration-500 bg-white/80 backdrop-blur-sm border border-gray-100 hover:border-[#BFDBFE] h-full'>
                   <CardContent className='p-6'>
                     <div
                       className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${tip.color} flex items-center justify-center mb-6 hover:scale-110 transition-transform duration-300`}
                     >
                       <tip.icon className='w-8 h-8 text-white' />
                     </div>
-                    <h3 className='text-xl font-bold text-gray-800 mb-3 hover:text-blue-600 transition-colors'>
+                    <h3 className='text-xl font-bold text-gray-800 mb-3 hover:text-[#1E40AF] transition-colors'>
                       {tip.title}
                     </h3>
                     <p className='text-gray-600 mb-4'>{tip.description}</p>
                     <Link to='/health'>
-                      <Button variant='ghost' className='text-blue-600 hover:bg-blue-50 p-0'>
+                      <Button variant='ghost' className='text-[#1E40AF] hover:bg-[#F0F6FF] p-0'>
                         Đọc thêm <ArrowRight className='ml-1 w-4 h-4' />
                       </Button>
                     </Link>
@@ -471,7 +472,7 @@ export function CategoriesOverviewPage() {
 
         {/* Newsletter Section */}
         <section>
-          <div className='bg-gradient-to-r from-blue-600 via-blue-700 to-cyan-600 rounded-3xl p-12 text-center text-white relative overflow-hidden'>
+          <div className='bg-gradient-to-r from-[#0A2463] via-[#071A49] to-[#1E40AF] rounded-3xl p-12 text-center text-white relative overflow-hidden'>
             {/* Background Effects */}
             <div className='absolute inset-0 opacity-20'>
               <div className='absolute top-4 left-4 w-16 h-16 bg-white rounded-full' />
@@ -494,7 +495,7 @@ export function CategoriesOverviewPage() {
                   placeholder='Nhập email của bạn...'
                   className='bg-white/20 border-white/30 text-white placeholder:text-white/70 focus:bg-white/30'
                 />
-                <Button className='bg-white text-blue-600 hover:bg-gray-100 font-semibold px-8'>Đăng ký</Button>
+                <Button className='bg-white text-[#1E40AF] hover:bg-gray-100 font-semibold px-8'>Đăng ký</Button>
               </div>
             </div>
           </div>

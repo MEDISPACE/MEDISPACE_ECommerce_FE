@@ -20,7 +20,7 @@ export function LoadingSpinner({ size = 'md', variant = 'default', className = '
         {[0, 1, 2].map((i) => (
           <motion.div
             key={i}
-            className='w-2 h-2 bg-blue-600 rounded-full'
+            className='w-2 h-2 bg-[#0A2463] rounded-full'
             animate={{
               scale: [1, 1.5, 1],
               opacity: [0.7, 1, 0.7],
@@ -40,7 +40,7 @@ export function LoadingSpinner({ size = 'md', variant = 'default', className = '
   if (variant === 'pulse') {
     return (
       <motion.div
-        className={`${sizeMap[size]} bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full ${className}`}
+        className={`${sizeMap[size]} bg-gradient-to-r from-[#0A2463] to-[#1E40AF] rounded-full ${className}`}
         animate={{
           scale: [1, 1.2, 1],
           opacity: [0.7, 1, 0.7],
@@ -60,7 +60,7 @@ export function LoadingSpinner({ size = 'md', variant = 'default', className = '
         {[0, 1, 2, 3, 4].map((i) => (
           <motion.div
             key={i}
-            className='w-1 bg-blue-600 rounded-full'
+            className='w-1 bg-[#0A2463] rounded-full'
             animate={{
               height: ['10px', '30px', '10px'],
             }}
@@ -79,7 +79,7 @@ export function LoadingSpinner({ size = 'md', variant = 'default', className = '
   if (variant === 'gradient') {
     return (
       <motion.div
-        className={`${sizeMap[size]} rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500 ${className}`}
+        className={`${sizeMap[size]} rounded-full bg-gradient-to-r from-[#0A2463] via-[#1E40AF] to-[#3B82F6] ${className}`}
         animate={{
           rotate: 360,
         }}
@@ -107,7 +107,7 @@ export function LoadingSpinner({ size = 'md', variant = 'default', className = '
   // Default spinner
   return (
     <motion.div
-      className={`${sizeMap[size]} border-2 border-gray-200 border-t-blue-600 rounded-full ${className}`}
+      className={`${sizeMap[size]} border-2 border-gray-200 border-t-[#1E40AF] rounded-full ${className}`}
       animate={{
         rotate: 360,
       }}

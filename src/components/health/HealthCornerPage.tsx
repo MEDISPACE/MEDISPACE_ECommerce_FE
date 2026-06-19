@@ -103,7 +103,7 @@ export function HealthCornerPage() {
     return (
       <div className='flex justify-center items-center min-h-screen bg-white'>
         <div className='text-center'>
-          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4'></div>
+          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-[#1E40AF] mx-auto mb-4'></div>
           <p className='text-gray-600 dark:text-gray-400'>Đang tải...</p>
         </div>
       </div>
@@ -114,19 +114,18 @@ export function HealthCornerPage() {
     <div className='min-h-screen bg-white'>
       {/* Header */}
       <div className='px-4 pt-6'>
-        <div className='max-w-7xl mx-auto rounded-lg bg-gradient-to-r from-blue-100 to-cyan-50 px-4 sm:px-6 lg:px-8 py-8 border border-blue-200'>
+        <div className='max-w-7xl mx-auto rounded-lg bg-gradient-to-r from-[#F0F6FF] to-[#F8FAFB] px-4 sm:px-6 lg:px-8 py-8 border border-[#BFDBFE]'>
           <UniversalBreadcrumb
             items={[
-              { label: 'Trang chủ', href: '/' },
-              { label: 'Góc sức khỏe', href: '/health' },
+              { label: 'Bệnh & Góc sức khỏe' },
             ]}
           />
-          <h1 className='text-4xl font-bold bg-gradient-to-r from-blue-800 to-cyan-600 bg-clip-text text-transparent mt-4'>
-            Góc sức khỏe
+          <h1 className='font-display bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text text-4xl font-bold text-transparent mt-4'>
+            Bệnh & Góc sức khỏe
           </h1>
           <p className='text-gray-700 mt-2'>Chia sẻ kiến thức y khoa và sống khỏe mỗi ngày</p>
           <form onSubmit={handleSearch} className='mt-6 max-w-2xl'>
-            <div className='relative flex items-center gap-3 rounded-lg bg-white p-2 shadow-sm border border-blue-100'>
+            <div className='relative flex items-center gap-3 rounded-lg bg-white p-2 shadow-sm border border-[#E8EDF5]'>
               <Search className='absolute left-5 h-5 w-5 text-blue-500' />
               <Input
                 value={searchQuery}
@@ -134,7 +133,7 @@ export function HealthCornerPage() {
                 placeholder='Tìm bệnh, triệu chứng, thuốc hoặc chủ đề sức khỏe'
                 className='h-11 pl-11 border-0 focus-visible:ring-0'
               />
-              <Button type='submit' className='h-11 bg-blue-600 hover:bg-blue-700 text-white'>
+              <Button type='submit' className='h-11 bg-[#0A2463] hover:bg-[#071A49] text-white'>
                 Tìm kiếm
               </Button>
             </div>
@@ -142,7 +141,7 @@ export function HealthCornerPage() {
           <Button
             type='button'
             variant='outline'
-            className='mt-4 border-blue-200 bg-white text-blue-700 hover:bg-blue-50'
+            className='mt-4 border-[#BFDBFE] bg-white text-[#0A2463] hover:bg-[#F0F6FF]'
             onClick={() => navigate('/health/checker')}
           >
             <ClipboardCheck className='h-4 w-4 mr-2' />
@@ -155,12 +154,12 @@ export function HealthCornerPage() {
         {/* Health Categories */}
         <section className='mb-12'>
           <div className='mb-6'>
-            <h2 className='text-3xl font-bold text-gray-900'>Health A-Z</h2>
+            <h2 className='font-display bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text text-3xl font-bold text-transparent'>Health A-Z</h2>
             <p className='text-sm text-gray-600 mt-1'>Đi nhanh theo triệu chứng, hoạt chất, nhóm người đọc hoặc dịch vụ cần dùng.</p>
           </div>
           <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4'>
             {hubAxes.map((axis) => (
-              <Card key={axis.title} className='border-blue-100 bg-white/90'>
+              <Card key={axis.title} className='border-[#E8EDF5] bg-white/90'>
                 <CardContent className='p-5'>
                   <h3 className='font-semibold text-gray-900 mb-3'>{axis.title}</h3>
                   <div className='flex flex-wrap gap-2'>
@@ -170,7 +169,7 @@ export function HealthCornerPage() {
                         type='button'
                         variant='outline'
                         size='sm'
-                        className='h-8 border-blue-100 bg-white text-blue-700 hover:bg-blue-50'
+                        className='h-8 border-[#E8EDF5] bg-white text-[#0A2463] hover:bg-[#F0F6FF]'
                         onClick={() => navigate(`/health/search?q=${encodeURIComponent(item)}`)}
                       >
                         {item}
@@ -184,7 +183,7 @@ export function HealthCornerPage() {
         </section>
 
         <section className='mb-12'>
-          <h2 className='text-3xl font-bold bg-gradient-to-r from-blue-800 to-cyan-600 bg-clip-text text-transparent mb-6'>
+          <h2 className='font-display bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text text-3xl font-bold text-transparent mb-6'>
             Danh mục sức khỏe
           </h2>
           <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4'>
@@ -192,16 +191,16 @@ export function HealthCornerPage() {
               const IconComponent = getIconForCategory(category.icon)
               return (
                 <Link key={category._id} to={`/health/category/${category.slug}`}>
-                  <Card className='hover:shadow-xl transition-all duration-300 cursor-pointer h-full border-blue-100 hover:border-blue-300 bg-white/80 backdrop-blur-sm'>
+                  <Card className='hover:shadow-xl transition-all duration-300 cursor-pointer h-full border-[#E8EDF5] hover:border-[#BFDBFE] bg-white/80 backdrop-blur-sm'>
                     <CardContent className='p-6'>
                       <div
-                        className={`w-12 h-12 rounded-lg ${category.color || 'bg-blue-100'} flex items-center justify-center mb-4`}
+                        className={`w-12 h-12 rounded-lg ${category.color || 'bg-[#E8EDF5]'} flex items-center justify-center mb-4`}
                       >
                         <IconComponent className='h-6 w-6' />
                       </div>
                       <h3 className='font-semibold text-gray-900 mb-1'>{category.name}</h3>
                       <p className='text-sm text-gray-600 mb-2'>{category.description}</p>
-                      <p className='text-xs text-blue-600 font-medium'>{category.articleCount} bài viết</p>
+                      <p className='text-xs text-[#1E40AF] font-medium'>{category.articleCount} bài viết</p>
                     </CardContent>
                   </Card>
                 </Link>
@@ -213,11 +212,11 @@ export function HealthCornerPage() {
         {personalizedArticles.length > 0 && (
           <section className='mb-12'>
             <div className='mb-6 flex items-center gap-3'>
-              <div className='rounded-full bg-cyan-100 p-2 text-cyan-700'>
+              <div className='rounded-full bg-[#E8EDF5] p-2 text-[#1E40AF]'>
                 <Sparkles className='h-5 w-5' />
               </div>
               <div>
-                <h2 className='text-3xl font-bold bg-gradient-to-r from-blue-800 to-cyan-600 bg-clip-text text-transparent'>
+                <h2 className='font-display bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text text-3xl font-bold text-transparent'>
                   Dành cho bạn
                 </h2>
                 <p className='text-sm text-gray-600 mt-1'>Gợi ý theo hồ sơ sức khỏe và lịch sử mua hàng hiện có.</p>
@@ -226,8 +225,8 @@ export function HealthCornerPage() {
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
               {personalizedArticles.map((article) => (
                 <Link key={article._id} to={`/health/article/${article.slug}`}>
-                  <Card className='overflow-hidden hover:shadow-xl transition-all duration-300 h-full border-cyan-100 hover:border-cyan-300 bg-white/80 backdrop-blur-sm'>
-                    <div className='aspect-video relative overflow-hidden bg-gradient-to-br from-cyan-100 to-blue-100'>
+                  <Card className='overflow-hidden hover:shadow-xl transition-all duration-300 h-full border-[#E8EDF5] hover:border-[#BFDBFE] bg-white/80 backdrop-blur-sm'>
+                    <div className='aspect-video relative overflow-hidden bg-gradient-to-br from-[#F0F6FF] to-[#E8EDF5]'>
                       {article.featuredImage && (
                         <ImageWithFallback
                           src={article.featuredImage}
@@ -235,11 +234,11 @@ export function HealthCornerPage() {
                           className='w-full h-full object-cover hover:scale-105 transition-transform duration-300'
                         />
                       )}
-                      <Badge className='absolute top-2 right-2 bg-cyan-600'>Gợi ý</Badge>
+                      <Badge className='absolute top-2 right-2 bg-[#1E40AF] text-white hover:bg-[#0A2463]'>Gợi ý</Badge>
                     </div>
                     <CardContent className='p-6'>
                       <div className='flex items-center gap-2 text-sm text-gray-600 mb-2'>
-                        <Badge variant='outline' className='border-cyan-300 text-cyan-700'>
+                        <Badge variant='outline' className='border-[#BFDBFE] text-[#1E40AF]'>
                           {article.category?.name}
                         </Badge>
                         <span>•</span>
@@ -269,15 +268,15 @@ export function HealthCornerPage() {
         {featuredArticles.length > 0 && (
           <section className='mb-12'>
             <div className='mb-6'>
-              <h2 className='text-3xl font-bold bg-gradient-to-r from-blue-800 to-cyan-600 bg-clip-text text-transparent'>
+              <h2 className='font-display bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text text-3xl font-bold text-transparent'>
                 Bài viết nổi bật
               </h2>
             </div>
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
               {featuredArticles.map((article) => (
                 <Link key={article._id} to={`/health/article/${article.slug}`}>
-                  <Card className='overflow-hidden hover:shadow-xl transition-all duration-300 h-full border-blue-100 hover:border-blue-300 bg-white/80 backdrop-blur-sm'>
-                    <div className='aspect-video relative overflow-hidden bg-gradient-to-br from-blue-100 to-cyan-100'>
+                  <Card className='overflow-hidden hover:shadow-xl transition-all duration-300 h-full border-[#E8EDF5] hover:border-[#BFDBFE] bg-white/80 backdrop-blur-sm'>
+                    <div className='aspect-video relative overflow-hidden bg-gradient-to-br from-[#F0F6FF] to-[#E8EDF5]'>
                       {article.featuredImage && (
                         <ImageWithFallback
                           src={article.featuredImage}
@@ -285,11 +284,11 @@ export function HealthCornerPage() {
                           className='w-full h-full object-cover hover:scale-105 transition-transform duration-300'
                         />
                       )}
-                      {article.isFeatured && <Badge className='absolute top-2 right-2 bg-red-500'>Nổi bật</Badge>}
+                      {article.isFeatured && <Badge className='absolute top-2 right-2 bg-red-500 text-white hover:bg-red-600'>Nổi bật</Badge>}
                     </div>
                     <CardContent className='p-6'>
                       <div className='flex items-center gap-2 text-sm text-gray-600 mb-2'>
-                        <Badge variant='outline' className='border-blue-300 text-blue-600'>
+                        <Badge variant='outline' className='border-[#BFDBFE] text-[#1E40AF]'>
                           {article.category?.name}
                         </Badge>
                         <span>•</span>
@@ -319,17 +318,17 @@ export function HealthCornerPage() {
         <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
           {/* Latest Articles */}
           <div className='lg:col-span-2'>
-            <h2 className='text-3xl font-bold bg-gradient-to-r from-blue-800 to-cyan-600 bg-clip-text text-transparent mb-6'>
+            <h2 className='font-display bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text text-3xl font-bold text-transparent mb-6'>
               Bài viết mới nhất
             </h2>
             <div className='space-y-6'>
               {latestArticles.map((article) => (
                 <Link key={article._id} to={`/health/article/${article.slug}`}>
-                  <Card className='hover:shadow-md transition-shadow border-blue-100 bg-white/80 backdrop-blur-sm'>
+                  <Card className='hover:shadow-md transition-shadow border-[#E8EDF5] bg-white/80 backdrop-blur-sm'>
                     <CardContent className='p-6'>
                       <div className='flex gap-4'>
                         {article.featuredImage && (
-                          <div className='w-32 h-24 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-blue-100 to-cyan-100'>
+                          <div className='w-32 h-24 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-[#F0F6FF] to-[#E8EDF5]'>
                             <ImageWithFallback
                               src={article.featuredImage}
                               alt={article.title}
@@ -339,7 +338,7 @@ export function HealthCornerPage() {
                         )}
                         <div className='flex-1'>
                           <div className='flex items-center gap-2 text-sm text-gray-600 mb-2'>
-                            <Badge variant='outline' className='text-xs border-blue-300 text-blue-600'>
+                            <Badge variant='outline' className='text-xs border-[#BFDBFE] text-[#1E40AF]'>
                               {article.category?.name}
                             </Badge>
                             <span>•</span>
@@ -369,16 +368,16 @@ export function HealthCornerPage() {
 
           {/* Popular Articles Sidebar */}
           <div>
-            <h2 className='text-2xl font-bold bg-gradient-to-r from-blue-800 to-cyan-600 bg-clip-text text-transparent mb-6'>
+            <h2 className='font-display bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text text-2xl font-bold text-transparent mb-6'>
               Bài viết phổ biến
             </h2>
             <div className='space-y-4'>
               {popularArticles.map((article, index) => (
                 <Link key={article._id} to={`/health/article/${article.slug}`}>
-                  <Card className='hover:shadow-md transition-shadow border-blue-100 bg-white/80 backdrop-blur-sm'>
+                  <Card className='hover:shadow-md transition-shadow border-[#E8EDF5] bg-white/80 backdrop-blur-sm'>
                     <CardContent className='p-4'>
                       <div className='flex gap-3'>
-                        <div className='flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 text-white flex items-center justify-center font-bold text-sm'>
+                        <div className='flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-[#0A2463] to-[#1E40AF] text-white flex items-center justify-center font-bold text-sm'>
                           {index + 1}
                         </div>
                         <div className='flex-1'>
@@ -397,30 +396,30 @@ export function HealthCornerPage() {
             </div>
 
             {/* Health Tips */}
-            <Card className='mt-8 bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200'>
+            <Card className='mt-8 bg-gradient-to-br from-[#F8FAFB] to-[#F0F6FF] border-[#BFDBFE]'>
               <CardHeader>
                 <CardTitle className='text-lg text-blue-900'>Mẹo sức khỏe</CardTitle>
               </CardHeader>
               <CardContent>
                 <ul className='space-y-3 text-sm text-gray-700'>
                   <li className='flex gap-2'>
-                    <span className='text-blue-600'>•</span>
+                    <span className='text-[#1E40AF]'>•</span>
                     <span>Uống đủ 2-2.5 lít nước mỗi ngày</span>
                   </li>
                   <li className='flex gap-2'>
-                    <span className='text-blue-600'>•</span>
+                    <span className='text-[#1E40AF]'>•</span>
                     <span>Ngủ đủ 7-8 tiếng mỗi đêm</span>
                   </li>
                   <li className='flex gap-2'>
-                    <span className='text-blue-600'>•</span>
+                    <span className='text-[#1E40AF]'>•</span>
                     <span>Tập thể dục 30 phút mỗi ngày</span>
                   </li>
                   <li className='flex gap-2'>
-                    <span className='text-blue-600'>•</span>
+                    <span className='text-[#1E40AF]'>•</span>
                     <span>Ăn nhiều rau xanh, hoa quả</span>
                   </li>
                   <li className='flex gap-2'>
-                    <span className='text-blue-600'>•</span>
+                    <span className='text-[#1E40AF]'>•</span>
                     <span>Giảm stress bằng thiền định</span>
                   </li>
                 </ul>

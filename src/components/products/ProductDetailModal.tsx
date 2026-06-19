@@ -53,7 +53,7 @@ export function ProductDetailModal({ product, isOpen, onClose, onAddToCart }: Pr
       case 'rx':
         return { badge: '🔴 Thuốc kê đơn', color: 'bg-red-100 text-red-700', warning: 'Cần có đơn thuốc của bác sĩ' }
       case 'otc':
-        return { badge: '💊 OTC', color: 'bg-blue-100 text-blue-700', warning: 'Không cần đơn thuốc' }
+        return { badge: '💊 OTC', color: 'bg-[#E8EDF5] text-[#0A2463]', warning: 'Không cần đơn thuốc' }
       case 'supplement':
         return { badge: '🌿 TPCN', color: 'bg-green-100 text-green-700', warning: 'Thực phẩm chức năng' }
       case 'cosmetic':
@@ -78,7 +78,7 @@ export function ProductDetailModal({ product, isOpen, onClose, onAddToCart }: Pr
             <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
               {/* Left Column - Image */}
               <div className='space-y-4'>
-                <div className='relative aspect-square rounded-lg overflow-hidden border-2 border-blue-100 bg-white'>
+                <div className='relative aspect-square rounded-lg overflow-hidden border-2 border-[#E8EDF5] bg-white'>
                   <ImageWithFallback
                     src={product.image}
                     alt={product.name}
@@ -91,14 +91,14 @@ export function ProductDetailModal({ product, isOpen, onClose, onAddToCart }: Pr
 
                 {/* Product Info Cards */}
                 <div className='grid grid-cols-2 gap-3'>
-                  <Card className='p-3 bg-blue-50 border-blue-100'>
+                  <Card className='p-3 bg-[#F0F6FF] border-[#E8EDF5]'>
                     <div className='text-xs text-gray-600 mb-1'>Giá bán</div>
                     {product.onSale && product.originalPrice ? (
                       <>
                         <div className='text-xs text-gray-400 line-through'>
                           {product.originalPrice.toLocaleString('vi-VN')}đ
                         </div>
-                        <div className='text-lg font-bold text-blue-700'>
+                        <div className='text-lg font-bold text-[#0A2463]'>
                           {(product.salePrice || product.price).toLocaleString('vi-VN')}đ
                         </div>
                         {product.discountPercentage && (
@@ -106,7 +106,7 @@ export function ProductDetailModal({ product, isOpen, onClose, onAddToCart }: Pr
                         )}
                       </>
                     ) : (
-                      <div className='text-lg font-bold text-blue-700'>{product.price.toLocaleString('vi-VN')}đ</div>
+                      <div className='text-lg font-bold text-[#0A2463]'>{product.price.toLocaleString('vi-VN')}đ</div>
                     )}
                     <div className='text-xs text-gray-500'>/{product.unit}</div>
                   </Card>
@@ -315,13 +315,13 @@ export function ProductDetailModal({ product, isOpen, onClose, onAddToCart }: Pr
                       onAddToCart(product, 1)
                       onClose()
                     }}
-                    className='flex-1 bg-blue-600 hover:bg-blue-700 text-white'
+                    className='flex-1 bg-[#0A2463] hover:bg-[#071A49] text-white'
                     disabled={product.stock === 0}
                   >
                     <ShoppingCart className='w-4 h-4 mr-2' />
                     {product.stock === 0 ? 'Hết hàng' : 'Thêm vào đơn'}
                   </Button>
-                  <Button variant='outline' onClick={onClose} className='border-blue-200 text-blue-700'>
+                  <Button variant='outline' onClick={onClose} className='border-[#BFDBFE] text-[#0A2463]'>
                     Đóng
                   </Button>
                 </div>

@@ -163,7 +163,7 @@ export function ContentManagementPage() {
     if (status === 'inactive') return getBadge('draft')
     if (status === 'draft') return getBadge('draft')
     // For custom statuses like "scheduled" or "expired", use custom badges
-    if (status === 'scheduled') return <Badge className='bg-blue-100 text-blue-800 border-blue-200'>Đã lên lịch</Badge>
+    if (status === 'scheduled') return <Badge className='bg-[#E8EDF5] text-blue-800 border-[#BFDBFE]'>Đã lên lịch</Badge>
     if (status === 'expired') return <Badge className='bg-red-100 text-red-800 border-red-200'>Hết hạn</Badge>
     return <Badge variant='outline'>{status}</Badge>
   }
@@ -171,11 +171,11 @@ export function ContentManagementPage() {
   return (
     <div className='space-y-6'>
       {/* Header */}
-      <div className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
+      <div className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-6'>
         <h1
           className='text-3xl font-bold bg-clip-text text-transparent'
           style={{
-            backgroundImage: `linear-gradient(to right, #0066CC, #4A90E2)`,
+            backgroundImage: `linear-gradient(to right, #0A2463, #1E40AF)`,
           }}
         >
           Quản lý nội dung
@@ -185,14 +185,14 @@ export function ContentManagementPage() {
 
       {/* Stats */}
       <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-        <Card className='bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200'>
+        <Card className='bg-gradient-to-br from-blue-50 to-blue-100 border-[#BFDBFE]'>
           <CardContent className='p-4'>
             <div className='flex items-center gap-2 mb-2'>
-              <Image className='w-5 h-5 text-blue-600' />
+              <Image className='w-5 h-5 text-[#1E40AF]' />
               <span className='text-sm text-blue-800'>Banners</span>
             </div>
             <p className='text-2xl text-blue-900'>{banners.length}</p>
-            <p className='text-xs text-blue-600 mt-1'>
+            <p className='text-xs text-[#1E40AF] mt-1'>
               {banners.filter((b) => b.status === 'active').length} đang hoạt động
             </p>
           </CardContent>
@@ -211,14 +211,14 @@ export function ContentManagementPage() {
           </CardContent>
         </Card>
 
-        <Card className='bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200'>
+        <Card className='bg-gradient-to-br from-blue-50 to-blue-100 border-[#BFDBFE]'>
           <CardContent className='p-4'>
             <div className='flex items-center gap-2 mb-2'>
-              <Tag className='w-5 h-5 text-[#0066CC]' />
-              <span className='text-sm text-[#0066CC]'>Khuyến mãi</span>
+              <Tag className='w-5 h-5 text-[#0A2463]' />
+              <span className='text-sm text-[#0A2463]'>Khuyến mãi</span>
             </div>
-            <p className='text-2xl text-[#0066CC]'>{promotions.length}</p>
-            <p className='text-xs text-[#4A90E2] mt-1'>
+            <p className='text-2xl text-[#0A2463]'>{promotions.length}</p>
+            <p className='text-xs text-[#1E40AF] mt-1'>
               {promotions.filter((p) => p.status === 'active').length} đang hoạt động
             </p>
           </CardContent>
@@ -240,8 +240,8 @@ export function ContentManagementPage() {
 
       {/* Tabs */}
       <Tabs defaultValue='banners' className='space-y-4'>
-        <div className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-4'>
-          <TabsList className='grid w-full grid-cols-3 !bg-blue-50 p-1.5 rounded-lg h-auto'>
+        <div className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-4'>
+          <TabsList className='grid w-full grid-cols-3 !bg-[#F0F6FF] p-1.5 rounded-lg h-auto'>
             <TabsTrigger
               value='banners'
               className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'
@@ -277,7 +277,7 @@ export function ContentManagementPage() {
                 onClick={() => {
                   // TODO: Implement banner creation dialog
                 }}
-                className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'
+                className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'
               >
                 <Plus className='w-4 h-4 mr-2' />
                 Thêm banner
@@ -288,7 +288,7 @@ export function ContentManagementPage() {
               {banners.map((banner) => (
                 <Card
                   key={banner.id}
-                  className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'
+                  className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'
                 >
                   <CardContent className='p-4'>
                     <div className='aspect-video mb-3 rounded-lg overflow-hidden bg-gray-100'>
@@ -300,7 +300,7 @@ export function ContentManagementPage() {
                     </div>
                     <div className='space-y-1 text-sm text-gray-600 mb-3'>
                       <p>
-                        Vị trí: <span className='text-blue-600'>{banner.position}</span>
+                        Vị trí: <span className='text-[#1E40AF]'>{banner.position}</span>
                       </p>
                       <p>
                         Lượt xem: <strong>{banner.views.toLocaleString()}</strong>
@@ -316,7 +316,7 @@ export function ContentManagementPage() {
                       <Button
                         variant='outline'
                         size='sm'
-                        className='flex-1 border-2 border-blue-200 hover:border-blue-500'
+                        className='flex-1 border-2 border-[#BFDBFE] hover:border-[#1E40AF]'
                         onClick={() => {
                           // TODO: Implement banner edit dialog
                         }}
@@ -352,7 +352,7 @@ export function ContentManagementPage() {
                 onClick={() => {
                   // TODO: Implement news article creation dialog
                 }}
-                className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'
+                className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'
               >
                 <Plus className='w-4 h-4 mr-2' />
                 Thêm bài viết
@@ -363,7 +363,7 @@ export function ContentManagementPage() {
               {news.map((article) => (
                 <Card
                   key={article.id}
-                  className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'
+                  className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'
                 >
                   <CardContent className='p-4'>
                     <div className='flex gap-4'>
@@ -399,7 +399,7 @@ export function ContentManagementPage() {
                           <Button
                             variant='outline'
                             size='sm'
-                            className='border-2 border-blue-200 hover:border-blue-500'
+                            className='border-2 border-[#BFDBFE] hover:border-[#1E40AF]'
                             onClick={() => {
                               // TODO: Implement news article edit dialog
                             }}
@@ -432,7 +432,7 @@ export function ContentManagementPage() {
                 onClick={() => {
                   // TODO: Implement promotion creation dialog
                 }}
-                className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'
+                className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'
               >
                 <Plus className='w-4 h-4 mr-2' />
                 Tạo khuyến mãi
@@ -441,21 +441,21 @@ export function ContentManagementPage() {
 
             <div className='grid md:grid-cols-2 gap-4'>
               {promotions.map((promo) => (
-                <Card key={promo.id} className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+                <Card key={promo.id} className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
                   <CardContent className='p-4'>
                     <div className='flex items-start justify-between mb-3'>
                       <div className='flex-1'>
                         <div className='flex items-center gap-2 mb-1'>
-                          <Megaphone className='w-5 h-5 text-blue-600' />
+                          <Megaphone className='w-5 h-5 text-[#1E40AF]' />
                           <h4 className='text-blue-900'>{promo.title}</h4>
                         </div>
-                        <Badge className='bg-blue-500 text-white'>{promo.code}</Badge>
+                        <Badge className='bg-[#1E40AF] text-white'>{promo.code}</Badge>
                       </div>
                       {getStatusBadge(promo.status)}
                     </div>
                     <p className='text-sm text-gray-600 mb-3'>{promo.description}</p>
                     <div className='space-y-2 text-sm mb-3'>
-                      <div className='flex items-center justify-between p-2 bg-blue-50 rounded'>
+                      <div className='flex items-center justify-between p-2 bg-[#F0F6FF] rounded'>
                         <span className='text-gray-600'>Giảm giá:</span>
                         <span className='text-blue-900'>
                           {promo.type === 'percentage'
@@ -473,9 +473,9 @@ export function ContentManagementPage() {
                           </span>
                         </div>
                       )}
-                      <div className='flex items-center justify-between p-2 bg-blue-50 rounded'>
+                      <div className='flex items-center justify-between p-2 bg-[#F0F6FF] rounded'>
                         <span className='text-gray-600'>Thời hạn:</span>
-                        <span className='text-[#0066CC]'>
+                        <span className='text-[#0A2463]'>
                           {new Date(promo.startDate).toLocaleDateString('vi-VN')} -{' '}
                           {new Date(promo.endDate).toLocaleDateString('vi-VN')}
                         </span>
@@ -485,7 +485,7 @@ export function ContentManagementPage() {
                       <Button
                         variant='outline'
                         size='sm'
-                        className='flex-1 border-2 border-blue-200 hover:border-blue-500'
+                        className='flex-1 border-2 border-[#BFDBFE] hover:border-[#1E40AF]'
                         onClick={() => {
                           // TODO: Implement promotion edit dialog
                         }}

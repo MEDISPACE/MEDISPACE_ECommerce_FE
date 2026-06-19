@@ -67,7 +67,7 @@ function MessageBubble({
         <div
           className={`rounded-2xl px-4 py-2 text-sm shadow-sm border ${
             isMine
-              ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white border-transparent'
+              ? 'bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white border-transparent'
               : 'bg-white text-gray-900 border-gray-200'
           } ${isHidden ? 'bg-amber-50 text-amber-800 border-amber-200' : ''}`}
         >
@@ -494,7 +494,7 @@ export function CommunityRoomPage() {
     <div className='max-w-7xl mx-auto px-4 py-6 space-y-6'>
       <div className='flex items-center justify-between gap-4'>
         <div className='flex items-center gap-3'>
-          <Button variant='ghost' className='hover:bg-blue-50' onClick={() => navigate('/community')}>
+          <Button variant='ghost' className='hover:bg-[#F0F6FF]' onClick={() => navigate('/community')}>
             <ArrowLeft className='w-4 h-4 mr-2' />
             Danh sách phòng
           </Button>
@@ -502,7 +502,7 @@ export function CommunityRoomPage() {
             <h1 className='text-2xl font-bold text-gray-900'>{room?.name || 'Phòng cộng đồng'}</h1>
             <div className='flex flex-wrap items-center gap-2 mt-1 text-sm text-gray-500'>
               <span>#{room?.slug || roomId}</span>
-              {room?.diseaseKey && <Badge className='bg-blue-100 text-blue-700'>{room.diseaseKey}</Badge>}
+              {room?.diseaseKey && <Badge className='bg-[#E8EDF5] text-[#0A2463]'>{room.diseaseKey}</Badge>}
               {isPending && <Badge className='bg-yellow-100 text-yellow-700'>Chờ duyệt tham gia</Badge>}
               {isBanned && <Badge className='bg-red-100 text-red-700'>Đã bị ban</Badge>}
               {isMuted && <Badge className='bg-orange-100 text-orange-700'>Đang mute</Badge>}
@@ -510,21 +510,21 @@ export function CommunityRoomPage() {
           </div>
         </div>
 
-        <Button variant='outline' className='border-blue-200 gap-2' onClick={() => loadMessages(1)}>
+        <Button variant='outline' className='border-[#BFDBFE] gap-2' onClick={() => loadMessages(1)}>
           <RefreshCw className='w-4 h-4' />
           Làm mới
         </Button>
       </div>
 
       <div className='grid grid-cols-1 lg:grid-cols-4 gap-4'>
-        <Card className='lg:col-span-3 bg-white border-blue-100 shadow-sm flex flex-col min-h-[560px]'>
+        <Card className='lg:col-span-3 bg-white border-[#E8EDF5] shadow-sm flex flex-col min-h-[560px]'>
           <CardContent className='p-0 flex flex-col flex-1 min-h-[560px]'>
-            <div className='p-4 border-b border-blue-100 flex items-center justify-between'>
+            <div className='p-4 border-b border-[#E8EDF5] flex items-center justify-between'>
               <div className='flex items-center gap-2'>
-                <Users className='w-4 h-4 text-blue-600' />
+                <Users className='w-4 h-4 text-[#1E40AF]' />
                 <span className='text-sm text-gray-600'>Phòng cộng đồng</span>
               </div>
-              {loadingRooms && <Loader2 className='w-4 h-4 animate-spin text-blue-600' />}
+              {loadingRooms && <Loader2 className='w-4 h-4 animate-spin text-[#1E40AF]' />}
             </div>
 
             <div className='flex-1 overflow-y-auto bg-gray-50 p-4 space-y-4'>
@@ -536,7 +536,7 @@ export function CommunityRoomPage() {
                 </div>
               ) : needsJoin ? (
                 <div className='flex flex-col items-center justify-center text-center h-full p-6'>
-                  <div className='w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4'>
+                  <div className='w-16 h-16 bg-[#F0F6FF] rounded-full flex items-center justify-center mb-4'>
                     <Info className='w-7 h-7 text-blue-500' />
                   </div>
                   <h3 className='text-lg font-semibold text-gray-900 mb-1'>
@@ -547,18 +547,18 @@ export function CommunityRoomPage() {
                       ? 'Admin cần duyệt trước khi bạn có thể xem và gửi tin nhắn.'
                       : 'Tham gia để xem và gửi tin nhắn trong phòng.'}
                   </p>
-                  <Button className='bg-gradient-to-r from-blue-600 to-cyan-500 text-white' onClick={handleJoin} disabled={isPending}>
+                  <Button className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white' onClick={handleJoin} disabled={isPending}>
                     {isPending ? 'Đã gửi yêu cầu' : room?.visibility === 'private' && !isInvited ? 'Gửi yêu cầu tham gia' : 'Tham gia phòng'}
                   </Button>
                   {!isAuthenticated && (
-                    <Button variant='outline' className='mt-2 border-blue-200' asChild>
+                    <Button variant='outline' className='mt-2 border-[#BFDBFE]' asChild>
                       <Link to='/login'>Đăng nhập</Link>
                     </Button>
                   )}
                 </div>
               ) : messages.length === 0 ? (
                 <div className='flex flex-col items-center justify-center text-center h-full p-6'>
-                  <div className='w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4'>
+                  <div className='w-16 h-16 bg-[#F0F6FF] rounded-full flex items-center justify-center mb-4'>
                     <Users className='w-7 h-7 text-blue-500' />
                   </div>
                   <h3 className='text-lg font-semibold text-gray-900 mb-1'>Chưa có tin nhắn</h3>
@@ -568,7 +568,7 @@ export function CommunityRoomPage() {
                 <>
                   {hasMore && (
                     <div className='text-center'>
-                      <Button variant='outline' className='border-blue-200' onClick={handleLoadMore}>
+                      <Button variant='outline' className='border-[#BFDBFE]' onClick={handleLoadMore}>
                         Tải thêm tin nhắn
                       </Button>
                     </div>
@@ -587,7 +587,7 @@ export function CommunityRoomPage() {
               )}
             </div>
 
-            <div className='border-t border-blue-100 bg-white'>
+            <div className='border-t border-[#E8EDF5] bg-white'>
               {/* Image preview strip */}
               {imageUrls.length > 0 && (
                 <div className='mx-3 mt-2 flex overflow-x-auto gap-3 pb-2 pt-2 pr-2 scrollbar-thin scrollbar-thumb-gray-300'>
@@ -619,7 +619,7 @@ export function CommunityRoomPage() {
                     {isUploading ? (
                       <Loader2 className='w-5 h-5 text-gray-400 animate-spin' />
                     ) : (
-                      <ImageIcon className='w-5 h-5 text-gray-400 hover:text-blue-600' />
+                      <ImageIcon className='w-5 h-5 text-gray-400 hover:text-[#1E40AF]' />
                     )}
                   </div>
                 </label>
@@ -646,7 +646,7 @@ export function CommunityRoomPage() {
                 <Button
                   className={`flex-shrink-0 w-9 h-9 p-0 rounded-full transition-all duration-200 ${
                     (messageText.trim() || imageUrls.length > 0) && canSend
-                      ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-md hover:shadow-blue-300/50 hover:scale-105'
+                      ? 'bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white shadow-md hover:shadow-blue-300/50 hover:scale-105'
                       : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                   }`}
                   onClick={handleSend}
@@ -664,7 +664,7 @@ export function CommunityRoomPage() {
         </Card>
 
         <div className='space-y-4'>
-          <Card className='bg-white border-blue-100'>
+          <Card className='bg-white border-[#E8EDF5]'>
             <CardContent className='p-5 space-y-3'>
               <h3 className='text-sm font-semibold text-gray-900 flex items-center gap-2'>
                 <ShieldAlert className='w-4 h-4 text-amber-500' />
@@ -678,7 +678,7 @@ export function CommunityRoomPage() {
             </CardContent>
           </Card>
 
-          <Card className='bg-white border-blue-100'>
+          <Card className='bg-white border-[#E8EDF5]'>
             <CardContent className='p-5 space-y-2'>
               <h3 className='text-sm font-semibold text-gray-900'>Gợi ý</h3>
               <p className='text-sm text-gray-600'>
@@ -686,7 +686,7 @@ export function CommunityRoomPage() {
               </p>
               <Button
                 variant='outline'
-                className='border-blue-200 w-full'
+                className='border-[#BFDBFE] w-full'
                 onClick={() => {
                   const chatButton = document.querySelector(
                     'button[aria-label="Chat với dược sĩ"]',
@@ -711,7 +711,7 @@ export function CommunityRoomPage() {
           </DialogHeader>
 
           <div className='space-y-3'>
-            <div className='rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-gray-700 break-words max-h-32 overflow-y-auto'>
+            <div className='rounded-md border border-[#E8EDF5] bg-[#F0F6FF] px-3 py-2 text-sm text-gray-700 break-words max-h-32 overflow-y-auto'>
               {reportTarget?.content}
             </div>
             <Textarea
@@ -727,7 +727,7 @@ export function CommunityRoomPage() {
               Hủy
             </Button>
             <Button
-              className='bg-gradient-to-r from-blue-600 to-cyan-500 text-white'
+              className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white'
               onClick={handleReport}
               disabled={reporting}
             >
@@ -764,7 +764,7 @@ export function CommunityRoomPage() {
               Hủy
             </Button>
             <Button
-              className='bg-gradient-to-r from-blue-600 to-cyan-500 text-white'
+              className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white'
               onClick={handleMessageAppeal}
               disabled={appealing}
             >

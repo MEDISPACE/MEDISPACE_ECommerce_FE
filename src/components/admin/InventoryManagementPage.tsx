@@ -262,7 +262,7 @@ export function InventoryManagementPage() {
       <div className='space-y-6'>
         <h1
           className='text-3xl font-bold bg-clip-text text-transparent'
-          style={{ backgroundImage: 'linear-gradient(to right, #0066CC, #4A90E2)' }}
+          style={{ backgroundImage: 'linear-gradient(to right, #0A2463, #1E40AF)' }}
         >
           Quản lý kho
         </h1>
@@ -290,14 +290,14 @@ export function InventoryManagementPage() {
         <div>
           <h1
             className='text-3xl font-bold bg-clip-text text-transparent'
-            style={{ backgroundImage: 'linear-gradient(to right, #0066CC, #4A90E2)' }}
+            style={{ backgroundImage: 'linear-gradient(to right, #0A2463, #1E40AF)' }}
           >
             Quản lý kho
           </h1>
           <p className='text-gray-600 mt-2'>
             Theo dõi và quản lý tồn kho sản phẩm
             {pagination && (
-              <span className='ml-2 text-sm font-medium text-blue-600'>
+              <span className='ml-2 text-sm font-medium text-[#1E40AF]'>
                 (Trang {pagination.page}/{pagination.totalPages} — Tổng: {pagination.total} sản phẩm)
               </span>
             )}
@@ -305,7 +305,7 @@ export function InventoryManagementPage() {
         </div>
         <Button
           variant='outline'
-          className='gap-2 border-blue-200 text-blue-600 hover:bg-blue-50'
+          className='gap-2 border-[#BFDBFE] text-[#1E40AF] hover:bg-[#F0F6FF]'
           onClick={() => {
             queryClient.invalidateQueries({ queryKey: ['admin', 'inventory'] })
             toast.info('Đang làm mới dữ liệu...')
@@ -318,12 +318,12 @@ export function InventoryManagementPage() {
 
       {/* Stats Cards */}
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4'>
-        <Card className='bg-white backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-xs text-gray-600'>Tổng sản phẩm</p>
-                <p className='text-2xl font-semibold text-blue-600'>{stats?.total ?? '—'}</p>
+                <p className='text-2xl font-semibold text-[#1E40AF]'>{stats?.total ?? '—'}</p>
               </div>
               <Package className='w-8 h-8 text-blue-400' />
             </div>
@@ -366,12 +366,12 @@ export function InventoryManagementPage() {
           </CardContent>
         </Card>
 
-        <Card className='bg-white backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-xs text-gray-600'>Giá trị tồn kho</p>
-                <p className='text-lg font-semibold text-blue-600'>{stats ? formatCurrency(stats.totalValue) : '—'}</p>
+                <p className='text-lg font-semibold text-[#1E40AF]'>{stats ? formatCurrency(stats.totalValue) : '—'}</p>
               </div>
               <Warehouse className='w-8 h-8 text-blue-400' />
             </div>
@@ -380,7 +380,7 @@ export function InventoryManagementPage() {
       </div>
 
       {/* Filter Tabs + Search */}
-      <Card className='bg-white backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
         <CardContent className='p-4'>
           <div className='flex flex-col lg:flex-row gap-4 items-start lg:items-center'>
             {/* Tabs */}
@@ -391,7 +391,7 @@ export function InventoryManagementPage() {
                   onClick={() => setActiveTab(tab.key)}
                   className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
                     activeTab === tab.key
-                      ? 'bg-white text-blue-700 shadow-sm'
+                      ? 'bg-white text-[#0A2463] shadow-sm'
                       : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                   }`}
                 >
@@ -399,7 +399,7 @@ export function InventoryManagementPage() {
                   {tab.count !== undefined && (
                     <span
                       className={`ml-1.5 px-1.5 py-0.5 rounded-full text-xs ${
-                        activeTab === tab.key ? 'bg-blue-100 text-blue-700' : 'bg-gray-200 text-gray-600'
+                        activeTab === tab.key ? 'bg-[#E8EDF5] text-[#0A2463]' : 'bg-gray-200 text-gray-600'
                       }`}
                     >
                       {tab.count}
@@ -416,7 +416,7 @@ export function InventoryManagementPage() {
                 placeholder='Tìm kiếm theo tên, SKU, mã vạch...'
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className='pl-10 border-2 border-blue-200 focus:border-blue-500'
+                className='pl-10 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
               />
             </div>
             {searchQuery && (
@@ -435,10 +435,10 @@ export function InventoryManagementPage() {
       </Card>
 
       {/* Products Table */}
-      <Card className='bg-white backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
-            <Box className='w-5 h-5 text-blue-600' />
+            <Box className='w-5 h-5 text-[#1E40AF]' />
             Danh sách tồn kho
           </CardTitle>
         </CardHeader>
@@ -446,7 +446,7 @@ export function InventoryManagementPage() {
           <div className='overflow-x-auto'>
             <Table>
               <TableHeader>
-                <TableRow className='!border-b-2 !border-blue-300'>
+                <TableRow className='!border-b-2 !border-[#BFDBFE]'>
                   <TableHead className='w-80'>Sản phẩm</TableHead>
                   <TableHead className='w-32'>SKU</TableHead>
                   <TableHead>Danh mục</TableHead>
@@ -463,7 +463,7 @@ export function InventoryManagementPage() {
                 {isLoading ? (
                   <TableRow>
                     <TableCell colSpan={9} className='text-center py-12'>
-                      <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto'></div>
+                      <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-[#1E40AF] mx-auto'></div>
                       <p className='text-gray-500 mt-2'>Đang tải...</p>
                     </TableCell>
                   </TableRow>
@@ -483,7 +483,7 @@ export function InventoryManagementPage() {
                     const hasMultiUnit = (product.priceVariants?.length || 0) > 1
 
                     return (
-                      <TableRow key={product._id} className='border-b border-blue-100 hover:bg-blue-50/30'>
+                      <TableRow key={product._id} className='border-b border-[#E8EDF5] hover:bg-[#F0F6FF]/30'>
                         <TableCell>
                           <div className='flex items-center gap-3'>
                             {product.featuredImage ? (
@@ -511,12 +511,12 @@ export function InventoryManagementPage() {
                           <span className='font-mono text-sm text-gray-600'>{product.sku}</span>
                         </TableCell>
                         <TableCell>
-                          <Badge className='bg-blue-100 text-blue-700 hover:bg-blue-100'>
+                          <Badge className='bg-[#E8EDF5] text-[#0A2463] hover:bg-[#E8EDF5]'>
                             {product.category?.name || 'N/A'}
                           </Badge>
                         </TableCell>
                         <TableCell className='text-right'>
-                          <span className='font-semibold text-blue-600'>{formatCurrency(price)}</span>
+                          <span className='font-semibold text-[#1E40AF]'>{formatCurrency(price)}</span>
                         </TableCell>
                         {/* Tồn kho + đơn vị */}
                         <TableCell className='text-center'>
@@ -547,7 +547,7 @@ export function InventoryManagementPage() {
                                   key={v.unit}
                                   className={`text-xs px-1.5 py-0 ${
                                     v.quantityPerUnit === 1
-                                      ? 'bg-blue-100 text-blue-700'
+                                      ? 'bg-[#E8EDF5] text-[#0A2463]'
                                       : 'bg-gray-100 text-gray-600'
                                   }`}
                                 >
@@ -556,7 +556,7 @@ export function InventoryManagementPage() {
                               ))}
                             </div>
                           ) : (
-                            <Badge className='text-xs bg-blue-100 text-blue-700'>{baseUnit}</Badge>
+                            <Badge className='text-xs bg-[#E8EDF5] text-[#0A2463]'>{baseUnit}</Badge>
                           )}
                         </TableCell>
                         <TableCell className='text-center'>
@@ -573,7 +573,7 @@ export function InventoryManagementPage() {
                           <Button
                             variant='outline'
                             size='sm'
-                            className='gap-1 text-blue-600 border-blue-200 hover:bg-blue-50'
+                            className='gap-1 text-[#1E40AF] border-[#BFDBFE] hover:bg-[#F0F6FF]'
                             onClick={() => openStockDialog(product)}
                           >
                             <Edit3 className='w-3 h-3' />
@@ -606,7 +606,7 @@ export function InventoryManagementPage() {
         <DialogContent className='sm:max-w-lg'>
           <DialogHeader>
             <DialogTitle className='flex items-center gap-2'>
-              <Box className='w-5 h-5 text-blue-600' />
+              <Box className='w-5 h-5 text-[#1E40AF]' />
               Cập nhật tồn kho
             </DialogTitle>
             <DialogDescription>
@@ -652,7 +652,7 @@ export function InventoryManagementPage() {
                           ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
                           : color === 'amber'
                             ? 'border-amber-500 bg-amber-50 text-amber-700'
-                            : 'border-blue-500 bg-blue-50 text-blue-700'
+                            : 'border-[#1E40AF] bg-[#F0F6FF] text-[#0A2463]'
                         : 'border-gray-200 text-gray-500 hover:border-gray-300'
                     }`}
                   >
@@ -673,7 +673,7 @@ export function InventoryManagementPage() {
                     value={stockDialog.selectedUnit}
                     onValueChange={(val) => setStockDialog((prev) => ({ ...prev, selectedUnit: val, inputQuantity: '' }))}
                   >
-                    <SelectTrigger className='border-2 border-blue-200'>
+                    <SelectTrigger className='border-2 border-[#BFDBFE]'>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -701,7 +701,7 @@ export function InventoryManagementPage() {
                   min='0'
                   value={stockDialog.inputQuantity}
                   onChange={(e) => setStockDialog((prev) => ({ ...prev, inputQuantity: e.target.value }))}
-                  className='text-lg font-bold border-2 border-blue-200 focus:border-blue-500'
+                  className='text-lg font-bold border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                   placeholder='0'
                   autoFocus
                 />
@@ -716,7 +716,7 @@ export function InventoryManagementPage() {
                     ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
                     : stockDialog.adjustmentMode === 'subtract'
                       ? 'bg-amber-50 border-amber-200 text-amber-700'
-                      : 'bg-blue-50 border-blue-200 text-blue-700'
+                      : 'bg-[#F0F6FF] border-[#BFDBFE] text-[#0A2463]'
                 }`}
               >
                 <div className='flex items-center justify-between'>
@@ -766,7 +766,7 @@ export function InventoryManagementPage() {
             <Button
               onClick={handleStockUpdate}
               disabled={updateStockMutation.isPending || !stockDialog.inputQuantity}
-              className='bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8] text-white'
+              className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'
             >
               {updateStockMutation.isPending ? 'Đang cập nhật...' : 'Cập nhật tồn kho'}
             </Button>

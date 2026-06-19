@@ -164,12 +164,12 @@ export function ChatInput({
             {isUploading ? (
               <Loader2 className='w-5 h-5 text-gray-400 animate-spin' />
             ) : (
-              <ImageIcon className='w-5 h-5 text-gray-400 group-hover:text-blue-500' />
+              <ImageIcon className='w-5 h-5 text-gray-400 group-hover:text-[#1E40AF]' />
             )}
           </div>
         </label>
 
-        {/* 💊 Nút gửi sản phẩm – CHỈ hiển thị cho dược sĩ */}
+        {/* Nút gửi sản phẩm - chỉ hiển thị cho dược sĩ */}
         {currentUserRole === 'pharmacist' && (
           <button
             type='button'
@@ -177,7 +177,7 @@ export function ChatInput({
             disabled={disabled}
             title='Gửi sản phẩm'
             className={`w-9 h-9 flex items-center justify-center flex-shrink-0 rounded-full transition-colors ${
-              showProductPicker ? 'bg-blue-100 text-blue-600' : 'hover:bg-gray-100 text-gray-400 hover:text-blue-600'
+              showProductPicker ? 'bg-[#F0F6FF] text-[#0A2463]' : 'hover:bg-gray-100 text-gray-400 hover:text-[#1E40AF]'
             }`}
           >
             <Pill className='w-5 h-5' />
@@ -202,7 +202,7 @@ export function ChatInput({
           disabled={disabled || (!message.trim() && imageUrls.length === 0)}
           className={`flex-shrink-0 w-9 h-9 p-0 rounded-full transition-all duration-200 ${
             message.trim() || imageUrls.length > 0
-              ? 'bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-blue-300/50 hover:scale-105'
+              ? 'bg-[#0A2463] hover:bg-[#1E40AF] shadow-md hover:shadow-[#BFDBFE] hover:scale-105'
               : 'bg-gray-200 text-gray-400 cursor-not-allowed'
           }`}
         >

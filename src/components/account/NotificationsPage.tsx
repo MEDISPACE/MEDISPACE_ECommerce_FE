@@ -118,11 +118,11 @@ export function NotificationsPage() {
   return (
     <div className='space-y-6'>
       {/* Header */}
-      <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
+      <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-6'>
         <div className='flex flex-col md:flex-row md:items-center justify-between gap-4'>
           <div>
             <div className='flex items-center gap-3'>
-              <h1 className='bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 bg-clip-text text-transparent'>
+              <h1 className='bg-gradient-to-r from-[#0A2463] via-[#1E40AF] to-[#3B82F6] bg-clip-text text-transparent'>
                 Thông báo
               </h1>
               {unreadCount > 0 && <Badge className='bg-red-500 text-white'>{unreadCount} chưa đọc</Badge>}
@@ -135,7 +135,7 @@ export function NotificationsPage() {
               <Button
                 variant='outline'
                 onClick={handleMarkAllAsRead}
-                className='text-blue-600 border-blue-200 hover:bg-blue-50'
+                className='text-[#1E40AF] border-[#BFDBFE] hover:bg-[#F0F6FF]'
               >
                 <Check className='w-4 h-4 mr-2' />
                 Đánh dấu tất cả đã đọc
@@ -146,18 +146,18 @@ export function NotificationsPage() {
       </div>
 
       {/* Tabs */}
-      <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+      <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
         <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setPage(1); }}>
           <div className='px-6 pt-6'>
-            <TabsList className='inline-flex w-full overflow-x-auto bg-blue-100 p-1 rounded-lg shadow-sm scrollbar-hide'>
+            <TabsList className='inline-flex w-full overflow-x-auto bg-[#E8EDF5] p-1 rounded-lg shadow-sm scrollbar-hide'>
               <TabsTrigger
                 value='all'
-                className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+                className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-[#E8EDF5] text-[#1E40AF] border-0 data-[state=active]:!bg-[#0A2463] data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-[#BFDBFE]'
               >
                 <span className='whitespace-nowrap flex items-center gap-1'>
                   Tất cả
                   {getTabCount('all') > 0 && (
-                    <span className='ml-1 rounded-full px-2 py-0.5 text-xs font-medium bg-white text-blue-600'>
+                    <span className='ml-1 rounded-full px-2 py-0.5 text-xs font-medium bg-white text-[#1E40AF]'>
                       {getTabCount('all')}
                     </span>
                   )}
@@ -165,7 +165,7 @@ export function NotificationsPage() {
               </TabsTrigger>
               <TabsTrigger
                 value='unread'
-                className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+                className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-[#E8EDF5] text-[#1E40AF] border-0 data-[state=active]:!bg-[#0A2463] data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-[#BFDBFE]'
               >
                 <span className='whitespace-nowrap flex items-center gap-1'>
                   Chưa đọc
@@ -178,12 +178,12 @@ export function NotificationsPage() {
               </TabsTrigger>
               <TabsTrigger
                 value='order'
-                className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:!shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+                className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-[#E8EDF5] text-[#1E40AF] border-0 data-[state=active]:!bg-[#0A2463] data-[state=active]:!text-white data-[state=active]:!shadow-md transition-all duration-200 rounded-md hover:bg-[#BFDBFE]'
               >
                 <span className='whitespace-nowrap flex items-center gap-1'>
                   Đơn hàng
                   {getTabCount('order') > 0 && (
-                    <span className='ml-1 rounded-full px-2 py-0.5 text-xs font-medium bg-white text-blue-600'>
+                    <span className='ml-1 rounded-full px-2 py-0.5 text-xs font-medium bg-white text-[#1E40AF]'>
                       {getTabCount('order')}
                     </span>
                   )}
@@ -191,7 +191,7 @@ export function NotificationsPage() {
               </TabsTrigger>
               <TabsTrigger
                 value='review'
-                className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-amber-500 data-[state=active]:!text-white data-[state=active]:!shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+                className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-[#E8EDF5] text-[#1E40AF] border-0 data-[state=active]:!bg-amber-500 data-[state=active]:!text-white data-[state=active]:!shadow-md transition-all duration-200 rounded-md hover:bg-[#BFDBFE]'
               >
                 <span className='whitespace-nowrap flex items-center gap-1'>
                   <Star className='w-3.5 h-3.5' />
@@ -205,12 +205,12 @@ export function NotificationsPage() {
               </TabsTrigger>
               <TabsTrigger
                 value='promotion'
-                className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:!shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+                className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-[#E8EDF5] text-[#1E40AF] border-0 data-[state=active]:!bg-[#0A2463] data-[state=active]:!text-white data-[state=active]:!shadow-md transition-all duration-200 rounded-md hover:bg-[#BFDBFE]'
               >
                 <span className='whitespace-nowrap flex items-center gap-1'>
                   Khuyến mãi
                   {getTabCount('promotion') > 0 && (
-                    <span className='ml-1 rounded-full px-2 py-0.5 text-xs font-medium bg-white text-blue-600'>
+                    <span className='ml-1 rounded-full px-2 py-0.5 text-xs font-medium bg-white text-[#1E40AF]'>
                       {getTabCount('promotion')}
                     </span>
                   )}
@@ -218,12 +218,12 @@ export function NotificationsPage() {
               </TabsTrigger>
               <TabsTrigger
                 value='health'
-                className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:!shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+                className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-[#E8EDF5] text-[#1E40AF] border-0 data-[state=active]:!bg-[#0A2463] data-[state=active]:!text-white data-[state=active]:!shadow-md transition-all duration-200 rounded-md hover:bg-[#BFDBFE]'
               >
                 <span className='whitespace-nowrap flex items-center gap-1'>
                   Sức khỏe
                   {getTabCount('health') > 0 && (
-                    <span className='ml-1 rounded-full px-2 py-0.5 text-xs font-medium bg-white text-blue-600'>
+                    <span className='ml-1 rounded-full px-2 py-0.5 text-xs font-medium bg-white text-[#1E40AF]'>
                       {getTabCount('health')}
                     </span>
                   )}
@@ -231,7 +231,7 @@ export function NotificationsPage() {
               </TabsTrigger>
               <TabsTrigger
                 value='settings'
-                className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+                className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-[#E8EDF5] text-[#1E40AF] border-0 data-[state=active]:!bg-[#0A2463] data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-[#BFDBFE]'
               >
                 <span className='whitespace-nowrap flex items-center gap-1'>
                   <Settings className='w-4 h-4' />
@@ -481,7 +481,7 @@ export function NotificationsPage() {
 
         {/* Pagination Controls */}
         {activeTab !== 'settings' && pagination && pagination.totalPages > 1 && (
-          <div className='px-6 py-4 border-t border-blue-100/50 mt-4'>
+          <div className='px-6 py-4 border-t border-[#E8EDF5]/50 mt-4'>
             <Pagination>
               <PaginationContent>
                 <PaginationItemUI>

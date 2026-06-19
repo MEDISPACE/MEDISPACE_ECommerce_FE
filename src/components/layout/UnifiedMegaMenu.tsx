@@ -74,7 +74,7 @@ export function UnifiedMegaMenu({ activeCategory, isVisible, onClose }: UnifiedM
                 onMouseEnter={() => setActiveSubCategory(subCategory)}
                 className={`block w-full text-left px-3 py-2.5 rounded-md text-sm transition-all ${
                   activeSubCategory?._id === subCategory._id
-                    ? 'bg-blue-50 text-blue-700 font-medium'
+                    ? 'bg-[#F0F6FF] text-[#0A2463] font-medium'
                     : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
                 }`}
                 onClick={onClose}
@@ -101,7 +101,7 @@ export function UnifiedMegaMenu({ activeCategory, isVisible, onClose }: UnifiedM
                 <Link
                   key={subSubCategory._id}
                   to={`/categories/${subSubCategory.slug}`}
-                  className='flex items-center justify-between px-3 py-2 rounded-md text-sm text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all group'
+                  className='flex items-center justify-between px-3 py-2 rounded-md text-sm text-gray-600 hover:text-[#1E40AF] hover:bg-[#F0F6FF] transition-all group'
                   onClick={onClose}
                 >
                   <span className='line-clamp-1 group-hover:font-medium'>{subSubCategory.name}</span>
@@ -118,7 +118,7 @@ export function UnifiedMegaMenu({ activeCategory, isVisible, onClose }: UnifiedM
                     <p className='text-xs text-gray-500'>Sản phẩm chất lượng từ các thương hiệu uy tín</p>
                     <Link
                       to={`/categories/${activeSubCategory.slug}`}
-                      className='inline-flex items-center text-blue-600 hover:text-blue-700 text-sm font-medium group'
+                      className='inline-flex items-center text-[#1E40AF] hover:text-[#0A2463] text-sm font-medium group'
                       onClick={onClose}
                     >
                       Xem tất cả sản phẩm
@@ -132,9 +132,9 @@ export function UnifiedMegaMenu({ activeCategory, isVisible, onClose }: UnifiedM
         </div>
 
         {/* Column 3: Featured Products (35%) */}
-        <div className='w-[35%] bg-gradient-to-br from-blue-50/30 to-cyan-50/30 p-5 overflow-y-auto'>
+        <div className='w-[35%] bg-gradient-to-br from-[#F8FAFB]/30 to-[#F0F6FF]/30 p-5 overflow-y-auto'>
           <h4 className='font-semibold text-gray-900 mb-4 text-sm flex items-center'>
-            <span className='bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent'>
+            <span className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text text-transparent'>
               Sản phẩm nổi bật
             </span>
           </h4>
@@ -148,7 +148,7 @@ export function UnifiedMegaMenu({ activeCategory, isVisible, onClose }: UnifiedM
                 <Link
                   key={product._id}
                   to={`/products/${product.slug}`}
-                  className='flex items-start space-x-3 p-3 rounded-lg bg-white hover:shadow-md transition-all border border-gray-100 hover:border-blue-200 group'
+                  className='flex items-start space-x-3 p-3 rounded-lg bg-white hover:shadow-md transition-all border border-gray-100 hover:border-[#BFDBFE] group'
                   onClick={onClose}
                 >
                   <ImageWithFallback
@@ -157,7 +157,7 @@ export function UnifiedMegaMenu({ activeCategory, isVisible, onClose }: UnifiedM
                     className='w-16 h-16 object-cover rounded-lg flex-shrink-0 group-hover:scale-105 transition-transform'
                   />
                   <div className='flex-1 min-w-0'>
-                    <h5 className='text-sm font-medium text-gray-900 line-clamp-2 mb-1 group-hover:text-blue-600 transition-colors'>
+                    <h5 className='text-sm font-medium text-gray-900 line-clamp-2 mb-1 group-hover:text-[#1E40AF] transition-colors'>
                       {product.name}
                     </h5>
                     {product.requiresPrescription && (
@@ -165,7 +165,7 @@ export function UnifiedMegaMenu({ activeCategory, isVisible, onClose }: UnifiedM
                         Kê đơn
                       </Badge>
                     )}
-                    <p className='text-sm text-blue-600 font-semibold'>
+                    <p className='text-sm text-[#1E40AF] font-semibold'>
                       {product.requiresPrescription
                         ? 'Liên hệ'
                         : (() => {

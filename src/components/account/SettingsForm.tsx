@@ -86,10 +86,10 @@ export function SettingsForm({ onSuccess }: SettingsFormProps) {
   return (
     <div className='space-y-6'>
       {/* Account Status */}
-      <Card className='border-blue-100'>
+      <Card className='border-[#E8EDF5]'>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
-            <Shield className='w-5 h-5 text-blue-600' />
+            <Shield className='w-5 h-5 text-[#1E40AF]' />
             Trạng thái tài khoản
           </CardTitle>
         </CardHeader>
@@ -102,7 +102,7 @@ export function SettingsForm({ onSuccess }: SettingsFormProps) {
               </Badge>
             </div>
             {user?.status === 0 && (
-              <Button size='sm' className='bg-blue-600 hover:bg-blue-700'>
+              <Button size='sm' className='bg-[#0A2463] hover:bg-[#071A49]'>
                 <Mail className='w-4 h-4 mr-2' />
                 Gửi lại email xác thực
               </Button>
@@ -163,7 +163,7 @@ export function SettingsForm({ onSuccess }: SettingsFormProps) {
             <select
               value={settings.sessionTimeout}
               onChange={(e) => handleSettingChange('sessionTimeout', parseInt(e.target.value))}
-              className='w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+              className='w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-[#1E40AF]'
             >
               <option value={15}>15 phút</option>
               <option value={30}>30 phút</option>
@@ -177,10 +177,10 @@ export function SettingsForm({ onSuccess }: SettingsFormProps) {
       </Card>
 
       {/* Notification Settings */}
-      <Card className='border-blue-100'>
+      <Card className='border-[#E8EDF5]'>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
-            <Bell className='w-5 h-5 text-blue-600' />
+            <Bell className='w-5 h-5 text-[#1E40AF]' />
             Cài đặt thông báo
           </CardTitle>
         </CardHeader>
@@ -250,10 +250,10 @@ export function SettingsForm({ onSuccess }: SettingsFormProps) {
       </Card>
 
       {/* Privacy Settings */}
-      <Card className='border-purple-100'>
+      <Card className='border-[#E8EDF5]'>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
-            <Eye className='w-5 h-5 text-purple-600' />
+            <Eye className='w-5 h-5 text-[#1E40AF]' />
             Quyền riêng tư
           </CardTitle>
         </CardHeader>
@@ -264,7 +264,7 @@ export function SettingsForm({ onSuccess }: SettingsFormProps) {
             <select
               value={settings.profileVisibility}
               onChange={(e) => handleSettingChange('profileVisibility', e.target.value as 'public' | 'private')}
-              className='w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500'
+              className='w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#1E40AF] focus:border-[#1E40AF]'
             >
               <option value='private'>Riêng tư - Chỉ mình tôi</option>
               <option value='public'>Công khai - Dược sĩ có thể xem</option>
@@ -303,7 +303,7 @@ export function SettingsForm({ onSuccess }: SettingsFormProps) {
         <Button
           onClick={handleSaveSettings}
           disabled={isSubmitting}
-          className='bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white'
+          className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'
         >
           {isSubmitting ? (
             <>

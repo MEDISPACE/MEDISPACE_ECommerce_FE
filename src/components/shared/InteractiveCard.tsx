@@ -54,7 +54,7 @@ export function InteractiveCard({
       {/* Glow effect */}
       {glowEffect && (
         <motion.div
-          className='absolute inset-0 bg-gradient-to-r from-blue-400/20 via-cyan-400/20 to-blue-600/20 rounded-2xl blur-xl'
+          className='absolute inset-0 bg-gradient-to-r from-[#BFDBFE]/30 via-[#F0F6FF]/40 to-[#1E40AF]/20 rounded-2xl blur-xl'
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{
             opacity: isHovered ? 1 : 0,

@@ -268,7 +268,7 @@ export function ArticleDetailPage() {
           <UniversalBreadcrumb
             items={[
               { label: 'Trang chủ', href: '/' },
-              { label: 'Góc sức khỏe', href: '/health' },
+              { label: 'Bệnh & Góc sức khỏe', href: '/health' },
               { label: article.category?.name || 'Bài viết', href: `/health/category/${article.category?.slug}` },
               { label: article.title },
             ]}
@@ -302,7 +302,7 @@ export function ArticleDetailPage() {
                   {tag}
                 </Badge>
               ))}
-              {article.isFeatured && <Badge className='bg-red-500'>Nổi bật</Badge>}
+              {article.isFeatured && <Badge className='bg-red-500 text-white hover:bg-red-600'>Nổi bật</Badge>}
             </div>
 
             {/* Title */}
@@ -338,11 +338,11 @@ export function ArticleDetailPage() {
 
 	            <div className='mt-4 flex flex-wrap gap-3'>
 	              <Button type='button' variant='outline' size='sm' className='gap-2' onClick={toggleSavedArticle}>
-	                <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-blue-600 text-blue-600' : ''}`} />
+	                <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-[#1E40AF] text-[#1E40AF]' : ''}`} />
 	                {isSaved ? 'Đã lưu' : 'Lưu bài'}
 	              </Button>
 	              <Button type='button' variant='outline' size='sm' className='gap-2' onClick={toggleFollowTopic}>
-	                <Bell className={`h-4 w-4 ${isFollowingTopic ? 'fill-cyan-600 text-cyan-600' : ''}`} />
+	                <Bell className={`h-4 w-4 ${isFollowingTopic ? 'fill-[#1E40AF] text-[#1E40AF]' : ''}`} />
 	                {isFollowingTopic ? 'Đang theo dõi chủ đề' : 'Theo dõi chủ đề'}
 	              </Button>
 	            </div>
@@ -386,14 +386,14 @@ export function ArticleDetailPage() {
               dangerouslySetInnerHTML={{ __html: article.content }}
             />
 
-            <div className='mt-8 rounded-lg border border-cyan-100 bg-cyan-50/70 p-5'>
+            <div className='mt-8 rounded-lg border border-[#E8EDF5] bg-[#F0F6FF]/80 p-5'>
               <div className='flex items-start gap-3 mb-4'>
-                <div className='mt-1 rounded-full bg-cyan-100 p-2 text-cyan-700'>
+                <div className='mt-1 rounded-full bg-[#E8EDF5] p-2 text-[#1E40AF]'>
                   <Bot className='h-5 w-5' />
                 </div>
                 <div>
-                  <h2 className='text-lg font-semibold text-cyan-950'>Trợ lý AI theo bài viết</h2>
-                  <p className='text-sm text-cyan-800 mt-1'>
+                  <h2 className='text-lg font-semibold text-[#0A2463]'>Trợ lý AI theo bài viết</h2>
+                  <p className='text-sm text-[#0A2463] mt-1'>
                     Hỏi nhanh về nội dung bài này. Câu trả lời AI chỉ để tham khảo và nên được dược sĩ xác nhận khi dùng thuốc.
                   </p>
                 </div>
@@ -412,7 +412,7 @@ export function ArticleDetailPage() {
                     type='button'
                     variant='outline'
                     size='sm'
-                    className='border-cyan-200 text-cyan-800 hover:bg-white'
+                    className='border-[#BFDBFE] text-[#0A2463] hover:bg-white'
                     onClick={() => askArticleAssistant(suggestion)}
                     disabled={aiLoading}
                   >
@@ -432,16 +432,16 @@ export function ArticleDetailPage() {
                   value={aiQuestion}
                   onChange={(event) => setAiQuestion(event.target.value)}
                   placeholder='Nhập câu hỏi về bài viết'
-                  className='h-11 flex-1 rounded-md border border-cyan-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-cyan-500'
+                  className='h-11 flex-1 rounded-md border border-[#BFDBFE] bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[#0A2463]'
                 />
-                <Button type='submit' className='h-11 bg-cyan-700 hover:bg-cyan-800 text-white' disabled={aiLoading}>
+                <Button type='submit' className='h-11 bg-[#0A2463] hover:bg-[#071A49] text-white' disabled={aiLoading}>
                   {aiLoading ? <Loader2 className='h-4 w-4 mr-2 animate-spin' /> : <Send className='h-4 w-4 mr-2' />}
                   Hỏi AI
                 </Button>
               </form>
 
               {aiAnswer && (
-                <div className='mt-4 rounded-lg bg-white border border-cyan-100 p-4'>
+                <div className='mt-4 rounded-lg bg-white border border-[#E8EDF5] p-4'>
                   {aiEscalated && (
                     <div className='mb-3 flex items-start gap-2 rounded-md bg-amber-50 p-3 text-sm text-amber-800'>
                       <AlertTriangle className='h-4 w-4 mt-0.5 flex-shrink-0' />
@@ -457,7 +457,7 @@ export function ArticleDetailPage() {
                           type='button'
                           variant='ghost'
                           size='sm'
-                          className='text-cyan-800 hover:bg-cyan-50'
+                          className='text-[#0A2463] hover:bg-[#F0F6FF]'
                           onClick={() => askArticleAssistant(suggestion)}
                           disabled={aiLoading}
                         >
@@ -470,7 +470,7 @@ export function ArticleDetailPage() {
               )}
             </div>
 
-            <div className='mt-8 rounded-lg border border-blue-100 bg-blue-50/70 p-5'>
+            <div className='mt-8 rounded-lg border border-[#E8EDF5] bg-[#F0F6FF]/70 p-5'>
               <div className='mb-4'>
                 <h2 className='text-lg font-semibold text-blue-950'>Cần hỗ trợ sau khi đọc?</h2>
                 <p className='text-sm text-blue-800 mt-1'>
@@ -478,7 +478,7 @@ export function ArticleDetailPage() {
                 </p>
               </div>
               <div className='flex flex-wrap gap-3'>
-                <Button asChild className='bg-blue-600 hover:bg-blue-700 text-white'>
+                <Button asChild className='bg-[#0A2463] hover:bg-[#071A49] text-white'>
                   <Link
                     to='/community'
                     onClick={() => trackArticleCta('cta_chat', 'chat', '/community')}
@@ -487,7 +487,7 @@ export function ArticleDetailPage() {
                     Hỏi dược sĩ
                   </Link>
                 </Button>
-                <Button asChild variant='outline' className='border-blue-200 text-blue-700 hover:bg-white'>
+                <Button asChild variant='outline' className='border-[#BFDBFE] text-[#0A2463] hover:bg-white'>
                   <Link
                     to='/upload-prescription'
                     onClick={() => trackArticleCta('cta_prescription_upload', 'prescription', '/upload-prescription')}
@@ -496,7 +496,7 @@ export function ArticleDetailPage() {
                     Gửi đơn thuốc
                   </Link>
                 </Button>
-                <Button asChild variant='outline' className='border-blue-200 text-blue-700 hover:bg-white'>
+                <Button asChild variant='outline' className='border-[#BFDBFE] text-[#0A2463] hover:bg-white'>
                   <Link
                     to={`/search?q=${encodeURIComponent(article.tags?.[0] || article.category?.name || article.title)}`}
                     onClick={() => trackArticleCta('cta_product_search', 'search', '/search')}
@@ -525,7 +525,7 @@ export function ArticleDetailPage() {
             {article.references && article.references.length > 0 && (
               <div className='mt-8 pt-6 border-t'>
                 <div className='flex items-center gap-2 mb-3'>
-                  <BookOpen className='h-4 w-4 text-blue-600' />
+                  <BookOpen className='h-4 w-4 text-[#1E40AF]' />
                   <h3 className='text-sm font-semibold text-gray-700'>Nguồn tham khảo:</h3>
                 </div>
                 <ol className='list-decimal pl-5 space-y-2 text-sm text-gray-600'>
@@ -544,7 +544,7 @@ export function ArticleDetailPage() {
                               metadata: { title: reference.title },
                             })
                           }
-                          className='text-blue-600 hover:text-blue-700 hover:underline'
+                          className='text-[#1E40AF] hover:text-[#0A2463] hover:underline'
                         >
                           {reference.title}
                         </a>
@@ -619,11 +619,11 @@ export function ArticleDetailPage() {
                           {product.requiresPrescription ? (
                             <p className='text-sm text-gray-500 mb-3'>Cần dược sĩ tư vấn trước khi mua</p>
                           ) : (
-                            <p className='font-semibold text-blue-600 mb-3'>
+                            <p className='font-semibold text-[#1E40AF] mb-3'>
                               {price.toLocaleString('vi-VN')}đ / {getProductUnit(product)}
                             </p>
                           )}
-                          <Button asChild className='w-full bg-blue-600 hover:bg-blue-700 text-white'>
+                          <Button asChild className='w-full bg-[#0A2463] hover:bg-[#071A49] text-white'>
                             <Link
                               to={`/products/${product.slug}`}
                               onClick={() =>

@@ -70,7 +70,7 @@ export function AddressBookPage() {
   return (
     <div className='space-y-6'>
       {/* Header */}
-      <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
+      <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-6'>
         <div className='flex flex-col md:flex-row md:items-center justify-between gap-4'>
           <div>
             <h1 className='text-2xl font-bold text-blue-800 mb-2'>Sổ địa chỉ</h1>
@@ -79,7 +79,7 @@ export function AddressBookPage() {
 
           <Button
             onClick={handleAddAddress}
-            className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white shadow-lg'
+            className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white shadow-lg'
           >
             <Plus className='w-4 h-4 mr-2' />
             Thêm địa chỉ mới
@@ -97,7 +97,7 @@ export function AddressBookPage() {
       </div>
 
       {/* Search */}
-      <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-4'>
+      <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-4'>
         <div className='relative'>
           <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4' />
           <Input
@@ -105,7 +105,7 @@ export function AddressBookPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder='Tìm kiếm địa chỉ...'
-            className='pl-10 border-2 border-blue-200 focus:border-blue-500'
+            className='pl-10 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
           />
         </div>
       </div>
@@ -113,7 +113,7 @@ export function AddressBookPage() {
       {/* Address List */}
       <div className='space-y-4'>
         {filteredAddresses.length === 0 ? (
-          <Card className='bg-white/80 backdrop-blur-lg shadow-lg border border-blue-100'>
+          <Card className='bg-white/80 backdrop-blur-lg shadow-lg border border-[#E8EDF5]'>
             <CardContent className='p-12 text-center'>
               <MapPin className='w-16 h-16 mx-auto text-gray-300 mb-4' />
               <h3 className='text-lg font-medium text-gray-900 mb-2'>
@@ -125,7 +125,7 @@ export function AddressBookPage() {
               {!searchQuery && (
                 <Button
                   onClick={handleAddAddress}
-                  className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'
+                  className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'
                 >
                   <Plus className='w-4 h-4 mr-2' />
                   Thêm địa chỉ đầu tiên

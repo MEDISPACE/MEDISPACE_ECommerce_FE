@@ -35,6 +35,7 @@ import {
 } from '../../utils/productHelpers'
 import { getProductPrice } from '../../utils/priceUtils'
 import type { Category, Product } from '../../types/product'
+import { getCategoryIcon } from '../../utils/categoryIcons'
 
 export function SubCategoryPage() {
   const { slug: categorySlug, subSlug: subCategorySlug } = useParams()
@@ -148,6 +149,7 @@ export function SubCategoryPage() {
   const totalPages = Math.ceil(sortedProducts.length / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
   const paginatedProducts = sortedProducts.slice(startIndex, startIndex + itemsPerPage)
+  const IconComponent = getCategoryIcon(category || { slug: categorySlug })
 
   const handleBrandToggle = (brandName: string) => {
     setSelectedBrands((prev: string[]) =>
@@ -179,7 +181,7 @@ export function SubCategoryPage() {
     return (
       <div className='min-h-screen flex items-center justify-center'>
         <div className='text-center'>
-          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4'></div>
+          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-[#1E40AF] mx-auto mb-4'></div>
           <p className='text-gray-600'>Đang tải danh mục sản phẩm...</p>
         </div>
       </div>
@@ -217,12 +219,12 @@ export function SubCategoryPage() {
       <EnhancedPageTransition>
         <div className='max-w-7xl mx-auto px-4 py-6'>
           {/* Sub-category Header */}
-          <div className='bg-gradient-to-r from-white to-gray-50 rounded-2xl p-6 mb-6 border-l-4 border-blue-500'>
+          <div className='bg-gradient-to-r from-white to-gray-50 rounded-2xl p-6 mb-6 border-l-4 border-[#1E40AF]'>
             <div className='flex items-center justify-between'>
               <div className='flex-1'>
                 <div className='flex items-center gap-4 mb-2'>
-                  <div className='w-16 h-16 rounded-xl flex items-center justify-center text-white font-bold text-2xl bg-blue-500'>
-                    {subCategory.name.charAt(0)}
+                  <div className='w-16 h-16 rounded-xl flex items-center justify-center text-white bg-[#1E40AF]'>
+                    <IconComponent className='w-8 h-8' />
                   </div>
                   <div>
                     <h1 className='text-3xl font-bold text-gray-900'>{subCategory.name}</h1>
@@ -296,7 +298,7 @@ export function SubCategoryPage() {
                       )
                     })}
                     {brands.length > 6 && (
-                      <Button variant='ghost' className='text-xs p-0 h-auto text-blue-600'>
+                      <Button variant='ghost' className='text-xs p-0 h-auto text-[#1E40AF]'>
                         + Xem thêm
                       </Button>
                     )}
@@ -326,7 +328,7 @@ export function SubCategoryPage() {
                           setPriceRange([value, priceRange[1]])
                         }}
                         placeholder='Từ'
-                        className='h-8 text-xs border-blue-200'
+                        className='h-8 text-xs border-[#BFDBFE]'
                       />
                       <Input
                         type='text'
@@ -336,7 +338,7 @@ export function SubCategoryPage() {
                           setPriceRange([priceRange[0], value])
                         }}
                         placeholder='Đến'
-                        className='h-8 text-xs border-blue-200'
+                        className='h-8 text-xs border-[#BFDBFE]'
                       />
                     </div>
                   </CardContent>
@@ -543,7 +545,7 @@ export function SubCategoryPage() {
                   </div>
                 </>
               ) : (
-                <Card className='text-center py-12 border-blue-200 bg-white'>
+                <Card className='text-center py-12 border-[#BFDBFE] bg-white'>
                   <CardContent>
                     <div className='text-gray-500 mb-4'>
                       <PackageX className='w-16 h-16 mx-auto mb-4 text-gray-300' strokeWidth={1.5} />

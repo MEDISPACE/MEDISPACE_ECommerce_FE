@@ -397,7 +397,7 @@ export function AddressFormDialog({
           </Button>
           <Button
             onClick={handleSubmitAddress}
-            className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'
+            className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'
           >
             {submitButtonText || (editingAddress ? 'Cập nhật' : 'Thêm địa chỉ')}
           </Button>

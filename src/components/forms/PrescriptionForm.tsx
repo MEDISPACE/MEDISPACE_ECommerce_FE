@@ -205,7 +205,7 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
       )}
 
       {/* Patient Information */}
-      <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+      <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
         <div className='p-6'>
           <h3 className='mb-4 text-blue-900 flex items-center'>👤 THÔNG TIN BỆNH NHÂN</h3>
 
@@ -219,7 +219,7 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
                 placeholder='Nhập tên bệnh nhân'
                 value={formData.patientName}
                 onChange={(e) => handleInputChange('patientName', e.target.value)}
-                className='border-2 border-blue-200 focus:border-blue-500'
+                className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                 required
               />
               <p className='text-sm text-gray-600 mt-1'>(Nếu khác với tên tài khoản)</p>
@@ -234,7 +234,7 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
                 placeholder='Nhập tuổi'
                 value={formData.patientAge}
                 onChange={(e) => handleInputChange('patientAge', e.target.value)}
-                className='border-2 border-blue-200 focus:border-blue-500'
+                className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
               />
             </div>
 
@@ -246,7 +246,7 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
                 value={formData.patientGender || ''}
                 onValueChange={(value) => handleInputChange('patientGender', value)}
               >
-                <SelectTrigger className='border-2 border-blue-200 focus:border-blue-500'>
+                <SelectTrigger className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'>
                   <SelectValue placeholder='Chọn giới tính' />
                 </SelectTrigger>
                 <SelectContent>
@@ -267,23 +267,23 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
                   placeholder='Nhập số điện thoại'
                   value={formData.phoneNumber}
                   onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
-                  className='border-2 border-blue-200 focus:border-blue-500 pl-10'
+                  className='border-2 border-[#BFDBFE] focus:border-[#1E40AF] pl-10'
                   required
                 />
                 <PhoneCall className='w-4 h-4 text-gray-400 absolute left-3 top-3' />
               </div>
 
               {showPhoneSuggestion && (
-                <div className='mt-2.5 text-sm flex flex-col sm:flex-row items-start sm:items-center gap-2 text-indigo-700 bg-indigo-50/80 p-2.5 rounded-lg border border-indigo-200 shadow-sm'>
+                <div className='mt-2.5 text-sm flex flex-col sm:flex-row items-start sm:items-center gap-2 text-[#1E40AF] bg-[#F0F6FF]/80 p-2.5 rounded-lg border border-[#BFDBFE] shadow-sm'>
                   <span className='font-medium flex-1 flex items-center gap-1.5'>
-                    <Sparkles className='w-4 h-4 text-indigo-500' />
+                    <Sparkles className='w-4 h-4 text-[#1E40AF]' />
                     AI tìm thấy SĐT trên đơn: <strong>{suggestedPhone}</strong>
                   </span>
                   <Button
                     type='button'
                     variant='outline'
                     size='sm'
-                    className='h-7 flex-shrink-0 text-xs border-indigo-300 hover:bg-indigo-100/80 hover:text-indigo-900 bg-white'
+                    className='h-7 flex-shrink-0 text-xs border-[#BFDBFE] hover:bg-[#E8EDF5]/80 hover:text-[#0A2463] bg-white'
                     onClick={() => handleInputChange('phoneNumber', suggestedPhone)}
                   >
                     Dùng số này
@@ -326,7 +326,7 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
       </Card>
 
       {/* Medical Information */}
-      <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+      <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
         <div className='p-6'>
           <h3 className='mb-4 text-blue-900 flex items-center'>🏥 THÔNG TIN KHÁM BỆNH</h3>
 
@@ -340,7 +340,7 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
                 placeholder='Nhập tên bác sĩ'
                 value={formData.doctorName}
                 onChange={(e) => handleInputChange('doctorName', e.target.value)}
-                className='border-2 border-blue-200 focus:border-blue-500'
+                className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                 required
               />
             </div>
@@ -354,7 +354,7 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
                 placeholder='Nhập tên bệnh viện/phòng khám'
                 value={formData.hospitalName}
                 onChange={(e) => handleInputChange('hospitalName', e.target.value)}
-                className='border-2 border-blue-200 focus:border-blue-500'
+                className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                 required
               />
             </div>
@@ -365,7 +365,7 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
                 <PopoverTrigger asChild>
                   <Button
                     variant='outline'
-                    className='w-full justify-start text-left font-normal border-2 !border-blue-200 focus:!border-blue-500'
+                    className='w-full justify-start text-left font-normal border-2 !border-[#BFDBFE] focus:!border-[#1E40AF]'
                   >
                     <CalendarIcon className='mr-2 h-4 w-4' />
                     {formData.examinationDate ? (
@@ -375,7 +375,7 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
                     )}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className='w-auto p-0 rounded-xl border-blue-200 shadow-lg overflow-hidden'>
+                <PopoverContent className='w-auto p-0 rounded-xl border-[#BFDBFE] shadow-lg overflow-hidden'>
                   <CalendarComponent
                     mode='single'
                     selected={formData.examinationDate}
@@ -395,7 +395,7 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
                 placeholder='Nhập chẩn đoán (tùy chọn)'
                 value={formData.diagnosis}
                 onChange={(e) => handleInputChange('diagnosis', e.target.value)}
-                className='border-2 border-blue-200 focus:border-blue-500'
+                className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                 rows={3}
               />
             </div>
@@ -463,7 +463,7 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
       )}
 
       {/* Special Notes */}
-      <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+      <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
         <div className='p-6'>
           <h3 className='mb-4 text-blue-900 flex items-center'>📝 GHI CHÚ ĐẶC BIỆT</h3>
 
@@ -471,7 +471,7 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
             placeholder='VD: Cần giao hàng khẩn cấp, dị ứng thuốc, v.v.'
             value={formData.specialNotes}
             onChange={(e) => handleInputChange('specialNotes', e.target.value)}
-            className='border-2 border-blue-200 focus:border-blue-500'
+            className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
             rows={4}
           />
         </div>
@@ -527,7 +527,7 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
         <Button
           type='button'
           variant='outline'
-          className='border-blue-200 text-blue-700 hover:bg-blue-50'
+          className='border-[#BFDBFE] text-[#0A2463] hover:bg-[#F0F6FF]'
           onClick={handleSaveDraft}
         >
           Lưu nháp
@@ -541,7 +541,7 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
           <Button
             type='submit'
             disabled={!isFormValid() || isSubmitting}
-            className='bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-700 hover:to-blue-600 disabled:opacity-50'
+            className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white hover:from-[#071A49] hover:to-[#1E40AF] disabled:opacity-50'
           >
             {isSubmitting ? 'Đang gửi...' : 'Gửi đơn thuốc'}
           </Button>

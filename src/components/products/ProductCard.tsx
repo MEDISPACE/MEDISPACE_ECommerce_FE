@@ -157,7 +157,7 @@ export function ProductCard({
                           onClick={(e) => handleUnitSelect(e, variant.unit)}
                           className={`flex-1 px-2 py-1.5 text-xs font-medium transition-all ${
                             selectedUnit === variant.unit
-                              ? 'bg-blue-600 text-white'
+                              ? 'bg-[#0A2463] text-white'
                               : 'bg-white text-gray-600 hover:bg-gray-50'
                           } ${index > 0 ? 'border-l border-gray-300' : ''}`}
                         >

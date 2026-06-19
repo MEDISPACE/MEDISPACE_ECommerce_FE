@@ -34,11 +34,11 @@ interface StatsCardProps {
 // Color gradient mappings
 const colorGradients = {
   blue: {
-    gradient: 'from-[#0066CC] to-[#4A90E2]',
-    iconBg: 'from-[#0066CC]/10 to-[#4A90E2]/10',
-    text: 'text-[#0066CC]',
-    badgeBg: 'bg-blue-50',
-    badgeText: 'text-[#0066CC]',
+    gradient: 'from-[#0A2463] to-[#1E40AF]',
+    iconBg: 'from-[#0A2463]/10 to-[#1E40AF]/10',
+    text: 'text-[#0A2463]',
+    badgeBg: 'bg-[#F0F6FF]',
+    badgeText: 'text-[#0A2463]',
   },
   green: {
     gradient: 'from-green-500 to-emerald-500',
@@ -83,25 +83,25 @@ const colorGradients = {
     badgeText: 'text-emerald-600',
   },
   cyan: {
-    gradient: 'from-blue-500 to-cyan-500',
-    iconBg: 'from-blue-500/10 to-cyan-500/10',
-    text: 'text-blue-600',
-    badgeBg: 'bg-blue-50',
-    badgeText: 'text-blue-600',
+    gradient: 'from-[#0A2463] to-[#1E40AF]',
+    iconBg: 'from-[#0A2463]/10 to-[#1E40AF]/10',
+    text: 'text-[#1E40AF]',
+    badgeBg: 'bg-[#F0F6FF]',
+    badgeText: 'text-[#1E40AF]',
   },
   purple: {
-    gradient: 'from-purple-500 to-violet-500',
-    iconBg: 'from-purple-500/10 to-violet-500/10',
-    text: 'text-purple-600',
-    badgeBg: 'bg-purple-50',
-    badgeText: 'text-purple-600',
+    gradient: 'from-[#0A2463] to-[#1E40AF]',
+    iconBg: 'from-[#0A2463]/10 to-[#1E40AF]/10',
+    text: 'text-[#1E40AF]',
+    badgeBg: 'bg-[#F0F6FF]',
+    badgeText: 'text-[#1E40AF]',
   },
   pink: {
-    gradient: 'from-pink-500 to-rose-500',
-    iconBg: 'from-pink-500/10 to-rose-500/10',
-    text: 'text-pink-600',
-    badgeBg: 'bg-pink-50',
-    badgeText: 'text-pink-600',
+    gradient: 'from-[#1E40AF] to-[#3B82F6]',
+    iconBg: 'from-[#1E40AF]/10 to-[#3B82F6]/10',
+    text: 'text-[#1E40AF]',
+    badgeBg: 'bg-[#F0F6FF]',
+    badgeText: 'text-[#1E40AF]',
   },
 }
 
@@ -112,7 +112,7 @@ export function StatsCard({ config, onClick }: StatsCardProps) {
 
   return (
     <Card
-      className={`group relative overflow-hidden bg-white/80 backdrop-blur-lg shadow-lg border border-blue-100 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 ${onClick ? 'cursor-pointer' : ''}`}
+      className={`group relative overflow-hidden bg-white/80 backdrop-blur-lg shadow-lg border border-[#E8EDF5] hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 ${onClick ? 'cursor-pointer' : ''}`}
       onClick={onClick}
     >
       {/* Gradient overlay on hover */}

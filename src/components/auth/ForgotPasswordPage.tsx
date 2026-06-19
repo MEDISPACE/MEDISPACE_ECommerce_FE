@@ -81,10 +81,10 @@ export function ForgotPasswordPage() {
       <PageTransition>
         <div className='p-8 text-center'>
           <div className='relative mb-8'>
-            <div className='w-24 h-24 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full flex items-center justify-center mx-auto mb-4 shadow-2xl'>
+            <div className='w-24 h-24 bg-gradient-to-r from-[#0A2463] to-[#1E40AF] rounded-full flex items-center justify-center mx-auto mb-4 shadow-2xl'>
               <Mail className='w-12 h-12 text-white' />
             </div>
-            <div className='absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full blur-xl opacity-30 animate-pulse'></div>
+            <div className='absolute inset-0 bg-gradient-to-r from-[#0A2463] to-[#1E40AF] rounded-full blur-xl opacity-30 animate-pulse'></div>
           </div>
 
           <h2 className='text-3xl font-bold mb-4 text-blue-800'>Kiểm tra email của bạn</h2>
@@ -92,13 +92,13 @@ export function ForgotPasswordPage() {
           <p className='text-gray-600 mb-8 text-lg leading-relaxed'>
             Chúng tôi đã gửi hướng dẫn đặt lại mật khẩu đến
             <br />
-            <span className='font-semibold text-blue-600'>{email}</span>
+            <span className='font-semibold text-[#1E40AF]'>{email}</span>
           </p>
 
           <div className='space-y-4'>
             <Button
               onClick={() => window.open('https://gmail.com', '_blank')}
-              className='w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 h-12 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300 text-white'
+              className='w-full bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] h-12 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300 text-white'
             >
               Mở Gmail
               <ArrowRight className='w-5 h-5 ml-2' />
@@ -109,7 +109,7 @@ export function ForgotPasswordPage() {
               <button
                 onClick={handleResend}
                 disabled={countdown > 0 || isLoading}
-                className='text-blue-600 font-semibold hover:underline disabled:opacity-50 disabled:cursor-not-allowed'
+                className='text-[#1E40AF] font-semibold hover:underline disabled:opacity-50 disabled:cursor-not-allowed'
               >
                 {countdown > 0 ? `Gửi lại sau ${countdown}s` : 'Gửi lại'}
               </button>
@@ -117,7 +117,7 @@ export function ForgotPasswordPage() {
 
             <Link
               to='/login'
-              className='inline-flex items-center text-gray-500 hover:text-blue-600 transition-colors mt-4'
+              className='inline-flex items-center text-gray-500 hover:text-[#1E40AF] transition-colors mt-4'
             >
               <ArrowLeft className='w-4 h-4 mr-2' />
               Quay lại đăng nhập
@@ -133,10 +133,10 @@ export function ForgotPasswordPage() {
       <div className='p-8'>
         <div className='text-center mb-8'>
           <div className='relative mb-6'>
-            <div className='w-20 h-20 bg-white/80 backdrop-blur-lg border border-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg'>
-              <Mail className='w-10 h-10 text-blue-600' />
+            <div className='w-20 h-20 bg-white/80 backdrop-blur-lg border border-[#E8EDF5] rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg'>
+              <Mail className='w-10 h-10 text-[#1E40AF]' />
             </div>
-            <div className='absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full blur-xl opacity-20 animate-pulse'></div>
+            <div className='absolute inset-0 bg-gradient-to-r from-[#0A2463] to-[#1E40AF] rounded-full blur-xl opacity-20 animate-pulse'></div>
           </div>
           <h2 className='text-3xl font-bold mb-3 text-blue-800'>Quên mật khẩu?</h2>
           <p className='text-gray-600 text-lg'>
@@ -159,7 +159,7 @@ export function ForgotPasswordPage() {
               placeholder='Email của bạn'
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className={`h-12 text-base px-4 bg-blue-50/50 focus:bg-white backdrop-blur-sm border-blue-200 focus:border-blue-500 transition-all duration-300 ${
+              className={`h-12 text-base px-4 bg-[#F0F6FF]/50 focus:bg-white backdrop-blur-sm border-[#BFDBFE] focus:border-[#1E40AF] transition-all duration-300 ${
                 errors.email ? 'border-red-500 focus:border-red-500' : ''
               }`}
             />
@@ -173,7 +173,7 @@ export function ForgotPasswordPage() {
 
           <Button
             type='submit'
-            className='w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 h-12 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300 text-white'
+            className='w-full bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] h-12 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300 text-white'
             disabled={isLoading}
           >
             {isLoading ? (
@@ -192,7 +192,7 @@ export function ForgotPasswordPage() {
           <div className='text-center mt-6'>
             <Link
               to='/login'
-              className='inline-flex items-center text-gray-500 hover:text-blue-600 transition-colors font-medium'
+              className='inline-flex items-center text-gray-500 hover:text-[#1E40AF] transition-colors font-medium'
             >
               <ArrowLeft className='w-4 h-4 mr-2' />
               Quay lại đăng nhập

@@ -13,6 +13,7 @@ import { Button } from '~/components/ui/button'
 import { Badge } from '~/components/ui/badge'
 import { Checkbox } from '~/components/ui/checkbox'
 import { Textarea } from '~/components/ui/textarea'
+import { UniversalBreadcrumb } from '~/components/shared/UniversalBreadcrumb'
 
 function formatDateTime(value?: string) {
   if (!value) return ''
@@ -108,6 +109,14 @@ export function CommunityVideoEventDetailPage() {
   if (!isAuthenticated) {
     return (
       <main className='mx-auto max-w-4xl px-4 py-10'>
+        <UniversalBreadcrumb
+          items={[
+            { label: 'Cộng đồng', href: '/community' },
+            { label: 'Hội thảo cộng đồng', href: '/community/video-events' },
+            { label: 'Chi tiết hội thảo' },
+          ]}
+        />
+
         <Button variant='ghost' onClick={() => navigate('/community/video-events')}><ArrowLeft />Quay lại</Button>
         <div className='mt-8 rounded-lg border border-gray-200 bg-white p-8 text-center'>
           <h1 className='text-xl font-semibold'>Bạn cần đăng nhập để xem hội thảo</h1>
@@ -122,6 +131,14 @@ export function CommunityVideoEventDetailPage() {
 
   return (
     <main className='mx-auto w-full max-w-7xl px-4 py-8'>
+      <UniversalBreadcrumb
+        items={[
+          { label: 'Cộng đồng', href: '/community' },
+          { label: 'Hội thảo cộng đồng', href: '/community/video-events' },
+          { label: event?.title || 'Chi tiết hội thảo' },
+        ]}
+      />
+
       <Button variant='ghost' onClick={() => navigate('/community/video-events')}><ArrowLeft />Lịch hội thảo</Button>
 
       {eventQuery.isError ? (
@@ -143,7 +160,7 @@ export function CommunityVideoEventDetailPage() {
                 <span className='inline-flex items-center gap-2'><Users className='h-4 w-4' />{event.registrationCount || 0}{event.capacity ? `/${event.capacity}` : ''} đăng ký</span>
               </div>
               {event.description && <p className='mt-4 whitespace-pre-wrap text-gray-700'>{event.description}</p>}
-              {event.agenda && <p className='mt-4 whitespace-pre-wrap rounded-md bg-blue-50 p-4 text-sm text-blue-950'>{event.agenda}</p>}
+              {event.agenda && <p className='mt-4 whitespace-pre-wrap rounded-md bg-[#F0F6FF] p-4 text-sm text-blue-950'>{event.agenda}</p>}
             </div>
 
             <div className='rounded-lg border border-gray-200 bg-white p-4'>
@@ -162,7 +179,7 @@ export function CommunityVideoEventDetailPage() {
                 </div>
               ) : (
                 <div className='flex min-h-[280px] flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 p-6 text-center'>
-                  <Video className='mb-3 h-10 w-10 text-blue-600' />
+                  <Video className='mb-3 h-10 w-10 text-[#1E40AF]' />
                   <p className='max-w-xl text-sm text-gray-600'>Trước khi tham gia, hãy xác nhận bạn hiểu nội dung hội thảo chỉ mang tính tham khảo, không thay thế chẩn đoán hoặc tư vấn điều trị cá nhân.</p>
                   <label className='mt-4 flex items-center gap-2 text-sm text-gray-700'>
                     <Checkbox checked={acceptedDisclaimer} onCheckedChange={(checked) => setAcceptedDisclaimer(Boolean(checked))} />

@@ -45,10 +45,10 @@ export default function PharmacistOrderDetailPage() {
       </div>
 
       {/* Placeholder content */}
-      <Card className='border-blue-100'>
+      <Card className='border-[#E8EDF5]'>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
-            <FileText className='w-5 h-5 text-blue-600' />
+            <FileText className='w-5 h-5 text-[#1E40AF]' />
             Thông tin đơn hàng
           </CardTitle>
         </CardHeader>
@@ -58,7 +58,7 @@ export default function PharmacistOrderDetailPage() {
             <p className='text-sm mt-2'>Trang chi tiết đầy đủ với in hóa đơn, xuất PDF sẽ được triển khai sau.</p>
             <p className='text-sm mt-4'>
               Hiện tại, vui lòng xem chi tiết từ{' '}
-              <Link to='/pharmacist/orders' className='text-blue-600 hover:underline'>
+              <Link to='/pharmacist/orders' className='text-[#1E40AF] hover:underline'>
                 trang Quản lý đơn hàng
               </Link>
             </p>

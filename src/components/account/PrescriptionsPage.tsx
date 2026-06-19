@@ -165,7 +165,7 @@ export function PrescriptionsPage() {
       case 'pending':
         return <Clock className='w-5 h-5 text-yellow-600' />
       case 'reviewing':
-        return <Eye className='w-5 h-5 text-blue-600' />
+        return <Eye className='w-5 h-5 text-[#1E40AF]' />
       case 'approved':
         return <CheckCircle className='w-5 h-5 text-green-600' />
       case 'rejected':
@@ -178,12 +178,12 @@ export function PrescriptionsPage() {
   }
 
   const PrescriptionCard = ({ prescription }: { prescription: Prescription }) => (
-    <Card className='border-blue-100 hover:shadow-md transition-all duration-300'>
+    <Card className='border-[#E8EDF5] hover:shadow-md transition-all duration-300'>
       <CardContent className='p-6'>
         {/* Header */}
         <div className='flex items-start justify-between mb-4'>
           <div className='flex items-center gap-3'>
-            <div className='w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center'>
+            <div className='w-12 h-12 bg-[#E8EDF5] rounded-lg flex items-center justify-center'>
               {getStatusIcon(prescription.status)}
             </div>
             <div>
@@ -261,7 +261,7 @@ export function PrescriptionsPage() {
         {/* Actions */}
         <div className='flex items-center flex-wrap gap-2 pt-3 border-t border-gray-100'>
           <Link to={`/account/prescriptions/${prescription.id}`}>
-            <Button size='sm' variant='outline' className='border-blue-200 text-blue-700 hover:bg-blue-50'>
+            <Button size='sm' variant='outline' className='border-[#BFDBFE] text-[#0A2463] hover:bg-[#F0F6FF]'>
               <ExternalLink className='w-4 h-4 mr-1' />
               Xem chi tiết
             </Button>
@@ -329,7 +329,7 @@ export function PrescriptionsPage() {
 
           {prescription.status === 'completed' && prescription.orderId && (
             <Link to={`/account/orders/${prescription.orderId}`}>
-              <Button size='sm' className='bg-blue-600 hover:bg-blue-700'>
+              <Button size='sm' className='bg-[#0A2463] hover:bg-[#071A49]'>
                 <ShoppingCart className='w-4 h-4 mr-1' />
                 Xem đơn hàng
               </Button>
@@ -374,7 +374,7 @@ export function PrescriptionsPage() {
         </div>
 
         <Link to='/upload-prescription'>
-          <Button className='bg-gradient-to-r text-white from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600'>
+          <Button className='bg-gradient-to-r text-white from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463]'>
             <Upload className='w-4 h-4 mr-2' />
             Gửi đơn thuốc mới
           </Button>
@@ -383,12 +383,12 @@ export function PrescriptionsPage() {
 
       {/* Status Tabs */}
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className='w-full'>
-        <TabsList className='inline-flex w-full overflow-x-auto bg-blue-100 p-1 rounded-lg shadow-sm scrollbar-hide mb-2'>
+        <TabsList className='inline-flex w-full overflow-x-auto bg-[#E8EDF5] p-1 rounded-lg shadow-sm scrollbar-hide mb-2'>
           {tabs.map((tab) => (
             <TabsTrigger
               key={tab.value}
               value={tab.value}
-              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-[#E8EDF5] text-[#1E40AF] border-0 data-[state=active]:!bg-[#0A2463] data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-[#BFDBFE]'
             >
               <span className='whitespace-nowrap flex items-center gap-1'>
                 {tab.label} ({tab.count})
@@ -401,7 +401,7 @@ export function PrescriptionsPage() {
         <div className='mt-6'>
           {loading ? (
             <div className='flex flex-col items-center justify-center py-12'>
-              <Loader2 className='w-8 h-8 text-blue-600 animate-spin mb-4' />
+              <Loader2 className='w-8 h-8 text-[#1E40AF] animate-spin mb-4' />
               <p className='text-gray-500'>Đang tải danh sách đơn thuốc...</p>
             </div>
           ) : error ? (
@@ -456,28 +456,28 @@ export function PrescriptionsPage() {
       {/* Quick Stats */}
       {prescriptions.length > 0 && (
         <div className='grid grid-cols-1 md:grid-cols-4 gap-4 pt-6 border-t border-gray-100'>
-          <Card className='border-blue-100'>
+          <Card className='border-[#E8EDF5]'>
             <CardContent className='p-4 text-center'>
-              <div className='text-2xl font-bold text-blue-600'>{tabCounts.all}</div>
+              <div className='text-2xl font-bold text-[#1E40AF]'>{tabCounts.all}</div>
               <div className='text-sm text-gray-600'>Tổng đơn thuốc</div>
             </CardContent>
           </Card>
 
-          <Card className='border-blue-100'>
+          <Card className='border-[#E8EDF5]'>
             <CardContent className='p-4 text-center'>
               <div className='text-2xl font-bold text-yellow-600'>{tabCounts.pending}</div>
               <div className='text-sm text-gray-600'>Chờ xử lý</div>
             </CardContent>
           </Card>
 
-          <Card className='border-blue-100'>
+          <Card className='border-[#E8EDF5]'>
             <CardContent className='p-4 text-center'>
               <div className='text-2xl font-bold text-green-600'>{tabCounts.completed}</div>
               <div className='text-sm text-gray-600'>Hoàn thành</div>
             </CardContent>
           </Card>
 
-          <Card className='border-blue-100'>
+          <Card className='border-[#E8EDF5]'>
             <CardContent className='p-4 text-center'>
               <div className='text-2xl font-bold text-red-600'>{tabCounts.rejected}</div>
               <div className='text-sm text-gray-600'>Từ chối</div>

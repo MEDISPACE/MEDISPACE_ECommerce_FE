@@ -8,7 +8,7 @@ export function ProductCardSkeleton({ variant = 'grid' }: ProductCardSkeletonPro
   // ==================== LIST VARIANT SKELETON ====================
   if (variant === 'list') {
     return (
-      <Card className="border border-blue-100 overflow-hidden bg-white/80 backdrop-blur-sm">
+      <Card className="border border-[#E8EDF5] overflow-hidden bg-white/80 backdrop-blur-sm">
         <CardContent className="p-4">
           <div className="flex gap-4">
             {/* Image Skeleton */}
@@ -44,7 +44,7 @@ export function ProductCardSkeleton({ variant = 'grid' }: ProductCardSkeletonPro
 
   // ==================== GRID VARIANT SKELETON ====================
   return (
-    <Card className="border border-blue-100 overflow-hidden bg-white/80 backdrop-blur-sm h-full flex flex-col">
+    <Card className="border border-[#E8EDF5] overflow-hidden bg-white/80 backdrop-blur-sm h-full flex flex-col">
       <CardContent className="p-0 flex flex-col h-full">
         {/* Image Skeleton */}
         <div className="aspect-square w-full animate-shimmer bg-gray-100" />

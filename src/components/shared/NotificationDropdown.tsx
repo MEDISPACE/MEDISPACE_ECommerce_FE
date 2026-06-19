@@ -24,11 +24,11 @@ const typeIcons: Record<string, React.ComponentType<{ className?: string }>> = {
 }
 
 const typeColors: Record<string, string> = {
-  order: 'text-blue-500 bg-blue-500/10',
+  order: 'text-blue-500 bg-[#1E40AF]/10',
   prescription: 'text-green-500 bg-green-500/10',
   promotion: 'text-orange-500 bg-orange-500/10',
-  health: 'text-pink-500 bg-pink-500/10',
-  reminder: 'text-purple-500 bg-purple-500/10',
+  health: 'text-[#1E40AF] bg-[#F0F6FF]',
+  reminder: 'text-[#1E40AF] bg-[#F0F6FF]',
   system: 'text-gray-500 bg-gray-500/10',
   review: 'text-amber-500 bg-amber-500/10',
 }
@@ -69,8 +69,8 @@ function NotificationListItem({
     <motion.div
       initial={{ opacity: 0, x: -8 }}
       animate={{ opacity: 1, x: 0 }}
-      className={`group flex gap-3 px-4 py-3 rounded-xl transition-colors cursor-pointer outline-none border border-transparent hover:bg-blue-500/10 ${
-        !isRead ? 'bg-blue-500/5' : ''
+      className={`group flex gap-3 px-4 py-3 rounded-xl transition-colors cursor-pointer outline-none border border-transparent hover:bg-[#1E40AF]/10 ${
+        !isRead ? 'bg-[#1E40AF]/5' : ''
       }`}
       onClick={() => {
         if (!isRead) onMarkAsRead(id)
@@ -89,7 +89,7 @@ function NotificationListItem({
             {n.title}
           </p>
           {!isRead && (
-            <span className='flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-1' />
+            <span className='flex-shrink-0 w-2 h-2 bg-[#1E40AF] rounded-full mt-1' />
           )}
         </div>
         <p className='text-xs text-gray-500 line-clamp-2 mt-0.5'>{n.message}</p>
@@ -136,7 +136,7 @@ export function NotificationDropdown({ viewAllUrl = '/account/notifications' }: 
       <Button
         variant='ghost'
         size='sm'
-        className='relative hover:!bg-blue-50 p-2'
+        className='relative hover:!bg-[#F0F6FF] p-2'
         onClick={() => setOpen((prev) => !prev)}
         aria-label='Thông báo'
       >
@@ -168,10 +168,10 @@ export function NotificationDropdown({ viewAllUrl = '/account/notifications' }: 
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.96 }}
               transition={{ duration: 0.18 }}
-              className='absolute right-0 top-full mt-2 w-96 z-50 bg-white border border-blue-500/20 rounded-2xl shadow-2xl shadow-blue-500/10 overflow-hidden'
+              className='absolute right-0 top-full mt-2 w-96 z-50 bg-white border border-[#1E40AF]/20 rounded-2xl shadow-2xl shadow-blue-500/10 overflow-hidden'
             >
               {/* Header */}
-              <div className='flex items-center justify-between px-4 py-3 border-b border-blue-500/10'>
+              <div className='flex items-center justify-between px-4 py-3 border-b border-[#1E40AF]/10'>
                 <div className='flex items-center gap-2'>
                   <Bell className='w-4 h-4 text-blue-500' />
                   <span className='font-semibold text-gray-800 text-sm'>Thông báo</span>
@@ -184,7 +184,7 @@ export function NotificationDropdown({ viewAllUrl = '/account/notifications' }: 
                 {unreadCount > 0 && (
                   <button
                     onClick={() => markAllAsRead()}
-                    className='text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 font-medium'
+                    className='text-xs text-[#1E40AF] hover:text-[#0A2463] flex items-center gap-1 font-medium'
                   >
                     <Check className='w-3 h-3' />
                     Đọc hết
@@ -217,11 +217,11 @@ export function NotificationDropdown({ viewAllUrl = '/account/notifications' }: 
               </ScrollArea>
 
               {/* Footer */}
-              <div className='border-t border-blue-500/10 px-4 py-2.5 bg-white relative z-10'>
+              <div className='border-t border-[#1E40AF]/10 px-4 py-2.5 bg-white relative z-10'>
                 <Link
                   to={viewAllUrl}
                   onClick={() => setOpen(false)}
-                  className='block text-center text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors'
+                  className='block text-center text-sm text-[#1E40AF] hover:text-[#0A2463] font-medium transition-colors'
                 >
                   Xem tất cả thông báo →
                 </Link>

@@ -128,7 +128,7 @@ export const ChatTextarea = forwardRef<HTMLTextAreaElement, ChatTextareaProps>(
             'border border-gray-200 bg-gray-50',
             'transition-[border-color,box-shadow] duration-150 ease-out',
             isFocused
-              ? 'border-blue-400 bg-white ring-[3px] ring-blue-500/15 shadow-sm'
+              ? 'border-[#1E40AF] bg-white ring-[3px] ring-[#BFDBFE]/60 shadow-sm'
               : 'hover:border-gray-300',
             'disabled:cursor-not-allowed disabled:opacity-50',
             // Ẩn scrollbar như Zalo/Messenger — vẫn scroll được, không hiển thị thanh cuộn

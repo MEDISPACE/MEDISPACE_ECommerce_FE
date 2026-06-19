@@ -85,11 +85,11 @@ export function ProductPicker({ onSelect, onClose }: ProductPickerProps) {
 
   return (
     <div
-      className='absolute bottom-full mb-2 left-0 right-0 z-50 bg-white rounded-xl shadow-2xl border border-blue-100 overflow-hidden'
+      className='absolute bottom-full mb-2 left-0 right-0 z-50 bg-white rounded-xl shadow-2xl border border-[#BFDBFE] overflow-hidden'
       style={{ maxHeight: '380px' }}
     >
       {/* Header */}
-      <div className='flex items-center justify-between p-3 border-b border-gray-100 bg-blue-600'>
+      <div className='flex items-center justify-between p-3 border-b border-gray-100 bg-[#0A2463]'>
         <div className='flex items-center gap-2 text-white'>
           <Pill className='w-4 h-4' />
           <span className='text-sm font-semibold'>Gửi sản phẩm</span>
@@ -120,7 +120,7 @@ export function ProductPicker({ onSelect, onClose }: ProductPickerProps) {
       <div className='overflow-y-auto' style={{ maxHeight: '260px' }}>
         {isLoading ? (
           <div className='flex items-center justify-center py-8'>
-            <Loader2 className='w-5 h-5 animate-spin text-blue-600 mr-2' />
+            <Loader2 className='w-5 h-5 animate-spin text-[#0A2463] mr-2' />
             <span className='text-sm text-gray-500'>Đang tìm...</span>
           </div>
         ) : results.length === 0 ? (
@@ -145,7 +145,7 @@ export function ProductPicker({ onSelect, onClose }: ProductPickerProps) {
                 <button
                   key={product._id || product.mongoId}
                   onClick={() => handleSelect(product)}
-                  className='w-full flex items-center gap-3 p-3 hover:bg-blue-50 transition-colors text-left group'
+                  className='w-full flex items-center gap-3 p-3 hover:bg-[#F0F6FF] transition-colors text-left group'
                 >
                   {/* Image */}
                   <div className='w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center'>
@@ -167,11 +167,11 @@ export function ProductPicker({ onSelect, onClose }: ProductPickerProps) {
                       )}
                     </div>
                     <p className='text-xs text-gray-400 mb-1'>{variant?.unit}</p>
-                    <p className='text-sm font-semibold text-blue-600'>{formatPrice(variant?.price || 0)}</p>
+                    <p className='text-sm font-semibold text-[#0A2463]'>{formatPrice(variant?.price || 0)}</p>
                   </div>
 
                   {/* Send indicator */}
-                  <div className='opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white text-xs px-2 py-1 rounded-md flex-shrink-0'>
+                  <div className='opacity-0 group-hover:opacity-100 transition-opacity bg-[#0A2463] text-white text-xs px-2 py-1 rounded-md flex-shrink-0'>
                     Gửi
                   </div>
                 </button>

@@ -97,7 +97,7 @@ export function HealthCategoryManagement() {
   if (loading) {
     return (
       <div className='flex justify-center p-8'>
-        <Loader2 className='w-8 h-8 animate-spin text-blue-600' />
+        <Loader2 className='w-8 h-8 animate-spin text-[#1E40AF]' />
       </div>
     )
   }
@@ -108,7 +108,7 @@ export function HealthCategoryManagement() {
         <h3 className='text-blue-900 font-medium'>Danh mục sức khỏe</h3>
         <Button
           onClick={handleOpenCreate}
-          className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'
+          className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'
         >
           <Plus className='w-4 h-4 mr-2' />
           Thêm danh mục
@@ -117,11 +117,11 @@ export function HealthCategoryManagement() {
 
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
         {categories.map((category) => (
-          <Card key={category._id} className='bg-white border-blue-100 hover:shadow-md transition-shadow'>
+          <Card key={category._id} className='bg-white border-[#E8EDF5] hover:shadow-md transition-shadow'>
             <CardContent className='p-4'>
               <div className='flex justify-between items-start mb-2'>
                 <div className='flex items-center gap-2'>
-                  <Tag className='w-4 h-4 text-blue-600' />
+                  <Tag className='w-4 h-4 text-[#1E40AF]' />
                   <h4 className='font-semibold text-gray-900'>{category.name}</h4>
                 </div>
                 <Badge
@@ -140,7 +140,7 @@ export function HealthCategoryManagement() {
                 <Button
                   variant='outline'
                   size='sm'
-                  className='flex-1 border-blue-200 hover:bg-blue-50 text-blue-600'
+                  className='flex-1 border-[#BFDBFE] hover:bg-[#F0F6FF] text-[#1E40AF]'
                   onClick={() => handleOpenEdit(category)}
                 >
                   <Edit className='w-3 h-3 mr-1' />
@@ -174,7 +174,7 @@ export function HealthCategoryManagement() {
                 value={currentCategory.name || ''}
                 onChange={(e) => setCurrentCategory({ ...currentCategory, name: e.target.value })}
                 placeholder='Ví dụ: Bệnh tim mạch'
-                className='border-2 border-blue-200 focus:border-blue-500'
+                className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
               />
             </div>
             <div className='space-y-2'>
@@ -184,7 +184,7 @@ export function HealthCategoryManagement() {
                 value={currentCategory.description || ''}
                 onChange={(e) => setCurrentCategory({ ...currentCategory, description: e.target.value })}
                 placeholder='Mô tả ngắn về danh mục...'
-                className='border-2 border-blue-200 focus:border-blue-500'
+                className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
               />
             </div>
             <div className='space-y-2'>
@@ -194,7 +194,7 @@ export function HealthCategoryManagement() {
                 value={currentCategory.icon || ''}
                 onChange={(e) => setCurrentCategory({ ...currentCategory, icon: e.target.value })}
                 placeholder='VD: Heart, Brain, Stethoscope'
-                className='border-2 border-blue-200 focus:border-blue-500'
+                className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
               />
             </div>
             <div className='flex items-center space-x-2'>

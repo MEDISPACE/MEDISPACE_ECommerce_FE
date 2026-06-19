@@ -52,12 +52,12 @@ interface ReturnManagementPageProps {
 // Status badge colors
 const statusColors: Record<ReturnStatus, { bg: string; text: string }> = {
   pending: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
-  reviewing: { bg: 'bg-blue-100', text: 'text-blue-800' },
+  reviewing: { bg: 'bg-[#E8EDF5]', text: 'text-blue-800' },
   approved: { bg: 'bg-green-100', text: 'text-green-800' },
   rejected: { bg: 'bg-red-100', text: 'text-red-800' },
-  awaiting_return: { bg: 'bg-purple-100', text: 'text-purple-800' },
-  received: { bg: 'bg-indigo-100', text: 'text-indigo-800' },
-  refund_processing: { bg: 'bg-cyan-100', text: 'text-cyan-800' },
+  awaiting_return: { bg: 'bg-[#E8EDF5]', text: 'text-[#0A2463]' },
+  received: { bg: 'bg-[#E8EDF5]', text: 'text-[#0A2463]' },
+  refund_processing: { bg: 'bg-[#E8EDF5]', text: 'text-[#0A2463]' },
   completed: { bg: 'bg-emerald-100', text: 'text-emerald-800' },
   cancelled: { bg: 'bg-gray-100', text: 'text-gray-800' },
 }
@@ -358,7 +358,7 @@ export function ReturnManagementPage({ role = 'admin' }: ReturnManagementPagePro
           <h1
             className='text-3xl font-bold bg-clip-text text-transparent'
             style={{
-              backgroundImage: `linear-gradient(to right, #0066CC, #4A90E2)`,
+              backgroundImage: `linear-gradient(to right, #0A2463, #1E40AF)`,
             }}
           >
             Quản lý đổi/trả hàng
@@ -375,7 +375,7 @@ export function ReturnManagementPage({ role = 'admin' }: ReturnManagementPagePro
       </div>
 
       {/* Filters */}
-      <div className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-4'>
+      <div className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-4'>
         <div className='flex flex-col lg:flex-row gap-4'>
           <div className='flex-1'>
             <div className='relative'>
@@ -384,12 +384,12 @@ export function ReturnManagementPage({ role = 'admin' }: ReturnManagementPagePro
                 placeholder='Tìm kiếm theo mã yêu cầu, đơn hàng...'
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className='pl-10 border-2 border-blue-200 focus:border-blue-500'
+                className='pl-10 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
               />
             </div>
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className='w-40 border-2 border-blue-200 focus:border-blue-500'>
+            <SelectTrigger className='w-40 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'>
               <SelectValue placeholder='Trạng thái' />
             </SelectTrigger>
             <SelectContent>
@@ -405,7 +405,7 @@ export function ReturnManagementPage({ role = 'admin' }: ReturnManagementPagePro
 
         {/* Bulk Actions */}
         {selectedRequests.length > 0 && (
-          <div className='flex items-center gap-3 mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg'>
+          <div className='flex items-center gap-3 mt-4 p-3 bg-[#F0F6FF] border border-[#BFDBFE] rounded-lg'>
             <span className='text-sm text-blue-800'>Đã chọn {selectedRequests.length} yêu cầu</span>
             <div className='flex gap-2 ml-auto'>
               <Button
@@ -433,7 +433,7 @@ export function ReturnManagementPage({ role = 'admin' }: ReturnManagementPagePro
                   toast.success(`Đã xuất ${selectedRequests.length} yêu cầu`)
                   setSelectedRequests([])
                 }}
-                className='!bg-blue-50 !text-blue-700 !border-blue-200 hover:!bg-blue-100 hover:!text-blue-800 hover:!border-blue-100'
+                className='!bg-[#F0F6FF] !text-[#0A2463] !border-[#BFDBFE] hover:!bg-[#E8EDF5] hover:!text-blue-800 hover:!border-[#E8EDF5]'
               >
                 <Download className='w-4 h-4 mr-1' />
                 Xuất
@@ -444,10 +444,10 @@ export function ReturnManagementPage({ role = 'admin' }: ReturnManagementPagePro
       </div>
 
       {/* Table */}
-      <div className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 overflow-hidden'>
+      <div className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] overflow-hidden'>
         <div className='overflow-x-auto'>
           <table className='w-full'>
-            <thead className='bg-gradient-to-r from-blue-50 to-cyan-50 border-b border-blue-200'>
+            <thead className='bg-gradient-to-r from-[#F8FAFB] to-[#F0F6FF] border-b border-[#BFDBFE]'>
               <tr>
                 <th className='p-4'>
                   <Checkbox
@@ -472,7 +472,7 @@ export function ReturnManagementPage({ role = 'admin' }: ReturnManagementPagePro
               {isLoading ? (
                 <tr>
                   <td colSpan={8} className='p-12 text-center'>
-                    <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto'></div>
+                    <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-[#1E40AF] mx-auto'></div>
                     <p className='mt-4 text-gray-600'>Đang tải dữ liệu...</p>
                   </td>
                 </tr>
@@ -486,7 +486,7 @@ export function ReturnManagementPage({ role = 'admin' }: ReturnManagementPagePro
                 </tr>
               ) : (
                 requests.map((request: ReturnRequest) => (
-                  <tr key={request._id} className='hover:bg-blue-50/50 transition-colors'>
+                  <tr key={request._id} className='hover:bg-[#F0F6FF]/50 transition-colors'>
                     <td className='p-4'>
                       {request.status === 'pending' || request.status === 'reviewing' ? (
                         <Checkbox
@@ -500,7 +500,7 @@ export function ReturnManagementPage({ role = 'admin' }: ReturnManagementPagePro
                     <td className='p-4'>
                       <button
                         onClick={() => handleViewDetails(request)}
-                        className='font-mono text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline cursor-pointer transition-colors'
+                        className='font-mono text-sm font-medium text-[#1E40AF] hover:text-blue-800 hover:underline cursor-pointer transition-colors'
                       >
                         {request.requestNumber}
                       </button>
@@ -508,7 +508,7 @@ export function ReturnManagementPage({ role = 'admin' }: ReturnManagementPagePro
                     <td className='p-4'>
                       <Link
                         to={`${basePath}/orders?search=${request.orderNumber}`}
-                        className='text-blue-600 hover:underline font-mono text-sm'
+                        className='text-[#1E40AF] hover:underline font-mono text-sm'
                       >
                         {request.orderNumber}
                       </Link>
@@ -527,7 +527,7 @@ export function ReturnManagementPage({ role = 'admin' }: ReturnManagementPagePro
                           size='sm'
                           variant='outline'
                           onClick={() => handleViewDetails(request)}
-                          className='!bg-blue-50 !text-blue-700 !border-blue-200 hover:!bg-blue-100 hover:!text-blue-800 hover:!border-blue-100'
+                          className='!bg-[#F0F6FF] !text-[#0A2463] !border-[#BFDBFE] hover:!bg-[#E8EDF5] hover:!text-blue-800 hover:!border-[#E8EDF5]'
                         >
                           <Eye className='w-4 h-4 mr-1' />
                           Xem
@@ -561,7 +561,7 @@ export function ReturnManagementPage({ role = 'admin' }: ReturnManagementPagePro
                           <Button
                             variant='ghost'
                             size='sm'
-                            className='text-purple-600 hover:text-purple-700 hover:bg-purple-50'
+                            className='text-[#1E40AF] hover:text-[#1E40AF] hover:bg-[#F0F6FF]'
                             onClick={() => handleReceive(request)}
                             title='Xác nhận nhận hàng'
                           >
@@ -573,7 +573,7 @@ export function ReturnManagementPage({ role = 'admin' }: ReturnManagementPagePro
                           <Button
                             variant='ghost'
                             size='sm'
-                            className='text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50'
+                            className='text-[#1E40AF] hover:text-[#1E40AF] hover:bg-[#F0F6FF]'
                             onClick={() => handleRefund(request)}
                             title='Xử lý hoàn tiền'
                           >
@@ -698,7 +698,7 @@ export function ReturnManagementPage({ role = 'admin' }: ReturnManagementPagePro
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className='hover:!bg-blue-100'>Hủy</AlertDialogCancel>
+            <AlertDialogCancel className='hover:!bg-[#E8EDF5]'>Hủy</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmReview}
               className={
@@ -751,7 +751,7 @@ export function ReturnManagementPage({ role = 'admin' }: ReturnManagementPagePro
               Hủy
             </Button>
             <Button
-              className='bg-purple-600 hover:bg-purple-700'
+              className='bg-[#0A2463] hover:bg-[#071A49]'
               onClick={() => {
                 if (selectedRequest) {
                   receiveMutation.mutate({
@@ -808,7 +808,7 @@ export function ReturnManagementPage({ role = 'admin' }: ReturnManagementPagePro
               Hủy
             </Button>
             <Button
-              className='bg-cyan-600 hover:bg-cyan-700'
+              className='bg-[#1E40AF] hover:bg-[#0A2463]'
               onClick={() => {
                 if (selectedRequest) {
                   refundMutation.mutate({

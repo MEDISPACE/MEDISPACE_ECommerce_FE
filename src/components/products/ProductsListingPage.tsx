@@ -226,7 +226,7 @@ export function ProductsListingPage() {
                 </div>
 
                 {/* Search Bar Skeleton */}
-                <Card className='border-blue-100 bg-white'>
+                <Card className='border-[#E8EDF5] bg-white'>
                   <CardContent className='p-4 animate-pulse flex gap-3'>
                     <div className='flex-1 h-10 bg-gray-200 rounded'></div>
                     <div className='w-24 h-10 bg-gray-200 rounded'></div>
@@ -234,7 +234,7 @@ export function ProductsListingPage() {
                 </Card>
 
                 {/* Toolbar Skeleton */}
-                <div className='flex items-center justify-between p-4 bg-white rounded-lg border border-blue-100 animate-pulse'>
+                <div className='flex items-center justify-between p-4 bg-white rounded-lg border border-[#E8EDF5] animate-pulse'>
                   <div className='h-8 bg-gray-200 rounded w-48'></div>
                   <div className='h-8 bg-gray-200 rounded w-24'></div>
                 </div>
@@ -268,7 +268,7 @@ export function ProductsListingPage() {
 
             <ScrollReveal direction='right' delay={0.3} className='flex-1 w-full'>
               <div className='w-full'>
-                <Card className='border-blue-100 bg-white w-full'>
+                <Card className='border-[#E8EDF5] bg-white w-full'>
                   <CardContent className='p-12 text-center flex flex-col items-center justify-center min-h-[400px]'>
                     <StaggerContainer direction='up' staggerDelay={0.2}>
                       <StaggerItem>
@@ -282,12 +282,12 @@ export function ProductsListingPage() {
                       </StaggerItem>
                       <StaggerItem>
                         <div className='flex justify-center gap-4'>
-                          <Button variant='outline' onClick={resetFilters} className='border-blue-200 text-blue-600'>
+                          <Button variant='outline' onClick={resetFilters} className='border-[#BFDBFE] text-[#1E40AF]'>
                             Xóa bộ lọc
                           </Button>
                           <Button
                             onClick={() => (window.location.href = '/')}
-                            className='bg-gradient-to-r from-blue-600 to-cyan-500 text-white'
+                            className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white'
                           >
                             Về trang chủ
                           </Button>
@@ -336,7 +336,7 @@ export function ProductsListingPage() {
                         : 'Khám phá toàn bộ sản phẩm của MediSpace - từ thuốc kê đơn đến sản phẩm chăm sóc sức khỏe'}
                     </p>
                     <div className='text-sm text-gray-600'>
-                      Đang hiển thị <span className='font-medium text-blue-600'>{totalProducts}</span> sản phẩm
+                      Đang hiển thị <span className='font-medium text-[#1E40AF]'>{totalProducts}</span> sản phẩm
                       {hasNextPage && <span className='text-gray-500 ml-1'>(tải thêm khi scroll xuống)</span>}
                     </div>
                   </div>
@@ -344,7 +344,7 @@ export function ProductsListingPage() {
 
                 {/* Search Bar */}
                 <StaggerItem>
-                  <Card className='border-blue-100 mb-6'>
+                  <Card className='border-[#E8EDF5] mb-6'>
                     <CardContent className='p-4'>
                       <form onSubmit={handleFormSubmit} className='flex gap-3'>
                         <div className='flex-1 relative'>
@@ -354,7 +354,7 @@ export function ProductsListingPage() {
                             placeholder='Tìm kiếm sản phẩm, thương hiệu, hoặc thành phần...'
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className='pl-10 border-blue-200 focus:border-blue-500'
+                            className='pl-10 border-[#BFDBFE] focus:border-[#1E40AF]'
                           />
                           {/* Small loading indicator when searching */}
                           {isFetching && !isInitialLoading && (
@@ -365,7 +365,7 @@ export function ProductsListingPage() {
                         </div>
                         <Button
                           type='submit'
-                          className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'
+                          className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'
                         >
                           Tìm kiếm
                         </Button>
@@ -376,13 +376,13 @@ export function ProductsListingPage() {
 
                 {/* Toolbar */}
                 <StaggerItem>
-                  <div className='flex items-center justify-between mb-6 p-4 bg-white rounded-lg border border-blue-100'>
+                  <div className='flex items-center justify-between mb-6 p-4 bg-white rounded-lg border border-[#E8EDF5]'>
                     <div className='flex items-center gap-4'>
                       {/* Sort */}
                       <div className='flex items-center gap-2'>
                         <span className='text-sm text-gray-600'>Sắp xếp:</span>
                         <Select value={sortBy} onValueChange={setSortBy}>
-                          <SelectTrigger className='w-40 border-blue-200'>
+                          <SelectTrigger className='w-40 border-[#BFDBFE]'>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -397,14 +397,14 @@ export function ProductsListingPage() {
                     </div>
 
                     {/* View toggle */}
-                    <div className='flex items-center border border-blue-200 rounded-lg overflow-hidden'>
+                    <div className='flex items-center border border-[#BFDBFE] rounded-lg overflow-hidden'>
                       <Button
                         variant={viewMode === 'grid' ? 'default' : 'ghost'}
                         size='sm'
                         onClick={() => setViewMode('grid')}
                         className={
                           viewMode === 'grid'
-                            ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white'
+                            ? 'bg-[#0A2463] text-white hover:bg-[#071A49] hover:text-white'
                             : 'text-gray-600'
                         }
                       >
@@ -416,7 +416,7 @@ export function ProductsListingPage() {
                         onClick={() => setViewMode('list')}
                         className={
                           viewMode === 'list'
-                            ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white'
+                            ? 'bg-[#0A2463] text-white hover:bg-[#071A49] hover:text-white'
                             : 'text-gray-600'
                         }
                       >
@@ -429,8 +429,8 @@ export function ProductsListingPage() {
                 {/* Products Grid/List */}
                 <StaggerItem>
                   {isFetching && !isInitialLoading && (
-                    <div className='w-full h-0.5 bg-blue-50 overflow-hidden relative mb-4 rounded'>
-                      <div className='absolute h-full bg-gradient-to-r from-blue-600 to-cyan-400 w-1/3 rounded animate-[progressLoop_1.5s_infinite_ease-in-out]' />
+                    <div className='w-full h-0.5 bg-[#F0F6FF] overflow-hidden relative mb-4 rounded'>
+                      <div className='absolute h-full bg-gradient-to-r from-[#0A2463] to-[#1E40AF] w-1/3 rounded animate-[progressLoop_1.5s_infinite_ease-in-out]' />
                     </div>
                   )}
                   <StaggerContainer direction='up' staggerDelay={0.05}>
@@ -487,7 +487,7 @@ export function ProductsListingPage() {
                 <StaggerItem>
                   <div ref={observerTarget} className='py-8 flex justify-center'>
                     {isFetchingNextPage && (
-                      <div className='flex items-center gap-3 text-blue-600'>
+                      <div className='flex items-center gap-3 text-[#1E40AF]'>
                         <Loader2 className='w-6 h-6 animate-spin' />
                         <span className='text-sm font-medium'>Đang tải thêm sản phẩm...</span>
                       </div>

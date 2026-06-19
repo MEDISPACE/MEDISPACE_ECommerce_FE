@@ -91,7 +91,7 @@ export function EntityFormDialog({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className={`${maxWidth} max-h-[90vh] overflow-y-auto bg-white`}>
           <DialogHeader>
-            <DialogTitle className='text-2xl bg-gradient-to-r from-[#0066CC] to-[#4A90E2] bg-clip-text text-transparent'>
+            <DialogTitle className='text-2xl bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text text-transparent'>
               {title}
             </DialogTitle>
             {description && <DialogDescription>{description}</DialogDescription>}
@@ -101,7 +101,7 @@ export function EntityFormDialog({
 
           <DialogFooter className='gap-2'>
             {infoBox && (
-              <div className='w-full p-4 bg-blue-50 border border-blue-200 rounded-lg mb-2'>
+              <div className='w-full p-4 bg-[#F0F6FF] border border-[#BFDBFE] rounded-lg mb-2'>
                 <p className='text-sm text-gray-600 flex items-start gap-2'>
                   {infoBox.icon && <span className='mt-0.5'>{infoBox.icon}</span>}
                   <span>{infoBox.text}</span>
@@ -116,7 +116,7 @@ export function EntityFormDialog({
             </Button>
             <Button
               onClick={onSave}
-              className='bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8] text-white'
+              className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'
             >
               <SaveIcon className='w-4 h-4 mr-2' />
               {defaultSaveLabel}
@@ -131,9 +131,9 @@ export function EntityFormDialog({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side='right' className='w-full sm:max-w-2xl overflow-y-auto p-0 bg-white'>
-        <div className='sticky top-0 z-10 bg-white border-b border-blue-100'>
+        <div className='sticky top-0 z-10 bg-white border-b border-[#E8EDF5]'>
           <SheetHeader className='p-6 pb-4'>
-            <SheetTitle className='text-2xl bg-gradient-to-r from-[#0066CC] to-[#4A90E2] bg-clip-text text-transparent'>
+            <SheetTitle className='text-2xl bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text text-transparent'>
               {title}
             </SheetTitle>
             {description && <SheetDescription>{description}</SheetDescription>}
@@ -144,9 +144,9 @@ export function EntityFormDialog({
 
         <Separator />
 
-        <div className='sticky bottom-0 bg-white border-t border-blue-100 p-6'>
+        <div className='sticky bottom-0 bg-white border-t border-[#E8EDF5] p-6'>
           {infoBox && (
-            <div className='p-4 bg-blue-50 border border-blue-200 rounded-lg mb-4'>
+            <div className='p-4 bg-[#F0F6FF] border border-[#BFDBFE] rounded-lg mb-4'>
               <p className='text-sm text-gray-600 flex items-start gap-2'>
                 {infoBox.icon && <span className='mt-0.5'>{infoBox.icon}</span>}
                 <span>{infoBox.text}</span>
@@ -163,7 +163,7 @@ export function EntityFormDialog({
             </Button>
             <Button
               onClick={onSave}
-              className='flex-1 bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8] text-white'
+              className='flex-1 bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'
             >
               <SaveIcon className='w-4 h-4 mr-2' />
               {defaultSaveLabel}

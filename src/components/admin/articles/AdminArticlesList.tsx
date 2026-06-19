@@ -164,13 +164,13 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
   const formatNumber = (value?: number) => (value || 0).toLocaleString('vi-VN')
 
   const eventLabels: Record<string, { label: string; icon: React.ElementType; color: string }> = {
-    article_ai_ask: { label: 'Hỏi AI', icon: Bot, color: 'text-cyan-700 bg-cyan-50 border-cyan-100' },
-    cta_chat: { label: 'Hỏi dược sĩ', icon: MessageCircle, color: 'text-blue-700 bg-blue-50 border-blue-100' },
+    article_ai_ask: { label: 'Hỏi AI', icon: Bot, color: 'text-[#1E40AF] bg-[#F0F6FF] border-[#E8EDF5]' },
+    cta_chat: { label: 'Hỏi dược sĩ', icon: MessageCircle, color: 'text-[#0A2463] bg-[#F0F6FF] border-[#E8EDF5]' },
     cta_prescription_upload: { label: 'Gửi đơn thuốc', icon: FileText, color: 'text-amber-700 bg-amber-50 border-amber-100' },
     cta_product_search: { label: 'Tìm sản phẩm', icon: ShoppingBag, color: 'text-emerald-700 bg-emerald-50 border-emerald-100' },
     related_product_click: { label: 'Click sản phẩm', icon: ShoppingBag, color: 'text-green-700 bg-green-50 border-green-100' },
-    article_save: { label: 'Lưu bài', icon: Bookmark, color: 'text-purple-700 bg-purple-50 border-purple-100' },
-    topic_follow: { label: 'Follow chủ đề', icon: Bell, color: 'text-indigo-700 bg-indigo-50 border-indigo-100' },
+    article_save: { label: 'Lưu bài', icon: Bookmark, color: 'text-[#1E40AF] bg-[#F0F6FF] border-[#E8EDF5]' },
+    topic_follow: { label: 'Follow chủ đề', icon: Bell, color: 'text-[#1E40AF] bg-[#F0F6FF] border-[#E8EDF5]' },
     article_share: { label: 'Chia sẻ', icon: BarChart3, color: 'text-slate-700 bg-slate-50 border-slate-100' },
   }
 
@@ -191,7 +191,7 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
   const renderInsights = () => {
     if (insightsLoading || !insights) {
       return (
-        <Card className='bg-white border-blue-100'>
+        <Card className='bg-white border-[#E8EDF5]'>
           <CardContent className='p-8 text-center text-gray-500'>Đang tải insights...</CardContent>
         </Card>
       )
@@ -212,7 +212,7 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
             <p className='text-sm text-gray-500 mt-1'>Đo event sau khi đọc trong {insights.period.days} ngày gần nhất và trạng thái editorial hiện tại.</p>
           </div>
           <Select value={insightsDays} onValueChange={setInsightsDays}>
-            <SelectTrigger className='w-40 bg-white border-2 border-blue-200'>
+            <SelectTrigger className='w-40 bg-white border-2 border-[#BFDBFE]'>
               <SelectValue placeholder='Khoảng thời gian' />
             </SelectTrigger>
             <SelectContent>
@@ -226,14 +226,14 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
 
         <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
           {[
-            { label: 'Tổng engagement', value: insights.overview.totalEvents, icon: BarChart3, color: 'bg-blue-100 text-blue-700' },
-            { label: 'Hỏi AI', value: insights.funnel.article_ai_ask?.count || 0, icon: Bot, color: 'bg-cyan-100 text-cyan-700' },
+            { label: 'Tổng engagement', value: insights.overview.totalEvents, icon: BarChart3, color: 'bg-[#E8EDF5] text-[#0A2463]' },
+            { label: 'Hỏi AI', value: insights.funnel.article_ai_ask?.count || 0, icon: Bot, color: 'bg-[#E8EDF5] text-[#1E40AF]' },
             { label: 'CTA tư vấn/mua', value: (insights.funnel.cta_chat?.count || 0) + (insights.funnel.cta_prescription_upload?.count || 0) + (insights.funnel.cta_product_search?.count || 0) + (insights.funnel.related_product_click?.count || 0), icon: MessageCircle, color: 'bg-emerald-100 text-emerald-700' },
-            { label: 'Đang lưu/follow', value: insights.overview.savedArticles + insights.overview.followedTopics, icon: Bookmark, color: 'bg-purple-100 text-purple-700' },
+            { label: 'Đang lưu/follow', value: insights.overview.savedArticles + insights.overview.followedTopics, icon: Bookmark, color: 'bg-[#E8EDF5] text-[#1E40AF]' },
           ].map((item) => {
             const Icon = item.icon
             return (
-              <Card key={item.label} className='bg-white border-blue-100'>
+              <Card key={item.label} className='bg-white border-[#E8EDF5]'>
                 <CardContent className='p-6 flex items-center gap-4'>
                   <div className={`p-3 rounded-full ${item.color}`}>
                     <Icon className='h-6 w-6' />
@@ -248,10 +248,10 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
           })}
         </div>
 
-        <Card className='bg-white border-blue-100'>
+        <Card className='bg-white border-[#E8EDF5]'>
           <CardContent className='p-6'>
             <div className='flex items-center gap-2 mb-4'>
-              <BarChart3 className='h-5 w-5 text-blue-600' />
+              <BarChart3 className='h-5 w-5 text-[#1E40AF]' />
               <h3 className='text-lg font-semibold text-gray-900'>Funnel hành động sau khi đọc</h3>
             </div>
             <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3'>
@@ -275,7 +275,7 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
         </Card>
 
         <div className='grid grid-cols-1 xl:grid-cols-2 gap-6'>
-          <Card className='bg-white border-blue-100'>
+          <Card className='bg-white border-[#E8EDF5]'>
             <CardContent className='p-6'>
               <h3 className='text-lg font-semibold text-gray-900 mb-4'>Top bài theo engagement</h3>
               <div className='space-y-3'>
@@ -286,11 +286,11 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
                     <div key={article.articleId} className='flex items-start justify-between gap-4 rounded-lg border border-blue-50 p-4'>
                       <div className='min-w-0'>
                         <div className='flex items-center gap-2'>
-                          <span className='text-sm font-semibold text-blue-600'>#{index + 1}</span>
+                          <span className='text-sm font-semibold text-[#1E40AF]'>#{index + 1}</span>
                           {article.riskLevel && <Badge variant='outline'>{article.riskLevel}</Badge>}
                         </div>
                         {article.slug ? (
-                          <Link to={`/health/article/${article.slug}`} target='_blank' className='mt-1 block font-medium text-gray-900 hover:text-blue-600 line-clamp-2'>
+                          <Link to={`/health/article/${article.slug}`} target='_blank' className='mt-1 block font-medium text-gray-900 hover:text-[#1E40AF] line-clamp-2'>
                             {article.title || 'Bài viết đã xoá'}
                           </Link>
                         ) : (
@@ -309,7 +309,7 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
             </CardContent>
           </Card>
 
-          <Card className='bg-white border-blue-100'>
+          <Card className='bg-white border-[#E8EDF5]'>
             <CardContent className='p-6'>
               <h3 className='text-lg font-semibold text-gray-900 mb-4'>Hiệu quả theo danh mục</h3>
               <div className='space-y-3'>
@@ -320,7 +320,7 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
                     <div key={category.categoryId || category.categoryName} className='rounded-lg border border-blue-50 p-4'>
                       <div className='flex items-center justify-between gap-4'>
                         <p className='font-medium text-gray-900'>{category.categoryName}</p>
-                        <p className='font-bold text-blue-600'>{formatNumber(category.totalEvents)} events</p>
+                        <p className='font-bold text-[#1E40AF]'>{formatNumber(category.totalEvents)} events</p>
                       </div>
                       <div className='mt-3 grid grid-cols-2 gap-2 text-xs text-gray-600'>
                         <span>{formatNumber(category.aiAsks)} lượt hỏi AI</span>
@@ -361,7 +361,7 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
                     insights.editorialWarnings.map((article) => (
                       <TableRow key={article._id}>
                         <TableCell className='max-w-[360px]'>
-                          <Link to={`${basePath}/${article._id}/edit`} className='font-medium text-gray-900 hover:text-blue-600 line-clamp-2'>
+                          <Link to={`${basePath}/${article._id}/edit`} className='font-medium text-gray-900 hover:text-[#1E40AF] line-clamp-2'>
                             {article.title}
                           </Link>
                         </TableCell>
@@ -409,7 +409,7 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
           <h1
             className='text-3xl font-bold bg-clip-text text-transparent'
             style={{
-              backgroundImage: `linear-gradient(to right, #0066CC, #4A90E2)`,
+              backgroundImage: `linear-gradient(to right, #0A2463, #1E40AF)`,
             }}
           >
             Quản lý bài viết
@@ -417,7 +417,7 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
           <p className='text-gray-500 mt-1'>Quản lý, chỉnh sửa và xuất bản các bài viết sức khỏe</p>
         </div>
         <Link to={`${basePath}/new`}>
-          <Button className='bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8] text-white shadow-md transition-all duration-200 hover:shadow-lg'>
+          <Button className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white shadow-md transition-all duration-200 hover:shadow-lg'>
             <Plus className='mr-2 h-4 w-4' /> Viết bài mới
           </Button>
         </Link>
@@ -425,10 +425,10 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
 
       {/* Stats Cards */}
       <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
-        <Card className='bg-white backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
           <CardContent className='p-6 flex items-center gap-4'>
-            <div className='p-3 bg-blue-100 rounded-full'>
-              <FileText className='h-6 w-6 text-blue-600' />
+            <div className='p-3 bg-[#E8EDF5] rounded-full'>
+              <FileText className='h-6 w-6 text-[#1E40AF]' />
             </div>
             <div>
               <p className='text-sm font-medium text-gray-500'>Tổng bài viết</p>
@@ -436,7 +436,7 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
             </div>
           </CardContent>
         </Card>
-        <Card className='bg-white backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
           <CardContent className='p-6 flex items-center gap-4'>
             <div className='p-3 bg-green-100 rounded-full'>
               <CheckCircle className='h-6 w-6 text-green-600' />
@@ -447,7 +447,7 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
             </div>
           </CardContent>
         </Card>
-        <Card className='bg-white backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
           <CardContent className='p-6 flex items-center gap-4'>
             <div className='p-3 bg-yellow-100 rounded-full'>
               <Clock className='h-6 w-6 text-yellow-600' />
@@ -458,10 +458,10 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
             </div>
           </CardContent>
         </Card>
-        <Card className='bg-white backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
           <CardContent className='p-6 flex items-center gap-4'>
-            <div className='p-3 bg-purple-100 rounded-full'>
-              <Star className='h-6 w-6 text-purple-600' />
+            <div className='p-3 bg-[#E8EDF5] rounded-full'>
+              <Star className='h-6 w-6 text-[#1E40AF]' />
             </div>
             <div>
               <p className='text-sm font-medium text-gray-500'>Nổi bật</p>
@@ -473,19 +473,19 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
 
       <Tabs defaultValue='list' className='space-y-6'>
         {isAdmin && (
-          <TabsList className='grid w-full max-w-md grid-cols-2 bg-blue-50 p-1.5 rounded-lg h-auto'>
+          <TabsList className='grid w-full max-w-md grid-cols-2 bg-[#F0F6FF] p-1.5 rounded-lg h-auto'>
             <TabsTrigger value='list'>Danh sách</TabsTrigger>
             <TabsTrigger value='insights'>Insights</TabsTrigger>
           </TabsList>
         )}
 
         <TabsContent value='list' className='mt-0'>
-          <Card className='bg-white backdrop-blur-lg border-blue-100'>
+          <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
             <CardContent className='p-6'>
           <div className='flex gap-4 mb-6'>
             <div className='w-48'>
               <Select value={filter.status} onValueChange={(value) => setFilter({ ...filter, status: value })}>
-                <SelectTrigger className='bg-white border-2 border-blue-200'>
+                <SelectTrigger className='bg-white border-2 border-[#BFDBFE]'>
                   <SelectValue placeholder='Trạng thái' />
                 </SelectTrigger>
                 <SelectContent>
@@ -499,7 +499,7 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
             </div>
             <div className='w-48'>
               <Select value={filter.categoryId} onValueChange={(value) => setFilter({ ...filter, categoryId: value })}>
-                <SelectTrigger className='bg-white border-2 border-blue-200'>
+                <SelectTrigger className='bg-white border-2 border-[#BFDBFE]'>
                   <SelectValue placeholder='Danh mục' />
                 </SelectTrigger>
                 <SelectContent>
@@ -514,10 +514,10 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
             </div>
           </div>
 
-          <div className='rounded-md border-2 border-blue-100 bg-white overflow-hidden'>
+          <div className='rounded-md border-2 border-[#E8EDF5] bg-white overflow-hidden'>
             <Table className='px-4'>
               <TableHeader>
-                <TableRow className='text-bold !bg-blue-50 hover:!bg-blue-50 !border-b-2 !border-blue-300'>
+                <TableRow className='text-bold !bg-[#F0F6FF] hover:!bg-[#F0F6FF] !border-b-2 !border-[#BFDBFE]'>
                   <TableHead>Tiêu đề</TableHead>
                   <TableHead>Danh mục</TableHead>
                   <TableHead>Tác giả</TableHead>
@@ -542,7 +542,7 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
                   articles.map((article) => (
                     <TableRow
                       key={article._id}
-                      className='border-b border-blue-200 hover:bg-blue-50/50 transition-colors'
+                      className='border-b border-[#BFDBFE] hover:bg-[#F0F6FF]/50 transition-colors'
                     >
                       <TableCell className='font-medium max-w-[300px]'>
                         <div className='flex flex-col gap-1'>
@@ -555,13 +555,13 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
                             {article.isFeatured && (
                               <Badge
                                 variant='outline'
-                                className='text-[10px] bg-purple-50 text-purple-700 border-purple-200'
+                                className='text-[10px] bg-[#F0F6FF] text-[#1E40AF] border-[#BFDBFE]'
                               >
                                 Nổi bật
                               </Badge>
                             )}
                             {article.isPinned && (
-                              <Badge variant='outline' className='text-[10px] bg-blue-50 text-blue-700 border-blue-200'>
+                              <Badge variant='outline' className='text-[10px] bg-[#F0F6FF] text-[#0A2463] border-[#BFDBFE]'>
                                 Ghim
                               </Badge>
                             )}
@@ -581,7 +581,7 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
                             <Button
                               variant='ghost'
                               size='icon'
-                              className='h-8 w-8 hover:text-blue-600 hover:bg-blue-50'
+                              className='h-8 w-8 hover:text-[#1E40AF] hover:bg-[#F0F6FF]'
                             >
                               <Eye className='h-4 w-4' />
                             </Button>
@@ -590,7 +590,7 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
                             <Button
                               variant='ghost'
                               size='icon'
-                              className='h-8 w-8 hover:text-blue-600 hover:bg-blue-50'
+                              className='h-8 w-8 hover:text-[#1E40AF] hover:bg-[#F0F6FF]'
                             >
                               <Edit className='h-4 w-4' />
                             </Button>

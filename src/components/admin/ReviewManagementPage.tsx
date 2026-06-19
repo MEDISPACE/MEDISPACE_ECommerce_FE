@@ -130,7 +130,7 @@ export function ReviewManagementPage() {
       {/* Header */}
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#0066CC] to-[#4A90E2]'>
+          <h1 className='text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#0A2463] to-[#1E40AF]'>
             Quản lý đánh giá
           </h1>
           <p className='text-gray-600 mt-2'>Kiểm duyệt và quản lý đánh giá sản phẩm</p>
@@ -146,21 +146,21 @@ export function ReviewManagementPage() {
       {/* Stats Cards */}
       {stats && (
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
-          <Card className='bg-white backdrop-blur-lg border-blue-100 shadow-sm hover:shadow-md transition-shadow'>
+          <Card className='bg-white backdrop-blur-lg border-[#E8EDF5] shadow-sm hover:shadow-md transition-shadow'>
             <CardContent className='p-4'>
               <div className='flex items-center justify-between'>
                 <div>
                   <p className='text-xs text-gray-600 font-medium uppercase'>Tổng đánh giá</p>
-                  <p className='text-2xl font-bold text-blue-600 mt-1'>{stats.total || 0}</p>
+                  <p className='text-2xl font-bold text-[#1E40AF] mt-1'>{stats.total || 0}</p>
                 </div>
-                <div className='p-2 bg-blue-50 rounded-lg'>
+                <div className='p-2 bg-[#F0F6FF] rounded-lg'>
                   <Star className='w-6 h-6 text-blue-500' />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className='bg-white backdrop-blur-lg border-blue-100 shadow-sm hover:shadow-md transition-shadow'>
+          <Card className='bg-white backdrop-blur-lg border-[#E8EDF5] shadow-sm hover:shadow-md transition-shadow'>
             <CardContent className='p-4'>
               <div className='flex items-center justify-between'>
                 <div>
@@ -174,7 +174,7 @@ export function ReviewManagementPage() {
             </CardContent>
           </Card>
 
-          <Card className='bg-white backdrop-blur-lg border-blue-100 shadow-sm hover:shadow-md transition-shadow'>
+          <Card className='bg-white backdrop-blur-lg border-[#E8EDF5] shadow-sm hover:shadow-md transition-shadow'>
             <CardContent className='p-4'>
               <div className='flex items-center justify-between'>
                 <div>
@@ -188,15 +188,15 @@ export function ReviewManagementPage() {
             </CardContent>
           </Card>
 
-          <Card className='bg-white backdrop-blur-lg border-blue-100 shadow-sm hover:shadow-md transition-shadow'>
+          <Card className='bg-white backdrop-blur-lg border-[#E8EDF5] shadow-sm hover:shadow-md transition-shadow'>
             <CardContent className='p-4'>
               <div className='flex items-center justify-between'>
                 <div>
                   <p className='text-xs text-gray-600 font-medium uppercase'>Auto-approved</p>
-                  <p className='text-2xl font-bold text-purple-600 mt-1'>{stats.autoApprovedPercentage || 0}%</p>
+                  <p className='text-2xl font-bold text-[#1E40AF] mt-1'>{stats.autoApprovedPercentage || 0}%</p>
                 </div>
-                <div className='p-2 bg-purple-50 rounded-lg'>
-                  <TrendingUp className='w-6 h-6 text-purple-500' />
+                <div className='p-2 bg-[#F0F6FF] rounded-lg'>
+                  <TrendingUp className='w-6 h-6 text-[#1E40AF]' />
                 </div>
               </div>
             </CardContent>
@@ -205,12 +205,12 @@ export function ReviewManagementPage() {
       )}
 
       {/* Filters */}
-      <Card className='bg-white backdrop-blur-lg border-blue-100 shadow-sm'>
+      <Card className='bg-white backdrop-blur-lg border-[#E8EDF5] shadow-sm'>
         <CardContent className='p-6'>
           <div className='flex flex-col md:flex-row gap-4 items-start md:items-center'>
             <div className='flex flex-col sm:flex-row gap-4 flex-1 w-full'>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className='w-full sm:w-48 border-blue-100 focus:ring-blue-200'>
+                <SelectTrigger className='w-full sm:w-48 border-[#E8EDF5] focus:ring-blue-200'>
                   <SelectValue placeholder='Lọc theo trạng thái' />
                 </SelectTrigger>
                 <SelectContent>
@@ -227,14 +227,14 @@ export function ReviewManagementPage() {
                   type='date'
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
-                  className='border border-blue-100 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 w-full sm:w-auto'
+                  className='border border-[#E8EDF5] rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 w-full sm:w-auto'
                 />
                 <span className='text-sm text-gray-500 whitespace-nowrap'>Đến:</span>
                 <input
                   type='date'
                   value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)}
-                  className='border border-blue-100 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 w-full sm:w-auto'
+                  className='border border-[#E8EDF5] rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 w-full sm:w-auto'
                 />
               </div>
             </div>
@@ -258,10 +258,10 @@ export function ReviewManagementPage() {
       </Card>
 
       {/* Reviews Table */}
-      <Card className='bg-white backdrop-blur-lg border-blue-100 shadow-sm overflow-hidden'>
+      <Card className='bg-white backdrop-blur-lg border-[#E8EDF5] shadow-sm overflow-hidden'>
         <CardHeader className='bg-gray-50/50 border-b border-gray-100 py-4'>
           <CardTitle className='flex items-center gap-2 text-lg'>
-            <Star className='w-5 h-5 text-blue-600' />
+            <Star className='w-5 h-5 text-[#1E40AF]' />
             Danh sách đánh giá
             <span className='text-sm font-normal text-gray-500 ml-2'>({pagination.total} đánh giá)</span>
           </CardTitle>
@@ -269,7 +269,7 @@ export function ReviewManagementPage() {
         <CardContent className='p-0'>
           {reviewsLoading ? (
             <div className='flex flex-col justify-center items-center h-64 gap-3'>
-              <RefreshCw className='w-8 h-8 animate-spin text-blue-600' />
+              <RefreshCw className='w-8 h-8 animate-spin text-[#1E40AF]' />
               <p className='text-gray-500 text-sm'>Đang tải dữ liệu...</p>
             </div>
           ) : (
@@ -277,7 +277,7 @@ export function ReviewManagementPage() {
               <div className='overflow-x-auto px-6'>
                 <Table>
                   <TableHeader>
-                    <TableRow className='!border-b-2 !border-blue-300 hover:!bg-gray-50'>
+                    <TableRow className='!border-b-2 !border-[#BFDBFE] hover:!bg-gray-50'>
                       <TableHead className='w-[300px]'>Sản phẩm</TableHead>
                       <TableHead>Người dùng</TableHead>
                       <TableHead className='w-[120px]'>Đánh giá</TableHead>
@@ -298,7 +298,7 @@ export function ReviewManagementPage() {
                       reviews.map((review: Review) => (
                         <TableRow
                           key={review._id}
-                          className='group border-b border-blue-200 hover:bg-blue-50/30 transition-colors'
+                          className='group border-b border-[#BFDBFE] hover:bg-[#F0F6FF]/30 transition-colors'
                         >
                           <TableCell>
                             <div className='flex gap-3 items-start'>
@@ -376,16 +376,16 @@ export function ReviewManagementPage() {
                                 <Button
                                   variant='ghost'
                                   size='sm'
-                                  className='h-8 w-8 p-0 hover:bg-blue-100 hover:text-blue-600'
+                                  className='h-8 w-8 p-0 hover:bg-[#E8EDF5] hover:text-[#1E40AF]'
                                   disabled={moderateMutation.isPending}
                                 >
                                   <MoreVertical className='h-4 w-4' />
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align='end' className='w-48 bg-white border-blue-100 shadow-lg'>
+                              <DropdownMenuContent align='end' className='w-48 bg-white border-[#E8EDF5] shadow-lg'>
                                 <DropdownMenuItem
                                   onClick={() => handleViewDetail(review)}
-                                  className='cursor-pointer hover:bg-blue-50 focus:bg-blue-50'
+                                  className='cursor-pointer hover:bg-[#F0F6FF] focus:bg-[#F0F6FF]'
                                 >
                                   <Eye className='w-4 h-4 mr-2 text-blue-500' />
                                   Xem chi tiết
@@ -434,7 +434,7 @@ export function ReviewManagementPage() {
 
               {/* Pagination */}
               {pagination.totalPages > 1 && (
-                <div className='flex items-center justify-between border-t border-blue-300 p-4 sticky bottom-0 bg-white'>
+                <div className='flex items-center justify-between border-t border-[#BFDBFE] p-4 sticky bottom-0 bg-white'>
                   <p className='text-sm text-gray-500'>
                     Hiển thị {(page - 1) * limit + 1} - {Math.min(page * limit, pagination.total)} của{' '}
                     <span className='font-medium text-gray-900'>{pagination.total}</span> đánh giá
@@ -445,7 +445,7 @@ export function ReviewManagementPage() {
                       size='sm'
                       onClick={() => setPage((p) => Math.max(1, p - 1))}
                       disabled={page === 1}
-                      className='h-8 w-8 p-0 hover:!bg-blue-100'
+                      className='h-8 w-8 p-0 hover:!bg-[#E8EDF5]'
                     >
                       <ChevronLeft className='w-4 h-4' />
                     </Button>
@@ -456,7 +456,7 @@ export function ReviewManagementPage() {
                           variant={page === i + 1 ? 'default' : 'ghost'}
                           size='sm'
                           onClick={() => setPage(i + 1)}
-                          className={`h-8 w-8 p-0 text-xs ${page === i + 1 ? 'bg-blue-600 hover:!bg-blue-700 !text-white' : 'text-gray-600 hover:!bg-blue-100'}`}
+                          className={`h-8 w-8 p-0 text-xs ${page === i + 1 ? 'bg-[#0A2463] hover:!bg-[#071A49] !text-white' : 'text-gray-600 hover:!bg-[#E8EDF5]'}`}
                         >
                           {i + 1}
                         </Button>
@@ -467,7 +467,7 @@ export function ReviewManagementPage() {
                       size='sm'
                       onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
                       disabled={page >= pagination.totalPages}
-                      className='h-8 w-8 p-0 hover:!bg-blue-100'
+                      className='h-8 w-8 p-0 hover:!bg-[#E8EDF5]'
                     >
                       <ChevronRight className='w-4 h-4' />
                     </Button>
@@ -481,14 +481,14 @@ export function ReviewManagementPage() {
 
       {/* Review Detail Modal */}
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className='max-w-3xl max-h-[90vh] flex flex-col overflow-hidden border-2 border-blue-200'>
-          <DialogHeader className='pb-4 border-b border-blue-100 shrink-0'>
-            <DialogTitle className='text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#0066CC] to-[#4A90E2]'>
+        <DialogContent className='max-w-3xl max-h-[90vh] flex flex-col overflow-hidden border-2 border-[#BFDBFE]'>
+          <DialogHeader className='pb-4 border-b border-[#E8EDF5] shrink-0'>
+            <DialogTitle className='text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#0A2463] to-[#1E40AF]'>
               Chi tiết đánh giá
             </DialogTitle>
             <DialogDescription className='text-gray-600'>
               ID:{' '}
-              <span className='font-mono bg-blue-50 px-2 py-0.5 rounded text-blue-700 border border-blue-100'>
+              <span className='font-mono bg-[#F0F6FF] px-2 py-0.5 rounded text-[#0A2463] border border-[#E8EDF5]'>
                 {selectedReview?._id}
               </span>
             </DialogDescription>
@@ -497,15 +497,15 @@ export function ReviewManagementPage() {
           {selectedReview && (
             <div className='space-y-6 pt-4 overflow-y-auto flex-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-blue-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-blue-400'>
               {/* Product & User Info - Grid */}
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-6 bg-gradient-to-br from-blue-50 to-white p-5 rounded-xl border-2 border-blue-100 shadow-sm'>
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-6 bg-gradient-to-br from-blue-50 to-white p-5 rounded-xl border-2 border-[#E8EDF5] shadow-sm'>
                 {/* Product */}
                 <div className='space-y-3'>
-                  <h4 className='text-xs font-bold text-blue-600 uppercase tracking-wider flex items-center gap-2'>
+                  <h4 className='text-xs font-bold text-[#1E40AF] uppercase tracking-wider flex items-center gap-2'>
                     <Package className='w-4 h-4' />
                     Sản phẩm
                   </h4>
                   <div className='flex gap-4'>
-                    <div className='w-16 h-16 rounded-lg bg-white border-2 border-blue-100 overflow-hidden shadow-sm flex-shrink-0'>
+                    <div className='w-16 h-16 rounded-lg bg-white border-2 border-[#E8EDF5] overflow-hidden shadow-sm flex-shrink-0'>
                       <ImageWithFallback
                         src={selectedReview.productImage || ''}
                         alt=''
@@ -513,7 +513,7 @@ export function ReviewManagementPage() {
                       />
                     </div>
                     <div className='flex-1'>
-                      <p className='font-semibold text-gray-900 line-clamp-2 hover:text-blue-600 transition-colors'>
+                      <p className='font-semibold text-gray-900 line-clamp-2 hover:text-[#1E40AF] transition-colors'>
                         {selectedReview.productName}
                       </p>
                       <p className='text-xs text-gray-500 mt-1 font-mono bg-gray-100 px-2 py-0.5 rounded inline-block'>
@@ -524,13 +524,13 @@ export function ReviewManagementPage() {
                 </div>
 
                 {/* User */}
-                <div className='space-y-3 md:border-l-2 md:border-blue-100 md:pl-6'>
-                  <h4 className='text-xs font-bold text-blue-600 uppercase tracking-wider flex items-center gap-2'>
+                <div className='space-y-3 md:border-l-2 md:border-[#E8EDF5] md:pl-6'>
+                  <h4 className='text-xs font-bold text-[#1E40AF] uppercase tracking-wider flex items-center gap-2'>
                     <User className='w-4 h-4' />
                     Người dùng
                   </h4>
                   <div className='flex gap-3 items-center'>
-                    <div className='w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-md'>
+                    <div className='w-12 h-12 rounded-full bg-gradient-to-br from-[#0A2463] to-[#1E40AF] flex items-center justify-center text-white font-bold text-lg shadow-md'>
                       {selectedReview.userName?.charAt(0) || 'A'}
                     </div>
                     <div>
@@ -601,7 +601,7 @@ export function ReviewManagementPage() {
                     {getStatusBadge(selectedReview.status)}
                   </div>
                   {selectedReview.autoApproved && (
-                    <Badge variant='outline' className='border-purple-200 text-purple-700 bg-purple-50'>
+                    <Badge variant='outline' className='border-[#BFDBFE] text-[#1E40AF] bg-[#F0F6FF]'>
                       Auto-approved System
                     </Badge>
                   )}
@@ -615,7 +615,7 @@ export function ReviewManagementPage() {
             </div>
           )}
 
-          <DialogFooter className='flex flex-row justify-end gap-3 pt-4 border-t-2 border-blue-100 shrink-0 bg-white'>
+          <DialogFooter className='flex flex-row justify-end gap-3 pt-4 border-t-2 border-[#E8EDF5] shrink-0 bg-white'>
             <Button
               variant='outline'
               onClick={() => setIsDetailOpen(false)}

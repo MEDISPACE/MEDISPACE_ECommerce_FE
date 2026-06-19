@@ -5,6 +5,7 @@ import type { Conversation, Message } from '../../types/chat'
 import { chatService } from '../../services/chatService'
 import { useSocketContext } from '../../contexts/SocketContext'
 import { toast } from 'sonner'
+import { LockKeyhole } from 'lucide-react'
 
 interface ChatWindowProps {
   conversation: Conversation
@@ -16,6 +17,31 @@ interface ChatWindowProps {
   aiMode?: boolean
   setAiMode?: (mode: boolean) => void
 }
+
+const normalizeForMatching = (value: string) =>
+  value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+
+const isOperationalOfflineMessage = (message: Message) => {
+  if (!message.isAI || !message.content) return false
+
+  const content = normalizeForMatching(message.content)
+  const mentionsPharmacistOffline =
+    content.includes('duoc si') &&
+    (content.includes('khong online') || content.includes('dang offline') || content.includes('offline'))
+  const exposesFallback =
+    content.includes('tro ly ai se tiep tuc ho tro') ||
+    content.includes('toi se tiep tuc ho tro') ||
+    content.includes('de lai loi nhan') ||
+    content.includes('so dien thoai') ||
+    content.includes('sdt')
+
+  return mentionsPharmacistOffline && exposesFallback
+}
+
+const visibleChatMessages = (messages: Message[]) => messages.filter((message) => !isOperationalOfflineMessage(message))
 
 export function ChatWindow({
   conversation,
@@ -77,6 +103,8 @@ export function ChatWindow({
           }
         }
 
+        if (isOperationalOfflineMessage(message)) return
+
         setMessages((prev) => {
           if (prev.some((m) => m._id === message._id)) return prev
           return [...prev, message]
@@ -130,10 +158,11 @@ export function ChatWindow({
           page: pageNum,
           limit: 50,
         })
+        const filteredMessages = visibleChatMessages(response.messages)
         if (pageNum === 1) {
-          setMessages(response.messages)
+          setMessages(filteredMessages)
         } else {
-          setMessages((prev) => [...response.messages, ...prev])
+          setMessages((prev) => [...filteredMessages, ...prev])
         }
         setHasMore(response.pagination.page < response.pagination.totalPages)
         setPage(pageNum)
@@ -246,7 +275,7 @@ export function ChatWindow({
         })
         if (response.messages?.length > 0) {
           setMessages((prev) => {
-            const newMsgs = response.messages.filter((r) => !prev.some((l) => l._id === r._id))
+            const newMsgs = visibleChatMessages(response.messages).filter((r) => !prev.some((l) => l._id === r._id))
             if (newMsgs.length === 0) return prev
             return [...prev, ...newMsgs].sort(
               (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
@@ -264,7 +293,6 @@ export function ChatWindow({
   const handleRequestHuman = useCallback(() => {
     if (isConnected) {
       requestHuman(conversation._id)
-      toast.info('Đang kết nối bạn với Dược sĩ...')
     }
   }, [isConnected, conversation._id, requestHuman])
 
@@ -298,19 +326,12 @@ export function ChatWindow({
       />
       {isClosed ? (
         <div className='flex-shrink-0 px-4 py-3 bg-gray-100 border-t border-gray-200 flex items-center gap-2 text-sm text-gray-500'>
-          <svg className='w-4 h-4 text-gray-400 flex-shrink-0' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
-            <path
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              strokeWidth={2}
-              d='M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z'
-            />
-          </svg>
+          <LockKeyhole className='w-4 h-4 text-gray-400 flex-shrink-0' />
           <span>Cuộc hội thoại đã được đóng.</span>
           {currentUserRole === 'customer' && (
             <button
               onClick={onNewConversation || (() => setIsClosed(false))}
-              className='ml-auto text-blue-600 hover:underline text-xs font-medium'
+              className='ml-auto text-[#1E40AF] hover:text-[#0A2463] hover:underline text-xs font-medium'
             >
               Tư vấn mới
             </button>

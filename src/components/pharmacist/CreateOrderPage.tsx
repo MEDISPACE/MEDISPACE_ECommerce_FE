@@ -930,7 +930,7 @@ export function CreateOrderPage() {
           <h1
             className='text-3xl font-bold bg-clip-text text-transparent'
             style={{
-              backgroundImage: `linear-gradient(to right, #0066CC, #4A90E2)`,
+              backgroundImage: `linear-gradient(to right, #0A2463, #1E40AF)`,
             }}
           >
             Tạo đơn hàng
@@ -939,7 +939,7 @@ export function CreateOrderPage() {
         </div>
         {prescriptionId && sourcePrescription && (
           <div className='flex items-center gap-3'>
-            <Badge variant='outline' className='border-blue-200 text-blue-700 py-1.5'>
+            <Badge variant='outline' className='border-[#BFDBFE] text-[#0A2463] py-1.5'>
               <FileText className='w-3 h-3 mr-1' />
               Từ đơn thuốc #{sourcePrescription?.prescriptionNumber || prescriptionId}
             </Badge>
@@ -948,7 +948,7 @@ export function CreateOrderPage() {
                 variant='outline'
                 size='sm'
                 onClick={() => setIsPrescriptionModalOpen(true)}
-                className='border-blue-300 text-blue-700 hover:bg-blue-50'
+                className='border-[#BFDBFE] text-[#0A2463] hover:bg-[#F0F6FF]'
               >
                 <Eye className='w-4 h-4 mr-2' />
                 Xem ảnh đơn thuốc gốc
@@ -963,10 +963,10 @@ export function CreateOrderPage() {
         <div className='lg:col-span-2 space-y-6'>
           {/* OCR Auto-Mapping Suggestions */}
           {ocrSuggestions.length > 0 && (
-            <Card className='bg-gradient-to-br from-indigo-50 to-white shadow-md rounded-2xl border border-indigo-100 overflow-hidden'>
-              <div className='bg-indigo-600 px-4 py-2 text-white flex justify-between items-center'>
+            <Card className='bg-gradient-to-br from-[#F8FAFB] to-white shadow-md rounded-2xl border border-[#E8EDF5] overflow-hidden'>
+              <div className='bg-[#0A2463] px-4 py-2 text-white flex justify-between items-center'>
                 <h3 className='font-medium text-sm flex items-center'>
-                  <Sparkles className='w-4 h-4 mr-2 text-indigo-200' />
+                  <Sparkles className='w-4 h-4 mr-2 text-[#BFDBFE]' />
                   🤖 Robot AI Gợi ý Thuốc từ Đơn OCR
                 </h3>
                 {ocrSuggestions.some((s) => s.matches.length > 0) && (
@@ -982,10 +982,10 @@ export function CreateOrderPage() {
               </div>
               <CardContent className='p-4 space-y-3 max-h-80 overflow-y-auto'>
                 {ocrSuggestions.map((suggestion, idx) => (
-                  <div key={idx} className='p-3 bg-white border border-indigo-100 rounded-xl shadow-sm'>
+                  <div key={idx} className='p-3 bg-white border border-[#E8EDF5] rounded-xl shadow-sm'>
                     {/* Medication header */}
                     <div className='flex items-center gap-2 mb-3'>
-                      <Badge variant='outline' className='bg-indigo-50 border-indigo-200 text-indigo-700 text-xs'>
+                      <Badge variant='outline' className='bg-[#F0F6FF] border-[#BFDBFE] text-[#1E40AF] text-xs'>
                         Đơn thuốc: {suggestion.medication.productName || suggestion.medication.name || 'Thuốc ' + (idx + 1)}
                       </Badge>
                       {suggestion.medication.quantity > 0 && (
@@ -1001,7 +1001,7 @@ export function CreateOrderPage() {
                         {suggestion.matches.map((match) => (
                           <div
                             key={match.id}
-                            className='flex items-center gap-3 p-2.5 rounded-xl border border-gray-100 hover:border-indigo-200 hover:bg-indigo-50/30 transition-all group'
+                            className='flex items-center gap-3 p-2.5 rounded-xl border border-gray-100 hover:border-[#BFDBFE] hover:bg-[#F0F6FF]/30 transition-all group'
                           >
                             {/* Product image */}
                             <ImageWithFallback
@@ -1014,7 +1014,7 @@ export function CreateOrderPage() {
                             <div className='flex-1 min-w-0'>
                               <p className='text-sm font-medium text-gray-900 line-clamp-2 leading-snug'>{match.name}</p>
                               <div className='flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1'>
-                                <span className='text-xs font-semibold text-indigo-600'>
+                                <span className='text-xs font-semibold text-[#1E40AF]'>
                                   {match.price > 0 ? `${match.price.toLocaleString('vi-VN')}đ` : 'Liên hệ'}
                                 </span>
                                 <span className='text-xs text-gray-400'>•</span>
@@ -1048,7 +1048,7 @@ export function CreateOrderPage() {
                               <Button
                                 size='sm'
                                 onClick={() => handleProductAdd(match, Number(suggestion.medication.quantity) || 1)}
-                                className='h-8 px-3 bg-indigo-600 hover:bg-indigo-700 text-white text-xs'
+                                className='h-8 px-3 bg-[#0A2463] hover:bg-[#071A49] text-white text-xs'
                               >
                                 <Plus className='w-3 h-3 mr-1' /> Thêm
                               </Button>
@@ -1057,7 +1057,7 @@ export function CreateOrderPage() {
                                 variant='outline'
                                 disabled={isLoadingDetail}
                                 onClick={() => handleOpenDetail(match)}
-                                className='h-8 px-3 border-indigo-200 text-indigo-700 hover:bg-indigo-50 text-xs'
+                                className='h-8 px-3 border-[#BFDBFE] text-[#1E40AF] hover:bg-[#F0F6FF] text-xs'
                               >
                                 {isLoadingDetail ? (
                                   <Loader2 className='w-3 h-3 mr-1 animate-spin' />
@@ -1084,7 +1084,7 @@ export function CreateOrderPage() {
           )}
 
           {/* Product Search */}
-          <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+          <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
             <CardHeader>
               <CardTitle className='text-blue-900 flex items-center'>
                 <Search className='w-5 h-5 mr-2' />
@@ -1098,11 +1098,11 @@ export function CreateOrderPage() {
 
           {/* 💡 ML Pharmacist Suggestions — hiển thị khi có sản phẩm trong đơn */}
           {(mlLoading || mlSuggestions.length > 0) && (
-            <Card className='bg-gradient-to-br from-violet-50 to-white shadow-md rounded-2xl border border-violet-100 overflow-hidden'>
-              <div className='bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-2.5 text-white flex items-center gap-2'>
-                <Sparkles className='w-4 h-4 text-violet-200' />
+            <Card className='bg-gradient-to-br from-[#F8FAFB] to-white shadow-md rounded-2xl border border-[#E8EDF5] overflow-hidden'>
+              <div className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] px-4 py-2.5 text-white flex items-center gap-2'>
+                <Sparkles className='w-4 h-4 text-[#BFDBFE]' />
                 <span className='font-medium text-sm'>💡 ML Gợi Ý Dược Sĩ</span>
-                <span className='text-xs text-violet-200 ml-1'>Dựa trên các thuốc trong đơn</span>
+                <span className='text-xs text-[#BFDBFE] ml-1'>Dựa trên các thuốc trong đơn</span>
               </div>
               <CardContent className='p-4'>
                 <Alert className='mb-3 border-amber-200 bg-amber-50'>
@@ -1113,7 +1113,7 @@ export function CreateOrderPage() {
                 </Alert>
                 {mlLoading ? (
                   <div className='flex items-center gap-3 text-gray-500 text-sm py-2'>
-                    <Loader2 className='w-4 h-4 animate-spin text-violet-500' />
+                    <Loader2 className='w-4 h-4 animate-spin text-[#1E40AF]' />
                     Đang phân tích gợi ý...
                   </div>
                 ) : (
@@ -1125,7 +1125,7 @@ export function CreateOrderPage() {
                       return (
                         <div
                           key={p._id}
-                          className='flex items-center gap-3 p-3 bg-white border border-violet-100 rounded-xl shadow-sm hover:border-violet-300 transition-all group'
+                          className='flex items-center gap-3 p-3 bg-white border border-[#E8EDF5] rounded-xl shadow-sm hover:border-[#BFDBFE] transition-all group'
                         >
                           {p.featuredImage ? (
                             <img
@@ -1134,13 +1134,13 @@ export function CreateOrderPage() {
                               className='w-12 h-12 rounded-lg object-cover flex-shrink-0 border border-gray-100'
                             />
                           ) : (
-                            <div className='w-12 h-12 rounded-lg bg-violet-50 flex items-center justify-center flex-shrink-0'>
-                              <Package className='w-6 h-6 text-violet-400' />
+                            <div className='w-12 h-12 rounded-lg bg-[#F0F6FF] flex items-center justify-center flex-shrink-0'>
+                              <Package className='w-6 h-6 text-[#1E40AF]' />
                             </div>
                           )}
                           <div className='flex-1 min-w-0'>
                             <p className='text-sm font-medium text-gray-900 line-clamp-2 leading-snug'>{p.name}</p>
-                            <p className='text-xs text-violet-600 font-semibold mt-0.5'>
+                            <p className='text-xs text-[#1E40AF] font-semibold mt-0.5'>
                               {price.toLocaleString('vi-VN')}đ/{unit}
                             </p>
                           </div>
@@ -1162,7 +1162,7 @@ export function CreateOrderPage() {
                                 1,
                               )
                             }}
-                            className='flex-shrink-0 w-8 h-8 rounded-full bg-violet-100 hover:bg-violet-600 text-violet-600 hover:text-white transition-all flex items-center justify-center group-hover:scale-110 disabled:cursor-not-allowed disabled:opacity-40'
+                            className='flex-shrink-0 w-8 h-8 rounded-full bg-[#E8EDF5] hover:bg-[#0A2463] text-[#1E40AF] hover:text-white transition-all flex items-center justify-center group-hover:scale-110 disabled:cursor-not-allowed disabled:opacity-40'
                             title={p.requiresPrescription ? 'Thuốc kê đơn phải được chọn và rà soát thủ công' : 'Thêm vào đơn hàng'}
                           >
                             <Plus className='w-4 h-4' />
@@ -1178,7 +1178,7 @@ export function CreateOrderPage() {
 
           {/* Shopping Cart */}
 
-          <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+          <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
             <CardHeader>
               <CardTitle className='text-blue-900 flex items-center justify-between'>
                 <div className='flex items-center'>
@@ -1187,7 +1187,7 @@ export function CreateOrderPage() {
                     GIỎ HÀNG
                   </h4>
                   {orderItems.length > 0 && (
-                    <Badge className='ml-2 bg-blue-600 text-white'>{orderItems.length} sản phẩm</Badge>
+                    <Badge className='ml-2 bg-[#0A2463] text-white'>{orderItems.length} sản phẩm</Badge>
                   )}
                 </div>
                 {orderItems.length > 1 && (
@@ -1213,7 +1213,7 @@ export function CreateOrderPage() {
               ) : (
                 <div className='space-y-3'>
                   {orderItems.map((item) => (
-                    <Card key={item.id} className='p-4 border border-gray-200 hover:border-blue-200 transition-colors'>
+                    <Card key={item.id} className='p-4 border border-gray-200 hover:border-[#BFDBFE] transition-colors'>
                       <div className='flex gap-4'>
                         {/* Product Image */}
                         <ImageWithFallback
@@ -1228,7 +1228,7 @@ export function CreateOrderPage() {
                             <div className='flex-1 min-w-0'>
                               <h4 className='font-medium text-gray-900 line-clamp-1 mb-1'>{item.product.name}</h4>
                               <div className='flex items-center gap-2 flex-wrap'>
-                                <span className='text-blue-600 font-semibold'>
+                                <span className='text-[#1E40AF] font-semibold'>
                                   {item.product.price.toLocaleString('vi-VN')}đ
                                 </span>
                                 <span className='text-xs text-gray-500'>/ {item.product.unit}</span>
@@ -1265,7 +1265,7 @@ export function CreateOrderPage() {
                                 type='number'
                                 value={item.quantity}
                                 onChange={(e) => updateItemQuantity(item.id, parseInt(e.target.value) || 0)}
-                                className='w-16 h-8 text-center border-blue-200 focus:border-blue-500'
+                                className='w-16 h-8 text-center border-[#BFDBFE] focus:border-[#1E40AF]'
                                 min='0'
                               />
 
@@ -1287,7 +1287,7 @@ export function CreateOrderPage() {
                               size='sm'
                               variant='outline'
                               onClick={() => openNoteModal(item.id, item.product.name, item.notes || '')}
-                              className='ml-auto border-blue-200 text-blue-700 hover:bg-blue-50'
+                              className='ml-auto border-[#BFDBFE] text-[#0A2463] hover:bg-[#F0F6FF]'
                             >
                               <Edit className='w-3 h-3 mr-1' />
                               Ghi chú
@@ -1296,7 +1296,7 @@ export function CreateOrderPage() {
 
                           {/* Notes */}
                           {item.notes && (
-                            <Alert className='mt-3 border-blue-200 bg-blue-50'>
+                            <Alert className='mt-3 border-[#BFDBFE] bg-[#F0F6FF]'>
                               <AlertDescription className='text-sm text-blue-900'>
                                 <FileText className='w-3 h-3 inline mr-1' />
                                 {item.notes}
@@ -1319,7 +1319,7 @@ export function CreateOrderPage() {
                   ))}
 
                   {/* Order Summary */}
-                  <Card className='p-4 bg-gradient-to-br from-blue-50 to-white border border-blue-100'>
+                  <Card className='p-4 bg-gradient-to-br from-blue-50 to-white border border-[#E8EDF5]'>
                     <div className='space-y-2'>
                       <div className='flex justify-between text-sm text-gray-600'>
                         <span>Tạm tính:</span>
@@ -1338,7 +1338,7 @@ export function CreateOrderPage() {
                       <Separator className='my-2' />
                       <div className='flex justify-between'>
                         <span className='text-gray-900'>Tổng cộng:</span>
-                        <span className='text-blue-600'>{calculateTotal().toLocaleString('vi-VN')}đ</span>
+                        <span className='text-[#1E40AF]'>{calculateTotal().toLocaleString('vi-VN')}đ</span>
                       </div>
                     </div>
                   </Card>
@@ -1353,7 +1353,7 @@ export function CreateOrderPage() {
                       value={orderNotes}
                       onChange={(e) => setOrderNotes(e.target.value)}
                       placeholder='Thêm ghi chú về đơn hàng...'
-                      className='border-2 border-blue-200 focus:border-blue-500 text-sm'
+                      className='border-2 border-[#BFDBFE] focus:border-[#1E40AF] text-sm'
                       rows={3}
                     />
                   </div>
@@ -1378,16 +1378,16 @@ export function CreateOrderPage() {
               }
             }}
           >
-            <TabsList className='grid grid-cols-2 w-full bg-blue-50 p-1 rounded-xl h-11 mb-4 border border-blue-100'>
+            <TabsList className='grid grid-cols-2 w-full bg-[#F0F6FF] p-1 rounded-xl h-11 mb-4 border border-[#E8EDF5]'>
               <TabsTrigger
                 value='instore'
-                className='rounded-lg data-[state=active]:!bg-white data-[state=active]:text-blue-700 data-[state=active]:!shadow-sm data-[state=inactive]:bg-transparent text-gray-500 font-medium transition-all text-sm !border-none !outline-none'
+                className='rounded-lg data-[state=active]:!bg-white data-[state=active]:text-[#0A2463] data-[state=active]:!shadow-sm data-[state=inactive]:bg-transparent text-gray-500 font-medium transition-all text-sm !border-none !outline-none'
               >
                 Tại quầy
               </TabsTrigger>
               <TabsTrigger
                 value='delivery'
-                className='rounded-lg data-[state=active]:!bg-white data-[state=active]:text-blue-700 data-[state=active]:!shadow-sm data-[state=inactive]:bg-transparent text-gray-500 font-medium transition-all text-sm !border-none !outline-none'
+                className='rounded-lg data-[state=active]:!bg-white data-[state=active]:text-[#0A2463] data-[state=active]:!shadow-sm data-[state=inactive]:bg-transparent text-gray-500 font-medium transition-all text-sm !border-none !outline-none'
               >
                 Giao tận nơi
               </TabsTrigger>
@@ -1395,7 +1395,7 @@ export function CreateOrderPage() {
           </Tabs>
 
           {/* Customer Info */}
-          <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+          <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
             <CardHeader>
               <CardTitle className='text-blue-900 flex items-center'>
                 <User className='w-5 h-5 mr-2' />
@@ -1417,7 +1417,7 @@ export function CreateOrderPage() {
                         onFocus={(e) => {
                           if (e.target.value.trim().length >= 2) setOpenCustomerDropdown(true)
                         }}
-                        className='border-2 border-blue-200 focus:border-blue-500 h-10 w-full pl-10'
+                        className='border-2 border-[#BFDBFE] focus:border-[#1E40AF] h-10 w-full pl-10'
                       />
                       <Search className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400' />
                       {isSearchingCustomer && (
@@ -1430,7 +1430,7 @@ export function CreateOrderPage() {
                     customerSearchResults.length > 0 ||
                     (debouncedSearchPhone.length >= 3 && customerSearchResults.length === 0)) && (
                     <PopoverContent
-                      className='p-0 border border-blue-200 shadow-xl overflow-hidden rounded-xl'
+                      className='p-0 border border-[#BFDBFE] shadow-xl overflow-hidden rounded-xl'
                       style={{ width: 'var(--radix-popover-trigger-width)' }}
                       align='start'
                       onOpenAutoFocus={(e) => e.preventDefault()}
@@ -1450,9 +1450,9 @@ export function CreateOrderPage() {
                                   key={patient.customerId || patient.phoneNumber}
                                   value={patient.phoneNumber}
                                   onSelect={() => handleSelectCustomer(patient)}
-                                  className='cursor-pointer flex items-center px-4 py-3 gap-3 border-b border-gray-100 last:border-0 data-[selected=true]:bg-blue-50/80 data-[selected=true]:text-blue-900 transition-all text-base'
+                                  className='cursor-pointer flex items-center px-4 py-3 gap-3 border-b border-gray-100 last:border-0 data-[selected=true]:bg-[#F0F6FF]/80 data-[selected=true]:text-blue-900 transition-all text-base'
                                 >
-                                  <div className='flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 text-blue-700 font-semibold shrink-0 shadow-sm'>
+                                  <div className='flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 text-[#0A2463] font-semibold shrink-0 shadow-sm'>
                                     {patient.fullName.charAt(0).toUpperCase()}
                                   </div>
                                   <div className='flex flex-col flex-1 min-w-0'>
@@ -1474,7 +1474,7 @@ export function CreateOrderPage() {
                   )}
                 </Popover>
               ) : (
-                <div className='p-4 bg-gradient-to-br from-blue-50 to-white rounded-lg border border-blue-200 relative shadow-sm'>
+                <div className='p-4 bg-gradient-to-br from-blue-50 to-white rounded-lg border border-[#BFDBFE] relative shadow-sm'>
                   <Button
                     variant='ghost'
                     size='sm'
@@ -1497,7 +1497,7 @@ export function CreateOrderPage() {
                     <div className='flex items-center gap-2'>
                       <Badge
                         variant={customerInfo.tier === 'vip' ? 'default' : 'secondary'}
-                        className={customerInfo.tier === 'vip' ? 'bg-blue-600' : ''}
+                        className={customerInfo.tier === 'vip' ? 'bg-[#0A2463]' : ''}
                       >
                         Khách {customerInfo.tier.toUpperCase()}
                       </Badge>
@@ -1507,7 +1507,7 @@ export function CreateOrderPage() {
                     </div>
 
                     {customerInfo.prescriptionId && (
-                      <div className='text-xs text-blue-600 flex items-center bg-blue-50 px-2 py-1 rounded overflow-hidden'>
+                      <div className='text-xs text-[#1E40AF] flex items-center bg-[#F0F6FF] px-2 py-1 rounded overflow-hidden'>
                         <FileText className='w-3 h-3 mr-1 flex-shrink-0' />
                         <span className='truncate'>Đơn thuốc: #{customerInfo.prescriptionId}</span>
                       </div>
@@ -1518,7 +1518,7 @@ export function CreateOrderPage() {
                         size='sm'
                         variant='outline'
                         title='Gọi cho khách hàng'
-                        className='flex-1 h-8 border-blue-100 hover:bg-blue-50 text-blue-700'
+                        className='flex-1 h-8 border-[#E8EDF5] hover:bg-[#F0F6FF] text-[#0A2463]'
                       >
                         <Phone className='w-4 h-4' />
                       </Button>
@@ -1526,7 +1526,7 @@ export function CreateOrderPage() {
                         size='sm'
                         variant='outline'
                         title='Chat với khách hàng'
-                        className='flex-1 h-8 border-blue-100 hover:bg-blue-50 text-blue-700'
+                        className='flex-1 h-8 border-[#E8EDF5] hover:bg-[#F0F6FF] text-[#0A2463]'
                       >
                         <MessageCircle className='w-4 h-4' />
                       </Button>
@@ -1534,7 +1534,7 @@ export function CreateOrderPage() {
                         size='sm'
                         variant='outline'
                         title='Lịch sử mua hàng'
-                        className='flex-1 h-8 border-blue-100 hover:bg-blue-50 text-blue-700'
+                        className='flex-1 h-8 border-[#E8EDF5] hover:bg-[#F0F6FF] text-[#0A2463]'
                       >
                         <History className='w-4 h-4' />
                       </Button>
@@ -1547,7 +1547,7 @@ export function CreateOrderPage() {
 
           {/* Delivery Address */}
           {orderType === 'delivery' && (
-            <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+            <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
               <CardHeader>
                 <CardTitle className='text-blue-900 flex items-center mb-0'>
                   <MapPin className='w-5 h-5 mr-2' />
@@ -1565,7 +1565,7 @@ export function CreateOrderPage() {
                       value={shippingAddress.firstName}
                       onChange={(e) => setShippingAddress((prev) => ({ ...prev, firstName: e.target.value }))}
                       placeholder='Họ'
-                      className='border-2 border-blue-200 focus:border-blue-500 text-sm h-10'
+                      className='border-2 border-[#BFDBFE] focus:border-[#1E40AF] text-sm h-10'
                     />
                   </div>
                   <div>
@@ -1577,7 +1577,7 @@ export function CreateOrderPage() {
                       value={shippingAddress.lastName}
                       onChange={(e) => setShippingAddress((prev) => ({ ...prev, lastName: e.target.value }))}
                       placeholder='Tên'
-                      className='border-2 border-blue-200 focus:border-blue-500 text-sm h-10'
+                      className='border-2 border-[#BFDBFE] focus:border-[#1E40AF] text-sm h-10'
                     />
                   </div>
                 </div>
@@ -1592,7 +1592,7 @@ export function CreateOrderPage() {
                       value={shippingAddress.phone || customerInfo.phone}
                       onChange={(e) => setShippingAddress((prev) => ({ ...prev, phone: e.target.value }))}
                       placeholder='Số điện thoại'
-                      className='border-2 border-blue-200 focus:border-blue-500 text-sm h-10'
+                      className='border-2 border-[#BFDBFE] focus:border-[#1E40AF] text-sm h-10'
                     />
                   </div>
                   <div>
@@ -1605,7 +1605,7 @@ export function CreateOrderPage() {
                       value={shippingAddress.email || customerInfo.email}
                       onChange={(e) => setShippingAddress((prev) => ({ ...prev, email: e.target.value }))}
                       placeholder='Email'
-                      className='border-2 border-blue-200 focus:border-blue-500 text-sm h-10'
+                      className='border-2 border-[#BFDBFE] focus:border-[#1E40AF] text-sm h-10'
                     />
                   </div>
                 </div>
@@ -1629,7 +1629,7 @@ export function CreateOrderPage() {
                         }))
                       }}
                     >
-                      <SelectTrigger className='border-2 border-blue-200 focus:border-blue-500 text-sm h-10'>
+                      <SelectTrigger className='border-2 border-[#BFDBFE] focus:border-[#1E40AF] text-sm h-10'>
                         <SelectValue placeholder='Chọn Tỉnh/Thành phố' />
                       </SelectTrigger>
                       <SelectContent className='max-h-[250px]'>
@@ -1658,7 +1658,7 @@ export function CreateOrderPage() {
                       }}
                       disabled={!shippingAddress.provinceId}
                     >
-                      <SelectTrigger className='border-2 border-blue-200 focus:border-blue-500 text-sm h-10'>
+                      <SelectTrigger className='border-2 border-[#BFDBFE] focus:border-[#1E40AF] text-sm h-10'>
                         <SelectValue placeholder='Chọn Quận/Huyện' />
                       </SelectTrigger>
                       <SelectContent className='max-h-[250px]'>
@@ -1680,7 +1680,7 @@ export function CreateOrderPage() {
                       }}
                       disabled={!shippingAddress.districtId}
                     >
-                      <SelectTrigger className='border-2 border-blue-200 focus:border-blue-500 text-sm h-10'>
+                      <SelectTrigger className='border-2 border-[#BFDBFE] focus:border-[#1E40AF] text-sm h-10'>
                         <SelectValue placeholder='Phường/Xã' />
                       </SelectTrigger>
                       <SelectContent className='max-h-[250px]'>
@@ -1703,7 +1703,7 @@ export function CreateOrderPage() {
                     value={shippingAddress.address}
                     onChange={(e) => setShippingAddress((prev) => ({ ...prev, address: e.target.value }))}
                     placeholder='Số nhà, Tên đường'
-                    className='border-2 border-blue-200 focus:border-blue-500 text-sm h-10'
+                    className='border-2 border-[#BFDBFE] focus:border-[#1E40AF] text-sm h-10'
                   />
                 </div>
               </CardContent>
@@ -1712,7 +1712,7 @@ export function CreateOrderPage() {
 
           {/* Delivery Method */}
           {orderType === 'delivery' && (
-            <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+            <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
               <CardHeader>
                 <CardTitle className='text-blue-900 flex items-center'>
                   <Truck className='w-5 h-5 mr-2' />
@@ -1732,8 +1732,8 @@ export function CreateOrderPage() {
                         key={option.id}
                         className={`p-3 border rounded-lg cursor-pointer transition-all ${
                           selectedDelivery === option.id
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-gray-200 hover:border-blue-300'
+                            ? 'border-[#1E40AF] bg-[#F0F6FF]'
+                            : 'border-gray-200 hover:border-[#BFDBFE]'
                         }`}
                         onClick={() => setSelectedDelivery(option.id)}
                       >
@@ -1743,7 +1743,7 @@ export function CreateOrderPage() {
                               type='radio'
                               checked={selectedDelivery === option.id}
                               onChange={() => setSelectedDelivery(option.id)}
-                              className='text-blue-600'
+                              className='text-[#1E40AF]'
                             />
                             <Icon className='w-4 h-4 text-gray-600' />
                             <div>
@@ -1764,7 +1764,7 @@ export function CreateOrderPage() {
           )}
 
           {/* Payment Method */}
-          <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+          <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
             <CardHeader>
               <CardTitle className='text-blue-900 flex items-center'>
                 <CreditCard className='w-5 h-5 mr-2' />
@@ -1779,8 +1779,8 @@ export function CreateOrderPage() {
                     key={method.id}
                     className={`p-3 border rounded-lg cursor-pointer transition-all ${
                       selectedPayment === method.id
-                        ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500'
-                        : 'border-gray-200 hover:border-blue-300'
+                        ? 'border-[#1E40AF] bg-[#F0F6FF] ring-1 ring-blue-500'
+                        : 'border-gray-200 hover:border-[#BFDBFE]'
                     }`}
                     onClick={() => setSelectedPayment(method.id)}
                   >
@@ -1789,7 +1789,7 @@ export function CreateOrderPage() {
                         type='radio'
                         checked={selectedPayment === method.id}
                         onChange={() => setSelectedPayment(method.id)}
-                        className='text-blue-600 w-4 h-4'
+                        className='text-[#1E40AF] w-4 h-4'
                       />
                       <Icon className='w-4 h-4 text-gray-600' />
                       <span className='text-sm text-gray-900 font-medium'>{method.label}</span>
@@ -1801,7 +1801,7 @@ export function CreateOrderPage() {
           </Card>
 
           {/* Pharmacist Notes */}
-          <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+          <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
             <CardHeader>
               <CardTitle className='text-blue-900 flex items-center'>
                 <FileText className='w-5 h-5 mr-2' />
@@ -1813,7 +1813,7 @@ export function CreateOrderPage() {
                 value={pharmacistNotes}
                 onChange={(e) => setPharmacistNotes(e.target.value)}
                 placeholder='- Hướng dẫn sử dụng&#10;- Lưu ý đặc biệt&#10;- Theo dõi tác dụng phụ&#10;- Cảnh báo tương tác thuốc&#10;- Chế độ ăn uống khi dùng thuốc'
-                className='border-2 border-blue-200 focus:border-blue-500 text-sm'
+                className='border-2 border-[#BFDBFE] focus:border-[#1E40AF] text-sm'
                 rows={6}
               />
             </CardContent>
@@ -1823,7 +1823,7 @@ export function CreateOrderPage() {
           <div className='space-y-3'>
             <Button
               onClick={handleCreateOrder}
-              className='w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-700 hover:to-blue-600 shadow-lg'
+              className='w-full bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white hover:from-[#071A49] hover:to-[#1E40AF] shadow-lg'
               disabled={orderItems.length === 0 || isCreatingOrder}
             >
               {isCreatingOrder ? (
@@ -1867,7 +1867,7 @@ export function CreateOrderPage() {
         <DialogContent className='max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden'>
           <DialogHeader className='px-4 py-3 border-b border-black/5 bg-gray-50/50 relative'>
             <DialogTitle className='flex items-center text-lg text-blue-900'>
-              <ImageIcon className='w-5 h-5 mr-2 text-blue-600' />
+              <ImageIcon className='w-5 h-5 mr-2 text-[#1E40AF]' />
               Ảnh đơn thuốc gốc #{sourcePrescription?.prescriptionNumber || prescriptionId}
             </DialogTitle>
           </DialogHeader>

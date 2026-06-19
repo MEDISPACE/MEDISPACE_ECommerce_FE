@@ -201,7 +201,7 @@ export function EnhancedSearchBar({
 
       {/* Search Dropdown */}
       {isOpen && (
-        <Card className='absolute top-full left-0 right-0 mt-2 z-50 bg-white/95 backdrop-blur-lg shadow-2xl border border-blue-100 rounded-2xl overflow-hidden'>
+        <Card className='absolute top-full left-0 right-0 mt-2 z-50 bg-white/95 backdrop-blur-lg shadow-2xl border border-[#E8EDF5] rounded-2xl overflow-hidden'>
           <CardContent className='p-0 max-h-96 overflow-y-auto'>
             {searchQuery ? (
               // Search suggestions — grouped by type
@@ -227,7 +227,7 @@ export function EnhancedSearchBar({
                               setSearchQuery(q)
                               handleSearch(q)
                             }}
-                            className='inline-flex items-center gap-1 text-sm px-3 py-1.5 rounded-full bg-gray-50 hover:bg-blue-50 hover:text-blue-600 border border-gray-200 hover:border-blue-200 transition-all duration-150 text-gray-700'
+                            className='inline-flex items-center gap-1 text-sm px-3 py-1.5 rounded-full bg-gray-50 hover:bg-[#F0F6FF] hover:text-[#1E40AF] border border-gray-200 hover:border-[#BFDBFE] transition-all duration-150 text-gray-700'
                           >
                             <Search className='w-3 h-3 opacity-50' />
                             {q}
@@ -241,7 +241,7 @@ export function EnhancedSearchBar({
                   {/* ── THƯƠNG HIỆU ── */}
                   {brands.length > 0 && (
                     <div className='mb-2'>
-                      <div className='flex items-center gap-1.5 text-xs font-semibold text-blue-600 uppercase tracking-wider px-2 py-1.5'>
+                      <div className='flex items-center gap-1.5 text-xs font-semibold text-[#1E40AF] uppercase tracking-wider px-2 py-1.5'>
                         <Tag className='w-3 h-3' />
                         Thương hiệu
                       </div>
@@ -250,13 +250,13 @@ export function EnhancedSearchBar({
                           key={suggestion.id}
                           onClick={() => handleSuggestionClick(suggestion)}
                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left ${
-                            selectedIndex === index ? 'bg-blue-50 border border-blue-200' : 'hover:bg-gray-50'
+                            selectedIndex === index ? 'bg-[#F0F6FF] border border-[#BFDBFE]' : 'hover:bg-gray-50'
                           }`}
                         >
                           {suggestion.image ? (
                             <img src={suggestion.image} alt={suggestion.text} className='w-8 h-8 object-contain rounded border border-gray-100' />
                           ) : (
-                            <div className='w-8 h-8 bg-blue-100 rounded flex items-center justify-center'>
+                            <div className='w-8 h-8 bg-[#E8EDF5] rounded flex items-center justify-center'>
                               <Tag className='w-4 h-4 text-blue-500' />
                             </div>
                           )}
@@ -266,7 +266,7 @@ export function EnhancedSearchBar({
                               <div className='text-xs text-gray-400'>{suggestion.productCount} sản phẩm</div>
                             )}
                           </div>
-                          <Badge variant='secondary' className='text-xs bg-blue-50 text-blue-600 shrink-0'>TH</Badge>
+                          <Badge variant='secondary' className='text-xs bg-[#F0F6FF] text-[#1E40AF] shrink-0'>TH</Badge>
                         </button>
                       ))}
                     </div>
@@ -307,7 +307,7 @@ export function EnhancedSearchBar({
                   {articles.length > 0 && (
                     <div className='mb-2'>
                       {(brands.length > 0 || categories.length > 0) && <Separator className='mb-2' />}
-                      <div className='flex items-center gap-1.5 text-xs font-semibold text-cyan-600 uppercase tracking-wider px-2 py-1.5'>
+                      <div className='flex items-center gap-1.5 text-xs font-semibold text-[#1E40AF] uppercase tracking-wider px-2 py-1.5'>
                         <Newspaper className='w-3 h-3' />
                         Bài viết sức khỏe
                       </div>
@@ -317,7 +317,7 @@ export function EnhancedSearchBar({
                           onClick={() => handleSuggestionClick(suggestion)}
                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left ${
                             selectedIndex === brands.length + categories.length + index
-                              ? 'bg-cyan-50 border border-cyan-200'
+                              ? 'bg-[#F0F6FF] border border-[#BFDBFE]'
                               : 'hover:bg-gray-50'
                           }`}
                         >
@@ -328,8 +328,8 @@ export function EnhancedSearchBar({
                               className='w-10 h-10 object-cover rounded-lg border border-gray-100 shrink-0'
                             />
                           ) : (
-                            <div className='w-10 h-10 bg-cyan-50 rounded-lg flex items-center justify-center shrink-0'>
-                              <Newspaper className='w-4 h-4 text-cyan-600' />
+                            <div className='w-10 h-10 bg-[#F0F6FF] rounded-lg flex items-center justify-center shrink-0'>
+                              <Newspaper className='w-4 h-4 text-[#1E40AF]' />
                             </div>
                           )}
                           <div className='flex-1 min-w-0'>
@@ -338,7 +338,7 @@ export function EnhancedSearchBar({
                               <div className='text-xs text-gray-400 truncate'>{suggestion.excerpt}</div>
                             )}
                           </div>
-                          <Badge variant='secondary' className='text-xs bg-cyan-50 text-cyan-700 shrink-0'>
+                          <Badge variant='secondary' className='text-xs bg-[#F0F6FF] text-[#1E40AF] shrink-0'>
                             Blog
                           </Badge>
                         </button>
@@ -360,7 +360,7 @@ export function EnhancedSearchBar({
                           onClick={() => handleSuggestionClick(suggestion)}
                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left ${
                             selectedIndex === brands.length + categories.length + articles.length + index
-                              ? 'bg-blue-50 border border-blue-200'
+                              ? 'bg-[#F0F6FF] border border-[#BFDBFE]'
                               : 'hover:bg-gray-50'
                           }`}
                         >
@@ -417,7 +417,7 @@ export function EnhancedSearchBar({
                               onClick={() => handleSearch(recent)}
                               className={`flex-1 flex items-center gap-3 p-2 rounded-lg transition-colors text-left text-sm ${
                                 selectedIndex === recentIndex
-                                  ? 'bg-blue-100 border border-blue-300'
+                                  ? 'bg-[#E8EDF5] border border-[#BFDBFE]'
                                   : 'hover:bg-gray-50'
                               }`}
                             >
@@ -452,7 +452,7 @@ export function EnhancedSearchBar({
                       <Badge
                         key={trending}
                         variant='secondary'
-                        className='cursor-pointer hover:bg-blue-100 hover:text-blue-700 transition-colors'
+                        className='cursor-pointer hover:bg-[#E8EDF5] hover:text-[#0A2463] transition-colors'
                         onClick={() => handleSearch(trending)}
                       >
                         {trending}

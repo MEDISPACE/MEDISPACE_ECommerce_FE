@@ -103,7 +103,7 @@ export function MultipleImageUploadField({
               <button
                 type='button'
                 onClick={() => fileInputRef.current?.click()}
-                className='aspect-square border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 transition-colors flex items-center justify-center bg-gray-50'
+                className='aspect-square border-2 border-dashed border-gray-300 rounded-lg hover:border-[#1E40AF] transition-colors flex items-center justify-center bg-gray-50'
               >
                 <div className='text-center'>
                   <Plus className='w-8 h-8 text-gray-400 mx-auto mb-1' />
@@ -116,7 +116,7 @@ export function MultipleImageUploadField({
 
         {/* Initial Upload Area */}
         {value.length === 0 && (
-          <div className='border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors'>
+          <div className='border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-[#1E40AF] transition-colors'>
             <button
               type='button'
               onClick={() => fileInputRef.current?.click()}
@@ -131,7 +131,7 @@ export function MultipleImageUploadField({
                   </>
                 ) : (
                   <>
-                    <div className='w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center'>
+                    <div className='w-12 h-12 bg-[#F0F6FF] rounded-full flex items-center justify-center'>
                       <ImageIcon className='w-6 h-6 text-blue-500' />
                     </div>
                     <div>

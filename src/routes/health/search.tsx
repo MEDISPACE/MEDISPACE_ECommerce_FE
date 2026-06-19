@@ -49,7 +49,7 @@ export default function HealthSearchPage() {
           <UniversalBreadcrumb
             items={[
               { label: 'Trang chủ', href: '/' },
-              { label: 'Góc sức khỏe', href: '/health' },
+              { label: 'Bệnh & Góc sức khỏe', href: '/health' },
               { label: `Tìm kiếm: ${query}` },
             ]}
           />

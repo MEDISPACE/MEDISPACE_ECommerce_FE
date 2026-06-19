@@ -48,13 +48,13 @@ function Calendar({
     return (
       <div className={cn("p-4 bg-white w-[300px]", className)}>
         <div className="flex justify-between items-center mb-4">
-          <Button type="button" variant="outline" size="icon" className="h-8 w-8 text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => handleMonthChange(new Date(currentMonth.getFullYear() - 1, currentMonth.getMonth()))}>
+          <Button type="button" variant="outline" size="icon" className="h-8 w-8 text-[#1E40AF] border-[#BFDBFE] hover:bg-[#F0F6FF]" onClick={() => handleMonthChange(new Date(currentMonth.getFullYear() - 1, currentMonth.getMonth()))}>
             <ChevronLeftIcon className="w-4 h-4" />
           </Button>
-          <button type="button" onClick={() => setView('years')} className="font-semibold text-[15px] hover:text-blue-600 transition-colors text-blue-900 px-3 py-1.5 rounded-md hover:bg-blue-50">
+          <button type="button" onClick={() => setView('years')} className="font-semibold text-[15px] hover:text-[#1E40AF] transition-colors text-blue-900 px-3 py-1.5 rounded-md hover:bg-[#F0F6FF]">
             {currentMonth.getFullYear()}
           </button>
-          <Button type="button" variant="outline" size="icon" className="h-8 w-8 text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => handleMonthChange(new Date(currentMonth.getFullYear() + 1, currentMonth.getMonth()))}>
+          <Button type="button" variant="outline" size="icon" className="h-8 w-8 text-[#1E40AF] border-[#BFDBFE] hover:bg-[#F0F6FF]" onClick={() => handleMonthChange(new Date(currentMonth.getFullYear() + 1, currentMonth.getMonth()))}>
             <ChevronRightIcon className="w-4 h-4" />
           </Button>
         </div>
@@ -64,7 +64,7 @@ function Calendar({
               key={i}
               type="button"
               variant={i === currentMonth.getMonth() ? "default" : "ghost"}
-              className={cn("h-12 font-medium text-[15px] transition-colors rounded-lg", i === currentMonth.getMonth() ? "bg-blue-600 text-white hover:bg-blue-700 shadow-md" : "hover:bg-blue-50 text-gray-700 hover:text-blue-700")}
+              className={cn("h-12 font-medium text-[15px] transition-colors rounded-lg", i === currentMonth.getMonth() ? "bg-[#0A2463] text-white hover:bg-[#071A49] shadow-md" : "hover:bg-[#F0F6FF] text-gray-700 hover:text-[#0A2463]")}
               onClick={() => {
                 handleMonthChange(new Date(currentMonth.getFullYear(), i));
                 setView('days');
@@ -84,13 +84,13 @@ function Calendar({
     return (
       <div className={cn("p-4 bg-white w-[300px]", className)}>
         <div className="flex justify-between items-center mb-4">
-          <Button type="button" variant="outline" size="icon" className="h-8 w-8 text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => handleMonthChange(new Date(startYear - 12, currentMonth.getMonth()))}>
+          <Button type="button" variant="outline" size="icon" className="h-8 w-8 text-[#1E40AF] border-[#BFDBFE] hover:bg-[#F0F6FF]" onClick={() => handleMonthChange(new Date(startYear - 12, currentMonth.getMonth()))}>
             <ChevronLeftIcon className="w-4 h-4" />
           </Button>
           <div className="font-semibold text-[15px] text-blue-900 px-3 py-1.5">
             {startYear} - {startYear + 11}
           </div>
-          <Button type="button" variant="outline" size="icon" className="h-8 w-8 text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => handleMonthChange(new Date(startYear + 12, currentMonth.getMonth()))}>
+          <Button type="button" variant="outline" size="icon" className="h-8 w-8 text-[#1E40AF] border-[#BFDBFE] hover:bg-[#F0F6FF]" onClick={() => handleMonthChange(new Date(startYear + 12, currentMonth.getMonth()))}>
             <ChevronRightIcon className="w-4 h-4" />
           </Button>
         </div>
@@ -102,7 +102,7 @@ function Calendar({
                 key={year}
                 type="button"
                 variant={year === currentYear ? "default" : "ghost"}
-                className={cn("h-12 font-medium text-[15px] transition-colors rounded-lg", year === currentYear ? "bg-blue-600 text-white hover:bg-blue-700 shadow-md" : "hover:bg-blue-50 text-gray-700 hover:text-blue-700")}
+                className={cn("h-12 font-medium text-[15px] transition-colors rounded-lg", year === currentYear ? "bg-[#0A2463] text-white hover:bg-[#071A49] shadow-md" : "hover:bg-[#F0F6FF] text-gray-700 hover:text-[#0A2463]")}
                 onClick={() => {
                   handleMonthChange(new Date(year, currentMonth.getMonth()));
                   setView('months');
@@ -147,12 +147,12 @@ function Calendar({
         ),
         button_previous: cn(
           buttonVariants({ variant: buttonVariant }),
-          'h-8 w-8 select-none p-0 aria-disabled:opacity-50 text-blue-600 hover:bg-blue-50 border border-blue-200 ml-1 pointer-events-auto',
+          'h-8 w-8 select-none p-0 aria-disabled:opacity-50 text-[#1E40AF] hover:bg-[#F0F6FF] border border-[#BFDBFE] ml-1 pointer-events-auto',
           defaultClassNames.button_previous
         ),
         button_next: cn(
           buttonVariants({ variant: buttonVariant }),
-          'h-8 w-8 select-none p-0 aria-disabled:opacity-50 text-blue-600 hover:bg-blue-50 border border-blue-200 mr-1 pointer-events-auto',
+          'h-8 w-8 select-none p-0 aria-disabled:opacity-50 text-[#1E40AF] hover:bg-[#F0F6FF] border border-[#BFDBFE] mr-1 pointer-events-auto',
           defaultClassNames.button_next
         ),
         month_caption: cn(
@@ -250,14 +250,14 @@ function Calendar({
               <button 
                 type="button" 
                 onClick={() => setView('months')} 
-                className="hover:text-blue-600 transition-colors px-2.5 py-1 rounded-md hover:bg-blue-50 font-semibold text-[15px] cursor-pointer pointer-events-auto"
+                className="hover:text-[#1E40AF] transition-colors px-2.5 py-1 rounded-md hover:bg-[#F0F6FF] font-semibold text-[15px] cursor-pointer pointer-events-auto"
               >
                 Tháng {currentMonth.getMonth() + 1}
               </button>
               <button 
                 type="button" 
                 onClick={() => setView('years')} 
-                className="hover:text-blue-600 transition-colors px-2.5 py-1 rounded-md hover:bg-blue-50 font-semibold text-[15px] cursor-pointer pointer-events-auto"
+                className="hover:text-[#1E40AF] transition-colors px-2.5 py-1 rounded-md hover:bg-[#F0F6FF] font-semibold text-[15px] cursor-pointer pointer-events-auto"
               >
                 {currentMonth.getFullYear()}
               </button>
@@ -287,12 +287,12 @@ function CalendarDayButton({
       modifiers={modifiers}
       className={cn(
         'flex items-center justify-center aspect-square h-[--cell-size] w-[--cell-size] font-normal leading-none transition-colors rounded-md mx-auto',
-        modifiers.today && !isSelected && 'text-blue-600 font-bold',
-        isSelected && 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white font-medium shadow-md',
-        modifiers.range_start && 'bg-blue-600 text-white rounded-l-md hover:bg-blue-700 hover:text-white',
-        modifiers.range_end && 'bg-blue-600 text-white rounded-r-md hover:bg-blue-700 hover:text-white',
-        modifiers.range_middle && 'bg-blue-50 text-blue-900 rounded-none hover:bg-blue-100',
-        modifiers.focused && 'ring-2 ring-blue-600 ring-offset-2',
+        modifiers.today && !isSelected && 'text-[#1E40AF] font-bold',
+        isSelected && 'bg-[#0A2463] text-white hover:bg-[#071A49] hover:text-white font-medium shadow-md',
+        modifiers.range_start && 'bg-[#0A2463] text-white rounded-l-md hover:bg-[#071A49] hover:text-white',
+        modifiers.range_end && 'bg-[#0A2463] text-white rounded-r-md hover:bg-[#071A49] hover:text-white',
+        modifiers.range_middle && 'bg-[#F0F6FF] text-blue-900 rounded-none hover:bg-[#E8EDF5]',
+        modifiers.focused && 'ring-2 ring-[#1E40AF] ring-offset-2',
         !isSelected && !modifiers.today && 'hover:bg-slate-100 hover:text-slate-900',
         defaultClassNames.day,
         className

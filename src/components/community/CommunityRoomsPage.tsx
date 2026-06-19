@@ -22,13 +22,14 @@ import { useSocketContext } from '~/contexts/SocketContext'
 import { UserRole, UserStatus } from '~/types/user'
 import communityService from '~/services/communityService'
 import type { CommunityRoom } from '~/types/community'
+import { UniversalBreadcrumb } from '~/components/shared/UniversalBreadcrumb'
 
 type AppealType = 'ban' | 'mute'
 
 function VisibilityBadge({ visibility }: { visibility?: string }) {
   if (!visibility) return null
   return (
-    <Badge variant='outline' className='border-blue-200 text-blue-700 bg-blue-50'>
+    <Badge variant='outline' className='border-[#BFDBFE] text-[#0A2463] bg-[#F0F6FF]'>
       {visibility === 'private' ? (
         <span className='inline-flex items-center gap-1'>
           <Lock className='w-3 h-3' /> Riêng tư
@@ -69,7 +70,7 @@ function RoomCard({
       data-testid='community-room-card'
       data-room-id={room._id}
       data-realtime-joined={realtimeJoined ? 'true' : 'false'}
-      className='bg-white backdrop-blur-lg border-blue-100 hover:shadow-md transition-shadow'
+      className='bg-white backdrop-blur-lg border-[#E8EDF5] hover:shadow-md transition-shadow'
     >
       <CardContent className='p-6 space-y-3'>
         <div className='flex items-start justify-between gap-3'>
@@ -77,19 +78,19 @@ function RoomCard({
             <h3 className='text-lg font-semibold text-gray-900 line-clamp-2'>{room.name}</h3>
             <p className='text-sm text-gray-500 mt-1'>#{room.slug}</p>
           </div>
-          <Users className='w-5 h-5 text-blue-600 flex-shrink-0 mt-1' />
+          <Users className='w-5 h-5 text-[#1E40AF] flex-shrink-0 mt-1' />
         </div>
 
         <div className='flex flex-wrap gap-2'>
           <VisibilityBadge visibility={room.visibility} />
           {room.diseaseKey && (
-            <Badge className='bg-blue-100 text-blue-700 hover:bg-blue-100'>{room.diseaseKey}</Badge>
+            <Badge className='bg-[#E8EDF5] text-[#0A2463] hover:bg-[#E8EDF5]'>{room.diseaseKey}</Badge>
           )}
           {Boolean(room.unreadCount) && <Badge className='bg-red-100 text-red-700'>{room.unreadCount} mới</Badge>}
           {isPending && <Badge className='bg-yellow-100 text-yellow-700'>Đang chờ duyệt</Badge>}
           {isBanned && <Badge className='bg-red-100 text-red-700'>Đã bị ban</Badge>}
           {isMuted && <Badge className='bg-orange-100 text-orange-700'>Đang mute</Badge>}
-          {hasAppeal && <Badge className='bg-purple-100 text-purple-700'>Đã gửi appeal</Badge>}
+          {hasAppeal && <Badge className='bg-[#E8EDF5] text-[#0A2463]'>Đã gửi appeal</Badge>}
         </div>
 
         <div className='flex flex-wrap gap-4 text-xs text-gray-500'>
@@ -124,19 +125,19 @@ function RoomCard({
               {hasAppeal ? 'Đã gửi appeal' : 'Appeal mute'}
             </Button>
           ) : isActive ? (
-            <Button asChild className='flex-1 bg-gradient-to-r from-blue-600 to-cyan-500 text-white'>
+            <Button asChild className='flex-1 bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white'>
               <Link to={`/community/${room._id}`}>Vào phòng</Link>
             </Button>
           ) : (
             <Button
-              className='flex-1 bg-gradient-to-r from-blue-600 to-cyan-500 text-white'
+              className='flex-1 bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white'
               onClick={() => onJoin(room._id)}
               disabled={isPending}
             >
               {isPending ? 'Chờ duyệt' : isInvited ? 'Nhận lời mời' : room.visibility === 'private' ? 'Gửi yêu cầu' : 'Tham gia'}
             </Button>
           )}
-          <Button asChild variant='outline' className='border-blue-200'>
+          <Button asChild variant='outline' className='border-[#BFDBFE]'>
             <Link to={`/community/${room._id}`}>Xem</Link>
           </Button>
         </div>
@@ -418,6 +419,8 @@ export function CommunityRoomsPage() {
 
   return (
     <div className='max-w-7xl mx-auto px-4 py-8 space-y-6'>
+      <UniversalBreadcrumb items={[{ label: 'Cộng đồng' }]} />
+
       <Dialog open={Boolean(appealRoom)} onOpenChange={(open) => !open && setAppealRoom(null)}>
         <DialogContent className='sm:max-w-lg'>
           <DialogHeader>
@@ -447,10 +450,7 @@ export function CommunityRoomsPage() {
       </Dialog>
       <div className='flex items-start justify-between gap-4'>
         <div>
-          <h1
-            className='text-3xl font-bold bg-clip-text text-transparent'
-            style={{ backgroundImage: 'linear-gradient(to right, #0066CC, #4A90E2)' }}
-          >
+          <h1 className='font-display bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text text-3xl font-bold text-transparent'>
             Cộng đồng
           </h1>
           <p className='text-gray-600 mt-1'>Tham gia phòng theo nhóm bệnh để chia sẻ kinh nghiệm.</p>
@@ -458,16 +458,16 @@ export function CommunityRoomsPage() {
 
         <div className='flex items-center gap-2'>
           {!isAuthenticated && (
-            <Button variant='outline' className='border-blue-200' onClick={() => navigate('/login')}>
+            <Button variant='outline' className='border-[#BFDBFE]' onClick={() => navigate('/login')}>
               <LogIn className='w-4 h-4 mr-2' />
               Đăng nhập
             </Button>
           )}
-          <Button variant='outline' className='border-blue-200 gap-2' onClick={() => navigate('/community/video-events')}>
+          <Button variant='outline' className='border-[#BFDBFE] gap-2' onClick={() => navigate('/community/video-events')}>
             <Video className='w-4 h-4' />
             Hội thảo
           </Button>
-          <Button variant='outline' className='border-blue-200 gap-2' onClick={() => refetch()} disabled={isFetching}>
+          <Button variant='outline' className='border-[#BFDBFE] gap-2' onClick={() => refetch()} disabled={isFetching}>
             <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
             Tải lại
           </Button>
@@ -477,7 +477,7 @@ export function CommunityRoomsPage() {
       {isLoading ? (
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
           {Array.from({ length: 6 }).map((_, i) => (
-            <Card key={i} className='bg-white border-blue-100'>
+            <Card key={i} className='bg-white border-[#E8EDF5]'>
               <CardContent className='p-6 space-y-3'>
                 <Skeleton className='h-5 w-3/4' />
                 <Skeleton className='h-4 w-1/3' />
@@ -494,14 +494,14 @@ export function CommunityRoomsPage() {
           ))}
         </div>
       ) : rooms.length === 0 ? (
-        <Card className='bg-white border-blue-100'>
+        <Card className='bg-white border-[#E8EDF5]'>
           <CardContent className='p-10 text-center'>
-            <div className='w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-3'>
+            <div className='w-14 h-14 bg-[#F0F6FF] rounded-full flex items-center justify-center mx-auto mb-3'>
               <Users className='w-7 h-7 text-blue-500' />
             </div>
             <h3 className='text-lg font-semibold text-gray-900 mb-1'>Chưa có phòng phù hợp</h3>
             <p className='text-gray-600 mb-4'>Hãy thử tải lại hoặc quay lại sau.</p>
-            <Button variant='outline' className='border-blue-200' onClick={() => refetch()}>
+            <Button variant='outline' className='border-[#BFDBFE]' onClick={() => refetch()}>
               Tải lại
             </Button>
           </CardContent>

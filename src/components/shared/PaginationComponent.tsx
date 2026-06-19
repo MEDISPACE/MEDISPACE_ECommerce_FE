@@ -85,7 +85,7 @@ export function PaginationComponent({
           size='sm'
           onClick={() => handlePageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className='!border-blue-200 hover:!border-blue-300 hover:!bg-blue-50'
+          className='!border-[#BFDBFE] hover:!border-[#BFDBFE] hover:!bg-[#F0F6FF]'
         >
           <ChevronLeft className='w-4 h-4 mr-1' />
           Trước
@@ -113,8 +113,8 @@ export function PaginationComponent({
                 onClick={() => handlePageChange(pageNum)}
                 className={
                   isActive
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                    : '!border-blue-200 hover:!border-blue-300 hover:!bg-blue-50 !text-blue-600'
+                    ? 'bg-[#0A2463] text-white hover:bg-[#071A49]'
+                    : '!border-[#BFDBFE] hover:!border-[#BFDBFE] hover:!bg-[#F0F6FF] !text-[#1E40AF]'
                 }
               >
                 {pageNum}
@@ -129,7 +129,7 @@ export function PaginationComponent({
           size='sm'
           onClick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className='!border-blue-200 hover:!border-blue-300 hover:!bg-blue-50'
+          className='!border-[#BFDBFE] hover:!border-[#BFDBFE] hover:!bg-[#F0F6FF]'
         >
           Sau
           <ChevronRight className='w-4 h-4 ml-1' />

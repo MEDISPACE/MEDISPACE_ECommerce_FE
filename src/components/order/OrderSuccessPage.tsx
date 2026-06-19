@@ -87,7 +87,7 @@ export function OrderSuccessPage() {
       <div className='max-w-4xl mx-auto px-4 py-12'>
         <UniversalBreadcrumb items={breadcrumbItems} />
         <div className='text-center'>
-          <div className='inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 shadow-lg mb-6'>
+          <div className='inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-[#BFDBFE] to-[#1E40AF] shadow-lg mb-6'>
             <Loader2 className='w-14 h-14 text-white animate-spin' />
           </div>
           <h1 className='text-xl text-gray-600 mb-4'>Đang tải thông tin đơn hàng...</h1>
@@ -207,7 +207,7 @@ export function OrderSuccessPage() {
             'Nếu bạn đã thanh toán, hệ thống sẽ cập nhật đơn hàng ngay khi cổng thanh toán xác nhận.'
           ) : (
             <>
-              Cảm ơn bạn đã tin tưởng và mua sắm tại <span className='text-blue-600'>MEDISPACE</span>
+              Cảm ơn bạn đã tin tưởng và mua sắm tại <span className='text-[#1E40AF]'>MEDISPACE</span>
             </>
           )}
         </p>
@@ -227,11 +227,11 @@ export function OrderSuccessPage() {
       {/* Removed QR Code Section */}
 
       {/* Order Information Card */}
-      <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 mb-6 animate-slide-in-up'>
-        <CardHeader className='bg-gradient-to-r from-blue-50 to-cyan-50'>
+      <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] mb-6 animate-slide-in-up'>
+        <CardHeader className='bg-gradient-to-r from-[#F8FAFB] to-[#F0F6FF]'>
           <CardTitle className='flex items-center justify-between'>
             <div className='flex items-center gap-3'>
-              <Package className='w-6 h-6 text-blue-600' />
+              <Package className='w-6 h-6 text-[#1E40AF]' />
               <span className='text-blue-900'>Thông tin đơn hàng</span>
             </div>
           </CardTitle>
@@ -240,7 +240,7 @@ export function OrderSuccessPage() {
           <div className='grid md:grid-cols-2 gap-6'>
             <div>
               <p className='text-sm text-gray-500 mb-1'>Mã đơn hàng</p>
-              <p className='text-lg font-mono text-blue-600'>#{order.orderNumber}</p>
+              <p className='text-lg font-mono text-[#1E40AF]'>#{order.orderNumber}</p>
             </div>
             <div>
               <p className='text-sm text-gray-500 mb-1'>Tổng tiền</p>
@@ -261,9 +261,9 @@ export function OrderSuccessPage() {
 
           <Separator />
 
-          <div className='bg-blue-50 border border-blue-200 rounded-lg p-4'>
+          <div className='bg-[#F0F6FF] border border-[#BFDBFE] rounded-lg p-4'>
             <div className='flex items-start gap-3'>
-              <MapPin className='w-5 h-5 text-blue-600 mt-1' />
+              <MapPin className='w-5 h-5 text-[#1E40AF] mt-1' />
               <div className='flex-1'>
                 <p className='text-sm text-blue-800 mb-1'>Địa chỉ giao hàng</p>
                 <p className='text-gray-900'>
@@ -291,7 +291,7 @@ export function OrderSuccessPage() {
       <div className='flex flex-col sm:flex-row gap-4 justify-center animate-fade-in'>
         <Button
           asChild
-          className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white shadow-lg'
+          className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white shadow-lg'
         >
           <Link to='/account/orders' className='gap-2'>
             <FileText className='w-5 h-5' />
@@ -300,7 +300,7 @@ export function OrderSuccessPage() {
           </Link>
         </Button>
 
-        <Button asChild variant='outline' className='border-2 border-blue-500 text-blue-600 hover:bg-blue-50'>
+        <Button asChild variant='outline' className='border-2 border-[#1E40AF] text-[#1E40AF] hover:bg-[#F0F6FF]'>
           <Link to='/' className='gap-2'>
             <Home className='w-5 h-5' />
             Về trang chủ
@@ -312,15 +312,15 @@ export function OrderSuccessPage() {
       <div className='mt-8 text-center'>
         <p className='text-gray-600 mb-2'>Cần hỗ trợ? Liên hệ với chúng tôi</p>
         <div className='flex flex-wrap justify-center gap-4 text-sm'>
-          <a href='tel:19001234' className='text-blue-600 hover:text-blue-700 hover:underline'>
+          <a href='tel:19001234' className='text-[#1E40AF] hover:text-[#0A2463] hover:underline'>
             📞 Hotline: 1900 1234
           </a>
           <span className='text-gray-300'>|</span>
-          <a href='mailto:support@medispace.vn' className='text-blue-600 hover:text-blue-700 hover:underline'>
+          <a href='mailto:support@medispace.vn' className='text-[#1E40AF] hover:text-[#0A2463] hover:underline'>
             ✉️ support@medispace.vn
           </a>
           <span className='text-gray-300'>|</span>
-          <Link to='/contact' className='text-blue-600 hover:text-blue-700 hover:underline'>
+          <Link to='/contact' className='text-[#1E40AF] hover:text-[#0A2463] hover:underline'>
             💬 Chat với dược sĩ
           </Link>
         </div>

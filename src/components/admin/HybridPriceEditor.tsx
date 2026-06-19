@@ -184,11 +184,11 @@ export function HybridPriceEditor({ variants = [], onChange, disabled = false }:
 
       {/* Variants table */}
       {variants.length > 0 && (
-        <Card className='border-blue-100'>
+        <Card className='border-[#E8EDF5]'>
           <CardContent className='p-0'>
             <Table>
               <TableHeader>
-                <TableRow className='bg-blue-50/50'>
+                <TableRow className='bg-[#F0F6FF]/50'>
                   <TableHead className='w-[120px]'>Đơn vị</TableHead>
                   <TableHead className='text-right'>Giá bán</TableHead>
                   <TableHead className='text-right'>Giá gốc</TableHead>
@@ -199,7 +199,7 @@ export function HybridPriceEditor({ variants = [], onChange, disabled = false }:
               </TableHeader>
               <TableBody>
                 {variants.map((variant, index) => (
-                  <TableRow key={index} className={variant.isDefault ? 'bg-blue-50/30' : ''}>
+                  <TableRow key={index} className={variant.isDefault ? 'bg-[#F0F6FF]/30' : ''}>
                     <TableCell className='font-medium'>
                       {variant.unit}
                       {variant.isDefault && (
@@ -208,7 +208,7 @@ export function HybridPriceEditor({ variants = [], onChange, disabled = false }:
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell className='text-right font-semibold text-blue-600'>
+                    <TableCell className='text-right font-semibold text-[#1E40AF]'>
                       {formatCurrency(variant.price)}
                     </TableCell>
                     <TableCell className='text-right text-gray-500'>
@@ -378,7 +378,7 @@ export function HybridPriceEditor({ variants = [], onChange, disabled = false }:
               <X className='w-4 h-4 mr-1' />
               Hủy
             </Button>
-            <Button type='button' onClick={handleSave} className='bg-blue-600 hover:bg-blue-700'>
+            <Button type='button' onClick={handleSave} className='bg-[#0A2463] hover:bg-[#071A49]'>
               <Check className='w-4 h-4 mr-1' />
               Lưu
             </Button>

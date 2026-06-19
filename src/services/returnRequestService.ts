@@ -155,12 +155,12 @@ export const returnStatusLabels: Record<ReturnStatus, string> = {
 // Return status colors
 export const returnStatusColors: Record<ReturnStatus, string> = {
   [ReturnStatus.PENDING]: 'bg-yellow-100 text-yellow-800',
-  [ReturnStatus.REVIEWING]: 'bg-blue-100 text-blue-800',
+  [ReturnStatus.REVIEWING]: 'bg-[#E8EDF5] text-blue-800',
   [ReturnStatus.APPROVED]: 'bg-green-100 text-green-800',
   [ReturnStatus.REJECTED]: 'bg-red-100 text-red-800',
   [ReturnStatus.AWAITING_RETURN]: 'bg-orange-100 text-orange-800',
-  [ReturnStatus.RECEIVED]: 'bg-cyan-100 text-cyan-800',
-  [ReturnStatus.REFUND_PROCESSING]: 'bg-purple-100 text-purple-800',
+  [ReturnStatus.RECEIVED]: 'bg-[#E8EDF5] text-[#0A2463]',
+  [ReturnStatus.REFUND_PROCESSING]: 'bg-[#E8EDF5] text-[#0A2463]',
   [ReturnStatus.COMPLETED]: 'bg-emerald-100 text-emerald-800',
   [ReturnStatus.CANCELLED]: 'bg-gray-100 text-gray-800',
 }

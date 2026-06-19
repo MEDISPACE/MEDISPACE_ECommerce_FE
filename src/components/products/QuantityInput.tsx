@@ -54,13 +54,13 @@ export function QuantityInput({
   }
 
   return (
-    <div className='flex items-center border-2 border-blue-200 rounded-lg overflow-hidden bg-white'>
+    <div className='flex items-center border-2 border-[#BFDBFE] rounded-lg overflow-hidden bg-white'>
       <Button
         variant='ghost'
         size='sm'
         onClick={handleDecrease}
         disabled={disabled || value <= min}
-        className={`${sizeClasses[size].button} rounded-none hover:bg-blue-50 border-0`}
+        className={`${sizeClasses[size].button} rounded-none hover:bg-[#F0F6FF] border-0`}
       >
         <Minus className='w-3 h-3' />
       </Button>
@@ -80,7 +80,7 @@ export function QuantityInput({
         size='sm'
         onClick={handleIncrease}
         disabled={disabled || value >= max}
-        className={`${sizeClasses[size].button} rounded-none hover:bg-blue-50 border-0`}
+        className={`${sizeClasses[size].button} rounded-none hover:bg-[#F0F6FF] border-0`}
       >
         <Plus className='w-3 h-3' />
       </Button>

@@ -36,7 +36,7 @@ export function ReviewList({
   if (loading) {
     return (
       <div className='flex justify-center items-center py-12'>
-        <Loader2 className='w-8 h-8 animate-spin text-blue-600' />
+        <Loader2 className='w-8 h-8 animate-spin text-[#1E40AF]' />
       </div>
     )
   }
@@ -96,7 +96,7 @@ export function ReviewList({
                 variant={p === page ? 'default' : 'outline'}
                 size='sm'
                 onClick={() => onPageChange(p)}
-                className={p === page ? 'bg-blue-600 text-white' : ''}
+                className={p === page ? 'bg-[#0A2463] text-white' : ''}
               >
                 {p}
               </Button>

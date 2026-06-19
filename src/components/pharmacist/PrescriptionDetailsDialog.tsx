@@ -167,7 +167,7 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
                         ? 'bg-red-50 text-red-700 border-red-300'
                         : urgency.level === 'medium'
                           ? 'bg-yellow-50 text-yellow-700 border-yellow-300'
-                          : 'bg-blue-50 text-blue-700 border-blue-200'
+                          : 'bg-[#F0F6FF] text-[#0A2463] border-[#BFDBFE]'
                     }`}
                   >
                     <Clock className='w-3 h-3' />
@@ -320,7 +320,7 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
                     className={`flex gap-3 p-3 rounded-lg border ${
                       med.productId
                         ? 'bg-emerald-50 border-emerald-200'
-                        : 'bg-blue-50 border-blue-100'
+                        : 'bg-[#F0F6FF] border-[#E8EDF5]'
                     }`}
                   >
                     {/* Product thumbnail or numbered circle */}
@@ -330,7 +330,7 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
                       </div>
                     ) : (
                       <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 mt-0.5 ${
-                        med.productId ? 'bg-emerald-600' : 'bg-blue-600'
+                        med.productId ? 'bg-emerald-600' : 'bg-[#0A2463]'
                       }`}>
                         {idx + 1}
                       </div>
@@ -386,7 +386,7 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
                 onChange={(e) => setPharmacistNotes(e.target.value)}
                 placeholder='Nhập ghi chú, lý do từ chối hoặc hướng dẫn thêm...'
                 rows={3}
-                className='border-2 border-blue-200 focus:border-blue-500 resize-none'
+                className='border-2 border-[#BFDBFE] focus:border-[#1E40AF] resize-none'
               />
             </div>
           )}
@@ -490,7 +490,7 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
                     : `?prescriptionId=${prescription._id}`
                   navigate(`/pharmacist/create-order${query}`)
                 }}
-                className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'
+                className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'
               >
                 <Package className='w-4 h-4 mr-1' />
                 {prescription.medications.some((m) => m.productId)

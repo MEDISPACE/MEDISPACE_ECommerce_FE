@@ -203,7 +203,7 @@ export function ProductDetailPage() {
         <div className='max-w-7xl mx-auto px-4 py-6'>
           <UniversalBreadcrumb items={breadcrumbItems} />
           <div className='text-center py-12'>
-            <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4'></div>
+            <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-[#1E40AF] mx-auto mb-4'></div>
             <p className='text-gray-600'>Đang tải thông tin sản phẩm...</p>
           </div>
         </div>
@@ -220,7 +220,7 @@ export function ProductDetailPage() {
             <h2 className='text-2xl font-bold text-gray-900 mb-2'>Sản phẩm không tồn tại</h2>
             <p className='text-gray-600 mb-6'>{error || 'Sản phẩm bạn đang tìm kiếm không có trong hệ thống.'}</p>
             <Button
-              className='!border-blue-200 !text-blue-600 hover:!bg-blue-50 hover:!text-blue-700'
+              className='!border-[#BFDBFE] !text-[#1E40AF] hover:!bg-[#F0F6FF] hover:!text-[#0A2463]'
               onClick={() => window.history.back()}
             >
               Quay lại
@@ -331,7 +331,7 @@ export function ProductDetailPage() {
           <div>
             <div className='relative mb-4'>
               <div
-                className='aspect-square overflow-hidden rounded-xl border border-blue-100 bg-white/80 backdrop-blur-sm cursor-zoom-in'
+                className='aspect-square overflow-hidden rounded-xl border border-[#E8EDF5] bg-white/80 backdrop-blur-sm cursor-zoom-in'
                 onClick={() => lightbox.open()}
                 role='button'
                 tabIndex={0}
@@ -369,7 +369,7 @@ export function ProductDetailPage() {
 
               {/* Image counter badge - Bottom Left */}
               {getProductImages(product).length > 1 && (
-                <div className='absolute bottom-4 left-4 z-20 bg-gradient-to-r from-blue-600 to-cyan-500 text-white px-3 py-1.5 rounded-lg shadow-lg backdrop-blur-sm'>
+                <div className='absolute bottom-4 left-4 z-20 bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white px-3 py-1.5 rounded-lg shadow-lg backdrop-blur-sm'>
                   <span className='font-medium text-sm'>
                     {selectedImage + 1}/{getProductImages(product).length}
                   </span>
@@ -381,7 +381,7 @@ export function ProductDetailPage() {
                 variant='secondary'
                 size='sm'
                 onClick={handleOpenLightbox}
-                className='absolute bottom-4 right-4 z-20 bg-white/80 backdrop-blur-lg border border-blue-100 shadow-lg hover:shadow-xl transition-all'
+                className='absolute bottom-4 right-4 z-20 bg-white/80 backdrop-blur-lg border border-[#E8EDF5] shadow-lg hover:shadow-xl transition-all'
               >
                 <Eye className='w-4 h-4 mr-2' />
                 Xem ảnh lớn
@@ -397,17 +397,17 @@ export function ProductDetailPage() {
                   <>
                     <button
                       onClick={() => navigateImage('prev')}
-                      className='absolute -left-3 top-1/2 -translate-y-1/2 z-20 bg-white/95 backdrop-blur-lg border border-blue-200 shadow-md hover:shadow-lg rounded-full transition-all hover:bg-blue-50 hover:border-blue-300 p-2'
+                      className='absolute -left-3 top-1/2 -translate-y-1/2 z-20 bg-white/95 backdrop-blur-lg border border-[#BFDBFE] shadow-md hover:shadow-lg rounded-full transition-all hover:bg-[#F0F6FF] hover:border-[#BFDBFE] p-2'
                       aria-label='Previous image'
                     >
-                      <ChevronLeft className='w-4 h-4 text-blue-600' />
+                      <ChevronLeft className='w-4 h-4 text-[#1E40AF]' />
                     </button>
                     <button
                       onClick={() => navigateImage('next')}
-                      className='absolute -right-3 top-1/2 -translate-y-1/2 z-20 bg-white/95 backdrop-blur-lg border border-blue-200 shadow-md hover:shadow-lg rounded-full transition-all hover:bg-blue-50 hover:border-blue-300 p-2'
+                      className='absolute -right-3 top-1/2 -translate-y-1/2 z-20 bg-white/95 backdrop-blur-lg border border-[#BFDBFE] shadow-md hover:shadow-lg rounded-full transition-all hover:bg-[#F0F6FF] hover:border-[#BFDBFE] p-2'
                       aria-label='Next image'
                     >
-                      <ChevronRight className='w-4 h-4 text-blue-600' />
+                      <ChevronRight className='w-4 h-4 text-[#1E40AF]' />
                     </button>
                   </>
                 )}
@@ -428,8 +428,8 @@ export function ProductDetailPage() {
                       onClick={() => setSelectedImage(index)}
                       className={`relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
                         selectedImage === index
-                          ? 'border-blue-500 shadow-lg scale-105 ring-2 ring-blue-200'
-                          : 'border-blue-100 hover:border-blue-300 hover:shadow-md'
+                          ? 'border-[#1E40AF] shadow-lg scale-105 ring-2 ring-blue-200'
+                          : 'border-[#E8EDF5] hover:border-[#BFDBFE] hover:shadow-md'
                       }`}
                     >
                       <ImageWithFallback
@@ -439,7 +439,7 @@ export function ProductDetailPage() {
                       />
                       {/* Active indicator */}
                       {selectedImage === index && (
-                        <div className='absolute inset-0 bg-blue-600/10 pointer-events-none' />
+                        <div className='absolute inset-0 bg-[#0A2463]/10 pointer-events-none' />
                       )}
                     </button>
                   ))}
@@ -454,7 +454,7 @@ export function ProductDetailPage() {
                       key={index}
                       onClick={() => setSelectedImage(index)}
                       className={`h-1.5 rounded-full transition-all ${
-                        selectedImage === index ? 'w-6 bg-blue-600' : 'w-1.5 bg-blue-200 hover:bg-blue-300'
+                        selectedImage === index ? 'w-6 bg-[#0A2463]' : 'w-1.5 bg-[#BFDBFE] hover:bg-blue-300'
                       }`}
                       aria-label={`View image ${index + 1}`}
                     />
@@ -469,7 +469,7 @@ export function ProductDetailPage() {
             <div>
               <h1 className='text-2xl lg:text-3xl font-bold text-gray-900 mb-2'>{product.name}</h1>
               <div className='flex items-center gap-4 mb-2'>
-                <span className='text-blue-600 hover:underline cursor-pointer'>{getBrandName(product)}</span>
+                <span className='text-[#1E40AF] hover:underline cursor-pointer'>{getBrandName(product)}</span>
                 <span className='text-gray-400'>|</span>
                 <span className='text-sm text-gray-500'>SKU: {product.sku}</span>
               </div>
@@ -477,7 +477,7 @@ export function ProductDetailPage() {
               <div className='flex items-center gap-2 mb-4'>
                 <RatingStars rating={stats?.averageRating || 0} size='lg' reviewCount={reviews.length} />
                 <span
-                  className='text-blue-600 hover:underline cursor-pointer text-sm'
+                  className='text-[#1E40AF] hover:underline cursor-pointer text-sm'
                   onClick={() => {
                     setActiveTab('reviews')
                     setTimeout(() => {
@@ -510,8 +510,8 @@ export function ProductDetailPage() {
                             onClick={() => setSelectedVariantIndex(index)}
                             className={`px-4 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
                               selectedVariantIndex === index
-                                ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                : 'border-gray-200 bg-white text-gray-700 hover:border-blue-200 hover:bg-blue-50/50'
+                                ? 'border-[#1E40AF] bg-[#F0F6FF] text-[#0A2463]'
+                                : 'border-gray-200 bg-white text-gray-700 hover:border-[#BFDBFE] hover:bg-[#F0F6FF]/50'
                             }`}
                           >
                           <span>{variant.unit}</span>
@@ -575,7 +575,7 @@ export function ProductDetailPage() {
 
                   <div className='flex gap-3'>
                     <Link to={`/upload-prescription?product=${product.slug}`} className='flex-1'>
-                      <Button className='w-full bg-gradient-to-r text-white from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 h-12 shadow-lg hover:shadow-xl transition-all'>
+                      <Button className='w-full bg-gradient-to-r text-white from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] h-12 shadow-lg hover:shadow-xl transition-all'>
                         <FileText className='w-5 h-5 mr-2' />
                         Upload đơn thuốc
                       </Button>
@@ -590,14 +590,14 @@ export function ProductDetailPage() {
                           chatBtn.click()
                         }
                       }}
-                      className='flex-1 border-2 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 h-12 shadow-md hover:shadow-lg transition-all'
+                      className='flex-1 border-2 border-[#BFDBFE] text-[#1E40AF] hover:bg-[#F0F6FF] hover:border-[#BFDBFE] h-12 shadow-md hover:shadow-lg transition-all'
                     >
                       <MessageCircle className='w-5 h-5 mr-2' />
                       Chat dược sĩ
                     </Button>
                   </div>
 
-                  <div className='bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-2 shadow-sm'>
+                  <div className='bg-[#F0F6FF] border border-[#BFDBFE] rounded-xl p-4 space-y-2 shadow-sm'>
                     <div className='text-sm text-blue-800'>
                       <div className='flex items-start gap-2'>
                         <Info className='w-5 h-5 flex-shrink-0 mt-0.5' />
@@ -620,7 +620,7 @@ export function ProductDetailPage() {
                     onClick={handleAddToCart}
                     disabled={!isProductInStock(product)}
                     variant='outline'
-                    className='flex-1 border-2 !bg-white !border-blue-200 text-blue-500 hover:bg-blue-50 hover:text-blue-600 hover:!border-blue-300 h-12 shadow-md hover:shadow-lg transition-all'
+                    className='flex-1 border-2 !bg-white !border-[#BFDBFE] text-blue-500 hover:bg-[#F0F6FF] hover:text-[#1E40AF] hover:!border-[#BFDBFE] h-12 shadow-md hover:shadow-lg transition-all'
                   >
                     <ShoppingCart className='w-5 h-5 mr-2' />
                     Thêm giỏ hàng
@@ -628,7 +628,7 @@ export function ProductDetailPage() {
                   <Button
                     onClick={handleBuyNow}
                     disabled={!isProductInStock(product)}
-                    className='flex-1 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 dark:from-blue-600 dark:to-cyan-500 dark:hover:from-blue-700 dark:hover:to-cyan-600 text-white dark:text-white h-12 shadow-lg hover:shadow-xl transition-all'
+                    className='flex-1 bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] dark:from-[#0A2463] dark:to-[#1E40AF] dark:hover:from-[#071A49] dark:hover:to-[#0A2463] text-white dark:text-white h-12 shadow-lg hover:shadow-xl transition-all'
                   >
                     Mua ngay
                   </Button>
@@ -643,7 +643,7 @@ export function ProductDetailPage() {
                   className={`flex-1 border-2 transition-all ${
                     isInWishlist(getProductId(product))
                       ? '!bg-red-50 !border-red-200 !text-red-600 hover:!bg-red-100'
-                      : '!bg-white !border-blue-200 !text-blue-500 hover:!bg-blue-50 hover:!text-blue-600 hover:!border-blue-300'
+                      : '!bg-white !border-[#BFDBFE] !text-blue-500 hover:!bg-[#F0F6FF] hover:!text-[#1E40AF] hover:!border-[#BFDBFE]'
                   }`}
                 >
                   <Heart className={`w-4 h-4 mr-2 ${isInWishlist(getProductId(product)) ? 'fill-red-600' : ''}`} />
@@ -652,14 +652,14 @@ export function ProductDetailPage() {
                 {/* <Button
                   variant='outline'
                   size='sm'
-                  className='flex-1 border-2 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 transition-all'
+                  className='flex-1 border-2 border-[#BFDBFE] text-[#1E40AF] hover:bg-[#F0F6FF] hover:border-[#BFDBFE] transition-all'
                 >
                   So sánh sản phẩm
                 </Button> */}
                 <Button
                   variant='outline'
                   size='sm'
-                  className='border-2 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 transition-all'
+                  className='border-2 border-[#BFDBFE] text-[#1E40AF] hover:bg-[#F0F6FF] hover:border-[#BFDBFE] transition-all'
                 >
                   <Share2 className='w-4 h-4' />
                 </Button>
@@ -667,7 +667,7 @@ export function ProductDetailPage() {
             </div>
 
             {/* Additional Info */}
-            <div className='space-y-3 pt-4 border-t border-blue-100'>
+            <div className='space-y-3 pt-4 border-t border-[#E8EDF5]'>
               <div className='grid grid-cols-2 gap-4 text-sm'>
                 <div>
                   <span className='text-gray-600'>Xuất xứ:</span>
@@ -684,14 +684,14 @@ export function ProductDetailPage() {
                 <span className='ml-2 font-medium'>{product.expiryInfo || '24 tháng kể từ ngày sản xuất'}</span>
               </div>
 
-              <div className='flex items-center gap-1 text-blue-600 text-sm'>
+              <div className='flex items-center gap-1 text-[#1E40AF] text-sm'>
                 <Truck className='w-4 h-4' />
                 <span>Giao hàng nhanh trong 2-4h tại TP.HCM</span>
               </div>
             </div>
 
             {/* Trust Badges */}
-            <div className='flex justify-between items-center pt-4 border-t border-blue-100'>
+            <div className='flex justify-between items-center pt-4 border-t border-[#E8EDF5]'>
               <div className='flex items-center gap-1 text-sm text-gray-600'>
                 <Shield className='w-4 h-4 text-green-500' />
                 <span>Thanh toán an toàn</span>
@@ -710,47 +710,47 @@ export function ProductDetailPage() {
 
         {/* Product Details Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className='mb-12'>
-          <TabsList className='inline-flex w-full overflow-x-auto bg-blue-100 p-1 rounded-lg shadow-sm scrollbar-hide'>
+          <TabsList className='inline-flex w-full overflow-x-auto bg-[#E8EDF5] p-1 rounded-lg shadow-sm scrollbar-hide'>
             <TabsTrigger
               value='description'
-              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-[#E8EDF5] text-[#1E40AF] border-0 data-[state=active]:!bg-[#0A2463] data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-[#BFDBFE]'
             >
               <span className='whitespace-nowrap'>Mô tả</span>
             </TabsTrigger>
             <TabsTrigger
               value='ingredients'
-              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-[#E8EDF5] text-[#1E40AF] border-0 data-[state=active]:!bg-[#0A2463] data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-[#BFDBFE]'
             >
               <span className='whitespace-nowrap'>Thành phần</span>
             </TabsTrigger>
             <TabsTrigger
               value='uses'
-              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-[#E8EDF5] text-[#1E40AF] border-0 data-[state=active]:!bg-[#0A2463] data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-[#BFDBFE]'
             >
               <span className='whitespace-nowrap'>Công dụng</span>
             </TabsTrigger>
             <TabsTrigger
               value='instructions'
-              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-[#E8EDF5] text-[#1E40AF] border-0 data-[state=active]:!bg-[#0A2463] data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-[#BFDBFE]'
             >
               <span className='whitespace-nowrap'>Cách dùng</span>
             </TabsTrigger>
             <TabsTrigger
               value='warnings'
-              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-[#E8EDF5] text-[#1E40AF] border-0 data-[state=active]:!bg-[#0A2463] data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-[#BFDBFE]'
             >
               <span className='whitespace-nowrap'>Chú ý</span>
             </TabsTrigger>
             <TabsTrigger
               value='reviews'
-              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-[#E8EDF5] text-[#1E40AF] border-0 data-[state=active]:!bg-[#0A2463] data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-[#BFDBFE]'
             >
               <span className='whitespace-nowrap'>Đánh giá ({reviews.length})</span>
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value='description' className='mt-6'>
-            <Card className='bg-white border-blue-100 shadow-sm'>
+            <Card className='bg-white border-[#E8EDF5] shadow-sm'>
               <CardContent className='p-6'>
                 <div className='prose max-w-none'>
                   <p className='text-gray-700 leading-relaxed'>{getProductDescription(product)}</p>
@@ -764,7 +764,7 @@ export function ProductDetailPage() {
           </TabsContent>
 
           <TabsContent value='ingredients' className='mt-6'>
-            <Card className='bg-white border-blue-100 shadow-sm'>
+            <Card className='bg-white border-[#E8EDF5] shadow-sm'>
               <CardContent className='p-6'>
                 <div className='space-y-4'>
                   {product.details?.activeIngredients ? (
@@ -805,7 +805,7 @@ export function ProductDetailPage() {
           </TabsContent>
 
           <TabsContent value='uses' className='mt-6'>
-            <Card className='bg-white border-blue-100 shadow-sm'>
+            <Card className='bg-white border-[#E8EDF5] shadow-sm'>
               <CardContent className='p-6'>
                 <div className='prose max-w-none'>
                   {product.details?.indications ? (
@@ -819,7 +819,7 @@ export function ProductDetailPage() {
           </TabsContent>
 
           <TabsContent value='instructions' className='mt-6'>
-            <Card className='bg-white border-blue-100 shadow-sm'>
+            <Card className='bg-white border-[#E8EDF5] shadow-sm'>
               <CardContent className='p-6'>
                 <div className='prose max-w-none'>
                   {product.details?.dosageInstructions ? (
@@ -835,7 +835,7 @@ export function ProductDetailPage() {
           </TabsContent>
 
           <TabsContent value='warnings' className='mt-6'>
-            <Card className='bg-white border-blue-100 shadow-sm'>
+            <Card className='bg-white border-[#E8EDF5] shadow-sm'>
               <CardContent className='p-6'>
                 <div className='space-y-4'>
                   {product.details?.storageInstructions && (
@@ -844,19 +844,19 @@ export function ProductDetailPage() {
                       <p className='text-amber-800 leading-relaxed'>{product.details.storageInstructions}</p>
                     </div>
                   )}
-                  <div className='p-4 bg-blue-50 border border-blue-200 rounded-lg'>
+                  <div className='p-4 bg-[#F0F6FF] border border-[#BFDBFE] rounded-lg'>
                     <h4 className='font-semibold text-blue-900 mb-2'>Lưu ý khi sử dụng</h4>
                     <ul className='space-y-2 text-blue-800'>
                       <li className='flex items-start gap-2'>
-                        <div className='w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0' />
+                        <div className='w-2 h-2 bg-[#1E40AF] rounded-full mt-2 flex-shrink-0' />
                         <span>Đọc kỹ hướng dẫn sử dụng trước khi dùng.</span>
                       </li>
                       <li className='flex items-start gap-2'>
-                        <div className='w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0' />
+                        <div className='w-2 h-2 bg-[#1E40AF] rounded-full mt-2 flex-shrink-0' />
                         <span>Để xa tầm tay trẻ em.</span>
                       </li>
                       <li className='flex items-start gap-2'>
-                        <div className='w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0' />
+                        <div className='w-2 h-2 bg-[#1E40AF] rounded-full mt-2 flex-shrink-0' />
                         <span>Tham khảo ý kiến bác sĩ hoặc dược sĩ nếu cần thiết.</span>
                       </li>
                     </ul>
@@ -874,17 +874,17 @@ export function ProductDetailPage() {
                   <ReviewStats stats={stats} loading={reviewsLoading} />
                 </div>
                 <div className='md:col-span-2'>
-                  <Card className='bg-white border-blue-200 shadow-sm'>
+                  <Card className='bg-white border-[#BFDBFE] shadow-sm'>
                     <CardContent className='p-6'>
-                      <div className='bg-blue-50 border border-blue-200 rounded-lg p-4 text-center'>
-                        <Star className='w-8 h-8 text-blue-600 mx-auto mb-2' />
+                      <div className='bg-[#F0F6FF] border border-[#BFDBFE] rounded-lg p-4 text-center'>
+                        <Star className='w-8 h-8 text-[#1E40AF] mx-auto mb-2' />
                         <h4 className='font-semibold text-blue-900 mb-2'>Đánh giá sản phẩm</h4>
-                        <p className='text-sm text-blue-700 mb-3'>
+                        <p className='text-sm text-[#0A2463] mb-3'>
                           Để đảm bảo tính xác thực, bạn chỉ có thể đánh giá sản phẩm từ đơn hàng đã hoàn thành.
                         </p>
                         <Link
                           to='/account/orders'
-                          className='inline-flex items-center text-sm text-blue-600 hover:text-blue-700 underline font-medium'
+                          className='inline-flex items-center text-sm text-[#1E40AF] hover:text-[#0A2463] underline font-medium'
                         >
                           Xem đơn hàng của tôi →
                         </Link>
@@ -945,7 +945,7 @@ export function ProductDetailPage() {
       {/* Image Lightbox - Full screen modal */}
 
       <Dialog open={lightbox.isOpen} onOpenChange={lightbox.close}>
-        <DialogContent className='max-w-[95vw] max-h-[95vh] p-0 bg-black/95 backdrop-blur-xl border-blue-500/20 overflow-hidden'>
+        <DialogContent className='max-w-[95vw] max-h-[95vh] p-0 bg-black/95 backdrop-blur-xl border-[#1E40AF]/20 overflow-hidden'>
           {/* Accessibility: Hidden title and description for screen readers */}
           <DialogTitle className='sr-only'>{product.name} - Xem ảnh chi tiết</DialogTitle>
           <DialogDescription className='sr-only'>
@@ -968,7 +968,7 @@ export function ProductDetailPage() {
             />
 
             {/* Counter badge - Top left */}
-            <div className='absolute top-4 left-4 z-40 bg-gradient-to-r from-blue-600 to-cyan-500 text-white px-4 py-2 rounded-lg shadow-lg backdrop-blur-sm'>
+            <div className='absolute top-4 left-4 z-40 bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white px-4 py-2 rounded-lg shadow-lg backdrop-blur-sm'>
               <span className='font-medium'>
                 {selectedImage + 1} / {getProductImages(product).length}
               </span>

@@ -31,12 +31,12 @@ interface ReturnRequestDetailsSheetProps {
 // Status badge colors
 const statusColors: Record<ReturnStatus, { bg: string; text: string }> = {
   pending: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
-  reviewing: { bg: 'bg-blue-100', text: 'text-blue-800' },
+  reviewing: { bg: 'bg-[#E8EDF5]', text: 'text-blue-800' },
   approved: { bg: 'bg-green-100', text: 'text-green-800' },
   rejected: { bg: 'bg-red-100', text: 'text-red-800' },
-  awaiting_return: { bg: 'bg-purple-100', text: 'text-purple-800' },
-  received: { bg: 'bg-indigo-100', text: 'text-indigo-800' },
-  refund_processing: { bg: 'bg-cyan-100', text: 'text-cyan-800' },
+  awaiting_return: { bg: 'bg-[#E8EDF5]', text: 'text-[#0A2463]' },
+  received: { bg: 'bg-[#E8EDF5]', text: 'text-[#0A2463]' },
+  refund_processing: { bg: 'bg-[#E8EDF5]', text: 'text-[#0A2463]' },
   completed: { bg: 'bg-emerald-100', text: 'text-emerald-800' },
   cancelled: { bg: 'bg-gray-100', text: 'text-gray-800' },
 }
@@ -83,20 +83,20 @@ export function ReturnRequestDetailsSheet({ isOpen, onClose, request, onReview }
   return (
     <>
       <Sheet open={isOpen} onOpenChange={onClose}>
-        <SheetContent className='w-full sm:max-w-2xl overflow-y-auto !bg-gradient-to-br !from-blue-50 !to-white border border-blue-100'>
-          <SheetHeader className='pb-2 border-b border-blue-100'>
+        <SheetContent className='w-full sm:max-w-2xl overflow-y-auto !bg-gradient-to-br !from-blue-50 !to-white border border-[#E8EDF5]'>
+          <SheetHeader className='pb-2 border-b border-[#E8EDF5]'>
             <SheetTitle className='text-2xl font-bold text-blue-900 flex items-center gap-2'>
-              <RotateCcw className='w-6 h-6 text-blue-600' />
+              <RotateCcw className='w-6 h-6 text-[#1E40AF]' />
               Chi tiết yêu cầu
             </SheetTitle>
           </SheetHeader>
 
           <div className='mt-2 space-y-5 pr-2 pl-2 pb-2'>
             {/* Request Info Card */}
-            <Card className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+            <Card className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
               <CardHeader className='pb-3'>
                 <CardTitle className='text-lg font-semibold text-blue-900 flex items-center gap-2'>
-                  <FileText className='w-5 h-5 text-blue-600' />
+                  <FileText className='w-5 h-5 text-[#1E40AF]' />
                   Thông tin yêu cầu
                 </CardTitle>
               </CardHeader>
@@ -107,7 +107,7 @@ export function ReturnRequestDetailsSheet({ isOpen, onClose, request, onReview }
                 </div>
                 <div className='flex justify-between items-center p-3 bg-white rounded-lg'>
                   <span className='text-sm text-gray-600'>Đơn hàng:</span>
-                  <span className='font-medium text-blue-600 font-mono'>{request.orderNumber}</span>
+                  <span className='font-medium text-[#1E40AF] font-mono'>{request.orderNumber}</span>
                 </div>
                 <div className='flex justify-between items-center p-3 bg-gradient-to-r from-blue-50 to-white rounded-lg'>
                   <span className='text-sm text-gray-600'>Ngày tạo:</span>
@@ -124,10 +124,10 @@ export function ReturnRequestDetailsSheet({ isOpen, onClose, request, onReview }
 
             {/* Customer Info Card */}
             {(request.customerName || request.customerEmail || request.customerPhone) && (
-              <Card className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+              <Card className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
                 <CardHeader className='pb-3'>
                   <CardTitle className='text-lg font-semibold text-blue-900 flex items-center gap-2'>
-                    <User className='w-5 h-5 text-blue-600' />
+                    <User className='w-5 h-5 text-[#1E40AF]' />
                     Thông tin khách hàng
                   </CardTitle>
                 </CardHeader>
@@ -141,7 +141,7 @@ export function ReturnRequestDetailsSheet({ isOpen, onClose, request, onReview }
                   {request.customerEmail && (
                     <div className='flex justify-between items-center p-3 bg-white rounded-lg'>
                       <span className='text-sm text-gray-600'>Email:</span>
-                      <span className='font-medium text-blue-600'>{request.customerEmail}</span>
+                      <span className='font-medium text-[#1E40AF]'>{request.customerEmail}</span>
                     </div>
                   )}
                   {request.customerPhone && (
@@ -155,10 +155,10 @@ export function ReturnRequestDetailsSheet({ isOpen, onClose, request, onReview }
             )}
 
             {/* Reason Card */}
-            <Card className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+            <Card className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
               <CardHeader className='pb-3'>
                 <CardTitle className='text-lg font-semibold text-blue-900 flex items-center gap-2'>
-                  <FileText className='w-5 h-5 text-blue-600' />
+                  <FileText className='w-5 h-5 text-[#1E40AF]' />
                   Lý do đổi/trả
                 </CardTitle>
               </CardHeader>
@@ -171,10 +171,10 @@ export function ReturnRequestDetailsSheet({ isOpen, onClose, request, onReview }
             </Card>
 
             {/* Products Card */}
-            <Card className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+            <Card className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
               <CardHeader className='pb-3'>
                 <CardTitle className='text-lg font-semibold text-blue-900 flex items-center gap-2'>
-                  <Package className='w-5 h-5 text-blue-600' />
+                  <Package className='w-5 h-5 text-[#1E40AF]' />
                   Sản phẩm ({request.items.length})
                 </CardTitle>
               </CardHeader>
@@ -182,16 +182,16 @@ export function ReturnRequestDetailsSheet({ isOpen, onClose, request, onReview }
                 {request.items.map((item, idx) => (
                   <div
                     key={idx}
-                    className='flex gap-3 bg-gradient-to-r from-blue-50/50 to-white p-4 rounded-xl border border-blue-100 hover:shadow-md transition-shadow'
+                    className='flex gap-3 bg-gradient-to-r from-blue-50/50 to-white p-4 rounded-xl border border-[#E8EDF5] hover:shadow-md transition-shadow'
                   >
                     {item.productImage ? (
                       <img
                         src={item.productImage}
                         alt={item.productName}
-                        className='w-16 h-16 object-cover rounded-lg border border-blue-100'
+                        className='w-16 h-16 object-cover rounded-lg border border-[#E8EDF5]'
                       />
                     ) : (
-                      <div className='w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center'>
+                      <div className='w-16 h-16 bg-[#E8EDF5] rounded-lg flex items-center justify-center'>
                         <Package className='w-8 h-8 text-blue-400' />
                       </div>
                     )}
@@ -200,20 +200,20 @@ export function ReturnRequestDetailsSheet({ isOpen, onClose, request, onReview }
                       <div className='flex items-center gap-2 flex-wrap'>
                         <span className='text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded'>SKU: {item.sku}</span>
                         {item.unit && (
-                          <span className='text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded'>{item.unit}</span>
+                          <span className='text-xs text-[#1E40AF] bg-[#F0F6FF] px-2 py-1 rounded'>{item.unit}</span>
                         )}
                       </div>
                       <p className='text-sm text-gray-600'>
-                        <span className='text-blue-600 font-medium'>{formatPrice(item.unitPrice)}</span>
+                        <span className='text-[#1E40AF] font-medium'>{formatPrice(item.unitPrice)}</span>
                         {item.unit && <span className='text-gray-400'>/{item.unit}</span>} x {item.quantity}
                       </p>
                     </div>
                     <div className='text-right flex flex-col justify-center'>
-                      <p className='text-lg font-bold text-blue-600'>{formatPrice(item.totalPrice)}</p>
+                      <p className='text-lg font-bold text-[#1E40AF]'>{formatPrice(item.totalPrice)}</p>
                       {((item.discountAllocation || 0) > 0 ||
                         (item.pointsAllocation || 0) > 0 ||
                         typeof item.netRefundAmount === 'number') && (
-                        <div className='mt-2 min-w-[150px] space-y-1 rounded-lg border border-blue-100 bg-white/80 p-2 text-xs'>
+                        <div className='mt-2 min-w-[150px] space-y-1 rounded-lg border border-[#E8EDF5] bg-white/80 p-2 text-xs'>
                           <div className='flex justify-between gap-3 text-gray-500'>
                             <span>Giá gốc</span>
                             <span>{formatPrice(item.totalPrice)}</span>
@@ -225,13 +225,13 @@ export function ReturnRequestDetailsSheet({ isOpen, onClose, request, onReview }
                             </div>
                           )}
                           {(item.pointsAllocation || 0) > 0 && (
-                            <div className='flex justify-between gap-3 text-purple-600'>
+                            <div className='flex justify-between gap-3 text-[#1E40AF]'>
                               <span>Điểm</span>
                               <span>-{formatPrice(item.pointsAllocation || 0)}</span>
                             </div>
                           )}
                           {typeof item.netRefundAmount === 'number' && (
-                            <div className='flex justify-between gap-3 border-t border-blue-100 pt-1 font-semibold text-blue-700'>
+                            <div className='flex justify-between gap-3 border-t border-[#E8EDF5] pt-1 font-semibold text-[#0A2463]'>
                               <span>Hoàn dự kiến</span>
                               <span>{formatPrice(item.netRefundAmount)}</span>
                             </div>
@@ -245,15 +245,15 @@ export function ReturnRequestDetailsSheet({ isOpen, onClose, request, onReview }
             </Card>
 
             {/* Amount Summary Card */}
-            <Card className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+            <Card className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
               <CardHeader className='pb-3'>
                 <CardTitle className='text-lg font-semibold text-blue-900 flex items-center gap-2'>
-                  <Wallet className='w-5 h-5 text-blue-600' />
+                  <Wallet className='w-5 h-5 text-[#1E40AF]' />
                   Số tiền
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className='bg-gradient-to-br from-blue-50 to-white p-4 rounded-xl border border-blue-100 space-y-3'>
+                <div className='bg-gradient-to-br from-blue-50 to-white p-4 rounded-xl border border-[#E8EDF5] space-y-3'>
                   <div className='flex justify-between items-center'>
                     <span className='text-gray-600'>Số tiền yêu cầu:</span>
                     <span className='font-semibold text-gray-900'>{formatPrice(request.requestedAmount)}</span>
@@ -271,7 +271,7 @@ export function ReturnRequestDetailsSheet({ isOpen, onClose, request, onReview }
                     </div>
                   )}
                   <Separator className='my-2' />
-                  <div className='flex justify-between items-center p-3 bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg text-white'>
+                  <div className='flex justify-between items-center p-3 bg-gradient-to-r from-[#0A2463] to-[#1E40AF] rounded-lg text-white'>
                     <span className='text-lg font-bold'>Tổng yêu cầu:</span>
                     <span className='text-2xl font-bold'>{formatPrice(request.requestedAmount)}</span>
                   </div>
@@ -281,10 +281,10 @@ export function ReturnRequestDetailsSheet({ isOpen, onClose, request, onReview }
 
             {/* Evidence Card */}
             {request.evidence && request.evidence.length > 0 && (
-              <Card className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+              <Card className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
                 <CardHeader className='pb-3'>
                   <CardTitle className='text-lg font-semibold text-blue-900 flex items-center gap-2'>
-                    <ImageIcon className='w-5 h-5 text-blue-600' />
+                    <ImageIcon className='w-5 h-5 text-[#1E40AF]' />
                     Hình ảnh chứng minh ({request.evidence.length})
                   </CardTitle>
                 </CardHeader>
@@ -295,7 +295,7 @@ export function ReturnRequestDetailsSheet({ isOpen, onClose, request, onReview }
                         key={idx}
                         src={url}
                         alt={`Evidence ${idx + 1}`}
-                        className='w-full h-28 object-cover rounded-xl border border-blue-100 hover:border-blue-400 hover:shadow-lg transition-all cursor-pointer'
+                        className='w-full h-28 object-cover rounded-xl border border-[#E8EDF5] hover:border-[#1E40AF] hover:shadow-lg transition-all cursor-pointer'
                         onClick={() => handleImageClick(idx)}
                       />
                     ))}
@@ -340,7 +340,7 @@ export function ReturnRequestDetailsSheet({ isOpen, onClose, request, onReview }
 
             {/* Action Footer */}
             {onReview && (request.status === 'pending' || request.status === 'reviewing') && (
-              <div className='sticky bottom-0 bg-white border-t border-blue-100 p-4 -mx-2 mt-6 flex gap-3 justify-end'>
+              <div className='sticky bottom-0 bg-white border-t border-[#E8EDF5] p-4 -mx-2 mt-6 flex gap-3 justify-end'>
                 <Button
                   variant='outline'
                   className='!bg-red-50 !text-red-700 !border-red-200 hover:!bg-red-100'

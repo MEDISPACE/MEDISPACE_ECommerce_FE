@@ -370,7 +370,7 @@ export function SearchResultsPage() {
       </div>
 
       {/* Clear Filters */}
-      <Button variant='outline' onClick={clearFilters} className='w-full border-blue-200 text-blue-600'>
+      <Button variant='outline' onClick={clearFilters} className='w-full border-[#BFDBFE] text-[#1E40AF]'>
         Xóa bộ lọc
       </Button>
     </div>
@@ -392,7 +392,7 @@ export function SearchResultsPage() {
       <div className='grid grid-cols-1 lg:grid-cols-4 gap-6'>
         {/* Desktop Filters */}
         <div className='hidden lg:block'>
-          <Card className='border-blue-100 sticky top-6 bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl'>
+          <Card className='border-[#E8EDF5] sticky top-6 bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl'>
             <CardHeader>
               <CardTitle className='text-blue-800 flex items-center gap-2'>
                 <Filter className='w-5 h-5' />
@@ -434,7 +434,7 @@ export function SearchResultsPage() {
                   {selectedCategories.map((categorySlug) => {
                     const category = categories.find((c) => c.slug === categorySlug)
                     return category ? (
-                      <Badge key={categorySlug} variant='outline' className='border-blue-200 text-blue-600'>
+                      <Badge key={categorySlug} variant='outline' className='border-[#BFDBFE] text-[#1E40AF]'>
                         {category.name}
                         <button
                           onClick={() => setSelectedCategories(selectedCategories.filter((c) => c !== categorySlug))}
@@ -446,7 +446,7 @@ export function SearchResultsPage() {
                     ) : null
                   })}
                   {selectedBrands.map((brand) => (
-                    <Badge key={brand} variant='outline' className='border-blue-200 text-blue-600'>
+                    <Badge key={brand} variant='outline' className='border-[#BFDBFE] text-[#1E40AF]'>
                       {brand}
                       <button
                         onClick={() => setSelectedBrands(selectedBrands.filter((b) => b !== brand))}
@@ -463,7 +463,7 @@ export function SearchResultsPage() {
             <div className='flex items-center gap-3'>
               {/* Sort */}
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger aria-label='Sắp xếp kết quả' className='w-[180px] border-blue-200 border rounded-lg border-blue-300'>
+                <SelectTrigger aria-label='Sắp xếp kết quả' className='w-[180px] border-[#BFDBFE] border rounded-lg border-[#BFDBFE]'>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -477,13 +477,13 @@ export function SearchResultsPage() {
               </Select>
 
               {/* View Mode */}
-              <div className='flex items-center border border-blue-200 rounded-lg overflow-hidden'>
+              <div className='flex items-center border border-[#BFDBFE] rounded-lg overflow-hidden'>
                 <Button
                   variant={viewMode === 'grid' ? 'default' : 'ghost'}
                   size='sm'
                   onClick={() => setViewMode('grid')}
                   className={
-                    viewMode === 'grid' ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : 'text-gray-600'
+                    viewMode === 'grid' ? 'bg-[#0A2463] text-white hover:bg-[#071A49] hover:text-white' : 'text-gray-600'
                   }
                 >
                   <Grid className='w-4 h-4' />
@@ -493,7 +493,7 @@ export function SearchResultsPage() {
                   size='sm'
                   onClick={() => setViewMode('list')}
                   className={
-                    viewMode === 'list' ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white' : 'text-gray-600'
+                    viewMode === 'list' ? 'bg-[#0A2463] text-white hover:bg-[#071A49] hover:text-white' : 'text-gray-600'
                   }
                 >
                   <List className='w-4 h-4' />
@@ -505,7 +505,7 @@ export function SearchResultsPage() {
           {/* Results */}
           {isLoading ? (
             <div className='flex flex-col items-center justify-center py-12'>
-              <Loader2 className='w-12 h-12 animate-spin text-blue-600 mb-4' />
+              <Loader2 className='w-12 h-12 animate-spin text-[#1E40AF] mb-4' />
               <p className='text-gray-600'>Đang tìm kiếm sản phẩm...</p>
             </div>
           ) : allProducts.length > 0 ? (
@@ -552,7 +552,7 @@ export function SearchResultsPage() {
               {/* Infinite scroll trigger + loading indicator */}
               <div ref={observerTarget} className='py-8 flex justify-center'>
                 {isFetchingNextPage && (
-                  <div className='flex items-center gap-3 text-blue-600'>
+                  <div className='flex items-center gap-3 text-[#1E40AF]'>
                     <Loader2 className='w-6 h-6 animate-spin' />
                     <span className='text-sm font-medium'>Đang tải thêm sản phẩm...</span>
                   </div>

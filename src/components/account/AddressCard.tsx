@@ -62,13 +62,13 @@ export function AddressCard({ address, onEdit, onDelete, onSetDefault }: Address
     <Card
       className={`relative transition-all duration-200 hover:shadow-lg border ${
         address.isDefault
-          ? 'ring-2 ring-blue-500 bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200'
-          : 'hover:shadow-md border-blue-200'
+          ? 'ring-2 ring-blue-500 bg-gradient-to-br from-[#F8FAFB] to-[#F0F6FF] border-[#BFDBFE]'
+          : 'hover:shadow-md border-[#BFDBFE]'
       }`}
     >
       {address.isDefault && (
         <div className='absolute -top-2 -right-2'>
-          <Badge className='bg-gradient-to-r from-blue-600 to-cyan-500 text-white px-3 py-1 rounded-full shadow-lg'>
+          <Badge className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white px-3 py-1 rounded-full shadow-lg'>
             <Star className='w-3 h-3 mr-1 fill-current' />
             Mặc định
           </Badge>
@@ -106,13 +106,13 @@ export function AddressCard({ address, onEdit, onDelete, onSetDefault }: Address
           </div>
         </div>
 
-        <div className='flex items-center justify-between pt-4 border-t border-blue-200'>
+        <div className='flex items-center justify-between pt-4 border-t border-[#BFDBFE]'>
           <div className='flex gap-2'>
             <Button
               variant='outline'
               size='sm'
               onClick={() => onEdit(address)}
-              className='text-blue-600 border-blue-200 hover:bg-blue-50'
+              className='text-[#1E40AF] border-[#BFDBFE] hover:bg-[#F0F6FF]'
             >
               <Edit className='w-4 h-4 mr-1' />
               Sửa
@@ -154,7 +154,7 @@ export function AddressCard({ address, onEdit, onDelete, onSetDefault }: Address
               variant='ghost'
               size='sm'
               onClick={() => address.id && onSetDefault(address.id)}
-              className='text-blue-600 hover:bg-blue-50'
+              className='text-[#1E40AF] hover:bg-[#F0F6FF]'
             >
               Đặt làm mặc định
             </Button>

@@ -116,7 +116,7 @@ export function PrescriptionImageViewer({ images, title = 'Ảnh đơn thuốc' 
             <img
               src={image}
               alt={`Đơn thuốc ${index + 1}`}
-              className='w-full h-48 object-cover rounded-lg border-2 border-gray-200 cursor-pointer hover:border-blue-400 transition-colors'
+              className='w-full h-48 object-cover rounded-lg border-2 border-gray-200 cursor-pointer hover:border-[#1E40AF] transition-colors'
               onClick={() => handleOpenZoom(index)}
             />
             <Badge className='absolute top-2 left-2 bg-white/90 text-gray-800'>Ảnh {index + 1}</Badge>

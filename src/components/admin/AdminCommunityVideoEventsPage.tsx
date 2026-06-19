@@ -173,7 +173,7 @@ export function AdminCommunityVideoEventsPage() {
           ) : (
           <div className='grid gap-3 lg:grid-cols-2'>
             {events.map((event) => (
-              <button key={event._id} className={`rounded-lg border bg-white p-4 text-left shadow-sm ${selectedEvent?._id === event._id ? 'border-blue-500' : 'border-gray-200'}`} onClick={() => setSelectedEvent(event)}>
+              <button key={event._id} className={`rounded-lg border bg-white p-4 text-left shadow-sm ${selectedEvent?._id === event._id ? 'border-[#1E40AF]' : 'border-gray-200'}`} onClick={() => setSelectedEvent(event)}>
                 <div className='mb-2 flex flex-wrap gap-2'><Badge>{statusLabel(event.status)}</Badge><Badge variant='outline'>{event.visibility}</Badge></div>
                 <div className='font-semibold text-gray-950'>{event.title}</div>
                 <div className='mt-2 text-sm text-gray-600'>{formatDateTime(event.scheduledStartAt)}</div>

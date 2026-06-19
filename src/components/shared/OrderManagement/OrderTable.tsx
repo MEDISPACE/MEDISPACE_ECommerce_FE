@@ -26,7 +26,7 @@ export function OrderTable({ orders, onUpdateStatus, onViewDetails, config }: Or
     <div className='overflow-x-auto'>
       <Table>
         <TableHeader>
-          <TableRow className='!border-b-2 !border-blue-300'>
+          <TableRow className='!border-b-2 !border-[#BFDBFE]'>
             <TableHead>Mã đơn</TableHead>
             <TableHead>Khách hàng</TableHead>
             <TableHead>Sản phẩm</TableHead>
@@ -39,7 +39,7 @@ export function OrderTable({ orders, onUpdateStatus, onViewDetails, config }: Or
         </TableHeader>
         <TableBody>
           {orders.map((order) => (
-            <TableRow key={order.id} className='border-b border-blue-200 hover:bg-blue-50/30'>
+            <TableRow key={order.id} className='border-b border-[#BFDBFE] hover:bg-[#F0F6FF]/30'>
               <TableCell>
                 <div>
                   <button
@@ -88,24 +88,24 @@ export function OrderTable({ orders, onUpdateStatus, onViewDetails, config }: Or
                       <MoreVertical className='w-4 h-4' />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align='end' className='bg-white border border-blue-200 shadow-lg'>
-                    <DropdownMenuLabel className='text-blue-700'>Thao tác</DropdownMenuLabel>
+                  <DropdownMenuContent align='end' className='bg-white border border-[#BFDBFE] shadow-lg'>
+                    <DropdownMenuLabel className='text-[#0A2463]'>Thao tác</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      className='hover:!bg-blue-50 hover:!text-blue-600'
+                      className='hover:!bg-[#F0F6FF] hover:!text-[#1E40AF]'
                       onClick={() => onViewDetails(order.id)}
                     >
                       <Eye className='w-4 h-4 mr-2' />
                       Xem chi tiết
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      className='hover:!bg-blue-50 hover:!text-blue-600'
+                      className='hover:!bg-[#F0F6FF] hover:!text-[#1E40AF]'
                       onClick={() => onUpdateStatus(order)}
                     >
                       <Edit className='w-4 h-4 mr-2' />
                       Cập nhật trạng thái
                     </DropdownMenuItem>
-                    {/* <DropdownMenuItem className='hover:!bg-blue-50' onClick={() => onViewDetails(order.id)}>
+                    {/* <DropdownMenuItem className='hover:!bg-[#F0F6FF]' onClick={() => onViewDetails(order.id)}>
                       <Download className='w-4 h-4 mr-2' />
                       In hóa đơn
                     </DropdownMenuItem> */}

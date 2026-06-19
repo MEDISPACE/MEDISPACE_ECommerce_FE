@@ -1,5 +1,5 @@
 import { useState, useEffect, useId, useRef } from 'react'
-import { MessageCircle, X, Minimize2, Maximize2, ArrowLeft, Loader2, MessageSquarePlus } from 'lucide-react'
+import { MessageCircle, X, Minimize2, Maximize2, ArrowLeft, Loader2, MessageSquarePlus, Bot, Stethoscope } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
 import { ChatWindow } from './ChatWindow'
@@ -167,7 +167,6 @@ export function FloatingChatWidget() {
          // Nếu chọn dược sĩ thật, gửi socket request human (để BE gán DS)
          joinConversation(newConv._id)
          requestHuman(newConv._id)
-         toast.success('Đang kết nối với Dược sĩ...')
       }
     } catch (error: any) {
       toast.error(error?.message || 'Không thể tạo cuộc trò chuyện')
@@ -182,7 +181,6 @@ export function FloatingChatWidget() {
       setIsActionLoading(true)
       // Gửi socket event yêu cầu dược sĩ thật cho chính cuộc hội thoại này
       requestHuman(conversation._id)
-      toast.info('Đang kết nối bạn với Dược sĩ...')
     } catch (error: any) {
       toast.error(error?.message || 'Không thể chuyển kết nối')
     } finally {
@@ -208,9 +206,9 @@ export function FloatingChatWidget() {
     <>
       {/* Chat Widget Window */}
       {isOpen && !isMinimized && (
-        <div className='fixed bottom-24 right-6 sm:bottom-6 sm:right-[88px] z-50 w-[90vw] sm:w-[360px] h-[80vh] sm:h-[550px] max-h-[calc(100vh-var(--header-height)-120px)] sm:max-h-[calc(100vh-var(--header-height)-48px)] bg-white rounded-2xl shadow-2xl border-2 border-blue-100 flex flex-col overflow-hidden slide-up-animation'>
+        <div className='fixed bottom-24 right-6 sm:bottom-6 sm:right-[88px] z-50 w-[90vw] sm:w-[360px] h-[80vh] sm:h-[550px] max-h-[calc(100vh-var(--header-height)-120px)] sm:max-h-[calc(100vh-var(--header-height)-48px)] bg-white rounded-2xl shadow-2xl border-2 border-[#BFDBFE] flex flex-col overflow-hidden slide-up-animation'>
           {/* Header */}
-          <div className={`text-white px-4 py-3 flex items-center justify-between ${aiMode && conversation ? 'bg-teal-600' : 'bg-blue-600'} flex-shrink-0`}>
+          <div className='text-white px-4 py-3 flex items-center justify-between bg-[#0A2463] flex-shrink-0'>
             <div className='flex items-center gap-3 min-w-0 flex-1 mr-2'>
               {conversation && (
                 <Button
@@ -225,7 +223,7 @@ export function FloatingChatWidget() {
               )}
               {aiMode && conversation ? (
                 <div className='relative flex items-center justify-center w-9 h-9 bg-white/20 rounded-full border border-white/30 backdrop-blur-sm shadow-inner flex-shrink-0'>
-                  <span className="text-lg">🤖</span>
+                  <Bot className='w-5 h-5 text-white' />
                   <span className='absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 border border-white rounded-full animate-pulse' />
                 </div>
               ) : (
@@ -277,20 +275,23 @@ export function FloatingChatWidget() {
 
           {/* AI Info & Transfer Banner */}
           {aiMode && conversation && (
-            <div className='bg-teal-50 border-b border-teal-100 px-4 py-2 flex items-center justify-between text-xs text-teal-800 flex-shrink-0 slide-down-animation'>
+            <div className='bg-[#F0F6FF] border-b border-[#BFDBFE] px-4 py-2 flex items-center justify-between text-xs text-[#0A2463] flex-shrink-0 slide-down-animation'>
               <div className='flex items-center gap-1.5 min-w-0'>
-                <span className='w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0' />
-                <span className='truncate font-medium text-teal-700'>Trợ lý AI đang hoạt động</span>
+                <span className='w-2 h-2 rounded-full bg-[#1E40AF] animate-pulse flex-shrink-0' />
+                <span className='truncate font-medium text-[#0A2463]'>Trợ lý AI đang hoạt động</span>
               </div>
               <button
                 onClick={handleSwitchToHuman}
                 disabled={isActionLoading}
-                className='font-semibold text-teal-600 hover:text-teal-700 hover:underline flex items-center gap-1 active:scale-95 transition-all flex-shrink-0 ml-2 cursor-pointer'
+                className='font-semibold text-[#1E40AF] hover:text-[#0A2463] hover:underline flex items-center gap-1 active:scale-95 transition-all flex-shrink-0 ml-2 cursor-pointer'
               >
                 {isActionLoading ? (
-                  <Loader2 className='w-3 h-3 animate-spin text-teal-600' />
+                  <Loader2 className='w-3 h-3 animate-spin text-[#1E40AF]' />
                 ) : (
-                  'Gặp Dược sĩ 👨‍⚕️'
+                  <>
+                    <Stethoscope className='w-3.5 h-3.5' />
+                    Gặp Dược sĩ
+                  </>
                 )}
               </button>
             </div>
@@ -300,8 +301,8 @@ export function FloatingChatWidget() {
           <div className='flex-1 overflow-hidden flex flex-col'>
             {!isAuthenticated ? (
               <div className='flex flex-col items-center justify-center h-full p-6 text-center space-y-4'>
-                <div className='w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-2'>
-                  <MessageCircle className='w-8 h-8 text-blue-600' />
+                <div className='w-16 h-16 bg-[#F0F6FF] border border-[#BFDBFE] rounded-full flex items-center justify-center mb-2'>
+                  <MessageCircle className='w-8 h-8 text-[#0A2463]' />
                 </div>
                 <h3 className='text-lg font-semibold text-gray-900'>Đăng nhập để chat</h3>
                 <p className='text-gray-600 text-sm max-w-[240px]'>
@@ -309,12 +310,12 @@ export function FloatingChatWidget() {
                 </p>
                 <div className='flex flex-col gap-2 w-full max-w-[200px]'>
                   <a href='/login' className='w-full'>
-                    <Button className='w-full bg-blue-600 hover:bg-blue-700 text-white'>
+                    <Button className='w-full bg-[#0A2463] hover:bg-[#1E40AF] text-white'>
                       Đăng nhập ngay
                     </Button>
                   </a>
                   <a href='/register' className='w-full'>
-                    <Button variant='outline' className='w-full border-blue-200 text-blue-600 hover:bg-blue-50'>
+                    <Button variant='outline' className='w-full border-[#BFDBFE] text-[#0A2463] hover:bg-[#F0F6FF]'>
                       Đăng ký tài khoản
                     </Button>
                   </a>
@@ -323,7 +324,7 @@ export function FloatingChatWidget() {
             ) : isLoading ? (
               <div className='flex items-center justify-center h-full'>
                 <div className='text-center'>
-                  <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2' />
+                  <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-[#0A2463] mx-auto mb-2' />
                   <p className='text-gray-600 text-sm'>Đang tải...</p>
                 </div>
               </div>
@@ -339,8 +340,8 @@ export function FloatingChatWidget() {
               />
             ) : (
               <div className='flex flex-col items-center justify-center h-full p-6 text-center space-y-4'>
-                <div className='w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-2'>
-                  <MessageCircle className='w-8 h-8 text-blue-600' />
+                <div className='w-16 h-16 bg-[#F0F6FF] border border-[#BFDBFE] rounded-full flex items-center justify-center mb-2'>
+                  <MessageCircle className='w-8 h-8 text-[#0A2463]' />
                 </div>
                 <h3 className='text-lg font-medium text-gray-900'>Chọn hình thức hỗ trợ</h3>
                 <p className='text-gray-500 text-sm mb-2'>Bạn muốn nhận hỗ trợ từ đâu?</p>
@@ -349,13 +350,13 @@ export function FloatingChatWidget() {
                   <Button
                     onClick={() => handleCreateConversation(true)}
                     disabled={isActionLoading}
-                    className='w-full bg-teal-600 hover:bg-teal-700 text-white flex items-center justify-center gap-2 h-11 transition-all duration-200 active:scale-[0.98] shadow-md'
+                    className='w-full bg-[#0A2463] hover:bg-[#1E40AF] text-white flex items-center justify-center gap-2 h-11 transition-all duration-200 active:scale-[0.98] shadow-md'
                   >
                     {isActionLoading ? (
                       <Loader2 className='w-4 h-4 animate-spin' />
                     ) : (
                       <>
-                        <span className="text-lg">🤖</span> Hỏi Trợ lý Sức khỏe AI
+                        <Bot className='w-4 h-4' /> Hỏi Trợ lý Sức khỏe AI
                       </>
                     )}
                   </Button>
@@ -363,13 +364,13 @@ export function FloatingChatWidget() {
                     onClick={() => handleCreateConversation(false)}
                     disabled={isActionLoading}
                     variant='outline'
-                    className='w-full border border-blue-200 text-blue-600 hover:bg-blue-50/50 hover:border-blue-400 flex items-center justify-center gap-2 h-11 bg-white transition-all duration-200 active:scale-[0.98] shadow-sm hover:shadow-md'
+                    className='w-full border border-[#BFDBFE] text-[#0A2463] hover:bg-[#F0F6FF] hover:border-[#1E40AF] flex items-center justify-center gap-2 h-11 bg-white transition-all duration-200 active:scale-[0.98] shadow-sm hover:shadow-md'
                   >
                     {isActionLoading ? (
                       <Loader2 className='w-4 h-4 animate-spin' />
                     ) : (
                       <>
-                        <span className="text-lg">👨‍⚕️</span> Gặp Dược sĩ chuyên môn
+                        <Stethoscope className='w-4 h-4' /> Gặp Dược sĩ chuyên môn
                       </>
                     )}
                   </Button>
@@ -383,7 +384,7 @@ export function FloatingChatWidget() {
       {/* Minimized State */}
       {isOpen && isMinimized && (
         <div
-          className={`fixed bottom-24 right-6 sm:bottom-6 sm:right-[88px] z-50 text-white rounded-lg shadow-xl px-4 py-3 cursor-pointer hover:shadow-2xl transition-shadow ${aiMode && conversation ? 'bg-teal-600 hover:bg-teal-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+          className='fixed bottom-24 right-6 sm:bottom-6 sm:right-[88px] z-50 text-white rounded-lg shadow-xl px-4 py-3 cursor-pointer hover:shadow-2xl transition-shadow bg-[#0A2463] hover:bg-[#1E40AF]'
           onClick={() => setIsMinimized(false)}
         >
           <div className='flex items-center gap-2'>
@@ -398,7 +399,7 @@ export function FloatingChatWidget() {
       <div className='fixed bottom-6 right-6 z-50'>
         <Button
           onClick={handleToggle}
-          className='relative w-14 h-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 text-white transition-all duration-300 hover:scale-110 animate-float'
+          className='relative w-14 h-14 rounded-full shadow-2xl bg-[#0A2463] hover:bg-[#1E40AF] text-white transition-all duration-300 hover:scale-110 animate-float'
           aria-label='Chat với dược sĩ'
         >
           {isOpen && !isMinimized ? (
@@ -412,7 +413,7 @@ export function FloatingChatWidget() {
                   {unreadCount > 99 ? '99+' : unreadCount}
                 </Badge>
               )}
-              <span className='absolute inset-0 rounded-full bg-blue-400 opacity-75 animate-ping' />
+              <span className='absolute inset-0 rounded-full bg-[#1E40AF] opacity-60 animate-ping' />
             </>
           )}
         </Button>

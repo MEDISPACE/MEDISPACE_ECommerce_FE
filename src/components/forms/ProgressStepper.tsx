@@ -32,7 +32,7 @@ export function ProgressStepper({ steps, currentStep, className = '' }: Progress
                       isCompleted
                         ? 'bg-emerald-500 border-emerald-500 text-white'
                         : isCurrent
-                          ? 'bg-blue-500 border-blue-500 text-white'
+                          ? 'bg-[#1E40AF] border-[#1E40AF] text-white'
                           : 'bg-white border-gray-300 text-gray-400'
                     }
                   `}

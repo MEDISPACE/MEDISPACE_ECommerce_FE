@@ -167,7 +167,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
 
   return (
     <div className='space-y-4'>
-      <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+      <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
         <CardHeader className='pb-0'>
           <CardTitle className='text-blue-800 text-xl font-bold flex items-center justify-between'>
             Bộ lọc sản phẩm
@@ -186,7 +186,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
             <Button
               variant='ghost'
               onClick={() => toggleCategory('categories')}
-              className='w-full justify-between p-2 h-auto font-medium text-gray-700 hover:!bg-blue-100 hover:!text-blue-800'
+              className='w-full justify-between p-2 h-auto font-medium text-gray-700 hover:!bg-[#E8EDF5] hover:!text-blue-800'
             >
               <span className='text-sm'>Danh mục sản phẩm</span>
               {expandedCategories.includes('categories') ? (
@@ -205,7 +205,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
                     placeholder='Tìm danh mục...'
                     value={categorySearch}
                     onChange={(e) => setCategorySearch(e.target.value)}
-                    className='pl-7 h-8 text-xs border-blue-200 focus:border-blue-500'
+                    className='pl-7 h-8 text-xs border-[#BFDBFE] focus:border-[#1E40AF]'
                   />
                 </div>
 
@@ -226,7 +226,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
                       >
                         <span className='truncate'>{category.name}</span>
                         {facetCounts[category._id] !== undefined && (
-                          <span className='text-[10px] bg-blue-50 text-blue-500 rounded px-1 shrink-0'>
+                          <span className='text-[10px] bg-[#F0F6FF] text-blue-500 rounded px-1 shrink-0'>
                             {facetCounts[category._id]}
                           </span>
                         )}
@@ -245,7 +245,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
             <Button
               variant='ghost'
               onClick={() => toggleCategory('brands')}
-              className='w-full justify-between p-2 h-auto font-medium text-gray-700 hover:!bg-blue-50 hover:!text-blue-800'
+              className='w-full justify-between p-2 h-auto font-medium text-gray-700 hover:!bg-[#F0F6FF] hover:!text-blue-800'
             >
               <span className='text-sm'>Thương hiệu</span>
               {expandedCategories.includes('brands') ? (
@@ -263,7 +263,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
                     placeholder='Tìm thương hiệu'
                     value={brandSearch}
                     onChange={(e) => setBrandSearch(e.target.value)}
-                    className='pl-7 h-8 text-xs border-blue-200 focus:border-blue-500'
+                    className='pl-7 h-8 text-xs border-[#BFDBFE] focus:border-[#1E40AF]'
                   />
                 </div>
 
@@ -283,7 +283,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
                       >
                         <span className='truncate'>{brand.name}</span>
                         {facetCounts[brand._id] !== undefined && (
-                          <span className='text-[10px] bg-blue-50 text-blue-500 rounded px-1 shrink-0'>
+                          <span className='text-[10px] bg-[#F0F6FF] text-blue-500 rounded px-1 shrink-0'>
                             {facetCounts[brand._id]}
                           </span>
                         )}
@@ -318,7 +318,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
                     handlePriceRangeChange([value, localPriceRange[1] || 10000000])
                   }}
                   placeholder='Từ'
-                  className='h-8 text-xs border-blue-200 focus:border-blue-500'
+                  className='h-8 text-xs border-[#BFDBFE] focus:border-[#1E40AF]'
                 />
                 <Input
                   type='text'
@@ -328,7 +328,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
                     handlePriceRangeChange([localPriceRange[0] || 0, value])
                   }}
                   placeholder='Đến'
-                  className='h-8 text-xs border-blue-200 focus:border-blue-500'
+                  className='h-8 text-xs border-[#BFDBFE] focus:border-[#1E40AF]'
                 />
               </div>
             </div>
@@ -404,7 +404,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
               <Button
                 variant='outline'
                 onClick={clearFilters}
-                className='w-full h-8 text-xs border-blue-200 hover:border-blue-300 text-blue-600'
+                className='w-full h-8 text-xs border-[#BFDBFE] hover:border-[#BFDBFE] text-[#1E40AF]'
               >
                 Xóa bộ lọc
               </Button>
@@ -420,7 +420,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
                   <Badge
                     key={categorySlug}
                     variant='secondary'
-                    className='bg-blue-100 text-blue-700 text-xs px-1.5 py-0.5 h-auto'
+                    className='bg-[#E8EDF5] text-[#0A2463] text-xs px-1.5 py-0.5 h-auto'
                   >
                     <span className='truncate max-w-[80px]' title={categoryMap[categorySlug] || categorySlug}>
                       {categoryMap[categorySlug] || categorySlug}
@@ -429,7 +429,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
                       variant='ghost'
                       size='sm'
                       onClick={() => handleCategoryChange(categorySlug, false)}
-                      className='ml-1 h-auto p-0 text-blue-700 hover:text-red-500'
+                      className='ml-1 h-auto p-0 text-[#0A2463] hover:text-red-500'
                     >
                       <X className='w-2.5 h-2.5' />
                     </Button>
@@ -439,7 +439,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
                   <Badge
                     key={brandId}
                     variant='secondary'
-                    className='bg-blue-100 text-blue-700 text-xs px-1.5 py-0.5 h-auto'
+                    className='bg-[#E8EDF5] text-[#0A2463] text-xs px-1.5 py-0.5 h-auto'
                   >
                     <span className='truncate max-w-[60px]' title={brandMap[brandId] || brandId}>
                       {brandMap[brandId] || brandId}
@@ -448,7 +448,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
                       variant='ghost'
                       size='sm'
                       onClick={() => handleBrandChange(brandId, false)}
-                      className='ml-1 h-auto p-0 text-blue-700 hover:text-red-500'
+                      className='ml-1 h-auto p-0 text-[#0A2463] hover:text-red-500'
                     >
                       <X className='w-2.5 h-2.5' />
                     </Button>
@@ -481,20 +481,20 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
                   </Badge>
                 )}
                 {filters.isPrescription === true && (
-                  <Badge variant='secondary' className='bg-purple-100 text-purple-700 text-xs px-1.5 py-0.5 h-auto'>
+                  <Badge variant='secondary' className='bg-[#E8EDF5] text-[#0A2463] text-xs px-1.5 py-0.5 h-auto'>
                     <span>Thuốc kê đơn</span>
                     <Button
                       variant='ghost'
                       size='sm'
                       onClick={() => onFiltersChange({ ...filters, isPrescription: undefined })}
-                      className='ml-1 h-auto p-0 text-purple-700 hover:text-red-500'
+                      className='ml-1 h-auto p-0 text-[#1E40AF] hover:text-red-500'
                     >
                       <X className='w-2.5 h-2.5' />
                     </Button>
                   </Badge>
                 )}
                 {((filters.priceRange?.[0] || 0) > 0 || (filters.priceRange?.[1] || 10000000) < 10000000) && (
-                  <Badge variant='secondary' className='bg-cyan-100 text-cyan-700 text-xs px-1.5 py-0.5 h-auto'>
+                  <Badge variant='secondary' className='bg-[#E8EDF5] text-[#1E40AF] text-xs px-1.5 py-0.5 h-auto'>
                     <span>
                       {new Intl.NumberFormat('vi-VN').format(filters.priceRange?.[0] || 0)}đ –{' '}
                       {new Intl.NumberFormat('vi-VN').format(filters.priceRange?.[1] || 10000000)}đ
@@ -507,7 +507,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
                         setLocalPriceRange(defaultRange)
                         onFiltersChange({ ...filters, priceRange: defaultRange })
                       }}
-                      className='ml-1 h-auto p-0 text-cyan-700 hover:text-red-500'
+                      className='ml-1 h-auto p-0 text-[#1E40AF] hover:text-red-500'
                     >
                       <X className='w-2.5 h-2.5' />
                     </Button>

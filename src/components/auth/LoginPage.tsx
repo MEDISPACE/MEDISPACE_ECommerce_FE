@@ -114,9 +114,9 @@ export function LoginPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className='text-blue-600 mb-2 text-center relative inline-block text-2xl md:text-2xl font-semibold'>
+        <h1 className='text-[#1E40AF] mb-2 text-center relative inline-block text-2xl md:text-2xl font-semibold'>
           Đăng nhập để tiếp tục mua sắm
-          <Sparkles className='inline-block ml-2 w-5 h-5 text-cyan-500 animate-pulse' />
+          <Sparkles className='inline-block ml-2 w-5 h-5 text-[#1E40AF] animate-pulse' />
         </h1>
         <p className='text-gray-500 text-base md:text-lg mt-2'>Chào mừng bạn quay trở lại!</p>
       </motion.div>
@@ -145,7 +145,7 @@ export function LoginPage() {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
         >
-          <Label htmlFor='email' className='text-blue-600 uppercase text-xs tracking-wide flex items-center gap-2'>
+          <Label htmlFor='email' className='text-[#1E40AF] uppercase text-xs tracking-wide flex items-center gap-2'>
             <Mail className='w-4 h-4' />
             EMAIL
           </Label>
@@ -163,7 +163,7 @@ export function LoginPage() {
               className={`pl-12 h-14 bg-white border-2 rounded-xl transition-all duration-200 ${
                 errors.email
                   ? 'border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-100'
-                  : 'border-blue-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 hover:border-blue-300'
+                  : 'border-[#BFDBFE] focus:border-[#1E40AF] focus:ring-4 focus:ring-blue-100 hover:border-[#BFDBFE]'
               }`}
               placeholder='Nhập email hoặc tên đăng nhập'
               disabled={isLoading}
@@ -188,7 +188,7 @@ export function LoginPage() {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.4, delay: 0.2 }}
         >
-          <Label htmlFor='password' className='text-blue-600 uppercase text-xs tracking-wide flex items-center gap-2'>
+          <Label htmlFor='password' className='text-[#1E40AF] uppercase text-xs tracking-wide flex items-center gap-2'>
             <Lock className='w-4 h-4' />
             MẬT KHẨU
           </Label>
@@ -206,7 +206,7 @@ export function LoginPage() {
               className={`pl-12 pr-12 h-14 bg-white border-2 rounded-xl transition-all duration-200 ${
                 errors.password
                   ? 'border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-100'
-                  : 'border-blue-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 hover:border-blue-300'
+                  : 'border-[#BFDBFE] focus:border-[#1E40AF] focus:ring-4 focus:ring-blue-100 hover:border-[#BFDBFE]'
               }`}
               placeholder='Nhập mật khẩu'
               disabled={isLoading}
@@ -214,7 +214,7 @@ export function LoginPage() {
             <button
               type='button'
               onClick={() => setShowPassword(!showPassword)}
-              className='absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600 transition-all duration-200 hover:scale-110'
+              className='absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#1E40AF] transition-all duration-200 hover:scale-110'
             >
               {showPassword ? <EyeOff className='w-5 h-5' /> : <Eye className='w-5 h-5' />}
             </button>
@@ -243,21 +243,21 @@ export function LoginPage() {
               id='rememberMe'
               checked={formData.rememberMe}
               onCheckedChange={(checked) => setFormData({ ...formData, rememberMe: checked as boolean })}
-              className='border-2 border-blue-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 transition-all duration-200'
+              className='border-2 border-[#BFDBFE] data-[state=checked]:bg-[#0A2463] data-[state=checked]:border-[#1E40AF] transition-all duration-200'
             />
             <Label
               htmlFor='rememberMe'
-              className='text-sm text-gray-700 cursor-pointer hover:text-blue-600 transition-colors'
+              className='text-sm text-gray-700 cursor-pointer hover:text-[#1E40AF] transition-colors'
             >
               Ghi nhớ đăng nhập
             </Label>
           </div>
           <Link
             to='/forgot-password'
-            className='text-sm text-blue-500 hover:text-blue-600 transition-all duration-200 relative group'
+            className='text-sm text-blue-500 hover:text-[#1E40AF] transition-all duration-200 relative group'
           >
             <span>Quên mật khẩu?</span>
-            <span className='absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300' />
+            <span className='absolute bottom-0 left-0 w-0 h-0.5 bg-[#0A2463] group-hover:w-full transition-all duration-300' />
           </Link>
         </motion.div>
 
@@ -269,7 +269,7 @@ export function LoginPage() {
         >
           <Button
             type='submit'
-            className='w-full bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-400 hover:from-blue-700 hover:via-blue-600 hover:to-cyan-500 text-white h-14 rounded-xl shadow-lg hover:shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 mt-8 uppercase tracking-wide relative overflow-hidden group'
+            className='w-full bg-gradient-to-r from-[#0A2463] via-[#1E40AF] to-[#3B82F6] hover:from-[#071A49] hover:via-[#0A2463] hover:to-[#1E40AF] text-white h-14 rounded-xl shadow-lg hover:shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 mt-8 uppercase tracking-wide relative overflow-hidden group'
             disabled={isLoading}
           >
             {/* Shimmer effect */}
@@ -314,7 +314,7 @@ export function LoginPage() {
         <Button
           type='button'
           variant='outline'
-          className='w-full h-14 bg-white border-2 border-gray-400 hover:bg-gray-50 hover:border-blue-500 hover:shadow-md rounded-xl transition-all duration-200 group'
+          className='w-full h-14 bg-white border-2 border-gray-400 hover:bg-gray-50 hover:border-[#1E40AF] hover:shadow-md rounded-xl transition-all duration-200 group'
           onClick={() => {
             window.location.href = googleOAuthUrl
           }}
@@ -352,10 +352,10 @@ export function LoginPage() {
         <span className='text-gray-600'>Chưa có tài khoản? </span>
         <Link
           to='/register'
-          className='text-blue-500 hover:text-blue-600 transition-all duration-200 relative group inline-block'
+          className='text-blue-500 hover:text-[#1E40AF] transition-all duration-200 relative group inline-block'
         >
           <span>Đăng ký ngay</span>
-          <span className='absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left' />
+          <span className='absolute bottom-0 left-0 w-full h-0.5 bg-[#0A2463] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left' />
         </Link>
       </motion.div>
     </PageTransition>

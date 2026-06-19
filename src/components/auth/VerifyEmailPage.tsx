@@ -37,7 +37,7 @@ export function VerifyEmailPage() {
       <div className='bg-white p-8 rounded-2xl shadow-xl max-w-md w-full text-center'>
         {status === 'loading' && (
           <div className='flex flex-col items-center'>
-            <Loader2 className='w-16 h-16 text-blue-600 animate-spin mb-4' />
+            <Loader2 className='w-16 h-16 text-[#1E40AF] animate-spin mb-4' />
             <h2 className='text-2xl font-bold text-gray-800 mb-2'>Đang xác thực...</h2>
             <p className='text-gray-600'>Vui lòng đợi trong giây lát.</p>
           </div>
@@ -54,7 +54,7 @@ export function VerifyEmailPage() {
             </p>
             <Button
               onClick={() => navigate('/login')}
-              className='w-full bg-blue-600 hover:bg-blue-700 text-white h-12 rounded-xl font-semibold'
+              className='w-full bg-[#0A2463] hover:bg-[#071A49] text-white h-12 rounded-xl font-semibold'
             >
               Đăng nhập ngay
             </Button>

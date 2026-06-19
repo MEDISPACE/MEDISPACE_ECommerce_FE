@@ -139,12 +139,12 @@ export function ManagementPageTemplate<T extends { id: string }>({
       <div className='flex items-center justify-between'>
         <div className='flex items-center gap-3'>
           {Icon && (
-            <div className='w-12 h-12 rounded-xl bg-gradient-to-r from-[#0066CC] to-[#4A90E2] flex items-center justify-center'>
+            <div className='w-12 h-12 rounded-xl bg-gradient-to-r from-[#0A2463] to-[#1E40AF] flex items-center justify-center'>
               <Icon className='w-6 h-6 text-white' />
             </div>
           )}
           <div>
-            <h1 className='text-3xl bg-gradient-to-r from-[#0066CC] to-[#4A90E2] bg-clip-text text-transparent'>
+            <h1 className='text-3xl bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text text-transparent'>
               {title}
             </h1>
             {description && <p className='text-gray-600 mt-1'>{description}</p>}
@@ -167,7 +167,7 @@ export function ManagementPageTemplate<T extends { id: string }>({
           {primaryAction && (
             <Button
               onClick={primaryAction.onClick}
-              className='bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8] gap-2'
+              className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] gap-2'
             >
               {primaryAction.icon && <primaryAction.icon className='w-4 h-4' />}
               {primaryAction.label}
@@ -189,7 +189,7 @@ export function ManagementPageTemplate<T extends { id: string }>({
       )}
 
       {/* Filters & Search */}
-      <Card className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
         <CardContent className='p-6'>
           <div className='flex flex-col md:flex-row gap-4'>
             {/* Search */}
@@ -201,7 +201,7 @@ export function ManagementPageTemplate<T extends { id: string }>({
                     placeholder={searchPlaceholder}
                     value={searchValue}
                     onChange={(e) => onSearchChange(e.target.value)}
-                    className='pl-10 border-2 border-blue-200 focus:border-blue-500'
+                    className='pl-10 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                   />
                 </div>
               </div>
@@ -215,7 +215,7 @@ export function ManagementPageTemplate<T extends { id: string }>({
                   value={filterValues?.[filter.key] || 'all'}
                   onValueChange={(value) => onFilterChange?.(filter.key, value)}
                 >
-                  <SelectTrigger className='w-full md:w-[200px] border-2 border-blue-200 focus:border-blue-500'>
+                  <SelectTrigger className='w-full md:w-[200px] border-2 border-[#BFDBFE] focus:border-[#1E40AF]'>
                     <SelectValue placeholder={filter.placeholder} />
                   </SelectTrigger>
                   <SelectContent>
@@ -231,7 +231,7 @@ export function ManagementPageTemplate<T extends { id: string }>({
 
           {/* Bulk Actions */}
           {bulkActions && selectedItems.length > 0 && (
-            <div className='mt-4 flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200'>
+            <div className='mt-4 flex items-center gap-2 p-3 bg-[#F0F6FF] rounded-lg border border-[#BFDBFE]'>
               <span className='text-sm text-gray-600'>Đã chọn {selectedItems.length} mục</span>
               {bulkActions.map((action, index) => (
                 <Button
@@ -254,12 +254,12 @@ export function ManagementPageTemplate<T extends { id: string }>({
       {beforeTable}
 
       {/* Data Table */}
-      <Card className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
         <CardContent className='p-0'>
           <div className='overflow-x-auto'>
             <Table>
               <TableHeader>
-                <TableRow className='bg-gradient-to-r from-blue-50 to-cyan-50'>
+                <TableRow className='bg-gradient-to-r from-[#F8FAFB] to-[#F0F6FF]'>
                   {selectable && (
                     <TableHead className='w-12'>
                       <input
@@ -291,7 +291,7 @@ export function ManagementPageTemplate<T extends { id: string }>({
                   <TableRow>
                     <TableCell colSpan={columns.length + (selectable ? 1 : 0)} className='text-center py-12'>
                       <div className='flex items-center justify-center gap-2'>
-                        <div className='w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin' />
+                        <div className='w-5 h-5 border-2 border-[#1E40AF] border-t-transparent rounded-full animate-spin' />
                         <span className='text-gray-600'>Đang tải...</span>
                       </div>
                     </TableCell>

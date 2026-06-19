@@ -156,7 +156,7 @@ export function PharmacistSettingsPage() {
   if (loading) {
     return (
       <div className='flex justify-center items-center min-h-screen'>
-        <Loader2 className='w-8 h-8 animate-spin text-blue-600' />
+        <Loader2 className='w-8 h-8 animate-spin text-[#1E40AF]' />
       </div>
     )
   }
@@ -172,13 +172,13 @@ export function PharmacistSettingsPage() {
   return (
     <div className='space-y-6'>
       {/* Header */}
-      <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
+      <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-6'>
         <div className='flex items-center gap-4'>
-          <div className='w-16 h-16 bg-gradient-to-br from-blue-600 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg'>
+          <div className='w-16 h-16 bg-gradient-to-br from-[#0A2463] to-[#1E40AF] rounded-xl flex items-center justify-center shadow-lg'>
             <User className='w-8 h-8 text-white' />
           </div>
           <div className='flex-1'>
-            <h1 className='text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent'>
+            <h1 className='text-2xl font-bold bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text text-transparent'>
               Cài đặt tài khoản
             </h1>
             <p className='text-gray-600 mt-1'>Quản lý thông tin cá nhân và bảo mật</p>
@@ -187,9 +187,9 @@ export function PharmacistSettingsPage() {
       </div>
 
       {/* Tabs */}
-      <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+      <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
         <Tabs defaultValue='personal' className='p-6'>
-          <TabsList className='grid w-full grid-cols-2 !bg-blue-50 p-1.5 rounded-lg h-auto'>
+          <TabsList className='grid w-full grid-cols-2 !bg-[#F0F6FF] p-1.5 rounded-lg h-auto'>
             <TabsTrigger
               value='personal'
               className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'
@@ -209,10 +209,10 @@ export function PharmacistSettingsPage() {
           {/* Personal Information */}
           <TabsContent value='personal' className='space-y-6 mt-6'>
             {/* Avatar Section */}
-            <div className='flex items-center gap-6 p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl'>
+            <div className='flex items-center gap-6 p-6 bg-gradient-to-r from-[#F8FAFB] to-[#F0F6FF] rounded-xl'>
               <Avatar className='w-24 h-24 border-4 border-white shadow-lg'>
                 <AvatarImage src={profile.avatar} />
-                <AvatarFallback className='bg-gradient-to-br from-blue-600 to-cyan-500 text-white text-2xl'>
+                <AvatarFallback className='bg-gradient-to-br from-[#0A2463] to-[#1E40AF] text-white text-2xl'>
                   {profile.firstName?.charAt(0) || 'P'}
                 </AvatarFallback>
               </Avatar>
@@ -236,7 +236,7 @@ export function PharmacistSettingsPage() {
                     id='firstName'
                     value={profile.firstName || ''}
                     onChange={(e) => setProfile({ ...profile, firstName: e.target.value })}
-                    className='border-2 border-blue-200 focus:border-blue-500'
+                    className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                     placeholder='Nhập tên'
                   />
                 </div>
@@ -247,7 +247,7 @@ export function PharmacistSettingsPage() {
                     id='lastName'
                     value={profile.lastName || ''}
                     onChange={(e) => setProfile({ ...profile, lastName: e.target.value })}
-                    className='border-2 border-blue-200 focus:border-blue-500'
+                    className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                     placeholder='Nhập họ'
                   />
                 </div>
@@ -262,7 +262,7 @@ export function PharmacistSettingsPage() {
                       id='phone'
                       value={profile.phoneNumber || ''}
                       onChange={(e) => setProfile({ ...profile, phoneNumber: e.target.value })}
-                      className='pl-10 border-2 border-blue-200 focus:border-blue-500'
+                      className='pl-10 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                       placeholder='Nhập số điện thoại'
                     />
                   </div>
@@ -290,7 +290,7 @@ export function PharmacistSettingsPage() {
                     id='lisenseNumber'
                     value={profile.lisenseNumber || ''}
                     onChange={(e) => setProfile({ ...profile, lisenseNumber: e.target.value })}
-                    className='border-2 border-blue-200 focus:border-blue-500'
+                    className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                     placeholder='Nhập số chứng chỉ'
                   />
                 </div>
@@ -309,7 +309,7 @@ export function PharmacistSettingsPage() {
                     type='date'
                     value={profile.dateOfBirth || ''}
                     onChange={(e) => setProfile({ ...profile, dateOfBirth: e.target.value })}
-                    className='border-2 border-blue-200 focus:border-blue-500'
+                    className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                   />
                 </div>
 
@@ -321,7 +321,7 @@ export function PharmacistSettingsPage() {
                     onChange={(e) =>
                       setProfile({ ...profile, gender: e.target.value ? Number(e.target.value) : undefined })
                     }
-                    className='w-full px-3 py-2 border-2 border-blue-200 rounded-md focus:border-blue-500'
+                    className='w-full px-3 py-2 border-2 border-[#BFDBFE] rounded-md focus:border-[#1E40AF]'
                   >
                     <option value=''>Chọn giới tính</option>
                     <option value='0'>Nam</option>
@@ -339,7 +339,7 @@ export function PharmacistSettingsPage() {
               <Button
                 onClick={handleSaveProfile}
                 disabled={saving}
-                className='bg-gradient-to-r from-blue-600 to-cyan-500 text-white'
+                className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white'
               >
                 {saving ? (
                   <>
@@ -358,9 +358,9 @@ export function PharmacistSettingsPage() {
 
           {/* Security Tab */}
           <TabsContent value='security' className='space-y-6 mt-6'>
-            <div className='p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl'>
+            <div className='p-6 bg-gradient-to-r from-[#F8FAFB] to-[#F0F6FF] rounded-xl'>
               <div className='flex items-center gap-3 mb-2'>
-                <Lock className='w-5 h-5 text-blue-600' />
+                <Lock className='w-5 h-5 text-[#1E40AF]' />
                 <h3 className='text-lg font-semibold text-gray-900'>Đổi mật khẩu</h3>
               </div>
               <p className='text-sm text-gray-600'>Cập nhật mật khẩu của bạn để đảm bảo an toàn cho tài khoản</p>
@@ -388,7 +388,7 @@ export function PharmacistSettingsPage() {
                     className={`pl-10 pr-10 border-2 ${
                       passwordErrors.oldPassword
                         ? 'border-red-500 focus:border-red-600'
-                        : 'border-blue-200 focus:border-blue-500'
+                        : 'border-[#BFDBFE] focus:border-[#1E40AF]'
                     }`}
                     placeholder='Nhập mật khẩu hiện tại'
                   />
@@ -426,7 +426,7 @@ export function PharmacistSettingsPage() {
                     className={`pl-10 pr-10 border-2 ${
                       passwordErrors.newPassword
                         ? 'border-red-500 focus:border-red-600'
-                        : 'border-blue-200 focus:border-blue-500'
+                        : 'border-[#BFDBFE] focus:border-[#1E40AF]'
                     }`}
                     placeholder='Nhập mật khẩu mới'
                   />
@@ -464,7 +464,7 @@ export function PharmacistSettingsPage() {
                     className={`pl-10 pr-10 border-2 ${
                       passwordErrors.confirmPassword
                         ? 'border-red-500 focus:border-red-600'
-                        : 'border-blue-200 focus:border-blue-500'
+                        : 'border-[#BFDBFE] focus:border-[#1E40AF]'
                     }`}
                     placeholder='Nhập lại mật khẩu mới'
                   />
@@ -493,7 +493,7 @@ export function PharmacistSettingsPage() {
               <Button
                 onClick={handleChangePassword}
                 disabled={saving}
-                className='bg-gradient-to-r from-blue-600 to-cyan-500 text-white'
+                className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white'
               >
                 {saving ? (
                   <>

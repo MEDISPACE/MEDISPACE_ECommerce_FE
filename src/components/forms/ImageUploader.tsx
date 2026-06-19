@@ -263,21 +263,21 @@ export function ImageUploader({
     <div className={`space-y-6 ${className}`}>
       {/* Upload Area */}
       {images.length === 0 && (
-        <Card className='border-2 border-dashed border-blue-200 bg-white hover:border-blue-300 transition-all duration-200'>
+        <Card className='border-2 border-dashed border-[#BFDBFE] bg-white hover:border-[#BFDBFE] transition-all duration-200'>
         <div
-          className={`p-8 text-center ${isDragging ? 'bg-blue-100/50' : ''}`}
+          className={`p-8 text-center ${isDragging ? 'bg-[#E8EDF5]/50' : ''}`}
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
         >
           <div className='flex justify-center mb-4'>
-            <div className='w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center'>
+            <div className='w-16 h-16 bg-[#E8EDF5] rounded-full flex items-center justify-center'>
               {isUploading ? (
-                <Loader2 className='w-8 h-8 text-blue-600 animate-spin' />
+                <Loader2 className='w-8 h-8 text-[#1E40AF] animate-spin' />
               ) : (
                 <div className='flex space-x-2'>
-                  <Camera className='w-6 h-6 text-blue-600' />
-                  <Upload className='w-6 h-6 text-blue-600' />
+                  <Camera className='w-6 h-6 text-[#1E40AF]' />
+                  <Upload className='w-6 h-6 text-[#1E40AF]' />
                 </div>
               )}
             </div>
@@ -287,7 +287,7 @@ export function ImageUploader({
             {isUploading ? 'Đang tải lên...' : 'Kéo thả ảnh vào đây hoặc click để chọn'}
           </h3>
 
-          <p className='text-blue-700 mb-4'>
+          <p className='text-[#0A2463] mb-4'>
             Hỗ trợ: JPG, PNG, PDF
             <br />
             Kích thước tối đa: {maxSize}MB mỗi file
@@ -298,7 +298,7 @@ export function ImageUploader({
           <div className='flex justify-center space-x-4'>
             <Button
               variant='outline'
-              className='border-blue-200 text-blue-700 hover:bg-blue-50'
+              className='border-[#BFDBFE] text-[#0A2463] hover:bg-[#F0F6FF]'
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading || images.length >= maxFiles}
             >
@@ -308,7 +308,7 @@ export function ImageUploader({
 
             <Button
               variant='outline'
-              className='border-blue-200 text-blue-700 hover:bg-blue-50'
+              className='border-[#BFDBFE] text-[#0A2463] hover:bg-[#F0F6FF]'
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading || images.length >= maxFiles}
             >
@@ -332,7 +332,7 @@ export function ImageUploader({
 
       {/* Image Preview */}
       {images.length > 0 && (
-        <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+        <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
           <div className='p-6'>
             <h3 className='mb-4 text-blue-900 flex items-center'>
               🖼️ ẢNH ĐÃ TẢI LÊN ({images.filter((img) => img.isUploaded).length}/{images.length})
@@ -402,7 +402,7 @@ export function ImageUploader({
               {/* Add more button as a grid item with drag & drop */}
               {images.length < maxFiles && (
                 <div
-                  className='relative aspect-square rounded-lg border-2 border-dashed border-blue-300 bg-blue-50/30 flex justify-center items-center cursor-pointer hover:bg-blue-50 transition-colors'
+                  className='relative aspect-square rounded-lg border-2 border-dashed border-[#BFDBFE] bg-[#F0F6FF]/30 flex justify-center items-center cursor-pointer hover:bg-[#F0F6FF] transition-colors'
                   onClick={() => fileInputRef.current?.click()}
                   onDrop={handleDrop}
                   onDragOver={handleDragOver}
@@ -410,7 +410,7 @@ export function ImageUploader({
                 >
                   <div className='text-center pointer-events-none'>
                     <Upload className='w-6 h-6 text-blue-500 mb-2 mx-auto' />
-                    <span className='block text-sm text-blue-700 font-medium'>Thêm ảnh</span>
+                    <span className='block text-sm text-[#0A2463] font-medium'>Thêm ảnh</span>
                     <span className='block text-xs text-blue-500'>
                       ({images.length}/{maxFiles})
                     </span>

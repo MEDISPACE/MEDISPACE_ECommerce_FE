@@ -69,6 +69,7 @@ vi.mock('lucide-react', () => ({
     MessageCircle: () => <span>💬</span>, X: () => <span>X</span>,
     Minimize2: () => null, Maximize2: () => null, ArrowLeft: () => null,
     Loader2: () => null, MessageSquarePlus: () => null,
+    Bot: () => null, Stethoscope: () => null,
 }))
 vi.mock('~/components/ui/avatar', () => ({
     Avatar: ({ children }: any) => <div>{children}</div>,

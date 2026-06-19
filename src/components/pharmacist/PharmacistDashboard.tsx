@@ -124,7 +124,7 @@ export function PharmacistDashboard() {
       case 'cancelled':
         return 'bg-red-100 text-red-700'
       case 'active':
-        return 'bg-blue-100 text-blue-700'
+        return 'bg-[#E8EDF5] text-[#0A2463]'
       case 'completed':
       case 'delivered':
         return 'bg-green-100 text-green-700'
@@ -178,7 +178,7 @@ export function PharmacistDashboard() {
     return (
       <div className='flex items-center justify-center min-h-screen'>
         <div className='text-center'>
-          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4'></div>
+          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-[#1E40AF] mx-auto mb-4'></div>
           <p className='text-gray-600'>Đang tải dữ liệu...</p>
         </div>
       </div>
@@ -229,7 +229,7 @@ export function PharmacistDashboard() {
         <h1
           className='text-3xl font-bold bg-clip-text text-transparent'
           style={{
-            backgroundImage: `linear-gradient(to right, #0066CC, #4A90E2)`,
+            backgroundImage: `linear-gradient(to right, #0A2463, #1E40AF)`,
           }}
         >
           Dashboard Tổng quan
@@ -238,28 +238,28 @@ export function PharmacistDashboard() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className='space-y-6'>
-        <TabsList className='grid w-full grid-cols-4 bg-white shadow-lg border-2 border-blue-100 rounded-lg p-1.5 gap-1 h-auto'>
+        <TabsList className='grid w-full grid-cols-4 bg-white shadow-lg border-2 border-[#E8EDF5] rounded-lg p-1.5 gap-1 h-auto'>
           <TabsTrigger
             value='overview'
-            className='border-0 outline-none focus-visible:ring-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-500 data-[state=active]:!text-white data-[state=active]:shadow-md text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all rounded-md font-medium py-2'
+            className='border-0 outline-none focus-visible:ring-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#0A2463] data-[state=active]:to-[#1E40AF] data-[state=active]:!text-white data-[state=active]:shadow-md text-gray-700 hover:text-[#1E40AF] hover:bg-[#F0F6FF] transition-all rounded-md font-medium py-2'
           >
             Tổng quan
           </TabsTrigger>
           <TabsTrigger
             value='prescriptions'
-            className='border-0 outline-none focus-visible:ring-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-500 data-[state=active]:!text-white data-[state=active]:shadow-md text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all rounded-md font-medium py-2'
+            className='border-0 outline-none focus-visible:ring-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#0A2463] data-[state=active]:to-[#1E40AF] data-[state=active]:!text-white data-[state=active]:shadow-md text-gray-700 hover:text-[#1E40AF] hover:bg-[#F0F6FF] transition-all rounded-md font-medium py-2'
           >
             Đơn thuốc
           </TabsTrigger>
           <TabsTrigger
             value='create-order'
-            className='border-0 outline-none focus-visible:ring-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-500 data-[state=active]:!text-white data-[state=active]:shadow-md text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all rounded-md font-medium py-2'
+            className='border-0 outline-none focus-visible:ring-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#0A2463] data-[state=active]:to-[#1E40AF] data-[state=active]:!text-white data-[state=active]:shadow-md text-gray-700 hover:text-[#1E40AF] hover:bg-[#F0F6FF] transition-all rounded-md font-medium py-2'
           >
             Tạo đơn hàng
           </TabsTrigger>
           <TabsTrigger
             value='reports'
-            className='border-0 outline-none focus-visible:ring-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-500 data-[state=active]:!text-white data-[state=active]:shadow-md text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all rounded-md font-medium py-2'
+            className='border-0 outline-none focus-visible:ring-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#0A2463] data-[state=active]:to-[#1E40AF] data-[state=active]:!text-white data-[state=active]:shadow-md text-gray-700 hover:text-[#1E40AF] hover:bg-[#F0F6FF] transition-all rounded-md font-medium py-2'
           >
             Báo cáo
           </TabsTrigger>
@@ -277,7 +277,7 @@ export function PharmacistDashboard() {
           {/* Recent Activities */}
           <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
             {/* Recent Prescriptions */}
-            <Card className='bg-white/80 backdrop-blur-lg shadow-lg border-2 border-blue-100'>
+            <Card className='bg-white/80 backdrop-blur-lg shadow-lg border-2 border-[#E8EDF5]'>
               <CardHeader>
                 <CardTitle className='text-blue-800 flex items-center justify-between'>
                   Đơn thuốc mới nhất
@@ -296,9 +296,9 @@ export function PharmacistDashboard() {
                     <div key={prescription._id} className='border border-gray-200 rounded-lg p-4'>
                       <div className='flex items-center justify-between mb-2'>
                         <div className='flex items-center gap-2'>
-                          <Avatar className='w-8 h-8 bg-blue-100'>
+                          <Avatar className='w-8 h-8 bg-[#E8EDF5]'>
                             <AvatarFallback>
-                              <Pill className='w-4 h-4 text-blue-600' />
+                              <Pill className='w-4 h-4 text-[#1E40AF]' />
                             </AvatarFallback>
                           </Avatar>
                           <div>
@@ -325,7 +325,7 @@ export function PharmacistDashboard() {
             </Card>
 
             {/* Recent Orders */}
-            <Card className='bg-white/80 backdrop-blur-lg shadow-lg border-2 border-blue-100'>
+            <Card className='bg-white/80 backdrop-blur-lg shadow-lg border-2 border-[#E8EDF5]'>
               <CardHeader>
                 <CardTitle className='text-blue-800 flex items-center justify-between'>
                   Đơn hàng mới nhất
@@ -391,7 +391,7 @@ export function PharmacistDashboard() {
 
         {/* Prescriptions Tab */}
         <TabsContent value='prescriptions'>
-          <Card className='bg-white/80 backdrop-blur-lg shadow-lg border-2 border-blue-100'>
+          <Card className='bg-white/80 backdrop-blur-lg shadow-lg border-2 border-[#E8EDF5]'>
             <CardHeader>
               <CardTitle className='text-blue-800 flex items-center justify-between'>
                 Quản lý đơn thuốc
@@ -412,9 +412,9 @@ export function PharmacistDashboard() {
                     <div key={prescription._id} className='border border-gray-200 rounded-lg p-6'>
                       <div className='flex items-start justify-between mb-4'>
                         <div className='flex items-center gap-4'>
-                          <Avatar className='bg-blue-100'>
+                          <Avatar className='bg-[#E8EDF5]'>
                             <AvatarFallback>
-                              <Pill className='w-5 h-5 text-blue-600' />
+                              <Pill className='w-5 h-5 text-[#1E40AF]' />
                             </AvatarFallback>
                           </Avatar>
                           <div>
@@ -450,7 +450,7 @@ export function PharmacistDashboard() {
                           <Button
                             size='sm'
                             onClick={() => handleCreateOrder(prescription._id)}
-                            className='bg-blue-600 hover:bg-blue-700 text-white'
+                            className='bg-[#0A2463] hover:bg-[#071A49] text-white'
                           >
                             <Plus className='w-4 h-4 mr-1' />
                             Tạo đơn hàng
@@ -467,7 +467,7 @@ export function PharmacistDashboard() {
 
         {/* Create Order Tab */}
         <TabsContent value='create-order'>
-          <Card className='bg-white/80 backdrop-blur-lg shadow-lg border-2 border-blue-100'>
+          <Card className='bg-white/80 backdrop-blur-lg shadow-lg border-2 border-[#E8EDF5]'>
             <CardHeader>
               <CardTitle className='text-blue-800 flex items-center gap-2'>
                 <Plus className='w-5 h-5' />
@@ -480,7 +480,7 @@ export function PharmacistDashboard() {
                 <h3 className='text-xl font-medium text-gray-900 mb-2'>Module tạo đơn hàng</h3>
                 <p className='text-gray-600 mb-6'>Tính năng này sẽ được triển khai trong phiên bản tiếp theo</p>
                 <Link to='/pharmacist/create-order'>
-                  <Button className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'>
+                  <Button className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'>
                     Đi đến trang tạo đơn hàng
                   </Button>
                 </Link>
@@ -491,7 +491,7 @@ export function PharmacistDashboard() {
 
         {/* Reports Tab */}
         <TabsContent value='reports'>
-          <Card className='bg-white/80 backdrop-blur-lg shadow-lg border-2 border-blue-100'>
+          <Card className='bg-white/80 backdrop-blur-lg shadow-lg border-2 border-[#E8EDF5]'>
             <CardHeader>
               <CardTitle className='text-blue-800'>Báo cáo & Thống kê</CardTitle>
             </CardHeader>
@@ -500,7 +500,7 @@ export function PharmacistDashboard() {
                 <BarChart3 className='w-16 h-16 text-blue-300 mx-auto mb-4' />
                 <h3 className='text-xl font-medium text-gray-900 mb-2'>Báo cáo chi tiết</h3>
                 <p className='text-gray-600 mb-6'>Thống kê doanh thu, đơn hàng và hiệu suất làm việc</p>
-                <Button className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'>
+                <Button className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'>
                   Xem báo cáo
                 </Button>
               </div>
