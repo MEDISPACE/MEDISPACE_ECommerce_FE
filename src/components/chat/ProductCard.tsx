@@ -22,6 +22,7 @@ export function ProductCard({ product, isOwnMessage }: ProductCardProps) {
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
+    if (product.requiresPrescription) return
     setIsAdding(true)
     try {
       await addToCart(
@@ -72,7 +73,7 @@ export function ProductCard({ product, isOwnMessage }: ProductCardProps) {
       <div className='px-2 pb-2.5 pt-1'>
         <Button
           size='sm'
-          disabled={isAdding}
+          disabled={isAdding || Boolean(product.requiresPrescription)}
           onClick={handleAddToCart}
           className={`w-full text-[10px] h-7 gap-1 font-semibold transition-all duration-200 active:scale-95 ${
             isOwnMessage

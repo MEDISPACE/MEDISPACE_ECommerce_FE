@@ -40,6 +40,8 @@ interface SocketCallbacks {
   onError?: (error: { message: string }) => void
   onMessageStreamStart?: (data: { conversationId: string }) => void
   onMessageStreamChunk?: (data: { conversationId: string; content: string }) => void
+  onMessageStreamDone?: (data: { conversationId: string }) => void
+  onMessageStreamError?: (data: { conversationId: string; message: string }) => void
 }
 
 interface SocketContextType {
@@ -250,6 +252,10 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     s.on('error', (err: { message: string }) => broadcast('onError', err))
     s.on('message:stream:start', (data: { conversationId: string }) => broadcast('onMessageStreamStart', data))
     s.on('message:stream:chunk', (data: { conversationId: string; content: string }) => broadcast('onMessageStreamChunk', data))
+    s.on('message:stream:done', (data: { conversationId: string }) => broadcast('onMessageStreamDone', data))
+    s.on('message:stream:error', (data: { conversationId: string; message: string }) =>
+      broadcast('onMessageStreamError', data),
+    )
   }, [refreshAndReconnect])
 
   const disconnect = useCallback(() => {
