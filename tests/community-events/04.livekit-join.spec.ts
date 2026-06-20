@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { users } from './fixtures/users'
 import { API_URL, APP_URL, pageForRole, testId } from './helpers/auth'
-import { joinEvent, registerForEvent, setupLiveRegisteredEvent, setupScheduledEvent, startEvent, endEvent } from './helpers/event'
+import { joinEvent, registerForEvent, setupScheduledEvent, startEvent, endEvent } from './helpers/event'
 
 async function mockLiveEventDetail(page: any, eventId = 'mock-event') {
   const event = {
@@ -16,7 +16,7 @@ async function mockLiveEventDetail(page: any, eventId = 'mock-event') {
     scheduledEndAt: new Date(Date.now() + 3600000).toISOString(),
     registrationCount: 1,
     capacity: 50,
-    viewerRegistration: { status: 'registered' },
+    viewerRegistration: null,
     room: { _id: 'mock-room', name: 'Mock room', slug: 'mock-room', visibility: 'public' },
   }
   await page.route(`**/community/video-events/${eventId}`, (route: any) => {
@@ -28,9 +28,10 @@ async function mockLiveEventDetail(page: any, eventId = 'mock-event') {
 }
 
 test.describe('Community Video Events - LiveKit join', () => {
-  test('registered user joins live event and receives backend token payload', async ({ request }) => {
+  test('authenticated user joins live event by link and receives backend token payload', async ({ request }) => {
     const { admin, registeredUser } = users()
-    const { event } = await setupLiveRegisteredEvent(request, admin, registeredUser)
+    const { event } = await setupScheduledEvent(request, admin)
+    await startEvent(request, admin, event._id)
     const payload = await joinEvent(request, registeredUser, event._id)
 
     expect(payload.provider).toBe('livekit')
@@ -54,12 +55,11 @@ test.describe('Community Video Events - LiveKit join', () => {
     await testId(page, 'medical-disclaimer-checkbox').check()
     await testId(page, 'join-event-btn').click()
     await expect(testId(page, 'video-room')).toBeVisible()
-    await expect(testId(page, 'mic-toggle-btn')).toBeVisible()
-    await expect(testId(page, 'camera-toggle-btn')).toBeVisible()
+    await expect(page.locator('.lk-chat-toggle')).toHaveCount(0)
     await context.close()
   })
 
-  test('unregistered user, non-live event, ended event, and unauthenticated user are blocked', async ({ request }) => {
+  test('non-live event, ended event, and unauthenticated user are blocked', async ({ request }) => {
     const { admin, registeredUser, host } = users()
     const scheduled = await setupScheduledEvent(request, admin)
     await registerForEvent(request, registeredUser, scheduled.event._id)
@@ -68,7 +68,7 @@ test.describe('Community Video Events - LiveKit join', () => {
 
     const live = await setupScheduledEvent(request, admin)
     await startEvent(request, admin, live.event._id)
-    await joinEvent(request, host, live.event._id, 403)
+    await joinEvent(request, host, live.event._id)
 
     const ended = await setupScheduledEvent(request, admin)
     await registerForEvent(request, registeredUser, ended.event._id)
@@ -80,7 +80,7 @@ test.describe('Community Video Events - LiveKit join', () => {
     expect(unauthenticated.status()).toBe(401)
   })
 
-  test('leave exits video room and returns to event detail page', async ({ browser }) => {
+  test('meeting renders one MediSpace chat panel and no LiveKit chat panel', async ({ browser }) => {
     const { context, page } = await pageForRole(browser, 'registeredUser')
     await mockLiveEventDetail(page)
     await page.route('**/community/video-events/*/join', (route) => route.fulfill({ status: 200, body: JSON.stringify({ data: { token: 'mock', wsUrl: 'wss://mock', provider: 'livekit', role: 'attendee', expiresAt: new Date().toISOString() } }) }))
@@ -88,8 +88,8 @@ test.describe('Community Video Events - LiveKit join', () => {
     await testId(page, 'medical-disclaimer-checkbox').check()
     await testId(page, 'join-event-btn').click()
     await expect(testId(page, 'video-room')).toBeVisible()
-    await page.evaluate(() => (document.querySelector('[data-testid="leave-event-btn"]') as HTMLButtonElement | null)?.click())
-    await expect(testId(page, 'event-detail-page')).toBeVisible()
+    await expect(page.getByText('Chat cuộc họp')).toBeVisible()
+    await expect(page.locator('.lk-chat')).toHaveCount(0)
     await context.close()
   })
 })
