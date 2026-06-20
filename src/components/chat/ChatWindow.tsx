@@ -61,6 +61,8 @@ export function ChatWindow({
   const [typingUserId, setTypingUserId] = useState<string | null>(null)
   const [isAiTyping, setIsAiTyping] = useState(false)
   const [streamingMessageText, setStreamingMessageText] = useState<string>('')
+  const [streamError, setStreamError] = useState<string | null>(null)
+  const lastAiMessageRef = useRef<{ content: string; imageUrl?: string; productRef?: import('~/types/chat').ProductRef } | null>(null)
   const [isClosed, setIsClosed] = useState(conversation.status === 'closed')
   // FIX: dùng useRef thay useState cho timeout
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -97,6 +99,7 @@ export function ChatWindow({
         if (message.isAI || message.senderRole === 'pharmacist') {
           setIsAiTyping(false)
           setStreamingMessageText('')
+          setStreamError(null)
           if (aiTypingTimeoutRef.current) {
             clearTimeout(aiTypingTimeoutRef.current)
             aiTypingTimeoutRef.current = null
@@ -114,11 +117,33 @@ export function ChatWindow({
         if (data.conversationId !== conversationIdRef.current) return
         setIsAiTyping(true)
         setStreamingMessageText('')
+        setStreamError(null)
       },
       onMessageStreamChunk: (data) => {
         if (data.conversationId !== conversationIdRef.current) return
         setIsAiTyping(true)
+        setStreamError(null)
         setStreamingMessageText((prev) => prev + data.content)
+      },
+      onMessageStreamDone: (data) => {
+        if (data.conversationId !== conversationIdRef.current) return
+        setIsAiTyping(false)
+        setStreamingMessageText('')
+        setStreamError(null)
+        if (aiTypingTimeoutRef.current) {
+          clearTimeout(aiTypingTimeoutRef.current)
+          aiTypingTimeoutRef.current = null
+        }
+      },
+      onMessageStreamError: (data) => {
+        if (data.conversationId !== conversationIdRef.current) return
+        setIsAiTyping(false)
+        setStreamingMessageText('')
+        setStreamError(data.message || 'Phản hồi AI bị gián đoạn')
+        if (aiTypingTimeoutRef.current) {
+          clearTimeout(aiTypingTimeoutRef.current)
+          aiTypingTimeoutRef.current = null
+        }
       },
       onUserTyping: (data) => {
         if (data.conversationId !== conversationIdRef.current || data.userId === currentUserId) return
@@ -186,6 +211,8 @@ export function ChatWindow({
   ) => {
     try {
       if (aiMode && currentUserRole === 'customer') {
+        lastAiMessageRef.current = { content, imageUrl, productRef }
+        setStreamError(null)
         setIsAiTyping(true)
         if (aiTypingTimeoutRef.current) clearTimeout(aiTypingTimeoutRef.current)
         aiTypingTimeoutRef.current = setTimeout(() => {
@@ -230,6 +257,13 @@ export function ChatWindow({
     }
   }
 
+  const handleRetryStream = useCallback(() => {
+    const last = lastAiMessageRef.current
+    if (!last) return
+    setStreamError(null)
+    handleSendMessage(last.content, last.imageUrl, last.productRef)
+  }, [conversation._id, isConnected, aiMode, currentUserRole])
+
   const handleTyping = () => isConnected && startTyping(conversation._id)
   const handleStopTyping = () => isConnected && stopTyping(conversation._id)
 
@@ -248,6 +282,7 @@ export function ChatWindow({
     setHasMore(false)
     setIsClosed(conversation.status === 'closed')
     setIsAiTyping(false)
+    setStreamError(null)
     if (aiTypingTimeoutRef.current) {
       clearTimeout(aiTypingTimeoutRef.current)
       aiTypingTimeoutRef.current = null
@@ -318,6 +353,8 @@ export function ChatWindow({
         typingUserId={typingUserId || undefined}
         isAiTyping={isAiTyping}
         streamingMessageText={streamingMessageText}
+        streamError={streamError || undefined}
+        onRetryStream={streamError ? handleRetryStream : undefined}
         onLoadMore={handleLoadMore}
         hasMore={hasMore}
         onRequestHuman={aiMode ? handleRequestHuman : undefined}

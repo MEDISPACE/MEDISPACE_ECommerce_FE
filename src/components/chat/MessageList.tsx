@@ -15,6 +15,8 @@ interface MessageListProps {
   typingUserId?: string
   isAiTyping?: boolean
   streamingMessageText?: string
+  streamError?: string
+  onRetryStream?: () => void
   onLoadMore?: () => void
   hasMore?: boolean
   onRequestHuman?: () => void
@@ -87,6 +89,8 @@ export function MessageList({
   typingUserId,
   isAiTyping,
   streamingMessageText,
+  streamError,
+  onRetryStream,
   onLoadMore,
   hasMore,
   onRequestHuman,
@@ -101,7 +105,7 @@ export function MessageList({
   // Auto-scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  }, [messages, streamingMessageText])
 
   const formatMessageTime = (timestamp: string) => {
     const date = new Date(timestamp)
@@ -253,7 +257,7 @@ export function MessageList({
               <div className='flex flex-col mb-2'>
                 <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-1`}>
                   {/* Message bubble */}
-                  <div className={`flex flex-col ${isOwnMessage ? 'items-end' : 'items-start'} max-w-[75%]`}>
+                  <div className={`flex flex-col ${isOwnMessage ? 'items-end' : 'items-start'} max-w-[75%] min-w-0`}>
                     
                     {/* AI Badge */}
                     {!isOwnMessage && message.isAI && (
@@ -430,7 +434,7 @@ export function MessageList({
           <div className='relative flex items-center justify-center w-8 h-8 bg-[#0A2463] text-white rounded-full flex-shrink-0 shadow-sm'>
             <Bot className='w-4 h-4' />
           </div>
-          <div className='bg-[#F0F6FF] border border-[#BFDBFE] rounded-2xl px-4 py-2.5 shadow-sm max-w-[85%]'>
+          <div className='bg-[#F0F6FF] border border-[#BFDBFE] rounded-2xl px-4 py-2.5 shadow-sm max-w-[85%] min-w-0 break-words'>
             {streamingMessageText ? (
               <div className='py-0.5'>
                 <MarkdownMessage
@@ -447,6 +451,26 @@ export function MessageList({
                   <span className='w-1.5 h-1.5 bg-[#1E40AF] rounded-full animate-bounce' style={{ animationDelay: '300ms' }} />
                 </div>
               </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {streamError && (
+        <div className='flex items-start gap-2'>
+          <div className='relative flex items-center justify-center w-8 h-8 bg-red-50 text-red-600 rounded-full flex-shrink-0 border border-red-100'>
+            <AlertTriangle className='w-4 h-4' />
+          </div>
+          <div className='bg-white border border-red-100 rounded-2xl px-4 py-2.5 shadow-sm max-w-[85%] min-w-0'>
+            <p className='text-xs text-red-600 break-words'>{streamError}</p>
+            {onRetryStream && (
+              <button
+                type='button'
+                onClick={onRetryStream}
+                className='mt-2 text-xs font-semibold text-[#1E40AF] hover:text-[#0A2463] underline'
+              >
+                Thá»­ láº¡i
+              </button>
             )}
           </div>
         </div>
