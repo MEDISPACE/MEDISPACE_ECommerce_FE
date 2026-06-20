@@ -56,7 +56,7 @@ export function PasswordInput({
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           name={name}
-          className={`pr-10 h-12 border-2 transition-all ${error ? 'border-red-300 focus:border-red-500' : 'border-blue-200 focus:border-blue-500'} ${className}`}
+          className={`pr-10 h-12 border-2 transition-all ${error ? 'border-red-300 focus:border-red-500' : 'border-[#BFDBFE] focus:border-[#1E40AF]'} ${className}`}
         />
         <Button
           type='button'

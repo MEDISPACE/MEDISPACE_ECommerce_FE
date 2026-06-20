@@ -145,7 +145,7 @@ export default function ReturnRequestDetail() {
 
       {/* Status Timeline */}
       {currentStatusIndex >= 0 && (
-        <Card className='border-blue-100'>
+        <Card className='border-[#E8EDF5]'>
           <CardHeader>
             <CardTitle className='flex items-center gap-2 text-blue-800'>
               <Clock className='h-5 w-5' />
@@ -161,7 +161,7 @@ export default function ReturnRequestDetail() {
                 style={{ marginLeft: '7%', marginRight: '7%' }}
               />
               <div
-                className='absolute top-5 left-0 h-0.5 bg-blue-500 transition-all duration-500'
+                className='absolute top-5 left-0 h-0.5 bg-[#1E40AF] transition-all duration-500'
                 style={{
                   marginLeft: '7%',
                   width: `${Math.min(currentStatusIndex, statusOrder.length - 1) * (86 / (statusOrder.length - 1))}%`,
@@ -180,9 +180,9 @@ export default function ReturnRequestDetail() {
                       <div
                         className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${
                           isCompleted
-                            ? 'bg-blue-500 border-blue-500 text-white'
+                            ? 'bg-[#1E40AF] border-[#1E40AF] text-white'
                             : isCurrent
-                              ? 'bg-blue-500 border-blue-500 text-white ring-4 ring-blue-100'
+                              ? 'bg-[#1E40AF] border-[#1E40AF] text-white ring-4 ring-blue-100'
                               : 'bg-white border-gray-300 text-gray-400'
                         }`}
                       >
@@ -194,7 +194,7 @@ export default function ReturnRequestDetail() {
                       </div>
                       <span
                         className={`text-xs mt-2 text-center max-w-[80px] leading-tight ${
-                          isActive ? 'font-medium text-blue-700' : 'text-gray-500'
+                          isActive ? 'font-medium text-[#0A2463]' : 'text-gray-500'
                         }`}
                       >
                         {returnStatusLabels[status]}
@@ -229,7 +229,7 @@ export default function ReturnRequestDetail() {
 
       {/* Action buttons */}
       {(canCancel || canAddShipping) && (
-        <Card className='border-blue-100'>
+        <Card className='border-[#E8EDF5]'>
           <CardContent className='pt-6'>
             <div className='flex gap-3'>
               {canCancel && (
@@ -255,7 +255,7 @@ export default function ReturnRequestDetail() {
       )}
 
       {/* Items */}
-      <Card className='border-blue-100'>
+      <Card className='border-[#E8EDF5]'>
         <CardHeader>
           <CardTitle className='flex items-center gap-2 text-blue-800'>
             <Package className='h-5 w-5' />
@@ -265,9 +265,9 @@ export default function ReturnRequestDetail() {
         <CardContent>
           <div className='space-y-4'>
             {request.items.map((item, index) => (
-              <div key={index} className='flex gap-4 p-4 border border-blue-100 rounded-lg bg-blue-50/30'>
+              <div key={index} className='flex gap-4 p-4 border border-[#E8EDF5] rounded-lg bg-[#F0F6FF]/30'>
                 {/* Product Image */}
-                <div className='w-20 h-20 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden'>
+                <div className='w-20 h-20 bg-[#E8EDF5] rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden'>
                   {item.productImage ? (
                     <img src={item.productImage} alt={item.productName} className='w-full h-full object-cover' />
                   ) : (
@@ -280,12 +280,12 @@ export default function ReturnRequestDetail() {
                     SKU: {item.sku} | Đơn vị: {item.unit} | Số lượng: {item.quantity}
                   </p>
                   <p className='text-sm'>
-                    Giá: <span className='text-blue-600'>{(item.unitPrice ?? 0).toLocaleString()}đ</span> ×{' '}
+                    Giá: <span className='text-[#1E40AF]'>{(item.unitPrice ?? 0).toLocaleString()}đ</span> ×{' '}
                     {item.quantity} ={' '}
-                    <span className='font-medium text-blue-600'>{(item.totalPrice ?? 0).toLocaleString()}đ</span>
+                    <span className='font-medium text-[#1E40AF]'>{(item.totalPrice ?? 0).toLocaleString()}đ</span>
                   </p>
                   {((item.discountAllocation || 0) > 0 || (item.pointsAllocation || 0) > 0 || item.netRefundAmount !== undefined) && (
-                    <div className='mt-2 rounded-lg bg-white border border-blue-100 p-3 text-sm space-y-1'>
+                    <div className='mt-2 rounded-lg bg-white border border-[#E8EDF5] p-3 text-sm space-y-1'>
                       {(item.discountAllocation || 0) > 0 && (
                         <div className='flex justify-between text-green-700'>
                           <span>Coupon đã dùng</span>
@@ -293,15 +293,15 @@ export default function ReturnRequestDetail() {
                         </div>
                       )}
                       {(item.pointsAllocation || 0) > 0 && (
-                        <div className='flex justify-between text-purple-700'>
+                        <div className='flex justify-between text-[#1E40AF]'>
                           <span>Điểm đã đổi</span>
                           <span>-{(item.pointsAllocation || 0).toLocaleString()}đ</span>
                         </div>
                       )}
                       {item.netRefundAmount !== undefined && (
-                        <div className='flex justify-between font-semibold pt-1 border-t border-blue-100'>
+                        <div className='flex justify-between font-semibold pt-1 border-t border-[#E8EDF5]'>
                           <span>Hoàn thực nhận cho sản phẩm</span>
-                          <span className='text-blue-600'>{(item.netRefundAmount || 0).toLocaleString()}đ</span>
+                          <span className='text-[#1E40AF]'>{(item.netRefundAmount || 0).toLocaleString()}đ</span>
                         </div>
                       )}
                     </div>
@@ -323,7 +323,7 @@ export default function ReturnRequestDetail() {
       </Card>
 
       {/* Request details */}
-      <Card className='border-blue-100'>
+      <Card className='border-[#E8EDF5]'>
         <CardHeader>
           <CardTitle className='flex items-center gap-2 text-blue-800'>
             <FileText className='h-5 w-5' />
@@ -375,7 +375,7 @@ export default function ReturnRequestDetail() {
           {request.reviewNotes && (
             <div>
               <p className='text-sm text-muted-foreground mb-1'>Ghi chú xử lý</p>
-              <p className='p-3 bg-blue-50 text-blue-800 rounded-lg'>{request.reviewNotes}</p>
+              <p className='p-3 bg-[#F0F6FF] text-blue-800 rounded-lg'>{request.reviewNotes}</p>
             </div>
           )}
         </CardContent>
@@ -383,7 +383,7 @@ export default function ReturnRequestDetail() {
 
       {/* Shipping info */}
       {request.returnShippingInfo && (
-        <Card className='border-blue-100'>
+        <Card className='border-[#E8EDF5]'>
           <CardHeader>
             <CardTitle className='flex items-center gap-2 text-blue-800'>
               <Truck className='h-5 w-5' />
@@ -440,7 +440,7 @@ export default function ReturnRequestDetail() {
       )}
 
       {/* Refund summary */}
-      <Card className='border-blue-100'>
+      <Card className='border-[#E8EDF5]'>
         <CardHeader>
           <CardTitle className='flex items-center gap-2 text-blue-800'>
             <CreditCard className='h-5 w-5' />
@@ -456,11 +456,11 @@ export default function ReturnRequestDetail() {
             {request.approvedAmount !== undefined && (
               <div className='flex justify-between'>
                 <span className='text-muted-foreground'>Số tiền được duyệt</span>
-                <span className='font-medium text-blue-600'>{(request.approvedAmount ?? 0).toLocaleString()}đ</span>
+                <span className='font-medium text-[#1E40AF]'>{(request.approvedAmount ?? 0).toLocaleString()}đ</span>
               </div>
             )}
             {request.refundedAmount !== undefined && (
-              <div className='flex justify-between pt-2 border-t border-blue-200'>
+              <div className='flex justify-between pt-2 border-t border-[#BFDBFE]'>
                 <span className='font-medium'>Đã hoàn tiền</span>
                 <span className='font-bold text-green-600'>{(request.refundedAmount ?? 0).toLocaleString()}đ</span>
               </div>

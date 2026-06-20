@@ -199,7 +199,7 @@ export function WriteReviewDialog({
             <Button
               type='submit'
               disabled={loading}
-              className='bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8] text-white'
+              className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'
             >
               {loading && <Loader2 className='w-4 h-4 mr-2 animate-spin' />}
               {existingReview ? 'Cập nhật' : 'Gửi đánh giá'}

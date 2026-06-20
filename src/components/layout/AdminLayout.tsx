@@ -213,7 +213,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   if (loading || !isAuthenticated || !isAdmin) {
     return (
       <div className='flex h-screen items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-100'>
-        <div className='h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent' />
+        <div className='h-10 w-10 animate-spin rounded-full border-4 border-[#1E40AF] border-t-transparent' />
       </div>
     )
   }
@@ -231,14 +231,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const SidebarContent = () => (
     <div className='flex flex-col h-full'>
       {/* Logo Section */}
-      <div className='p-6 border-b border-blue-100 flex-shrink-0'>
+      <div className='p-6 border-b border-[#E8EDF5] flex-shrink-0'>
         <Link to='/admin/dashboard' className='flex items-center gap-3'>
           <div className='w-10 h-10 rounded-lg flex items-center justify-center shadow-lg'>
             <img src={faviconLogo} alt='MEDISPACE' className='w-8 h-8' />
           </div>
           <div className='flex-1'>
             <h2 className='font-semibold text-gray-900'>MEDISPACE</h2>
-            <p className='text-xs text-[#0066CC]'>Admin Panel</p>
+            <p className='text-xs text-[#0A2463]'>Admin Panel</p>
           </div>
         </Link>
       </div>
@@ -272,11 +272,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative ${
                     isActive
-                      ? 'bg-gradient-to-r from-[#0066CC] to-[#4A90E2] text-white shadow-lg shadow-blue-500/30'
-                      : 'text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 hover:text-[#0066CC]'
+                      ? 'bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white shadow-lg shadow-blue-500/30'
+                      : 'text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 hover:text-[#0A2463]'
                   }`}
                 >
-                  <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-500 group-hover:text-[#0066CC]'}`} />
+                  <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-500 group-hover:text-[#0A2463]'}`} />
                   <span className='flex-1 text-sm font-medium'>{item.label}</span>
                   {badge && (
                     <Badge
@@ -285,7 +285,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                           ? 'bg-red-500'
                           : badgeVariant === 'warning'
                             ? 'bg-yellow-500'
-                            : 'bg-blue-500'
+                            : 'bg-[#1E40AF]'
                       } text-white`}
                     >
                       {badge}
@@ -306,18 +306,18 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       </div>
 
       {/* Quick Stats - Fixed at bottom */}
-      <div className='px-6 py-4 border-t border-blue-100 bg-gradient-to-br from-blue-50 to-blue-100 flex-shrink-0'>
+      <div className='px-6 py-4 border-t border-[#E8EDF5] bg-gradient-to-br from-blue-50 to-blue-100 flex-shrink-0'>
         <p className='text-xs text-gray-600 mb-3'>Hệ thống</p>
         <div className='grid grid-cols-2 gap-3'>
           <div className='text-center p-2 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm'>
             <p className='text-xs text-gray-600'>Users</p>
-            <p className='text-lg font-semibold text-[#0066CC]'>
+            <p className='text-lg font-semibold text-[#0A2463]'>
               {dashboardStats?.users.total.toLocaleString() || '...'}
             </p>
           </div>
           <div className='text-center p-2 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm'>
             <p className='text-xs text-gray-600'>Orders</p>
-            <p className='text-lg font-semibold text-[#4A90E2]'>
+            <p className='text-lg font-semibold text-[#1E40AF]'>
               {dashboardStats?.orders.todayCount.toLocaleString() || '...'}
             </p>
           </div>
@@ -325,23 +325,23 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       </div>
 
       {/* User Profile Section - Fixed at bottom */}
-      <div className='p-4 border-t border-blue-100 flex-shrink-0'>
+      <div className='p-4 border-t border-[#E8EDF5] flex-shrink-0'>
         <div className='flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg'>
-          <Avatar className='w-10 h-10 border-2 border-[#0066CC]'>
+          <Avatar className='w-10 h-10 border-2 border-[#0A2463]'>
             <AvatarImage src={user?.avatar} />
-            <AvatarFallback className='bg-[#0066CC] text-white'>{getUserInitials(user) || 'A'}</AvatarFallback>
+            <AvatarFallback className='bg-[#0A2463] text-white'>{getUserInitials(user) || 'A'}</AvatarFallback>
           </Avatar>
           <div className='flex-1 min-w-0'>
             <p className='text-sm font-medium text-gray-900 truncate'>{getFullName(user) || 'Admin User'}</p>
-            <p className='text-xs text-[#0066CC]'>Administrator</p>
+            <p className='text-xs text-[#0A2463]'>Administrator</p>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant='ghost' size='sm' className='text-gray-600 hover:text-[#0066CC]'>
+              <Button variant='ghost' size='sm' className='text-gray-600 hover:text-[#0A2463]'>
                 <ChevronDown className='w-4 h-4' />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align='end' className='w-48 z-50 bg-white shadow-lg border border-blue-100'>
+            <DropdownMenuContent align='end' className='w-48 z-50 bg-white shadow-lg border border-[#E8EDF5]'>
               <DropdownMenuLabel>Tài khoản</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => navigate('/admin/settings')}>
@@ -374,7 +374,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -280, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className='hidden lg:flex w-72 bg-white/95 backdrop-blur-lg flex-col shadow-xl border-r border-blue-100'
+            className='hidden lg:flex w-72 bg-white/95 backdrop-blur-lg flex-col shadow-xl border-r border-[#E8EDF5]'
           >
             <SidebarContent />
           </motion.aside>
@@ -383,7 +383,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
       {/* Mobile Sidebar */}
       <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-        <SheetContent side='left' className='w-72 p-0 bg-white border-blue-100'>
+        <SheetContent side='left' className='w-72 p-0 bg-white border-[#E8EDF5]'>
           <SidebarContent />
         </SheetContent>
       </Sheet>
@@ -391,14 +391,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       {/* Main Content Area */}
       <div className='flex-1 flex flex-col overflow-hidden'>
         {/* Top Header */}
-        <header className='relative z-50 h-16 bg-white/80 backdrop-blur-lg border-b border-blue-100 flex items-center justify-between px-6 shadow-sm'>
+        <header className='relative z-50 h-16 bg-white/80 backdrop-blur-lg border-b border-[#E8EDF5] flex items-center justify-between px-6 shadow-sm'>
           <div className='flex items-center gap-4'>
             {/* Toggle Sidebar Button */}
             <Button
               variant='ghost'
               size='sm'
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className='hidden lg:flex text-gray-600 hover:text-[#0066CC]'
+              className='hidden lg:flex text-gray-600 hover:text-[#0A2463]'
             >
               {sidebarOpen ? <X className='w-5 h-5' /> : <Menu className='w-5 h-5' />}
             </Button>
@@ -408,14 +408,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               variant='ghost'
               size='sm'
               onClick={() => setMobileMenuOpen(true)}
-              className='lg:hidden text-gray-600 hover:text-[#0066CC]'
+              className='lg:hidden text-gray-600 hover:text-[#0A2463]'
             >
               <Menu className='w-5 h-5' />
             </Button>
 
             {/* Search Bar */}
-            <div className='hidden md:flex items-center gap-2 bg-blue-50 rounded-lg px-4 py-2 w-80 border border-blue-200'>
-              <Search className='w-4 h-4 text-[#4A90E2]' />
+            <div className='hidden md:flex items-center gap-2 bg-[#F0F6FF] rounded-lg px-4 py-2 w-80 border border-[#BFDBFE]'>
+              <Search className='w-4 h-4 text-[#1E40AF]' />
               <Input
                 type='search'
                 placeholder='Tìm kiếm...'
@@ -427,20 +427,20 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           <div className='flex items-center gap-4'>
             {/* Quick Stats (Desktop) */}
             <div className='hidden xl:flex items-center gap-4 mr-4'>
-              <div className='flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg'>
-                <TrendingUp className='w-4 h-4 text-[#0066CC]' />
+              <div className='flex items-center gap-2 px-3 py-1.5 bg-[#F0F6FF] rounded-lg'>
+                <TrendingUp className='w-4 h-4 text-[#0A2463]' />
                 <div>
                   <p className='text-xs text-gray-600'>Doanh thu</p>
-                  <p className='text-sm font-semibold text-[#0066CC]'>
+                  <p className='text-sm font-semibold text-[#0A2463]'>
                     {dashboardStats?.revenue.month ? `₫${(dashboardStats.revenue.month / 1000000).toFixed(1)}M` : '...'}
                   </p>
                 </div>
               </div>
-              <div className='flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg'>
-                <ShoppingCart className='w-4 h-4 text-[#4A90E2]' />
+              <div className='flex items-center gap-2 px-3 py-1.5 bg-[#F0F6FF] rounded-lg'>
+                <ShoppingCart className='w-4 h-4 text-[#1E40AF]' />
                 <div>
                   <p className='text-xs text-gray-600'>Đơn hàng</p>
-                  <p className='text-sm font-semibold text-[#4A90E2]'>
+                  <p className='text-sm font-semibold text-[#1E40AF]'>
                     {dashboardStats?.orders.todayCount.toLocaleString() || '...'}
                   </p>
                 </div>
@@ -456,13 +456,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   <Button variant='ghost' size='sm'>
                     <Avatar className='w-8 h-8'>
                       <AvatarImage src={user?.avatar} />
-                      <AvatarFallback className='bg-[#0066CC] text-white text-xs'>
+                      <AvatarFallback className='bg-[#0A2463] text-white text-xs'>
                         {getUserInitials(user) || 'A'}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align='end' className='w-48 z-50 bg-white shadow-lg border border-blue-100'>
+                <DropdownMenuContent align='end' className='w-48 z-50 bg-white shadow-lg border border-[#E8EDF5]'>
                   <DropdownMenuLabel>
                     <div className='flex flex-col'>
                       <span className='text-sm font-medium'>{getFullName(user) || 'Admin User'}</span>
@@ -496,7 +496,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           <div className='p-6'>
             {/* Admin Badge */}
             {/* <div className='mb-6'>
-              <Badge className='bg-gradient-to-r from-purple-600 to-pink-600 text-white px-3 py-1 shadow-lg'>
+              <Badge className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white px-3 py-1 shadow-lg'>
                 <Shield className='w-3 h-3 mr-1' />
                 Administrator Access
               </Badge>

@@ -50,7 +50,7 @@ export function PhoneInput({
         onChange={handleChange}
         placeholder={placeholder}
         name={name}
-        className={`h-11 border-2 transition-all ${error || !isValid ? 'border-red-300 focus:border-red-500' : 'border-blue-200 focus:border-blue-500'} ${className}`}
+        className={`h-11 border-2 transition-all ${error || !isValid ? 'border-red-300 focus:border-red-500' : 'border-[#BFDBFE] focus:border-[#1E40AF]'} ${className}`}
       />
       {error && <p className='text-red-500 text-sm mt-1'>{error}</p>}
       {!isValid && value && !error && (

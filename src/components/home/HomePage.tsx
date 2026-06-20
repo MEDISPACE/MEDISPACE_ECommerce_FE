@@ -15,11 +15,11 @@ import {
   HeartPulse,
   Leaf,
   MessageCircle,
+  MonitorCheck,
   Pill,
   RefreshCw,
   Search,
   Shield,
-  Stethoscope,
   Thermometer,
   Truck,
   Upload,
@@ -40,8 +40,22 @@ const categoryIcons = {
   thuoc: Pill,
   'thuc-pham-chuc-nang': Leaf,
   'cham-soc-ca-nhan': User,
-  'thiet-bi-y-te': Stethoscope,
+  'thiet-bi-y-te': MonitorCheck,
   'duoc-my-pham': Droplets,
+}
+
+const getCategoryIcon = (category: { slug?: string; name?: string }) => {
+  const slug = category.slug?.toLowerCase() ?? ''
+  const normalizedName = category.name
+    ?.normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase() ?? ''
+
+  if (slug.includes('thiet-bi') || normalizedName.includes('thiet bi y te')) {
+    return MonitorCheck
+  }
+
+  return categoryIcons[slug as keyof typeof categoryIcons] || Pill
 }
 
 const popularSearches = ['Paracetamol', 'Vitamin C', 'Omega 3', 'Cảm cúm']
@@ -136,7 +150,7 @@ export function HomePage() {
                 Nhà thuốc trực tuyến có phép hoạt động
               </div>
 
-              <h1 className='font-display text-4xl font-extrabold leading-[1.1] text-[#0A2463] md:text-5xl'>
+              <h1 className='font-display bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text py-1 text-4xl font-extrabold leading-[1.24] text-transparent md:text-5xl md:leading-[1.22]'>
                 Nhà thuốc trực tuyến đáng tin cậy cho gia đình Việt
               </h1>
 
@@ -239,7 +253,7 @@ export function HomePage() {
           <div className='mx-auto max-w-7xl px-4'>
             <div className='mb-5 flex items-end justify-between gap-4'>
               <div>
-                <h2 id='categories-heading' className='font-display text-2xl font-bold text-[#0A2463] md:text-3xl'>Danh mục sản phẩm</h2>
+                <h2 id='categories-heading' className='font-display bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text text-2xl font-bold text-transparent md:text-3xl'>Danh mục sản phẩm</h2>
                 <p className='mt-1 text-sm text-[#4B5E7A]'>Đi nhanh đến nhóm sản phẩm bạn cần.</p>
               </div>
               <Link to='/categories' className='hidden text-sm font-semibold text-[#1E40AF] hover:text-[#0A2463] sm:inline-flex'>Xem tất cả</Link>
@@ -262,7 +276,7 @@ export function HomePage() {
             ) : (
               <div className='flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
                 {realCategories.map((category) => {
-                  const Icon = categoryIcons[category.slug as keyof typeof categoryIcons] || Pill
+                  const Icon = getCategoryIcon(category)
                   return (
                     <Link key={category._id} to={`/categories/${category.slug}`} className='group min-w-28 text-center' aria-label={`Xem danh mục ${category.name}`}>
                       <div className='mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-[#E8EDF5] bg-[#F0F6FF] text-[#0A2463] transition group-hover:border-[#0A2463] group-hover:bg-white'>
@@ -283,7 +297,7 @@ export function HomePage() {
         <div className='mx-auto max-w-7xl px-4'>
           <div className='mb-7 flex flex-col justify-between gap-3 md:flex-row md:items-end'>
             <div>
-              <h2 id='health-needs-heading' className='font-display text-3xl font-bold text-[#0A2463]'>Mua theo nhu cầu sức khỏe</h2>
+              <h2 id='health-needs-heading' className='font-display bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text text-3xl font-bold text-transparent'>Mua theo nhu cầu sức khỏe</h2>
               <p className='mt-2 text-[#4B5E7A]'>Tìm sản phẩm phù hợp với tình trạng của bạn mà không cần nhớ tên thuốc.</p>
             </div>
             <Link to='/health-needs' className='inline-flex items-center text-sm font-semibold text-[#1E40AF] hover:text-[#0A2463]'>Xem tất cả nhu cầu <ArrowRight className='ml-1 h-4 w-4' /></Link>
@@ -341,7 +355,7 @@ export function HomePage() {
               <Award className='h-4 w-4' />
               Dược sĩ phụ trách chuyên môn
             </div>
-            <h2 id='pharmacists-heading' className='font-display text-3xl font-bold leading-tight text-[#0A2463] md:text-4xl'>Mọi đơn hàng được dược sĩ kiểm tra trước khi giao</h2>
+            <h2 id='pharmacists-heading' className='font-display bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text text-3xl font-bold leading-tight text-transparent md:text-4xl'>Mọi đơn hàng được dược sĩ kiểm tra trước khi giao</h2>
             <p className='mt-4 leading-7 text-[#4B5E7A]'>Đội ngũ MediSpace hỗ trợ đọc đơn, kiểm tra tương tác thuốc và tư vấn cách dùng phù hợp cho từng tình huống.</p>
             <Button onClick={openConsultation} className='mt-6 rounded-lg bg-[#0A2463] text-white hover:bg-[#1E40AF]'>
               <MessageCircle className='mr-2 h-4 w-4' />
@@ -366,7 +380,7 @@ export function HomePage() {
         <div className='mx-auto max-w-7xl px-4'>
           <div className='mb-7 flex items-end justify-between gap-4'>
             <div>
-              <h2 id='health-corner-heading' className='font-display text-3xl font-bold text-[#0A2463]'>Góc Sức Khỏe</h2>
+              <h2 id='health-corner-heading' className='font-display bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text text-3xl font-bold text-transparent'>Góc Sức Khỏe</h2>
               <p className='mt-2 text-[#4B5E7A]'>Kiến thức y tế được kiểm chứng bởi dược sĩ.</p>
             </div>
             <Link to='/health' className='hidden items-center text-sm font-semibold text-[#1E40AF] hover:text-[#0A2463] sm:inline-flex'>Xem tất cả <ArrowRight className='ml-1 h-4 w-4' /></Link>

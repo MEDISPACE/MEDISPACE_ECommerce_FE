@@ -61,7 +61,7 @@ export function TextField({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         disabled={disabled}
-        className='border-2 border-blue-200 focus:border-blue-500'
+        className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
       />
     </FormField>
   )
@@ -101,7 +101,7 @@ export function TextAreaField({
         placeholder={placeholder}
         rows={rows}
         disabled={disabled}
-        className='border-2 border-blue-200 focus:border-blue-500'
+        className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
       />
     </FormField>
   )
@@ -135,7 +135,7 @@ export function SelectField({
   return (
     <FormField label={label} id={id} required={required} error={error} className={className}>
       <Select value={value} onValueChange={onChange} disabled={disabled}>
-        <SelectTrigger className='border-2 border-blue-200'>
+        <SelectTrigger className='border-2 border-[#BFDBFE]'>
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent className='max-h-[300px] overflow-y-auto'>
@@ -170,7 +170,7 @@ export function SwitchField({
   className = '',
 }: SwitchFieldProps) {
   return (
-    <div className={`flex items-center justify-between space-x-4 p-4 border-2 border-blue-100 rounded-lg ${className}`}>
+    <div className={`flex items-center justify-between space-x-4 p-4 border-2 border-[#E8EDF5] rounded-lg ${className}`}>
       <div className='flex-1'>
         <Label htmlFor={id} className='cursor-pointer'>
           {label}

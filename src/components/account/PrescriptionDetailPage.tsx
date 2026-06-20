@@ -80,10 +80,10 @@ const STATUS_CONFIG: Record<
   },
   approved: {
     label: 'Đã xác nhận',
-    color: 'text-blue-700',
-    bgColor: 'bg-blue-50',
-    borderColor: 'border-blue-200',
-    icon: <CheckCircle className='w-5 h-5 text-blue-600' />,
+    color: 'text-[#0A2463]',
+    bgColor: 'bg-[#F0F6FF]',
+    borderColor: 'border-[#BFDBFE]',
+    icon: <CheckCircle className='w-5 h-5 text-[#1E40AF]' />,
     description: 'Đơn thuốc đã được xác nhận, dược sĩ đang tạo đơn hàng',
   },
   rejected: {
@@ -184,8 +184,8 @@ function TimelineDot({ status, isRejected }: { status: 'done' | 'active' | 'pend
   }
   if (status === 'active') {
     return (
-      <div className='w-8 h-8 rounded-full bg-blue-100 border-2 border-blue-500 flex items-center justify-center shrink-0 z-10 animate-pulse'>
-        <Clock className='w-4 h-4 text-blue-600' />
+      <div className='w-8 h-8 rounded-full bg-[#E8EDF5] border-2 border-[#1E40AF] flex items-center justify-center shrink-0 z-10 animate-pulse'>
+        <Clock className='w-4 h-4 text-[#1E40AF]' />
       </div>
     )
   }
@@ -270,7 +270,7 @@ export function PrescriptionDetailPage() {
           variant='ghost'
           size='sm'
           onClick={() => navigate('/account/prescriptions')}
-          className='text-gray-500 hover:text-blue-700 -ml-2'
+          className='text-gray-500 hover:text-[#0A2463] -ml-2'
         >
           <ArrowLeft className='w-4 h-4 mr-1' /> Lịch sử đơn thuốc
         </Button>
@@ -302,9 +302,9 @@ export function PrescriptionDetailPage() {
             </div>
           )}
           {status === 'approved' && prescription.pharmacistNotes && (
-            <div className='mt-2 p-2 bg-white/60 rounded-lg border border-blue-200'>
-              <p className='text-sm font-medium text-blue-700'>Ghi chú từ dược sĩ:</p>
-              <p className='text-sm text-blue-600 mt-0.5'>{prescription.pharmacistNotes}</p>
+            <div className='mt-2 p-2 bg-white/60 rounded-lg border border-[#BFDBFE]'>
+              <p className='text-sm font-medium text-[#0A2463]'>Ghi chú từ dược sĩ:</p>
+              <p className='text-sm text-[#1E40AF] mt-0.5'>{prescription.pharmacistNotes}</p>
             </div>
           )}
         </div>
@@ -331,7 +331,7 @@ export function PrescriptionDetailPage() {
         {/* Main content */}
         <div className='lg:col-span-2 space-y-6'>
           {/* Tracking Timeline */}
-          <Card className='border-blue-100 shadow-sm'>
+          <Card className='border-[#E8EDF5] shadow-sm'>
             <CardHeader className='pb-2'>
               <CardTitle className='text-base text-blue-900 flex items-center gap-2'>
                 <Clock className='w-4 h-4' /> Theo dõi trạng thái
@@ -357,7 +357,7 @@ export function PrescriptionDetailPage() {
                               stepStatus === 'done' || isRejectedStep
                                 ? 'text-gray-800'
                                 : stepStatus === 'active'
-                                  ? 'text-blue-700'
+                                  ? 'text-[#0A2463]'
                                   : 'text-gray-400'
                             }`}
                           >
@@ -389,7 +389,7 @@ export function PrescriptionDetailPage() {
           </Card>
 
           {/* Patient Info */}
-          <Card className='border-blue-100 shadow-sm'>
+          <Card className='border-[#E8EDF5] shadow-sm'>
             <CardHeader className='pb-2'>
               <CardTitle className='text-base text-blue-900 flex items-center gap-2'>
                 <User className='w-4 h-4' /> Thông tin bệnh nhân
@@ -424,7 +424,7 @@ export function PrescriptionDetailPage() {
           </Card>
 
           {/* Medical Info */}
-          <Card className='border-blue-100 shadow-sm'>
+          <Card className='border-[#E8EDF5] shadow-sm'>
             <CardHeader className='pb-2'>
               <CardTitle className='text-base text-blue-900 flex items-center gap-2'>
                 <Hospital className='w-4 h-4' /> Thông tin khám bệnh
@@ -476,7 +476,7 @@ export function PrescriptionDetailPage() {
           </Card>
 
           {/* Medications */}
-          <Card className='border-blue-100 shadow-sm'>
+          <Card className='border-[#E8EDF5] shadow-sm'>
             <CardHeader className='pb-2'>
               <CardTitle className='text-base text-blue-900 flex items-center gap-2'>
                 <Pill className='w-4 h-4' /> Danh sách thuốc ({prescription.medications.length})
@@ -490,9 +490,9 @@ export function PrescriptionDetailPage() {
                   {prescription.medications.map((med, idx) => (
                     <div
                       key={idx}
-                      className='flex items-start gap-3 p-3 bg-blue-50/60 rounded-lg border border-blue-100'
+                      className='flex items-start gap-3 p-3 bg-[#F0F6FF]/60 rounded-lg border border-[#E8EDF5]'
                     >
-                      <div className='w-7 h-7 bg-blue-100 rounded-full flex items-center justify-center shrink-0 text-xs font-bold text-blue-700'>
+                      <div className='w-7 h-7 bg-[#E8EDF5] rounded-full flex items-center justify-center shrink-0 text-xs font-bold text-[#0A2463]'>
                         {idx + 1}
                       </div>
                       <div className='flex-1 min-w-0'>
@@ -521,7 +521,7 @@ export function PrescriptionDetailPage() {
         {/* Sidebar */}
         <div className='space-y-5'>
           {/* Prescription images */}
-          <Card className='border-blue-100 shadow-sm'>
+          <Card className='border-[#E8EDF5] shadow-sm'>
             <CardHeader className='pb-2'>
               <CardTitle className='text-base text-blue-900 flex items-center gap-2'>
                 <FileText className='w-4 h-4' /> Ảnh đơn thuốc ({prescription.images.length})
@@ -536,7 +536,7 @@ export function PrescriptionDetailPage() {
                     <button
                       key={idx}
                       onClick={() => setSelectedImage(img)}
-                      className='relative group rounded-lg overflow-hidden border border-gray-200 hover:border-blue-400 transition-all'
+                      className='relative group rounded-lg overflow-hidden border border-gray-200 hover:border-[#1E40AF] transition-all'
                     >
                       <img src={img} alt={`Ảnh đơn ${idx + 1}`} className='w-full h-24 object-cover' />
                       <div className='absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center'>
@@ -550,7 +550,7 @@ export function PrescriptionDetailPage() {
           </Card>
 
           {/* Quick Actions */}
-          <Card className='border-blue-100 shadow-sm'>
+          <Card className='border-[#E8EDF5] shadow-sm'>
             <CardHeader className='pb-2'>
               <CardTitle className='text-base text-blue-900'>Thao tác</CardTitle>
             </CardHeader>
@@ -559,7 +559,7 @@ export function PrescriptionDetailPage() {
                 <Button
                   variant='outline'
                   size='sm'
-                  className='w-full justify-start text-blue-700 border-blue-200 hover:bg-blue-50'
+                  className='w-full justify-start text-[#0A2463] border-[#BFDBFE] hover:bg-[#F0F6FF]'
                 >
                   <Upload className='w-4 h-4 mr-2' /> Gửi đơn thuốc mới
                 </Button>

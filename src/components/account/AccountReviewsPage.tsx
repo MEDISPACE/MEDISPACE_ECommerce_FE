@@ -88,7 +88,7 @@ export function AccountReviewsPage() {
             Đã đăng
           </Badge>
           {review.autoApproved && (
-            <Badge variant='outline' className='bg-blue-50 text-blue-600 border-blue-200 text-xs'>
+            <Badge variant='outline' className='bg-[#F0F6FF] text-[#1E40AF] border-[#BFDBFE] text-xs'>
               <Zap className='w-3 h-3 mr-1' />
               Auto
             </Badge>
@@ -120,16 +120,16 @@ export function AccountReviewsPage() {
 
         {/* Tabs */}
         <Tabs value={selectedTab} onValueChange={setSelectedTab} className='space-y-6'>
-          <TabsList className='inline-flex w-full overflow-x-auto bg-blue-100 p-1 rounded-lg shadow-sm scrollbar-hide'>
+          <TabsList className='inline-flex w-full overflow-x-auto bg-[#E8EDF5] p-1 rounded-lg shadow-sm scrollbar-hide'>
             <TabsTrigger
               value='all'
-              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-[#E8EDF5] text-[#1E40AF] border-0 data-[state=active]:!bg-[#0A2463] data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-[#BFDBFE]'
             >
               <span className='whitespace-nowrap flex items-center gap-1'>Tất cả ({reviews.length})</span>
             </TabsTrigger>
             <TabsTrigger
               value='pending'
-              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-[#E8EDF5] text-[#1E40AF] border-0 data-[state=active]:!bg-[#0A2463] data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-[#BFDBFE]'
             >
               <span className='whitespace-nowrap flex items-center gap-1'>
                 Chờ duyệt ({getStatusCount(ReviewStatus.Pending)})
@@ -137,7 +137,7 @@ export function AccountReviewsPage() {
             </TabsTrigger>
             <TabsTrigger
               value='approved'
-              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-[#E8EDF5] text-[#1E40AF] border-0 data-[state=active]:!bg-[#0A2463] data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-[#BFDBFE]'
             >
               <span className='whitespace-nowrap flex items-center gap-1'>
                 Đã đăng ({getStatusCount(ReviewStatus.Approved)})
@@ -145,7 +145,7 @@ export function AccountReviewsPage() {
             </TabsTrigger>
             <TabsTrigger
               value='rejected'
-              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 text-blue-600 border-0 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+              className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-[#E8EDF5] text-[#1E40AF] border-0 data-[state=active]:!bg-[#0A2463] data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-[#BFDBFE]'
             >
               <span className='whitespace-nowrap flex items-center gap-1'>
                 Bị từ chối ({getStatusCount(ReviewStatus.Rejected)})
@@ -156,10 +156,10 @@ export function AccountReviewsPage() {
           <TabsContent value={selectedTab} className='space-y-4'>
             {loading ? (
               <div className='flex justify-center items-center py-12'>
-                <Loader2 className='w-8 h-8 animate-spin text-blue-600' />
+                <Loader2 className='w-8 h-8 animate-spin text-[#1E40AF]' />
               </div>
             ) : filteredReviews.length === 0 ? (
-              <Card className='border-blue-200'>
+              <Card className='border-[#BFDBFE]'>
                 <CardContent className='p-12 text-center'>
                   <Package className='w-16 h-16 mx-auto text-gray-300 mb-4' />
                   <p className='text-gray-500 mb-2'>
@@ -174,7 +174,7 @@ export function AccountReviewsPage() {
               </Card>
             ) : (
               filteredReviews.map((review) => (
-                <Card key={review._id} className='hover:shadow-md transition-shadow border-blue-200'>
+                <Card key={review._id} className='hover:shadow-md transition-shadow border-[#BFDBFE]'>
                   <CardContent className='p-6'>
                     {/* Product Info */}
                     <div className='flex items-start gap-4 mb-4'>
@@ -190,7 +190,7 @@ export function AccountReviewsPage() {
                       <div className='flex-1'>
                         <Link
                           to={`/products/${review.productSlug || review.productId}`}
-                          className='font-semibold text-gray-900 hover:text-blue-600 transition-colors'
+                          className='font-semibold text-gray-900 hover:text-[#1E40AF] transition-colors'
                         >
                           {review.productName || 'Sản phẩm'}
                         </Link>
@@ -238,7 +238,7 @@ export function AccountReviewsPage() {
                           variant='outline'
                           size='sm'
                           onClick={() => handleEdit(review)}
-                          className='text-blue-600 hover:text-blue-700'
+                          className='text-[#1E40AF] hover:text-[#0A2463]'
                         >
                           <Edit className='w-4 h-4 mr-1' />
                           Sửa

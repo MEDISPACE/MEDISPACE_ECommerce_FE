@@ -406,7 +406,7 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
       <div className='space-y-6'>
         <div className='flex items-center justify-center py-12'>
           <div className='text-center'>
-            <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto'></div>
+            <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-[#1E40AF] mx-auto'></div>
             <p className='mt-4 text-gray-600'>Đang tải dữ liệu...</p>
           </div>
         </div>
@@ -470,7 +470,7 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
       />
 
       {/* Orders Table */}
-      <Card className='bg-white backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
         <CardHeader>
           <CardTitle className='flex items-center justify-between'>
             <div className='flex items-center gap-2'>
@@ -492,7 +492,7 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
 
           {/* Pagination Controls */}
           {totalPages > 1 && (
-            <div className='flex items-center justify-between mt-4 pt-4 border-t border-blue-300'>
+            <div className='flex items-center justify-between mt-4 pt-4 border-t border-[#BFDBFE]'>
               <div className='text-sm text-gray-600'>
                 Hiển thị {startIndex + 1} - {Math.min(endIndex, filteredOrders.length)} / {filteredOrders.length} đơn
                 hàng
@@ -519,7 +519,7 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
             <div className='space-y-2'>
               <Label>Trạng thái đơn hàng</Label>
               <Select value={newStatus} onValueChange={(value) => setNewStatus(value as OrderStatus)}>
-                <SelectTrigger className='border-2 border-blue-200'>
+                <SelectTrigger className='border-2 border-[#BFDBFE]'>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -531,7 +531,7 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
                     >
                       {option.label}
                       {currentOrder?.status === option.value && (
-                        <span className='ml-2 text-xs text-blue-600'>(Hiện tại)</span>
+                        <span className='ml-2 text-xs text-[#1E40AF]'>(Hiện tại)</span>
                       )}
                     </SelectItem>
                   ))}
@@ -546,7 +546,7 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
             <div className='space-y-2'>
               <Label>Trạng thái thanh toán</Label>
               <Select value={newPaymentStatus} onValueChange={setNewPaymentStatus}>
-                <SelectTrigger className='border-2 border-blue-200'>
+                <SelectTrigger className='border-2 border-[#BFDBFE]'>
                   <SelectValue placeholder='Giữ nguyên' />
                 </SelectTrigger>
                 <SelectContent>
@@ -558,7 +558,7 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
                     >
                       {option.label}
                       {currentOrder?.paymentStatus === option.value && (
-                        <span className='ml-2 text-xs text-blue-600'>(Hiện tại)</span>
+                        <span className='ml-2 text-xs text-[#1E40AF]'>(Hiện tại)</span>
                       )}
                     </SelectItem>
                   ))}
@@ -574,7 +574,7 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
               <Label>Ghi chú</Label>
               <Textarea
                 placeholder='Ghi chú về việc cập nhật...'
-                className='border-2 border-blue-200'
+                className='border-2 border-[#BFDBFE]'
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
               />
@@ -589,7 +589,7 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
               style={{
                 backgroundImage: `linear-gradient(to right, ${config.gradientFrom}, ${config.gradientTo})`,
               }}
-              className='!text-white hover:!bg-blue-700'
+              className='!text-white hover:!bg-[#071A49]'
             >
               Cập nhật
             </Button>

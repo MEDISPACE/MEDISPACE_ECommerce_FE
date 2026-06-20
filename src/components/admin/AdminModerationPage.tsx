@@ -60,7 +60,7 @@ import type {
 const PAGE_SIZE = 20
 
 const severityMeta: Record<string, { label: string; className: string }> = {
-  low: { label: 'LOW', className: 'bg-blue-100 text-blue-700' },
+  low: { label: 'LOW', className: 'bg-[#E8EDF5] text-[#0A2463]' },
   medium: { label: 'MED', className: 'bg-yellow-100 text-yellow-700' },
   high: { label: 'HIGH', className: 'bg-orange-100 text-orange-700' },
   critical: { label: 'CRIT', className: 'bg-red-100 text-red-700' },
@@ -95,7 +95,7 @@ function QueueRow({
     <button
       onClick={onSelect}
       className={`w-full text-left rounded-xl border p-4 transition-all ${
-        active ? 'border-blue-400 bg-blue-50/60' : 'border-blue-100 hover:border-blue-200 hover:bg-blue-50/40'
+        active ? 'border-blue-400 bg-[#F0F6FF]/60' : 'border-[#E8EDF5] hover:border-[#BFDBFE] hover:bg-[#F0F6FF]/40'
       }`}
     >
       <div className='flex items-start justify-between gap-3'>
@@ -409,24 +409,24 @@ export function AdminModerationPage() {
         <div>
           <h1
             className='text-3xl font-bold bg-clip-text text-transparent'
-            style={{ backgroundImage: 'linear-gradient(to right, #0066CC, #4A90E2)' }}
+            style={{ backgroundImage: 'linear-gradient(to right, #0A2463, #1E40AF)' }}
           >
             Kiểm duyệt cộng đồng
           </h1>
           <p className='text-gray-600 mt-1'>Duyệt nội dung bị báo cáo hoặc bị tự động gắn cờ.</p>
         </div>
-        <Button variant='outline' className='border-blue-200 gap-2' onClick={() => loadQueue(page)}>
+        <Button variant='outline' className='border-[#BFDBFE] gap-2' onClick={() => loadQueue(page)}>
           <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
           Làm mới
         </Button>
       </div>
 
       <div className='grid grid-cols-1 lg:grid-cols-3 gap-4'>
-        <Card className='lg:col-span-1 bg-white border-blue-100'>
+        <Card className='lg:col-span-1 bg-white border-[#E8EDF5]'>
           <CardContent className='p-4 space-y-3'>
             <div className='flex items-center justify-between'>
               <h3 className='text-sm font-semibold text-gray-900'>Hàng đợi kiểm duyệt</h3>
-              <Badge className='bg-blue-100 text-blue-700'>{filteredItems.length}/{total}</Badge>
+              <Badge className='bg-[#E8EDF5] text-[#0A2463]'>{filteredItems.length}/{total}</Badge>
             </div>
             <div className='space-y-2'>
               <Input
@@ -464,7 +464,7 @@ export function AdminModerationPage() {
             {isLoading ? (
               <div className='space-y-3'>
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className='h-20 rounded-xl bg-blue-50 animate-pulse' />
+                  <div key={i} className='h-20 rounded-xl bg-[#F0F6FF] animate-pulse' />
                 ))}
               </div>
             ) : filteredItems.length === 0 ? (
@@ -506,7 +506,7 @@ export function AdminModerationPage() {
           </CardContent>
         </Card>
 
-        <Card className='lg:col-span-2 bg-white border-blue-100'>
+        <Card className='lg:col-span-2 bg-white border-[#E8EDF5]'>
           <CardContent className='p-6 space-y-5'>
             {!selectedItem ? (
               <div className='text-center py-12 text-gray-500'>
@@ -531,7 +531,7 @@ export function AdminModerationPage() {
 
                 <div className='space-y-2'>
                   <p className='text-sm font-semibold text-gray-700'>Nội dung tin nhắn</p>
-                  <div className='rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-gray-800'>
+                  <div className='rounded-lg border border-[#E8EDF5] bg-[#F0F6FF] p-4 text-sm text-gray-800'>
                     {selectedItem.message?.content || 'Nội dung không khả dụng'}
                   </div>
                 </div>
@@ -546,7 +546,7 @@ export function AdminModerationPage() {
                         </Badge>
                       ) : (
                         selectedItem.categories?.map((cat) => (
-                          <Badge key={cat} className='bg-blue-100 text-blue-700'>
+                          <Badge key={cat} className='bg-[#E8EDF5] text-[#0A2463]'>
                             {cat}
                           </Badge>
                         ))
@@ -569,7 +569,7 @@ export function AdminModerationPage() {
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                   <div className='space-y-2'>
                     <p className='text-sm font-semibold text-gray-700'>Độ tin cậy</p>
-                    <Badge className='bg-blue-100 text-blue-700'>
+                    <Badge className='bg-[#E8EDF5] text-[#0A2463]'>
                       {typeof selectedItem.confidence === 'number'
                         ? selectedItem.confidence.toFixed(2)
                         : (selectedItem.confidence || 'unknown').toString().toUpperCase()}
@@ -583,15 +583,15 @@ export function AdminModerationPage() {
                   </div>
                 </div>
 
-                <div className='rounded-lg border border-violet-100 bg-violet-50 p-4 space-y-3'>
+                <div className='rounded-lg border border-[#E8EDF5] bg-[#F0F6FF] p-4 space-y-3'>
                   <div className='flex items-center justify-between gap-3'>
                     <p className='text-sm font-semibold text-gray-800 flex items-center gap-2'>
-                      <Sparkles className='w-4 h-4 text-violet-600' />
+                      <Sparkles className='w-4 h-4 text-[#1E40AF]' />
                       AI moderation
                     </p>
                     <Button
                       variant='outline'
-                      className='border-violet-200 text-violet-700'
+                      className='border-[#BFDBFE] text-[#1E40AF]'
                       onClick={handleAiReview}
                       disabled={isPerforming}
                     >
@@ -603,7 +603,7 @@ export function AdminModerationPage() {
                     <div className='grid grid-cols-1 md:grid-cols-3 gap-3 text-sm'>
                       <div>
                         <p className='text-xs text-gray-500'>Đề xuất</p>
-                        <Badge className='bg-violet-100 text-violet-700'>{selectedItem.ai.suggestedAction}</Badge>
+                        <Badge className='bg-[#E8EDF5] text-[#1E40AF]'>{selectedItem.ai.suggestedAction}</Badge>
                       </div>
                       <div>
                         <p className='text-xs text-gray-500'>Confidence</p>
@@ -637,14 +637,14 @@ export function AdminModerationPage() {
 
                 <div className='flex flex-wrap items-center gap-3 pt-2'>
                   <Button
-                    className='bg-gradient-to-r from-blue-600 to-cyan-500 text-white'
+                    className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white'
                     onClick={() => handleAction('approve')}
                     disabled={isPerforming}
                   >
                     <CheckCircle className='w-4 h-4 mr-2' />
                     Duyệt hiển thị
                   </Button>
-                  <Button variant='outline' className='border-blue-200' onClick={() => handleAction('hide')} disabled={isPerforming}>
+                  <Button variant='outline' className='border-[#BFDBFE]' onClick={() => handleAction('hide')} disabled={isPerforming}>
                     <EyeOff className='w-4 h-4 mr-2' />
                     Ẩn
                   </Button>
@@ -658,7 +658,7 @@ export function AdminModerationPage() {
                   </Button>
                 </div>
 
-                <div className='flex flex-wrap items-center gap-3 border-t border-blue-100 pt-4'>
+                <div className='flex flex-wrap items-center gap-3 border-t border-[#E8EDF5] pt-4'>
                   <div className='w-48'>
                     <Select value={duration} onValueChange={setDuration}>
                       <SelectTrigger>
@@ -680,10 +680,10 @@ export function AdminModerationPage() {
                     <UserX className='w-4 h-4 mr-2' />
                     Ban user
                   </Button>
-                  <Button variant='outline' className='border-blue-200 text-blue-700' onClick={() => handleAction('unmute_user')} disabled={isPerforming}>
+                  <Button variant='outline' className='border-[#BFDBFE] text-[#0A2463]' onClick={() => handleAction('unmute_user')} disabled={isPerforming}>
                     Unmute
                   </Button>
-                  <Button variant='outline' className='border-blue-200 text-blue-700' onClick={() => handleAction('unban_user')} disabled={isPerforming}>
+                  <Button variant='outline' className='border-[#BFDBFE] text-[#0A2463]' onClick={() => handleAction('unban_user')} disabled={isPerforming}>
                     Unban
                   </Button>
                 </div>
@@ -693,11 +693,11 @@ export function AdminModerationPage() {
         </Card>
       </div>
 
-      <Card className='bg-white border-blue-100'>
+      <Card className='bg-white border-[#E8EDF5]'>
         <CardContent className='p-5 space-y-3'>
           <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
             <h3 className='text-sm font-semibold text-gray-900 flex items-center gap-2'>
-              <Sparkles className='w-4 h-4 text-violet-600' />
+              <Sparkles className='w-4 h-4 text-[#1E40AF]' />
               AI moderation jobs
             </h3>
             <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
@@ -731,7 +731,7 @@ export function AdminModerationPage() {
                   <SelectItem value='succeeded'>Succeeded</SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant='outline' className='border-violet-200 text-violet-700' onClick={loadAiJobs}>
+              <Button variant='outline' className='border-[#BFDBFE] text-[#1E40AF]' onClick={loadAiJobs}>
                 Làm mới AI
               </Button>
             </div>
@@ -740,7 +740,7 @@ export function AdminModerationPage() {
           {aiJobs.length === 0 ? (
             <p className='text-sm text-gray-500 py-4'>Chưa có AI moderation job phù hợp.</p>
           ) : (
-            <div className='divide-y divide-violet-50'>
+            <div className='divide-y divide-[#E8EDF5]'>
               {aiJobs.map((job) => (
                 <div key={job._id} className='py-3 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between'>
                   <div className='min-w-0 space-y-1'>
@@ -752,7 +752,7 @@ export function AdminModerationPage() {
                             : job.status === 'succeeded'
                               ? 'bg-green-100 text-green-700'
                               : job.status === 'running'
-                                ? 'bg-blue-100 text-blue-700'
+                                ? 'bg-[#E8EDF5] text-[#0A2463]'
                                 : 'bg-yellow-100 text-yellow-700'
                         }
                       >
@@ -778,7 +778,7 @@ export function AdminModerationPage() {
                     <Button
                       size='sm'
                       variant='outline'
-                      className='border-violet-200 text-violet-700'
+                      className='border-[#BFDBFE] text-[#1E40AF]'
                       disabled={isPerforming || job.status === 'running'}
                       onClick={() => handleRetryAiJob(job)}
                     >
@@ -793,11 +793,11 @@ export function AdminModerationPage() {
         </CardContent>
       </Card>
 
-      <Card className='bg-white border-blue-100'>
+      <Card className='bg-white border-[#E8EDF5]'>
         <CardContent className='p-5 space-y-3'>
           <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
             <h3 className='text-sm font-semibold text-gray-900 flex items-center gap-2'>
-              <ShieldAlert className='w-4 h-4 text-blue-600' />
+              <ShieldAlert className='w-4 h-4 text-[#1E40AF]' />
               Appeal đang chờ xử lý
             </h3>
             <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
@@ -829,7 +829,7 @@ export function AdminModerationPage() {
                   <SelectItem value='all'>Tất cả</SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant='outline' className='border-blue-200' onClick={loadAppeals}>
+              <Button variant='outline' className='border-[#BFDBFE]' onClick={loadAppeals}>
                 Làm mới appeal
               </Button>
             </div>
@@ -844,7 +844,7 @@ export function AdminModerationPage() {
                   <div key={appeal._id} className='py-3 flex flex-col gap-3 md:flex-row md:items-start md:justify-between'>
                     <div className='min-w-0 space-y-1'>
                       <div className='flex flex-wrap items-center gap-2'>
-                        <Badge className='bg-blue-100 text-blue-700'>{appeal.type}</Badge>
+                        <Badge className='bg-[#E8EDF5] text-[#0A2463]'>{appeal.type}</Badge>
                         <Badge
                           className={
                             appeal.status === 'approved'
@@ -898,11 +898,11 @@ export function AdminModerationPage() {
         </CardContent>
       </Card>
 
-      <Card className='bg-white border-blue-100'>
+      <Card className='bg-white border-[#E8EDF5]'>
         <CardContent className='p-5 space-y-3'>
           <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
             <h3 className='text-sm font-semibold text-gray-900 flex items-center gap-2'>
-              <History className='w-4 h-4 text-blue-600' />
+              <History className='w-4 h-4 text-[#1E40AF]' />
               Lịch sử xử lý gần đây
             </h3>
             <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
@@ -946,7 +946,7 @@ export function AdminModerationPage() {
                   <SelectItem value='restore_message'>Restore</SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant='outline' className='border-blue-200' onClick={loadActions}>
+              <Button variant='outline' className='border-[#BFDBFE]' onClick={loadActions}>
                 Làm mới lịch sử
               </Button>
             </div>
@@ -969,7 +969,7 @@ export function AdminModerationPage() {
                       </p>
                       {log.notes && <p className='text-gray-600 mt-1'>{log.notes}</p>}
                     </div>
-                    <Badge variant='outline' className='border-blue-200 text-blue-700'>
+                    <Badge variant='outline' className='border-[#BFDBFE] text-[#0A2463]'>
                       {log.previousMessageStatus || 'n/a'}
                     </Badge>
                   </div>

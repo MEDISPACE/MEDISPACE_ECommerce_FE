@@ -341,7 +341,7 @@ export function BrandManagementPage() {
           <h1
             className='text-3xl font-bold bg-clip-text text-transparent'
             style={{
-              backgroundImage: `linear-gradient(to right, #0066CC, #4A90E2)`,
+              backgroundImage: `linear-gradient(to right, #0A2463, #1E40AF)`,
             }}
           >
             Quản lý Thương hiệu
@@ -350,7 +350,7 @@ export function BrandManagementPage() {
         </div>
         <Button
           onClick={openAddDialog}
-          className='bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8] gap-2 text-white'
+          className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] gap-2 text-white'
         >
           <Plus className='w-4 h-4' />
           Thêm thương hiệu
@@ -359,19 +359,19 @@ export function BrandManagementPage() {
 
       {/* Stats Cards */}
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
-        <Card className='bg-white backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-xs text-gray-600'>Tổng thương hiệu</p>
-                <p className='text-2xl font-semibold text-blue-600'>{stats.total}</p>
+                <p className='text-2xl font-semibold text-[#1E40AF]'>{stats.total}</p>
               </div>
               <Building2 className='w-8 h-8 text-blue-400' />
             </div>
           </CardContent>
         </Card>
 
-        <Card className='bg-white backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
@@ -383,7 +383,7 @@ export function BrandManagementPage() {
           </CardContent>
         </Card>
 
-        <Card className='bg-white backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
@@ -395,21 +395,21 @@ export function BrandManagementPage() {
           </CardContent>
         </Card>
 
-        <Card className='bg-white backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-xs text-gray-600'>Tổng sản phẩm</p>
-                <p className='text-2xl font-semibold text-[#4A90E2]'>{stats.totalProducts.toLocaleString('vi-VN')}</p>
+                <p className='text-2xl font-semibold text-[#1E40AF]'>{stats.totalProducts.toLocaleString('vi-VN')}</p>
               </div>
-              <Package className='w-8 h-8 text-[#4A90E2]' />
+              <Package className='w-8 h-8 text-[#1E40AF]' />
             </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Filters & Search */}
-      <Card className='bg-white backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
         <CardContent className='p-6'>
           <div className='flex flex-col lg:flex-row gap-4'>
             <div className='flex-1 relative'>
@@ -418,11 +418,11 @@ export function BrandManagementPage() {
                 placeholder='Tìm kiếm thương hiệu...'
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className='pl-10 border-2 border-blue-200 focus:border-blue-500'
+                className='pl-10 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
               />
             </div>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className='w-40 border-2 border-blue-200'>
+              <SelectTrigger className='w-40 border-2 border-[#BFDBFE]'>
                 <SelectValue placeholder='Trạng thái' />
               </SelectTrigger>
               <SelectContent>
@@ -432,7 +432,7 @@ export function BrandManagementPage() {
               </SelectContent>
             </Select>
             <Select value={filterCountry} onValueChange={setFilterCountry}>
-              <SelectTrigger className='w-40 border-2 border-blue-200'>
+              <SelectTrigger className='w-40 border-2 border-[#BFDBFE]'>
                 <SelectValue placeholder='Quốc gia' />
               </SelectTrigger>
               <SelectContent className='max-h-60'>
@@ -451,7 +451,7 @@ export function BrandManagementPage() {
                 setCurrentPage(1)
               }}
             >
-              <SelectTrigger className='w-32 border-2 border-blue-200'>
+              <SelectTrigger className='w-32 border-2 border-[#BFDBFE]'>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -465,10 +465,10 @@ export function BrandManagementPage() {
       </Card>
 
       {/* Brands Table */}
-      <Card className='bg-white backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
-            <Building2 className='w-5 h-5 text-blue-600' />
+            <Building2 className='w-5 h-5 text-[#1E40AF]' />
             Danh sách thương hiệu ({filteredBrands.length})
           </CardTitle>
         </CardHeader>
@@ -476,7 +476,7 @@ export function BrandManagementPage() {
           <div className='overflow-x-auto'>
             <Table>
               <TableHeader>
-                <TableRow className='!border-b-2 !border-blue-300'>
+                <TableRow className='!border-b-2 !border-[#BFDBFE]'>
                   <TableHead className='w-16'>Logo</TableHead>
                   <TableHead className='w-56'>Tên thương hiệu</TableHead>
                   <TableHead className='hidden md:table-cell'>Mô tả</TableHead>
@@ -488,20 +488,20 @@ export function BrandManagementPage() {
               </TableHeader>
               <TableBody>
                 {isLoading ? (
-                  <TableRow className='border-b-2 border-blue-200'>
+                  <TableRow className='border-b-2 border-[#BFDBFE]'>
                     <TableCell colSpan={7} className='text-center py-8'>
-                      <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto'></div>
+                      <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-[#1E40AF] mx-auto'></div>
                     </TableCell>
                   </TableRow>
                 ) : paginatedBrands.length === 0 ? (
-                  <TableRow className='border-b-2 border-blue-200'>
+                  <TableRow className='border-b-2 border-[#BFDBFE]'>
                     <TableCell colSpan={7} className='text-center py-8 text-gray-500'>
                       Không tìm thấy thương hiệu nào
                     </TableCell>
                   </TableRow>
                 ) : (
                   paginatedBrands.map((brand) => (
-                    <TableRow key={brand._id} className='border-b-2 border-blue-200 hover:bg-blue-50/30'>
+                    <TableRow key={brand._id} className='border-b-2 border-[#BFDBFE] hover:bg-[#F0F6FF]/30'>
                       <TableCell>
                         {brand.logo ? (
                           <img
@@ -539,13 +539,13 @@ export function BrandManagementPage() {
                       </TableCell>
                       <TableCell className='hidden lg:table-cell'>
                         {brand.country ? (
-                          <Badge className='bg-blue-100 text-blue-700 hover:bg-blue-100'>{brand.country}</Badge>
+                          <Badge className='bg-[#E8EDF5] text-[#0A2463] hover:bg-[#E8EDF5]'>{brand.country}</Badge>
                         ) : (
                           <span className='text-gray-400 text-sm'>—</span>
                         )}
                       </TableCell>
                       <TableCell className='text-center'>
-                        <span className='font-semibold text-blue-600'>{brand.productCount || 0}</span>
+                        <span className='font-semibold text-[#1E40AF]'>{brand.productCount || 0}</span>
                       </TableCell>
                       <TableCell>
                         <div
@@ -577,11 +577,11 @@ export function BrandManagementPage() {
                               <MoreVertical className='w-4 h-4' />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align='end' className='bg-white shadow-lg border-2 border-blue-200'>
-                            <DropdownMenuLabel className='text-blue-700'>Thao tác</DropdownMenuLabel>
+                          <DropdownMenuContent align='end' className='bg-white shadow-lg border-2 border-[#BFDBFE]'>
+                            <DropdownMenuLabel className='text-[#0A2463]'>Thao tác</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
+                              className='hover:!bg-[#E8EDF5] hover:!border-[#E8EDF5] hover:!text-[#0A2463]'
                               onClick={() => openEditDialog(brand)}
                             >
                               <Edit className='w-4 h-4 mr-2' />
@@ -644,7 +644,7 @@ export function BrandManagementPage() {
                 value={formState.data.name || ''}
                 onChange={(e) => handleNameChange(e.target.value)}
                 placeholder='VD: Sanofi, DHG Pharma...'
-                className={`border-2 ${formState.errors.name ? 'border-red-500' : 'border-blue-200'} focus:border-blue-500`}
+                className={`border-2 ${formState.errors.name ? 'border-red-500' : 'border-[#BFDBFE]'} focus:border-[#1E40AF]`}
               />
               {formState.errors.name && <p className='text-sm text-red-500'>{formState.errors.name}</p>}
             </div>
@@ -667,7 +667,7 @@ export function BrandManagementPage() {
                   variant='outline'
                   role='combobox'
                   aria-expanded={countryComboboxOpen}
-                  className='w-full h-10 justify-between font-normal text-left border-2 !border-blue-200 hover:!border-blue-500 focus:!border-blue-500 bg-white'
+                  className='w-full h-10 justify-between font-normal text-left border-2 !border-[#BFDBFE] hover:!border-[#1E40AF] focus:!border-[#1E40AF] bg-white'
                 >
                   <span className={formState.data.country ? 'text-gray-900' : 'text-gray-400'}>
                     {formState.data.country || 'Chọn hoặc nhập quốc gia...'}
@@ -676,7 +676,7 @@ export function BrandManagementPage() {
                 </Button>
               </PopoverTrigger>
               <PopoverContent
-                className='w-[608px] p-0 bg-white border-2 border-blue-200 shadow-lg z-[9999]'
+                className='w-[608px] p-0 bg-white border-2 border-[#BFDBFE] shadow-lg z-[9999]'
                 align='start'
               >
                 <Command className='bg-white rounded-md'>
@@ -704,8 +704,8 @@ export function BrandManagementPage() {
                             setCountryComboboxOpen(false)
                           }}
                           className={cn(
-                            'hover:!bg-blue-50 hover:!text-blue-500',
-                            formState.data.country === country ? 'bg-blue-50 text-blue-600' : 'bg-white',
+                            'hover:!bg-[#F0F6FF] hover:!text-blue-500',
+                            formState.data.country === country ? 'bg-[#F0F6FF] text-[#1E40AF]' : 'bg-white',
                           )}
                         >
                           <Check
@@ -762,7 +762,7 @@ export function BrandManagementPage() {
               onClick={() => setLogoMode('url')}
               className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                 logoMode === 'url'
-                  ? 'bg-blue-100 text-blue-700 border border-blue-300'
+                  ? 'bg-[#E8EDF5] text-[#0A2463] border border-[#BFDBFE]'
                   : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
               }`}
             >
@@ -774,7 +774,7 @@ export function BrandManagementPage() {
               onClick={() => setLogoMode('upload')}
               className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                 logoMode === 'upload'
-                  ? 'bg-blue-100 text-blue-700 border border-blue-300'
+                  ? 'bg-[#E8EDF5] text-[#0A2463] border border-[#BFDBFE]'
                   : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
               }`}
             >
@@ -828,14 +828,14 @@ export function BrandManagementPage() {
                                         file:mr-4 file:py-2 file:px-4
                                         file:rounded-lg file:border-0
                                         file:text-sm file:font-medium
-                                        file:bg-blue-50 file:text-blue-700
-                                        hover:file:bg-blue-100
+                                        file:bg-[#F0F6FF] file:text-[#0A2463]
+                                        hover:file:bg-[#E8EDF5]
                                         file:cursor-pointer file:transition-colors
                                         disabled:opacity-50 disabled:cursor-not-allowed'
                 />
                 {isUploading && (
                   <div className='absolute inset-0 bg-white/80 flex items-center justify-center rounded-lg'>
-                    <Loader2 className='w-5 h-5 animate-spin text-blue-600' />
+                    <Loader2 className='w-5 h-5 animate-spin text-[#1E40AF]' />
                     <span className='ml-2 text-sm text-gray-600'>Đang tải...</span>
                   </div>
                 )}

@@ -5,6 +5,8 @@ import type {
   CommunityMember,
   CommunityModerationResult,
   CommunityVideoEvent,
+  CommunityVideoEventLiveParticipantsPayload,
+  CommunityVideoEventModerationActionPayload,
   CommunityVideoEventRegistration,
   CommunityVideoJoinPayload,
   PaginatedResult,
@@ -65,10 +67,10 @@ export const communityService = {
     return unwrap(res.data)
   },
 
-  async sendMessage(params: { roomId: string; content: string }) {
+  async sendMessage(params: { roomId: string; content?: string; imageUrl?: string }) {
     const res = await apiClient.post<
       Envelope<{ message: CommunityMessage; moderation: CommunityModerationResult; memberRole?: string }>
-    >(`/community/rooms/${params.roomId}/messages`, { content: params.content })
+    >(`/community/rooms/${params.roomId}/messages`, { content: params.content || '', imageUrl: params.imageUrl })
     return unwrap(res.data)
   },
 
@@ -228,6 +230,27 @@ export const adminCommunityService = {
     const res = await apiClient.patch<Envelope<CommunityVideoEventRegistration>>(
       `/admin/community/video-events/${eventId}/registrations/${userId}`,
       data,
+    )
+    return unwrap(res.data)
+  },
+
+  async listVideoEventParticipants(eventId: string) {
+    const res = await apiClient.get<Envelope<CommunityVideoEventLiveParticipantsPayload>>(
+      `/admin/community/video-events/${eventId}/participants`,
+    )
+    return unwrap(res.data)
+  },
+
+  async muteVideoEventParticipant(eventId: string, userId: string) {
+    const res = await apiClient.post<Envelope<CommunityVideoEventModerationActionPayload>>(
+      `/admin/community/video-events/${eventId}/participants/${userId}/mute`,
+    )
+    return unwrap(res.data)
+  },
+
+  async kickVideoEventParticipant(eventId: string, userId: string) {
+    const res = await apiClient.post<Envelope<CommunityVideoEventModerationActionPayload>>(
+      `/admin/community/video-events/${eventId}/participants/${userId}/kick`,
     )
     return unwrap(res.data)
   },

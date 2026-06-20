@@ -69,11 +69,11 @@ export function SystemSettingsPage() {
   return (
     <div className='space-y-6'>
       {/* Header */}
-      <div className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
+      <div className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-6'>
         <h1
           className='text-3xl font-bold bg-clip-text text-transparent'
           style={{
-            backgroundImage: `linear-gradient(to right, #0066CC, #4A90E2)`,
+            backgroundImage: `linear-gradient(to right, #0A2463, #1E40AF)`,
           }}
         >
           Cài đặt hệ thống
@@ -83,8 +83,8 @@ export function SystemSettingsPage() {
 
       {/* Tabs */}
       <Tabs defaultValue='general' className='space-y-4'>
-        <div className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-4'>
-          <TabsList className='grid w-full grid-cols-6 !bg-blue-50 p-1.5 rounded-lg h-auto'>
+        <div className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-4'>
+          <TabsList className='grid w-full grid-cols-6 !bg-[#F0F6FF] p-1.5 rounded-lg h-auto'>
             <TabsTrigger
               value='general'
               className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'
@@ -125,7 +125,7 @@ export function SystemSettingsPage() {
 
           {/* General Settings */}
           <TabsContent value='general' className='space-y-4 mt-4'>
-            <Card className='border border-blue-200'>
+            <Card className='border border-[#BFDBFE]'>
               <CardHeader>
                 <CardTitle className='text-blue-900 flex items-center gap-2'>
                   <Globe className='w-5 h-5' />
@@ -142,7 +142,7 @@ export function SystemSettingsPage() {
                       id='siteName'
                       value={settings.siteName}
                       onChange={(e) => handleChange('siteName', e.target.value)}
-                      className='border-2 border-blue-200 focus:border-blue-500'
+                      className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                     />
                   </div>
                   <div>
@@ -153,7 +153,7 @@ export function SystemSettingsPage() {
                       id='siteUrl'
                       value={settings.siteUrl}
                       onChange={(e) => handleChange('siteUrl', e.target.value)}
-                      className='border-2 border-blue-200 focus:border-blue-500'
+                      className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                     />
                   </div>
                   <div>
@@ -164,7 +164,7 @@ export function SystemSettingsPage() {
                       id='supportEmail'
                       value={settings.supportEmail}
                       onChange={(e) => handleChange('supportEmail', e.target.value)}
-                      className='border-2 border-blue-200 focus:border-blue-500'
+                      className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                     />
                   </div>
                   <div>
@@ -175,7 +175,7 @@ export function SystemSettingsPage() {
                       id='supportPhone'
                       value={settings.supportPhone}
                       onChange={(e) => handleChange('supportPhone', e.target.value)}
-                      className='border-2 border-blue-200 focus:border-blue-500'
+                      className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                     />
                   </div>
                   <div>
@@ -183,7 +183,7 @@ export function SystemSettingsPage() {
                       Múi giờ
                     </Label>
                     <Select value={settings.timezone} onValueChange={(val) => handleChange('timezone', val)}>
-                      <SelectTrigger className='border-2 border-blue-200 focus:border-blue-500'>
+                      <SelectTrigger className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -198,7 +198,7 @@ export function SystemSettingsPage() {
                       Đơn vị tiền tệ
                     </Label>
                     <Select value={settings.currency} onValueChange={(val) => handleChange('currency', val)}>
-                      <SelectTrigger className='border-2 border-blue-200 focus:border-blue-500'>
+                      <SelectTrigger className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -211,7 +211,7 @@ export function SystemSettingsPage() {
                 </div>
                 <Button
                   onClick={() => handleSave('thông tin chung')}
-                  className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'
+                  className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'
                 >
                   <Save className='w-4 h-4 mr-2' />
                   Lưu thay đổi
@@ -222,7 +222,7 @@ export function SystemSettingsPage() {
 
           {/* Email Settings */}
           <TabsContent value='email' className='space-y-4 mt-4'>
-            <Card className='border border-blue-200'>
+            <Card className='border border-[#BFDBFE]'>
               <CardHeader>
                 <CardTitle className='text-blue-900 flex items-center gap-2'>
                   <Mail className='w-5 h-5' />
@@ -230,9 +230,9 @@ export function SystemSettingsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className='space-y-4'>
-                <div className='flex items-center justify-between p-3 bg-blue-50 rounded-lg'>
+                <div className='flex items-center justify-between p-3 bg-[#F0F6FF] rounded-lg'>
                   <div className='flex items-center gap-2'>
-                    <Mail className='w-5 h-5 text-blue-600' />
+                    <Mail className='w-5 h-5 text-[#1E40AF]' />
                     <span className='text-gray-900'>Bật gửi email</span>
                   </div>
                   <Switch
@@ -253,7 +253,7 @@ export function SystemSettingsPage() {
                           id='smtpHost'
                           value={settings.smtpHost}
                           onChange={(e) => handleChange('smtpHost', e.target.value)}
-                          className='border-2 border-blue-200 focus:border-blue-500'
+                          className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                           placeholder='smtp.gmail.com'
                         />
                       </div>
@@ -265,7 +265,7 @@ export function SystemSettingsPage() {
                           id='smtpPort'
                           value={settings.smtpPort}
                           onChange={(e) => handleChange('smtpPort', e.target.value)}
-                          className='border-2 border-blue-200 focus:border-blue-500'
+                          className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                           placeholder='587'
                         />
                       </div>
@@ -277,7 +277,7 @@ export function SystemSettingsPage() {
                           id='smtpUser'
                           value={settings.smtpUser}
                           onChange={(e) => handleChange('smtpUser', e.target.value)}
-                          className='border-2 border-blue-200 focus:border-blue-500'
+                          className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                         />
                       </div>
                       <div>
@@ -289,7 +289,7 @@ export function SystemSettingsPage() {
                           type='password'
                           value={settings.smtpPassword}
                           onChange={(e) => handleChange('smtpPassword', e.target.value)}
-                          className='border-2 border-blue-200 focus:border-blue-500'
+                          className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                         />
                       </div>
                     </div>
@@ -298,7 +298,7 @@ export function SystemSettingsPage() {
 
                 <Button
                   onClick={() => handleSave('email')}
-                  className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'
+                  className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'
                 >
                   <Save className='w-4 h-4 mr-2' />
                   Lưu cấu hình
@@ -309,7 +309,7 @@ export function SystemSettingsPage() {
 
           {/* SMS Settings */}
           <TabsContent value='sms' className='space-y-4 mt-4'>
-            <Card className='border border-blue-200'>
+            <Card className='border border-[#BFDBFE]'>
               <CardHeader>
                 <CardTitle className='text-blue-900 flex items-center gap-2'>
                   <MessageSquare className='w-5 h-5' />
@@ -317,9 +317,9 @@ export function SystemSettingsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className='space-y-4'>
-                <div className='flex items-center justify-between p-3 bg-blue-50 rounded-lg'>
+                <div className='flex items-center justify-between p-3 bg-[#F0F6FF] rounded-lg'>
                   <div className='flex items-center gap-2'>
-                    <MessageSquare className='w-5 h-5 text-blue-600' />
+                    <MessageSquare className='w-5 h-5 text-[#1E40AF]' />
                     <span className='text-gray-900'>Bật gửi SMS</span>
                   </div>
                   <Switch checked={settings.smsEnabled} onCheckedChange={(val) => handleChange('smsEnabled', val)} />
@@ -334,7 +334,7 @@ export function SystemSettingsPage() {
                           Nhà cung cấp SMS
                         </Label>
                         <Select value={settings.smsProvider} onValueChange={(val) => handleChange('smsProvider', val)}>
-                          <SelectTrigger className='border-2 border-blue-200 focus:border-blue-500'>
+                          <SelectTrigger className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -352,7 +352,7 @@ export function SystemSettingsPage() {
                           id='smsApiKey'
                           value={settings.smsApiKey}
                           onChange={(e) => handleChange('smsApiKey', e.target.value)}
-                          className='border-2 border-blue-200 focus:border-blue-500'
+                          className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                           placeholder='YOUR_API_KEY'
                         />
                       </div>
@@ -362,7 +362,7 @@ export function SystemSettingsPage() {
 
                 <Button
                   onClick={() => handleSave('SMS')}
-                  className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'
+                  className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'
                 >
                   <Save className='w-4 h-4 mr-2' />
                   Lưu cấu hình
@@ -373,7 +373,7 @@ export function SystemSettingsPage() {
 
           {/* Payment Settings */}
           <TabsContent value='payment' className='space-y-4 mt-4'>
-            <Card className='border border-blue-200'>
+            <Card className='border border-[#BFDBFE]'>
               <CardHeader>
                 <CardTitle className='text-blue-900 flex items-center gap-2'>
                   <CreditCard className='w-5 h-5' />
@@ -382,7 +382,7 @@ export function SystemSettingsPage() {
               </CardHeader>
               <CardContent className='space-y-4'>
                 {/* MoMo */}
-                <div className='p-4 border border-blue-200 rounded-lg'>
+                <div className='p-4 border border-[#BFDBFE] rounded-lg'>
                   <div className='flex items-center justify-between mb-3'>
                     <h4 className='text-gray-900'>MoMo</h4>
                     <Switch
@@ -397,7 +397,7 @@ export function SystemSettingsPage() {
                         <Input
                           value={settings.momoPartnerCode}
                           onChange={(e) => handleChange('momoPartnerCode', e.target.value)}
-                          className='border-2 border-blue-200 focus:border-blue-500'
+                          className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                         />
                       </div>
                       <div>
@@ -406,7 +406,7 @@ export function SystemSettingsPage() {
                           type='password'
                           value={settings.momoAccessKey}
                           onChange={(e) => handleChange('momoAccessKey', e.target.value)}
-                          className='border-2 border-blue-200 focus:border-blue-500'
+                          className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                         />
                       </div>
                     </div>
@@ -414,7 +414,7 @@ export function SystemSettingsPage() {
                 </div>
 
                 {/* VNPay */}
-                <div className='p-4 border border-blue-200 rounded-lg'>
+                <div className='p-4 border border-[#BFDBFE] rounded-lg'>
                   <div className='flex items-center justify-between mb-3'>
                     <h4 className='text-gray-900'>VNPay</h4>
                     <Switch
@@ -429,7 +429,7 @@ export function SystemSettingsPage() {
                         <Input
                           value={settings.vnpayTmnCode}
                           onChange={(e) => handleChange('vnpayTmnCode', e.target.value)}
-                          className='border-2 border-blue-200 focus:border-blue-500'
+                          className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                         />
                       </div>
                       <div>
@@ -438,7 +438,7 @@ export function SystemSettingsPage() {
                           type='password'
                           value={settings.vnpayHashSecret}
                           onChange={(e) => handleChange('vnpayHashSecret', e.target.value)}
-                          className='border-2 border-blue-200 focus:border-blue-500'
+                          className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                         />
                       </div>
                     </div>
@@ -446,7 +446,7 @@ export function SystemSettingsPage() {
                 </div>
 
                 {/* COD */}
-                <div className='p-4 border border-blue-200 rounded-lg'>
+                <div className='p-4 border border-[#BFDBFE] rounded-lg'>
                   <div className='flex items-center justify-between'>
                     <h4 className='text-gray-900'>Thanh toán khi nhận hàng (COD)</h4>
                     <Switch checked={settings.codEnabled} onCheckedChange={(val) => handleChange('codEnabled', val)} />
@@ -455,7 +455,7 @@ export function SystemSettingsPage() {
 
                 <Button
                   onClick={() => handleSave('thanh toán')}
-                  className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'
+                  className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'
                 >
                   <Save className='w-4 h-4 mr-2' />
                   Lưu cấu hình
@@ -466,7 +466,7 @@ export function SystemSettingsPage() {
 
           {/* Shipping Settings */}
           <TabsContent value='shipping' className='space-y-4 mt-4'>
-            <Card className='border border-blue-200'>
+            <Card className='border border-[#BFDBFE]'>
               <CardHeader>
                 <CardTitle className='text-blue-900 flex items-center gap-2'>
                   <Truck className='w-5 h-5' />
@@ -475,7 +475,7 @@ export function SystemSettingsPage() {
               </CardHeader>
               <CardContent className='space-y-4'>
                 {/* GHN */}
-                <div className='p-4 border border-blue-200 rounded-lg'>
+                <div className='p-4 border border-[#BFDBFE] rounded-lg'>
                   <div className='flex items-center justify-between mb-3'>
                     <h4 className='text-gray-900'>Giao Hàng Nhanh (GHN)</h4>
                     <Switch checked={settings.ghnEnabled} onCheckedChange={(val) => handleChange('ghnEnabled', val)} />
@@ -487,7 +487,7 @@ export function SystemSettingsPage() {
                         <Input
                           value={settings.ghnShopId}
                           onChange={(e) => handleChange('ghnShopId', e.target.value)}
-                          className='border-2 border-blue-200 focus:border-blue-500'
+                          className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                         />
                       </div>
                       <div>
@@ -496,7 +496,7 @@ export function SystemSettingsPage() {
                           type='password'
                           value={settings.ghnToken}
                           onChange={(e) => handleChange('ghnToken', e.target.value)}
-                          className='border-2 border-blue-200 focus:border-blue-500'
+                          className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                         />
                       </div>
                     </div>
@@ -504,7 +504,7 @@ export function SystemSettingsPage() {
                 </div>
 
                 {/* GHTK */}
-                <div className='p-4 border border-blue-200 rounded-lg'>
+                <div className='p-4 border border-[#BFDBFE] rounded-lg'>
                   <div className='flex items-center justify-between'>
                     <h4 className='text-gray-900'>Giao Hàng Tiết Kiệm (GHTK)</h4>
                     <Switch
@@ -516,7 +516,7 @@ export function SystemSettingsPage() {
 
                 <Button
                   onClick={() => handleSave('vận chuyển')}
-                  className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'
+                  className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'
                 >
                   <Save className='w-4 h-4 mr-2' />
                   Lưu cấu hình
@@ -527,7 +527,7 @@ export function SystemSettingsPage() {
 
           {/* Security Settings */}
           <TabsContent value='security' className='space-y-4 mt-4'>
-            <Card className='border border-blue-200'>
+            <Card className='border border-[#BFDBFE]'>
               <CardHeader>
                 <CardTitle className='text-blue-900 flex items-center gap-2'>
                   <Shield className='w-5 h-5' />
@@ -535,7 +535,7 @@ export function SystemSettingsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className='space-y-4'>
-                <div className='flex items-center justify-between p-3 bg-blue-50 rounded-lg'>
+                <div className='flex items-center justify-between p-3 bg-[#F0F6FF] rounded-lg'>
                   <div>
                     <p className='text-gray-900'>Xác thực 2 yếu tố (2FA)</p>
                     <p className='text-sm text-gray-600'>Yêu cầu mã OTP khi đăng nhập</p>
@@ -558,7 +558,7 @@ export function SystemSettingsPage() {
                       type='number'
                       value={settings.sessionTimeout}
                       onChange={(e) => handleChange('sessionTimeout', e.target.value)}
-                      className='border-2 border-blue-200 focus:border-blue-500'
+                      className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                     />
                   </div>
                   <div>
@@ -570,14 +570,14 @@ export function SystemSettingsPage() {
                       type='number'
                       value={settings.maxLoginAttempts}
                       onChange={(e) => handleChange('maxLoginAttempts', e.target.value)}
-                      className='border-2 border-blue-200 focus:border-blue-500'
+                      className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                     />
                   </div>
                 </div>
 
                 <Button
                   onClick={() => handleSave('bảo mật')}
-                  className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'
+                  className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'
                 >
                   <Save className='w-4 h-4 mr-2' />
                   Lưu cấu hình

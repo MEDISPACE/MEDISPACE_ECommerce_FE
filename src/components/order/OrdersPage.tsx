@@ -172,7 +172,7 @@ export function OrdersPage() {
     return (
       <div className='space-y-6'>
         <div className='text-center py-12'>
-          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto'></div>
+          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-[#1E40AF] mx-auto'></div>
           <p className='mt-4 text-gray-600'>Đang tải đơn hàng...</p>
         </div>
       </div>
@@ -195,12 +195,12 @@ export function OrdersPage() {
             placeholder='Tìm đơn hàng theo mã hoặc tên sản phẩm...'
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className='pl-10 border-blue-200 focus:border-blue-500'
+            className='pl-10 border-[#BFDBFE] focus:border-[#1E40AF]'
           />
         </div>
 
         <Select value={timeFilter} onValueChange={setTimeFilter}>
-          <SelectTrigger className='w-full md:w-[200px] border-blue-200'>
+          <SelectTrigger className='w-full md:w-[200px] border-[#BFDBFE]'>
             <SelectValue placeholder='Lọc theo thời gian' />
           </SelectTrigger>
           <SelectContent>
@@ -215,18 +215,18 @@ export function OrdersPage() {
 
       {/* Status Tabs */}
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className='w-full'>
-        <TabsList className='!inline-flex !overflow-x-auto !gap-1.5 !h-auto !w-full !bg-blue-50 !p-2 !pb-3 !rounded-lg !justify-start scrollbar-thin'>
+        <TabsList className='!inline-flex !overflow-x-auto !gap-1.5 !h-auto !w-full !bg-[#F0F6FF] !p-2 !pb-3 !rounded-lg !justify-start scrollbar-thin'>
           {tabs.map((tab) => (
             <TabsTrigger
               key={tab.value}
               value={tab.value}
-              className='flex-shrink-0 text-sm px-3 py-2 !bg-white !text-gray-700 border border-blue-200 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white data-[state=active]:!border-blue-600 transition-all duration-200 rounded-md hover:!bg-blue-100'
+              className='flex-shrink-0 text-sm px-3 py-2 !bg-white !text-gray-700 border border-[#BFDBFE] data-[state=active]:!bg-[#0A2463] data-[state=active]:!text-white data-[state=active]:!border-[#1E40AF] transition-all duration-200 rounded-md hover:!bg-[#E8EDF5]'
             >
               <span className='whitespace-nowrap'>{tab.label}</span>
               {tab.count > 0 && (
                 <span
                   className={`ml-1.5 rounded-full px-1.5 py-0.5 text-xs font-medium ${
-                    selectedTab === tab.value ? 'bg-white/90 text-blue-600' : 'bg-blue-500 text-white'
+                    selectedTab === tab.value ? 'bg-white/90 text-[#1E40AF]' : 'bg-[#1E40AF] text-white'
                   }`}
                 >
                   {tab.count}
@@ -251,7 +251,7 @@ export function OrdersPage() {
                     <Button variant='outline' size='sm' disabled>
                       Trước
                     </Button>
-                    <Button variant='outline' size='sm' className='bg-blue-600 text-white'>
+                    <Button variant='outline' size='sm' className='bg-[#0A2463] text-white'>
                       1
                     </Button>
                     <Button variant='outline' size='sm'>

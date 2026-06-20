@@ -50,7 +50,7 @@ export function ConversationList({
     return (
       <div className='flex items-center justify-center h-64'>
         <div className='text-center'>
-          <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2' />
+          <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-[#0A2463] mx-auto mb-2' />
           <p className='text-gray-600 text-sm'>Đang tải...</p>
         </div>
       </div>
@@ -60,8 +60,8 @@ export function ConversationList({
   if (conversations.length === 0) {
     return (
       <div className='flex flex-col items-center justify-center h-64 text-center px-4'>
-        <div className='w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4'>
-          <MessageCircle className='w-8 h-8 text-blue-600' />
+        <div className='w-16 h-16 bg-[#F0F6FF] border border-[#BFDBFE] rounded-full flex items-center justify-center mb-4'>
+          <MessageCircle className='w-8 h-8 text-[#0A2463]' />
         </div>
         <h3 className='text-lg font-medium text-gray-900 mb-1'>Chưa có cuộc trò chuyện</h3>
         <p className='text-gray-600 text-sm'>
@@ -85,8 +85,8 @@ export function ConversationList({
         return (
           <div
             key={conversation._id}
-            className={`relative group w-full p-3 flex items-start gap-3 hover:bg-blue-50 transition-colors ${
-              isSelected ? 'bg-blue-50 border-l-4 border-blue-600' : ''
+            className={`relative group w-full p-3 flex items-start gap-3 hover:bg-[#F0F6FF] transition-colors ${
+              isSelected ? 'bg-[#F0F6FF] border-l-4 border-[#0A2463]' : ''
             }`}
           >
             <button
@@ -94,7 +94,7 @@ export function ConversationList({
               className='flex-1 flex items-start gap-3 text-left'
             >
               <div className='relative flex-shrink-0'>
-                <Avatar className='w-10 h-10 bg-blue-600'>
+                <Avatar className='w-10 h-10 bg-[#0A2463]'>
                   <AvatarImage src={otherUser?.avatar} />
                   <AvatarFallback className='text-white font-medium text-sm'>
                     {otherUserName.charAt(0).toUpperCase()}

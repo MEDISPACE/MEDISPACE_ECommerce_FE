@@ -300,9 +300,9 @@ export function UploadPrescriptionPage() {
             <div className='space-y-6'>
               {/* Header */}
               <div className='text-center'>
-                <div className='inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-full mb-4'>
-                  <Loader2 className='w-4 h-4 text-blue-600 animate-spin' />
-                  <span className='text-sm font-medium text-blue-700'>Đang phân tích đơn thuốc</span>
+                <div className='inline-flex items-center gap-2 px-4 py-2 bg-[#F0F6FF] border border-[#BFDBFE] rounded-full mb-4'>
+                  <Loader2 className='w-4 h-4 text-[#1E40AF] animate-spin' />
+                  <span className='text-sm font-medium text-[#0A2463]'>Đang phân tích đơn thuốc</span>
                 </div>
                 <h2 className='text-xl font-bold text-gray-800 mb-1'>Hệ thống nhận diện đơn thuốc đang làm việc...</h2>
                 <p className='text-sm text-gray-500'>Vui lòng không đóng trang. Thường mất khoảng 15-20 giây.</p>
@@ -311,13 +311,13 @@ export function UploadPrescriptionPage() {
               <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
                 {/* Image preview with scan line */}
                 <div
-                  className='relative rounded-2xl overflow-hidden border-2 border-blue-200 bg-gray-100'
+                  className='relative rounded-2xl overflow-hidden border-2 border-[#BFDBFE] bg-gray-100'
                   style={{ minHeight: '200px' }}
                 >
                   {firstUrl && <img src={firstUrl} alt='Đơn thuốc' className='w-full h-full object-contain' />}
                   {/* Animated scan line */}
                   <div
-                    className='absolute left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-blue-500 to-transparent'
+                    className='absolute left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#1E40AF] to-transparent'
                     style={{
                       top: `${(scanProgress / 100) * 100}%`,
                       transition: 'top 0.1s linear',
@@ -325,7 +325,7 @@ export function UploadPrescriptionPage() {
                     }}
                   />
                   {/* Blue tint overlay */}
-                  <div className='absolute inset-0 bg-blue-500/5 pointer-events-none' />
+                  <div className='absolute inset-0 bg-[#1E40AF]/5 pointer-events-none' />
                 </div>
 
                 {/* Pipeline & progress */}
@@ -351,7 +351,7 @@ export function UploadPrescriptionPage() {
                             isDone
                               ? 'bg-emerald-50 border-emerald-200'
                               : isActive
-                                ? 'bg-blue-50 border-blue-200 shadow-sm'
+                                ? 'bg-[#F0F6FF] border-[#BFDBFE] shadow-sm'
                                 : 'bg-gray-50 border-gray-200 opacity-40'
                           }`}
                         >
@@ -360,7 +360,7 @@ export function UploadPrescriptionPage() {
                               isDone
                                 ? 'bg-emerald-100 text-emerald-600'
                                 : isActive
-                                  ? 'bg-blue-100 text-blue-600'
+                                  ? 'bg-[#E8EDF5] text-[#1E40AF]'
                                   : 'bg-gray-100 text-gray-400'
                             }`}
                           >
@@ -375,7 +375,7 @@ export function UploadPrescriptionPage() {
                           <div className='flex-1 min-w-0'>
                             <p
                               className={`text-xs font-medium ${
-                                isDone ? 'text-emerald-700' : isActive ? 'text-blue-700' : 'text-gray-400'
+                                isDone ? 'text-emerald-700' : isActive ? 'text-[#0A2463]' : 'text-gray-400'
                               }`}
                             >
                               Trạm {stage}:{' '}
@@ -428,7 +428,7 @@ export function UploadPrescriptionPage() {
               <Button
                 onClick={handleNextStep}
                 disabled={uploadedImages.length === 0 || uploadedImages.some((img) => img.isUploading)}
-                className='bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-700 hover:to-blue-600'
+                className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white hover:from-[#071A49] hover:to-[#1E40AF]'
               >
                 Tiếp tục
               </Button>
@@ -451,11 +451,11 @@ export function UploadPrescriptionPage() {
 
             {/* OCR scanning spinner */}
             {isScanning && (
-              <div className='flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl'>
-                <Loader2 className='w-5 h-5 text-blue-600 animate-spin shrink-0' />
+              <div className='flex items-center gap-3 p-4 bg-[#F0F6FF] border border-[#BFDBFE] rounded-xl'>
+                <Loader2 className='w-5 h-5 text-[#1E40AF] animate-spin shrink-0' />
                 <div>
                   <p className='text-sm font-medium text-blue-800'>Đang quét đơn thuốc bằng AI...</p>
-                  <p className='text-xs text-blue-600'>Hệ thống sẽ tự điền thông tin sau vài giây</p>
+                  <p className='text-xs text-[#1E40AF]'>Hệ thống sẽ tự điền thông tin sau vài giây</p>
                 </div>
               </div>
             )}
@@ -499,7 +499,7 @@ export function UploadPrescriptionPage() {
                   <div className='flex justify-between items-center pb-4 border-b border-gray-50'>
                     <span className='text-gray-500 font-medium'>Mã đơn thuốc:</span>
                     <div 
-                      className='bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors px-3 py-1.5 rounded-lg flex items-center gap-2 cursor-pointer font-mono font-medium border border-blue-100 active:scale-95'
+                      className='bg-[#F0F6FF] text-[#0A2463] hover:bg-[#E8EDF5] transition-colors px-3 py-1.5 rounded-lg flex items-center gap-2 cursor-pointer font-mono font-medium border border-[#E8EDF5] active:scale-95'
                       onClick={() => {
                         navigator.clipboard.writeText(prescriptionNumber || prescriptionId || '')
                         toast.success('Đã copy mã đơn thuốc')
@@ -520,7 +520,7 @@ export function UploadPrescriptionPage() {
                 </div>
 
                 {/* Next Steps Timeline */}
-                <div className='bg-blue-50/50 border border-blue-100/50 rounded-2xl p-5'>
+                <div className='bg-[#F0F6FF]/50 border border-[#E8EDF5]/50 rounded-2xl p-5'>
                   <h3 className='text-xs font-bold text-blue-800 uppercase tracking-wider mb-5 flex items-center gap-2'>
                     <Clock className='w-4 h-4' />
                     Các bước tiếp theo
@@ -530,21 +530,21 @@ export function UploadPrescriptionPage() {
                     {/* Item 1 */}
                     <div className='flex gap-4'>
                       <div className='flex flex-col items-center mt-0.5'>
-                        <div className='w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 z-10'>
+                        <div className='w-8 h-8 rounded-full bg-[#E8EDF5] text-[#1E40AF] flex items-center justify-center shrink-0 z-10'>
                           <UserCheck className='w-4 h-4' />
                         </div>
-                        <div className='w-0.5 h-12 bg-blue-200 my-1 rounded-full'></div>
+                        <div className='w-0.5 h-12 bg-[#BFDBFE] my-1 rounded-full'></div>
                       </div>
                       <div className='pb-4'>
                         <h4 className='text-sm font-semibold text-gray-900'>Dược sĩ đang xem xét</h4>
-                        <p className='text-sm text-gray-600 mt-1 leading-relaxed'>Chúng tôi sẽ kiểm tra và phản hồi trong vòng <span className='font-medium text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded'>2-4 giờ</span> (giờ hành chính).</p>
+                        <p className='text-sm text-gray-600 mt-1 leading-relaxed'>Chúng tôi sẽ kiểm tra và phản hồi trong vòng <span className='font-medium text-[#0A2463] bg-[#E8EDF5] px-1.5 py-0.5 rounded'>2-4 giờ</span> (giờ hành chính).</p>
                       </div>
                     </div>
                     
                     {/* Item 2 */}
                     <div className='flex gap-4'>
                       <div className='flex flex-col items-center mt-0.5'>
-                        <div className='w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 z-10'>
+                        <div className='w-8 h-8 rounded-full bg-[#E8EDF5] text-[#1E40AF] flex items-center justify-center shrink-0 z-10'>
                           <Bell className='w-4 h-4' />
                         </div>
                       </div>
@@ -563,7 +563,7 @@ export function UploadPrescriptionPage() {
                 <div className='pt-2'>
                   <div className='grid grid-cols-1 md:grid-cols-2 gap-3 mb-5'>
                     <Button
-                      className='w-full h-12 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white shadow-md border-0 rounded-xl text-base'
+                      className='w-full h-12 bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#1E40AF] text-white shadow-md border-0 rounded-xl text-base'
                       onClick={() => navigate('/account/prescriptions')}
                     >
                       <ClipboardList className='w-5 h-5 mr-2' />
@@ -572,7 +572,7 @@ export function UploadPrescriptionPage() {
 
                     <Button
                       variant='outline'
-                      className='w-full h-12 border-blue-200 text-blue-700 hover:bg-blue-50 rounded-xl text-base shadow-sm'
+                      className='w-full h-12 border-[#BFDBFE] text-[#0A2463] hover:bg-[#F0F6FF] rounded-xl text-base shadow-sm'
                       onClick={() => navigate('/products')}
                     >
                       <ShoppingBag className='w-5 h-5 mr-2' />
@@ -592,7 +592,7 @@ export function UploadPrescriptionPage() {
                     <span className='text-gray-300 mx-1'>|</span>
                     <Button
                       variant='ghost'
-                      className='text-gray-500 hover:text-blue-600'
+                      className='text-gray-500 hover:text-[#1E40AF]'
                       onClick={() => {
                         setCurrentStep(1)
                         setUploadedImages([])
@@ -631,7 +631,7 @@ export function UploadPrescriptionPage() {
           <div className='space-y-6'>
             {/* Product Info */}
             {product && (
-              <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+              <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
                 <CardHeader>
                   <CardTitle className='text-blue-800'>Sản phẩm liên quan</CardTitle>
                 </CardHeader>
@@ -661,7 +661,7 @@ export function UploadPrescriptionPage() {
             )}
 
             {/* Guidelines */}
-            <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+            <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
               <div className='p-4'>
                 <h3 className='mb-3 text-blue-900 flex items-center text-sm font-bold'>📋 HƯỚNG DẪN CHỤP ẢNH TỐT</h3>
 
@@ -697,7 +697,7 @@ export function UploadPrescriptionPage() {
 
             {/* Process Timeline */}
 
-            <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+            <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
               <CardHeader>
                 <CardTitle className='text-blue-800'>Quy trình xử lý</CardTitle>
               </CardHeader>
@@ -706,7 +706,7 @@ export function UploadPrescriptionPage() {
                   <div className='flex items-start gap-3'>
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
-                        currentStep >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
+                        currentStep >= 1 ? 'bg-[#0A2463] text-white' : 'bg-gray-300 text-gray-600'
                       }`}
                     >
                       <Upload className='w-4 h-4' />
@@ -720,7 +720,7 @@ export function UploadPrescriptionPage() {
                   <div className='flex items-start gap-3'>
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
-                        currentStep >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
+                        currentStep >= 2 ? 'bg-[#0A2463] text-white' : 'bg-gray-300 text-gray-600'
                       }`}
                     >
                       <UserCheck className='w-4 h-4' />
@@ -734,7 +734,7 @@ export function UploadPrescriptionPage() {
                   <div className='flex items-start gap-3'>
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
-                        currentStep >= 3 ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
+                        currentStep >= 3 ? 'bg-[#0A2463] text-white' : 'bg-gray-300 text-gray-600'
                       }`}
                     >
                       <Package className='w-4 h-4' />
@@ -763,14 +763,14 @@ export function UploadPrescriptionPage() {
             </Card>
 
             {/* Support Info */}
-            <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+            <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
               <CardContent className='p-4'>
-                <Alert className='border-blue-200 bg-blue-50'>
+                <Alert className='border-[#BFDBFE] bg-[#F0F6FF]'>
                   <AlertDescription>
                     <div className='space-y-2'>
                       <p className='font-medium text-blue-900'>Cần hỗ trợ?</p>
                       <p className='text-sm text-blue-800'>
-                        Liên hệ hotline: <span className='font-medium text-blue-600'>1800 6928</span>
+                        Liên hệ hotline: <span className='font-medium text-[#1E40AF]'>1800 6928</span>
                       </p>
                       <p className='text-sm text-blue-800'>Hoặc chat trực tiếp với dược sĩ</p>
                     </div>

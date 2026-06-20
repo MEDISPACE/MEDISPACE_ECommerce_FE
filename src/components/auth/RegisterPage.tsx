@@ -173,12 +173,12 @@ const RegisterPage = () => {
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
           >
-            <div className='w-24 h-24 bg-gradient-to-r from-blue-500 via-blue-600 to-cyan-500 rounded-full flex items-center justify-center mx-auto shadow-2xl shadow-blue-500/50'>
+            <div className='w-24 h-24 bg-gradient-to-r from-[#0A2463] via-[#1E40AF] to-[#3B82F6] rounded-full flex items-center justify-center mx-auto shadow-2xl shadow-blue-500/50'>
               <CheckCircle className='w-12 h-12 text-white' />
             </div>
             {/* Animated rings */}
             <motion.div
-              className='absolute inset-0 w-24 h-24 mx-auto border-4 border-blue-300 rounded-full'
+              className='absolute inset-0 w-24 h-24 mx-auto border-4 border-[#BFDBFE] rounded-full'
               animate={{ scale: [1, 1.3], opacity: [0.5, 0] }}
               transition={{ duration: 1.5, repeat: Infinity }}
             />
@@ -199,16 +199,16 @@ const RegisterPage = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
           >
-            Chào mừng bạn đến với <span className='text-blue-600'>MEDISPACE</span>!<br />
+            Chào mừng bạn đến với <span className='text-[#1E40AF]'>MEDISPACE</span>!<br />
             Tài khoản của bạn đã được tạo thành công.
             <br />
-            Vui lòng <span className='font-bold text-blue-700'>kiểm tra email</span> để xác thực tài khoản trước khi
+            Vui lòng <span className='font-bold text-[#0A2463]'>kiểm tra email</span> để xác thực tài khoản trước khi
             đăng nhập.
           </motion.p>
 
           <Button
             onClick={() => navigate('/login')}
-            className='bg-blue-600 hover:bg-blue-700 text-white px-8 py-2 rounded-xl mb-4'
+            className='bg-[#0A2463] hover:bg-[#071A49] text-white px-8 py-2 rounded-xl mb-4'
           >
             Đăng nhập ngay
           </Button>
@@ -228,9 +228,9 @@ const RegisterPage = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className='text-blue-600 mb-2 relative inline-block text-2xl md:text-2xl font-semibold'>
+        <h1 className='text-[#1E40AF] mb-2 relative inline-block text-2xl md:text-2xl font-semibold'>
           Trở thành thành viên để mua sắm dễ dàng hơn
-          <Sparkles className='inline-block ml-2 w-5 h-5 text-cyan-500 animate-pulse' />
+          <Sparkles className='inline-block ml-2 w-5 h-5 text-[#1E40AF] animate-pulse' />
         </h1>
         <p className='text-gray-500 text-base md:text-lg mt-2'>Tạo tài khoản chỉ trong vài phút!</p>
       </motion.div>
@@ -250,7 +250,7 @@ const RegisterPage = () => {
           <div className='space-y-2.5'>
             <Label
               htmlFor='firstName'
-              className='text-blue-600 uppercase text-xs tracking-wide flex items-center gap-2'
+              className='text-[#1E40AF] uppercase text-xs tracking-wide flex items-center gap-2'
             >
               <User className='w-4 h-4' />
               HỌ
@@ -266,7 +266,7 @@ const RegisterPage = () => {
                 className={`pl-12 h-14 bg-white border-2 rounded-xl transition-all duration-200 ${
                   errors.firstName
                     ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-200'
-                    : 'border-blue-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 hover:border-blue-300'
+                    : 'border-[#BFDBFE] focus:border-[#1E40AF] focus:ring-4 focus:ring-blue-100 hover:border-[#BFDBFE]'
                 }`}
               />
             </div>
@@ -283,7 +283,7 @@ const RegisterPage = () => {
           </div>
 
           <div className='space-y-2.5'>
-            <Label htmlFor='lastName' className='text-blue-600 uppercase text-xs tracking-wide flex items-center gap-2'>
+            <Label htmlFor='lastName' className='text-[#1E40AF] uppercase text-xs tracking-wide flex items-center gap-2'>
               <UserCircle2 className='w-4 h-4' />
               TÊN
             </Label>
@@ -298,7 +298,7 @@ const RegisterPage = () => {
                 className={`pl-12 h-14 bg-white border-2 rounded-xl transition-all duration-200 ${
                   errors.lastName
                     ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-200'
-                    : 'border-blue-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 hover:border-blue-300'
+                    : 'border-[#BFDBFE] focus:border-[#1E40AF] focus:ring-4 focus:ring-blue-100 hover:border-[#BFDBFE]'
                 }`}
               />
             </div>
@@ -317,7 +317,7 @@ const RegisterPage = () => {
 
         {/* Gender */}
         <div className='space-y-2.5'>
-          <Label className='text-blue-600 uppercase text-xs tracking-wide flex items-center gap-2'>
+          <Label className='text-[#1E40AF] uppercase text-xs tracking-wide flex items-center gap-2'>
             <UserCircle2 className='w-4 h-4' />
             GIỚI TÍNH
           </Label>
@@ -329,14 +329,14 @@ const RegisterPage = () => {
             <div
               className={`flex items-center justify-center h-14 border-2 rounded-xl transition-all duration-200 cursor-pointer ${
                 formData.gender === 'Nam'
-                  ? 'border-blue-500 bg-blue-50 shadow-md shadow-blue-100'
-                  : 'border-blue-200 bg-white hover:border-blue-300 hover:bg-blue-50/50'
+                  ? 'border-[#1E40AF] bg-[#F0F6FF] shadow-md shadow-blue-100'
+                  : 'border-[#BFDBFE] bg-white hover:border-[#BFDBFE] hover:bg-[#F0F6FF]/50'
               }`}
             >
               <RadioGroupItem value='Nam' id='male' className='sr-only' />
               <Label
                 htmlFor='male'
-                className={`w-full h-full flex items-center justify-center cursor-pointer transition-colors ${formData.gender === 'Nam' ? 'text-blue-600' : 'text-gray-600'}`}
+                className={`w-full h-full flex items-center justify-center cursor-pointer transition-colors ${formData.gender === 'Nam' ? 'text-[#1E40AF]' : 'text-gray-600'}`}
               >
                 Nam
               </Label>
@@ -344,14 +344,14 @@ const RegisterPage = () => {
             <div
               className={`flex items-center justify-center h-14 border-2 rounded-xl transition-all duration-200 cursor-pointer ${
                 formData.gender === 'Nữ'
-                  ? 'border-blue-500 bg-blue-50 shadow-md shadow-blue-100'
-                  : 'border-blue-200 bg-white hover:border-blue-300 hover:bg-blue-50/50'
+                  ? 'border-[#1E40AF] bg-[#F0F6FF] shadow-md shadow-blue-100'
+                  : 'border-[#BFDBFE] bg-white hover:border-[#BFDBFE] hover:bg-[#F0F6FF]/50'
               }`}
             >
               <RadioGroupItem value='Nữ' id='female' className='sr-only' />
               <Label
                 htmlFor='female'
-                className={`w-full h-full flex items-center justify-center cursor-pointer transition-colors ${formData.gender === 'Nữ' ? 'text-blue-600' : 'text-gray-600'}`}
+                className={`w-full h-full flex items-center justify-center cursor-pointer transition-colors ${formData.gender === 'Nữ' ? 'text-[#1E40AF]' : 'text-gray-600'}`}
               >
                 Nữ
               </Label>
@@ -362,7 +362,7 @@ const RegisterPage = () => {
 
         {/* Phone */}
         <div className='space-y-2.5'>
-          <Label className='text-blue-600 uppercase text-xs tracking-wide flex items-center gap-2'>
+          <Label className='text-[#1E40AF] uppercase text-xs tracking-wide flex items-center gap-2'>
             <Phone className='w-4 h-4' />
             SỐ ĐIỆN THOẠI
           </Label>
@@ -376,7 +376,7 @@ const RegisterPage = () => {
               className={`pl-12 h-14 bg-white border-2 rounded-xl transition-all duration-200 ${
                 errors.phoneNumber
                   ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-200'
-                  : 'border-blue-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 hover:border-blue-300'
+                  : 'border-[#BFDBFE] focus:border-[#1E40AF] focus:ring-4 focus:ring-blue-100 hover:border-[#BFDBFE]'
               }`}
             />
           </div>
@@ -394,7 +394,7 @@ const RegisterPage = () => {
 
         {/* Email */}
         <div className='space-y-2.5'>
-          <Label htmlFor='email' className='text-blue-600 uppercase text-xs tracking-wide flex items-center gap-2'>
+          <Label htmlFor='email' className='text-[#1E40AF] uppercase text-xs tracking-wide flex items-center gap-2'>
             <Mail className='w-4 h-4' />
             EMAIL
           </Label>
@@ -409,7 +409,7 @@ const RegisterPage = () => {
               className={`pl-12 h-14 bg-white border-2 rounded-xl transition-all duration-200 ${
                 errors.email
                   ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-200'
-                  : 'border-blue-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 hover:border-blue-300'
+                  : 'border-[#BFDBFE] focus:border-[#1E40AF] focus:ring-4 focus:ring-blue-100 hover:border-[#BFDBFE]'
               }`}
             />
           </div>
@@ -427,7 +427,7 @@ const RegisterPage = () => {
 
         {/* Password */}
         <div className='space-y-2.5'>
-          <Label htmlFor='password' className='text-blue-600 uppercase text-xs tracking-wide flex items-center gap-2'>
+          <Label htmlFor='password' className='text-[#1E40AF] uppercase text-xs tracking-wide flex items-center gap-2'>
             <Lock className='w-4 h-4' />
             MẬT KHẨU
           </Label>
@@ -442,13 +442,13 @@ const RegisterPage = () => {
               className={`pl-12 pr-12 h-14 bg-white border-2 rounded-xl transition-all duration-200 ${
                 errors.password
                   ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-200'
-                  : 'border-blue-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 hover:border-blue-300'
+                  : 'border-[#BFDBFE] focus:border-[#1E40AF] focus:ring-4 focus:ring-blue-100 hover:border-[#BFDBFE]'
               }`}
             />
             <button
               type='button'
               onClick={() => setShowPassword(!showPassword)}
-              className='absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600 transition-colors'
+              className='absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#1E40AF] transition-colors'
             >
               {showPassword ? <EyeOff className='w-5 h-5' /> : <Eye className='w-5 h-5' />}
             </button>
@@ -469,7 +469,7 @@ const RegisterPage = () => {
         <div className='space-y-2.5'>
           <Label
             htmlFor='confirmPassword'
-            className='text-blue-600 uppercase text-xs tracking-wide flex items-center gap-2'
+            className='text-[#1E40AF] uppercase text-xs tracking-wide flex items-center gap-2'
           >
             <Lock className='w-4 h-4' />
             XÁC NHẬN MẬT KHẨU
@@ -485,13 +485,13 @@ const RegisterPage = () => {
               className={`pl-12 pr-12 h-14 bg-white border-2 rounded-xl transition-all duration-200 ${
                 errors.confirmPassword
                   ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-200'
-                  : 'border-blue-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 hover:border-blue-300'
+                  : 'border-[#BFDBFE] focus:border-[#1E40AF] focus:ring-4 focus:ring-blue-100 hover:border-[#BFDBFE]'
               }`}
             />
             <button
               type='button'
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className='absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600 transition-colors'
+              className='absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#1E40AF] transition-colors'
             >
               {showConfirmPassword ? <EyeOff className='w-5 h-5' /> : <Eye className='w-5 h-5' />}
             </button>
@@ -510,7 +510,7 @@ const RegisterPage = () => {
 
         {/* Terms and Conditions */}
         <motion.div
-          className='flex items-center gap-3 p-4 bg-blue-50 rounded-xl border-2 border-blue-100'
+          className='flex items-center gap-3 p-4 bg-[#F0F6FF] rounded-xl border-2 border-[#E8EDF5]'
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4, delay: 0.3 }}
@@ -519,16 +519,16 @@ const RegisterPage = () => {
             id='agreeToTerms'
             checked={formData.agreeToTerms}
             onCheckedChange={(checked) => setFormData({ ...formData, agreeToTerms: checked as boolean })}
-            className='border-2 border-blue-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 flex-shrink-0'
+            className='border-2 border-[#BFDBFE] data-[state=checked]:bg-[#0A2463] data-[state=checked]:border-[#1E40AF] flex-shrink-0'
           />
           <div className='flex-1'>
             <Label htmlFor='agreeToTerms' className='text-sm text-gray-700 cursor-pointer block'>
               Tôi đồng ý với{' '}
-              <Link to='#' className='text-blue-600 hover:text-blue-700 hover:underline transition-colors'>
+              <Link to='#' className='text-[#1E40AF] hover:text-[#0A2463] hover:underline transition-colors'>
                 Điều khoản dịch vụ
               </Link>{' '}
               và{' '}
-              <Link to='#' className='text-blue-600 hover:text-blue-700 hover:underline transition-colors'>
+              <Link to='#' className='text-[#1E40AF] hover:text-[#0A2463] hover:underline transition-colors'>
                 Chính sách bảo mật
               </Link>{' '}
               của MEDISPACE
@@ -544,7 +544,7 @@ const RegisterPage = () => {
         >
           <Button
             type='submit'
-            className='w-full bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-400 hover:from-blue-700 hover:via-blue-600 hover:to-cyan-500 text-white h-14 rounded-xl shadow-lg hover:shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 mt-6 uppercase tracking-wide relative overflow-hidden group'
+            className='w-full bg-gradient-to-r from-[#0A2463] via-[#1E40AF] to-[#3B82F6] hover:from-[#071A49] hover:via-[#0A2463] hover:to-[#1E40AF] text-white h-14 rounded-xl shadow-lg hover:shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 mt-6 uppercase tracking-wide relative overflow-hidden group'
             disabled={isLoading || !formData.agreeToTerms}
           >
             {/* Shimmer effect */}
@@ -575,10 +575,10 @@ const RegisterPage = () => {
         <span className='text-gray-600'>Đã có tài khoản? </span>
         <Link
           to='/login'
-          className='text-blue-500 hover:text-blue-600 transition-all duration-200 relative group inline-block'
+          className='text-blue-500 hover:text-[#1E40AF] transition-all duration-200 relative group inline-block'
         >
           <span>Đăng nhập ngay</span>
-          <span className='absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left' />
+          <span className='absolute bottom-0 left-0 w-full h-0.5 bg-[#0A2463] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left' />
         </Link>
       </motion.div>
     </PageTransition>

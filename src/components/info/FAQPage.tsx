@@ -187,10 +187,10 @@ export function FAQPage() {
       <UniversalBreadcrumb items={breadcrumbItems} />
       {/* Hero Section */}
       <div className='text-center space-y-6 animate-slide-in-up'>
-        <div className='inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 shadow-lg mb-4'>
+        <div className='inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-[#0A2463] to-[#1E40AF] shadow-lg mb-4'>
           <HelpCircle className='w-10 h-10 text-white' />
         </div>
-        <h1 className='bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 bg-clip-text text-transparent'>
+        <h1 className='bg-gradient-to-r from-[#0A2463] via-[#1E40AF] to-[#3B82F6] bg-clip-text text-transparent'>
           Câu hỏi thường gặp
         </h1>
         <p className='text-xl text-gray-600 max-w-2xl mx-auto'>
@@ -206,7 +206,7 @@ export function FAQPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder='Tìm kiếm câu hỏi...'
-              className='pl-12 pr-4 py-6 border-2 border-blue-200 focus:border-blue-500 rounded-xl text-lg'
+              className='pl-12 pr-4 py-6 border-2 border-[#BFDBFE] focus:border-[#1E40AF] rounded-xl text-lg'
             />
           </div>
         </div>
@@ -217,15 +217,15 @@ export function FAQPage() {
         {categories.map((cat, index) => (
           <Card
             key={cat.id}
-            className='bg-white/80 backdrop-blur-lg shadow-lg rounded-xl border border-blue-100 hover:shadow-xl transition-all animate-slide-in-up'
+            className='bg-white/80 backdrop-blur-lg shadow-lg rounded-xl border border-[#E8EDF5] hover:shadow-xl transition-all animate-slide-in-up'
             style={{ animationDelay: `${index * 0.05}s` }}
           >
             <CardContent className='p-4 text-center'>
-              <div className='w-12 h-12 mx-auto mb-2 rounded-full bg-blue-100 flex items-center justify-center'>
-                <cat.icon className='w-6 h-6 text-blue-600' />
+              <div className='w-12 h-12 mx-auto mb-2 rounded-full bg-[#E8EDF5] flex items-center justify-center'>
+                <cat.icon className='w-6 h-6 text-[#1E40AF]' />
               </div>
               <p className='text-sm text-gray-700 mb-1'>{cat.label}</p>
-              <Badge className='bg-blue-100 text-blue-800 border-blue-200'>{cat.count} câu hỏi</Badge>
+              <Badge className='bg-[#E8EDF5] text-blue-800 border-[#BFDBFE]'>{cat.count} câu hỏi</Badge>
             </CardContent>
           </Card>
         ))}
@@ -233,12 +233,12 @@ export function FAQPage() {
 
       {/* FAQ Content */}
       <Tabs defaultValue='all' className='space-y-6'>
-        <TabsList className='grid w-full grid-cols-2 md:grid-cols-5 gap-2 bg-blue-50 p-2 rounded-xl'>
+        <TabsList className='grid w-full grid-cols-2 md:grid-cols-5 gap-2 bg-[#F0F6FF] p-2 rounded-xl'>
           {categories.map((cat) => (
             <TabsTrigger
               key={cat.id}
               value={cat.id}
-              className='flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-500 data-[state=active]:text-white rounded-lg'
+              className='flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#0A2463] data-[state=active]:to-[#1E40AF] data-[state=active]:text-white rounded-lg'
             >
               <cat.icon className='w-4 h-4' />
               <span className='hidden md:inline'>{cat.label}</span>
@@ -249,7 +249,7 @@ export function FAQPage() {
         {categories.map((cat) => (
           <TabsContent key={cat.id} value={cat.id} className='space-y-4'>
             {getFAQsByCategory(cat.id).length === 0 ? (
-              <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+              <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
                 <CardContent className='p-12 text-center'>
                   <HelpCircle className='w-16 h-16 mx-auto text-gray-300 mb-4' />
                   <h3 className='text-lg text-gray-900 mb-2'>Không tìm thấy câu hỏi</h3>
@@ -257,18 +257,18 @@ export function FAQPage() {
                 </CardContent>
               </Card>
             ) : (
-              <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+              <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
                 <CardContent className='p-6'>
                   <Accordion type='single' collapsible className='space-y-4'>
                     {getFAQsByCategory(cat.id).map((faq, index) => (
                       <AccordionItem
                         key={index}
                         value={`item-${index}`}
-                        className='border border-blue-100 rounded-lg px-4 data-[state=open]:bg-blue-50'
+                        className='border border-[#E8EDF5] rounded-lg px-4 data-[state=open]:bg-[#F0F6FF]'
                       >
                         <AccordionTrigger className='hover:no-underline py-4 text-left'>
                           <div className='flex items-start gap-3 pr-4'>
-                            <div className='w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0 text-sm mt-1'>
+                            <div className='w-6 h-6 rounded-full bg-[#E8EDF5] text-[#1E40AF] flex items-center justify-center flex-shrink-0 text-sm mt-1'>
                               Q
                             </div>
                             <span className='text-gray-900'>{faq.question}</span>
@@ -293,7 +293,7 @@ export function FAQPage() {
       </Tabs>
 
       {/* Still Have Questions? */}
-      <Card className='bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 text-white'>
+      <Card className='bg-gradient-to-r from-[#0A2463] via-[#1E40AF] to-[#3B82F6] text-white'>
         <CardContent className='p-8 text-center space-y-6'>
           <div className='inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm mb-2'>
             <Phone className='w-8 h-8 text-white' />
@@ -305,7 +305,7 @@ export function FAQPage() {
             </p>
           </div>
           <div className='flex flex-col sm:flex-row gap-4 justify-center'>
-            <Button asChild className='bg-white text-blue-600 hover:bg-blue-50 shadow-lg'>
+            <Button asChild className='bg-white text-[#1E40AF] hover:bg-[#F0F6FF] shadow-lg'>
               <a href='tel:19001234' className='gap-2'>
                 <Phone className='w-5 h-5' />
                 Gọi hotline: 1900 1234
@@ -323,14 +323,14 @@ export function FAQPage() {
                 }
               }}
               variant='outline'
-              className='bg-blue-700 text-white border-2 border-white/20 hover:bg-blue-800'
+              className='bg-[#071A49] text-white border-2 border-white/20 hover:bg-blue-800'
             >
               Chat với dược sĩ
             </Button>
             <Button
               asChild
               variant='outline'
-              className='bg-blue-700 text-white border-2 border-white/20 hover:bg-blue-800'
+              className='bg-[#071A49] text-white border-2 border-white/20 hover:bg-blue-800'
             >
               <a href='/contact' className='gap-2'>
                 Gửi tin nhắn
@@ -342,40 +342,40 @@ export function FAQPage() {
 
       {/* Additional Resources */}
       <div className='grid md:grid-cols-3 gap-6'>
-        <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 hover:shadow-xl transition-all'>
+        <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] hover:shadow-xl transition-all'>
           <CardContent className='p-6 text-center space-y-3'>
-            <div className='w-12 h-12 mx-auto rounded-full bg-blue-100 flex items-center justify-center'>
-              <Shield className='w-6 h-6 text-blue-600' />
+            <div className='w-12 h-12 mx-auto rounded-full bg-[#E8EDF5] flex items-center justify-center'>
+              <Shield className='w-6 h-6 text-[#1E40AF]' />
             </div>
             <h3 className='text-blue-900'>Chính sách bảo mật</h3>
             <p className='text-sm text-gray-600'>Tìm hiểu cách chúng tôi bảo vệ thông tin của bạn</p>
-            <Button variant='link' className='text-blue-600 hover:text-blue-700'>
+            <Button variant='link' className='text-[#1E40AF] hover:text-[#0A2463]'>
               Xem chi tiết →
             </Button>
           </CardContent>
         </Card>
 
-        <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 hover:shadow-xl transition-all'>
+        <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] hover:shadow-xl transition-all'>
           <CardContent className='p-6 text-center space-y-3'>
             <div className='w-12 h-12 mx-auto rounded-full bg-green-100 flex items-center justify-center'>
               <FileText className='w-6 h-6 text-green-600' />
             </div>
             <h3 className='text-blue-900'>Điều khoản sử dụng</h3>
             <p className='text-sm text-gray-600'>Các quy định khi sử dụng dịch vụ MEDISPACE</p>
-            <Button variant='link' className='text-blue-600 hover:text-blue-700'>
+            <Button variant='link' className='text-[#1E40AF] hover:text-[#0A2463]'>
               Xem chi tiết →
             </Button>
           </CardContent>
         </Card>
 
-        <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 hover:shadow-xl transition-all'>
+        <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] hover:shadow-xl transition-all'>
           <CardContent className='p-6 text-center space-y-3'>
-            <div className='w-12 h-12 mx-auto rounded-full bg-purple-100 flex items-center justify-center'>
-              <Truck className='w-6 h-6 text-purple-600' />
+            <div className='w-12 h-12 mx-auto rounded-full bg-[#E8EDF5] flex items-center justify-center'>
+              <Truck className='w-6 h-6 text-[#1E40AF]' />
             </div>
             <h3 className='text-blue-900'>Chính sách giao hàng</h3>
             <p className='text-sm text-gray-600'>Thông tin về giao hàng và phí vận chuyển</p>
-            <Button variant='link' className='text-blue-600 hover:text-blue-700'>
+            <Button variant='link' className='text-[#1E40AF] hover:text-[#0A2463]'>
               Xem chi tiết →
             </Button>
           </CardContent>

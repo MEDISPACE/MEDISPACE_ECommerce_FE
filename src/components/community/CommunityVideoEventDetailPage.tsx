@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { LiveKitRoom, VideoConference } from '@livekit/components-react'
 import '@livekit/components-styles'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, CalendarDays, Copy, MessageSquare, Mic, MicOff, MonitorUp, MoreVertical, PhoneOff, Send, Users, Video, VideoOff } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Copy, MessageSquare, Mic, MicOff, Send, Users, Video, VideoOff } from 'lucide-react'
 import { toast } from 'sonner'
 import communityService from '~/services/communityService'
 import type { CommunityMessage, CommunityVideoEvent, CommunityVideoJoinPayload } from '~/types/community'
@@ -12,6 +12,7 @@ import { useSocketContext } from '~/contexts/SocketContext'
 import { Button } from '~/components/ui/button'
 import { Checkbox } from '~/components/ui/checkbox'
 import { Textarea } from '~/components/ui/textarea'
+import { UniversalBreadcrumb } from '~/components/shared/UniversalBreadcrumb'
 
 function formatDateTime(value?: string) {
   if (!value) return ''
@@ -44,6 +45,10 @@ function isCommunityVideoEventPayload(payload: unknown): payload is CommunityVid
   return typeof event._id === 'string' && typeof event.roomId === 'string' && typeof event.title === 'string'
 }
 
+function displayNameFromParts(firstName?: string, lastName?: string, email?: string) {
+  return [firstName, lastName].filter(Boolean).join(' ').trim() || email || ''
+}
+
 export function CommunityVideoEventDetailPage() {
   const { eventId = '' } = useParams()
   const navigate = useNavigate()
@@ -58,6 +63,15 @@ export function CommunityVideoEventDetailPage() {
   const [cameraEnabled, setCameraEnabled] = useState(true)
   const [showChat, setShowChat] = useState(true)
   const [isOffline, setIsOffline] = useState(false)
+  const [cameraPreviewError, setCameraPreviewError] = useState<string | null>(null)
+  const previewVideoRef = useRef<HTMLVideoElement | null>(null)
+  const previewStreamRef = useRef<MediaStream | null>(null)
+
+  const stopCameraPreview = useCallback(() => {
+    previewStreamRef.current?.getTracks().forEach((track) => track.stop())
+    previewStreamRef.current = null
+    if (previewVideoRef.current) previewVideoRef.current.srcObject = null
+  }, [])
 
   const eventQuery = useQuery({
     queryKey: ['community-video-event', eventId],
@@ -67,8 +81,6 @@ export function CommunityVideoEventDetailPage() {
   })
 
   const event = eventQuery.data
-  const registered = ['registered', 'attended'].includes(event?.viewerRegistration?.status || '')
-
   const chatQuery = useQuery({
     queryKey: ['community-video-event-chat', event?.roomId],
     queryFn: () => communityService.listMessages({ roomId: event!.roomId, page: 1, limit: 80 }),
@@ -79,6 +91,39 @@ export function CommunityVideoEventDetailPage() {
     if (!chatQuery.data?.items) return
     setChatMessages([...chatQuery.data.items].reverse())
   }, [chatQuery.data?.items])
+
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) return
+    if (joinPayload || !cameraEnabled) {
+      stopCameraPreview()
+      return
+    }
+
+    let cancelled = false
+    setCameraPreviewError(null)
+    navigator.mediaDevices
+      .getUserMedia({ video: true, audio: false })
+      .then((stream) => {
+        if (cancelled) {
+          stream.getTracks().forEach((track) => track.stop())
+          return
+        }
+        stopCameraPreview()
+        previewStreamRef.current = stream
+        if (previewVideoRef.current) {
+          previewVideoRef.current.srcObject = stream
+          previewVideoRef.current.play().catch(() => undefined)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setCameraPreviewError('Không thể mở camera. Kiểm tra quyền truy cập camera của trình duyệt.')
+      })
+
+    return () => {
+      cancelled = true
+      stopCameraPreview()
+    }
+  }, [cameraEnabled, joinPayload, stopCameraPreview])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -134,15 +179,6 @@ export function CommunityVideoEventDetailPage() {
     }
   }, [event?.roomId, isAuthenticated, joinPayload, socket])
 
-  const registerMutation = useMutation({
-    mutationFn: () => communityService.registerVideoEvent(eventId),
-    onSuccess: () => {
-      toast.success('Đã đăng ký hội thảo')
-      queryClient.invalidateQueries({ queryKey: ['community-video-event', eventId] })
-    },
-    onError: (error: any) => toast.error(error?.response?.data?.message || 'Không thể đăng ký'),
-  })
-
   const joinMutation = useMutation({
     mutationFn: () => communityService.joinVideoEvent(eventId),
     onSuccess: async (payload) => {
@@ -154,6 +190,7 @@ export function CommunityVideoEventDetailPage() {
       if (event?.roomId) {
         await communityService.joinRoom(event.roomId).catch(() => undefined)
       }
+      stopCameraPreview()
       setJoinPayload(payload)
     },
     onError: (error: any) => toast.error(error?.response?.data?.message || 'Không thể tham gia hội thảo'),
@@ -177,6 +214,7 @@ export function CommunityVideoEventDetailPage() {
   }
 
   const showReconnectIndicator = isOffline || (Boolean(joinPayload) && socket.isConnecting)
+  const backToCommunityPath = event?.roomId ? `/community/${event.roomId}` : '/community'
 
   const copyMeetingLink = async () => {
     await navigator.clipboard.writeText(window.location.href)
@@ -193,7 +231,14 @@ export function CommunityVideoEventDetailPage() {
   if (!isAuthenticated) {
     return (
       <main className='mx-auto max-w-4xl px-4 py-10'>
-        <Button variant='ghost' onClick={() => navigate('/community/video-events')}><ArrowLeft />Quay lại</Button>
+        <UniversalBreadcrumb
+          items={[
+            { label: 'Cộng đồng', href: '/community' },
+            { label: 'Chi tiết hội thảo' },
+          ]}
+        />
+
+        <Button variant='ghost' onClick={() => navigate('/community')}><ArrowLeft />Quay lại cộng đồng</Button>
         <div className='mt-8 rounded-lg border border-gray-200 bg-white p-8 text-center'>
           <h1 className='text-xl font-semibold'>Bạn cần đăng nhập để xem hội thảo</h1>
           <Button className='mt-4' onClick={() => navigate('/login', { state: { from: { pathname: `/community/video-events/${eventId}` } } })}>Đăng nhập</Button>
@@ -230,10 +275,14 @@ export function CommunityVideoEventDetailPage() {
               token={joinPayload.token}
               serverUrl={joinPayload.wsUrl}
               connect={true}
+              audio={micEnabled}
+              video={cameraEnabled}
               data-lk-theme='default'
+              className='medispace-livekit-room'
               onDisconnected={() => setJoinPayload(null)}
               onError={(error) => toast.error(error?.message || 'Không thể kết nối LiveKit')}
             >
+              <style>{`.medispace-livekit-room .lk-chat,.medispace-livekit-room .lk-chat-toggle{display:none!important}`}</style>
               <VideoConference />
             </LiveKitRoom>
           </div>
@@ -245,12 +294,21 @@ export function CommunityVideoEventDetailPage() {
                 {chatQuery.isLoading ? <p className='text-sm text-gray-500'>Đang tải chat...</p> : null}
                 {chatMessages.length ? chatMessages.map((message) => {
                   const mine = message.senderId === user?._id
-                  const senderName = mine ? 'Bạn' : [message.sender?.firstName, message.sender?.lastName].filter(Boolean).join(' ') || 'Thành viên'
+                  const senderName = mine
+                    ? displayNameFromParts(message.sender?.firstName || user?.firstName, message.sender?.lastName || user?.lastName, message.sender?.email || user?.email) || 'Bạn'
+                    : displayNameFromParts(message.sender?.firstName, message.sender?.lastName, message.sender?.email) || 'Thành viên'
                   return (
                     <div key={message._id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
                       <div className={`max-w-[88%] rounded-2xl px-3 py-2 text-sm ${mine ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'}`}>
                         <div className={`mb-1 text-xs font-medium ${mine ? 'text-blue-100' : 'text-gray-500'}`}>{senderName}</div>
-                        <p className='whitespace-pre-wrap break-words'>{message.content}</p>
+                        <div className='space-y-2'>
+                          {message.imageUrl && (
+                            <a href={message.imageUrl} target='_blank' rel='noreferrer' className='block overflow-hidden rounded-xl'>
+                              <img src={message.imageUrl} alt='Ảnh trong tin nhắn' className='max-h-64 w-full object-cover' loading='lazy' />
+                            </a>
+                          )}
+                          {message.content && <p className='whitespace-pre-wrap break-words'>{message.content}</p>}
+                        </div>
                       </div>
                     </div>
                   )
@@ -282,20 +340,13 @@ export function CommunityVideoEventDetailPage() {
           )}
         </section>
 
-        <footer className='grid h-20 grid-cols-[1fr_auto_1fr] items-center px-4 md:px-6'>
+        <footer className='grid h-14 grid-cols-[1fr_auto] items-center px-4 md:px-6'>
           <div className='hidden min-w-0 text-sm text-gray-300 md:block'>
             <span className='font-medium'>{formatDateTime(new Date().toISOString())}</span>
             <span className='mx-2 text-gray-500'>|</span>
             <span className='truncate'>{event.title}</span>
           </div>
-          <div className='flex items-center gap-3'>
-            <Button data-testid='mic-toggle-btn' size='icon' className='h-12 w-12 rounded-full bg-[#3c4043] text-white hover:bg-[#4b5055]' onClick={() => setMicEnabled((value) => !value)}>{micEnabled ? <Mic /> : <MicOff />}</Button>
-            <Button data-testid='camera-toggle-btn' size='icon' className='h-12 w-12 rounded-full bg-[#3c4043] text-white hover:bg-[#4b5055]' onClick={() => setCameraEnabled((value) => !value)}>{cameraEnabled ? <Video /> : <VideoOff />}</Button>
-            <Button size='icon' className='h-12 w-12 rounded-full bg-[#3c4043] text-white hover:bg-[#4b5055]'><MonitorUp /></Button>
-            <Button size='icon' className='h-12 w-12 rounded-full bg-[#3c4043] text-white hover:bg-[#4b5055]'><MoreVertical /></Button>
-            <Button data-testid='leave-event-btn' size='icon' className='h-12 w-16 rounded-full bg-red-600 text-white hover:bg-red-700' onClick={() => setJoinPayload(null)}><PhoneOff /></Button>
-          </div>
-          <div className='hidden justify-self-end md:block'>
+          <div className='justify-self-end'>
             <Button variant='ghost' className='rounded-full text-white hover:bg-white/10' onClick={copyMeetingLink}><Copy />Copy link</Button>
           </div>
         </footer>
@@ -305,8 +356,16 @@ export function CommunityVideoEventDetailPage() {
 
   return (
     <main data-testid='event-detail-page' className='min-h-screen bg-white text-[#202124]'>
+      <UniversalBreadcrumb
+        items={[
+          { label: 'Cộng đồng', href: '/community' },
+          { label: 'Hội thảo cộng đồng', href: '/community/video-events' },
+          { label: event.title || 'Chi tiết hội thảo' },
+        ]}
+      />
+
       <header className='flex h-16 items-center justify-between px-4 text-[#5f6368] md:px-8'>
-        <button type='button' className='flex items-center gap-3 text-[22px] font-normal text-[#5f6368]' onClick={() => navigate('/community/video-events')}>
+        <button type='button' className='flex items-center gap-3 text-[22px] font-normal text-[#5f6368]' onClick={() => navigate(backToCommunityPath)}>
           <span className='flex h-9 w-9 items-center justify-center rounded bg-[#1a73e8] text-white'><Video className='h-5 w-5' /></span>
           <span>MediSpace Meet</span>
         </button>
@@ -319,9 +378,16 @@ export function CommunityVideoEventDetailPage() {
       <section className='mx-auto grid min-h-[calc(100vh-64px)] max-w-7xl items-center gap-10 px-4 pb-8 md:px-8 lg:grid-cols-[minmax(0,1.25fr)_420px]'>
         <div className='space-y-5'>
           <div className='relative flex aspect-video min-h-[260px] items-center justify-center overflow-hidden rounded-[24px] bg-[#202124] shadow-[0_8px_30px_rgba(0,0,0,0.18)]'>
-            <div className='absolute left-5 top-5 rounded-full bg-black/45 px-3 py-1.5 text-sm text-white'>{cameraEnabled ? 'Camera preview' : 'Camera đang tắt'}</div>
+            <div className='absolute left-5 top-5 z-10 rounded-full bg-black/45 px-3 py-1.5 text-sm text-white'>{cameraEnabled ? 'Camera preview' : 'Camera đang tắt'}</div>
             {cameraEnabled ? (
-              <div className='flex h-32 w-32 items-center justify-center rounded-full bg-[#1a73e8] text-5xl font-medium text-white shadow-xl'>{event.title.slice(0, 1).toUpperCase()}</div>
+              <>
+                <video ref={previewVideoRef} data-testid='camera-preview-video' className='h-full w-full object-cover' autoPlay muted playsInline />
+                {cameraPreviewError && (
+                  <div className='absolute inset-x-6 top-1/2 -translate-y-1/2 rounded-[16px] bg-black/65 px-4 py-3 text-center text-sm text-white'>
+                    {cameraPreviewError}
+                  </div>
+                )}
+              </>
             ) : (
               <div className='flex h-32 w-32 items-center justify-center rounded-full bg-[#3c4043] text-white'><VideoOff className='h-14 w-14' /></div>
             )}
@@ -332,7 +398,7 @@ export function CommunityVideoEventDetailPage() {
           </div>
           <div className='flex flex-wrap items-center justify-center gap-4 text-sm text-[#5f6368]'>
             <span className='inline-flex items-center gap-2'><CalendarDays className='h-4 w-4' />{formatDateTime(event.scheduledStartAt)}</span>
-            <span data-testid='attendee-count' className='inline-flex items-center gap-2'><Users className='h-4 w-4' />{event.registrationCount || 0}{event.capacity ? `/${event.capacity}` : ''} người đã đăng ký</span>
+            <span data-testid='attendee-count' className='inline-flex items-center gap-2'><Users className='h-4 w-4' />{event.registrationCount || 0}{event.capacity ? `/${event.capacity}` : ''} người đã tham gia</span>
           </div>
         </div>
 
@@ -358,7 +424,6 @@ export function CommunityVideoEventDetailPage() {
             <Button data-testid='join-event-btn' className='h-11 rounded-full bg-[#1a73e8] px-7 text-white hover:bg-[#1765cc]' disabled={!acceptedDisclaimer || event.status !== 'live' || joinMutation.isPending} onClick={() => joinMutation.mutate()}>
               {event.status === 'live' ? 'Tham gia ngay' : 'Cuộc họp chưa bắt đầu'}
             </Button>
-            {!registered && event.status !== 'ended' && <Button variant='ghost' className='rounded-full text-[#1a73e8] hover:bg-[#e8f0fe]' onClick={() => registerMutation.mutate()}>Đăng ký trước</Button>}
           </div>
 
           <div className='rounded-[14px] border border-[#dadce0] bg-white p-3 text-left shadow-sm'>

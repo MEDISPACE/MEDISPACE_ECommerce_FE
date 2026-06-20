@@ -5,6 +5,17 @@ export default {
   content: ['./src/**/*.{js,ts,jsx,tsx}', './public/index.html', './index.html'],
   theme: {
     extend: {
+      fontFamily: {
+        sans: [
+          'ui-sans-serif',
+          'system-ui',
+          'sans-serif',
+          'Apple Color Emoji',
+          'Segoe UI Emoji',
+          'Segoe UI Symbol',
+          'Noto Color Emoji',
+        ],
+      },
       colors: {
         // Redefine light shades using exact mathematical RGBA equivalents over #FFF.
         // This completely neutralizes Chrome's Auto Dark Mode forcing thick solid dark borders!

@@ -50,7 +50,7 @@ export function ChangePasswordPage() {
       color = 'text-green-600'
     } else if (score >= 4) {
       label = 'Mạnh'
-      color = 'text-blue-600'
+      color = 'text-[#1E40AF]'
     } else if (score >= 3) {
       label = 'Trung bình'
       color = 'text-yellow-600'
@@ -158,15 +158,15 @@ export function ChangePasswordPage() {
       <div className='max-w-3xl space-y-6'>
         {/* Page Header */}
         <div>
-          <h1 className='text-3xl mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent'>
+          <h1 className='text-3xl mb-2 bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text text-transparent'>
             Đổi mật khẩu
           </h1>
           <p className='text-gray-600'>Cập nhật mật khẩu để bảo vệ tài khoản của bạn</p>
         </div>
 
         {/* Security Alert */}
-        <Alert className='bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-200'>
-          <Shield className='w-5 h-5 text-blue-600' />
+        <Alert className='bg-gradient-to-r from-[#F8FAFB] to-[#F0F6FF] border-2 border-[#BFDBFE]'>
+          <Shield className='w-5 h-5 text-[#1E40AF]' />
           <AlertDescription className='text-blue-900'>
             <span className='font-semibold'>Bảo mật tài khoản:</span> Chúng tôi khuyến nghị bạn đổi mật khẩu định kỳ
             (3-6 tháng/lần) để đảm bảo an toàn tài khoản.
@@ -176,10 +176,10 @@ export function ChangePasswordPage() {
         <div className='grid lg:grid-cols-3 gap-6'>
           {/* Change Password Form */}
           <div className='lg:col-span-2'>
-            <Card className='bg-white/80 backdrop-blur-lg border-2 border-blue-100 shadow-xl'>
+            <Card className='bg-white/80 backdrop-blur-lg border-2 border-[#E8EDF5] shadow-xl'>
               <CardHeader>
                 <CardTitle className='flex items-center gap-2'>
-                  <Lock className='w-6 h-6 text-blue-600' />
+                  <Lock className='w-6 h-6 text-[#1E40AF]' />
                   Thay đổi mật khẩu
                 </CardTitle>
               </CardHeader>
@@ -195,7 +195,7 @@ export function ChangePasswordPage() {
                       value={currentPassword}
                       onChange={(value) => setCurrentPassword(value)}
                       placeholder='Nhập mật khẩu hiện tại'
-                      className='border-2 border-blue-200 focus:border-blue-500'
+                      className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                     />
                     <p className='text-xs text-gray-500 flex items-center gap-1'>
                       <Info className='w-3 h-3' />
@@ -213,7 +213,7 @@ export function ChangePasswordPage() {
                       value={newPassword}
                       onChange={(value) => setNewPassword(value)}
                       placeholder='Nhập mật khẩu mới'
-                      className='border-2 border-blue-200 focus:border-blue-500'
+                      className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                       showStrength={true}
                     />
 
@@ -232,7 +232,7 @@ export function ChangePasswordPage() {
                               passwordStrength.score >= 5
                                 ? 'bg-green-600'
                                 : passwordStrength.score >= 4
-                                  ? 'bg-blue-600'
+                                  ? 'bg-[#0A2463]'
                                   : passwordStrength.score >= 3
                                     ? 'bg-yellow-600'
                                     : passwordStrength.score >= 2
@@ -320,7 +320,7 @@ export function ChangePasswordPage() {
                       value={confirmPassword}
                       onChange={(value) => setConfirmPassword(value)}
                       placeholder='Nhập lại mật khẩu mới'
-                      className='border-2 border-blue-200 focus:border-blue-500'
+                      className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                     />
                     {confirmPassword && newPassword && (
                       <p
@@ -348,7 +348,7 @@ export function ChangePasswordPage() {
                     <Button
                       type='submit'
                       disabled={isSubmitting}
-                      className='flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white h-12'
+                      className='flex-1 bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white h-12'
                     >
                       {isSubmitting ? (
                         <>
@@ -383,10 +383,10 @@ export function ChangePasswordPage() {
           {/* Security Tips Sidebar */}
           <div className='space-y-4'>
             {/* Tips Card */}
-            <Card className='bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200'>
+            <Card className='bg-gradient-to-br from-[#F8FAFB] to-[#F0F6FF] border-2 border-[#BFDBFE]'>
               <CardHeader>
                 <CardTitle className='text-lg flex items-center gap-2'>
-                  <Shield className='w-5 h-5 text-purple-600' />
+                  <Shield className='w-5 h-5 text-[#1E40AF]' />
                   Mẹo bảo mật
                 </CardTitle>
               </CardHeader>
@@ -394,7 +394,7 @@ export function ChangePasswordPage() {
                 <ul className='space-y-2 text-sm text-gray-700'>
                   {securityTips.map((tip, index) => (
                     <li key={index} className='flex items-start gap-2'>
-                      <CheckCircle className='w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0' />
+                      <CheckCircle className='w-4 h-4 text-[#1E40AF] mt-0.5 flex-shrink-0' />
                       <span>{tip}</span>
                     </li>
                   ))}
@@ -403,10 +403,10 @@ export function ChangePasswordPage() {
             </Card>
 
             {/* Additional Security */}
-            <Card className='bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200'>
+            <Card className='bg-gradient-to-br from-[#F8FAFB] to-[#F0F6FF] border-2 border-[#BFDBFE]'>
               <CardContent className='p-4'>
                 <h3 className='flex items-center gap-2 mb-3'>
-                  <Info className='w-5 h-5 text-blue-600' />
+                  <Info className='w-5 h-5 text-[#1E40AF]' />
                   Bảo mật nâng cao
                 </h3>
                 <p className='text-sm text-gray-700 mb-3'>
@@ -414,7 +414,7 @@ export function ChangePasswordPage() {
                 </p>
                 <Button
                   variant='outline'
-                  className='w-full border-2 border-blue-300 text-blue-700 hover:bg-blue-100'
+                  className='w-full border-2 border-[#BFDBFE] text-[#0A2463] hover:bg-[#E8EDF5]'
                   onClick={() => toast.info('Tính năng đang phát triển')}
                 >
                   Cài đặt xác thực 2FA

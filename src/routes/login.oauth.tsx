@@ -63,9 +63,9 @@ export default function OAuthCallback() {
   }, [searchParams, navigate, setUser, setIsAuthenticated, navigateByRole])
 
   return (
-    <div className='flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-cyan-50'>
+    <div className='flex min-h-screen items-center justify-center bg-gradient-to-br from-[#F8FAFB] to-[#F0F6FF]'>
       <div className='text-center'>
-        <div className='inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent'></div>
+        <div className='inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-[#1E40AF] border-r-transparent'></div>
         <p className='mt-4 text-lg font-medium text-gray-700'>Đang xử lý đăng nhập...</p>
       </div>
     </div>

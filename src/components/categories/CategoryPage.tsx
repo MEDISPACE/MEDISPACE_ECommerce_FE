@@ -35,6 +35,7 @@ import {
   getProductPrice,
 } from '../../utils/productHelpers'
 import { getProductPrice as getPriceFromVariants } from '../../utils/priceUtils'
+import { getCategoryIcon } from '../../utils/categoryIcons'
 
 // Category icon mapping cho hệ thống MediSpace
 const categoryIcons = {
@@ -135,7 +136,7 @@ export function CategoryPage() {
   const brands = Array.from(new Set(allProducts.map((p: Product) => p.brand?.name).filter(Boolean) as string[]))
 
   // Get icon component for this category
-  const IconComponent = categoryIcons[slug as keyof typeof categoryIcons] || Pill
+  const IconComponent = getCategoryIcon(category || { slug })
 
   // Fetch all categories for breadcrumb name lookup
   const [allCategoriesFlat, setAllCategoriesFlat] = useState<Category[]>([])
@@ -176,6 +177,10 @@ export function CategoryPage() {
 
     // Parse path into slugs (remove leading slash and split)
     const slugs = categoryPath.split('/').filter(Boolean)
+
+    if (slugs.length === 0) {
+      return [{ label: category.name }]
+    }
 
     // Build breadcrumb items from slugs
     const items = slugs.map((slugItem, index) => {
@@ -288,11 +293,11 @@ export function CategoryPage() {
       <UniversalBreadcrumb items={breadcrumbItems} />
       <div className='max-w-7xl mx-auto px-4 py-6'>
         {/* Category Header */}
-        <div className='bg-gradient-to-r from-white to-gray-50 rounded-2xl p-6 mb-6 border-l-4 border-blue-500'>
+        <div className='bg-gradient-to-r from-white to-gray-50 rounded-2xl p-6 mb-6 border-l-4 border-[#1E40AF]'>
           <div className='flex items-center justify-between'>
             <div className='flex-1'>
               <div className='flex items-center gap-4 mb-2'>
-                <div className='w-16 h-16 rounded-xl flex items-center justify-center text-white bg-gradient-to-r from-blue-600 to-cyan-500 shadow-lg'>
+                <div className='w-16 h-16 rounded-xl flex items-center justify-center text-white bg-gradient-to-r from-[#0A2463] to-[#1E40AF] shadow-lg'>
                   <IconComponent className='w-8 h-8' />
                 </div>
                 <div>
@@ -320,13 +325,13 @@ export function CategoryPage() {
               {subcategories.slice(0, 8).map((subCategory) => (
                 <Card
                   key={subCategory._id}
-                  className='group bg-white border-blue-100 hover:shadow-md transition-all duration-300 hover:border-blue-200'
+                  className='group bg-white border-[#E8EDF5] hover:shadow-md transition-all duration-300 hover:border-[#BFDBFE]'
                 >
                   <CardContent className='p-4 text-center'>
-                    <div className='w-12 h-12 rounded-lg mx-auto mb-3 flex items-center justify-center text-white font-bold bg-blue-500'>
-                      {subCategory.name.charAt(0)}
+                    <div className='w-12 h-12 rounded-lg mx-auto mb-3 flex items-center justify-center text-white bg-[#1E40AF]'>
+                      <IconComponent className='w-6 h-6' />
                     </div>
-                    <h3 className='font-medium text-sm group-hover:text-blue-600 transition-colors mb-1'>
+                    <h3 className='font-medium text-sm group-hover:text-[#1E40AF] transition-colors mb-1'>
                       {subCategory.name}
                     </h3>
                     <p className='text-xs text-gray-500 mb-3'>{subCategory.productCount} sản phẩm</p>
@@ -334,7 +339,7 @@ export function CategoryPage() {
                       <Button
                         size='sm'
                         variant='outline'
-                        className='w-full text-xs border-blue-200 text-blue-600 hover:!bg-[#eff6ff] hover:border-blue-400 transition-all duration-300'
+                        className='w-full text-xs border-[#BFDBFE] text-[#1E40AF] hover:!bg-[#eff6ff] hover:border-[#1E40AF] transition-all duration-300'
                       >
                         Xem ngay
                       </Button>
@@ -368,7 +373,7 @@ export function CategoryPage() {
             <div className='space-y-6'>
               {/* Sub-categories - Only show if has subcategories */}
               {subcategories.length > 0 && (
-                <Card className='bg-white border-blue-200 shadow-sm'>
+                <Card className='bg-white border-[#BFDBFE] shadow-sm'>
                   <CardHeader>
                     <CardTitle className='text-lg'>Danh mục con</CardTitle>
                   </CardHeader>
@@ -377,9 +382,9 @@ export function CategoryPage() {
                       <Link
                         key={subCategory._id}
                         to={`/categories/${subCategory.slug}`}
-                        className='flex items-center justify-between py-2 px-3 rounded-lg hover:bg-blue-50 transition-colors group'
+                        className='flex items-center justify-between py-2 px-3 rounded-lg hover:bg-[#F0F6FF] transition-colors group'
                       >
-                        <span className='text-sm group-hover:text-blue-600'>{subCategory.name}</span>
+                        <span className='text-sm group-hover:text-[#1E40AF]'>{subCategory.name}</span>
                         <Badge variant='secondary' className='text-xs'>
                           {subCategory.productCount}
                         </Badge>
@@ -390,7 +395,7 @@ export function CategoryPage() {
                         variant='ghost'
                         size='sm'
                         onClick={() => setShowAllSubcategories(!showAllSubcategories)}
-                        className='w-full text-blue-600 hover:text-blue-700 hover:bg-blue-50 mt-2'
+                        className='w-full text-[#1E40AF] hover:text-[#0A2463] hover:bg-[#F0F6FF] mt-2'
                       >
                         {showAllSubcategories ? 'Thu gọn' : `+ Xem thêm ${subcategories.length - 6} danh mục`}
                       </Button>
@@ -400,7 +405,7 @@ export function CategoryPage() {
               )}
 
               {/* Brands Filter */}
-              <Card className='bg-white border-blue-200 shadow-sm'>
+              <Card className='bg-white border-[#BFDBFE] shadow-sm'>
                 <CardHeader>
                   <CardTitle className='text-lg'>Thương hiệu</CardTitle>
                 </CardHeader>
@@ -428,7 +433,7 @@ export function CategoryPage() {
                     )
                   })}
                   {brands.length > 6 && (
-                    <Button variant='ghost' className='text-xs p-0 h-auto text-blue-600'>
+                    <Button variant='ghost' className='text-xs p-0 h-auto text-[#1E40AF]'>
                       + Xem thêm
                     </Button>
                   )}
@@ -436,7 +441,7 @@ export function CategoryPage() {
               </Card>
 
               {/* Price Range Filter */}
-              <Card className='bg-white border-blue-200 shadow-sm'>
+              <Card className='bg-white border-[#BFDBFE] shadow-sm'>
                 <CardHeader>
                   <CardTitle className='text-lg'>Khoảng giá</CardTitle>
                 </CardHeader>
@@ -458,7 +463,7 @@ export function CategoryPage() {
                         setFilters((prev) => ({ ...prev, priceRange: [value, prev.priceRange?.[1] || 5000000] }))
                       }}
                       placeholder='Từ'
-                      className='h-8 text-xs border-blue-200'
+                      className='h-8 text-xs border-[#BFDBFE]'
                     />
                     <Input
                       type='text'
@@ -468,14 +473,14 @@ export function CategoryPage() {
                         setFilters((prev) => ({ ...prev, priceRange: [prev.priceRange?.[0] || 0, value] }))
                       }}
                       placeholder='Đến'
-                      className='h-8 text-xs border-blue-200'
+                      className='h-8 text-xs border-[#BFDBFE]'
                     />
                   </div>
                 </CardContent>
               </Card>
 
               {/* Rating Filter */}
-              <Card className='bg-white border-blue-200 shadow-sm'>
+              <Card className='bg-white border-[#BFDBFE] shadow-sm'>
                 <CardHeader>
                   <CardTitle className='text-lg'>Đánh giá</CardTitle>
                 </CardHeader>
@@ -497,7 +502,7 @@ export function CategoryPage() {
               </Card>
 
               {/* Stock & Prescription Filter */}
-              <Card className='bg-white border-blue-200 shadow-sm'>
+              <Card className='bg-white border-[#BFDBFE] shadow-sm'>
                 <CardHeader>
                   <CardTitle className='text-lg'>Tình trạng</CardTitle>
                 </CardHeader>
@@ -532,7 +537,7 @@ export function CategoryPage() {
               {/* Clear Filters Button */}
               <Button
                 variant='outline'
-                className='w-full border-blue-200 text-blue-600 hover:bg-blue-50'
+                className='w-full border-[#BFDBFE] text-[#1E40AF] hover:bg-[#F0F6FF]'
                 onClick={() =>
                   setFilters({
                     categories: [],
@@ -554,7 +559,7 @@ export function CategoryPage() {
             {/* Toolbar */}
             <div className='flex items-center justify-between mb-6'>
               <div className='flex items-center gap-4'>
-                <h2 className='font-medium text-lg text-blue-600'>
+                <h2 className='font-medium text-lg text-[#1E40AF]'>
                   {sortedProducts.length} / {totalCount} sản phẩm
                 </h2>
 
@@ -604,14 +609,14 @@ export function CategoryPage() {
                 </Select>
 
                 {/* View Mode */}
-                <div className='flex items-center border border-blue-200 rounded-lg overflow-hidden'>
+                <div className='flex items-center border border-[#BFDBFE] rounded-lg overflow-hidden'>
                   <Button
                     variant={viewMode === 'grid' ? 'default' : 'ghost'}
                     size='sm'
                     onClick={() => setViewMode('grid')}
                     className={
                       viewMode === 'grid'
-                        ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white rounded-r-none'
+                        ? 'bg-[#0A2463] text-white hover:bg-[#071A49] hover:text-white rounded-r-none'
                         : 'text-gray-600 rounded-r-none'
                     }
                   >
@@ -623,7 +628,7 @@ export function CategoryPage() {
                     onClick={() => setViewMode('list')}
                     className={
                       viewMode === 'list'
-                        ? 'bg-blue-600 text-white hover:bg-blue-700 hover:text-white rounded-l-none'
+                        ? 'bg-[#0A2463] text-white hover:bg-[#071A49] hover:text-white rounded-l-none'
                         : 'text-gray-600 rounded-l-none'
                     }
                   >
@@ -635,8 +640,8 @@ export function CategoryPage() {
 
             {/* Products Grid */}
             {isFetching && !isLoading && (
-              <div className='w-full h-0.5 bg-blue-50 overflow-hidden relative mb-4 rounded'>
-                <div className='absolute h-full bg-gradient-to-r from-blue-600 to-cyan-400 w-1/3 rounded animate-[progressLoop_1.5s_infinite_ease-in-out]' />
+              <div className='w-full h-0.5 bg-[#F0F6FF] overflow-hidden relative mb-4 rounded'>
+                <div className='absolute h-full bg-gradient-to-r from-[#0A2463] to-[#1E40AF] w-1/3 rounded animate-[progressLoop_1.5s_infinite_ease-in-out]' />
               </div>
             )}
             {transformedProducts.length > 0 ? (
@@ -677,7 +682,7 @@ export function CategoryPage() {
                 {hasNextPage && (
                   <div ref={loadMoreRef} className='mt-8 flex justify-center py-8'>
                     {isFetchingNextPage ? (
-                      <div className='flex items-center gap-2 text-blue-600'>
+                      <div className='flex items-center gap-2 text-[#1E40AF]'>
                         <Loader2 className='w-5 h-5 animate-spin' />
                         <span>Đang tải thêm sản phẩm...</span>
                       </div>
@@ -685,7 +690,7 @@ export function CategoryPage() {
                       <Button
                         variant='outline'
                         onClick={() => fetchNextPage()}
-                        className='border-blue-200 text-blue-600 hover:bg-blue-50'
+                        className='border-[#BFDBFE] text-[#1E40AF] hover:bg-[#F0F6FF]'
                       >
                         Xem thêm sản phẩm
                       </Button>
@@ -701,7 +706,7 @@ export function CategoryPage() {
                 )}
               </>
             ) : (
-              <Card className='text-center py-12 border-blue-200 bg-white'>
+              <Card className='text-center py-12 border-[#BFDBFE] bg-white'>
                 <CardContent>
                   <div className='text-gray-500 mb-4'>
                     <PackageX className='w-16 h-16 mx-auto mb-4 text-gray-300' strokeWidth={1.5} />

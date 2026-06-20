@@ -44,7 +44,7 @@ export function ReviewItem({ review, onEdit, onDelete, onHelpful, isOwner }: Rev
   }
 
   return (
-    <Card className='border-blue-300 hover:shadow-md transition-shadow'>
+    <Card className='border-[#BFDBFE] hover:shadow-md transition-shadow'>
       <CardContent className='p-6'>
         {/* Header */}
         <div className='flex items-start justify-between mb-4'>
@@ -57,7 +57,7 @@ export function ReviewItem({ review, onEdit, onDelete, onHelpful, isOwner }: Rev
               <div className='flex items-center gap-2'>
                 <p className='font-medium'>{review.userName}</p>
                 {review.isVerifiedPurchase && (
-                  <Badge variant='outline' className='bg-blue-50 text-blue-700 border-blue-200'>
+                  <Badge variant='outline' className='bg-[#F0F6FF] text-[#0A2463] border-[#BFDBFE]'>
                     <BadgeCheck className='w-3 h-3 mr-1' />
                     Đã mua hàng
                   </Badge>
@@ -104,10 +104,10 @@ export function ReviewItem({ review, onEdit, onDelete, onHelpful, isOwner }: Rev
         )}
 
         {/* Actions */}
-        <div className='flex items-center gap-2 pt-4 border-t border-blue-300'>
+        <div className='flex items-center gap-2 pt-4 border-t border-[#BFDBFE]'>
           {/* Helpful Button */}
           {!isOwner && onHelpful && (
-            <Button variant='outline' size='sm' onClick={onHelpful} className='text-gray-600 hover:text-blue-600'>
+            <Button variant='outline' size='sm' onClick={onHelpful} className='text-gray-600 hover:text-[#1E40AF]'>
               <ThumbsUp className='w-4 h-4 mr-1' />
               Hữu ích ({review.helpfulCount})
             </Button>
@@ -117,7 +117,7 @@ export function ReviewItem({ review, onEdit, onDelete, onHelpful, isOwner }: Rev
           {isOwner && (
             <>
               {onEdit && review.status !== ReviewStatus.Rejected && (
-                <Button variant='outline' size='sm' onClick={onEdit} className='text-blue-600 hover:text-blue-700'>
+                <Button variant='outline' size='sm' onClick={onEdit} className='text-[#1E40AF] hover:text-[#0A2463]'>
                   <Edit className='w-4 h-4 mr-1' />
                   Sửa
                 </Button>

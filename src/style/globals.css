@@ -25,6 +25,7 @@ button {
 
 :root {
   --font-size: 16px;
+  --font-family-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --background: #f8fafb;
   --foreground: #1c2b4a;
   --card: rgba(255, 255, 255, 0.999);
@@ -237,6 +238,7 @@ button {
 
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-family-sans);
   }
 }
 
@@ -300,7 +302,7 @@ html {
 }
 
 .font-display {
-  font-family: 'Plus Jakarta Sans', Inter, ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-family-sans);
 }
 
 /* Simple transitions only */

@@ -72,7 +72,7 @@ const TIER_CONFIG: Record<LoyaltyTier, { label: string; color: string; icon: Rea
   member: { label: 'Thành Viên', color: 'text-gray-600', bg: 'bg-gray-100', icon: <Award className='w-4 h-4' /> },
   silver: { label: 'Bạc', color: 'text-gray-500', bg: 'bg-gray-200', icon: <Star className='w-4 h-4' /> },
   gold: { label: 'Vàng', color: 'text-yellow-600', bg: 'bg-yellow-100', icon: <Trophy className='w-4 h-4' /> },
-  platinum: { label: 'Bạch Kim', color: 'text-purple-600', bg: 'bg-purple-100', icon: <Crown className='w-4 h-4' /> },
+  platinum: { label: 'Bạch Kim', color: 'text-[#1E40AF]', bg: 'bg-[#E8EDF5]', icon: <Crown className='w-4 h-4' /> },
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -246,7 +246,7 @@ export function AdminLoyaltyPage() {
         <div>
           <h1
             className='text-3xl font-bold bg-clip-text text-transparent'
-            style={{ backgroundImage: `linear-gradient(to right, #0066CC, #4A90E2)` }}
+            style={{ backgroundImage: `linear-gradient(to right, #0A2463, #1E40AF)` }}
           >
             Loyalty & Điểm thưởng
           </h1>
@@ -254,7 +254,7 @@ export function AdminLoyaltyPage() {
         </div>
         <Button
           onClick={() => { fetchStats(); fetchAccounts() }}
-          className='bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8] gap-2 text-white self-start sm:self-auto'
+          className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] gap-2 text-white self-start sm:self-auto'
         >
           <RefreshCw className='w-4 h-4' />
           Cập nhật
@@ -276,13 +276,13 @@ export function AdminLoyaltyPage() {
                 label: 'Tài khoản tích điểm',
                 value: formatPoints(stats.totalAccounts),
                 icon: <Users className='w-5 h-5' />,
-                color: 'text-blue-600 bg-blue-100'
+                color: 'text-[#1E40AF] bg-[#E8EDF5]'
               },
               {
                 label: 'Điểm đang lưu hành',
                 value: formatPoints(stats.totalPointsCirculating),
                 icon: <Sparkles className='w-5 h-5' />,
-                color: 'text-blue-600 bg-blue-100'
+                color: 'text-[#1E40AF] bg-[#E8EDF5]'
               },
               {
                 label: 'Tổng điểm đã tích',
@@ -298,7 +298,7 @@ export function AdminLoyaltyPage() {
               },
             ].map((s, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}>
-                <Card className='bg-white backdrop-blur-lg border-blue-100'>
+                <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
                   <CardContent className='p-4 flex items-center gap-3'>
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${s.color}`}>{s.icon}</div>
                     <div>
@@ -312,10 +312,10 @@ export function AdminLoyaltyPage() {
           </div>
 
           {/* Tier Distribution */}
-          <Card className='bg-white backdrop-blur-lg border-blue-100'>
+          <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
             <CardHeader>
               <CardTitle className='text-base flex items-center gap-2'>
-                <Crown className='w-5 h-5 text-blue-600' />
+                <Crown className='w-5 h-5 text-[#1E40AF]' />
                 Phân bổ hạng thành viên
               </CardTitle>
             </CardHeader>
@@ -348,12 +348,12 @@ export function AdminLoyaltyPage() {
         </>
       ) : null}
 
-      <Card className='bg-white backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
         <CardHeader>
           <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-3'>
             <div>
               <CardTitle className='text-base flex items-center gap-2'>
-                <Sparkles className='w-5 h-5 text-blue-600' />
+                <Sparkles className='w-5 h-5 text-[#1E40AF]' />
                 Cấu hình chương trình loyalty
               </CardTitle>
               {programConfig && (
@@ -367,7 +367,7 @@ export function AdminLoyaltyPage() {
                 <Save className='w-4 h-4' />
                 Lưu nháp
               </Button>
-              <Button size='sm' onClick={publishProgramConfig} disabled={!draftConfig || isSavingConfig} className='bg-[#0066CC] hover:bg-[#0052A3] text-white gap-2'>
+              <Button size='sm' onClick={publishProgramConfig} disabled={!draftConfig || isSavingConfig} className='bg-[#0A2463] hover:bg-[#071A49] text-white gap-2'>
                 <Upload className='w-4 h-4' />
                 Publish
               </Button>
@@ -407,10 +407,10 @@ export function AdminLoyaltyPage() {
                 </div>
               </div>
 
-              <div className='overflow-x-auto rounded-lg border border-blue-100'>
+              <div className='overflow-x-auto rounded-lg border border-[#E8EDF5]'>
                 <table className='w-full text-sm'>
                   <thead>
-                    <tr className='bg-blue-50 text-blue-900'>
+                    <tr className='bg-[#F0F6FF] text-blue-900'>
                       <th className='text-left p-3'>Hạng</th>
                       <th className='text-left p-3'>Tên hiển thị</th>
                       <th className='text-left p-3'>Chi tiêu tối thiểu</th>
@@ -421,7 +421,7 @@ export function AdminLoyaltyPage() {
                     {tiers.map(code => {
                       const tier = draftConfig.tiers.find(t => t.code === code)!
                       return (
-                        <tr key={code} className='border-t border-blue-100'>
+                        <tr key={code} className='border-t border-[#E8EDF5]'>
                           <td className='p-3 font-medium'>{code}</td>
                           <td className='p-3'>
                             <Input value={tier.label} onChange={e => updateDraftTier(code, 'label', e.target.value)} />
@@ -446,7 +446,7 @@ export function AdminLoyaltyPage() {
       </Card>
 
       {/* Filters */}
-      <Card className='bg-white backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
         <CardContent className='p-4 flex flex-col sm:flex-row gap-3'>
           <div className='relative flex-1'>
             <Search className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400' />
@@ -454,11 +454,11 @@ export function AdminLoyaltyPage() {
               placeholder='Tìm theo tên, email...'
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className='pl-10 border-2 border-blue-200 focus:border-blue-500'
+              className='pl-10 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
             />
           </div>
           <Select value={filterTier} onValueChange={v => { setFilterTier(v); setPage(1) }}>
-            <SelectTrigger className='w-44 border-2 border-blue-200'>
+            <SelectTrigger className='w-44 border-2 border-[#BFDBFE]'>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -472,14 +472,14 @@ export function AdminLoyaltyPage() {
       </Card>
 
       {/* Accounts Table */}
-      <Card className='bg-white backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
         <CardHeader>
           <CardTitle className='text-base'>Tài khoản điểm thưởng ({total})</CardTitle>
         </CardHeader>
         <CardContent className='p-0'>
           {isLoading ? (
             <div className='flex items-center justify-center h-48 gap-3'>
-              <Loader2 className='w-6 h-6 animate-spin text-blue-600' />
+              <Loader2 className='w-6 h-6 animate-spin text-[#1E40AF]' />
               <span className='text-gray-500'>Đang tải...</span>
             </div>
           ) : error ? (
@@ -495,7 +495,7 @@ export function AdminLoyaltyPage() {
             <div className='overflow-x-auto'>
               <table className='w-full text-sm'>
                 <thead>
-                  <tr className='!border-b-2 !border-blue-300 bg-gray-50 text-gray-600'>
+                  <tr className='!border-b-2 !border-[#BFDBFE] bg-gray-50 text-gray-600'>
                     <th className='text-left p-3 pl-6'>Khách hàng</th>
                     <th className='text-left p-3'>Hạng</th>
                     <th className='text-left p-3'>Số dư điểm</th>
@@ -514,7 +514,7 @@ export function AdminLoyaltyPage() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: idx * 0.02 }}
-                        className='border-b-2 border-blue-200 hover:bg-blue-50/30 transition-colors'
+                        className='border-b-2 border-[#BFDBFE] hover:bg-[#F0F6FF]/30 transition-colors'
                       >
                         <td className='p-3 pl-6'>
                           <div>
@@ -536,12 +536,12 @@ export function AdminLoyaltyPage() {
                           </Badge>
                         </td>
                         <td className='p-3'>
-                          <p className='font-bold text-blue-700'>{formatPoints(acc.pointsBalance)}</p>
+                          <p className='font-bold text-[#0A2463]'>{formatPoints(acc.pointsBalance)}</p>
                           <p className='text-xs text-gray-400'>điểm</p>
                         </td>
                         <td className='p-3 text-xs'>
                           <p className='text-green-600'>+{formatPoints(acc.totalPointsEarned)} tích</p>
-                          <p className='text-blue-600'>-{formatPoints(acc.totalPointsRedeemed)} đổi</p>
+                          <p className='text-[#1E40AF]'>-{formatPoints(acc.totalPointsRedeemed)} đổi</p>
                           {acc.totalPointsExpired > 0 && (
                             <p className='text-gray-400'>-{formatPoints(acc.totalPointsExpired)} hết hạn</p>
                           )}
@@ -557,7 +557,7 @@ export function AdminLoyaltyPage() {
                           <Button
                             variant='outline'
                             size='sm'
-                            className='border-blue-200 text-blue-700 hover:bg-blue-50'
+                            className='border-[#BFDBFE] text-[#0A2463] hover:bg-[#F0F6FF]'
                             onClick={() => openAdjustDialog(acc)}
                           >
                             Điều chỉnh điểm
@@ -593,7 +593,7 @@ export function AdminLoyaltyPage() {
             <DialogTitle className='text-lg'>Điều chỉnh điểm thưởng</DialogTitle>
           </DialogHeader>
           <div className='space-y-3 py-1'>
-            <div className='rounded-md bg-blue-50 border border-blue-100 px-3 py-2 text-sm'>
+            <div className='rounded-md bg-[#F0F6FF] border border-[#E8EDF5] px-3 py-2 text-sm'>
               <p className='font-medium text-gray-900'>
                 {adjustTarget?.userInfo
                   ? `${adjustTarget.userInfo.lastName} ${adjustTarget.userInfo.firstName}`
@@ -652,7 +652,7 @@ export function AdminLoyaltyPage() {
               size='sm'
               onClick={submitAdjustment}
               disabled={isAdjusting}
-              className='bg-[#0066CC] hover:bg-[#0052A3] text-white'
+              className='bg-[#0A2463] hover:bg-[#071A49] text-white'
             >
               {isAdjusting ? 'Đang lưu...' : 'Xác nhận'}
             </Button>

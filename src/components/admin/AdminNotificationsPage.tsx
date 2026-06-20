@@ -49,11 +49,11 @@ const TAB_PILLS: { key: Filter; label: string }[] = [
 ]
 
 const TYPE_META: Record<string, { icon: React.ElementType; color: string; bg: string; label: string }> = {
-  order: { icon: Package, color: 'text-blue-600', bg: 'bg-blue-50', label: 'Đơn hàng' },
+  order: { icon: Package, color: 'text-[#1E40AF]', bg: 'bg-[#F0F6FF]', label: 'Đơn hàng' },
   prescription: { icon: FileText, color: 'text-green-600', bg: 'bg-green-50', label: 'Đơn thuốc' },
-  promotion: { icon: Tag, color: 'text-purple-500', bg: 'bg-purple-50', label: 'Khuyến mãi' },
+  promotion: { icon: Tag, color: 'text-[#1E40AF]', bg: 'bg-[#F0F6FF]', label: 'Khuyến mãi' },
   system: { icon: AlertCircle, color: 'text-orange-500', bg: 'bg-orange-50', label: 'Hệ thống' },
-  reminder: { icon: Bell, color: 'text-pink-500', bg: 'bg-pink-50', label: 'Nhắc nhở' },
+  reminder: { icon: Bell, color: 'text-[#1E40AF]', bg: 'bg-[#F0F6FF]', label: 'Nhắc nhở' },
 }
 const DEFAULT_META = TYPE_META.system
 
@@ -104,14 +104,14 @@ function NotifRow({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -4 }}
       transition={{ duration: 0.15 }}
-      className={`group relative flex gap-4 px-4 py-4 border-b border-blue-50 last:border-0 cursor-pointer transition-colors hover:bg-blue-50/50 ${
-        !isRead ? 'bg-blue-50/30' : ''
+      className={`group relative flex gap-4 px-4 py-4 border-b border-blue-50 last:border-0 cursor-pointer transition-colors hover:bg-[#F0F6FF]/50 ${
+        !isRead ? 'bg-[#F0F6FF]/30' : ''
       }`}
       onClick={handleClick}
     >
       {/* Unread indicator bar */}
       {!isRead && (
-        <span className='absolute left-0 top-3 bottom-3 w-0.5 bg-[#0066CC] rounded-r-full' />
+        <span className='absolute left-0 top-3 bottom-3 w-0.5 bg-[#0A2463] rounded-r-full' />
       )}
 
       {/* Type icon */}
@@ -126,7 +126,7 @@ function NotifRow({
             {n.title as string}
           </p>
           <div className='flex items-center gap-1.5 flex-shrink-0'>
-            {!isRead && <span className='w-2 h-2 bg-[#0066CC] rounded-full mt-1 flex-shrink-0' />}
+            {!isRead && <span className='w-2 h-2 bg-[#0A2463] rounded-full mt-1 flex-shrink-0' />}
             <button
               className='opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50 text-gray-300 hover:text-red-500'
               title='Xóa thông báo'
@@ -144,9 +144,9 @@ function NotifRow({
           <Badge
             variant='outline'
             className={`text-[10px] px-1.5 py-0 h-4 font-medium border-0 ${
-              type === 'order' ? 'bg-blue-100 text-blue-700' :
+              type === 'order' ? 'bg-[#E8EDF5] text-[#0A2463]' :
               type === 'prescription' ? 'bg-green-100 text-green-700' :
-              type === 'promotion' ? 'bg-purple-100 text-purple-700' :
+              type === 'promotion' ? 'bg-[#E8EDF5] text-[#0A2463]' :
               'bg-orange-100 text-orange-700'
             }`}
           >
@@ -198,7 +198,7 @@ export function AdminNotificationsPage({ role = 'admin' }: Props) {
         <div>
           <h1
             className='text-3xl font-bold bg-clip-text text-transparent'
-            style={{ backgroundImage: 'linear-gradient(to right, #0066CC, #4A90E2)' }}
+            style={{ backgroundImage: 'linear-gradient(to right, #0A2463, #1E40AF)' }}
           >
             Trung tâm thông báo
           </h1>
@@ -218,7 +218,7 @@ export function AdminNotificationsPage({ role = 'admin' }: Props) {
         {unreadCount > 0 && (
           <Button
             variant='outline'
-            className='gap-2 border-blue-200 text-blue-600 hover:bg-blue-50'
+            className='gap-2 border-[#BFDBFE] text-[#1E40AF] hover:bg-[#F0F6FF]'
             onClick={handleMarkAll}
           >
             <Check className='w-4 h-4' />
@@ -228,7 +228,7 @@ export function AdminNotificationsPage({ role = 'admin' }: Props) {
       </div>
 
       {/* ── Filter Tabs (matches InventoryManagementPage tab style) ── */}
-      <Card className='bg-white backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
         <CardContent className='p-4'>
           <div className='flex gap-1 p-1 bg-gray-100 rounded-lg w-fit'>
             {TAB_PILLS.map((tab) => (
@@ -240,7 +240,7 @@ export function AdminNotificationsPage({ role = 'admin' }: Props) {
                 }}
                 className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
                   filter === tab.key
-                    ? 'bg-white text-blue-700 shadow-sm'
+                    ? 'bg-white text-[#0A2463] shadow-sm'
                     : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                 }`}
               >
@@ -248,7 +248,7 @@ export function AdminNotificationsPage({ role = 'admin' }: Props) {
                 {tab.key === 'unread' && unreadCount > 0 && (
                   <span
                     className={`ml-1.5 px-1.5 py-0.5 rounded-full text-xs ${
-                      filter === 'unread' ? 'bg-blue-100 text-blue-700' : 'bg-gray-200 text-gray-600'
+                      filter === 'unread' ? 'bg-[#E8EDF5] text-[#0A2463]' : 'bg-gray-200 text-gray-600'
                     }`}
                   >
                     {unreadCount}
@@ -261,10 +261,10 @@ export function AdminNotificationsPage({ role = 'admin' }: Props) {
       </Card>
 
       {/* ── Notification List Card ── */}
-      <Card className='bg-white backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
-            <Bell className='w-5 h-5 text-blue-600' />
+            <Bell className='w-5 h-5 text-[#1E40AF]' />
             Danh sách thông báo
             {isFetching && !isLoading && (
               <RefreshCw className='w-3.5 h-3.5 text-blue-400 animate-spin ml-1' />

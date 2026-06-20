@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Flag, Info, Loader2, RefreshCw, Send, ShieldAlert, Users } from 'lucide-react'
+import { ArrowLeft, CalendarDays, ExternalLink, Flag, Image as ImageIcon, Info, Loader2, RefreshCw, Search, Send, ShieldAlert, Users, Video, X } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { Card, CardContent } from '~/components/ui/card'
 import { Button } from '~/components/ui/button'
 import { Badge } from '~/components/ui/badge'
 import { Textarea } from '~/components/ui/textarea'
+import { ChatTextarea } from '~/components/chat/ChatTextarea'
 import {
   Dialog,
   DialogContent,
@@ -21,7 +21,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
 import { useAuth } from '~/contexts/AuthContext'
 import { useSocketContext } from '~/contexts/SocketContext'
 import communityService from '~/services/communityService'
-import type { CommunityMessage, CommunityRoom } from '~/types/community'
+import type { CommunityMessage, CommunityRoom, CommunityVideoEvent } from '~/types/community'
 
 const PAGE_SIZE = 20
 
@@ -50,8 +50,8 @@ function MessageBubble({
   appealSent?: boolean
 }) {
   const isHidden = message.status === 'hidden'
-  const senderName = `${message.sender?.firstName || ''} ${message.sender?.lastName || ''}`.trim() || 'Người dùng'
-  const initials = `${message.sender?.firstName?.charAt(0) || 'U'}${message.sender?.lastName?.charAt(0) || ''}`
+  const senderName = `${message.sender?.firstName || ''} ${message.sender?.lastName || ''}`.trim() || message.sender?.email || 'Thành viên'
+  const initials = `${message.sender?.firstName?.charAt(0) || message.sender?.email?.charAt(0) || 'U'}${message.sender?.lastName?.charAt(0) || ''}`
 
   return (
     <div className={`flex ${isMine ? 'justify-end' : 'justify-start'} gap-2`}>
@@ -66,7 +66,7 @@ function MessageBubble({
         <div
           className={`rounded-2xl px-4 py-2 text-sm shadow-sm border ${
             isMine
-              ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white border-transparent'
+              ? 'bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white border-transparent'
               : 'bg-white text-gray-900 border-gray-200'
           } ${isHidden ? 'bg-amber-50 text-amber-800 border-amber-200' : ''}`}
         >
@@ -76,7 +76,14 @@ function MessageBubble({
               <span>Tin nhắn của bạn đã bị ẩn do vi phạm.</span>
             </div>
           ) : (
-            <p className='whitespace-pre-wrap break-words'>{message.content}</p>
+            <div className='space-y-2'>
+              {message.imageUrl && (
+                <a href={message.imageUrl} target='_blank' rel='noreferrer' className='block overflow-hidden rounded-xl'>
+                  <img src={message.imageUrl} alt='Ảnh trong tin nhắn' className='max-h-80 w-full object-cover' loading='lazy' />
+                </a>
+              )}
+              {message.content && <p className='whitespace-pre-wrap break-words'>{message.content}</p>}
+            </div>
           )}
         </div>
 
@@ -107,6 +114,53 @@ function MessageBubble({
   )
 }
 
+function formatEventTime(value?: string) {
+  if (!value) return ''
+  return new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value))
+}
+
+function roomInitials(room?: CommunityRoom, fallback = 'MS') {
+  const source = room?.name || room?.slug || fallback
+  return source
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('') || fallback
+}
+
+function roomPreview(room: CommunityRoom) {
+  if (room.lastMessagePreview) return room.lastMessagePreview
+  if (room.messageCount) return `${room.messageCount} tin nhắn trong phòng`
+  return room.visibility === 'private' ? 'Phòng riêng tư' : 'Phòng cộng đồng'
+}
+
+function MeetingCard({ event }: { event: CommunityVideoEvent }) {
+  const isLive = event.status === 'live'
+  return (
+    <div className='mx-auto w-full max-w-[620px] rounded-[18px] border border-[#dbe7ff] bg-white p-4 shadow-sm'>
+      <div className='flex items-start gap-3'>
+        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${isLive ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
+          <Video className='h-5 w-5' />
+        </div>
+        <div className='min-w-0 flex-1'>
+          <div className='mb-1 flex flex-wrap items-center gap-2'>
+            <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${isLive ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
+              {isLive ? 'Đang live' : 'Cuộc họp sắp diễn ra'}
+            </span>
+            <span className='inline-flex items-center gap-1 text-xs text-gray-500'><CalendarDays className='h-3.5 w-3.5' />{formatEventTime(event.scheduledStartAt)}</span>
+          </div>
+          <h3 className='truncate text-sm font-semibold text-gray-950'>{event.title}</h3>
+          {event.description && <p className='mt-1 line-clamp-2 text-sm text-gray-600'>{event.description}</p>}
+          <Button asChild size='sm' className='mt-3 rounded-full bg-blue-600 text-white hover:bg-blue-700'>
+            <Link to={`/community/video-events/${event._id}`}><ExternalLink className='h-4 w-4' />{isLive ? 'Tham gia ngay' : 'Mở link họp'}</Link>
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function CommunityRoomPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -123,6 +177,8 @@ export function CommunityRoomPage() {
   const [needsJoin, setNeedsJoin] = useState(false)
   const [messageText, setMessageText] = useState('')
   const [sending, setSending] = useState(false)
+  const [imageUrls, setImageUrls] = useState<string[]>([])
+  const [isUploading, setIsUploading] = useState(false)
 
   const [reportOpen, setReportOpen] = useState(false)
   const [reportReason, setReportReason] = useState('')
@@ -139,7 +195,23 @@ export function CommunityRoomPage() {
     staleTime: 60_000,
   })
 
+  const roomEventsQuery = useQuery({
+    queryKey: ['community-room-video-events', roomId],
+    queryFn: () => communityService.listVideoEvents({ roomId, upcomingOnly: true, page: 1, limit: 3 }),
+    enabled: Boolean(roomId) && isAuthenticated && !needsJoin,
+    staleTime: 30_000,
+  })
+
   const room = useMemo(() => rooms?.find((r) => r._id === roomId), [rooms, roomId])
+  const sortedRooms = useMemo(
+    () =>
+      [...(rooms || [])].sort((a, b) => {
+        const aTime = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0
+        const bTime = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0
+        return bTime - aTime
+      }),
+    [rooms],
+  )
   const memberStatus = room?.viewerMembership?.status
   const mutedUntil = room?.viewerMembership?.mutedUntil ? new Date(room.viewerMembership.mutedUntil) : null
   const isMuted = Boolean(mutedUntil && mutedUntil.getTime() > Date.now())
@@ -190,7 +262,7 @@ export function CommunityRoomPage() {
                 ...item,
                 messageCount: (item.messageCount || 0) + 1,
                 lastMessageAt: message.createdAt,
-                lastMessagePreview: message.content,
+                lastMessagePreview: message.content || (message.imageUrl ? 'Đã gửi ảnh' : ''),
                 unreadCount: Math.max((item.unreadCount || 0) + unreadIncrement, 0),
               }
             : item,
@@ -330,24 +402,24 @@ export function CommunityRoomPage() {
 
   const handleSend = async () => {
     const trimmed = messageText.trim()
-    if (!trimmed || sending) return
+    if ((!trimmed && imageUrls.length === 0) || sending) return
     setSending(true)
     try {
-      const res = await communityService.sendMessage({ roomId, content: trimmed })
-      const next = res.message
-      if (next) {
-        if (next.status === 'hidden') {
-          toast.info('Tin nhắn của bạn có thể vi phạm và đã bị ẩn.')
+      if (imageUrls.length > 0) {
+        const res1 = await communityService.sendMessage({ roomId, content: trimmed, imageUrl: imageUrls[0] })
+        handleNewMessageResponse(res1)
+
+        for (let i = 1; i < imageUrls.length; i++) {
+          const res = await communityService.sendMessage({ roomId, content: '', imageUrl: imageUrls[i] })
+          handleNewMessageResponse(res)
         }
-        setMessages((prev) => {
-          if (prev.some((item) => item._id === next._id)) return prev
-          return [...prev, next]
-        })
-        if (next.status === 'visible') {
-          applyMessageMetric(next, 0)
-        }
+      } else if (trimmed) {
+        const res = await communityService.sendMessage({ roomId, content: trimmed })
+        handleNewMessageResponse(res)
       }
+
       setMessageText('')
+      setImageUrls([])
     } catch (err: any) {
       const status = err?.response?.status
       if (status === 403) {
@@ -360,6 +432,62 @@ export function CommunityRoomPage() {
     }
   }
 
+  const handleNewMessageResponse = (res: any) => {
+    const next = res.message
+    if (next) {
+      if (next.status === 'hidden') {
+        toast.info('Tin nhắn của bạn có thể vi phạm và đã bị ẩn.')
+      }
+      setMessages((prev) => {
+        if (prev.some((item) => item._id === next._id)) return prev
+        return [...prev, next]
+      })
+      if (next.status === 'visible') {
+        applyMessageMetric(next, 0)
+      }
+    }
+  }
+
+  const handleFilesUpload = async (filesToUpload: File[]) => {
+    if (!filesToUpload || filesToUpload.length === 0) return
+    const maxSize = 2 * 1024 * 1024
+
+    const validFiles = filesToUpload.filter((file) => {
+      if (!file.type.startsWith('image/')) {
+        toast.error(`File ${file.name} không phải là ảnh`)
+        return false
+      }
+      if (file.size > maxSize) {
+        toast.error(`Ảnh ${file.name} quá lớn. Vui lòng chọn nhỏ hơn 2MB`)
+        return false
+      }
+      return true
+    })
+
+    if (validFiles.length === 0) return
+
+    setIsUploading(true)
+    try {
+      const { uploadImage } = await import('~/services/mediaService')
+      const uploadPromises = validFiles.map((file) => uploadImage(file))
+      const uploadedUrls = await Promise.all(uploadPromises)
+      setImageUrls((prev) => [...prev, ...uploadedUrls])
+      if (validFiles.length > 1) {
+        toast.success(`Tải lên thành công ${uploadedUrls.length} ảnh`)
+      }
+    } catch (error: any) {
+      toast.error(error?.message || 'Không thể tải ảnh lên')
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      handleFilesUpload(Array.from(e.target.files))
+    }
+    e.target.value = ''
+  }
   const openReportDialog = (message: CommunityMessage) => {
     setReportTarget(message)
     setReportReason('')
@@ -419,173 +547,223 @@ export function CommunityRoomPage() {
   const isMine = (message: CommunityMessage) => message.senderId === user?._id
 
   return (
-    <div className='max-w-7xl mx-auto px-4 py-6 space-y-6'>
-      <div className='flex items-center justify-between gap-4'>
-        <div className='flex items-center gap-3'>
-          <Button variant='ghost' className='hover:bg-blue-50' onClick={() => navigate('/community')}>
-            <ArrowLeft className='w-4 h-4 mr-2' />
-            Danh sách phòng
-          </Button>
-          <div>
-            <h1 className='text-2xl font-bold text-gray-900'>{room?.name || 'Phòng cộng đồng'}</h1>
-            <div className='flex flex-wrap items-center gap-2 mt-1 text-sm text-gray-500'>
-              <span>#{room?.slug || roomId}</span>
-              {room?.diseaseKey && <Badge className='bg-blue-100 text-blue-700'>{room.diseaseKey}</Badge>}
-              {isPending && <Badge className='bg-yellow-100 text-yellow-700'>Chờ duyệt tham gia</Badge>}
-              {isBanned && <Badge className='bg-red-100 text-red-700'>Đã bị ban</Badge>}
-              {isMuted && <Badge className='bg-orange-100 text-orange-700'>Đang mute</Badge>}
+    <div className='mx-auto flex h-[calc(100vh-96px)] min-h-[680px] max-w-[1440px] gap-0 overflow-hidden border border-gray-200 bg-white shadow-sm lg:my-4 lg:rounded-[18px]'>
+      <aside className='hidden w-[330px] shrink-0 border-r border-gray-200 bg-white md:flex md:flex-col'>
+        <div className='border-b border-gray-100 px-4 py-4'>
+          <div className='flex items-center justify-between gap-3'>
+            <div>
+              <h1 className='text-xl font-bold text-gray-950'>Cộng đồng</h1>
+              <p className='text-xs text-gray-500'>Chat nhóm MediSpace</p>
             </div>
+            <Button variant='ghost' size='icon' className='rounded-full' onClick={() => navigate('/community')} aria-label='Quay lại cộng đồng'>
+              <ArrowLeft className='h-4 w-4' />
+            </Button>
+          </div>
+          <div className='mt-4 flex h-10 items-center gap-2 rounded-full bg-gray-100 px-3 text-sm text-gray-500'>
+            <Search className='h-4 w-4' />
+            <span>Tìm phòng chat</span>
           </div>
         </div>
 
-        <Button variant='outline' className='border-blue-200 gap-2' onClick={() => loadMessages(1)}>
-          <RefreshCw className='w-4 h-4' />
-          Làm mới
-        </Button>
-      </div>
-
-      <div className='grid grid-cols-1 lg:grid-cols-4 gap-4'>
-        <Card className='lg:col-span-3 bg-white border-blue-100 shadow-sm flex flex-col min-h-[560px]'>
-          <CardContent className='p-0 flex flex-col flex-1 min-h-[560px]'>
-            <div className='p-4 border-b border-blue-100 flex items-center justify-between'>
-              <div className='flex items-center gap-2'>
-                <Users className='w-4 h-4 text-blue-600' />
-                <span className='text-sm text-gray-600'>Phòng cộng đồng</span>
-              </div>
-              {loadingRooms && <Loader2 className='w-4 h-4 animate-spin text-blue-600' />}
+        <div className='min-h-0 flex-1 overflow-y-auto px-2 py-3'>
+          {loadingRooms ? (
+            <div className='space-y-2 px-2'>
+              {Array.from({ length: 6 }).map((_, index) => <Skeleton key={index} className='h-16 rounded-2xl' />)}
             </div>
-
-            <div className='flex-1 overflow-y-auto bg-gray-50 p-4 space-y-4'>
-              {loadingMessages ? (
-                <div className='space-y-3'>
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <Skeleton key={i} className='h-12 w-3/4' />
-                  ))}
-                </div>
-              ) : needsJoin ? (
-                <div className='flex flex-col items-center justify-center text-center h-full p-6'>
-                  <div className='w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4'>
-                    <Info className='w-7 h-7 text-blue-500' />
-                  </div>
-                  <h3 className='text-lg font-semibold text-gray-900 mb-1'>
-                    {isPending ? 'Yêu cầu tham gia đang chờ duyệt' : 'Bạn chưa tham gia phòng này'}
-                  </h3>
-                  <p className='text-gray-600 mb-4'>
-                    {isPending
-                      ? 'Admin cần duyệt trước khi bạn có thể xem và gửi tin nhắn.'
-                      : 'Tham gia để xem và gửi tin nhắn trong phòng.'}
-                  </p>
-                  <Button className='bg-gradient-to-r from-blue-600 to-cyan-500 text-white' onClick={handleJoin} disabled={isPending}>
-                    {isPending ? 'Đã gửi yêu cầu' : room?.visibility === 'private' && !isInvited ? 'Gửi yêu cầu tham gia' : 'Tham gia phòng'}
-                  </Button>
-                  {!isAuthenticated && (
-                    <Button variant='outline' className='mt-2 border-blue-200' asChild>
-                      <Link to='/login'>Đăng nhập</Link>
-                    </Button>
-                  )}
-                </div>
-              ) : messages.length === 0 ? (
-                <div className='flex flex-col items-center justify-center text-center h-full p-6'>
-                  <div className='w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4'>
-                    <Users className='w-7 h-7 text-blue-500' />
-                  </div>
-                  <h3 className='text-lg font-semibold text-gray-900 mb-1'>Chưa có tin nhắn</h3>
-                  <p className='text-gray-600'>Hãy gửi tin nhắn đầu tiên để bắt đầu cuộc trò chuyện.</p>
-                </div>
-              ) : (
-                <>
-                  {hasMore && (
-                    <div className='text-center'>
-                      <Button variant='outline' className='border-blue-200' onClick={handleLoadMore}>
-                        Tải thêm tin nhắn
-                      </Button>
-                    </div>
-                  )}
-                  {messages.map((message) => (
-                    <MessageBubble
-                      key={message._id}
-                      message={message}
-                      isMine={isMine(message)}
-                      onReport={isMine(message) ? undefined : openReportDialog}
-                      onAppeal={isMine(message) ? openAppealDialog : undefined}
-                      appealSent={appealedMessageIds.has(message._id)}
-                    />
-                  ))}
-                </>
-              )}
-            </div>
-
-            <div className='border-t border-blue-100 p-3 bg-white'>
-              <div className='flex items-end gap-2'>
-                <Textarea
-                  value={messageText}
-                  onChange={(e) => setMessageText(e.target.value)}
-                  placeholder={
-                    isPending
-                      ? 'Yêu cầu tham gia đang chờ duyệt'
-                      : isBanned
-                        ? 'Bạn đang bị ban trong phòng này'
-                        : isMuted
-                          ? 'Bạn đang bị mute trong phòng này'
-                          : needsJoin
-                            ? 'Tham gia phòng để gửi tin nhắn'
-                            : 'Nhập tin nhắn...'
-                  }
-                  disabled={!canSend || sending}
-                  rows={2}
-                />
-                <Button
-                  className='bg-gradient-to-r from-blue-600 to-cyan-500 text-white h-10 px-4'
-                  onClick={handleSend}
-                  disabled={!canSend || sending || !messageText.trim()}
+          ) : (
+            sortedRooms.map((item) => {
+              const active = item._id === roomId
+              return (
+                <button
+                  key={item._id}
+                  type='button'
+                  onClick={() => navigate(`/community/${item._id}`)}
+                  className={`flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition ${active ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
                 >
-                  {sending ? <Loader2 className='w-4 h-4 animate-spin' /> : <Send className='w-4 h-4' />}
-                </Button>
-              </div>
-              {!isAuthenticated && (
-                <p className='text-xs text-gray-500 mt-2'>Vui lòng đăng nhập để tham gia trò chuyện.</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className='space-y-4'>
-          <Card className='bg-white border-blue-100'>
-            <CardContent className='p-5 space-y-3'>
-              <h3 className='text-sm font-semibold text-gray-900 flex items-center gap-2'>
-                <ShieldAlert className='w-4 h-4 text-amber-500' />
-                Quy tắc cộng đồng
-              </h3>
-              <ul className='text-sm text-gray-600 space-y-2'>
-                <li>Không chia sẻ thông tin cá nhân nhạy cảm.</li>
-                <li>Không quảng cáo, spam hoặc chia sẻ liên kết độc hại.</li>
-                <li>Không tư vấn y khoa nguy hiểm hoặc gây hại.</li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card className='bg-white border-blue-100'>
-            <CardContent className='p-5 space-y-2'>
-              <h3 className='text-sm font-semibold text-gray-900'>Gợi ý</h3>
-              <p className='text-sm text-gray-600'>
-                Nếu cần tư vấn chuyên sâu, hãy dùng kênh chat với dược sĩ hoặc bác sĩ.
-              </p>
-              <Button
-                variant='outline'
-                className='border-blue-200 w-full'
-                onClick={() => {
-                  const chatButton = document.querySelector(
-                    'button[aria-label="Chat với dược sĩ"]',
-                  ) as HTMLButtonElement | null
-                  chatButton?.click()
-                }}
-              >
-                Chat với dược sĩ
-              </Button>
-            </CardContent>
-          </Card>
+                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${active ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}>
+                    {roomInitials(item)}
+                  </div>
+                  <div className='min-w-0 flex-1'>
+                    <div className='flex items-center justify-between gap-2'>
+                      <span className='truncate text-sm font-semibold text-gray-950'>{item.name}</span>
+                      {Boolean(item.unreadCount) && <span className='rounded-full bg-blue-600 px-2 py-0.5 text-[11px] font-semibold text-white'>{item.unreadCount}</span>}
+                    </div>
+                    <p className='mt-0.5 truncate text-xs text-gray-500'>{roomPreview(item)}</p>
+                  </div>
+                </button>
+              )
+            })
+          )}
         </div>
-      </div>
+      </aside>
+
+      <main className='flex min-w-0 flex-1 flex-col bg-[#f5f7fb]'>
+        <header className='flex h-[72px] shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 md:px-5'>
+          <div className='flex min-w-0 items-center gap-3'>
+            <Button variant='ghost' size='icon' className='rounded-full md:hidden' onClick={() => navigate('/community')} aria-label='Quay lại cộng đồng'>
+              <ArrowLeft className='h-4 w-4' />
+            </Button>
+            <div className='relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white'>
+              {roomInitials(room)}
+              <span className='absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-emerald-500' />
+            </div>
+            <div className='min-w-0'>
+              <h2 className='truncate text-base font-semibold text-gray-950'>{room?.name || 'Phòng cộng đồng'}</h2>
+              <div className='mt-0.5 flex flex-wrap items-center gap-2 text-xs text-gray-500'>
+                <span>#{room?.slug || roomId}</span>
+                {room?.diseaseKey && <Badge className='h-5 bg-blue-100 px-2 text-[11px] text-blue-700 hover:bg-blue-100'>{room.diseaseKey}</Badge>}
+                {isPending && <Badge className='h-5 bg-yellow-100 px-2 text-[11px] text-yellow-700 hover:bg-yellow-100'>Chờ duyệt</Badge>}
+                {isBanned && <Badge className='h-5 bg-red-100 px-2 text-[11px] text-red-700 hover:bg-red-100'>Đã bị ban</Badge>}
+                {isMuted && <Badge className='h-5 bg-orange-100 px-2 text-[11px] text-orange-700 hover:bg-orange-100'>Đang mute</Badge>}
+              </div>
+            </div>
+          </div>
+          <Button variant='ghost' size='icon' className='rounded-full text-gray-600' onClick={() => loadMessages(1)} aria-label='Làm mới chat'>
+            <RefreshCw className='h-4 w-4' />
+          </Button>
+        </header>
+
+        <div className='min-h-0 flex-1 overflow-y-auto px-3 py-5 md:px-6'>
+          <div className='mx-auto flex max-w-3xl flex-col gap-4'>
+            {loadingMessages ? (
+              <div className='space-y-3'>
+                {Array.from({ length: 7 }).map((_, index) => (
+                  <Skeleton key={index} className={`h-12 rounded-2xl ${index % 2 ? 'ml-auto w-2/3' : 'w-3/4'}`} />
+                ))}
+              </div>
+            ) : needsJoin ? (
+              <div className='mx-auto flex max-w-md flex-col items-center justify-center rounded-[18px] bg-white p-6 text-center shadow-sm'>
+                <div className='mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50'>
+                  <Info className='h-6 w-6 text-blue-500' />
+                </div>
+                <h3 className='text-base font-semibold text-gray-950'>{isPending ? 'Yêu cầu tham gia đang chờ duyệt' : 'Bạn chưa tham gia phòng này'}</h3>
+                <p className='mt-2 text-sm text-gray-600'>{isPending ? 'Admin cần duyệt trước khi bạn có thể xem và gửi tin nhắn.' : 'Tham gia để xem và gửi tin nhắn trong phòng.'}</p>
+                <Button className='mt-4 rounded-full bg-blue-600 text-white hover:bg-blue-700' onClick={handleJoin} disabled={isPending}>
+                  {isPending ? 'Đã gửi yêu cầu' : room?.visibility === 'private' && !isInvited ? 'Gửi yêu cầu tham gia' : 'Tham gia phòng'}
+                </Button>
+                {!isAuthenticated && (
+                  <Button variant='outline' className='mt-2 rounded-full' asChild>
+                    <Link to='/login'>Đăng nhập</Link>
+                  </Button>
+                )}
+              </div>
+            ) : messages.length === 0 && !(roomEventsQuery.data?.items || []).length ? (
+              <div className='mx-auto flex max-w-md flex-col items-center justify-center rounded-[18px] bg-white p-6 text-center shadow-sm'>
+                <div className='mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50'>
+                  <Users className='h-6 w-6 text-blue-500' />
+                </div>
+                <h3 className='text-base font-semibold text-gray-950'>Chưa có tin nhắn</h3>
+                <p className='mt-2 text-sm text-gray-600'>Hãy gửi tin nhắn đầu tiên để bắt đầu cuộc trò chuyện.</p>
+              </div>
+            ) : (
+              <>
+                {(roomEventsQuery.data?.items || []).map((event) => <MeetingCard key={event._id} event={event} />)}
+                {hasMore && (
+                  <div className='text-center'>
+                    <Button variant='outline' className='rounded-full border-gray-200 bg-white' onClick={handleLoadMore}>
+                      Tải thêm tin nhắn
+                    </Button>
+                  </div>
+                )}
+                {messages.map((message) => (
+                  <MessageBubble
+                    key={message._id}
+                    message={message}
+                    isMine={isMine(message)}
+                    onReport={isMine(message) ? undefined : openReportDialog}
+                    onAppeal={isMine(message) ? openAppealDialog : undefined}
+                    appealSent={appealedMessageIds.has(message._id)}
+                  />
+                ))}
+              </>
+            )}
+          </div>
+        </div>
+
+        <footer className='shrink-0 border-t border-gray-200 bg-white px-3 py-3 md:px-5'>
+          <div className='mx-auto max-w-3xl'>
+            {imageUrls.length > 0 && (
+              <div className='mb-3 flex gap-3 overflow-x-auto pb-1'>
+                {imageUrls.map((url, index) => (
+                  <div key={`${url}-${index}`} className='relative shrink-0'>
+                    <img src={url} alt='Ảnh chuẩn bị gửi' className='h-20 w-20 rounded-2xl border border-gray-200 object-cover shadow-sm' />
+                    <button
+                      type='button'
+                      className='absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm hover:text-red-600'
+                      onClick={() => setImageUrls((prev) => prev.filter((_, i) => i !== index))}
+                      aria-label='Xóa ảnh'
+                    >
+                      <X className='h-3.5 w-3.5' />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className='flex items-end gap-2'>
+              <label className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 ${canSend && !isUploading ? 'cursor-pointer hover:bg-blue-100' : 'opacity-50'}`} aria-label='Gửi ảnh'>
+                <input type='file' accept='image/*' multiple className='hidden' disabled={!canSend || isUploading || sending} onChange={handleImageUpload} />
+                {isUploading ? <Loader2 className='h-4 w-4 animate-spin' /> : <ImageIcon className='h-4 w-4' />}
+              </label>
+              <ChatTextarea
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
+                onSend={handleSend}
+                onPasteFiles={handleFilesUpload}
+                placeholder={
+                  isPending
+                    ? 'Yêu cầu tham gia đang chờ duyệt'
+                    : isBanned
+                      ? 'Bạn đang bị ban trong phòng này'
+                      : isMuted
+                        ? 'Bạn đang bị mute trong phòng này'
+                        : needsJoin
+                          ? 'Tham gia phòng để gửi tin nhắn'
+                          : 'Aa'
+                }
+                disabled={!canSend || sending}
+              />
+              <Button
+                size='icon'
+                className='h-10 w-10 shrink-0 rounded-full bg-blue-600 text-white hover:bg-blue-700'
+                onClick={handleSend}
+                disabled={!canSend || sending || isUploading || (!messageText.trim() && imageUrls.length === 0)}
+                aria-label='Gửi tin nhắn'
+              >
+                {sending ? <Loader2 className='h-4 w-4 animate-spin' /> : <Send className='h-4 w-4' />}
+              </Button>
+            </div>
+            {!isAuthenticated && <p className='mt-2 text-xs text-gray-500'>Vui lòng đăng nhập để tham gia trò chuyện.</p>}
+          </div>
+        </footer>
+      </main>
+
+      <aside className='hidden w-[300px] shrink-0 border-l border-gray-200 bg-white xl:flex xl:flex-col'>
+        <div className='border-b border-gray-100 px-5 py-5 text-center'>
+          <div className='mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-blue-600 text-lg font-semibold text-white'>{roomInitials(room)}</div>
+          <h3 className='mt-3 truncate text-base font-semibold text-gray-950'>{room?.name || 'Phòng cộng đồng'}</h3>
+          <p className='mt-1 text-xs text-gray-500'>{room?.memberCount || 0} thành viên</p>
+        </div>
+        <div className='space-y-4 px-5 py-5 text-sm text-gray-600'>
+          <div>
+            <h4 className='mb-2 flex items-center gap-2 font-semibold text-gray-950'><ShieldAlert className='h-4 w-4 text-amber-500' />Quy tắc cộng đồng</h4>
+            <ul className='space-y-2'>
+              <li>Không chia sẻ thông tin cá nhân nhạy cảm.</li>
+              <li>Không spam hoặc chia sẻ liên kết độc hại.</li>
+              <li>Không tư vấn y khoa nguy hiểm.</li>
+            </ul>
+          </div>
+          <Button
+            variant='outline'
+            className='w-full rounded-full'
+            onClick={() => {
+              const chatButton = document.querySelector('button[aria-label="Chat với dược sĩ"]') as HTMLButtonElement | null
+              chatButton?.click()
+            }}
+          >
+            Chat với dược sĩ
+          </Button>
+        </div>
+      </aside>
 
       <Dialog open={reportOpen} onOpenChange={setReportOpen}>
         <DialogContent className='sm:max-w-lg max-h-[90vh] overflow-y-auto'>
@@ -597,7 +775,7 @@ export function CommunityRoomPage() {
           </DialogHeader>
 
           <div className='space-y-3'>
-            <div className='rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-gray-700 break-words max-h-32 overflow-y-auto'>
+            <div className='rounded-md border border-[#E8EDF5] bg-[#F0F6FF] px-3 py-2 text-sm text-gray-700 break-words max-h-32 overflow-y-auto'>
               {reportTarget?.content}
             </div>
             <Textarea
@@ -613,7 +791,7 @@ export function CommunityRoomPage() {
               Hủy
             </Button>
             <Button
-              className='bg-gradient-to-r from-blue-600 to-cyan-500 text-white'
+              className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white'
               onClick={handleReport}
               disabled={reporting}
             >
@@ -650,7 +828,7 @@ export function CommunityRoomPage() {
               Hủy
             </Button>
             <Button
-              className='bg-gradient-to-r from-blue-600 to-cyan-500 text-white'
+              className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white'
               onClick={handleMessageAppeal}
               disabled={appealing}
             >

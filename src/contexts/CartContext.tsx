@@ -299,7 +299,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       toast.success('Đã thêm vào giỏ hàng', {
         description: `"${product.name}" (x${quantity})`,
         duration: 3000,
-        icon: <ShoppingCart className='w-5 h-5 text-blue-600' />,
+        icon: <ShoppingCart className='w-5 h-5 text-[#1E40AF]' />,
         action: {
           label: 'Xem giỏ hàng',
           onClick: () => (window.location.href = '/cart'),

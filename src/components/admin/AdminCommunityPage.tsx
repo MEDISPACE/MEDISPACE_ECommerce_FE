@@ -185,7 +185,7 @@ export function AdminCommunityPage() {
               Hủy
             </Button>
             <Button
-              className='bg-gradient-to-r from-blue-600 to-cyan-500 text-white'
+              className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white'
               disabled={!form.name.trim() || saveRoom.isPending}
               onClick={() => saveRoom.mutate()}
             >
@@ -199,18 +199,18 @@ export function AdminCommunityPage() {
         <div>
           <h1
             className='text-3xl font-bold bg-clip-text text-transparent'
-            style={{ backgroundImage: 'linear-gradient(to right, #0066CC, #4A90E2)' }}
+            style={{ backgroundImage: 'linear-gradient(to right, #0A2463, #1E40AF)' }}
           >
             Quản lý cộng đồng
           </h1>
           <p className='text-gray-600 mt-1'>Tạo phòng, quản lý thành viên và xử lý yêu cầu tham gia.</p>
         </div>
         <div className='flex gap-2'>
-          <Button variant='outline' className='border-blue-200 gap-2' onClick={() => refetch()}>
+          <Button variant='outline' className='border-[#BFDBFE] gap-2' onClick={() => refetch()}>
             <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
             Làm mới
           </Button>
-          <Button className='bg-gradient-to-r from-blue-600 to-cyan-500 text-white gap-2' onClick={openCreate}>
+          <Button className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white gap-2' onClick={openCreate}>
             <Plus className='w-4 h-4' />
             Tạo phòng
           </Button>
@@ -218,7 +218,7 @@ export function AdminCommunityPage() {
       </div>
 
       <div className='grid grid-cols-1 xl:grid-cols-3 gap-4'>
-        <Card className='xl:col-span-1 bg-white border-blue-100'>
+        <Card className='xl:col-span-1 bg-white border-[#E8EDF5]'>
           <CardContent className='p-4 space-y-3'>
             <div className='space-y-3'>
               <div className='relative'>
@@ -263,7 +263,7 @@ export function AdminCommunityPage() {
                   key={room._id}
                   onClick={() => setSelectedRoomId(room._id)}
                   className={`w-full text-left rounded-lg border p-4 transition ${
-                    selectedRoom?._id === room._id ? 'border-blue-400 bg-blue-50' : 'border-blue-100 hover:bg-blue-50'
+                    selectedRoom?._id === room._id ? 'border-blue-400 bg-[#F0F6FF]' : 'border-[#E8EDF5] hover:bg-[#F0F6FF]'
                   }`}
                 >
                   <div className='flex items-start justify-between gap-3'>
@@ -271,7 +271,7 @@ export function AdminCommunityPage() {
                       <p className='font-semibold text-gray-900 line-clamp-1'>{room.name}</p>
                       <p className='text-xs text-gray-500'>#{room.slug}</p>
                     </div>
-                    <Badge className={room.status === 'archived' ? 'bg-gray-100 text-gray-700' : 'bg-blue-100 text-blue-700'}>
+                    <Badge className={room.status === 'archived' ? 'bg-gray-100 text-gray-700' : 'bg-[#E8EDF5] text-[#0A2463]'}>
                       {room.status === 'archived' ? 'archived' : room.visibility}
                     </Badge>
                   </div>
@@ -285,7 +285,7 @@ export function AdminCommunityPage() {
           </CardContent>
         </Card>
 
-        <Card className='xl:col-span-2 bg-white border-blue-100'>
+        <Card className='xl:col-span-2 bg-white border-[#E8EDF5]'>
           <CardContent className='p-5'>
             {!selectedRoom ? (
               <div className='text-center text-gray-500 py-12'>Chọn một phòng để quản lý</div>
@@ -297,7 +297,7 @@ export function AdminCommunityPage() {
                     <TabsTrigger value='members'>Thành viên</TabsTrigger>
                   </TabsList>
                   <div className='flex gap-2'>
-                    <Button variant='outline' className='border-blue-200 gap-2' onClick={() => openEdit(selectedRoom)}>
+                    <Button variant='outline' className='border-[#BFDBFE] gap-2' onClick={() => openEdit(selectedRoom)}>
                       <Edit className='w-4 h-4' />
                       Sửa
                     </Button>
@@ -310,22 +310,22 @@ export function AdminCommunityPage() {
 
                 <TabsContent value='info' className='space-y-4'>
                   <div className='grid grid-cols-2 md:grid-cols-4 gap-3'>
-                    <div className='rounded-lg bg-blue-50 p-4'>
+                    <div className='rounded-lg bg-[#F0F6FF] p-4'>
                       <p className='text-xs text-gray-500'>Hiển thị</p>
                       <p className='font-semibold flex items-center gap-1'>
                         {selectedRoom.visibility === 'private' && <Lock className='w-4 h-4' />}
                         {selectedRoom.visibility}
                       </p>
                     </div>
-                    <div className='rounded-lg bg-blue-50 p-4'>
+                    <div className='rounded-lg bg-[#F0F6FF] p-4'>
                       <p className='text-xs text-gray-500'>Thành viên</p>
                       <p className='font-semibold'>{selectedRoom.memberCount || 0}</p>
                     </div>
-                    <div className='rounded-lg bg-blue-50 p-4'>
+                    <div className='rounded-lg bg-[#F0F6FF] p-4'>
                       <p className='text-xs text-gray-500'>Tin nhắn</p>
                       <p className='font-semibold'>{selectedRoom.messageCount || 0}</p>
                     </div>
-                    <div className='rounded-lg bg-blue-50 p-4'>
+                    <div className='rounded-lg bg-[#F0F6FF] p-4'>
                       <p className='text-xs text-gray-500'>Nhóm bệnh</p>
                       <p className='font-semibold'>{selectedRoom.diseaseKey || '-'}</p>
                     </div>
@@ -341,7 +341,7 @@ export function AdminCommunityPage() {
                       onChange={(e) => setInviteEmail(e.target.value)}
                     />
                     <Button
-                      className='bg-gradient-to-r from-blue-600 to-cyan-500 text-white gap-2'
+                      className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white gap-2'
                       disabled={!inviteEmail.trim() || inviteMember.isPending}
                       onClick={() => inviteMember.mutate()}
                     >
@@ -366,7 +366,7 @@ export function AdminCommunityPage() {
                             <div className='text-xs text-gray-500'>{member.user?.email || member.userId}</div>
                           </TableCell>
                           <TableCell>
-                            <Badge className='bg-blue-100 text-blue-700'>{member.status}</Badge>
+                            <Badge className='bg-[#E8EDF5] text-[#0A2463]'>{member.status}</Badge>
                           </TableCell>
                           <TableCell>{member.role || 'member'}</TableCell>
                           <TableCell className='text-right space-x-2'>

@@ -286,10 +286,10 @@ export function CouponManagementPage() {
 
   const TYPE_LABELS: Record<string, string> = { percentage: 'Phần trăm', fixed: 'Cố định', fixed_amount: 'Cố định', free_shipping: 'Freeship' }
   const TYPE_COLORS: Record<string, string> = {
-    percentage: 'bg-blue-100 text-blue-700',
+    percentage: 'bg-[#E8EDF5] text-[#0A2463]',
     fixed: 'bg-green-100 text-green-700',
     fixed_amount: 'bg-green-100 text-green-700',
-    free_shipping: 'bg-cyan-100 text-cyan-700'
+    free_shipping: 'bg-[#E8EDF5] text-[#1E40AF]'
   }
 
   const isExpired = (endDate: string) => new Date(endDate) < new Date()
@@ -311,7 +311,7 @@ export function CouponManagementPage() {
         <div>
           <h1
             className='text-3xl font-bold bg-clip-text text-transparent'
-            style={{ backgroundImage: `linear-gradient(to right, #0066CC, #4A90E2)` }}
+            style={{ backgroundImage: `linear-gradient(to right, #0A2463, #1E40AF)` }}
           >
             Quản lý Coupon
           </h1>
@@ -319,7 +319,7 @@ export function CouponManagementPage() {
         </div>
         <Button
           onClick={openCreate}
-          className='bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8] gap-2 text-white self-start sm:self-auto'
+          className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] gap-2 text-white self-start sm:self-auto'
         >
           <Plus className='w-4 h-4' />
           Tạo coupon
@@ -329,13 +329,13 @@ export function CouponManagementPage() {
       {/* Stats */}
       <div className='grid grid-cols-2 lg:grid-cols-4 gap-4'>
         {[
-          { label: 'Tổng coupon', value: total, icon: <Tag className='w-5 h-5' />, color: 'text-blue-600 bg-blue-100' },
+          { label: 'Tổng coupon', value: total, icon: <Tag className='w-5 h-5' />, color: 'text-[#1E40AF] bg-[#E8EDF5]' },
           { label: 'Đang hoạt động', value: coupons.filter(c => c.isActive && !isExpired(c.endDate) && !isExhausted(c)).length, icon: <CheckCircle className='w-5 h-5' />, color: 'text-green-600 bg-green-100' },
-          { label: 'Đã dùng', value: coupons.reduce((s, c) => s + (c.currentUsageCount || 0), 0), icon: <Users className='w-5 h-5' />, color: 'text-blue-600 bg-blue-100' },
+          { label: 'Đã dùng', value: coupons.reduce((s, c) => s + (c.currentUsageCount || 0), 0), icon: <Users className='w-5 h-5' />, color: 'text-[#1E40AF] bg-[#E8EDF5]' },
           { label: 'Hết hạn', value: coupons.filter(c => isExpired(c.endDate)).length, icon: <Calendar className='w-5 h-5' />, color: 'text-red-600 bg-red-100' },
         ].map((stat, i) => (
           <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-            <Card className='bg-white backdrop-blur-lg border-blue-100'>
+            <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
               <CardContent className='p-4 flex items-center gap-3'>
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${stat.color}`}>
                   {stat.icon}
@@ -351,7 +351,7 @@ export function CouponManagementPage() {
       </div>
 
       {/* Filters */}
-      <Card className='bg-white backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
         <CardContent className='p-4 flex flex-col sm:flex-row gap-3'>
           <div className='relative flex-1'>
             <Search className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400' />
@@ -359,11 +359,11 @@ export function CouponManagementPage() {
               placeholder='Tìm mã coupon, tên...'
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className='pl-10 border-2 border-blue-200 focus:border-blue-500'
+              className='pl-10 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
             />
           </div>
           <Select value={filterStatus} onValueChange={(v: any) => { setFilterStatus(v); setPage(1) }}>
-            <SelectTrigger className='w-40 border-2 border-blue-200'>
+            <SelectTrigger className='w-40 border-2 border-[#BFDBFE]'>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -379,14 +379,14 @@ export function CouponManagementPage() {
       </Card>
 
       {/* Table */}
-      <Card className='bg-white backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
         <CardHeader>
           <CardTitle className='text-base'>Danh sách coupon ({total})</CardTitle>
         </CardHeader>
         <CardContent className='p-0'>
           {isLoading ? (
             <div className='flex items-center justify-center h-48 gap-3'>
-              <Loader2 className='w-6 h-6 animate-spin text-blue-600' />
+              <Loader2 className='w-6 h-6 animate-spin text-[#1E40AF]' />
               <span className='text-gray-500'>Đang tải...</span>
             </div>
           ) : error ? (
@@ -403,7 +403,7 @@ export function CouponManagementPage() {
             <div className='overflow-x-auto'>
               <table className='w-full text-sm'>
                 <thead>
-                  <tr className='!border-b-2 !border-blue-300 bg-gray-50 text-gray-600'>
+                  <tr className='!border-b-2 !border-[#BFDBFE] bg-gray-50 text-gray-600'>
                     <th className='text-left p-3 pl-6'>Mã / Tên</th>
                     <th className='text-left p-3'>Loại / Giá trị</th>
                     <th className='text-left p-3'>Thời hạn</th>
@@ -419,7 +419,7 @@ export function CouponManagementPage() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: idx * 0.03 }}
-                      className='border-b-2 border-blue-200 hover:bg-blue-50/30 transition-colors'
+                      className='border-b-2 border-[#BFDBFE] hover:bg-[#F0F6FF]/30 transition-colors'
                     >
                       <td className='p-3 pl-6'>
                         <div className='flex items-center gap-2'>
@@ -428,7 +428,7 @@ export function CouponManagementPage() {
                           </code>
                           <button
                             onClick={() => copyCode(c.code, c._id)}
-                            className='text-gray-400 hover:text-blue-600 transition-colors'
+                            className='text-gray-400 hover:text-[#1E40AF] transition-colors'
                           >
                             {copiedId === c._id ? <CheckCircle className='w-3.5 h-3.5 text-green-500' /> : <Copy className='w-3.5 h-3.5' />}
                           </button>
@@ -461,7 +461,7 @@ export function CouponManagementPage() {
                         <p className='text-xs text-gray-400 mt-1'>/{c.perUserLimit || 1} mỗi khách</p>
                         <div className='h-1.5 bg-gray-100 rounded-full mt-1 w-20'>
                           <div
-                            className={`h-full rounded-full ${isExhausted(c) ? 'bg-orange-500' : 'bg-blue-500'}`}
+                            className={`h-full rounded-full ${isExhausted(c) ? 'bg-orange-500' : 'bg-[#1E40AF]'}`}
                             style={{ width: `${Math.min(100, ((c.currentUsageCount || 0) / Math.max(c.totalUsageLimit || 1, 1)) * 100)}%` }}
                           />
                         </div>
@@ -481,7 +481,7 @@ export function CouponManagementPage() {
                           </button>
                           <button
                             onClick={() => openEdit(c)}
-                            className='p-1.5 rounded hover:bg-blue-50 text-blue-600 transition-colors'
+                            className='p-1.5 rounded hover:bg-[#F0F6FF] text-[#1E40AF] transition-colors'
                           >
                             <Edit2 className='w-4 h-4' />
                           </button>
@@ -674,7 +674,7 @@ export function CouponManagementPage() {
               <Label>Kích hoạt ngay</Label>
             </div>
 
-            <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-lg border border-blue-100 bg-blue-50/40 p-4'>
+            <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-lg border border-[#E8EDF5] bg-[#F0F6FF]/40 p-4'>
               <div className='flex items-center gap-3'>
                 <Switch
                   checked={formData.isPublic}
@@ -718,7 +718,7 @@ export function CouponManagementPage() {
                       <button
                         key={user._id}
                         type='button'
-                        className='w-full text-left px-3 py-2 hover:bg-blue-50 text-sm'
+                        className='w-full text-left px-3 py-2 hover:bg-[#F0F6FF] text-sm'
                         onClick={() => addUniqueId('targetUserIds', user._id)}
                       >
                         <span className='font-medium'>{user.lastName} {user.firstName}</span>
@@ -730,7 +730,7 @@ export function CouponManagementPage() {
                 {formData.targetUserIds.length > 0 && (
                   <div className='flex flex-wrap gap-2 mt-2'>
                     {formData.targetUserIds.map(id => (
-                      <Badge key={id} className='bg-blue-100 text-blue-700 hover:bg-blue-100 gap-1'>
+                      <Badge key={id} className='bg-[#E8EDF5] text-[#0A2463] hover:bg-[#E8EDF5] gap-1'>
                         User {id.slice(-6)}
                         <button type='button' onClick={() => removeId('targetUserIds', id)}><X className='w-3 h-3' /></button>
                       </Badge>
@@ -786,7 +786,7 @@ export function CouponManagementPage() {
                         <button
                           key={product._id || product.id}
                           type='button'
-                          className='w-full text-left px-3 py-2 hover:bg-blue-50 text-sm'
+                          className='w-full text-left px-3 py-2 hover:bg-[#F0F6FF] text-sm'
                           onClick={() => addUniqueId('applicableProductIds', product._id || product.id)}
                         >
                           <span className='font-medium'>{product.name}</span>
@@ -798,7 +798,7 @@ export function CouponManagementPage() {
                   {formData.applicableProductIds.length > 0 && (
                     <div className='flex flex-wrap gap-2 mt-2'>
                       {formData.applicableProductIds.map(id => (
-                        <Badge key={id} className='bg-blue-100 text-blue-700 hover:bg-blue-100 gap-1'>
+                        <Badge key={id} className='bg-[#E8EDF5] text-[#0A2463] hover:bg-[#E8EDF5] gap-1'>
                           Product {id.slice(-6)}
                           <button type='button' onClick={() => removeId('applicableProductIds', id)}><X className='w-3 h-3' /></button>
                         </Badge>
@@ -822,7 +822,7 @@ export function CouponManagementPage() {
             <Button
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className='bg-blue-600 hover:bg-blue-700 text-white gap-2'
+              className='bg-[#0A2463] hover:bg-[#071A49] text-white gap-2'
             >
               {isSubmitting && <Loader2 className='w-4 h-4 animate-spin' />}
               {editCoupon ? 'Cập nhật' : 'Tạo coupon'}
@@ -837,7 +837,7 @@ export function CouponManagementPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Xóa coupon?</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn chắc chắn muốn xóa coupon <strong className='text-blue-600'>{deleteTarget?.code}</strong>? Chỉ coupon chưa có lượt dùng mới được xóa; coupon đã dùng nên tắt để giữ lịch sử đối soát.
+              Bạn chắc chắn muốn xóa coupon <strong className='text-[#1E40AF]'>{deleteTarget?.code}</strong>? Chỉ coupon chưa có lượt dùng mới được xóa; coupon đã dùng nên tắt để giữ lịch sử đối soát.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -210,7 +210,7 @@ export function OrderDetailPage() {
   if (loading) {
     return (
       <div className='text-center py-12'>
-        <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto'></div>
+        <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-[#1E40AF] mx-auto'></div>
         <p className='mt-4 text-gray-600'>Đang tải chi tiết đơn hàng...</p>
       </div>
     )
@@ -257,7 +257,7 @@ export function OrderDetailPage() {
       <div className='flex flex-col md:flex-row md:items-center justify-between gap-4'>
         <div className='flex items-center gap-4'>
           <Button
-            className='text-blue-600 hover:!text-blue-700 hover:!bg-blue-50 rounded-full p-2.5 h-10 w-10'
+            className='text-[#1E40AF] hover:!text-[#0A2463] hover:!bg-[#F0F6FF] rounded-full p-2.5 h-10 w-10'
             variant='ghost'
             size='icon'
             onClick={() => navigate('/account/orders')}
@@ -277,9 +277,9 @@ export function OrderDetailPage() {
             Tải PDF
           </Button> */}
           <Button
-            // className='!border-blue-100 !bg-blue-100 !text-blue-600 !hover:border-blue-200 !hover:bg-blue-200 !hover:text-blue-600'
+            // className='!border-[#E8EDF5] !bg-[#E8EDF5] !text-[#1E40AF] !hover:border-[#BFDBFE] !hover:bg-[#BFDBFE] !hover:text-[#1E40AF]'
             variant='outline'
-            className='!border-blue-200 !text-blue-600 hover:!bg-blue-100 hover:!text-blue-700'
+            className='!border-[#BFDBFE] !text-[#1E40AF] hover:!bg-[#E8EDF5] hover:!text-[#0A2463]'
             size='sm'
             onClick={() => {
               const chatBtn = document.querySelector(
@@ -299,7 +299,7 @@ export function OrderDetailPage() {
       </div>
 
       {/* Order Timeline */}
-      <Card className='border-blue-100'>
+      <Card className='border-[#E8EDF5]'>
         <CardHeader>
           <CardTitle className='text-blue-800'>Trạng thái đơn hàng</CardTitle>
         </CardHeader>
@@ -328,11 +328,11 @@ export function OrderDetailPage() {
           </div>
 
           {order.trackingNumber && (
-            <div className='mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg'>
+            <div className='mt-6 p-4 bg-[#F0F6FF] border border-[#BFDBFE] rounded-lg'>
               <div className='flex items-center justify-between'>
                 <div>
                   <p className='font-medium text-blue-800'>Mã vận đơn</p>
-                  <p className='text-blue-600'>{order.trackingNumber}</p>
+                  <p className='text-[#1E40AF]'>{order.trackingNumber}</p>
                 </div>
                 <Button size='sm' variant='outline'>
                   <Truck className='w-4 h-4 mr-2' />
@@ -347,7 +347,7 @@ export function OrderDetailPage() {
       <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
         {/* Order Items */}
         <div className='lg:col-span-2 space-y-6'>
-          <Card className='border-blue-100'>
+          <Card className='border-[#E8EDF5]'>
             <CardHeader>
               <CardTitle className='text-blue-800'>Sản phẩm đã đặt</CardTitle>
             </CardHeader>
@@ -383,14 +383,14 @@ export function OrderDetailPage() {
                         <Button
                           variant='outline'
                           size='sm'
-                          className='!border-blue-200 !text-blue-600 hover:!bg-blue-50'
+                          className='!border-[#BFDBFE] !text-[#1E40AF] hover:!bg-[#F0F6FF]'
                         >
                           Xem sản phẩm
                         </Button>
                       </Link>
                       <Button
                         size='sm'
-                        className='bg-blue-600 text-white hover:!bg-blue-700'
+                        className='bg-[#0A2463] text-white hover:!bg-[#071A49]'
                         onClick={async () => {
                           try {
                             const product = {
@@ -476,7 +476,7 @@ export function OrderDetailPage() {
                   </>
                 )}
                 {(order.pointsRedeemAmount || 0) > 0 && (
-                  <div className='flex justify-between text-sm text-purple-600'>
+                  <div className='flex justify-between text-sm text-[#1E40AF]'>
                     <span>Điểm thưởng ({(order.pointsRedeemed || 0).toLocaleString('vi-VN')} điểm):</span>
                     <span>-{formatPrice(order.pointsRedeemAmount || 0)}</span>
                   </div>
@@ -484,7 +484,7 @@ export function OrderDetailPage() {
                 <Separator />
                 <div className='flex justify-between font-medium text-lg'>
                   <span>Tổng cộng:</span>
-                  <span className='text-blue-600'>{formatPrice(order.total)}</span>
+                  <span className='text-[#1E40AF]'>{formatPrice(order.total)}</span>
                 </div>
               </div>
             </CardContent>
@@ -494,7 +494,7 @@ export function OrderDetailPage() {
         {/* Sidebar */}
         <div className='space-y-6'>
           {/* Delivery Info */}
-          <Card className='border-blue-100'>
+          <Card className='border-[#E8EDF5]'>
             <CardHeader>
               <CardTitle className='text-blue-800 flex items-center gap-2'>
                 <MapPin className='w-5 h-5' />
@@ -528,7 +528,7 @@ export function OrderDetailPage() {
           </Card>
 
           {/* Payment Info */}
-          <Card className='border-blue-100'>
+          <Card className='border-[#E8EDF5]'>
             <CardHeader>
               <CardTitle className='text-blue-800 flex items-center gap-2'>
                 <CreditCard className='w-5 h-5' />
@@ -554,11 +554,11 @@ export function OrderDetailPage() {
           </Card>
 
           {/* Actions */}
-          <Card className='border-blue-100'>
+          <Card className='border-[#E8EDF5]'>
             <CardContent className='p-4 space-y-3'>
               {order.paymentStatus === 'pending' && order.paymentMethod !== 'cod' && (
                 <Button
-                  className='w-full text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:!bg-gradient-to-r hover:from-blue-700 hover:to-cyan-600'
+                  className='w-full text-white bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:!bg-gradient-to-r hover:from-[#071A49] hover:to-[#0A2463]'
                   disabled={retryingPayment}
                   onClick={async () => {
                     try {
@@ -587,7 +587,7 @@ export function OrderDetailPage() {
 
               <Button
                 variant='outline'
-                className='w-full !border-blue-200 !text-blue-600 hover:!bg-blue-50 hover:!text-blue-700'
+                className='w-full !border-[#BFDBFE] !text-[#1E40AF] hover:!bg-[#F0F6FF] hover:!text-[#0A2463]'
                 onClick={() => {
                   const chatBtn = document.querySelector(
                     'button[aria-label="Chat với dược sĩ"]',
@@ -605,7 +605,7 @@ export function OrderDetailPage() {
 
               <Button
                 variant='outline'
-                className='w-full !border-blue-200 !text-blue-600 hover:!bg-blue-50 hover:!text-blue-700'
+                className='w-full !border-[#BFDBFE] !text-[#1E40AF] hover:!bg-[#F0F6FF] hover:!text-[#0A2463]'
                 onClick={async () => {
                   try {
                     // Add items to cart sequentially

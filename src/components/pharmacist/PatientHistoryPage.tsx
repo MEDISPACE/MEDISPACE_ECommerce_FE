@@ -150,15 +150,15 @@ export function PatientHistoryPage() {
   return (
     <div className='space-y-6'>
       {/* Header */}
-      <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
-        <h1 className='bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 bg-clip-text text-transparent'>
+      <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-6'>
+        <h1 className='bg-gradient-to-r from-[#0A2463] via-[#1E40AF] to-[#3B82F6] bg-clip-text text-transparent'>
           Lịch sử bệnh nhân
         </h1>
         <p className='text-gray-600 mt-1'>Xem lịch sử điều trị và đơn thuốc của bệnh nhân</p>
       </div>
 
       {/* Search */}
-      <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-4'>
+      <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-4'>
         <div className='flex gap-3'>
           <div className='relative flex-1'>
             <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4' />
@@ -168,10 +168,10 @@ export function PatientHistoryPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               placeholder='Nhập số điện thoại bệnh nhân...'
-              className='pl-10 border-2 border-blue-200 focus:border-blue-500'
+              className='pl-10 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
             />
           </div>
-          <Button onClick={handleSearch} disabled={searching} className='bg-blue-600 hover:bg-blue-700'>
+          <Button onClick={handleSearch} disabled={searching} className='bg-[#0A2463] hover:bg-[#071A49]'>
             {searching ? (
               <>
                 <Loader2 className='w-4 h-4 mr-2 animate-spin' />
@@ -189,7 +189,7 @@ export function PatientHistoryPage() {
 
       {/* Search Results */}
       {searchResults.length > 0 && (
-        <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-4'>
+        <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-4'>
           <h3 className='font-semibold mb-3'>Kết quả tìm kiếm ({searchResults.length})</h3>
           <div className='space-y-2'>
             {searchResults.map((patient) => (
@@ -234,7 +234,7 @@ export function PatientHistoryPage() {
 
             {loading ? (
               <div className='flex justify-center items-center py-12'>
-                <Loader2 className='w-8 h-8 animate-spin text-blue-600' />
+                <Loader2 className='w-8 h-8 animate-spin text-[#1E40AF]' />
               </div>
             ) : (
               <Tabs defaultValue='info' className='space-y-4'>
@@ -287,9 +287,9 @@ export function PatientHistoryPage() {
 
                       {/* Current Medications */}
                       {medicalInfo.currentMedications && medicalInfo.currentMedications.length > 0 && (
-                        <div className='p-4 bg-blue-50 border border-blue-200 rounded-lg'>
+                        <div className='p-4 bg-[#F0F6FF] border border-[#BFDBFE] rounded-lg'>
                           <div className='flex items-center gap-2 mb-3'>
-                            <Pill className='w-5 h-5 text-blue-600' />
+                            <Pill className='w-5 h-5 text-[#1E40AF]' />
                             <h4 className='font-semibold text-blue-800'>Thuốc đang dùng</h4>
                           </div>
                           <ul className='space-y-2'>
@@ -327,7 +327,7 @@ export function PatientHistoryPage() {
                 <TabsContent value='notes' className='space-y-4'>
                   {patientNotes.length > 0 ? (
                     patientNotes.map((note) => (
-                      <Card key={note._id} className='border border-blue-200'>
+                      <Card key={note._id} className='border border-[#BFDBFE]'>
                         <CardContent className='p-4'>
                           <div className='flex justify-between items-start mb-2'>
                             <p className='font-medium text-sm text-gray-600'>

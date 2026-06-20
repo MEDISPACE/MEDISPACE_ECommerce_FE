@@ -51,6 +51,7 @@ export interface CommunityMessage {
   roomId: string
   senderId: string
   content: string
+  imageUrl?: string
   status: CommunityMessageStatus
   createdAt: string
   updatedAt?: string
@@ -123,6 +124,39 @@ export interface CommunityVideoEventRegistration {
   lastSeenAt?: string | null
   reminder15mSentAt?: string | null
   user?: CommunityUserSummary
+}
+
+export interface CommunityVideoEventLiveTrack {
+  sid: string
+  name: string
+  source: 'microphone' | 'camera' | 'screen_share' | 'screen_share_audio' | 'unknown'
+  muted: boolean
+}
+
+export interface CommunityVideoEventLiveParticipant {
+  identity: string
+  name: string
+  metadata?: {
+    userId?: string
+    avatar?: string
+    role?: string
+    [key: string]: unknown
+  } | null
+  joinedAt?: string
+  tracks: CommunityVideoEventLiveTrack[]
+}
+
+export interface CommunityVideoEventLiveParticipantsPayload {
+  eventId: string
+  roomName: string
+  participants: CommunityVideoEventLiveParticipant[]
+}
+
+export interface CommunityVideoEventModerationActionPayload {
+  eventId: string
+  userId: string
+  action: 'muted' | 'kicked'
+  track?: CommunityVideoEventLiveTrack
 }
 
 export interface CommunityModerationResult {

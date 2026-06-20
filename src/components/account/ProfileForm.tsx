@@ -224,10 +224,10 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
   return (
     <div className='space-y-6'>
       {/* Profile Header */}
-      <Card className='border border-blue-200 hover:shadow-md transition-all duration-300'>
+      <Card className='border border-[#BFDBFE] hover:shadow-md transition-all duration-300'>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
-            <UserIcon className='w-5 h-5 text-blue-600' />
+            <UserIcon className='w-5 h-5 text-[#1E40AF]' />
             Thông tin cá nhân
           </CardTitle>
         </CardHeader>
@@ -236,9 +236,9 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
             {/* Avatar Section */}
             <div className='flex flex-col items-center space-y-4'>
               <div className='relative'>
-                <Avatar className='w-24 h-24 border-4 border-blue-100'>
+                <Avatar className='w-24 h-24 border-4 border-[#E8EDF5]'>
                   <AvatarImage src={avatarPreview || user?.avatar} alt={`${user?.firstName} ${user?.lastName}`} />
-                  <AvatarFallback className='text-2xl bg-blue-100 text-blue-600'>
+                  <AvatarFallback className='text-2xl bg-[#E8EDF5] text-[#1E40AF]'>
                     {user?.firstName?.[0]}
                     {user?.lastName?.[0]}
                   </AvatarFallback>
@@ -246,7 +246,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
                 <button
                   type='button'
                   onClick={() => fileInputRef.current?.click()}
-                  className='absolute -bottom-2 -right-2 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors'
+                  className='absolute -bottom-2 -right-2 w-8 h-8 bg-[#0A2463] text-white rounded-full flex items-center justify-center hover:bg-[#071A49] transition-colors'
                 >
                   <Camera className='w-4 h-4' />
                 </button>
@@ -351,7 +351,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
       </Card>
 
       {/* Edit Form */}
-      <Card className='border border-blue-200 hover:shadow-md transition-all duration-300'>
+      <Card className='border border-[#BFDBFE] hover:shadow-md transition-all duration-300'>
         <CardHeader>
           <CardTitle>Chỉnh sửa thông tin</CardTitle>
         </CardHeader>
@@ -368,7 +368,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
                   id='firstName'
                   {...register('firstName')}
                   placeholder='Nhập họ của bạn'
-                  className='border-2 border-blue-200 focus:border-blue-500'
+                  className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                 />
                 {errors.firstName && (
                   <p className='text-sm text-red-600 flex items-center gap-1'>
@@ -388,7 +388,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
                   id='lastName'
                   {...register('lastName')}
                   placeholder='Nhập tên của bạn'
-                  className='border-2 border-blue-200 focus:border-blue-500'
+                  className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                 />
                 {errors.lastName && (
                   <p className='text-sm text-red-600 flex items-center gap-1'>
@@ -408,7 +408,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
                   id='phoneNumber'
                   {...register('phoneNumber')}
                   placeholder='Ví dụ: 0987654321'
-                  className='border-2 border-blue-200 focus:border-blue-500'
+                  className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                 />
                 {errors.phoneNumber && (
                   <p className='text-sm text-red-600 flex items-center gap-1'>
@@ -428,7 +428,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
                   id='dateOfBirth'
                   type='date'
                   {...register('dateOfBirth')}
-                  className='border-2 border-blue-200 focus:border-blue-500'
+                  className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                 />
                 {errors.dateOfBirth && (
                   <p className='text-sm text-red-600 flex items-center gap-1'>
@@ -445,7 +445,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
                   Giới tính
                 </Label>
                 <Select value={watchedGender} onValueChange={(value) => setValue('gender', value as '0' | '1')}>
-                  <SelectTrigger className='border-2 border-blue-200 focus:border-blue-500'>
+                  <SelectTrigger className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'>
                     <SelectValue placeholder='Chọn giới tính' />
                   </SelectTrigger>
                   <SelectContent>
@@ -467,7 +467,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
               <Button
                 type='submit'
                 disabled={isSubmitting}
-                className='flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white'
+                className='flex-1 bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'
               >
                 {isSubmitting ? (
                   <>

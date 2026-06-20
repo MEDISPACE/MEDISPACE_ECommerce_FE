@@ -37,7 +37,7 @@ export function ConfirmDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className='border-2 border-blue-200'>
+      <AlertDialogContent className='border-2 border-[#BFDBFE]'>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
@@ -49,7 +49,7 @@ export function ConfirmDialog({
             className={
               variant === 'destructive'
                 ? 'bg-red-600 hover:bg-red-700 text-white'
-                : 'bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8] text-white'
+                : 'bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'
             }
           >
             {confirmText}

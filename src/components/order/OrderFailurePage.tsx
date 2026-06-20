@@ -115,7 +115,7 @@ export function OrderFailurePage() {
                 key={index}
                 className='flex items-start gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors'
               >
-                <div className='w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0 text-sm'>
+                <div className='w-6 h-6 rounded-full bg-[#E8EDF5] text-[#1E40AF] flex items-center justify-center flex-shrink-0 text-sm'>
                   {index + 1}
                 </div>
                 <p className='text-gray-900 flex-1'>{suggestion}</p>
@@ -140,7 +140,7 @@ export function OrderFailurePage() {
       <div className='flex flex-col sm:flex-row gap-4 justify-center mb-8 animate-fade-in'>
         <Button
           asChild
-          className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white shadow-lg'
+          className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white shadow-lg'
         >
           <Link to='/cart/checkout' className='gap-2'>
             <RefreshCw className='w-5 h-5' />
@@ -148,7 +148,7 @@ export function OrderFailurePage() {
           </Link>
         </Button>
 
-        <Button asChild variant='outline' className='border-2 border-blue-500 text-blue-600 hover:bg-blue-50'>
+        <Button asChild variant='outline' className='border-2 border-[#1E40AF] text-[#1E40AF] hover:bg-[#F0F6FF]'>
           <Link to='/cart' className='gap-2'>
             Quay lại giỏ hàng
           </Link>
@@ -163,7 +163,7 @@ export function OrderFailurePage() {
       </div>
 
       {/* Support Section */}
-      <Card className='bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 animate-slide-in-up'>
+      <Card className='bg-gradient-to-r from-[#F8FAFB] to-[#F0F6FF] border border-[#BFDBFE] animate-slide-in-up'>
         <CardHeader>
           <CardTitle className='text-blue-900'>Cần hỗ trợ?</CardTitle>
         </CardHeader>
@@ -176,21 +176,21 @@ export function OrderFailurePage() {
           <div className='grid md:grid-cols-3 gap-4'>
             <a
               href='tel:19001234'
-              className='flex flex-col items-center gap-3 p-4 bg-white rounded-lg border border-blue-200 hover:border-blue-400 hover:shadow-md transition-all'
+              className='flex flex-col items-center gap-3 p-4 bg-white rounded-lg border border-[#BFDBFE] hover:border-[#1E40AF] hover:shadow-md transition-all'
             >
-              <div className='w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center'>
-                <Phone className='w-6 h-6 text-blue-600' />
+              <div className='w-12 h-12 rounded-full bg-[#E8EDF5] flex items-center justify-center'>
+                <Phone className='w-6 h-6 text-[#1E40AF]' />
               </div>
               <div className='text-center'>
                 <p className='text-sm text-gray-600 mb-1'>Hotline</p>
-                <p className='text-blue-600'>1900 1234</p>
+                <p className='text-[#1E40AF]'>1900 1234</p>
                 <p className='text-xs text-gray-500'>24/7</p>
               </div>
             </a>
 
             <a
               href='mailto:support@medispace.vn'
-              className='flex flex-col items-center gap-3 p-4 bg-white rounded-lg border border-blue-200 hover:border-blue-400 hover:shadow-md transition-all'
+              className='flex flex-col items-center gap-3 p-4 bg-white rounded-lg border border-[#BFDBFE] hover:border-[#1E40AF] hover:shadow-md transition-all'
             >
               <div className='w-12 h-12 rounded-full bg-green-100 flex items-center justify-center'>
                 <Mail className='w-6 h-6 text-green-600' />
@@ -213,20 +213,20 @@ export function OrderFailurePage() {
                   window.location.href = '/contact'
                 }
               }}
-              className='flex flex-col items-center gap-3 p-4 bg-white rounded-lg border border-blue-200 hover:border-blue-400 hover:shadow-md transition-all cursor-pointer w-full'
+              className='flex flex-col items-center gap-3 p-4 bg-white rounded-lg border border-[#BFDBFE] hover:border-[#1E40AF] hover:shadow-md transition-all cursor-pointer w-full'
             >
-              <div className='w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center'>
-                <HelpCircle className='w-6 h-6 text-purple-600' />
+              <div className='w-12 h-12 rounded-full bg-[#E8EDF5] flex items-center justify-center'>
+                <HelpCircle className='w-6 h-6 text-[#1E40AF]' />
               </div>
               <div className='text-center'>
                 <p className='text-sm text-gray-600 mb-1'>Live Chat</p>
-                <p className='text-purple-600'>Chat với dược sĩ</p>
+                <p className='text-[#1E40AF]'>Chat với dược sĩ</p>
                 <p className='text-xs text-gray-500'>Trực tuyến</p>
               </div>
             </button>
           </div>
 
-          <div className='bg-white border border-blue-200 rounded-lg p-4'>
+          <div className='bg-white border border-[#BFDBFE] rounded-lg p-4'>
             <p className='text-sm text-gray-700 text-center'>
               💡 <strong>Mẹo:</strong> Chụp ảnh màn hình trang này và gửi kèm khi liên hệ hỗ trợ để được giải quyết
               nhanh hơn!

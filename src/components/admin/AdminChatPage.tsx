@@ -160,7 +160,7 @@ function TransferModal({
       <div className='bg-white rounded-xl shadow-2xl w-full max-w-md'>
         <div className='flex items-center justify-between p-5 border-b'>
           <h3 className='text-lg font-semibold text-gray-900 flex items-center gap-2'>
-            <ArrowRightLeft className='w-5 h-5 text-blue-600' />
+            <ArrowRightLeft className='w-5 h-5 text-[#1E40AF]' />
             Chuyển đến dược sĩ khác
           </h3>
           <button onClick={onClose} className='p-1.5 hover:bg-gray-100 rounded-lg'>
@@ -176,7 +176,7 @@ function TransferModal({
           </p>
           {isLoading ? (
             <div className='flex justify-center py-6'>
-              <Loader2 className='w-6 h-6 animate-spin text-blue-600' />
+              <Loader2 className='w-6 h-6 animate-spin text-[#1E40AF]' />
             </div>
           ) : loadError ? (
             <p className='text-sm text-red-500 text-center py-4'>Không thể tải danh sách dược sĩ</p>
@@ -189,7 +189,7 @@ function TransferModal({
                 .map((p) => (
                   <label
                     key={p._id}
-                    className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer border transition-colors ${selectedId === p._id ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300'}`}
+                    className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer border transition-colors ${selectedId === p._id ? 'border-[#1E40AF] bg-[#F0F6FF]' : 'border-gray-200 hover:border-[#BFDBFE]'}`}
                   >
                     <input
                       type='radio'
@@ -201,7 +201,7 @@ function TransferModal({
                     />
                     <Avatar className='w-8 h-8'>
                       <AvatarImage src={p.avatar || undefined} />
-                      <AvatarFallback className='bg-blue-100 text-blue-600 text-xs'>{p.firstName[0]}</AvatarFallback>
+                      <AvatarFallback className='bg-[#E8EDF5] text-[#1E40AF] text-xs'>{p.firstName[0]}</AvatarFallback>
                     </Avatar>
                     <div className='flex-1 min-w-0'>
                       <p className='text-sm font-medium'>
@@ -223,7 +223,7 @@ function TransferModal({
           <Button
             onClick={handleTransfer}
             disabled={!selectedId || isTransferring}
-            className='flex-1 bg-gradient-to-r from-blue-600 to-cyan-500 text-white'
+            className='flex-1 bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white'
           >
             {isTransferring ? <Loader2 className='w-4 h-4 animate-spin mr-1' /> : null}
             Chuyển
@@ -285,7 +285,7 @@ function ConversationDetailPanel({
         <div className='flex items-center gap-3'>
           <Avatar className='w-9 h-9'>
             <AvatarImage src={conversation.customer.avatar || undefined} />
-            <AvatarFallback className='bg-blue-100 text-blue-600 text-sm'>
+            <AvatarFallback className='bg-[#E8EDF5] text-[#1E40AF] text-sm'>
               {conversation.customer.firstName[0]}
             </AvatarFallback>
           </Avatar>
@@ -310,7 +310,7 @@ function ConversationDetailPanel({
 
       {/* Pharmacist info */}
       {conversation.pharmacist && (
-        <div className='px-4 py-2 bg-blue-50 border-b flex items-center gap-2 text-xs text-blue-700 flex-shrink-0'>
+        <div className='px-4 py-2 bg-[#F0F6FF] border-b flex items-center gap-2 text-xs text-[#0A2463] flex-shrink-0'>
           <User className='w-3.5 h-3.5' />
           Dược sĩ:{' '}
           <strong>
@@ -327,7 +327,7 @@ function ConversationDetailPanel({
       <div className='flex-1 flex flex-col min-h-0'>
         {isLoading ? (
           <div className='flex items-center justify-center h-full'>
-            <Loader2 className='w-6 h-6 animate-spin text-blue-600' />
+            <Loader2 className='w-6 h-6 animate-spin text-[#1E40AF]' />
           </div>
         ) : (
           <>
@@ -342,7 +342,7 @@ function ConversationDetailPanel({
                 {conversation.pharmacist
                   ? `${conversation.pharmacist.firstName} ${conversation.pharmacist.lastName}`
                   : 'Chưa phân công'}
-                <span className='w-2.5 h-2.5 rounded-full bg-blue-500 inline-block' />
+                <span className='w-2.5 h-2.5 rounded-full bg-[#1E40AF] inline-block' />
               </span>
             </div>
             <MessageList
@@ -362,7 +362,7 @@ function ConversationDetailPanel({
             variant='outline'
             size='sm'
             onClick={() => setShowTransfer(true)}
-            className='flex-1 border-blue-200 text-blue-600 hover:bg-blue-50'
+            className='flex-1 border-[#BFDBFE] text-[#1E40AF] hover:bg-[#F0F6FF]'
           >
             <ArrowRightLeft className='w-4 h-4 mr-1.5' /> Chuyển dược sĩ
           </Button>
@@ -475,7 +475,7 @@ export function AdminChatPage() {
       <div className='flex items-center justify-between'>
         <div>
           <h1 className='text-2xl font-bold text-gray-900 flex items-center gap-2'>
-            <MessageCircle className='w-7 h-7 text-blue-600' />
+            <MessageCircle className='w-7 h-7 text-[#1E40AF]' />
             Quản lý Chat
           </h1>
           <p className='text-sm text-gray-500 mt-1'>Giám sát và quản lý các cuộc tư vấn của dược sĩ</p>
@@ -487,7 +487,7 @@ export function AdminChatPage() {
             loadStats()
             if (activeTab === 'conversations') loadConversations(1)
           }}
-          className='border-blue-200 text-blue-600 hover:bg-blue-50'
+          className='border-[#BFDBFE] text-[#1E40AF] hover:bg-[#F0F6FF]'
         >
           <RefreshCw className='w-4 h-4 mr-1.5' /> Làm mới
         </Button>
@@ -504,7 +504,7 @@ export function AdminChatPage() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === tab.id ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === tab.id ? 'bg-white text-[#1E40AF] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
           >
             <tab.icon className='w-4 h-4' /> {tab.label}
           </button>
@@ -516,7 +516,7 @@ export function AdminChatPage() {
         <div className='space-y-6'>
           {isLoadingStats ? (
             <div className='flex items-center justify-center py-16'>
-              <Loader2 className='w-8 h-8 animate-spin text-blue-600' />
+              <Loader2 className='w-8 h-8 animate-spin text-[#1E40AF]' />
             </div>
           ) : stats ? (
             <>
@@ -526,7 +526,7 @@ export function AdminChatPage() {
                   icon={MessageSquare}
                   label='Tổng hội thoại'
                   value={stats.totalConversations}
-                  color='border-blue-500'
+                  color='border-[#1E40AF]'
                 />
                 <StatCard
                   icon={CheckCircle}
@@ -553,7 +553,7 @@ export function AdminChatPage() {
               {/* Top Pharmacists */}
               <div className='bg-white rounded-xl shadow-sm border border-gray-100 p-6'>
                 <h2 className='text-base font-semibold text-gray-900 mb-4 flex items-center gap-2'>
-                  <Users className='w-5 h-5 text-blue-600' />
+                  <Users className='w-5 h-5 text-[#1E40AF]' />
                   Top Dược sĩ đang hoạt động
                 </h2>
                 {stats.topPharmacists.length === 0 ? (
@@ -565,7 +565,7 @@ export function AdminChatPage() {
                         <span className='text-sm font-bold text-gray-400 w-5'>{idx + 1}</span>
                         <Avatar className='w-8 h-8'>
                           <AvatarImage src={item.pharmacist.avatar || undefined} />
-                          <AvatarFallback className='bg-blue-100 text-blue-600 text-xs'>
+                          <AvatarFallback className='bg-[#E8EDF5] text-[#1E40AF] text-xs'>
                             {item.pharmacist.firstName[0]}
                           </AvatarFallback>
                         </Avatar>
@@ -578,7 +578,7 @@ export function AdminChatPage() {
                           <span
                             className={`w-2 h-2 rounded-full ${item.pharmacist.isOnline ? 'bg-green-500' : 'bg-gray-300'}`}
                           />
-                          <Badge className='bg-blue-100 text-blue-700 text-xs'>{item.conversationCount} cuộc</Badge>
+                          <Badge className='bg-[#E8EDF5] text-[#0A2463] text-xs'>{item.conversationCount} cuộc</Badge>
                         </div>
                       </div>
                     ))}
@@ -614,7 +614,7 @@ export function AdminChatPage() {
                 <Button
                   size='sm'
                   onClick={() => loadConversations(1)}
-                  className='h-9 bg-blue-600 hover:bg-blue-700 text-white'
+                  className='h-9 bg-[#0A2463] hover:bg-[#071A49] text-white'
                 >
                   <Filter className='w-4 h-4' />
                 </Button>
@@ -624,7 +624,7 @@ export function AdminChatPage() {
                   <button
                     key={s}
                     onClick={() => setStatusFilter(s)}
-                    className={`px-3 py-1 text-xs rounded-full font-medium transition-colors ${statusFilter === s ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                    className={`px-3 py-1 text-xs rounded-full font-medium transition-colors ${statusFilter === s ? 'bg-[#0A2463] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                   >
                     {s === 'all' ? 'Tất cả' : s === 'active' ? 'Đang hoạt động' : 'Đã đóng'}
                   </button>
@@ -636,7 +636,7 @@ export function AdminChatPage() {
             <div className='flex-1 overflow-y-auto min-h-0'>
               {isLoadingList ? (
                 <div className='flex items-center justify-center h-full'>
-                  <Loader2 className='w-6 h-6 animate-spin text-blue-600' />
+                  <Loader2 className='w-6 h-6 animate-spin text-[#1E40AF]' />
                 </div>
               ) : conversations.length === 0 ? (
                 <div className='flex flex-col items-center justify-center h-full text-center p-6'>
@@ -649,12 +649,12 @@ export function AdminChatPage() {
                     <button
                       key={conv._id}
                       onClick={() => setSelectedConversation(conv)}
-                      className={`w-full p-4 text-left hover:bg-blue-50 transition-colors ${selectedConversation?._id === conv._id ? 'bg-blue-50 border-l-2 border-blue-600' : ''}`}
+                      className={`w-full p-4 text-left hover:bg-[#F0F6FF] transition-colors ${selectedConversation?._id === conv._id ? 'bg-[#F0F6FF] border-l-2 border-[#1E40AF]' : ''}`}
                     >
                       <div className='flex items-start gap-3'>
                         <Avatar className='w-9 h-9 flex-shrink-0'>
                           <AvatarImage src={conv.customer.avatar || undefined} />
-                          <AvatarFallback className='bg-gradient-to-r from-blue-500 to-cyan-400 text-white text-xs'>
+                          <AvatarFallback className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white text-xs'>
                             {conv.customer.firstName[0]}
                           </AvatarFallback>
                         </Avatar>
@@ -723,7 +723,7 @@ export function AdminChatPage() {
 
           {/* Detail Panel */}
           {selectedConversation && (
-            <div className='bg-white rounded-xl shadow-sm border border-blue-200 overflow-hidden flex flex-col h-full'>
+            <div className='bg-white rounded-xl shadow-sm border border-[#BFDBFE] overflow-hidden flex flex-col h-full'>
               <ConversationDetailPanel
                 conversation={selectedConversation}
                 onClose={() => setSelectedConversation(null)}

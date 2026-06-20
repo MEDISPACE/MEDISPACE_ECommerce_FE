@@ -91,11 +91,11 @@ export function CategoryArticlesPage() {
     <div className='min-h-screen bg-white'>
       {/* Header */}
       <div className='px-4 pt-6'>
-        <div className='max-w-7xl mx-auto rounded-lg bg-gradient-to-r from-primary/10 to-accent/10 px-4 sm:px-6 lg:px-8 py-8 border border-blue-100'>
+        <div className='max-w-7xl mx-auto rounded-lg bg-gradient-to-r from-primary/10 to-accent/10 px-4 sm:px-6 lg:px-8 py-8 border border-[#E8EDF5]'>
           <UniversalBreadcrumb
             items={[
               { label: 'Trang chủ', href: '/' },
-              { label: 'Góc sức khỏe', href: '/health' },
+              { label: 'Bệnh & Góc sức khỏe', href: '/health' },
               { label: category.name },
             ]}
           />
@@ -129,7 +129,7 @@ export function CategoryArticlesPage() {
                           className='w-full h-full object-cover hover:scale-105 transition-transform duration-300'
                         />
                       )}
-                      {article.isFeatured && <Badge className='absolute top-2 right-2 bg-red-500'>Nổi bật</Badge>}
+                      {article.isFeatured && <Badge className='absolute top-2 right-2 bg-red-500 text-white hover:bg-red-600'>Nổi bật</Badge>}
                     </div>
                     <CardContent className='p-6'>
                       <div className='flex items-center gap-2 text-sm text-gray-500 mb-2'>

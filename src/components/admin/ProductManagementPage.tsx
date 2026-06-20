@@ -501,7 +501,7 @@ export function ProductManagementPage() {
         <h1
           className='text-3xl font-bold bg-clip-text text-transparent'
           style={{
-            backgroundImage: `linear-gradient(to right, #0066CC, #4A90E2)`,
+            backgroundImage: `linear-gradient(to right, #0A2463, #1E40AF)`,
           }}
         >
           Quản lý sản phẩm
@@ -531,7 +531,7 @@ export function ProductManagementPage() {
           <h1
             className='text-3xl font-bold bg-clip-text text-transparent'
             style={{
-              backgroundImage: `linear-gradient(to right, #0066CC, #4A90E2)`,
+              backgroundImage: `linear-gradient(to right, #0A2463, #1E40AF)`,
             }}
           >
             Quản lý sản phẩm
@@ -539,7 +539,7 @@ export function ProductManagementPage() {
           <p className='text-gray-600 mt-2'>
             Quản lý danh mục sản phẩm và tồn kho
             {(paginationInfo || dashboardStats) && (
-              <span className='ml-2 text-sm font-medium text-blue-600'>
+              <span className='ml-2 text-sm font-medium text-[#1E40AF]'>
                 (Trang {currentPage}/{totalPages} - Tổng: {filteredTotalCount} sản phẩm)
               </span>
             )}
@@ -556,7 +556,7 @@ export function ProductManagementPage() {
           </Button> */}
           <Button
             onClick={openAddDialog}
-            className='bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8] gap-2 text-white'
+            className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] gap-2 text-white'
           >
             <Plus className='w-4 h-4' />
             Thêm sản phẩm
@@ -566,19 +566,19 @@ export function ProductManagementPage() {
 
       {/* Stats Cards */}
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4'>
-        <Card className='bg-white backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-xs text-gray-600'>Tổng Sản Phẩm</p>
-                <p className='text-2xl font-semibold text-blue-600'>{stats.total}</p>
+                <p className='text-2xl font-semibold text-[#1E40AF]'>{stats.total}</p>
               </div>
               <Package className='w-8 h-8 text-blue-400' />
             </div>
           </CardContent>
         </Card>
 
-        <Card className='bg-white backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
@@ -590,7 +590,7 @@ export function ProductManagementPage() {
           </CardContent>
         </Card>
 
-        <Card className='bg-white backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
@@ -602,7 +602,7 @@ export function ProductManagementPage() {
           </CardContent>
         </Card>
 
-        <Card className='bg-white backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
@@ -614,19 +614,19 @@ export function ProductManagementPage() {
           </CardContent>
         </Card>
 
-        <Card className='bg-white backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-xs text-gray-600'>Giá trị kho</p>
-                <p className='text-lg font-semibold text-[#4A90E2]'>{formatCurrency(stats.totalValue)}</p>
+                <p className='text-lg font-semibold text-[#1E40AF]'>{formatCurrency(stats.totalValue)}</p>
               </div>
-              <DollarSign className='w-8 h-8 text-[#4A90E2]' />
+              <DollarSign className='w-8 h-8 text-[#1E40AF]' />
             </div>
           </CardContent>
         </Card>
 
-        <Card className='bg-white backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
@@ -638,7 +638,7 @@ export function ProductManagementPage() {
           </CardContent>
         </Card>
 
-        <Card className='bg-white backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
@@ -652,7 +652,7 @@ export function ProductManagementPage() {
       </div>
 
       {/* Filters & Search */}
-      <Card className='bg-white backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
         <CardContent className='p-6'>
           <div className='flex flex-col lg:flex-row gap-4'>
             <div className='flex-1 relative'>
@@ -661,11 +661,11 @@ export function ProductManagementPage() {
                 placeholder='Tìm kiếm sản phẩm, SKU...'
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className='pl-10 border-2 border-blue-200 focus:border-blue-500'
+                className='pl-10 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
               />
             </div>
             <Select value={filterCategory} onValueChange={setFilterCategory}>
-              <SelectTrigger className='w-48 border-2 border-blue-200'>
+              <SelectTrigger className='w-48 border-2 border-[#BFDBFE]'>
                 <SelectValue placeholder='Danh mục' />
               </SelectTrigger>
               <SelectContent className='max-h-64 overflow-y-auto'>
@@ -678,7 +678,7 @@ export function ProductManagementPage() {
               </SelectContent>
             </Select>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className='w-40 border-2 border-blue-200'>
+              <SelectTrigger className='w-40 border-2 border-[#BFDBFE]'>
                 <SelectValue placeholder='Trạng thái' />
               </SelectTrigger>
               <SelectContent>
@@ -689,7 +689,7 @@ export function ProductManagementPage() {
               </SelectContent>
             </Select>
             <Select value={filterPrescription} onValueChange={setFilterPrescription}>
-              <SelectTrigger className='w-32 border-2 border-blue-200'>
+              <SelectTrigger className='w-32 border-2 border-[#BFDBFE]'>
                 <SelectValue placeholder='Loại' />
               </SelectTrigger>
               <SelectContent>
@@ -705,7 +705,7 @@ export function ProductManagementPage() {
                 setCurrentPage(1)
               }}
             >
-              <SelectTrigger className='w-40 border-2 border-blue-200'>
+              <SelectTrigger className='w-40 border-2 border-[#BFDBFE]'>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -738,10 +738,10 @@ export function ProductManagementPage() {
       </Card>
 
       {/* Products Table */}
-      <Card className='bg-white backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
-            <Package className='w-5 h-5 text-blue-600' />
+            <Package className='w-5 h-5 text-[#1E40AF]' />
             Danh sách sản phẩm ({allProducts.length})
           </CardTitle>
         </CardHeader>
@@ -749,7 +749,7 @@ export function ProductManagementPage() {
           <div className='overflow-x-auto'>
             <Table>
               <TableHeader>
-                <TableRow className='!border-b-2 !border-blue-300'>
+                <TableRow className='!border-b-2 !border-[#BFDBFE]'>
                   <TableHead className='w-48 sm:w-56 md:w-64 lg:w-72 xl:w-80'>Sản phẩm</TableHead>
                   <TableHead className='hidden sm:table-cell w-24 sm:w-28 lg:w-32'>SKU</TableHead>
                   <TableHead className='hidden md:table-cell'>Danh mục</TableHead>
@@ -765,7 +765,7 @@ export function ProductManagementPage() {
                 {isLoading ? (
                   <TableRow>
                     <TableCell colSpan={9} className='text-center py-8'>
-                      <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto'></div>
+                      <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-[#1E40AF] mx-auto'></div>
                     </TableCell>
                   </TableRow>
                 ) : paginatedProducts.length === 0 ? (
@@ -776,7 +776,7 @@ export function ProductManagementPage() {
                   </TableRow>
                 ) : (
                   paginatedProducts.map((product) => (
-                    <TableRow key={product._id} className='border-b-2 border-blue-200 hover:bg-blue-50/30'>
+                    <TableRow key={product._id} className='border-b-2 border-[#BFDBFE] hover:bg-[#F0F6FF]/30'>
                       <TableCell>
                         <div className='w-48 sm:w-56 md:w-64 lg:w-72 xl:w-80'>
                           <p className='font-medium text-gray-900 truncate' title={product.name}>
@@ -794,12 +794,12 @@ export function ProductManagementPage() {
                         </div>
                       </TableCell>
                       <TableCell className='hidden md:table-cell'>
-                        <Badge className='bg-blue-100 text-blue-700 hover:bg-blue-100'>
+                        <Badge className='bg-[#E8EDF5] text-[#0A2463] hover:bg-[#E8EDF5]'>
                           {product.category?.name || 'N/A'}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <p className='font-semibold text-blue-600'>
+                        <p className='font-semibold text-[#1E40AF]'>
                           {(() => {
                             const defaultVariant =
                               product.priceVariants?.find((v) => v.isDefault) || product.priceVariants?.[0]
@@ -868,18 +868,18 @@ export function ProductManagementPage() {
                               <MoreVertical className='w-4 h-4' />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align='end' className='bg-white shadow-lg border-2 border-blue-200'>
-                            <DropdownMenuLabel className='text-blue-700'>Thao tác</DropdownMenuLabel>
+                          <DropdownMenuContent align='end' className='bg-white shadow-lg border-2 border-[#BFDBFE]'>
+                            <DropdownMenuLabel className='text-[#0A2463]'>Thao tác</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
+                              className='hover:!bg-[#E8EDF5] hover:!border-[#E8EDF5] hover:!text-[#0A2463]'
                               onClick={() => openEditDialog(product)}
                             >
-                              <Edit className='w-4 h-4 mr-2 hover:!text-blue-600' />
+                              <Edit className='w-4 h-4 mr-2 hover:!text-[#1E40AF]' />
                               Chỉnh sửa
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
+                              className='hover:!bg-[#E8EDF5] hover:!border-[#E8EDF5] hover:!text-[#0A2463]'
                               onClick={() => openStockDialog(product)}
                             >
                               <Package className='w-4 h-4 mr-2' />
@@ -1017,7 +1017,7 @@ export function ProductManagementPage() {
             (formState.data.priceVariants as PriceVariant[]).length > 0 &&
             formState.data.stockQuantity !== undefined &&
             formState.data.stockQuantity > 0 && (
-              <div className='p-3 bg-blue-50 border border-blue-200 rounded-lg mt-3'>
+              <div className='p-3 bg-[#F0F6FF] border border-[#BFDBFE] rounded-lg mt-3'>
                 <p className='text-xs font-medium text-gray-600 mb-2'>📦 Quy đổi tồn kho theo đơn vị:</p>
                 <div className='flex flex-wrap gap-2'>
                   {(formState.data.priceVariants as PriceVariant[]).map((variant, idx) => {
@@ -1025,10 +1025,10 @@ export function ProductManagementPage() {
                     return (
                       <div
                         key={idx}
-                        className='flex items-center gap-1 px-2 py-1 bg-white rounded border border-blue-100'
+                        className='flex items-center gap-1 px-2 py-1 bg-white rounded border border-[#E8EDF5]'
                       >
                         <span className='text-xs text-gray-600'>{variant.unit}:</span>
-                        <span className='text-sm font-semibold text-blue-600'>
+                        <span className='text-sm font-semibold text-[#1E40AF]'>
                           {stockByUnit.toLocaleString('vi-VN')}
                         </span>
                       </div>
@@ -1124,7 +1124,7 @@ export function ProductManagementPage() {
         <DialogContent className='sm:max-w-lg'>
           <DialogHeader>
             <DialogTitle className='flex items-center gap-2'>
-              <Box className='w-5 h-5 text-blue-600' />
+              <Box className='w-5 h-5 text-[#1E40AF]' />
               Điều chỉnh tồn kho
             </DialogTitle>
             <DialogDescription>
@@ -1145,7 +1145,7 @@ export function ProductManagementPage() {
               {stockDialog.product?.priceVariants && stockDialog.product.priceVariants.length > 1 && (
                 <div className='flex flex-wrap gap-1.5 mt-2'>
                   {(stockDialog.product.priceVariants as PriceVariant[]).filter(v => (v.quantityPerUnit ?? 1) > 1).map((v) => (
-                    <span key={v.unit} className='text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded'>
+                    <span key={v.unit} className='text-xs bg-[#E8EDF5] text-[#0A2463] px-2 py-0.5 rounded'>
                       {Math.floor((stockDialog.product?.stockQuantity || 0) / (v.quantityPerUnit ?? 1))} {v.unit}
                     </span>
                   ))}
@@ -1168,7 +1168,7 @@ export function ProductManagementPage() {
                       stockDialog.adjustmentMode === mode
                         ? c === 'emerald' ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
                         : c === 'amber' ? 'border-amber-500 bg-amber-50 text-amber-700'
-                        : 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-[#1E40AF] bg-[#F0F6FF] text-[#0A2463]'
                         : 'border-gray-200 text-gray-500 hover:border-gray-300'
                     }`}
                   >
@@ -1191,7 +1191,7 @@ export function ProductManagementPage() {
                       setStockDialog(prev => ({ ...prev, selectedUnit: val, newAbsoluteQuantity: newAbs }))
                     }}
                   >
-                    <SelectTrigger className='border-2 border-blue-200'>
+                    <SelectTrigger className='border-2 border-[#BFDBFE]'>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -1217,7 +1217,7 @@ export function ProductManagementPage() {
                     const newAbs = computeNewStock(stockDialog.adjustmentMode, stockDialog.selectedUnit, e.target.value, stockDialog.product)
                     setStockDialog(prev => ({ ...prev, inputQuantity: e.target.value, newAbsoluteQuantity: newAbs }))
                   }}
-                  className='text-lg font-bold border-2 border-blue-200 focus:border-blue-500'
+                  className='text-lg font-bold border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                   placeholder='0'
                   autoFocus
                 />
@@ -1229,7 +1229,7 @@ export function ProductManagementPage() {
               <div className={`p-3 rounded-lg border ${
                 stockDialog.adjustmentMode === 'add' ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
                 : stockDialog.adjustmentMode === 'subtract' ? 'bg-amber-50 border-amber-200 text-amber-700'
-                : 'bg-blue-50 border-blue-200 text-blue-700'
+                : 'bg-[#F0F6FF] border-[#BFDBFE] text-[#0A2463]'
               }`}>
                 <div className='flex items-center justify-between'>
                   <span className='text-sm font-medium'>
@@ -1269,7 +1269,7 @@ export function ProductManagementPage() {
             <Button
               onClick={handleStockAdjustment}
               disabled={!stockDialog.inputQuantity || parseFloat(stockDialog.inputQuantity) <= 0}
-              className='bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8] text-white'
+              className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'
             >
               Xác nhận
             </Button>

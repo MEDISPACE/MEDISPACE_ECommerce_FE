@@ -21,14 +21,14 @@ export function addToCart(productId: string, productName: string, quantity: numb
     toast.success('Đã cập nhật giỏ hàng', {
       description: `Tăng số lượng "${productName}" lên ${existingItem.quantity}`,
       duration: 3000,
-      icon: <ShoppingCart className='w-5 h-5 text-blue-600' />,
+      icon: <ShoppingCart className='w-5 h-5 text-[#1E40AF]' />,
     })
   } else {
     cart.push({ id: productId, quantity })
     toast.success('Đã thêm vào giỏ hàng', {
       description: `"${productName}" (x${quantity})`,
       duration: 3000,
-      icon: <ShoppingCart className='w-5 h-5 text-blue-600' />,
+      icon: <ShoppingCart className='w-5 h-5 text-[#1E40AF]' />,
       action: {
         label: 'Xem giỏ hàng',
         onClick: () => (window.location.href = '/cart'),

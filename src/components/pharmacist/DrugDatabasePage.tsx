@@ -94,8 +94,8 @@ export function DrugDatabasePage() {
   return (
     <div className='space-y-6'>
       {/* Header */}
-      <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
-        <h1 className='text-2xl font-bold bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 bg-clip-text text-transparent'>
+      <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-6'>
+        <h1 className='text-2xl font-bold bg-gradient-to-r from-[#0A2463] via-[#1E40AF] to-[#3B82F6] bg-clip-text text-transparent'>
           Cơ sở dữ liệu thuốc
         </h1>
         <p className='text-gray-600 mt-1'>
@@ -104,7 +104,7 @@ export function DrugDatabasePage() {
       </div>
 
       {/* Search & Filters */}
-      <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-4'>
+      <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-4'>
         <div className='flex flex-col md:flex-row gap-4'>
           <div className='flex-1'>
             <div className='relative'>
@@ -114,13 +114,13 @@ export function DrugDatabasePage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder='Tìm theo tên thuốc, hoạt chất, thương hiệu...'
-                className='pl-10 border-2 border-blue-200 focus:border-blue-500'
+                className='pl-10 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
               />
             </div>
           </div>
 
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className='w-48 border-2 border-blue-200 focus:border-blue-500'>
+            <SelectTrigger className='w-48 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'>
               <SelectValue placeholder='Danh mục' />
             </SelectTrigger>
             <SelectContent>
@@ -134,7 +134,7 @@ export function DrugDatabasePage() {
           </Select>
 
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className='w-40 border-2 border-blue-200 focus:border-blue-500'>
+            <SelectTrigger className='w-40 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'>
               <SelectValue placeholder='Loại thuốc' />
             </SelectTrigger>
             <SelectContent>
@@ -145,7 +145,7 @@ export function DrugDatabasePage() {
           </Select>
 
           <Select value={stockFilter} onValueChange={setStockFilter}>
-            <SelectTrigger className='w-36 border-2 border-blue-200 focus:border-blue-500'>
+            <SelectTrigger className='w-36 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'>
               <SelectValue placeholder='Tồn kho' />
             </SelectTrigger>
             <SelectContent>
@@ -159,9 +159,9 @@ export function DrugDatabasePage() {
 
       {/* Loading State */}
       {loading ? (
-        <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-12'>
+        <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-12'>
           <div className='flex flex-col items-center justify-center'>
-            <Loader2 className='w-12 h-12 text-blue-600 animate-spin mb-4' />
+            <Loader2 className='w-12 h-12 text-[#1E40AF] animate-spin mb-4' />
             <p className='text-gray-600'>Đang tải dữ liệu...</p>
           </div>
         </div>
@@ -169,7 +169,7 @@ export function DrugDatabasePage() {
         /* Drug List */
         <div className='grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'>
           {filteredProducts.length === 0 ? (
-            <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 md:col-span-2 lg:col-span-3 xl:col-span-4'>
+            <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] md:col-span-2 lg:col-span-3 xl:col-span-4'>
               <CardContent className='p-12 text-center'>
                 <Pill className='w-16 h-16 mx-auto text-gray-300 mb-4' />
                 <h3 className='text-lg font-medium text-gray-900 mb-2'>Không tìm thấy sản phẩm</h3>
@@ -180,7 +180,7 @@ export function DrugDatabasePage() {
             filteredProducts.slice(0, 50).map((product) => (
               <Card
                 key={product._id}
-                className='bg-white/80 backdrop-blur-lg shadow-lg rounded-xl border border-blue-100 hover:shadow-xl transition-all cursor-pointer'
+                className='bg-white/80 backdrop-blur-lg shadow-lg rounded-xl border border-[#E8EDF5] hover:shadow-xl transition-all cursor-pointer'
                 onClick={() => setSelectedProduct(product)}
               >
                 <CardContent className='p-4'>
@@ -218,7 +218,7 @@ export function DrugDatabasePage() {
 
                   {/* Active Ingredients */}
                   {product.details?.activeIngredients && (
-                    <p className='text-xs text-blue-600 mb-2 line-clamp-1'>
+                    <p className='text-xs text-[#1E40AF] mb-2 line-clamp-1'>
                       <Pill className='w-3 h-3 inline mr-1' />
                       {product.details.activeIngredients}
                     </p>
@@ -229,7 +229,7 @@ export function DrugDatabasePage() {
                   {/* Price & Stock */}
                   <div className='flex items-center justify-between'>
                     <div>
-                      <p className='text-blue-600 font-semibold text-sm'>{formatPrice(product)}</p>
+                      <p className='text-[#1E40AF] font-semibold text-sm'>{formatPrice(product)}</p>
                       <p className='text-xs text-gray-500'>/ {getUnit(product)}</p>
                     </div>
                     <div className='flex items-center gap-1 text-xs'>
@@ -271,7 +271,7 @@ export function DrugDatabasePage() {
             </DialogHeader>
 
             <Tabs defaultValue='info' className='space-y-4'>
-              <TabsList className='grid w-full grid-cols-4 bg-blue-50'>
+              <TabsList className='grid w-full grid-cols-4 bg-[#F0F6FF]'>
                 <TabsTrigger value='info' className='data-[state=active]:bg-white'>
                   Thông tin
                 </TabsTrigger>
@@ -340,7 +340,7 @@ export function DrugDatabasePage() {
                 </div>
 
                 {selectedProduct.details?.indications && (
-                  <div className='p-4 bg-blue-50 border border-blue-200 rounded-lg'>
+                  <div className='p-4 bg-[#F0F6FF] border border-[#BFDBFE] rounded-lg'>
                     <label className='text-sm text-blue-800 mb-2 block font-medium'>Chỉ định</label>
                     <p className='text-gray-900'>{selectedProduct.details.indications}</p>
                   </div>
@@ -390,9 +390,9 @@ export function DrugDatabasePage() {
 
               <TabsContent value='stock' className='space-y-4'>
                 <div className='grid md:grid-cols-3 gap-4'>
-                  <div className='p-4 bg-blue-50 border border-blue-200 rounded-lg text-center'>
-                    <Package className='w-8 h-8 mx-auto mb-2 text-blue-600' />
-                    <p className='text-2xl font-bold text-blue-600'>
+                  <div className='p-4 bg-[#F0F6FF] border border-[#BFDBFE] rounded-lg text-center'>
+                    <Package className='w-8 h-8 mx-auto mb-2 text-[#1E40AF]' />
+                    <p className='text-2xl font-bold text-[#1E40AF]'>
                       {selectedProduct.stockQuantity.toLocaleString('vi-VN')}
                     </p>
                     <p className='text-sm text-gray-600'>Tồn kho (đơn vị nhỏ nhất)</p>
@@ -411,7 +411,7 @@ export function DrugDatabasePage() {
 
                 {/* Stock breakdown by unit */}
                 {selectedProduct.priceVariants && selectedProduct.priceVariants.length > 0 && (
-                  <div className='p-4 bg-white border border-blue-200 rounded-lg'>
+                  <div className='p-4 bg-white border border-[#BFDBFE] rounded-lg'>
                     <p className='text-sm font-medium text-gray-700 mb-3'>📦 Quy đổi tồn kho theo đơn vị:</p>
                     <div className='grid grid-cols-2 md:grid-cols-3 gap-3'>
                       {selectedProduct.priceVariants.map((variant, idx) => {
@@ -419,7 +419,7 @@ export function DrugDatabasePage() {
                         return (
                           <div key={idx} className='flex items-center justify-between p-2 bg-gray-50 rounded-lg'>
                             <span className='text-sm text-gray-600'>{variant.unit}</span>
-                            <span className='font-semibold text-blue-600'>{stockByUnit.toLocaleString('vi-VN')}</span>
+                            <span className='font-semibold text-[#1E40AF]'>{stockByUnit.toLocaleString('vi-VN')}</span>
                           </div>
                         )
                       })}
@@ -448,13 +448,13 @@ export function DrugDatabasePage() {
                     selectedProduct.priceVariants.map((variant, idx) => (
                       <div
                         key={idx}
-                        className={`p-4 rounded-lg border ${variant.isDefault ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 border-gray-200'}`}
+                        className={`p-4 rounded-lg border ${variant.isDefault ? 'bg-[#F0F6FF] border-[#BFDBFE]' : 'bg-gray-50 border-gray-200'}`}
                       >
                         <div className='flex items-center justify-between mb-2'>
                           <span className='font-medium text-gray-900'>{variant.unit}</span>
-                          {variant.isDefault && <Badge className='bg-blue-500 text-white text-xs'>Mặc định</Badge>}
+                          {variant.isDefault && <Badge className='bg-[#1E40AF] text-white text-xs'>Mặc định</Badge>}
                         </div>
-                        <p className='text-xl font-bold text-blue-600'>{variant.price.toLocaleString('vi-VN')}đ</p>
+                        <p className='text-xl font-bold text-[#1E40AF]'>{variant.price.toLocaleString('vi-VN')}đ</p>
                         {variant.originalPrice && variant.originalPrice > variant.price && (
                           <p className='text-sm text-gray-400 line-through'>
                             {variant.originalPrice.toLocaleString('vi-VN')}đ
@@ -468,9 +468,9 @@ export function DrugDatabasePage() {
                       </div>
                     ))
                   ) : (
-                    <div className='p-4 bg-blue-50 border border-blue-200 rounded-lg'>
+                    <div className='p-4 bg-[#F0F6FF] border border-[#BFDBFE] rounded-lg'>
                       <p className='text-sm text-gray-600 mb-1'>Giá bán</p>
-                      <p className='text-xl font-bold text-blue-600'>{formatPrice(selectedProduct)}</p>
+                      <p className='text-xl font-bold text-[#1E40AF]'>{formatPrice(selectedProduct)}</p>
                     </div>
                   )}
                 </div>

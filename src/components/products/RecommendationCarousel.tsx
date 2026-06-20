@@ -214,7 +214,7 @@ export function RecommendationCarousel({
                   </div>
                 )}
                 <div>
-                  <h2 className='font-display text-2xl font-bold text-[#0A2463] lg:text-3xl'>
+                  <h2 className='font-display bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text text-2xl font-bold text-transparent lg:text-3xl'>
                     {title}
                   </h2>
                   {subtitle && <p className='text-[#4B5E7A] text-sm mt-1'>{subtitle}</p>}
@@ -265,7 +265,7 @@ export function RecommendationCarousel({
                     <BadgeIcon className='w-5 h-5' />
                   </div>
                 )}
-                <h2 className='font-display text-3xl font-bold text-[#0A2463] md:text-4xl'>
+                <h2 className='font-display bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text text-3xl font-bold text-transparent md:text-4xl'>
                   {title}
                 </h2>
               </div>

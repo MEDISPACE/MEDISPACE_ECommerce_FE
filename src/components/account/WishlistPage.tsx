@@ -95,13 +95,13 @@ export function WishlistPage() {
 
   if (!isAuthenticated) {
     return (
-      <Card className='bg-white/80 backdrop-blur-lg shadow-lg border border-blue-100'>
+      <Card className='bg-white/80 backdrop-blur-lg shadow-lg border border-[#E8EDF5]'>
         <CardContent className='p-12 text-center'>
           <Heart className='w-16 h-16 mx-auto text-gray-300 mb-4' />
           <h3 className='text-lg font-medium text-gray-900 mb-2'>Vui lòng đăng nhập</h3>
           <p className='text-gray-500 mb-6'>Bạn cần đăng nhập để xem danh sách yêu thích</p>
           <Button
-            className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'
+            className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'
             onClick={() => (window.location.href = '/login')}
           >
             Đăng nhập ngay
@@ -276,7 +276,7 @@ export function WishlistPage() {
   if (loading) {
     return (
       <div className='flex justify-center items-center min-h-[400px]'>
-        <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600'></div>
+        <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-[#1E40AF]'></div>
       </div>
     )
   }
@@ -284,11 +284,11 @@ export function WishlistPage() {
   return (
     <div className='space-y-6'>
       {/* Header */}
-      <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
+      <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-6'>
         <div className='flex flex-col md:flex-row md:items-center justify-between gap-4'>
           <div>
             <div className='flex items-center gap-3'>
-              <h1 className='bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 bg-clip-text text-transparent'>
+              <h1 className='bg-gradient-to-r from-[#0A2463] via-[#1E40AF] to-[#3B82F6] bg-clip-text text-transparent'>
                 Sản phẩm yêu thích
               </h1>
               <Badge variant='secondary'>{wishlistProducts.length} sản phẩm</Badge>
@@ -351,7 +351,7 @@ export function WishlistPage() {
                       value={shareEmail}
                       onChange={(e) => setShareEmail(e.target.value)}
                       placeholder='example@email.com'
-                      className='border-2 border-blue-200 focus:border-blue-500'
+                      className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                     />
                   </div>
                   <div className='flex justify-end gap-2'>
@@ -369,7 +369,7 @@ export function WishlistPage() {
 
       {/* Bulk Actions */}
       {wishlistProducts.length > 0 && (
-        <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-4'>
+        <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-4'>
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-4'>
               <Checkbox
@@ -387,7 +387,7 @@ export function WishlistPage() {
                   variant='outline'
                   size='sm'
                   onClick={handleAddSelectedToCart}
-                  className='text-blue-600 border-blue-200 hover:bg-blue-50'
+                  className='text-[#1E40AF] border-[#BFDBFE] hover:bg-[#F0F6FF]'
                 >
                   <ShoppingCart className='w-4 h-4 mr-2' />
                   Thêm vào giỏ hàng
@@ -409,13 +409,13 @@ export function WishlistPage() {
 
       {/* Products */}
       {wishlistProducts.length === 0 ? (
-        <Card className='bg-white/80 backdrop-blur-lg shadow-lg border border-blue-100'>
+        <Card className='bg-white/80 backdrop-blur-lg shadow-lg border border-[#E8EDF5]'>
           <CardContent className='p-12 text-center'>
             <Heart className='w-16 h-16 mx-auto text-gray-300 mb-4' />
             <h3 className='text-lg font-medium text-gray-900 mb-2'>Danh sách yêu thích trống</h3>
             <p className='text-gray-500 mb-6'>Khám phá và lưu các sản phẩm bạn quan tâm</p>
             <Button
-              className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'
+              className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'
               onClick={() => (window.location.href = '/products')}
             >
               Khám phá sản phẩm
@@ -431,7 +431,7 @@ export function WishlistPage() {
           {sortedProducts.map((product) => (
             <div key={product.id} className='relative'>
               {viewMode === 'list' ? (
-                <Card className='bg-white/80 backdrop-blur-lg shadow-lg border border-blue-100 hover:shadow-xl transition-all duration-200'>
+                <Card className='bg-white/80 backdrop-blur-lg shadow-lg border border-[#E8EDF5] hover:shadow-xl transition-all duration-200'>
                   <CardContent className='p-6'>
                     <div className='flex items-center gap-4'>
                       <Checkbox
@@ -461,7 +461,7 @@ export function WishlistPage() {
                         <div className='flex items-center justify-between'>
                           <div>
                             <div className='flex items-center gap-2 mb-1'>
-                              <span className='font-medium text-blue-600'>
+                              <span className='font-medium text-[#1E40AF]'>
                                 {product.currentPrice.toLocaleString()}đ
                               </span>
                               {product.originalPrice && product.originalPrice > product.currentPrice && (

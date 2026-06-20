@@ -195,21 +195,21 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
   const SidebarContent = () => (
     <div className='flex flex-col h-full'>
       {/* Logo Section */}
-      <div className='p-6 border-b border-blue-100 flex-shrink-0'>
+      <div className='p-6 border-b border-[#E8EDF5] flex-shrink-0'>
         <Link to='/pharmacist/dashboard' className='flex items-center gap-3'>
           <div className='w-10 h-10 rounded-lg flex items-center justify-center shadow-lg'>
             <img src={faviconLogo} alt='MEDISPACE' className='w-8 h-8' />
           </div>
           <div className='flex-1'>
             <h2 className='font-semibold text-blue-900'>MEDISPACE</h2>
-            <p className='text-xs text-blue-600'>Dược sĩ</p>
+            <p className='text-xs text-[#1E40AF]'>Dược sĩ</p>
           </div>
         </Link>
       </div>
 
       {/* Status Toggle */}
-      <div className='px-6 py-4 border-b border-blue-100 flex-shrink-0'>
-        <div className='flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg'>
+      <div className='px-6 py-4 border-b border-[#E8EDF5] flex-shrink-0'>
+        <div className='flex items-center justify-between p-3 bg-gradient-to-r from-[#F8FAFB] to-[#F0F6FF] rounded-lg'>
           <div className='flex items-center gap-2'>
             {isOnline ? (
               <UserRoundCheck className='w-4 h-4 text-green-600' />
@@ -248,11 +248,11 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
                   onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative ${
                     isActive
-                      ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/30'
-                      : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700'
+                      ? 'bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white shadow-lg shadow-blue-500/30'
+                      : 'text-gray-700 hover:bg-[#F0F6FF] hover:text-[#0A2463]'
                   }`}
                 >
-                  <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'}`} />
+                  <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-500 group-hover:text-[#1E40AF]'}`} />
                   <span className='flex-1 text-sm font-medium'>{item.label}</span>
                   {item.badge && (
                     <Badge
@@ -263,7 +263,7 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
                             ? 'bg-yellow-500'
                             : item.badgeVariant === 'success'
                               ? 'bg-green-500'
-                              : 'bg-blue-500'
+                              : 'bg-[#1E40AF]'
                       } text-white`}
                     >
                       {item.badge}
@@ -284,12 +284,12 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
       </div>
 
       {/* Quick Stats - Fixed at bottom */}
-      <div className='px-6 py-4 border-t border-blue-100 bg-gradient-to-br from-blue-50 to-cyan-50 flex-shrink-0'>
+      <div className='px-6 py-4 border-t border-[#E8EDF5] bg-gradient-to-br from-[#F8FAFB] to-[#F0F6FF] flex-shrink-0'>
         <p className='text-xs text-gray-600 mb-3'>Hôm nay</p>
         <div className='grid grid-cols-2 gap-3'>
           <div className='text-center p-2 bg-white rounded-lg shadow-sm'>
             <p className='text-xs text-gray-600'>Đơn thuốc</p>
-            <p className='text-lg font-semibold text-blue-600'>{stats?.prescriptionsToday.total ?? 0}</p>
+            <p className='text-lg font-semibold text-[#1E40AF]'>{stats?.prescriptionsToday.total ?? 0}</p>
           </div>
           <div className='text-center p-2 bg-white rounded-lg shadow-sm'>
             <p className='text-xs text-gray-600'>Tư vấn</p>
@@ -299,23 +299,23 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
       </div>
 
       {/* User Profile Section - Fixed at bottom */}
-      <div className='p-4 border-t border-blue-100 flex-shrink-0'>
-        <div className='flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg'>
-          <Avatar className='w-10 h-10 border-2 border-blue-500'>
+      <div className='p-4 border-t border-[#E8EDF5] flex-shrink-0'>
+        <div className='flex items-center gap-3 p-3 bg-gradient-to-r from-[#F8FAFB] to-[#F0F6FF] rounded-lg'>
+          <Avatar className='w-10 h-10 border-2 border-[#1E40AF]'>
             <AvatarImage src={user?.avatar} />
-            <AvatarFallback className='bg-blue-600 text-white'>{getUserInitials(user) || 'D'}</AvatarFallback>
+            <AvatarFallback className='bg-[#0A2463] text-white'>{getUserInitials(user) || 'D'}</AvatarFallback>
           </Avatar>
           <div className='flex-1 min-w-0'>
             <p className='text-sm font-medium text-gray-900 truncate'>{getFullName(user) || 'Dược sĩ'}</p>
-            <p className='text-xs text-blue-600'>Dược sĩ</p>
+            <p className='text-xs text-[#1E40AF]'>Dược sĩ</p>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant='ghost' size='sm' className='text-gray-600 hover:text-blue-700'>
+              <Button variant='ghost' size='sm' className='text-gray-600 hover:text-[#0A2463]'>
                 <ChevronDown className='w-4 h-4' />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align='end' className='w-48 z-50 bg-white shadow-lg border border-blue-100'>
+            <DropdownMenuContent align='end' className='w-48 z-50 bg-white shadow-lg border border-[#E8EDF5]'>
               <DropdownMenuLabel>Tài khoản</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => navigate('/pharmacist/settings')}>
@@ -339,7 +339,7 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
   )
 
   return (
-    <div className='flex h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 overflow-hidden'>
+    <div className='flex h-screen bg-gradient-to-br from-[#F8FAFB] via-white to-[#F0F6FF] overflow-hidden'>
       {/* Desktop Sidebar */}
       <AnimatePresence mode='wait'>
         {sidebarOpen && (
@@ -348,7 +348,7 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -280, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className='hidden lg:flex w-72 bg-white flex-col shadow-xl border-r border-blue-100'
+            className='hidden lg:flex w-72 bg-white flex-col shadow-xl border-r border-[#E8EDF5]'
           >
             <SidebarContent />
           </motion.aside>
@@ -357,7 +357,7 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
 
       {/* Mobile Sidebar */}
       <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-        <SheetContent side='left' className='w-72 p-0 bg-white border-blue-100'>
+        <SheetContent side='left' className='w-72 p-0 bg-white border-[#E8EDF5]'>
           <SidebarContent />
         </SheetContent>
       </Sheet>
@@ -365,14 +365,14 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
       {/* Main Content Area */}
       <div className='flex-1 flex flex-col overflow-hidden'>
         {/* Top Header */}
-        <header className='relative z-50 h-16 bg-white/80 backdrop-blur-lg border-b border-blue-100 flex items-center justify-between px-6 shadow-sm'>
+        <header className='relative z-50 h-16 bg-white/80 backdrop-blur-lg border-b border-[#E8EDF5] flex items-center justify-between px-6 shadow-sm'>
           <div className='flex items-center gap-4'>
             {/* Toggle Sidebar Button */}
             <Button
               variant='ghost'
               size='sm'
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className='hidden lg:flex text-gray-600 hover:text-blue-700'
+              className='hidden lg:flex text-gray-600 hover:text-[#0A2463]'
             >
               {sidebarOpen ? <X className='w-5 h-5' /> : <Menu className='w-5 h-5' />}
             </Button>
@@ -382,13 +382,13 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
               variant='ghost'
               size='sm'
               onClick={() => setMobileMenuOpen(true)}
-              className='lg:hidden text-gray-600 hover:text-blue-700'
+              className='lg:hidden text-gray-600 hover:text-[#0A2463]'
             >
               <Menu className='w-5 h-5' />
             </Button>
 
             {/* Search Bar */}
-            <div className='hidden md:flex items-center gap-2 bg-blue-50 rounded-lg px-4 py-2 flex-1 max-w-md border border-blue-200'>
+            <div className='hidden md:flex items-center gap-2 bg-[#F0F6FF] rounded-lg px-4 py-2 flex-1 max-w-md border border-[#BFDBFE]'>
               <Search className='w-4 h-4 text-blue-400' />
               <Input
                 type='search'
@@ -433,13 +433,13 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
                   <Button variant='ghost' size='sm'>
                     <Avatar className='w-8 h-8'>
                       <AvatarImage src={user?.avatar} />
-                      <AvatarFallback className='bg-blue-600 text-white text-xs'>
+                      <AvatarFallback className='bg-[#0A2463] text-white text-xs'>
                         {getUserInitials(user) || 'D'}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align='end' className='w-48 z-50 bg-white shadow-lg border border-blue-100'>
+                <DropdownMenuContent align='end' className='w-48 z-50 bg-white shadow-lg border border-[#E8EDF5]'>
                   <DropdownMenuLabel>
                     <div className='flex flex-col'>
                       <span className='text-sm font-medium'>{getFullName(user) || 'Dược sĩ'}</span>

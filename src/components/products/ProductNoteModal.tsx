@@ -37,7 +37,7 @@ export function ProductNoteModal({ isOpen, onClose, onSave, productName, initial
         </DialogHeader>
 
         <div className='space-y-4 py-4'>
-          <div className='bg-blue-50 p-3 rounded-lg border border-blue-100'>
+          <div className='bg-[#F0F6FF] p-3 rounded-lg border border-[#E8EDF5]'>
             <p className='text-sm text-gray-700'>
               <span className='font-semibold text-blue-900'>Sản phẩm:</span> {productName}
             </p>
@@ -52,7 +52,7 @@ export function ProductNoteModal({ isOpen, onClose, onSave, productName, initial
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder='Nhập ghi chú cho sản phẩm này...&#10;&#10;Ví dụ:&#10;- Uống sau bữa ăn&#10;- Tránh tiếp xúc ánh nắng&#10;- Không uống cùng sữa'
-              className='border-2 border-blue-200 focus:border-blue-500 min-h-[150px] resize-none'
+              className='border-2 border-[#BFDBFE] focus:border-[#1E40AF] min-h-[150px] resize-none'
               autoFocus
             />
             <p className='text-xs text-gray-500'>Ghi chú này sẽ được hiển thị trong đơn hàng và in trên hóa đơn</p>
@@ -63,7 +63,7 @@ export function ProductNoteModal({ isOpen, onClose, onSave, productName, initial
           <Button variant='outline' onClick={handleClose} className='border-gray-300'>
             Hủy
           </Button>
-          <Button onClick={handleSave} className='bg-blue-600 hover:bg-blue-700 text-white'>
+          <Button onClick={handleSave} className='bg-[#0A2463] hover:bg-[#071A49] text-white'>
             <FileText className='w-4 h-4 mr-2' />
             Lưu ghi chú
           </Button>

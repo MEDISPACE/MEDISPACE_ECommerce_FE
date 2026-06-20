@@ -16,7 +16,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         <Button
           variant='outline'
           size='sm'
-          className='bg-gradient-to-r from-blue-600 to-cyan-500 text-white border-0 shadow-sm transition-transform transform hover:-translate-y-1 hover:shadow-lg hover:from-blue-700 hover:to-cyan-600 focus:outline-none'
+          className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white border-0 shadow-sm transition-transform transform hover:-translate-y-1 hover:shadow-lg hover:from-[#071A49] hover:to-[#0A2463] focus:outline-none'
         >
           <Home className='w-4 h-4 mr-2' />
           Trang chủ
@@ -24,20 +24,20 @@ export function AuthLayout({ children }: AuthLayoutProps) {
       </Link>
 
       {/* Left Side - Branding (55%) */}
-      <div className='hidden lg:flex lg:w-[55%] relative bg-gradient-to-br from-[#0066CC] via-[#4A90E2] to-[#00BFFF] overflow-hidden'>
+      <div className='hidden lg:flex lg:w-[55%] relative bg-gradient-to-br from-[#0A2463] via-[#1E40AF] to-[#1E40AF] overflow-hidden'>
         {/* Enhanced background effects */}
         <div className='absolute inset-0'>
           {/* Animated gradient mesh */}
-          <div className='absolute inset-0 bg-gradient-to-br from-blue-600/30 via-transparent to-cyan-400/20 animate-gradient' />
+          <div className='absolute inset-0 bg-gradient-to-br from-[#0A2463]/30 via-transparent to-[#BFDBFE]/30 animate-gradient' />
 
           {/* Multiple gradient orbs for depth */}
           <div className='absolute top-20 left-20 w-96 h-96 bg-white/15 rounded-full blur-3xl animate-pulse-soft' />
           <div
-            className='absolute bottom-20 right-20 w-80 h-80 bg-cyan-300/25 rounded-full blur-3xl animate-pulse-soft'
+            className='absolute bottom-20 right-20 w-80 h-80 bg-[#BFDBFE]/30 rounded-full blur-3xl animate-pulse-soft'
             style={{ animationDelay: '1.5s' }}
           />
           <div
-            className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-purple-400/10 rounded-full blur-3xl animate-pulse-soft'
+            className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#BFDBFE]/20 rounded-full blur-3xl animate-pulse-soft'
             style={{ animationDelay: '3s' }}
           />
 
@@ -189,8 +189,8 @@ export function AuthLayout({ children }: AuthLayoutProps) {
                 description: 'Mã hóa tuyệt đối bảo vệ thông tin khách hàng',
                 stat: '100%',
                 statLabel: 'Bảo mật',
-                gradient: 'from-blue-500/30 via-purple-500/20 to-transparent',
-                iconBg: 'bg-gradient-to-br from-blue-400/40 to-purple-500/40',
+                gradient: 'from-[#0A2463]/30 via-[#1E40AF]/20 to-transparent',
+                iconBg: 'bg-gradient-to-br from-[#BFDBFE]/40 to-[#1E40AF]/40',
                 glowColor: 'shadow-blue-400/30',
                 borderGlow: 'group-hover:shadow-[0_0_30px_rgba(96,165,250,0.4)]',
               },
@@ -200,10 +200,10 @@ export function AuthLayout({ children }: AuthLayoutProps) {
                 description: 'Express 2-4h nội thành, 24-48h toàn quốc',
                 stat: '2-4h',
                 statLabel: 'Giao hàng',
-                gradient: 'from-cyan-500/30 via-blue-500/20 to-transparent',
-                iconBg: 'bg-gradient-to-br from-cyan-400/40 to-blue-500/40',
-                glowColor: 'shadow-cyan-400/30',
-                borderGlow: 'group-hover:shadow-[0_0_30px_rgba(34,211,238,0.4)]',
+                gradient: 'from-[#BFDBFE]/30 via-[#1E40AF]/20 to-transparent',
+                iconBg: 'bg-gradient-to-br from-[#BFDBFE]/40 to-[#1E40AF]/40',
+                glowColor: 'shadow-[#BFDBFE]/30',
+                borderGlow: 'group-hover:shadow-[0_0_30px_rgba(191,219,254,0.45)]',
               },
               {
                 icon: CheckCircle2,
@@ -222,8 +222,8 @@ export function AuthLayout({ children }: AuthLayoutProps) {
                 description: 'Dược sĩ chuyên môn cao hỗ trợ 24/7',
                 stat: '24/7',
                 statLabel: 'Hỗ trợ',
-                gradient: 'from-pink-500/30 via-rose-500/20 to-transparent',
-                iconBg: 'bg-gradient-to-br from-pink-400/40 to-rose-500/40',
+                gradient: 'from-[#BFDBFE]/30 via-[#1E40AF]/20 to-transparent',
+                iconBg: 'bg-gradient-to-br from-[#BFDBFE]/40 to-[#1E40AF]/40',
                 glowColor: 'shadow-pink-400/30',
                 borderGlow: 'group-hover:shadow-[0_0_30px_rgba(244,114,182,0.4)]',
               },
@@ -307,7 +307,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
             <Button
               variant='outline'
               size='sm'
-              className='bg-gradient-to-r from-blue-600 to-cyan-500 text-white border-0 shadow-sm transition-transform transform hover:-translate-y-1 hover:shadow-lg hover:from-blue-700 hover:to-cyan-600 focus:outline-none'
+              className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white border-0 shadow-sm transition-transform transform hover:-translate-y-1 hover:shadow-lg hover:from-[#071A49] hover:to-[#0A2463] focus:outline-none'
             >
               <Home className='w-4 h-4 mr-2' />
               Trang chủ
@@ -330,15 +330,15 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         <div className='lg:hidden py-6 px-6 border-t border-gray-100'>
           <div className='flex items-center justify-center gap-6 text-xs text-gray-500'>
             <div className='flex items-center gap-1.5'>
-              <Shield className='w-4 h-4 text-blue-600' />
+              <Shield className='w-4 h-4 text-[#1E40AF]' />
               <span>Bảo mật</span>
             </div>
             <div className='flex items-center gap-1.5'>
-              <CheckCircle2 className='w-4 h-4 text-blue-600' />
+              <CheckCircle2 className='w-4 h-4 text-[#1E40AF]' />
               <span>Tin cậy</span>
             </div>
             <div className='flex items-center gap-1.5'>
-              <Heart className='w-4 h-4 text-blue-600' />
+              <Heart className='w-4 h-4 text-[#1E40AF]' />
               <span>Tận tâm</span>
             </div>
           </div>

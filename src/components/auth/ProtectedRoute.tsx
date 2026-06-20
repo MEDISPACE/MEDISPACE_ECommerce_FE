@@ -42,10 +42,10 @@ export function ProtectedRoute({
   // Show loading while checking authentication
   if (loading) {
     return (
-      <div className='min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 flex items-center justify-center'>
+      <div className='min-h-screen bg-gradient-to-br from-[#F8FAFB] to-[#F0F6FF] flex items-center justify-center'>
         <div className='text-center'>
-          <div className='w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4'></div>
-          <p className='text-blue-600'>Đang tải...</p>
+          <div className='w-8 h-8 border-4 border-[#1E40AF] border-t-transparent rounded-full animate-spin mx-auto mb-4'></div>
+          <p className='text-[#1E40AF]'>Đang tải...</p>
         </div>
       </div>
     )
@@ -59,8 +59,8 @@ export function ProtectedRoute({
   // Check role requirement
   if (requiredRole !== undefined && user.role !== requiredRole) {
     return (
-      <div className='min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 flex items-center justify-center p-4'>
-        <div className='max-w-md w-full bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-8 text-center'>
+      <div className='min-h-screen bg-gradient-to-br from-[#F8FAFB] to-[#F0F6FF] flex items-center justify-center p-4'>
+        <div className='max-w-md w-full bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-8 text-center'>
           <div className='mb-6'>
             <div className='w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4'>
               <Lock className='w-8 h-8 text-red-600' />
@@ -90,7 +90,7 @@ export function ProtectedRoute({
             </Button>
             <Button
               onClick={() => (window.location.href = '/')}
-              className='w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white'
+              className='w-full bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#071A49] text-white'
             >
               Về trang chủ
             </Button>
@@ -109,8 +109,8 @@ export function ProtectedRoute({
 
     if (!hasRequiredPermissions) {
       return (
-        <div className='min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 flex items-center justify-center p-4'>
-          <div className='max-w-md w-full bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-8 text-center'>
+        <div className='min-h-screen bg-gradient-to-br from-[#F8FAFB] to-[#F0F6FF] flex items-center justify-center p-4'>
+          <div className='max-w-md w-full bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-8 text-center'>
             <div className='mb-6'>
               <div className='w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4'>
                 <AlertTriangle className='w-8 h-8 text-orange-600' />
@@ -130,7 +130,7 @@ export function ProtectedRoute({
               </Button>
               <Button
                 onClick={() => (window.location.href = '/')}
-                className='w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white'
+                className='w-full bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#071A49] text-white'
               >
                 Về trang chủ
               </Button>

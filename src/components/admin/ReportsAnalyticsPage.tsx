@@ -44,8 +44,8 @@ import {
 } from 'recharts'
 
 // Color palette for charts
-const CHART_COLORS = ['#0066CC', '#4A90E2', '#36B37E', '#FF9F43', '#FF6B6B', '#A855F7', '#06B6D4', '#F59E0B']
-const PIE_COLORS = ['#0066CC', '#36B37E', '#FF9F43', '#FF6B6B', '#A855F7', '#06B6D4', '#F59E0B', '#EC4899']
+const CHART_COLORS = ['#0A2463', '#1E40AF', '#36B37E', '#FF9F43', '#FF6B6B', '#A855F7', '#06B6D4', '#F59E0B']
+const PIE_COLORS = ['#0A2463', '#36B37E', '#FF9F43', '#FF6B6B', '#A855F7', '#06B6D4', '#F59E0B', '#EC4899']
 
 // Date formatter for Vietnamese locale
 const formatDate = (date: Date) => {
@@ -56,7 +56,7 @@ const formatDate = (date: Date) => {
 const CurrencyTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null
   return (
-    <div className='bg-white/95 backdrop-blur-sm border border-blue-100 shadow-xl rounded-xl p-3 min-w-[160px]'>
+    <div className='bg-white/95 backdrop-blur-sm border border-[#E8EDF5] shadow-xl rounded-xl p-3 min-w-[160px]'>
       <p className='text-sm font-medium text-gray-900 mb-1'>{label}</p>
       {payload.map((entry: any, index: number) => (
         <p key={index} className='text-sm' style={{ color: entry.color }}>
@@ -72,9 +72,9 @@ const PieTooltip = ({ active, payload }: any) => {
   if (!active || !payload?.length) return null
   const data = payload[0]
   return (
-    <div className='bg-white/95 backdrop-blur-sm border border-blue-100 shadow-xl rounded-xl p-3'>
+    <div className='bg-white/95 backdrop-blur-sm border border-[#E8EDF5] shadow-xl rounded-xl p-3'>
       <p className='text-sm font-medium text-gray-900'>{data.name}</p>
-      <p className='text-sm text-blue-600'>{formatCurrency(data.payload.amount)}</p>
+      <p className='text-sm text-[#1E40AF]'>{formatCurrency(data.payload.amount)}</p>
       <p className='text-xs text-gray-500'>{data.value.toFixed(1)}%</p>
     </div>
   )
@@ -153,7 +153,7 @@ export function ReportsAnalyticsPage() {
     return (
       <div className='flex items-center justify-center min-h-[400px]'>
         <div className='text-center'>
-          <Loader2 className='w-12 h-12 animate-spin text-blue-600 mx-auto mb-4' />
+          <Loader2 className='w-12 h-12 animate-spin text-[#1E40AF] mx-auto mb-4' />
           <p className='text-gray-600'>Đang tải dữ liệu báo cáo...</p>
         </div>
       </div>
@@ -201,7 +201,7 @@ export function ReportsAnalyticsPage() {
   const orderStatusData = data.orders?.statusBreakdown
     ? [
         { name: 'Chờ xử lý', value: data.orders.statusBreakdown.pending || 0, color: '#FF9F43' },
-        { name: 'Đang xử lý', value: data.orders.statusBreakdown.processing || 0, color: '#0066CC' },
+        { name: 'Đang xử lý', value: data.orders.statusBreakdown.processing || 0, color: '#0A2463' },
         { name: 'Đang giao', value: data.orders.statusBreakdown.shipped || 0, color: '#06B6D4' },
         { name: 'Hoàn thành', value: data.orders.statusBreakdown.delivered || 0, color: '#36B37E' },
         { name: 'Đã hủy', value: data.orders.statusBreakdown.cancelled || 0, color: '#FF6B6B' },
@@ -214,13 +214,13 @@ export function ReportsAnalyticsPage() {
   return (
     <div className='space-y-6'>
       {/* Header */}
-      <div className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
+      <div className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-6'>
         <div className='flex flex-col md:flex-row md:items-center justify-between gap-4'>
           <div>
             <h1
               className='text-3xl font-bold bg-clip-text text-transparent'
               style={{
-                backgroundImage: `linear-gradient(to right, #0066CC, #4A90E2)`,
+                backgroundImage: `linear-gradient(to right, #0A2463, #1E40AF)`,
               }}
             >
               Báo cáo &amp; Phân tích
@@ -230,7 +230,7 @@ export function ReportsAnalyticsPage() {
           <div className='flex flex-col sm:flex-row sm:items-center gap-4'>
             <div className='flex items-center gap-3'>
               <Select value={timeRange} onValueChange={handleTimeRangeChange}>
-                <SelectTrigger className='w-40 border-2 border-blue-200'>
+                <SelectTrigger className='w-40 border-2 border-[#BFDBFE]'>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -248,7 +248,7 @@ export function ReportsAnalyticsPage() {
                   {/* Start Date Picker */}
                   <Popover open={showStartPicker} onOpenChange={setShowStartPicker}>
                     <PopoverTrigger asChild>
-                      <button className='flex items-center gap-1.5 px-3 py-2 text-sm border-2 border-blue-200 rounded-lg hover:bg-blue-50 transition-colors'>
+                      <button className='flex items-center gap-1.5 px-3 py-2 text-sm border-2 border-[#BFDBFE] rounded-lg hover:bg-[#F0F6FF] transition-colors'>
                         <CalendarIcon className='w-4 h-4 text-blue-500' />
                         <span className='text-gray-700'>{customStartDate ? formatDate(customStartDate) : 'Từ ngày'}</span>
                       </button>
@@ -272,7 +272,7 @@ export function ReportsAnalyticsPage() {
                   {/* End Date Picker */}
                   <Popover open={showEndPicker} onOpenChange={setShowEndPicker}>
                     <PopoverTrigger asChild>
-                      <button className='flex items-center gap-1.5 px-3 py-2 text-sm border-2 border-blue-200 rounded-lg hover:bg-blue-50 transition-colors'>
+                      <button className='flex items-center gap-1.5 px-3 py-2 text-sm border-2 border-[#BFDBFE] rounded-lg hover:bg-[#F0F6FF] transition-colors'>
                         <CalendarIcon className='w-4 h-4 text-blue-500' />
                         <span className='text-gray-700'>{customEndDate ? formatDate(customEndDate) : 'Đến ngày'}</span>
                       </button>
@@ -299,14 +299,14 @@ export function ReportsAnalyticsPage() {
               <DropdownMenu>
                 <DropdownMenuTrigger
                   disabled={!data || isExporting}
-                  className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-blue-700 bg-blue-500/10 border-2 border-blue-500/20 rounded-lg transition-colors ${!data || isExporting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-500/20'} !outline-none`}
+                  className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-[#0A2463] bg-[#1E40AF]/10 border-2 border-[#1E40AF]/20 rounded-lg transition-colors ${!data || isExporting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#1E40AF]/20'} !outline-none`}
                 >
                   {isExporting ? <Loader2 className='w-4 h-4 animate-spin' /> : <Download className='w-4 h-4' />}
                   <span className='hidden sm:inline'>Xuất báo cáo</span>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align='end'
-                  className='w-[160px] bg-white/95 backdrop-blur-sm border border-blue-100 shadow-xl'
+                  className='w-[160px] bg-white/95 backdrop-blur-sm border border-[#E8EDF5] shadow-xl'
                 >
                   <DropdownMenuItem
                     className='cursor-pointer flex items-center gap-2 text-green-700 focus:text-green-800 focus:bg-green-500/10'
@@ -347,7 +347,7 @@ export function ReportsAnalyticsPage() {
         {/* Comparison period info */}
         {comparisonLabel && (
           <div className='mt-3 flex items-center gap-2'>
-            <div className='inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-xs font-medium'>
+            <div className='inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#F0F6FF] text-[#0A2463] rounded-full text-xs font-medium'>
               <ArrowLeftRight className='w-3 h-3' />
               {comparisonLabel}
             </div>
@@ -363,12 +363,12 @@ export function ReportsAnalyticsPage() {
 
       {/* KPI Cards */}
       <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-        <Card className='bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-lg transition-shadow'>
+        <Card className='bg-gradient-to-br from-blue-50 to-blue-100 border-[#BFDBFE] hover:shadow-lg transition-shadow'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between mb-2'>
               <div className='flex items-center gap-2'>
-                <div className='w-8 h-8 rounded-lg bg-blue-200/60 flex items-center justify-center'>
-                  <DollarSign className='w-4 h-4 text-blue-700' />
+                <div className='w-8 h-8 rounded-lg bg-[#BFDBFE]/60 flex items-center justify-center'>
+                  <DollarSign className='w-4 h-4 text-[#0A2463]' />
                 </div>
                 <span className='text-sm font-medium text-blue-800'>Doanh thu</span>
               </div>
@@ -397,17 +397,17 @@ export function ReportsAnalyticsPage() {
           </CardContent>
         </Card>
 
-        <Card className='bg-gradient-to-br from-indigo-50 to-blue-100 border-blue-200 hover:shadow-lg transition-shadow'>
+        <Card className='bg-gradient-to-br from-[#F8FAFB] to-[#F0F6FF] border-[#BFDBFE] hover:shadow-lg transition-shadow'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between mb-2'>
               <div className='flex items-center gap-2'>
-                <div className='w-8 h-8 rounded-lg bg-indigo-200/60 flex items-center justify-center'>
-                  <Users className='w-4 h-4 text-indigo-700' />
+                <div className='w-8 h-8 rounded-lg bg-[#BFDBFE]/60 flex items-center justify-center'>
+                  <Users className='w-4 h-4 text-[#1E40AF]' />
                 </div>
-                <span className='text-sm font-medium text-indigo-800'>Người dùng</span>
+                <span className='text-sm font-medium text-[#0A2463]'>Người dùng</span>
               </div>
             </div>
-            <p className='text-2xl font-bold text-indigo-900'>{data.users?.total || 0}</p>
+            <p className='text-2xl font-bold text-[#0A2463]'>{data.users?.total || 0}</p>
             <div className='mt-1'>
               <GrowthBadge value={data.users?.growth || 0} />
             </div>
@@ -434,8 +434,8 @@ export function ReportsAnalyticsPage() {
 
       {/* Charts Tabs */}
       <Tabs defaultValue='overview' className='space-y-4'>
-        <div className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
-          <TabsList className='grid w-full grid-cols-4 !bg-blue-50 p-1.5 rounded-lg h-auto'>
+        <div className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-6'>
+          <TabsList className='grid w-full grid-cols-4 !bg-[#F0F6FF] p-1.5 rounded-lg h-auto'>
             <TabsTrigger value='overview' className={tabTriggerClass}>
               Tổng quan
             </TabsTrigger>
@@ -462,8 +462,8 @@ export function ReportsAnalyticsPage() {
                       <AreaChart data={revenueChartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                         <defs>
                           <linearGradient id='revenueGradient' x1='0' y1='0' x2='0' y2='1'>
-                            <stop offset='5%' stopColor='#0066CC' stopOpacity={0.3} />
-                            <stop offset='95%' stopColor='#0066CC' stopOpacity={0.02} />
+                            <stop offset='5%' stopColor='#0A2463' stopOpacity={0.3} />
+                            <stop offset='95%' stopColor='#0A2463' stopOpacity={0.02} />
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray='3 3' stroke='#E5E7EB' vertical={false} />
@@ -483,11 +483,11 @@ export function ReportsAnalyticsPage() {
                         <Area
                           type='monotone'
                           dataKey='Doanh thu'
-                          stroke='#0066CC'
+                          stroke='#0A2463'
                           strokeWidth={2.5}
                           fill='url(#revenueGradient)'
-                          dot={{ r: 4, fill: '#0066CC', strokeWidth: 2, stroke: '#fff' }}
-                          activeDot={{ r: 6, fill: '#0066CC', strokeWidth: 2, stroke: '#fff' }}
+                          dot={{ r: 4, fill: '#0A2463', strokeWidth: 2, stroke: '#fff' }}
+                          activeDot={{ r: 6, fill: '#0A2463', strokeWidth: 2, stroke: '#fff' }}
                         />
                       </AreaChart>
                     </ResponsiveContainer>
@@ -549,10 +549,10 @@ export function ReportsAnalyticsPage() {
 
             {/* Key Metrics */}
             <div className='grid md:grid-cols-3 gap-4'>
-              <Card className='border border-blue-200 hover:shadow-md transition-shadow'>
+              <Card className='border border-[#BFDBFE] hover:shadow-md transition-shadow'>
                 <CardContent className='p-5 text-center'>
-                  <div className='w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center mx-auto mb-3'>
-                    <Activity className='w-6 h-6 text-blue-600' />
+                  <div className='w-12 h-12 rounded-xl bg-[#E8EDF5] flex items-center justify-center mx-auto mb-3'>
+                    <Activity className='w-6 h-6 text-[#1E40AF]' />
                   </div>
                   <p className='text-sm text-gray-500 mb-1'>Giá trị đơn TB</p>
                   <p className='text-2xl font-bold text-blue-900'>{formatCurrency(data.metrics?.avgOrderValue || 0)}</p>
@@ -569,13 +569,13 @@ export function ReportsAnalyticsPage() {
                 </CardContent>
               </Card>
 
-              <Card className='border border-indigo-200 hover:shadow-md transition-shadow'>
+              <Card className='border border-[#BFDBFE] hover:shadow-md transition-shadow'>
                 <CardContent className='p-5 text-center'>
-                  <div className='w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center mx-auto mb-3'>
-                    <Users className='w-6 h-6 text-indigo-600' />
+                  <div className='w-12 h-12 rounded-xl bg-[#E8EDF5] flex items-center justify-center mx-auto mb-3'>
+                    <Users className='w-6 h-6 text-[#1E40AF]' />
                   </div>
                   <p className='text-sm text-gray-500 mb-1'>Giữ chân KH</p>
-                  <p className='text-2xl font-bold text-indigo-900'>
+                  <p className='text-2xl font-bold text-[#0A2463]'>
                     {(data.metrics?.customerRetention || 0).toFixed(1)}%
                   </p>
                 </CardContent>
@@ -675,7 +675,7 @@ export function ReportsAnalyticsPage() {
               <div className='space-y-3'>
                 {data.products.topProducts && data.products.topProducts.length > 0 ? (
                   data.products.topProducts.map((product: any, idx: number) => (
-                    <Card key={product._id} className='border border-blue-100 hover:shadow-md transition-shadow'>
+                    <Card key={product._id} className='border border-[#E8EDF5] hover:shadow-md transition-shadow'>
                       <CardContent className='p-4'>
                         <div className='flex items-center justify-between'>
                           <div className='flex items-center gap-3'>
@@ -690,7 +690,7 @@ export function ReportsAnalyticsPage() {
                               <div className='flex items-center gap-2'>
                                 <p className='text-sm text-gray-500'>{product.sales} đơn bán</p>
                                 {product.categoryName && (
-                                  <span className='text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full'>
+                                  <span className='text-xs bg-[#F0F6FF] text-[#1E40AF] px-2 py-0.5 rounded-full'>
                                     {product.categoryName}
                                   </span>
                                 )}
@@ -718,15 +718,15 @@ export function ReportsAnalyticsPage() {
           <TabsContent value='customers' className='space-y-6 mt-6'>
             <div className='grid md:grid-cols-2 gap-6'>
               {/* New vs Returning Customers */}
-              <Card className='border border-blue-200'>
+              <Card className='border border-[#BFDBFE]'>
                 <CardHeader className='pb-2'>
                   <CardTitle className='text-base text-gray-900'>Phân tích khách hàng</CardTitle>
                 </CardHeader>
                 <CardContent className='space-y-4'>
                   <div className='grid grid-cols-2 gap-4'>
-                    <div className='p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl'>
-                      <p className='text-sm text-indigo-600 mb-1'>Khách hàng mới</p>
-                      <p className='text-2xl font-bold text-indigo-900'>
+                    <div className='p-4 bg-gradient-to-br from-[#F8FAFB] to-[#F0F6FF] rounded-xl'>
+                      <p className='text-sm text-[#1E40AF] mb-1'>Khách hàng mới</p>
+                      <p className='text-2xl font-bold text-[#0A2463]'>
                         {(data.users?.newUsers || 0).toLocaleString()}
                       </p>
                       <div className='mt-1'>
@@ -774,7 +774,7 @@ export function ReportsAnalyticsPage() {
                             }}
                           />
                           <Bar dataKey='value' name='Số lượng' radius={[6, 6, 0, 0]} maxBarSize={50}>
-                            <Cell fill='#0066CC' />
+                            <Cell fill='#0A2463' />
                             <Cell fill='#36B37E' />
                             <Cell fill='#FF9F43' />
                           </Bar>
@@ -786,13 +786,13 @@ export function ReportsAnalyticsPage() {
               </Card>
 
               {/* Customer Metrics Summary */}
-              <Card className='border border-blue-200'>
+              <Card className='border border-[#BFDBFE]'>
                 <CardHeader className='pb-2'>
                   <CardTitle className='text-base text-gray-900'>Chỉ số khách hàng</CardTitle>
                 </CardHeader>
                 <CardContent className='space-y-4'>
                   <div className='grid grid-cols-2 gap-3'>
-                    <div className='p-3 bg-blue-50 rounded-xl text-center'>
+                    <div className='p-3 bg-[#F0F6FF] rounded-xl text-center'>
                       <p className='text-xs text-gray-500'>Tổng KH</p>
                       <p className='text-xl font-bold text-blue-900'>{data.users?.customers || 0}</p>
                     </div>
@@ -800,9 +800,9 @@ export function ReportsAnalyticsPage() {
                       <p className='text-xs text-gray-500'>Đã xác thực</p>
                       <p className='text-xl font-bold text-green-900'>{data.users?.verified || 0}</p>
                     </div>
-                    <div className='p-3 bg-indigo-50 rounded-xl text-center'>
+                    <div className='p-3 bg-[#F0F6FF] rounded-xl text-center'>
                       <p className='text-xs text-gray-500'>Conversion</p>
-                      <p className='text-xl font-bold text-indigo-900'>
+                      <p className='text-xl font-bold text-[#0A2463]'>
                         {(data.metrics?.conversionRate || 0).toFixed(1)}%
                       </p>
                     </div>
@@ -832,7 +832,7 @@ export function ReportsAnalyticsPage() {
                           strokeWidth={2}
                           stroke='#fff'
                         >
-                          <Cell fill='#4A90E2' />
+                          <Cell fill='#1E40AF' />
                           <Cell fill='#36B37E' />
                         </Pie>
                         <Tooltip
@@ -951,7 +951,7 @@ export function ReportsAnalyticsPage() {
                 {/* Product Trends */}
                 {data.products?.trends && (
                   <div className='grid grid-cols-3 gap-3'>
-                    <div className='p-3 bg-blue-50 rounded-xl text-center'>
+                    <div className='p-3 bg-[#F0F6FF] rounded-xl text-center'>
                       <p className='text-xs text-gray-500'>SP mới trong kỳ</p>
                       <p className='text-lg font-bold text-blue-900'>{data.products.trends.newProducts}</p>
                     </div>

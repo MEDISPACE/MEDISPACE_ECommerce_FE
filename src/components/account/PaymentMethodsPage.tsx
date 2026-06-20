@@ -225,7 +225,7 @@ export function PaymentMethodsPage() {
   return (
     <div className='space-y-6'>
       {/* Header */}
-      <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
+      <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-6'>
         <div className='flex flex-col md:flex-row md:items-center justify-between gap-4'>
           <div>
             <h1 className='text-2xl font-bold text-blue-800 mb-2'>Phương thức thanh toán</h1>
@@ -234,7 +234,7 @@ export function PaymentMethodsPage() {
 
           <Button
             onClick={handleAddPaymentMethod}
-            className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white shadow-lg'
+            className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white shadow-lg'
           >
             <Plus className='w-4 h-4 mr-2' />
             Thêm phương thức mới
@@ -253,9 +253,9 @@ export function PaymentMethodsPage() {
       <div className='space-y-6'>
         {/* Credit/Debit Cards */}
         {cardTypes.length > 0 && (
-          <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
+          <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-6'>
             <div className='flex items-center gap-3 mb-4'>
-              <CreditCard className='w-5 h-5 text-blue-600' />
+              <CreditCard className='w-5 h-5 text-[#1E40AF]' />
               <h2 className='font-medium text-gray-900'>Thẻ tín dụng / Ghi nợ</h2>
               <Badge variant='secondary'>{cardTypes.length}</Badge>
             </div>
@@ -275,7 +275,7 @@ export function PaymentMethodsPage() {
 
         {/* E-Wallets */}
         {ewallets.length > 0 && (
-          <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
+          <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-6'>
             <div className='flex items-center gap-3 mb-4'>
               <Smartphone className='w-5 h-5 text-green-600' />
               <h2 className='font-medium text-gray-900'>Ví điện tử</h2>
@@ -297,7 +297,7 @@ export function PaymentMethodsPage() {
 
         {/* Bank Accounts */}
         {bankAccounts.length > 0 && (
-          <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
+          <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-6'>
             <div className='flex items-center gap-3 mb-4'>
               <Building className='w-5 h-5 text-gray-600' />
               <h2 className='font-medium text-gray-900'>Tài khoản ngân hàng</h2>
@@ -319,14 +319,14 @@ export function PaymentMethodsPage() {
 
         {/* Empty State */}
         {paymentMethods.length === 0 && (
-          <Card className='bg-white/80 backdrop-blur-lg shadow-lg border border-blue-100'>
+          <Card className='bg-white/80 backdrop-blur-lg shadow-lg border border-[#E8EDF5]'>
             <CardContent className='p-12 text-center'>
               <CreditCard className='w-16 h-16 mx-auto text-gray-300 mb-4' />
               <h3 className='text-lg font-medium text-gray-900 mb-2'>Chưa có phương thức thanh toán</h3>
               <p className='text-gray-500 mb-4'>Thêm thẻ hoặc ví điện tử để thanh toán nhanh chóng</p>
               <Button
                 onClick={handleAddPaymentMethod}
-                className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'
+                className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'
               >
                 <Plus className='w-4 h-4 mr-2' />
                 Thêm phương thức đầu tiên
@@ -358,10 +358,10 @@ export function PaymentMethodsPage() {
               }
             }}
           >
-            <TabsList className='inline-flex w-full overflow-x-auto bg-blue-100 p-1 rounded-lg shadow-sm scrollbar-hide'>
+            <TabsList className='inline-flex w-full overflow-x-auto bg-[#E8EDF5] p-1 rounded-lg shadow-sm scrollbar-hide'>
               <TabsTrigger
                 value='card'
-                className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 !text-blue-600 border-0 data-[state=active]:!bg-blue-500 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+                className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-[#E8EDF5] !text-[#1E40AF] border-0 data-[state=active]:!bg-[#1E40AF] data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-[#BFDBFE]'
               >
                 <span className='whitespace-nowrap flex items-center gap-1'>
                   <CreditCard className='w-4 h-4' />
@@ -370,7 +370,7 @@ export function PaymentMethodsPage() {
               </TabsTrigger>
               <TabsTrigger
                 value='ewallet'
-                className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 !text-blue-600 border-0 data-[state=active]:!bg-blue-500 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+                className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-[#E8EDF5] !text-[#1E40AF] border-0 data-[state=active]:!bg-[#1E40AF] data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-[#BFDBFE]'
               >
                 <span className='whitespace-nowrap flex items-center gap-1'>
                   <Smartphone className='w-4 h-4' />
@@ -379,7 +379,7 @@ export function PaymentMethodsPage() {
               </TabsTrigger>
               <TabsTrigger
                 value='bank'
-                className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-blue-100 !text-blue-600 border-0 data-[state=active]:!bg-blue-500 data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-blue-200'
+                className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-[#E8EDF5] !text-[#1E40AF] border-0 data-[state=active]:!bg-[#1E40AF] data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-[#BFDBFE]'
               >
                 <span className='whitespace-nowrap flex items-center gap-1'>
                   <Building className='w-4 h-4' />
@@ -403,7 +403,7 @@ export function PaymentMethodsPage() {
                   }
                   placeholder='1234 5678 9012 3456'
                   maxLength={19}
-                  className='mt-2 border-2 border-blue-200 focus:border-blue-500'
+                  className='mt-2 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                 />
               </div>
 
@@ -421,7 +421,7 @@ export function PaymentMethodsPage() {
                     }
                     placeholder='MM/YY'
                     maxLength={5}
-                    className='mt-2 border-2 border-blue-200 focus:border-blue-500'
+                    className='mt-2 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                   />
                 </div>
                 <div>
@@ -441,7 +441,7 @@ export function PaymentMethodsPage() {
                     placeholder='123'
                     maxLength={4}
                     type='password'
-                    className='mt-2 border-2 border-blue-200 focus:border-blue-500'
+                    className='mt-2 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                   />
                 </div>
               </div>
@@ -458,7 +458,7 @@ export function PaymentMethodsPage() {
                     }))
                   }
                   placeholder='NGUYEN VAN A'
-                  className='mt-2 border-2 border-blue-200 focus:border-blue-500'
+                  className='mt-2 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                 />
               </div>
 
@@ -480,7 +480,7 @@ export function PaymentMethodsPage() {
                   value={ewalletForm.provider}
                   onValueChange={(value) => setEwalletForm((prev) => ({ ...prev, provider: value }))}
                 >
-                  <SelectTrigger className='mt-2 border-2 border-blue-200 focus:border-blue-500'>
+                  <SelectTrigger className='mt-2 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'>
                     <SelectValue placeholder='Chọn ví điện tử' />
                   </SelectTrigger>
                   <SelectContent>
@@ -509,7 +509,7 @@ export function PaymentMethodsPage() {
                   }
                   placeholder='0901234567'
                   maxLength={11}
-                  className='mt-2 border-2 border-blue-200 focus:border-blue-500'
+                  className='mt-2 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                 />
               </div>
 
@@ -531,7 +531,7 @@ export function PaymentMethodsPage() {
                   value={bankForm.bankName}
                   onValueChange={(value) => setBankForm((prev) => ({ ...prev, bankName: value }))}
                 >
-                  <SelectTrigger className='mt-2 border-2 border-blue-200 focus:border-blue-500'>
+                  <SelectTrigger className='mt-2 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'>
                     <SelectValue placeholder='Chọn ngân hàng' />
                   </SelectTrigger>
                   <SelectContent>
@@ -556,7 +556,7 @@ export function PaymentMethodsPage() {
                     }))
                   }
                   placeholder='1234567890'
-                  className='mt-2 border-2 border-blue-200 focus:border-blue-500'
+                  className='mt-2 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                 />
               </div>
 
@@ -572,7 +572,7 @@ export function PaymentMethodsPage() {
                     }))
                   }
                   placeholder='NGUYEN VAN A'
-                  className='mt-2 border-2 border-blue-200 focus:border-blue-500'
+                  className='mt-2 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                 />
               </div>
 
@@ -587,13 +587,13 @@ export function PaymentMethodsPage() {
             </TabsContent>
           </Tabs>
 
-          <div className='flex justify-end gap-3 pt-4 border-t border-blue-300'>
+          <div className='flex justify-end gap-3 pt-4 border-t border-[#BFDBFE]'>
             <Button variant='outline' onClick={() => setIsAddModalOpen(false)}>
               Hủy
             </Button>
             <Button
               onClick={handleSavePaymentMethod}
-              className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'
+              className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'
             >
               {editingMethod ? 'Cập nhật' : 'Thêm phương thức'}
             </Button>

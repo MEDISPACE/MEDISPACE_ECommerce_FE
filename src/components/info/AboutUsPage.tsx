@@ -12,13 +12,13 @@ export function AboutUsPage() {
       icon: Users,
       label: 'Khách hàng',
       value: '500K+',
-      color: 'from-blue-500 to-cyan-500',
+      color: 'from-[#0A2463] to-[#1E40AF]',
     },
     {
       icon: Award,
       label: 'Năm kinh nghiệm',
       value: '15+',
-      color: 'from-purple-500 to-pink-500',
+      color: 'from-[#0A2463] to-[#1E40AF]',
     },
     {
       icon: Heart,
@@ -89,7 +89,7 @@ export function AboutUsPage() {
       <UniversalBreadcrumb items={breadcrumbItems} />
       {/* Hero Section */}
       <div className='text-center space-y-6 animate-slide-in-up'>
-        <h1 className='bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 bg-clip-text text-transparent'>
+        <h1 className='bg-gradient-to-r from-[#0A2463] via-[#1E40AF] to-[#3B82F6] bg-clip-text text-transparent'>
           Đồng hành cùng sức khỏe Việt
         </h1>
         <p className='text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed'>
@@ -103,7 +103,7 @@ export function AboutUsPage() {
         {stats.map((stat, index) => (
           <Card
             key={index}
-            className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 hover:shadow-xl transition-all animate-slide-in-up'
+            className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] hover:shadow-xl transition-all animate-slide-in-up'
             style={{ animationDelay: `${index * 0.1}s` }}
           >
             <CardContent className='p-6 text-center'>
@@ -124,7 +124,7 @@ export function AboutUsPage() {
       {/* About Image & Story */}
       <div className='grid md:grid-cols-2 gap-12 items-center'>
         <div className='space-y-6 animate-slide-in-left'>
-          <h2 className='bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent'>
+          <h2 className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text text-transparent'>
             Câu chuyện của chúng tôi
           </h2>
           <p className='text-gray-700 leading-relaxed'>
@@ -142,7 +142,7 @@ export function AboutUsPage() {
           </p>
         </div>
         <div className='relative animate-slide-in-right'>
-          <div className='absolute inset-0 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-2xl blur-2xl opacity-20'></div>
+          <div className='absolute inset-0 bg-gradient-to-br from-[#BFDBFE] to-[#1E40AF] rounded-2xl blur-2xl opacity-20'></div>
           <ImageWithFallback
             src='https://images.unsplash.com/photo-1652295372392-3171ab2c0e01?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080'
             alt='MEDISPACE Team'
@@ -154,7 +154,7 @@ export function AboutUsPage() {
       {/* Core Values */}
       <div className='space-y-8'>
         <div className='text-center'>
-          <h2 className='bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent mb-4'>
+          <h2 className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text text-transparent mb-4'>
             Giá trị cốt lõi
           </h2>
           <p className='text-gray-600 max-w-2xl mx-auto'>Những giá trị mà chúng tôi cam kết mang đến cho khách hàng</p>
@@ -164,12 +164,12 @@ export function AboutUsPage() {
           {values.map((value, index) => (
             <Card
               key={index}
-              className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 hover:border-blue-300 hover:shadow-xl transition-all group animate-slide-in-up'
+              className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] hover:border-[#BFDBFE] hover:shadow-xl transition-all group animate-slide-in-up'
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               <CardContent className='p-6 text-center space-y-4'>
-                <div className='w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-blue-100 to-cyan-100 flex items-center justify-center group-hover:scale-110 transition-transform'>
-                  <value.icon className='w-8 h-8 text-blue-600' />
+                <div className='w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-[#F0F6FF] to-[#E8EDF5] flex items-center justify-center group-hover:scale-110 transition-transform'>
+                  <value.icon className='w-8 h-8 text-[#1E40AF]' />
                 </div>
                 <h3 className='text-blue-900'>{value.title}</h3>
                 <p className='text-sm text-gray-600 leading-relaxed'>{value.description}</p>
@@ -182,7 +182,7 @@ export function AboutUsPage() {
       {/* Timeline */}
       <div className='space-y-8'>
         <div className='text-center'>
-          <h2 className='bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent mb-4'>
+          <h2 className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text text-transparent mb-4'>
             Hành trình phát triển
           </h2>
           <p className='text-gray-600 max-w-2xl mx-auto'>
@@ -192,7 +192,7 @@ export function AboutUsPage() {
 
         <div className='relative'>
           {/* Timeline line */}
-          <div className='absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-gradient-to-b from-blue-200 via-cyan-200 to-blue-200 hidden md:block'></div>
+          <div className='absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-gradient-to-b from-blue-200 via-[#BFDBFE] to-blue-200 hidden md:block'></div>
 
           <div className='space-y-8'>
             {milestones.map((milestone, index) => (
@@ -202,13 +202,13 @@ export function AboutUsPage() {
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <div className={`flex-1 ${index % 2 === 0 ? 'md:text-right' : 'md:text-left'}`}>
-                  <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 hover:shadow-xl transition-all'>
+                  <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] hover:shadow-xl transition-all'>
                     <CardContent className='p-6'>
                       <div className='flex items-center gap-3 mb-2'>
-                        <Badge className='bg-gradient-to-r from-blue-600 to-cyan-500 text-white'>
+                        <Badge className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white'>
                           {milestone.year}
                         </Badge>
-                        <TrendingUp className='w-4 h-4 text-blue-600' />
+                        <TrendingUp className='w-4 h-4 text-[#1E40AF]' />
                       </div>
                       <p className='text-gray-700'>{milestone.event}</p>
                     </CardContent>
@@ -217,7 +217,7 @@ export function AboutUsPage() {
 
                 {/* Timeline dot */}
                 <div className='hidden md:block'>
-                  <div className='w-4 h-4 rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 shadow-lg'></div>
+                  <div className='w-4 h-4 rounded-full bg-gradient-to-br from-[#0A2463] to-[#1E40AF] shadow-lg'></div>
                 </div>
 
                 <div className='flex-1 hidden md:block'></div>
@@ -228,8 +228,8 @@ export function AboutUsPage() {
       </div>
 
       {/* Team Section */}
-      <div className='bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl p-12 text-center space-y-6'>
-        <h2 className='bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent'>
+      <div className='bg-gradient-to-r from-[#F8FAFB] to-[#F0F6FF] rounded-2xl p-12 text-center space-y-6'>
+        <h2 className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text text-transparent'>
           Đội ngũ chuyên nghiệp
         </h2>
         <p className='text-gray-700 max-w-3xl mx-auto leading-relaxed'>
@@ -237,7 +237,7 @@ export function AboutUsPage() {
           nghiệm, luôn tận tâm chăm sóc và tư vấn cho khách hàng.
         </p>
         <div className='relative max-w-4xl mx-auto mt-8'>
-          <div className='absolute inset-0 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-2xl blur-2xl opacity-20'></div>
+          <div className='absolute inset-0 bg-gradient-to-br from-[#BFDBFE] to-[#1E40AF] rounded-2xl blur-2xl opacity-20'></div>
           <ImageWithFallback
             src='https://images.unsplash.com/photo-1758519290233-a03c1d17ecc9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080'
             alt='MEDISPACE Professional Team'
@@ -247,7 +247,7 @@ export function AboutUsPage() {
       </div>
 
       {/* CTA Section */}
-      <div className='text-center space-y-6 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 rounded-2xl p-12 text-white'>
+      <div className='text-center space-y-6 bg-gradient-to-r from-[#0A2463] via-[#1E40AF] to-[#3B82F6] rounded-2xl p-12 text-white'>
         <h2 className='text-white'>Hãy để MEDISPACE chăm sóc sức khỏe của bạn</h2>
         <p className='text-xl text-blue-50 max-w-2xl mx-auto'>
           Tham gia cộng đồng hơn 500,000 khách hàng đang tin tưởng sử dụng dịch vụ của chúng tôi
@@ -255,13 +255,13 @@ export function AboutUsPage() {
         <div className='flex flex-col sm:flex-row gap-4 justify-center mt-8'>
           <a
             href='/products'
-            className='inline-flex items-center justify-center gap-2 px-8 py-3 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-colors shadow-lg'
+            className='inline-flex items-center justify-center gap-2 px-8 py-3 bg-white text-[#1E40AF] rounded-lg hover:bg-[#F0F6FF] transition-colors shadow-lg'
           >
             Khám phá sản phẩm
           </a>
           <a
             href='/contact'
-            className='inline-flex items-center justify-center gap-2 px-8 py-3 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-colors border-2 border-white/20'
+            className='inline-flex items-center justify-center gap-2 px-8 py-3 bg-[#071A49] text-white rounded-lg hover:bg-blue-800 transition-colors border-2 border-white/20'
           >
             Tư vấn miễn phí
           </a>

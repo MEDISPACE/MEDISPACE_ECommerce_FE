@@ -109,9 +109,9 @@ const getMembershipLevelConfig = (level: string) => {
     case 'gold':
       return { label: 'Thành viên Vàng', className: 'bg-yellow-100 text-yellow-700' }
     case 'platinum':
-      return { label: 'Thành viên Bạch Kim', className: 'bg-purple-100 text-purple-700' }
+      return { label: 'Thành viên Bạch Kim', className: 'bg-[#E8EDF5] text-[#0A2463]' }
     default:
-      return { label: 'Thành viên', className: 'bg-blue-100 text-blue-700' }
+      return { label: 'Thành viên', className: 'bg-[#E8EDF5] text-[#0A2463]' }
   }
 }
 
@@ -136,8 +136,8 @@ export function AccountLayout({ children, breadcrumbItems = [] }: AccountLayoutP
 
   if (loading || !isAuthenticated || !user) {
     return (
-      <div className='min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 flex items-center justify-center'>
-        <div className='w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin' />
+      <div className='min-h-screen bg-gradient-to-br from-[#F8FAFB] to-[#F0F6FF] flex items-center justify-center'>
+        <div className='w-8 h-8 border-4 border-[#1E40AF] border-t-transparent rounded-full animate-spin' />
       </div>
     )
   }
@@ -152,10 +152,10 @@ export function AccountLayout({ children, breadcrumbItems = [] }: AccountLayoutP
   const SidebarContent = () => (
     <div className='space-y-6'>
       {/* User Info */}
-      <div className='text-center pb-6 border-b border-blue-100'>
+      <div className='text-center pb-6 border-b border-[#E8EDF5]'>
         <Avatar className='w-20 h-20 mx-auto mb-3'>
           <AvatarImage src={accountUser?.avatar} />
-          <AvatarFallback className='text-xl bg-blue-100 text-blue-600'>
+          <AvatarFallback className='text-xl bg-[#E8EDF5] text-[#1E40AF]'>
             {(accountUser?.firstName || 'U').charAt(0)}
             {(accountUser?.lastName || 'N').charAt(0)}
           </AvatarFallback>
@@ -181,7 +181,7 @@ export function AccountLayout({ children, breadcrumbItems = [] }: AccountLayoutP
               to={item.href}
               onClick={() => setIsMobileMenuOpen(false)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
-                isActive ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                isActive ? 'bg-[#F0F6FF] text-[#0A2463] font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
               }`}
             >
               <Icon className='w-5 h-5' />
@@ -200,7 +200,7 @@ export function AccountLayout({ children, breadcrumbItems = [] }: AccountLayoutP
         <div className='grid grid-cols-1 lg:grid-cols-4 gap-6'>
           {/* Desktop Sidebar */}
           <div className='hidden lg:block lg:col-span-1'>
-            <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6 sticky top-6'>
+            <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-6 sticky top-6'>
               <SidebarContent />
             </div>
           </div>
@@ -209,7 +209,7 @@ export function AccountLayout({ children, breadcrumbItems = [] }: AccountLayoutP
           <div className='lg:hidden mb-4'>
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
-                <Button variant='outline' className='border-blue-200'>
+                <Button variant='outline' className='border-[#BFDBFE]'>
                   <Menu className='w-4 h-4 mr-2' />
                   Menu tài khoản
                 </Button>
@@ -227,7 +227,7 @@ export function AccountLayout({ children, breadcrumbItems = [] }: AccountLayoutP
 
           {/* Main Content */}
           <div className='lg:col-span-3'>
-            <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
+            <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-6'>
               {children}
             </div>
           </div>

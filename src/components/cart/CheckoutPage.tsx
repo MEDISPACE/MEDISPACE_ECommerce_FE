@@ -450,11 +450,11 @@ export function CheckoutPage() {
       <div className='bg-white border-b border-gray-200'>
         <div className='max-w-7xl mx-auto px-4 py-4'>
           <nav className='flex items-center space-x-2 text-sm text-gray-600'>
-            <Link to='/cart' className='hover:text-blue-600'>
+            <Link to='/cart' className='hover:text-[#1E40AF]'>
               Giỏ hàng
             </Link>
             <ChevronRight className='w-4 h-4' />
-            <span className='text-blue-600 font-medium'>Thanh toán</span>
+            <span className='text-[#1E40AF] font-medium'>Thanh toán</span>
           </nav>
         </div>
       </div>
@@ -463,15 +463,15 @@ export function CheckoutPage() {
       <div className='bg-white border-b border-gray-200'>
         <div className='max-w-7xl mx-auto px-4 py-4'>
           <div className='flex items-center justify-center gap-2'>
-            <Link to='/cart' className='flex items-center gap-2 text-blue-600'>
-              <div className='w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-medium'>
+            <Link to='/cart' className='flex items-center gap-2 text-[#1E40AF]'>
+              <div className='w-8 h-8 bg-[#0A2463] text-white rounded-full flex items-center justify-center text-sm font-medium'>
                 ✓
               </div>
               <span>Giỏ hàng</span>
             </Link>
             <ChevronRight className='w-4 h-4 text-gray-400' />
-            <div className='flex items-center gap-2 text-blue-600'>
-              <div className='w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-medium'>
+            <div className='flex items-center gap-2 text-[#1E40AF]'>
+              <div className='w-8 h-8 bg-[#0A2463] text-white rounded-full flex items-center justify-center text-sm font-medium'>
                 2
               </div>
               <span className='font-medium'>Thanh toán</span>
@@ -519,7 +519,7 @@ export function CheckoutPage() {
               <CardContent className='space-y-4'>
                 {loading ? (
                   <div className='text-center py-4'>
-                    <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto'></div>
+                    <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-[#1E40AF] mx-auto'></div>
                     <p className='mt-2 text-sm text-gray-600'>Đang tải thông tin...</p>
                   </div>
                 ) : addresses && addresses.length > 0 ? (
@@ -532,13 +532,13 @@ export function CheckoutPage() {
                             id={address.id || `address-${index}`}
                           />
                           <Label htmlFor={address.id || `address-${index}`} className='flex-1 cursor-pointer'>
-                            <div className='p-3 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors'>
+                            <div className='p-3 border border-gray-200 rounded-lg hover:border-[#BFDBFE] transition-colors'>
                               <div className='flex items-center gap-2 mb-1'>
                                 <span className='font-medium'>{address.name}</span>
                                 <span className='text-gray-400'>|</span>
                                 <span className='text-gray-600'>{address.phone}</span>
                                 {address.isDefault && (
-                                  <Badge variant='secondary' className='bg-blue-100 text-blue-700'>
+                                  <Badge variant='secondary' className='bg-[#E8EDF5] text-[#0A2463]'>
                                     Địa chỉ mặc định
                                   </Badge>
                                 )}
@@ -555,7 +555,7 @@ export function CheckoutPage() {
                     <Button
                       variant='outline'
                       onClick={() => setUseNewAddress(true)}
-                      className='w-full border-gray-200 text-blue-600'
+                      className='w-full border-gray-200 text-[#1E40AF]'
                     >
                       <Plus className='w-4 h-4 mr-2' />
                       Giao đến địa chỉ khác
@@ -567,7 +567,7 @@ export function CheckoutPage() {
                     <p className='text-gray-500 mb-4'>Thêm địa chỉ để tiếp tục thanh toán</p>
                     <Button
                       onClick={() => setUseNewAddress(true)}
-                      className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'
+                      className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'
                     >
                       <Plus className='w-4 h-4 mr-2' />
                       Thêm địa chỉ
@@ -615,7 +615,7 @@ export function CheckoutPage() {
                       <div key={method.id} className='flex items-center space-x-2'>
                         <RadioGroupItem value={method.id} id={method.id} />
                         <Label htmlFor={method.id} className='flex-1 cursor-pointer'>
-                          <div className='p-3 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors'>
+                          <div className='p-3 border border-gray-200 rounded-lg hover:border-[#BFDBFE] transition-colors'>
                             <div className='flex items-center justify-between mb-1'>
                               <div className='flex items-center gap-2'>
                                 <Clock className='w-4 h-4 text-blue-500' />
@@ -636,7 +636,7 @@ export function CheckoutPage() {
                                     {new Intl.NumberFormat('vi-VN').format(method.price)}đ
                                   </span>
                                 )}
-                                <span className='font-medium text-blue-600'>
+                                <span className='font-medium text-[#1E40AF]'>
                                   {(() => {
                                     // Rule: Orders >= 300k are completely free shipping
                                     const finalPrice = subtotal >= 300000 ? 0 : method.price
@@ -648,7 +648,7 @@ export function CheckoutPage() {
                               </div>
                             </div>
                             <div className='text-sm text-gray-600'>{method.description}</div>
-                            <div className='text-sm text-blue-600 mt-1'>
+                            <div className='text-sm text-[#1E40AF] mt-1'>
                               Dự kiến: {method.estimatedDays !== 'N/A' ? method.estimatedDays : '2-3 ngày'}
                             </div>
                           </div>
@@ -708,7 +708,7 @@ export function CheckoutPage() {
                       <div key={method.id} className='flex items-center space-x-2'>
                         <RadioGroupItem value={method.id} id={method.id} />
                         <Label htmlFor={method.id} className='flex-1 cursor-pointer'>
-                          <div className='p-3 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors'>
+                          <div className='p-3 border border-gray-200 rounded-lg hover:border-[#BFDBFE] transition-colors'>
                             <div className='flex items-center gap-3'>
                               <span className='text-2xl'>{method.icon}</span>
                               <div>
@@ -735,7 +735,7 @@ export function CheckoutPage() {
                   placeholder='Ghi chú cho đơn hàng (tùy chọn)'
                   value={orderNotes}
                   onChange={(e) => setOrderNotes(e.target.value)}
-                  className='border-gray-200 focus:border-blue-500'
+                  className='border-gray-200 focus:border-[#1E40AF]'
                   rows={3}
                 />
               </CardContent>
@@ -769,7 +769,7 @@ export function CheckoutPage() {
                           </div>
                         </div>
                         <div className='text-right'>
-                          <div className='text-sm font-medium text-blue-600'>
+                          <div className='text-sm font-medium text-[#1E40AF]'>
                             {new Intl.NumberFormat('vi-VN').format(item.totalPrice)}đ
                           </div>
                           {(item as any).originalUnitPrice && (item as any).originalUnitPrice > item.unitPrice && (
@@ -783,7 +783,7 @@ export function CheckoutPage() {
                   </div>
 
                   <div className='text-center'>
-                    <Link to='/cart' className='text-blue-600 hover:underline text-sm'>
+                    <Link to='/cart' className='text-[#1E40AF] hover:underline text-sm'>
                       Sửa giỏ hàng
                     </Link>
                   </div>
@@ -819,7 +819,7 @@ export function CheckoutPage() {
                           <Sparkles className='w-3.5 h-3.5 text-blue-500' />
                           Điểm thưởng
                         </span>
-                        <span className='text-blue-600'>-{new Intl.NumberFormat('vi-VN').format(pointsDiscount)}đ</span>
+                        <span className='text-[#1E40AF]'>-{new Intl.NumberFormat('vi-VN').format(pointsDiscount)}đ</span>
                       </div>
                     )}
                   </div>
@@ -859,7 +859,7 @@ export function CheckoutPage() {
 
                   <div className='flex justify-between text-lg font-bold'>
                     <span>Tổng cộng</span>
-                    <span className='text-blue-600'>{new Intl.NumberFormat('vi-VN').format(total)}đ</span>
+                    <span className='text-[#1E40AF]'>{new Intl.NumberFormat('vi-VN').format(total)}đ</span>
                   </div>
                 </CardContent>
               </Card>
@@ -877,11 +877,11 @@ export function CheckoutPage() {
                     <Label htmlFor='agree-terms' className='text-sm leading-relaxed flex-1 cursor-pointer'>
                       <span>
                         Tôi đồng ý với{' '}
-                        <Link to='/terms' className='text-blue-600 hover:underline'>
+                        <Link to='/terms' className='text-[#1E40AF] hover:underline'>
                           điều khoản sử dụng
                         </Link>{' '}
                         và{' '}
-                        <Link to='/privacy' className='text-blue-600 hover:underline'>
+                        <Link to='/privacy' className='text-[#1E40AF] hover:underline'>
                           chính sách bảo mật
                         </Link>{' '}
                         của MediSpace
@@ -892,7 +892,7 @@ export function CheckoutPage() {
                   <Button
                     onClick={handlePlaceOrder}
                     disabled={!agreeToTerms || isProcessing || (requiresPrescription && !selectedPrescriptionId)}
-                    className='w-full text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 h-12 text-lg font-semibold'
+                    className='w-full text-white bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] h-12 text-lg font-semibold'
                   >
                     {isProcessing ? (
                       <div className='flex items-center gap-2'>

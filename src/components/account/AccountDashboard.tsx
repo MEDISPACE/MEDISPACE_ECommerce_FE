@@ -151,21 +151,21 @@ export function AccountDashboard() {
 
       {/* Stats Cards */}
       <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-        <Card className='border-blue-100'>
+        <Card className='border-[#E8EDF5]'>
           <CardContent className='p-6'>
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-sm text-gray-600'>Đơn hàng</p>
-                <p className='text-2xl font-bold text-blue-600'>{getOrderCount()}</p>
+                <p className='text-2xl font-bold text-[#1E40AF]'>{getOrderCount()}</p>
               </div>
-              <div className='w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center'>
-                <Package className='w-6 h-6 text-blue-600' />
+              <div className='w-12 h-12 bg-[#E8EDF5] rounded-lg flex items-center justify-center'>
+                <Package className='w-6 h-6 text-[#1E40AF]' />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className='border-blue-100'>
+        <Card className='border-[#E8EDF5]'>
           <CardContent className='p-6'>
             <div className='flex items-center justify-between'>
               <div>
@@ -181,7 +181,7 @@ export function AccountDashboard() {
           </CardContent>
         </Card>
 
-        <Card className='border-blue-100'>
+        <Card className='border-[#E8EDF5]'>
           <CardContent className='p-6'>
             <div className='flex items-center justify-between'>
               <div>
@@ -197,39 +197,39 @@ export function AccountDashboard() {
       </div>
 
       {/* Quick Actions */}
-      <Card className='border-blue-100'>
+      <Card className='border-[#E8EDF5]'>
         <CardHeader>
           <CardTitle className='text-blue-800'>Thao tác nhanh</CardTitle>
         </CardHeader>
         <CardContent>
           <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
             <Link to='/account/orders'>
-              <Button variant='outline' className='w-full h-20 flex-col gap-2 border-blue-200 hover:bg-blue-50'>
-                <Package className='w-6 h-6 text-blue-600' />
+              <Button variant='outline' className='w-full h-20 flex-col gap-2 border-[#BFDBFE] hover:bg-[#F0F6FF]'>
+                <Package className='w-6 h-6 text-[#1E40AF]' />
                 <span className='text-sm'>Đơn hàng</span>
                 <span className='text-xs text-gray-500'>Xem đơn hàng gần đây</span>
               </Button>
             </Link>
 
             <Link to='/upload-prescription'>
-              <Button variant='outline' className='w-full h-20 flex-col gap-2 border-blue-200 hover:bg-blue-50'>
-                <FileText className='w-6 h-6 text-blue-600' />
+              <Button variant='outline' className='w-full h-20 flex-col gap-2 border-[#BFDBFE] hover:bg-[#F0F6FF]'>
+                <FileText className='w-6 h-6 text-[#1E40AF]' />
                 <span className='text-sm'>Đơn thuốc</span>
                 <span className='text-xs text-gray-500'>Upload mới, Tư vấn DS</span>
               </Button>
             </Link>
 
             <Link to='/products'>
-              <Button variant='outline' className='w-full h-20 flex-col gap-2 border-blue-200 hover:bg-blue-50'>
-                <Search className='w-6 h-6 text-blue-600' />
+              <Button variant='outline' className='w-full h-20 flex-col gap-2 border-[#BFDBFE] hover:bg-[#F0F6FF]'>
+                <Search className='w-6 h-6 text-[#1E40AF]' />
                 <span className='text-sm'>Tìm kiếm</span>
                 <span className='text-xs text-gray-500'>Thuốc, TPCN, Dược phẩm</span>
               </Button>
             </Link>
 
             <Link to='/account/loyalty'>
-              <Button variant='outline' className='w-full h-20 flex-col gap-2 border-blue-200 hover:bg-blue-50'>
-                <Gift className='w-6 h-6 text-blue-600' />
+              <Button variant='outline' className='w-full h-20 flex-col gap-2 border-[#BFDBFE] hover:bg-[#F0F6FF]'>
+                <Gift className='w-6 h-6 text-[#1E40AF]' />
                 <span className='text-sm'>Khuyến mãi</span>
                 <span className='text-xs text-gray-500'>Ưu đãi riêng cho bạn</span>
               </Button>
@@ -241,7 +241,7 @@ export function AccountDashboard() {
       {/* Recent Orders & Health Reminders */}
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
         {/* Recent Orders */}
-        <Card className='border-blue-100'>
+        <Card className='border-[#E8EDF5]'>
           <CardHeader>
             <div className='flex items-center justify-between'>
               <CardTitle className='text-blue-800'>Đơn hàng gần đây</CardTitle>
@@ -270,7 +270,7 @@ export function AccountDashboard() {
         </Card>
 
         {/* Health Reminders & Notifications */}
-        <Card className='border-blue-100'>
+        <Card className='border-[#E8EDF5]'>
           <CardHeader>
             <div className='flex items-center justify-between'>
               <CardTitle className='text-blue-800'>Thông báo & Nhắc nhở</CardTitle>
@@ -287,12 +287,12 @@ export function AccountDashboard() {
           <CardContent className='space-y-4'>
             {/* Health Reminders */}
             <div className='space-y-3'>
-              <div className='bg-blue-50 border border-blue-200 rounded-lg p-4'>
+              <div className='bg-[#F0F6FF] border border-[#BFDBFE] rounded-lg p-4'>
                 <div className='flex items-start gap-3'>
-                  <div className='w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center'>💊</div>
+                  <div className='w-8 h-8 bg-[#E8EDF5] rounded-full flex items-center justify-center'>💊</div>
                   <div className='flex-1'>
                     <h4 className='font-medium text-blue-800'>Nhắc nhở uống thuốc</h4>
-                    <p className='text-sm text-blue-600'>Amoxicillin - Uống 2 viên sau bữa ăn sáng</p>
+                    <p className='text-sm text-[#1E40AF]'>Amoxicillin - Uống 2 viên sau bữa ăn sáng</p>
                     <p className='text-xs text-blue-500 mt-1'>
                       <Calendar className='w-3 h-3 inline mr-1' />
                       Hôm nay, 8:00 AM
@@ -321,7 +321,7 @@ export function AccountDashboard() {
                 <div
                   key={notification.id}
                   className={`p-3 rounded-lg border ${
-                    notification.isRead ? 'bg-gray-50 border-gray-200' : 'bg-blue-50 border-blue-200'
+                    notification.isRead ? 'bg-gray-50 border-gray-200' : 'bg-[#F0F6FF] border-[#BFDBFE]'
                   }`}
                 >
                   <div className='flex items-start gap-2'>

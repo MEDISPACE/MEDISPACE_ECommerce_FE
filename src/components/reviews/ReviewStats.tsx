@@ -12,7 +12,7 @@ interface ReviewStatsProps {
 export function ReviewStats({ stats, loading }: ReviewStatsProps) {
   if (loading || !stats) {
     return (
-      <Card className='border-blue-200 shadow-sm'>
+      <Card className='border-[#BFDBFE] shadow-sm'>
         <CardContent className='p-6'>
           <div className='animate-pulse space-y-4'>
             <div className='h-20 bg-gray-200 rounded'></div>
@@ -29,7 +29,7 @@ export function ReviewStats({ stats, loading }: ReviewStatsProps) {
 
   if (stats.total === 0) {
     return (
-      <Card className='border-blue-200 shadow-sm'>
+      <Card className='border-[#BFDBFE] shadow-sm'>
         <CardContent className='p-6 text-center'>
           <Star className='w-12 h-12 mx-auto text-gray-300 mb-2' />
           <p className='text-gray-500'>Chưa có đánh giá</p>
@@ -39,7 +39,7 @@ export function ReviewStats({ stats, loading }: ReviewStatsProps) {
   }
 
   return (
-    <Card className='border-blue-200 shadow-sm'>
+    <Card className='border-[#BFDBFE] shadow-sm'>
       <CardContent className='p-6'>
         {/* Average Rating */}
         <div className='text-center mb-6'>

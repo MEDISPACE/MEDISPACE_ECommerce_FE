@@ -68,7 +68,7 @@ export function PharmacistInfo({
   return (
     <div className={`space-y-4 ${className}`}>
       {/* Pharmacist Profile */}
-      <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+      <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
         <div className='p-6'>
           <h3 className='mb-4 text-blue-900 flex items-center'>👨‍⚕️ THÔNG TIN DƯỢC SĨ</h3>
 
@@ -76,7 +76,7 @@ export function PharmacistInfo({
             <div className='relative'>
               <Avatar className='w-16 h-16'>
                 <AvatarImage src={pharmacist.avatar} />
-                <AvatarFallback className='bg-blue-100 text-blue-600 text-lg'>👨‍⚕️</AvatarFallback>
+                <AvatarFallback className='bg-[#E8EDF5] text-[#1E40AF] text-lg'>👨‍⚕️</AvatarFallback>
               </Avatar>
               <div
                 className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${pharmacist.isOnline ? 'bg-emerald-500' : 'bg-gray-400'}`}
@@ -155,22 +155,22 @@ export function PharmacistInfo({
 
       {/* Related Prescriptions */}
       {prescriptions.length > 0 && (
-        <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+        <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
           <div className='p-6'>
             <h3 className='mb-4 text-blue-900 flex items-center'>📋 ĐƠN THUỐC LIÊN QUAN</h3>
 
             <div className='space-y-3'>
               {prescriptions.map((prescription) => (
-                <div key={prescription.id} className='p-3 bg-blue-50 rounded-lg'>
+                <div key={prescription.id} className='p-3 bg-[#F0F6FF] rounded-lg'>
                   <div className='flex items-center justify-between mb-2'>
                     <span className='font-medium text-blue-900'>#{prescription.id}</span>
                     {getStatusBadge(prescription.status, 'prescription')}
                   </div>
-                  <div className='text-sm text-blue-700'>
+                  <div className='text-sm text-[#0A2463]'>
                     <div>Bác sĩ: {prescription.doctor}</div>
                     <div>Ngày: {prescription.date}</div>
                   </div>
-                  <Button size='sm' variant='outline' className='mt-2 border-blue-200 text-blue-700 hover:bg-blue-50'>
+                  <Button size='sm' variant='outline' className='mt-2 border-[#BFDBFE] text-[#0A2463] hover:bg-[#F0F6FF]'>
                     Xem chi tiết
                   </Button>
                 </div>
@@ -182,7 +182,7 @@ export function PharmacistInfo({
 
       {/* Related Orders */}
       {orders.length > 0 && (
-        <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+        <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
           <div className='p-6'>
             <h3 className='mb-4 text-blue-900 flex items-center'>🛒 ĐƠN HÀNG ĐÃ TẠO</h3>
 
@@ -208,7 +208,7 @@ export function PharmacistInfo({
       )}
 
       {/* Quick Actions */}
-      <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+      <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
         <div className='p-6'>
           <h3 className='mb-4 text-blue-900 flex items-center'>🎯 HÀNH ĐỘNG NHANH</h3>
 
@@ -221,7 +221,7 @@ export function PharmacistInfo({
             <Button
               onClick={onEmail}
               variant='outline'
-              className='w-full border-blue-200 text-blue-700 hover:bg-blue-50'
+              className='w-full border-[#BFDBFE] text-[#0A2463] hover:bg-[#F0F6FF]'
             >
               <Mail className='w-4 h-4 mr-2' />
               Gửi email

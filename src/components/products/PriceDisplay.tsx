@@ -48,7 +48,7 @@ export function PriceDisplay({
     <div className={`flex items-center gap-2 ${className}`}>
       <div className='flex flex-col'>
         {/* Sale Price */}
-        <div className={`${sizeClasses[size].sale} font-bold text-blue-700`}>
+        <div className={`${sizeClasses[size].sale} font-bold text-[#0A2463]`}>
           {formatPrice(salePrice)}
           {currency}
           {unit && <span className='text-gray-500 font-normal text-sm ml-1'>/ {unit}</span>}

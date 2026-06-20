@@ -103,7 +103,7 @@ export default function MyReturnRequestsList() {
       {!isLoading && requests.length > 0 && (
         <div className='space-y-4'>
           {requests.map((request: ReturnRequest) => (
-            <Card key={request._id} className='hover:shadow-md transition-shadow border-blue-100'>
+            <Card key={request._id} className='hover:shadow-md transition-shadow border-[#E8EDF5]'>
               <CardContent className='pt-6'>
                 <Link to={`/account/returns/${request._id}`} className='block'>
                   <div className='flex items-start justify-between gap-4'>
@@ -138,10 +138,10 @@ export default function MyReturnRequestsList() {
                         </div>
                       </div>
 
-                      <div className='mt-3 pt-3 border-t border-blue-200'>
+                      <div className='mt-3 pt-3 border-t border-[#BFDBFE]'>
                         <p className='font-medium'>
                           Số tiền yêu cầu hoàn:{' '}
-                          <span className='text-blue-600'>{request.requestedAmount.toLocaleString()}đ</span>
+                          <span className='text-[#1E40AF]'>{request.requestedAmount.toLocaleString()}đ</span>
                         </p>
                         {request.approvedAmount && (
                           <p className='text-sm text-muted-foreground'>

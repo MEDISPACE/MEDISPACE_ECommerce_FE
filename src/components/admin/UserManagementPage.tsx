@@ -295,8 +295,8 @@ export function UserManagementPage() {
     const roleStr = ROLE_MAP[role] || 'unknown'
     const colors: Record<string, string> = {
       customer: 'bg-gray-100 text-gray-700',
-      pharmacist: 'bg-blue-100 text-blue-700',
-      admin: 'bg-purple-100 text-purple-700',
+      pharmacist: 'bg-[#E8EDF5] text-[#0A2463]',
+      admin: 'bg-[#E8EDF5] text-[#0A2463]',
     }
     const labels: Record<string, string> = {
       customer: 'Khách hàng',
@@ -329,7 +329,7 @@ export function UserManagementPage() {
       {/* Header */}
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#0066CC] to-[#4A90E2]'>
+          <h1 className='text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#0A2463] to-[#1E40AF]'>
             Quản lý người dùng
           </h1>
           <p className='text-gray-600 mt-2'>Quản lý tất cả người dùng trong hệ thống</p>
@@ -337,7 +337,7 @@ export function UserManagementPage() {
         <div className='flex items-center gap-3'>
           <Button
             variant='outline'
-            className='!border-blue-300 !text-blue-600 hover:!bg-blue-50 !gap-2'
+            className='!border-[#BFDBFE] !text-[#1E40AF] hover:!bg-[#F0F6FF] !gap-2'
             onClick={handleRefresh}
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -357,19 +357,19 @@ export function UserManagementPage() {
       {/* Stats Cards */}
       {stats && (
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4'>
-          <Card className='bg-white backdrop-blur-lg border-blue-100'>
+          <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
             <CardContent className='p-4'>
               <div className='flex items-center justify-between'>
                 <div>
                   <p className='text-xs text-gray-600'>Tổng số</p>
-                  <p className='text-2xl font-semibold text-blue-600'>{stats.total}</p>
+                  <p className='text-2xl font-semibold text-[#1E40AF]'>{stats.total}</p>
                 </div>
                 <Users className='w-8 h-8 text-blue-400' />
               </div>
             </CardContent>
           </Card>
 
-          <Card className='bg-white backdrop-blur-lg border-blue-100'>
+          <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
             <CardContent className='p-4'>
               <div className='flex items-center justify-between'>
                 <div>
@@ -381,31 +381,31 @@ export function UserManagementPage() {
             </CardContent>
           </Card>
 
-          <Card className='bg-white backdrop-blur-lg border-blue-100'>
+          <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
             <CardContent className='p-4'>
               <div className='flex items-center justify-between'>
                 <div>
                   <p className='text-xs text-gray-600'>Dược sĩ</p>
-                  <p className='text-2xl font-semibold text-blue-600'>{stats.pharmacists}</p>
+                  <p className='text-2xl font-semibold text-[#1E40AF]'>{stats.pharmacists}</p>
                 </div>
                 <Stethoscope className='w-8 h-8 text-blue-400' />
               </div>
             </CardContent>
           </Card>
 
-          <Card className='bg-white backdrop-blur-lg border-blue-100'>
+          <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
             <CardContent className='p-4'>
               <div className='flex items-center justify-between'>
                 <div>
                   <p className='text-xs text-gray-600'>Admin</p>
-                  <p className='text-2xl font-semibold text-[#0066CC]'>{stats.admins}</p>
+                  <p className='text-2xl font-semibold text-[#0A2463]'>{stats.admins}</p>
                 </div>
-                <Shield className='w-8 h-8 text-[#4A90E2]' />
+                <Shield className='w-8 h-8 text-[#1E40AF]' />
               </div>
             </CardContent>
           </Card>
 
-          <Card className='bg-white backdrop-blur-lg border-blue-100'>
+          <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
             <CardContent className='p-4'>
               <div className='flex items-center justify-between'>
                 <div>
@@ -417,12 +417,12 @@ export function UserManagementPage() {
             </CardContent>
           </Card>
 
-          <Card className='bg-white backdrop-blur-lg border-blue-100'>
+          <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
             <CardContent className='p-4'>
               <div className='flex items-center justify-between'>
                 <div>
                   <p className='text-xs text-gray-600'>Đã xác thực</p>
-                  <p className='text-2xl font-semibold text-blue-600'>{stats.verified}</p>
+                  <p className='text-2xl font-semibold text-[#1E40AF]'>{stats.verified}</p>
                 </div>
                 <CheckCircle className='w-8 h-8 text-blue-400' />
               </div>
@@ -432,7 +432,7 @@ export function UserManagementPage() {
       )}
 
       {/* Filters & Search */}
-      <Card className='bg-white backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
         <CardContent className='p-6'>
           <div className='flex flex-col md:flex-row gap-4'>
             <div className='flex-1 relative'>
@@ -441,11 +441,11 @@ export function UserManagementPage() {
                 placeholder='Tìm kiếm theo tên, email, số điện thoại...'
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className='pl-10 border-2 border-blue-200 focus:border-blue-500'
+                className='pl-10 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
               />
             </div>
             <Select value={filterRole} onValueChange={setFilterRole}>
-              <SelectTrigger className='w-48 border-2 border-blue-200'>
+              <SelectTrigger className='w-48 border-2 border-[#BFDBFE]'>
                 <SelectValue placeholder='Vai trò' />
               </SelectTrigger>
               <SelectContent>
@@ -456,7 +456,7 @@ export function UserManagementPage() {
               </SelectContent>
             </Select>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className='w-48 border-2 border-blue-200'>
+              <SelectTrigger className='w-48 border-2 border-[#BFDBFE]'>
                 <SelectValue placeholder='Trạng thái' />
               </SelectTrigger>
               <SelectContent>
@@ -471,17 +471,17 @@ export function UserManagementPage() {
       </Card>
 
       {/* Users Table */}
-      <Card className='bg-white backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
-            <Users className='w-5 h-5 text-blue-600' />
+            <Users className='w-5 h-5 text-[#1E40AF]' />
             Danh sách người dùng ({pagination.total})
           </CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <div className='flex justify-center items-center h-64'>
-              <RefreshCw className='w-8 h-8 animate-spin text-blue-600' />
+              <RefreshCw className='w-8 h-8 animate-spin text-[#1E40AF]' />
             </div>
           ) : error ? (
             <div className='text-center text-red-600 py-8'>Không thể tải danh sách người dùng. Vui lòng thử lại.</div>
@@ -489,7 +489,7 @@ export function UserManagementPage() {
             <>
               <div className='overflow-x-auto'>
                 <Table>
-                  <TableHeader className='border-b-2 border-blue-300'>
+                  <TableHeader className='border-b-2 border-[#BFDBFE]'>
                     <TableRow>
                       <TableHead>Người dùng</TableHead>
                       <TableHead>Liên hệ</TableHead>
@@ -501,11 +501,11 @@ export function UserManagementPage() {
                   </TableHeader>
                   <TableBody>
                     {users.map((user: UserData) => (
-                      <TableRow key={user._id} className='border-b border-blue-200 hover:bg-blue-50/30'>
+                      <TableRow key={user._id} className='border-b border-[#BFDBFE] hover:bg-[#F0F6FF]/30'>
                         <TableCell>
                           <div className='flex items-center gap-3'>
                             <Avatar>
-                              <AvatarFallback className='bg-blue-100 text-blue-700'>
+                              <AvatarFallback className='bg-[#E8EDF5] text-[#0A2463]'>
                                 {user.firstName?.charAt(0) || 'U'}
                               </AvatarFallback>
                             </Avatar>
@@ -537,18 +537,18 @@ export function UserManagementPage() {
                                 <MoreVertical className='w-4 h-4' />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align='end' className='bg-white shadow-lg border-2 border-blue-200'>
-                              <DropdownMenuLabel className='text-blue-700'>Thao tác</DropdownMenuLabel>
+                            <DropdownMenuContent align='end' className='bg-white shadow-lg border-2 border-[#BFDBFE]'>
+                              <DropdownMenuLabel className='text-[#0A2463]'>Thao tác</DropdownMenuLabel>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
-                                className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
+                                className='hover:!bg-[#E8EDF5] hover:!border-[#E8EDF5] hover:!text-[#0A2463]'
                                 onClick={() => handleViewDetails(user)}
                               >
                                 <Eye className='w-4 h-4 mr-2' />
                                 Xem chi tiết
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
+                                className='hover:!bg-[#E8EDF5] hover:!border-[#E8EDF5] hover:!text-[#0A2463]'
                                 onClick={() => handleEdit(user)}
                               >
                                 <Edit className='w-4 h-4 mr-2' />
@@ -556,21 +556,21 @@ export function UserManagementPage() {
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
-                                className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
+                                className='hover:!bg-[#E8EDF5] hover:!border-[#E8EDF5] hover:!text-[#0A2463]'
                                 onClick={() => handleVerifyEmail(user._id)}
                               >
                                 <CheckCircle className='w-4 h-4 mr-2' />
                                 Xác thực email
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
+                                className='hover:!bg-[#E8EDF5] hover:!border-[#E8EDF5] hover:!text-[#0A2463]'
                                 onClick={() => handleResetPassword(user._id)}
                               >
                                 <RefreshCw className='w-4 h-4 mr-2' />
                                 Reset mật khẩu
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
+                                className='hover:!bg-[#E8EDF5] hover:!border-[#E8EDF5] hover:!text-[#0A2463]'
                                 onClick={() => handleToggleBan(user)}
                               >
                                 <Ban className='w-4 h-4 mr-2' />
@@ -595,7 +595,7 @@ export function UserManagementPage() {
 
               {/* Pagination */}
               {pagination.totalPages > 1 && (
-                <div className='flex items-center justify-between mt-4 pt-4 border-t border-blue-300'>
+                <div className='flex items-center justify-between mt-4 pt-4 border-t border-[#BFDBFE]'>
                   <p className='text-sm text-gray-600'>
                     Hiển thị {(page - 1) * limit + 1} - {Math.min(page * limit, pagination.total)} của{' '}
                     {pagination.total} người dùng
@@ -685,7 +685,7 @@ export function UserManagementPage() {
                   value={editFormData.firstName}
                   onChange={(e) => setEditFormData({ ...editFormData, firstName: e.target.value })}
                   placeholder='Nhập họ'
-                  className='border-2 border-blue-200'
+                  className='border-2 border-[#BFDBFE]'
                 />
               </div>
               <div className='space-y-2'>
@@ -694,7 +694,7 @@ export function UserManagementPage() {
                   value={editFormData.lastName}
                   onChange={(e) => setEditFormData({ ...editFormData, lastName: e.target.value })}
                   placeholder='Nhập tên'
-                  className='border-2 border-blue-200'
+                  className='border-2 border-[#BFDBFE]'
                 />
               </div>
             </div>
@@ -705,7 +705,7 @@ export function UserManagementPage() {
                 value={editFormData.email}
                 onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
                 placeholder='email@example.com'
-                className='border-2 border-blue-200'
+                className='border-2 border-[#BFDBFE]'
               />
             </div>
             <div className='space-y-2'>
@@ -715,7 +715,7 @@ export function UserManagementPage() {
                 value={editFormData.phoneNumber}
                 onChange={(e) => setEditFormData({ ...editFormData, phoneNumber: e.target.value })}
                 placeholder='0123456789'
-                className='border-2 border-blue-200'
+                className='border-2 border-[#BFDBFE]'
               />
             </div>
             <div className='flex justify-end gap-3 mt-6'>
@@ -724,7 +724,7 @@ export function UserManagementPage() {
               </Button>
               <Button
                 onClick={handleSaveEdit}
-                className='bg-gradient-to-r from-[#0066CC] to-[#4A90E2]'
+                className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF]'
                 disabled={updateMutation.isPending}
               >
                 {updateMutation.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}

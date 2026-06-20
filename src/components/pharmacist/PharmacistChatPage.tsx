@@ -193,9 +193,9 @@ export function PharmacistChatPage() {
     <div>
       <div className='grid grid-cols-1 lg:grid-cols-3 gap-4 h-[calc(100vh-140px)] overflow-hidden'>
         {/* Sidebar – Conversation List */}
-        <div className='lg:col-span-1 bg-white rounded-lg shadow-lg border-2 border-blue-100 flex flex-col h-full overflow-hidden'>
+        <div className='lg:col-span-1 bg-white rounded-lg shadow-lg border-2 border-[#E8EDF5] flex flex-col h-full overflow-hidden'>
           {/* Header */}
-          <div className='p-4 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-cyan-500 flex-shrink-0'>
+          <div className='p-4 border-b border-gray-200 bg-gradient-to-r from-[#0A2463] to-[#1E40AF] flex-shrink-0'>
             <div className='flex items-center justify-between mb-3'>
               <h2 className='text-lg font-semibold text-white flex items-center'>
                 <MessageCircle className='w-5 h-5 mr-2' />
@@ -215,7 +215,7 @@ export function PharmacistChatPage() {
               <button
                 onClick={() => setActiveTab('pending')}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-sm font-medium transition-all ${
-                  activeTab === 'pending' ? 'bg-white text-blue-600 shadow-sm' : 'text-white/80 hover:text-white'
+                  activeTab === 'pending' ? 'bg-white text-[#1E40AF] shadow-sm' : 'text-white/80 hover:text-white'
                 }`}
               >
                 <Inbox className='w-3.5 h-3.5' />
@@ -229,7 +229,7 @@ export function PharmacistChatPage() {
               <button
                 onClick={() => setActiveTab('mine')}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-sm font-medium transition-all ${
-                  activeTab === 'mine' ? 'bg-white text-blue-600 shadow-sm' : 'text-white/80 hover:text-white'
+                  activeTab === 'mine' ? 'bg-white text-[#1E40AF] shadow-sm' : 'text-white/80 hover:text-white'
                 }`}
               >
                 <User className='w-3.5 h-3.5' />
@@ -258,13 +258,13 @@ export function PharmacistChatPage() {
             {isLoading ? (
               <div className='flex items-center justify-center h-full'>
                 <div className='text-center'>
-                  <Loader2 className='w-8 h-8 animate-spin text-blue-600 mx-auto mb-2' />
+                  <Loader2 className='w-8 h-8 animate-spin text-[#1E40AF] mx-auto mb-2' />
                   <p className='text-gray-600 text-sm'>Đang tải...</p>
                 </div>
               </div>
             ) : filteredConversations.length === 0 ? (
               <div className='flex flex-col items-center justify-center h-full text-center p-6'>
-                <div className='w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center mb-3'>
+                <div className='w-14 h-14 bg-[#F0F6FF] rounded-full flex items-center justify-center mb-3'>
                   {activeTab === 'pending' ? (
                     <Inbox className='w-7 h-7 text-blue-400' />
                   ) : (
@@ -283,12 +283,12 @@ export function PharmacistChatPage() {
                 {filteredConversations.map((conv) => (
                   <div
                     key={conv._id}
-                    className={`p-3 hover:bg-blue-50 transition-colors ${
-                      selectedConversation?._id === conv._id ? 'bg-blue-50 border-l-4 border-blue-600' : ''
+                    className={`p-3 hover:bg-[#F0F6FF] transition-colors ${
+                      selectedConversation?._id === conv._id ? 'bg-[#F0F6FF] border-l-4 border-[#1E40AF]' : ''
                     }`}
                   >
                     <div className='flex items-center gap-2 mb-1'>
-                      <div className='w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0'>
+                      <div className='w-8 h-8 bg-gradient-to-r from-[#0A2463] to-[#1E40AF] rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0'>
                         {conv.customer?.firstName?.charAt(0) || 'K'}
                       </div>
                       <div className='flex-1 min-w-0'>
@@ -309,7 +309,7 @@ export function PharmacistChatPage() {
                         size='sm'
                         variant='outline'
                         onClick={() => handleSelectConversation(conv)}
-                        className='flex-1 h-7 text-xs border-blue-200 text-blue-600'
+                        className='flex-1 h-7 text-xs border-[#BFDBFE] text-[#1E40AF]'
                       >
                         Xem
                       </Button>
@@ -317,7 +317,7 @@ export function PharmacistChatPage() {
                         size='sm'
                         onClick={() => handleAssign(conv._id)}
                         disabled={isAssigning}
-                        className='flex-1 h-7 text-xs bg-gradient-to-r from-blue-600 to-cyan-500 text-white'
+                        className='flex-1 h-7 text-xs bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white'
                       >
                         {isAssigning ? <Loader2 className='w-3 h-3 animate-spin' /> : '✓ Nhận tư vấn'}
                       </Button>
@@ -341,10 +341,10 @@ export function PharmacistChatPage() {
         {/* Chat Window */}
         <div className='lg:col-span-2 h-full overflow-hidden'>
           {selectedConversation ? (
-            <div className='h-full bg-white rounded-lg shadow-lg border-2 border-blue-100 flex flex-col overflow-hidden'>
+            <div className='h-full bg-white rounded-lg shadow-lg border-2 border-[#E8EDF5] flex flex-col overflow-hidden'>
               <div className='p-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between'>
                 <div className='flex items-center gap-3'>
-                  <div className='w-10 h-10 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full flex items-center justify-center text-white font-semibold'>
+                  <div className='w-10 h-10 bg-gradient-to-r from-[#0A2463] to-[#1E40AF] rounded-full flex items-center justify-center text-white font-semibold'>
                     {selectedConversation.customer?.firstName?.charAt(0) || 'K'}
                   </div>
                   <div>
@@ -360,7 +360,7 @@ export function PharmacistChatPage() {
                     size='sm'
                     onClick={() => handleAssign(selectedConversation._id)}
                     disabled={isAssigning}
-                    className='bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-xs'
+                    className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white text-xs'
                   >
                     {isAssigning ? <Loader2 className='w-3 h-3 animate-spin mr-1' /> : null}
                     Nhận tư vấn này
@@ -382,10 +382,10 @@ export function PharmacistChatPage() {
               </div>
             </div>
           ) : (
-            <div className='h-full bg-white rounded-lg shadow-lg border-2 border-blue-100 flex items-center justify-center'>
+            <div className='h-full bg-white rounded-lg shadow-lg border-2 border-[#E8EDF5] flex items-center justify-center'>
               <div className='text-center'>
-                <div className='w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4'>
-                  <MessageCircle className='w-10 h-10 text-blue-600' />
+                <div className='w-20 h-20 bg-[#E8EDF5] rounded-full flex items-center justify-center mx-auto mb-4'>
+                  <MessageCircle className='w-10 h-10 text-[#1E40AF]' />
                 </div>
                 <h3 className='text-xl font-medium text-gray-900 mb-2'>Chọn một cuộc trò chuyện</h3>
                 <p className='text-gray-600 text-sm'>

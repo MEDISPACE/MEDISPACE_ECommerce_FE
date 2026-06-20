@@ -35,17 +35,17 @@ export function PharmacistReportsPage() {
   return (
     <div className='space-y-6'>
       {/* Header */}
-      <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
+      <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-6'>
         <div className='flex flex-col md:flex-row md:items-center justify-between gap-4'>
           <div>
-            <h1 className='bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 bg-clip-text text-transparent'>
+            <h1 className='bg-gradient-to-r from-[#0A2463] via-[#1E40AF] to-[#3B82F6] bg-clip-text text-transparent'>
               Báo cáo công việc
             </h1>
             <p className='text-gray-600 mt-1'>Theo dõi hiệu suất và thống kê công việc của bạn</p>
           </div>
           <div className='flex gap-2'>
             <Select value={timeRange} onValueChange={setTimeRange}>
-              <SelectTrigger className='w-32 border-2 border-blue-200'>
+              <SelectTrigger className='w-32 border-2 border-[#BFDBFE]'>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -65,14 +65,14 @@ export function PharmacistReportsPage() {
 
       {/* KPI Cards */}
       <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4'>
-        <Card className='bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200'>
+        <Card className='bg-gradient-to-br from-blue-50 to-blue-100 border-[#BFDBFE]'>
           <CardContent className='p-4'>
             <div className='flex items-center gap-2 mb-2'>
-              <FileText className='w-5 h-5 text-blue-600' />
+              <FileText className='w-5 h-5 text-[#1E40AF]' />
               <span className='text-sm text-blue-800'>Đơn thuốc</span>
             </div>
             <p className='text-2xl text-blue-900'>{stats.prescriptionsProcessed}</p>
-            <p className='text-xs text-blue-600 mt-1'>+12% so với tuần trước</p>
+            <p className='text-xs text-[#1E40AF] mt-1'>+12% so với tuần trước</p>
           </CardContent>
         </Card>
 
@@ -87,14 +87,14 @@ export function PharmacistReportsPage() {
           </CardContent>
         </Card>
 
-        <Card className='bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200'>
+        <Card className='bg-gradient-to-br from-[#F8FAFB] to-[#F0F6FF] border-[#BFDBFE]'>
           <CardContent className='p-4'>
             <div className='flex items-center gap-2 mb-2'>
-              <MessageSquare className='w-5 h-5 text-purple-600' />
-              <span className='text-sm text-purple-800'>Tư vấn</span>
+              <MessageSquare className='w-5 h-5 text-[#1E40AF]' />
+              <span className='text-sm text-[#0A2463]'>Tư vấn</span>
             </div>
-            <p className='text-2xl text-purple-900'>{stats.consultations}</p>
-            <p className='text-xs text-purple-600 mt-1'>+5% so với tuần trước</p>
+            <p className='text-2xl text-[#0A2463]'>{stats.consultations}</p>
+            <p className='text-xs text-[#1E40AF] mt-1'>+5% so với tuần trước</p>
           </CardContent>
         </Card>
 
@@ -120,22 +120,22 @@ export function PharmacistReportsPage() {
           </CardContent>
         </Card>
 
-        <Card className='bg-gradient-to-br from-cyan-50 to-cyan-100 border-cyan-200'>
+        <Card className='bg-gradient-to-br from-[#F0F6FF] to-[#E8EDF5] border-[#BFDBFE]'>
           <CardContent className='p-4'>
             <div className='flex items-center gap-2 mb-2'>
-              <TrendingUp className='w-5 h-5 text-cyan-600' />
-              <span className='text-sm text-cyan-800'>Doanh thu</span>
+              <TrendingUp className='w-5 h-5 text-[#1E40AF]' />
+              <span className='text-sm text-[#0A2463]'>Doanh thu</span>
             </div>
-            <p className='text-xl text-cyan-900'>{(stats.revenue / 1000000).toFixed(1)}M</p>
-            <p className='text-xs text-cyan-600 mt-1'>+15% so với tuần trước</p>
+            <p className='text-xl text-[#0A2463]'>{(stats.revenue / 1000000).toFixed(1)}M</p>
+            <p className='text-xs text-[#1E40AF] mt-1'>+15% so với tuần trước</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Charts */}
       <Tabs defaultValue='daily' className='space-y-4'>
-        <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-6'>
-          <TabsList className='grid w-full grid-cols-3 !bg-blue-50 p-1.5 rounded-lg h-auto'>
+        <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-6'>
+          <TabsList className='grid w-full grid-cols-3 !bg-[#F0F6FF] p-1.5 rounded-lg h-auto'>
             <TabsTrigger
               value='daily'
               className='!border-0 data-[state=active]:!bg-white data-[state=active]:!text-gray-900 data-[state=active]:shadow-md !text-gray-700 hover:!text-gray-900 !transition-all !focus-visible:ring-0 !focus-visible:ring-offset-0 !focus-visible:outline-0 rounded-md px-4 py-2.5'
@@ -168,7 +168,7 @@ export function PharmacistReportsPage() {
                   </div>
                   <div className='flex gap-1 h-8'>
                     <div
-                      className='bg-blue-500 rounded-l'
+                      className='bg-[#1E40AF] rounded-l'
                       style={{ width: `${(day.prescriptions / 15) * 100}%` }}
                       title={`Đơn thuốc: ${day.prescriptions}`}
                     />
@@ -178,7 +178,7 @@ export function PharmacistReportsPage() {
                       title={`Đơn hàng: ${day.orders}`}
                     />
                     <div
-                      className='bg-purple-500 rounded-r'
+                      className='bg-[#1E40AF] rounded-r'
                       style={{ width: `${(day.consultations / 15) * 100}%` }}
                       title={`Tư vấn: ${day.consultations}`}
                     />
@@ -189,7 +189,7 @@ export function PharmacistReportsPage() {
 
             <div className='flex items-center justify-center gap-6 pt-4 border-t'>
               <div className='flex items-center gap-2'>
-                <div className='w-4 h-4 bg-blue-500 rounded' />
+                <div className='w-4 h-4 bg-[#1E40AF] rounded' />
                 <span className='text-sm text-gray-700'>Đơn thuốc</span>
               </div>
               <div className='flex items-center gap-2'>
@@ -197,7 +197,7 @@ export function PharmacistReportsPage() {
                 <span className='text-sm text-gray-700'>Đơn hàng</span>
               </div>
               <div className='flex items-center gap-2'>
-                <div className='w-4 h-4 bg-purple-500 rounded' />
+                <div className='w-4 h-4 bg-[#1E40AF] rounded' />
                 <span className='text-sm text-gray-700'>Tư vấn</span>
               </div>
             </div>
@@ -205,7 +205,7 @@ export function PharmacistReportsPage() {
 
           <TabsContent value='category' className='mt-6'>
             <div className='grid md:grid-cols-2 gap-4'>
-              <Card className='border border-blue-200'>
+              <Card className='border border-[#BFDBFE]'>
                 <CardHeader>
                   <CardTitle className='text-blue-900'>Danh mục thuốc phổ biến</CardTitle>
                 </CardHeader>
@@ -219,11 +219,11 @@ export function PharmacistReportsPage() {
                     <div key={idx}>
                       <div className='flex items-center justify-between mb-1'>
                         <span className='text-sm text-gray-700'>{cat.name}</span>
-                        <span className='text-sm text-blue-600'>{cat.count} đơn</span>
+                        <span className='text-sm text-[#1E40AF]'>{cat.count} đơn</span>
                       </div>
                       <div className='h-2 bg-gray-200 rounded-full overflow-hidden'>
                         <div
-                          className='h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full'
+                          className='h-full bg-gradient-to-r from-[#0A2463] to-[#1E40AF] rounded-full'
                           style={{ width: `${cat.percent}%` }}
                         />
                       </div>
@@ -263,20 +263,20 @@ export function PharmacistReportsPage() {
 
           <TabsContent value='performance' className='mt-6'>
             <div className='grid md:grid-cols-3 gap-4'>
-              <Card className='border border-purple-200'>
+              <Card className='border border-[#BFDBFE]'>
                 <CardContent className='p-6 text-center'>
-                  <BarChart3 className='w-12 h-12 mx-auto text-purple-600 mb-3' />
-                  <h3 className='text-purple-900 mb-2'>Hiệu quả xử lý</h3>
-                  <p className='text-3xl text-purple-600 mb-1'>94%</p>
+                  <BarChart3 className='w-12 h-12 mx-auto text-[#1E40AF] mb-3' />
+                  <h3 className='text-[#0A2463] mb-2'>Hiệu quả xử lý</h3>
+                  <p className='text-3xl text-[#1E40AF] mb-1'>94%</p>
                   <p className='text-sm text-gray-600'>Tỷ lệ hoàn thành đúng hạn</p>
                 </CardContent>
               </Card>
 
-              <Card className='border border-blue-200'>
+              <Card className='border border-[#BFDBFE]'>
                 <CardContent className='p-6 text-center'>
-                  <Clock className='w-12 h-12 mx-auto text-blue-600 mb-3' />
+                  <Clock className='w-12 h-12 mx-auto text-[#1E40AF] mb-3' />
                   <h3 className='text-blue-900 mb-2'>Thời gian phản hồi</h3>
-                  <p className='text-3xl text-blue-600 mb-1'>8 phút</p>
+                  <p className='text-3xl text-[#1E40AF] mb-1'>8 phút</p>
                   <p className='text-sm text-gray-600'>Trung bình mỗi tư vấn</p>
                 </CardContent>
               </Card>
@@ -305,8 +305,8 @@ export function PharmacistReportsPage() {
                     </p>
                   </div>
                 </div>
-                <div className='flex items-start gap-3 p-3 bg-blue-50 rounded-lg'>
-                  <MessageSquare className='w-5 h-5 text-blue-600 mt-0.5' />
+                <div className='flex items-start gap-3 p-3 bg-[#F0F6FF] rounded-lg'>
+                  <MessageSquare className='w-5 h-5 text-[#1E40AF] mt-0.5' />
                   <div>
                     <p className='text-sm text-gray-900 mb-1'>Cải thiện chất lượng tư vấn về thuốc tim mạch</p>
                     <p className='text-xs text-gray-600'>

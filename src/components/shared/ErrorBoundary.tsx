@@ -26,8 +26,8 @@ export class ErrorBoundary extends Component<Props, State> {
   public render() {
     if (this.state.hasError) {
       return (
-        <div className='min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 flex items-center justify-center p-4'>
-          <div className='max-w-md w-full bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 p-8 text-center'>
+        <div className='min-h-screen bg-gradient-to-br from-[#F8FAFB] to-[#F0F6FF] flex items-center justify-center p-4'>
+          <div className='max-w-md w-full bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-8 text-center'>
             <div className='mb-6'>
               <div className='w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4'>
                 <AlertTriangle className='w-8 h-8 text-red-600' />
@@ -46,7 +46,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <div className='space-y-3'>
               <Button
                 onClick={() => this.setState({ hasError: false, error: undefined })}
-                className='w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800'
+                className='w-full bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#071A49]'
               >
                 <RotateCcw className='w-4 h-4 mr-2' />
                 Thử lại

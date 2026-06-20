@@ -80,7 +80,7 @@ export function MainLayout({ children, breadcrumbItems = [], showBreadcrumb = fa
       <main
         className='flex-1'
         style={{
-          backgroundColor: '#eefaff',
+          backgroundColor: '#F0F6FF',
           position: 'relative',
           zIndex: 1,
         }}

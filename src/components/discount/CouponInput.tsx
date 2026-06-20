@@ -257,7 +257,7 @@ export function CouponInput({ subtotal, hasPrescriptionItems = false, items = []
         <Button
           onClick={handleApply}
           disabled={isLoading || !inputCode.trim()}
-          className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-5 shrink-0'
+          className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white px-5 shrink-0'
         >
           {isLoading ? <Loader2 className='w-4 h-4 animate-spin' /> : 'Áp dụng'}
         </Button>
@@ -283,7 +283,7 @@ export function CouponInput({ subtotal, hasPrescriptionItems = false, items = []
           {appliedCoupons.map(coupon => (
             <div
               key={coupon.code}
-              className='flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-3 py-2'
+              className='flex items-center justify-between bg-[#F0F6FF] border border-[#BFDBFE] rounded-lg px-3 py-2'
             >
               <div className='flex items-center gap-2'>
                 <Ticket className='w-4 h-4 text-blue-500 shrink-0' />

@@ -368,7 +368,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
   return (
     <div className='p-6 max-w-5xl mx-auto space-y-6'>
       <div className='flex items-center gap-4'>
-        <Button variant='ghost' onClick={() => navigate(basePath)} className='hover:bg-blue-50 hover:text-blue-600'>
+        <Button variant='ghost' onClick={() => navigate(basePath)} className='hover:bg-[#F0F6FF] hover:text-[#1E40AF]'>
           <ArrowLeft className='h-4 w-4 mr-2' />
           Quay lại
         </Button>
@@ -376,7 +376,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
           <h1
             className='text-3xl font-bold bg-clip-text text-transparent'
             style={{
-              backgroundImage: `linear-gradient(to right, #0066CC, #4A90E2)`,
+              backgroundImage: `linear-gradient(to right, #0A2463, #1E40AF)`,
             }}
           >
             {isEdit ? 'Chỉnh sửa bài viết' : 'Viết bài mới'}
@@ -389,7 +389,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
 
       <form onSubmit={handleSubmit} className='space-y-8'>
         {/* Basic Information */}
-        <Card className='bg-white backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
           <CardHeader>
             <CardTitle className='text-xl text-blue-800'>Thông tin cơ bản</CardTitle>
           </CardHeader>
@@ -404,7 +404,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                 onChange={(e) => handleTitleChange(e.target.value)}
                 required
                 placeholder='Nhập tiêu đề bài viết'
-                className='h-11 border-2 border-blue-200 focus:border-blue-500'
+                className='h-11 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
               />
             </div>
 
@@ -417,7 +417,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                 value={formData.slug}
                 onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
                 placeholder='bai-viet-slug'
-                className='h-11 bg-gray-50 border-2 border-blue-200 focus:border-blue-500'
+                className='h-11 bg-gray-50 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
               />
             </div>
 
@@ -432,7 +432,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                 required
                 rows={3}
                 placeholder='Tóm tắt ngắn gọn về bài viết (10-500 ký tự)'
-                className='resize-none border-2 border-blue-200 focus:border-blue-500'
+                className='resize-none border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
               />
             </div>
 
@@ -458,7 +458,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                   value={formData.categoryId}
                   onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
                 >
-                  <SelectTrigger className='h-11 border-2 border-blue-200'>
+                  <SelectTrigger className='h-11 border-2 border-[#BFDBFE]'>
                     <SelectValue placeholder='Chọn danh mục' />
                   </SelectTrigger>
                   <SelectContent>
@@ -480,7 +480,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                   value={formData.featuredImage}
                   onChange={(e) => setFormData({ ...formData, featuredImage: e.target.value })}
                   placeholder='https://example.com/image.jpg'
-                  className='h-11 border-2 border-blue-200 focus:border-blue-500'
+                  className='h-11 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                 />
               </div>
             </div>
@@ -494,7 +494,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                 value={formData.tags}
                 onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
                 placeholder='sức khỏe, dinh dưỡng, vitamin'
-                className='h-11 border-2 border-blue-200 focus:border-blue-500'
+                className='h-11 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
               />
             </div>
 
@@ -508,7 +508,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                   value={formData.healthTopics}
                   onChange={(e) => setFormData({ ...formData, healthTopics: e.target.value })}
                   placeholder='cảm cúm, dị ứng, huyết áp'
-                  className='h-11 border-2 border-blue-200 focus:border-blue-500'
+                  className='h-11 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                 />
               </div>
 
@@ -521,7 +521,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                   value={formData.targetAudiences}
                   onChange={(e) => setFormData({ ...formData, targetAudiences: e.target.value })}
                   placeholder='trẻ em, người cao tuổi, phụ nữ mang thai'
-                  className='h-11 border-2 border-blue-200 focus:border-blue-500'
+                  className='h-11 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                 />
               </div>
 
@@ -534,7 +534,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                   value={formData.symptoms}
                   onChange={(e) => setFormData({ ...formData, symptoms: e.target.value })}
                   placeholder='ho, sốt, đau họng'
-                  className='h-11 border-2 border-blue-200 focus:border-blue-500'
+                  className='h-11 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                 />
               </div>
 
@@ -547,7 +547,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                   value={formData.activeIngredients}
                   onChange={(e) => setFormData({ ...formData, activeIngredients: e.target.value })}
                   placeholder='paracetamol, ibuprofen, vitamin c'
-                  className='h-11 border-2 border-blue-200 focus:border-blue-500'
+                  className='h-11 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                 />
               </div>
             </div>
@@ -555,9 +555,9 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
         </Card>
 
         {/* AI Author Assistant */}
-        <Card className='bg-white backdrop-blur-lg border-cyan-100'>
+        <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
           <CardHeader>
-            <CardTitle className='text-xl text-cyan-800 flex items-center gap-2'>
+            <CardTitle className='text-xl text-[#0A2463] flex items-center gap-2'>
               <Wand2 className='h-5 w-5' />
               AI hỗ trợ tác giả
             </CardTitle>
@@ -580,7 +580,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                     variant='outline'
                     onClick={() => runAiAssist(item.action)}
                     disabled={!!aiLoadingAction}
-                    className='border-cyan-200 text-cyan-700 hover:bg-cyan-50'
+                    className='border-[#BFDBFE] text-[#1E40AF] hover:bg-[#F0F6FF]'
                   >
                     {isLoading ? <Loader2 className='h-4 w-4 mr-2 animate-spin' /> : <Icon className='h-4 w-4 mr-2' />}
                     {item.label}
@@ -594,7 +594,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
               variant='ghost'
               onClick={() => runAiAssist('sources')}
               disabled={!!aiLoadingAction}
-              className='text-cyan-700 hover:bg-cyan-50'
+              className='text-[#1E40AF] hover:bg-[#F0F6FF]'
             >
               {aiLoadingAction === 'sources' ? (
                 <Loader2 className='h-4 w-4 mr-2 animate-spin' />
@@ -605,14 +605,14 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
             </Button>
 
             {aiResult && (
-              <div className='rounded-lg border border-cyan-100 bg-cyan-50/60 p-4 space-y-4'>
+              <div className='rounded-lg border border-[#E8EDF5] bg-[#F0F6FF]/70 p-4 space-y-4'>
                 <div className='flex items-start justify-between gap-4'>
                   <div>
-                    <h3 className='font-semibold text-cyan-950'>Kết quả AI: {aiResult.action}</h3>
-                    <p className='text-sm text-cyan-800 mt-1'>Kiểm tra lại nội dung trước khi đăng, đặc biệt với khuyến nghị y tế.</p>
+                    <h3 className='font-semibold text-[#0A2463]'>Kết quả AI: {aiResult.action}</h3>
+                    <p className='text-sm text-[#0A2463] mt-1'>Kiểm tra lại nội dung trước khi đăng, đặc biệt với khuyến nghị y tế.</p>
                   </div>
                   {['outline', 'faq', 'sources'].includes(aiResult.action) && (
-                    <Button type='button' size='sm' onClick={insertAiResult} disabled={!canInsertAiResult()} className='bg-cyan-700 hover:bg-cyan-800 text-white'>
+                    <Button type='button' size='sm' onClick={insertAiResult} disabled={!canInsertAiResult()} className='bg-[#0A2463] hover:bg-[#071A49] text-white'>
                       Chèn vào bài
                     </Button>
                   )}
@@ -630,7 +630,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                 ) : null}
 
                 {aiResult.result.excerpt ? (
-                  <div className='rounded-md border border-cyan-100 bg-white/80 p-3'>
+                  <div className='rounded-md border border-[#E8EDF5] bg-white/80 p-3'>
                     <p className='text-sm font-medium text-gray-700 mb-2'>Tóm tắt đã áp dụng:</p>
                     <p className='text-sm text-gray-700 leading-relaxed'>{aiResult.result.excerpt}</p>
                   </div>
@@ -686,7 +686,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
         </Card>
 
         {/* SEO & Settings */}
-        <Card className='bg-white backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
           <CardHeader>
             <CardTitle className='text-xl text-blue-800'>SEO & Cài đặt</CardTitle>
           </CardHeader>
@@ -700,7 +700,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                 value={formData.metaTitle}
                 onChange={(e) => setFormData({ ...formData, metaTitle: e.target.value })}
                 placeholder='Tiêu đề hiển thị trên Google'
-                className='h-11 border-2 border-blue-200 focus:border-blue-500'
+                className='h-11 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
               />
             </div>
 
@@ -714,7 +714,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                 onChange={(e) => setFormData({ ...formData, metaDescription: e.target.value })}
                 rows={2}
                 placeholder='Mô tả ngắn hiển thị trên kết quả tìm kiếm'
-                className='resize-none border-2 border-blue-200 focus:border-blue-500'
+                className='resize-none border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
               />
             </div>
 
@@ -727,7 +727,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                 value={formData.metaKeywords}
                 onChange={(e) => setFormData({ ...formData, metaKeywords: e.target.value })}
                 placeholder='keyword1, keyword2, keyword3'
-                className='h-11 border-2 border-blue-200 focus:border-blue-500'
+                className='h-11 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
               />
             </div>
 
@@ -740,7 +740,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                   value={formData.riskLevel}
                   onValueChange={(value: ArticleFormData['riskLevel']) => setFormData({ ...formData, riskLevel: value })}
                 >
-                  <SelectTrigger className='h-11 bg-white border-2 border-blue-200'>
+                  <SelectTrigger className='h-11 bg-white border-2 border-[#BFDBFE]'>
                     <SelectValue placeholder='Chọn mức rủi ro' />
                   </SelectTrigger>
                   <SelectContent>
@@ -762,7 +762,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                   min='1'
                   value={formData.contentVersion}
                   onChange={(e) => setFormData({ ...formData, contentVersion: e.target.value })}
-                  className='h-11 border-2 border-blue-200 focus:border-blue-500'
+                  className='h-11 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                 />
               </div>
 
@@ -775,7 +775,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                   value={formData.reviewedBy}
                   onChange={(e) => setFormData({ ...formData, reviewedBy: e.target.value })}
                   placeholder='VD: DS. Nguyễn Văn A'
-                  className='h-11 border-2 border-blue-200 focus:border-blue-500'
+                  className='h-11 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                 />
               </div>
 
@@ -788,7 +788,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                   value={formData.reviewedByTitle}
                   onChange={(e) => setFormData({ ...formData, reviewedByTitle: e.target.value })}
                   placeholder='VD: Dược sĩ lâm sàng'
-                  className='h-11 border-2 border-blue-200 focus:border-blue-500'
+                  className='h-11 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                 />
               </div>
 
@@ -801,7 +801,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                   type='date'
                   value={formData.reviewedAt}
                   onChange={(e) => setFormData({ ...formData, reviewedAt: e.target.value })}
-                  className='h-11 border-2 border-blue-200 focus:border-blue-500'
+                  className='h-11 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                 />
               </div>
 
@@ -814,7 +814,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                   type='date'
                   value={formData.lastMedicallyReviewedAt}
                   onChange={(e) => setFormData({ ...formData, lastMedicallyReviewedAt: e.target.value })}
-                  className='h-11 border-2 border-blue-200 focus:border-blue-500'
+                  className='h-11 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                 />
               </div>
             </div>
@@ -829,7 +829,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                 onChange={(e) => setFormData({ ...formData, references: e.target.value })}
                 rows={4}
                 placeholder={'Mỗi dòng một nguồn, định dạng: Tiêu đề nguồn | https://example.com'}
-                className='resize-none border-2 border-blue-200 focus:border-blue-500'
+                className='resize-none border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
               />
               <p className='text-xs text-gray-500'>Nguồn rõ ràng giúp bài viết sức khỏe đáng tin cậy hơn.</p>
             </div>
@@ -843,7 +843,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
                   value={formData.status}
                   onValueChange={(value: any) => setFormData({ ...formData, status: value })}
                 >
-                  <SelectTrigger className='h-11 bg-white border-2 border-blue-200'>
+                  <SelectTrigger className='h-11 bg-white border-2 border-[#BFDBFE]'>
                     <SelectValue placeholder='Chọn trạng thái' />
                   </SelectTrigger>
                   <SelectContent>
@@ -901,7 +901,7 @@ export function AdminArticleForm({ basePath = '/admin/articles' }: AdminArticleF
           <Button
             type='submit'
             disabled={loading}
-            className='bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8] text-white'
+            className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'
           >
             <Save className='h-4 w-4 mr-2' />
             {loading ? 'Đang lưu...' : isEdit ? 'Cập nhật bài viết' : 'Lưu bài viết'}

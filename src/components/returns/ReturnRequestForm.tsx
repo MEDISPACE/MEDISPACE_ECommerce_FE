@@ -209,7 +209,7 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
       {/* Header */}
       <div className='flex items-center gap-4'>
         <Button
-          className='text-blue-600 hover:!text-blue-700 hover:!bg-blue-50 rounded-full p-2.5 h-10 w-10'
+          className='text-[#1E40AF] hover:!text-[#0A2463] hover:!bg-[#F0F6FF] rounded-full p-2.5 h-10 w-10'
           variant='ghost'
           size='icon'
           onClick={() => navigate(-1)}
@@ -259,7 +259,7 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
       )}
 
       {/* Select items */}
-      <Card className='border-blue-100'>
+      <Card className='border-[#E8EDF5]'>
         <CardHeader>
           <CardTitle className='flex items-center gap-2 text-blue-800'>
             <Package className='h-5 w-5' />
@@ -277,7 +277,7 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
               <div
                 key={item.productId}
                 className={`border rounded-lg p-4 transition-colors ${
-                  isSelected ? 'border-blue-500 bg-blue-50' : 'border-blue-100'
+                  isSelected ? 'border-[#1E40AF] bg-[#F0F6FF]' : 'border-[#E8EDF5]'
                 }`}
               >
                 <div className='flex items-start gap-4'>
@@ -355,7 +355,7 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
                     {(() => {
                       const preview = getRefundPreview(item, selectedData.quantity)
                       return (
-                        <div className='rounded-lg bg-white border border-blue-100 p-3 text-sm space-y-1'>
+                        <div className='rounded-lg bg-white border border-[#E8EDF5] p-3 text-sm space-y-1'>
                           <div className='flex justify-between'>
                             <span className='text-muted-foreground'>Giá trị sản phẩm</span>
                             <span>{preview.grossAmount.toLocaleString()}đ</span>
@@ -367,14 +367,14 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
                             </div>
                           )}
                           {preview.pointsDiscount > 0 && (
-                            <div className='flex justify-between text-purple-700'>
+                            <div className='flex justify-between text-[#1E40AF]'>
                               <span>Điểm đã đổi</span>
                               <span>-{preview.pointsDiscount.toLocaleString()}đ</span>
                             </div>
                           )}
                           <div className='flex justify-between font-semibold pt-1 border-t'>
                             <span>Ước tính hoàn thực nhận</span>
-                            <span className='text-blue-600'>{preview.netAmount.toLocaleString()}đ</span>
+                            <span className='text-[#1E40AF]'>{preview.netAmount.toLocaleString()}đ</span>
                           </div>
                         </div>
                       )
@@ -388,7 +388,7 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
       </Card>
 
       {/* Main reason and details */}
-      <Card className='border-blue-100'>
+      <Card className='border-[#E8EDF5]'>
         <CardHeader>
           <CardTitle className='text-blue-800'>Chi tiết yêu cầu</CardTitle>
           <CardDescription>Vui lòng cung cấp thông tin chi tiết về yêu cầu đổi/trả</CardDescription>
@@ -438,7 +438,7 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
           {/* Evidence upload */}
           <div>
             <Label className='mb-2 block'>Hình ảnh/Video chứng minh (bắt buộc, tối thiểu 1 ảnh)</Label>
-            <div className='border-2 border-dashed border-blue-200 rounded-lg p-6 text-center hover:border-blue-300 transition-colors'>
+            <div className='border-2 border-dashed border-[#BFDBFE] rounded-lg p-6 text-center hover:border-[#BFDBFE] transition-colors'>
               <input
                 type='file'
                 multiple
@@ -530,25 +530,25 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
       </Card>
 
       {/* Summary and submit */}
-      <Card className='border-blue-100'>
+      <Card className='border-[#E8EDF5]'>
         <CardContent className='pt-6'>
           <div className='flex items-center justify-between'>
             <div>
               <p className='text-sm text-muted-foreground'>Số sản phẩm: {selectedItems.size}</p>
               <p className='text-lg font-semibold'>
-                Tổng tiền hoàn: <span className='text-blue-600'>{totalRefundAmount.toLocaleString()}đ</span>
+                Tổng tiền hoàn: <span className='text-[#1E40AF]'>{totalRefundAmount.toLocaleString()}đ</span>
               </p>
             </div>
             <div className='flex gap-3'>
               <Button
                 variant='outline'
-                className='!border-blue-200 !text-blue-600 hover:!bg-blue-50'
+                className='!border-[#BFDBFE] !text-[#1E40AF] hover:!bg-[#F0F6FF]'
                 onClick={onCancel || (() => navigate(-1))}
               >
                 Hủy
               </Button>
               <Button
-                className='bg-blue-600 text-white hover:bg-blue-700'
+                className='bg-[#0A2463] text-white hover:bg-[#071A49]'
                 onClick={() => submitMutation.mutate()}
                 disabled={!isValid || submitMutation.isPending}
               >

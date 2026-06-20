@@ -11,7 +11,7 @@ interface OrderStatsCardsProps {
 export function OrderStatsCards({ stats, config }: OrderStatsCardsProps) {
   return (
     <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4'>
-      <Card className='bg-white backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
         <CardContent className='p-4'>
           <div className='flex items-center justify-between'>
             <div>
@@ -23,7 +23,7 @@ export function OrderStatsCards({ stats, config }: OrderStatsCardsProps) {
         </CardContent>
       </Card>
 
-      <Card className='bg-white backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
         <CardContent className='p-4'>
           <div className='flex items-center justify-between'>
             <div>
@@ -35,19 +35,19 @@ export function OrderStatsCards({ stats, config }: OrderStatsCardsProps) {
         </CardContent>
       </Card>
 
-      <Card className='bg-white backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
         <CardContent className='p-4'>
           <div className='flex items-center justify-between'>
             <div>
               <p className='text-xs text-gray-600'>Đang xử lý</p>
-              <p className='text-2xl font-semibold text-[#4A90E2]'>{stats.processing}</p>
+              <p className='text-2xl font-semibold text-[#1E40AF]'>{stats.processing}</p>
             </div>
-            <Package className='w-8 h-8 text-[#4A90E2]' />
+            <Package className='w-8 h-8 text-[#1E40AF]' />
           </div>
         </CardContent>
       </Card>
 
-      <Card className='bg-white backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
         <CardContent className='p-4'>
           <div className='flex items-center justify-between'>
             <div>
@@ -59,7 +59,7 @@ export function OrderStatsCards({ stats, config }: OrderStatsCardsProps) {
         </CardContent>
       </Card>
 
-      <Card className='bg-white backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
         <CardContent className='p-4'>
           <div className='flex items-center justify-between'>
             <div>
@@ -71,7 +71,7 @@ export function OrderStatsCards({ stats, config }: OrderStatsCardsProps) {
         </CardContent>
       </Card>
 
-      <Card className='bg-white backdrop-blur-lg border-blue-100 lg:col-span-2'>
+      <Card className='bg-white backdrop-blur-lg border-[#E8EDF5] lg:col-span-2'>
         <CardContent className='p-4'>
           <div className='flex items-center justify-between'>
             <div>

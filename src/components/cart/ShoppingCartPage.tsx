@@ -190,7 +190,7 @@ export function ShoppingCartPage() {
     return (
       <div className='max-w-7xl mx-auto px-4 py-6'>
         <UniversalBreadcrumb items={breadcrumbItems} />
-        <Card className='max-w-md mx-auto text-center p-8 border-blue-200 bg-white'>
+        <Card className='max-w-md mx-auto text-center p-8 border-[#BFDBFE] bg-white'>
           <CardContent>
             <ShoppingCart className='w-24 h-24 text-blue-300 mx-auto mb-6' />
             <h2 className='text-2xl font-bold text-gray-900 mb-2'>Giỏ hàng trống</h2>
@@ -198,7 +198,7 @@ export function ShoppingCartPage() {
               Bạn chưa có sản phẩm nào trong giỏ hàng. Hãy khám phá các sản phẩm tuyệt vời của chúng tôi!
             </p>
             <Link to='/products'>
-              <Button className='bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white'>
+              <Button className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'>
                 Tiếp tục mua sắm
               </Button>
             </Link>
@@ -213,7 +213,7 @@ export function ShoppingCartPage() {
       <UniversalBreadcrumb items={breadcrumbItems} />
       <div className='flex items-center gap-4 mb-6 mt-4'>
         <h1 className='text-2xl font-bold text-blue-800'>Giỏ hàng của bạn</h1>
-        <Badge variant='secondary' className='bg-blue-100 text-blue-700'>
+        <Badge variant='secondary' className='bg-[#E8EDF5] text-[#0A2463]'>
           {cart?.itemCount || 0} sản phẩm
         </Badge>
       </div>
@@ -238,7 +238,7 @@ export function ShoppingCartPage() {
         {/* Cart Items - 70% width */}
         <div className='lg:col-span-7 space-y-6'>
           {/* Cart Header */}
-          <Card className='bg-white border-blue-100 hover:shadow-md transition-shadow'>
+          <Card className='bg-white border-[#E8EDF5] hover:shadow-md transition-shadow'>
             <CardContent className='p-4'>
               <div className='flex items-center justify-between'>
                 <div className='flex items-center gap-3'>
@@ -271,7 +271,7 @@ export function ShoppingCartPage() {
                   <Button
                     variant='ghost'
                     size='sm'
-                    className='text-gray-500 hover:text-blue-600 hover:!bg-blue-100 hover:!border-blue-100 hover:shadow-md transition-shadow'
+                    className='text-gray-500 hover:text-[#1E40AF] hover:!bg-[#E8EDF5] hover:!border-[#E8EDF5] hover:shadow-md transition-shadow'
                     disabled={getSelectedItemsCount() === 0}
                     onClick={async () => {
                       let successCount = 0
@@ -302,7 +302,7 @@ export function ShoppingCartPage() {
             {cart?.items.map((item) => (
               <Card
                 key={createSelectionKey(item.productId, item.unit)}
-                className='bg-white border-blue-100 hover:shadow-md transition-shadow'
+                className='bg-white border-[#E8EDF5] hover:shadow-md transition-shadow'
               >
                 <CardContent className='p-6'>
                   <div className='flex items-start gap-4'>
@@ -322,7 +322,7 @@ export function ShoppingCartPage() {
                     <div className='flex-1 min-w-0'>
                       <Link
                         to={`/products/${item.productId}`}
-                        className='font-medium text-gray-900 hover:text-blue-600 line-clamp-2 mb-1'
+                        className='font-medium text-gray-900 hover:text-[#1E40AF] line-clamp-2 mb-1'
                       >
                         {item.name}
                       </Link>
@@ -339,7 +339,7 @@ export function ShoppingCartPage() {
                         <div className='flex items-center gap-2 mb-2'>
                           <span className='text-xs text-gray-500'>Đơn vị:</span>
                           <Select value={item.unit} onValueChange={(value) => updateUnit(item.productId, value)}>
-                            <SelectTrigger className='h-7 w-[100px] text-xs border-blue-200'>
+                            <SelectTrigger className='h-7 w-[100px] text-xs border-[#BFDBFE]'>
                               <SelectValue placeholder='Chọn đơn vị' />
                             </SelectTrigger>
                             <SelectContent>
@@ -354,7 +354,7 @@ export function ShoppingCartPage() {
                       ) : (
                         item.unit && (
                           <div className='mb-2'>
-                            <span className='inline-flex items-center px-2 py-1 text-xs bg-blue-50 text-blue-600 rounded-full'>
+                            <span className='inline-flex items-center px-2 py-1 text-xs bg-[#F0F6FF] text-[#1E40AF] rounded-full'>
                               Đơn vị: {item.unit}
                             </span>
                           </div>
@@ -363,7 +363,7 @@ export function ShoppingCartPage() {
 
                       <div className='flex items-center justify-between'>
                         <div>
-                          <div className='text-lg font-bold text-blue-600'>
+                          <div className='text-lg font-bold text-[#1E40AF]'>
                             {new Intl.NumberFormat('vi-VN').format(item.unitPrice)}đ
                             {item.unit && <span className='text-sm font-normal text-gray-500 ml-1'>/ {item.unit}</span>}
                           </div>
@@ -377,13 +377,13 @@ export function ShoppingCartPage() {
 
                         <div className='flex items-center gap-4'>
                           {/* Quantity Controls */}
-                          <div className='flex items-center border border-blue-200 rounded-lg'>
+                          <div className='flex items-center border border-[#BFDBFE] rounded-lg'>
                             <Button
                               variant='ghost'
                               size='sm'
                               onClick={() => handleQuantityChange(item.productId, item.quantity - 1)}
                               disabled={item.quantity <= 1 || isLoading}
-                              className='h-8 w-8 rounded-none hover:bg-blue-50'
+                              className='h-8 w-8 rounded-none hover:bg-[#F0F6FF]'
                             >
                               <Minus className='w-3 h-3' />
                             </Button>
@@ -393,14 +393,14 @@ export function ShoppingCartPage() {
                               size='sm'
                               onClick={() => handleQuantityChange(item.productId, item.quantity + 1)}
                               disabled={item.quantity >= 10 || isLoading} // Max 10 items
-                              className='h-8 w-8 rounded-none hover:bg-blue-50'
+                              className='h-8 w-8 rounded-none hover:bg-[#F0F6FF]'
                             >
                               <Plus className='w-3 h-3' />
                             </Button>
                           </div>
 
                           {/* Subtotal */}
-                          <div className='text-lg font-bold text-blue-600 min-w-[100px] text-right'>
+                          <div className='text-lg font-bold text-[#1E40AF] min-w-[100px] text-right'>
                             {new Intl.NumberFormat('vi-VN').format(item.totalPrice)}đ
                           </div>
 
@@ -410,7 +410,7 @@ export function ShoppingCartPage() {
                               variant='ghost'
                               size='sm'
                               onClick={() => handleAddToWishlist(item.productId)}
-                              className='text-gray-400 hover:text-pink-500'
+                              className='text-gray-400 hover:text-[#1E40AF]'
                             >
                               <Heart className='w-4 h-4' />
                             </Button>
@@ -441,7 +441,7 @@ export function ShoppingCartPage() {
 
           {/* Promotion Section */}
           <Card
-            className={`bg-white border-blue-100 hover:shadow-md transition-shadow ${getSelectedItemsCount() === 0 ? 'opacity-60' : ''}`}
+            className={`bg-white border-[#E8EDF5] hover:shadow-md transition-shadow ${getSelectedItemsCount() === 0 ? 'opacity-60' : ''}`}
           >
             <CardHeader>
               <CardTitle className='text-blue-800 flex items-center gap-2'>
@@ -479,7 +479,7 @@ export function ShoppingCartPage() {
         <div className='lg:col-span-3'>
           <div className='sticky top-6 space-y-6'>
             {/* Order Summary */}
-            <Card className='bg-white border-blue-100 hover:shadow-md transition-shadow'>
+            <Card className='bg-white border-[#E8EDF5] hover:shadow-md transition-shadow'>
               <CardHeader>
                 <CardTitle className='text-blue-800'>Tóm tắt đơn hàng</CardTitle>
               </CardHeader>
@@ -515,11 +515,11 @@ export function ShoppingCartPage() {
 
                 <div className='flex justify-between text-lg'>
                   <span className='font-bold'>Tổng cộng</span>
-                  <span className='font-bold text-blue-600'>{new Intl.NumberFormat('vi-VN').format(total)}đ</span>
+                  <span className='font-bold text-[#1E40AF]'>{new Intl.NumberFormat('vi-VN').format(total)}đ</span>
                 </div>
 
                 <Button
-                  className='w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white h-12 mt-4 mb-2'
+                  className='w-full bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white h-12 mt-4 mb-2'
                   disabled={!cart?.items || cart.items.length === 0 || getSelectedItemsCount() === 0}
                   onClick={handleCheckout}
                 >
@@ -530,7 +530,7 @@ export function ShoppingCartPage() {
                   <Link to='/products'>
                     <Button
                       variant='outline'
-                      className='w-full !border-blue-200 hover:!bg-blue-100 hover:!border-blue-100 hover:shadow-md transition-shadow text-blue-600'
+                      className='w-full !border-[#BFDBFE] hover:!bg-[#E8EDF5] hover:!border-[#E8EDF5] hover:shadow-md transition-shadow text-[#1E40AF]'
                     >
                       Tiếp tục mua sắm
                     </Button>
@@ -540,7 +540,7 @@ export function ShoppingCartPage() {
             </Card>
 
             {/* Shipping Info */}
-            {/* <Card className='bg-white border-blue-100 hover:shadow-md transition-shadow'>
+            {/* <Card className='bg-white border-[#E8EDF5] hover:shadow-md transition-shadow'>
               <CardContent className='p-4 space-y-3'>
                 <div className='text-sm'>
                   <span className='font-medium'>Giao đến:</span>
@@ -558,20 +558,20 @@ export function ShoppingCartPage() {
                     )}
                   </div>
                   <Link to='/account/addresses'>
-                    <Button variant='link' className='p-0 h-auto text-blue-600 text-sm'>
+                    <Button variant='link' className='p-0 h-auto text-[#1E40AF] text-sm'>
                       {defaultAddress ? 'Thay đổi' : 'Thêm địa chỉ'}
                     </Button>
                   </Link>
                 </div>
 
                 <div className='text-sm text-gray-600'>
-                  Dự kiến giao hàng: <span className='font-medium text-blue-600'>2-4 giờ</span>
+                  Dự kiến giao hàng: <span className='font-medium text-[#1E40AF]'>2-4 giờ</span>
                 </div>
               </CardContent>
             </Card> */}
 
             {/* Trust Badges */}
-            <Card className='bg-white border-blue-100 hover:shadow-md transition-shadow'>
+            <Card className='bg-white border-[#E8EDF5] hover:shadow-md transition-shadow'>
               <CardContent className='p-4 space-y-3'>
                 <div className='flex items-center gap-2 text-sm text-gray-600'>
                   <Shield className='w-4 h-4 text-green-500' />

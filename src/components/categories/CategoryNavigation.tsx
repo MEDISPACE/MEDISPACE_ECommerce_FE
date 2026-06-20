@@ -49,7 +49,7 @@ export function CategoryQuickActions({
           <Button
             variant='outline'
             size='sm'
-            className='border-blue-200 text-blue-600 hover:!bg-[#eff6ff] hover:border-blue-400 transition-all duration-300'
+            className='border-[#BFDBFE] text-[#1E40AF] hover:!bg-[#eff6ff] hover:border-[#1E40AF] transition-all duration-300'
           >
             Tư vấn miễn phí
           </Button>
@@ -61,7 +61,7 @@ export function CategoryQuickActions({
           <Button
             variant='outline'
             size='sm'
-            className='border-blue-200 text-blue-600 hover:!bg-[#eff6ff] hover:border-blue-400 transition-all duration-300'
+            className='border-[#BFDBFE] text-[#1E40AF] hover:!bg-[#eff6ff] hover:border-[#1E40AF] transition-all duration-300'
           >
             So sánh sản phẩm
           </Button>
@@ -73,7 +73,7 @@ export function CategoryQuickActions({
           <Button
             variant='outline'
             size='sm'
-            className='border-blue-200 text-blue-600 hover:!bg-[#eff6ff] hover:border-blue-400 transition-all duration-300'
+            className='border-[#BFDBFE] text-[#1E40AF] hover:!bg-[#eff6ff] hover:border-[#1E40AF] transition-all duration-300'
           >
             Hướng dẫn sử dụng
           </Button>

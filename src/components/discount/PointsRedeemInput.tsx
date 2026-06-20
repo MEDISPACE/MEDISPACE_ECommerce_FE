@@ -113,17 +113,17 @@ export function PointsRedeemInput({ subtotal, onRedeemChange, className }: Point
   if (!preview) return null
 
   return (
-    <div className={`border border-purple-200 rounded-xl overflow-hidden ${className}`}>
+    <div className={`border border-[#BFDBFE] rounded-xl overflow-hidden ${className}`}>
       {/* Header — luôn hiển thị */}
       <button
         onClick={handleToggleExpand}
-        className='w-full flex items-center justify-between px-4 py-3 bg-gradient-to-r from-purple-50 to-blue-50 hover:from-purple-100 hover:to-blue-100 transition-colors'
+        className='w-full flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[#F8FAFB] to-[#F0F6FF] hover:from-[#E8EDF5] hover:to-[#BFDBFE] transition-colors'
         disabled={!preview.canRedeem}
       >
         <div className='flex items-center gap-2'>
-          <Sparkles className='w-4 h-4 text-purple-600' />
-          <span className='text-sm font-medium text-purple-800'>Dùng điểm thưởng</span>
-          <Badge className='bg-purple-100 text-purple-700 text-xs hover:bg-purple-100'>
+          <Sparkles className='w-4 h-4 text-[#1E40AF]' />
+          <span className='text-sm font-medium text-[#0A2463]'>Dùng điểm thưởng</span>
+          <Badge className='bg-[#E8EDF5] text-[#1E40AF] text-xs hover:bg-[#E8EDF5]'>
             {formatPoints(preview.pointsBalance)}
           </Badge>
           {isApplied && (
@@ -139,7 +139,7 @@ export function PointsRedeemInput({ subtotal, onRedeemChange, className }: Point
             </span>
           )}
           {preview.canRedeem && (
-            isExpanded ? <ChevronUp className='w-4 h-4 text-purple-500' /> : <ChevronDown className='w-4 h-4 text-purple-500' />
+            isExpanded ? <ChevronUp className='w-4 h-4 text-[#1E40AF]' /> : <ChevronDown className='w-4 h-4 text-[#1E40AF]' />
           )}
         </div>
       </button>
@@ -159,7 +159,7 @@ export function PointsRedeemInput({ subtotal, onRedeemChange, className }: Point
           <div className='space-y-3'>
             <div className='flex justify-between text-sm'>
               <span className='text-gray-600'>Số điểm muốn dùng</span>
-              <span className='font-semibold text-purple-700'>{formatPoints(pointsToRedeem)}</span>
+              <span className='font-semibold text-[#1E40AF]'>{formatPoints(pointsToRedeem)}</span>
             </div>
             <Slider
               min={0}
@@ -189,8 +189,8 @@ export function PointsRedeemInput({ subtotal, onRedeemChange, className }: Point
                   onClick={() => { setPointsToRedeem(pts); setIsApplied(false); onRedeemChange?.(0, 0) }}
                   className={`text-xs px-2.5 py-1 rounded-full border transition-all ${
                     pointsToRedeem === pts
-                      ? 'bg-purple-600 text-white border-purple-600'
-                      : 'border-purple-200 text-purple-600 hover:bg-purple-50'
+                      ? 'bg-[#0A2463] text-white border-[#0A2463]'
+                      : 'border-[#BFDBFE] text-[#1E40AF] hover:bg-[#F0F6FF]'
                   }`}
                 >
                   {pct}%
@@ -201,8 +201,8 @@ export function PointsRedeemInput({ subtotal, onRedeemChange, className }: Point
               onClick={() => { setPointsToRedeem(preview.pointsNeeded); setIsApplied(false); onRedeemChange?.(0, 0) }}
               className={`text-xs px-2.5 py-1 rounded-full border transition-all ${
                 pointsToRedeem === preview.pointsNeeded
-                  ? 'bg-purple-600 text-white border-purple-600'
-                  : 'border-purple-200 text-purple-600 hover:bg-purple-50'
+                  ? 'bg-[#0A2463] text-white border-[#0A2463]'
+                  : 'border-[#BFDBFE] text-[#1E40AF] hover:bg-[#F0F6FF]'
               }`}
             >
               Tối đa
@@ -228,7 +228,7 @@ export function PointsRedeemInput({ subtotal, onRedeemChange, className }: Point
                 size='sm'
                 onClick={handleApply}
                 disabled={pointsToRedeem <= 0}
-                className='flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white'
+                className='flex-1 bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'
               >
                 Dùng {formatPoints(pointsToRedeem)} (-{formatCurrency(pointsToRedeem)})
               </Button>

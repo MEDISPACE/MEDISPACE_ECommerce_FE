@@ -82,7 +82,7 @@ export function ComparisonTable({
                 <Button
                   size='sm'
                   onClick={() => onAddToCart(product.id)}
-                  className='bg-blue-600 hover:bg-blue-700 text-white'
+                  className='bg-[#0A2463] hover:bg-[#071A49] text-white'
                 >
                   <ShoppingCart className='w-4 h-4 mr-1' />
                   Thêm
@@ -116,7 +116,7 @@ export function ComparisonTable({
         case 'price':
           return (
             <div className='text-center'>
-              <div className='font-bold text-blue-600'>{product.price?.toLocaleString('vi-VN') || 0}đ</div>
+              <div className='font-bold text-[#1E40AF]'>{product.price?.toLocaleString('vi-VN') || 0}đ</div>
               <div className='text-sm text-gray-600'>/{product.unit || ''}</div>
             </div>
           )
@@ -165,13 +165,13 @@ export function ComparisonTable({
 
   return (
     <Card
-      className={`overflow-hidden bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100 ${className}`}
+      className={`overflow-hidden bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] ${className}`}
     >
       <div className='overflow-x-auto'>
         <table className='w-full'>
           <thead>
-            <tr className='border-b border-blue-100'>
-              <th className='sticky left-0 bg-blue-50 p-4 text-left font-medium text-blue-900 min-w-40'>THÔNG TIN</th>
+            <tr className='border-b border-[#E8EDF5]'>
+              <th className='sticky left-0 bg-[#F0F6FF] p-4 text-left font-medium text-blue-900 min-w-40'>THÔNG TIN</th>
               {products.map((product) => (
                 <th key={product.id} className='p-4 text-center font-medium text-blue-900 min-w-64'>
                   <div>

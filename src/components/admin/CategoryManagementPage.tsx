@@ -294,7 +294,7 @@ export function CategoryManagementPage() {
           <h1
             className='text-3xl font-bold bg-clip-text text-transparent'
             style={{
-              backgroundImage: `linear-gradient(to right, #0066CC, #4A90E2)`,
+              backgroundImage: `linear-gradient(to right, #0A2463, #1E40AF)`,
             }}
           >
             Quản lý danh mục
@@ -303,7 +303,7 @@ export function CategoryManagementPage() {
         </div>
         <Button
           onClick={() => openAddDialog()}
-          className='bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8] gap-2 text-white'
+          className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] gap-2 text-white'
         >
           <Plus className='w-4 h-4' />
           Thêm danh mục gốc
@@ -312,19 +312,19 @@ export function CategoryManagementPage() {
 
       {/* Stats Cards */}
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4'>
-        <Card className='bg-white backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-xs text-gray-600'>Tổng danh mục</p>
-                <p className='text-2xl font-semibold text-blue-600'>{stats.total}</p>
+                <p className='text-2xl font-semibold text-[#1E40AF]'>{stats.total}</p>
               </div>
               <Tag className='w-8 h-8 text-blue-400' />
             </div>
           </CardContent>
         </Card>
 
-        <Card className='bg-white backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
@@ -336,7 +336,7 @@ export function CategoryManagementPage() {
           </CardContent>
         </Card>
 
-        <Card className='bg-white backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
@@ -348,31 +348,31 @@ export function CategoryManagementPage() {
           </CardContent>
         </Card>
 
-        <Card className='bg-white backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-xs text-gray-600'>Danh mục gốc</p>
-                <p className='text-2xl font-semibold text-[#4A90E2]'>{stats.root}</p>
+                <p className='text-2xl font-semibold text-[#1E40AF]'>{stats.root}</p>
               </div>
-              <Folder className='w-8 h-8 text-[#4A90E2]' />
+              <Folder className='w-8 h-8 text-[#1E40AF]' />
             </div>
           </CardContent>
         </Card>
 
-        <Card className='bg-white backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-xs text-gray-600'>Danh mục con</p>
-                <p className='text-2xl font-semibold text-blue-600'>{stats.subCategories}</p>
+                <p className='text-2xl font-semibold text-[#1E40AF]'>{stats.subCategories}</p>
               </div>
               <FolderOpen className='w-8 h-8 text-blue-400' />
             </div>
           </CardContent>
         </Card>
 
-        <Card className='bg-white backdrop-blur-lg border-blue-100'>
+        <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
           <CardContent className='p-4'>
             <div className='flex items-center justify-between'>
               <div>
@@ -386,7 +386,7 @@ export function CategoryManagementPage() {
       </div>
 
       {/* Filters & Search */}
-      <Card className='bg-white backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
         <CardContent className='p-6'>
           <div className='flex flex-col md:flex-row gap-4'>
             <div className='flex-1 relative'>
@@ -395,11 +395,11 @@ export function CategoryManagementPage() {
                 placeholder='Tìm kiếm danh mục...'
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className='pl-10 border-2 border-blue-200 focus:border-blue-500'
+                className='pl-10 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className='w-48 border-2 border-blue-200'>
+              <SelectTrigger className='w-48 border-2 border-[#BFDBFE]'>
                 <SelectValue placeholder='Trạng thái' />
               </SelectTrigger>
               <SelectContent>
@@ -415,7 +415,7 @@ export function CategoryManagementPage() {
                 setCurrentPage(1)
               }}
             >
-              <SelectTrigger className='w-40 border-2 border-blue-200'>
+              <SelectTrigger className='w-40 border-2 border-[#BFDBFE]'>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -430,10 +430,10 @@ export function CategoryManagementPage() {
       </Card>
 
       {/* Categories Table */}
-      <Card className='bg-white backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
-            <Tag className='w-5 h-5 text-blue-600' />
+            <Tag className='w-5 h-5 text-[#1E40AF]' />
             Danh sách danh mục ({filteredCategories.length})
           </CardTitle>
         </CardHeader>
@@ -441,7 +441,7 @@ export function CategoryManagementPage() {
           <div className='overflow-x-auto'>
             <Table>
               <TableHeader>
-                <TableRow className='!border-b-2 border-blue-300'>
+                <TableRow className='!border-b-2 border-[#BFDBFE]'>
                   <TableHead>Danh mục</TableHead>
                   <TableHead>Slug</TableHead>
                   <TableHead>Sản phẩm</TableHead>
@@ -454,7 +454,7 @@ export function CategoryManagementPage() {
                 {isLoading ? (
                   <TableRow>
                     <TableCell colSpan={6} className='text-center py-8'>
-                      <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto'></div>
+                      <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-[#1E40AF] mx-auto'></div>
                     </TableCell>
                   </TableRow>
                 ) : filteredCategories.length === 0 ? (
@@ -465,7 +465,7 @@ export function CategoryManagementPage() {
                   </TableRow>
                 ) : (
                   paginatedCategories.map((category: Category) => (
-                    <TableRow key={category._id} className='border-b-2 border-blue-200 hover:bg-blue-50/30'>
+                    <TableRow key={category._id} className='border-b-2 border-[#BFDBFE] hover:bg-[#F0F6FF]/30'>
                       <TableCell>
                         <div className='flex items-center gap-2' style={{ paddingLeft: `${category.level * 24}px` }}>
                           {category.level > 0 && <ChevronUp className='w-4 h-4 text-gray-400 rotate-90' />}
@@ -477,12 +477,12 @@ export function CategoryManagementPage() {
                               className='w-8 h-8 rounded object-cover border border-gray-200'
                             />
                           ) : (
-                            <div className='w-8 h-8 rounded bg-blue-100 flex items-center justify-center text-lg'>
+                            <div className='w-8 h-8 rounded bg-[#E8EDF5] flex items-center justify-center text-lg'>
                               {category.icon ||
                                 (category.parentId ? (
                                   <FolderOpen className='w-4 h-4 text-blue-500' />
                                 ) : (
-                                  <Folder className='w-4 h-4 text-blue-600' />
+                                  <Folder className='w-4 h-4 text-[#1E40AF]' />
                                 ))}
                             </div>
                           )}
@@ -499,7 +499,7 @@ export function CategoryManagementPage() {
                         <code className='text-sm bg-gray-100 px-2 py-1 rounded'>{category.slug}</code>
                       </TableCell>
                       <TableCell>
-                        <Badge className='bg-blue-100 text-blue-700 hover:bg-blue-100'>
+                        <Badge className='bg-[#E8EDF5] text-[#0A2463] hover:bg-[#E8EDF5]'>
                           {category.productCount || 0} SP
                         </Badge>
                       </TableCell>
@@ -523,18 +523,18 @@ export function CategoryManagementPage() {
                               <MoreVertical className='w-4 h-4' />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align='end' className='bg-white shadow-lg border-2 border-blue-200'>
-                            <DropdownMenuLabel className='text-blue-700'>Thao tác</DropdownMenuLabel>
+                          <DropdownMenuContent align='end' className='bg-white shadow-lg border-2 border-[#BFDBFE]'>
+                            <DropdownMenuLabel className='text-[#0A2463]'>Thao tác</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
+                              className='hover:!bg-[#E8EDF5] hover:!border-[#E8EDF5] hover:!text-[#0A2463]'
                               onClick={() => openAddDialog(category._id)}
                             >
                               <Plus className='w-4 h-4 mr-2' />
                               Thêm danh mục con
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              className='hover:!bg-blue-100 hover:!border-blue-100 hover:!text-blue-700'
+                              className='hover:!bg-[#E8EDF5] hover:!border-[#E8EDF5] hover:!text-[#0A2463]'
                               onClick={() => openEditDialog(category)}
                             >
                               <Edit className='w-4 h-4 mr-2' />
@@ -622,7 +622,7 @@ export function CategoryManagementPage() {
                 onClick={() => setImageMode('url')}
                 className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                   imageMode !== 'upload'
-                    ? 'bg-blue-100 text-blue-700 border border-blue-300'
+                    ? 'bg-[#E8EDF5] text-[#0A2463] border border-[#BFDBFE]'
                     : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
                 }`}
               >
@@ -633,7 +633,7 @@ export function CategoryManagementPage() {
                 onClick={() => setImageMode('upload')}
                 className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                   imageMode === 'upload'
-                    ? 'bg-blue-100 text-blue-700 border border-blue-300'
+                    ? 'bg-[#E8EDF5] text-[#0A2463] border border-[#BFDBFE]'
                     : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
                 }`}
               >
@@ -686,14 +686,14 @@ export function CategoryManagementPage() {
                       file:mr-4 file:py-2 file:px-4
                       file:rounded-lg file:border-0
                       file:text-sm file:font-medium
-                      file:bg-blue-50 file:text-blue-700
-                      hover:file:bg-blue-100
+                      file:bg-[#F0F6FF] file:text-[#0A2463]
+                      hover:file:bg-[#E8EDF5]
                       file:cursor-pointer file:transition-colors
                       disabled:opacity-50 disabled:cursor-not-allowed'
                   />
                   {isUploading && (
                     <div className='absolute inset-0 bg-white/80 flex items-center justify-center rounded-lg'>
-                      <Loader2 className='w-5 h-5 animate-spin text-blue-600' />
+                      <Loader2 className='w-5 h-5 animate-spin text-[#1E40AF]' />
                       <span className='ml-2 text-sm text-gray-600'>Đang tải...</span>
                     </div>
                   )}

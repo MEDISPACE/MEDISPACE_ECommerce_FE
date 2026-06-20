@@ -273,7 +273,7 @@ export function AdminCampaignPage() {
         <div>
           <h1
             className='text-3xl font-bold bg-clip-text text-transparent'
-            style={{ backgroundImage: `linear-gradient(to right, #0066CC, #4A90E2)` }}
+            style={{ backgroundImage: `linear-gradient(to right, #0A2463, #1E40AF)` }}
           >
             Quản lý Chiến dịch
           </h1>
@@ -281,7 +281,7 @@ export function AdminCampaignPage() {
         </div>
         <Button
           onClick={openCreate}
-          className='bg-gradient-to-r from-[#0066CC] to-[#4A90E2] hover:from-[#0052A3] hover:to-[#3A7BC8] gap-2 text-white self-start sm:self-auto'
+          className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] gap-2 text-white self-start sm:self-auto'
         >
           <Plus className='w-4 h-4' />
           Tạo chiến dịch
@@ -291,13 +291,13 @@ export function AdminCampaignPage() {
       {/* Stats */}
       <div className='grid grid-cols-2 lg:grid-cols-4 gap-4'>
         {[
-          { label: 'Tổng chiến dịch', value: total, icon: <Zap className='w-5 h-5' />, color: 'text-purple-600 bg-purple-100' },
+          { label: 'Tổng chiến dịch', value: total, icon: <Zap className='w-5 h-5' />, color: 'text-[#1E40AF] bg-[#E8EDF5]' },
           { label: 'Đang chạy', value: campaigns.filter(isActive).length, icon: <Zap className='w-5 h-5' />, color: 'text-green-600 bg-green-100' },
-          { label: 'Công khai', value: campaigns.filter(c => c.isPublic).length, icon: <Globe className='w-5 h-5' />, color: 'text-blue-600 bg-blue-100' },
+          { label: 'Công khai', value: campaigns.filter(c => c.isPublic).length, icon: <Globe className='w-5 h-5' />, color: 'text-[#1E40AF] bg-[#E8EDF5]' },
           { label: 'Hết hạn', value: campaigns.filter(c => isExpired(c.endDate)).length, icon: <Calendar className='w-5 h-5' />, color: 'text-red-600 bg-red-100' },
         ].map((s, i) => (
           <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-            <Card className='bg-white backdrop-blur-lg border-blue-100'>
+            <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
               <CardContent className='p-4 flex items-center gap-3'>
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${s.color}`}>{s.icon}</div>
                 <div>
@@ -311,7 +311,7 @@ export function AdminCampaignPage() {
       </div>
 
       {/* Filters */}
-      <Card className='bg-white backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
         <CardContent className='p-4 flex flex-col sm:flex-row gap-3'>
           <div className='relative flex-1'>
             <Search className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400' />
@@ -319,11 +319,11 @@ export function AdminCampaignPage() {
               placeholder='Tìm tên chiến dịch...'
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className='pl-10 border-2 border-blue-200 focus:border-blue-500'
+              className='pl-10 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
             />
           </div>
           <Select value={filterStatus} onValueChange={(v) => { setFilterStatus(v); setPage(1) }}>
-            <SelectTrigger className='w-44 border-2 border-blue-200'>
+            <SelectTrigger className='w-44 border-2 border-[#BFDBFE]'>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -337,14 +337,14 @@ export function AdminCampaignPage() {
       </Card>
 
       {/* Table */}
-      <Card className='bg-white backdrop-blur-lg border-blue-100'>
+      <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
         <CardHeader>
           <CardTitle className='text-base'>Danh sách chiến dịch ({total})</CardTitle>
         </CardHeader>
         <CardContent className='p-0'>
           {isLoading ? (
             <div className='flex items-center justify-center h-48 gap-3'>
-              <Loader2 className='w-6 h-6 animate-spin text-purple-600' />
+              <Loader2 className='w-6 h-6 animate-spin text-[#1E40AF]' />
               <span className='text-gray-500'>Đang tải...</span>
             </div>
           ) : error ? (
@@ -360,7 +360,7 @@ export function AdminCampaignPage() {
             <div className='overflow-x-auto'>
               <table className='w-full text-sm'>
                 <thead>
-                  <tr className='!border-b-2 !border-blue-300 bg-gray-50 text-gray-600'>
+                  <tr className='!border-b-2 !border-[#BFDBFE] bg-gray-50 text-gray-600'>
                     <th className='text-left p-3 pl-6'>Tên chiến dịch</th>
                     <th className='text-left p-3'>Giảm giá</th>
                     <th className='text-left p-3'>Thời gian</th>
@@ -376,7 +376,7 @@ export function AdminCampaignPage() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: idx * 0.03 }}
-                      className='border-b-2 border-blue-200 hover:bg-blue-50/30 transition-colors'
+                      className='border-b-2 border-[#BFDBFE] hover:bg-[#F0F6FF]/30 transition-colors'
                     >
                       <td className='p-3 pl-6'>
                         <div className='flex items-center gap-2'>
@@ -402,10 +402,10 @@ export function AdminCampaignPage() {
                       <td className='p-3'>
                         <div className='flex items-center gap-1.5'>
                           {c.discountType === 'percentage'
-                            ? <Percent className='w-3.5 h-3.5 text-purple-500' />
+                            ? <Percent className='w-3.5 h-3.5 text-[#1E40AF]' />
                             : <DollarSign className='w-3.5 h-3.5 text-green-500' />
                           }
-                          <span className='font-semibold text-purple-700'>
+                          <span className='font-semibold text-[#1E40AF]'>
                             {c.discountType === 'percentage' ? `${c.discountValue}%` : formatCurrency(c.discountValue)}
                           </span>
                         </div>
@@ -445,7 +445,7 @@ export function AdminCampaignPage() {
                               : <ToggleLeft className='w-4 h-4 text-gray-400' />
                             }
                           </button>
-                          <button onClick={() => openEdit(c)} className='p-1.5 rounded hover:bg-blue-50 text-blue-600'>
+                          <button onClick={() => openEdit(c)} className='p-1.5 rounded hover:bg-[#F0F6FF] text-[#1E40AF]'>
                             <Edit2 className='w-4 h-4' />
                           </button>
                           <button onClick={() => setDeleteTarget(c)} className='p-1.5 rounded hover:bg-red-50 text-red-500'>
@@ -829,7 +829,7 @@ export function AdminCampaignPage() {
             <Button
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className='bg-purple-600 hover:bg-purple-700 text-white gap-2'
+              className='bg-[#0A2463] hover:bg-[#071A49] text-white gap-2'
             >
               {isSubmitting && <Loader2 className='w-4 h-4 animate-spin' />}
               {editCampaign ? 'Cập nhật' : 'Tạo chiến dịch'}
@@ -844,7 +844,7 @@ export function AdminCampaignPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Xóa chiến dịch?</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn chắc chắn muốn xóa chiến dịch <strong className='text-blue-600'>{deleteTarget?.name}</strong>?
+              Bạn chắc chắn muốn xóa chiến dịch <strong className='text-[#1E40AF]'>{deleteTarget?.name}</strong>?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

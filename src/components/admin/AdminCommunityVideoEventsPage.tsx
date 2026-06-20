@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { CalendarPlus, Copy, ExternalLink, Link as LinkIcon, MessageSquare, Play, Search, Square, Video, X } from 'lucide-react'
+import { CalendarPlus, Copy, ExternalLink, Link as LinkIcon, MessageSquare, MicOff, Play, RefreshCw, Search, Square, UserX, Video, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { adminCommunityService } from '~/services/communityService'
 import type { CommunityRoom, CommunityVideoEvent } from '~/types/community'
@@ -67,10 +67,17 @@ export function AdminCommunityVideoEventsPage() {
     queryFn: () => adminCommunityService.listVideoEventRegistrations({ eventId: selectedEvent!._id, page: 1, limit: 50 }),
     enabled: Boolean(selectedEvent?._id),
   })
+  const liveParticipantsQuery = useQuery({
+    queryKey: ['admin-community-video-event-live-participants', selectedEvent?._id],
+    queryFn: () => adminCommunityService.listVideoEventParticipants(selectedEvent!._id),
+    enabled: Boolean(selectedEvent?._id && selectedEvent.status === 'live'),
+    refetchInterval: selectedEvent?.status === 'live' ? 10_000 : false,
+  })
   const invalidateEvents = () => {
     queryClient.invalidateQueries({ queryKey: ['admin-community-video-events'] })
     if (selectedEvent?._id) {
       queryClient.invalidateQueries({ queryKey: ['admin-community-video-event-registrations', selectedEvent._id] })
+      queryClient.invalidateQueries({ queryKey: ['admin-community-video-event-live-participants', selectedEvent._id] })
     }
   }
 
@@ -93,7 +100,7 @@ export function AdminCommunityVideoEventsPage() {
       scheduledEndAt: scheduledEndAt.toISOString(),
       capacity: Number(form.capacity) || null,
       ...(tags.length ? { tags } : {}),
-      registrationRequired: true,
+      registrationRequired: false,
       provider: 'livekit',
     }
   }
@@ -123,6 +130,24 @@ export function AdminCommunityVideoEventsPage() {
     onError: (error: any) => toast.error(error?.response?.data?.message || 'Không thể cập nhật hội thảo'),
   })
 
+  const muteParticipantMutation = useMutation({
+    mutationFn: ({ eventId, userId }: { eventId: string; userId: string }) => adminCommunityService.muteVideoEventParticipant(eventId, userId),
+    onSuccess: () => {
+      toast.success('Đã tắt micro người tham gia')
+      if (selectedEvent?._id) queryClient.invalidateQueries({ queryKey: ['admin-community-video-event-live-participants', selectedEvent._id] })
+    },
+    onError: (error: any) => toast.error(error?.response?.data?.message || 'Không thể tắt micro người tham gia'),
+  })
+
+  const kickParticipantMutation = useMutation({
+    mutationFn: ({ eventId, userId }: { eventId: string; userId: string }) => adminCommunityService.kickVideoEventParticipant(eventId, userId),
+    onSuccess: () => {
+      toast.success('Đã mời người tham gia khỏi phòng họp')
+      if (selectedEvent?._id) queryClient.invalidateQueries({ queryKey: ['admin-community-video-event-live-participants', selectedEvent._id] })
+    },
+    onError: (error: any) => toast.error(error?.response?.data?.message || 'Không thể mời người tham gia khỏi phòng họp'),
+  })
+
   const copyMeetingLink = async (event: CommunityVideoEvent) => {
     const href = getMeetingHref(event)
     if (!href) return
@@ -131,6 +156,7 @@ export function AdminCommunityVideoEventsPage() {
   }
 
   const events = eventsQuery.data?.items || []
+  const liveParticipants = liveParticipantsQuery.data?.participants || []
 
   useEffect(() => {
     const firstRoom = roomsQuery.data?.[0]
@@ -208,11 +234,11 @@ export function AdminCommunityVideoEventsPage() {
           ) : (
           <div data-testid='admin-event-list' className='grid gap-3 lg:grid-cols-2'>
             {events.map((event) => (
-              <button key={event._id} className={`rounded-lg border bg-white p-4 text-left shadow-sm ${selectedEvent?._id === event._id ? 'border-blue-500' : 'border-gray-200'}`} onClick={() => setSelectedEvent(event)}>
+              <button key={event._id} className={`rounded-lg border bg-white p-4 text-left shadow-sm ${selectedEvent?._id === event._id ? 'border-[#1E40AF]' : 'border-gray-200'}`} onClick={() => setSelectedEvent(event)}>
                 <div className='mb-2 flex flex-wrap gap-2'><Badge data-testid={`event-status-${event.status}`}>{statusLabel(event.status)}</Badge><Badge variant='outline'>{event.visibility}</Badge></div>
                 <div className='font-semibold text-gray-950'>{event.title}</div>
                 <div className='mt-2 text-sm text-gray-600'>{formatDateTime(event.scheduledStartAt)}</div>
-                <div className='mt-3 flex items-center gap-2 rounded-md bg-blue-50 px-3 py-2 text-xs text-blue-800'>
+                <div className='mt-3 flex items-center gap-2 rounded-md bg-[#F0F6FF] px-3 py-2 text-xs text-[#0A2463]'>
                   <LinkIcon className='h-3.5 w-3.5' />
                   <span className='truncate'>{getMeetingHref(event)}</span>
                 </div>
@@ -244,11 +270,67 @@ export function AdminCommunityVideoEventsPage() {
 
               <div className='mt-5 grid gap-5 lg:grid-cols-2'>
                 <div>
-                  <div className='mb-3 flex items-center gap-2 font-semibold'><Video className='h-4 w-4' />Người đăng ký</div>
-                  <div className='max-h-80 space-y-2 overflow-auto'>
-                    {registrationsQuery.isError ? <p className='text-sm text-red-600'>Không thể tải đăng ký.</p> : registrationsQuery.data?.items?.map((item) => <div key={item._id || item.userId} className='rounded-md border border-gray-100 p-3 text-sm'><div className='font-medium'>{item.user?.firstName || item.user?.email || item.userId}</div><Badge variant='outline'>{item.status}</Badge></div>)}
-                    {!registrationsQuery.isError && !registrationsQuery.data?.items?.length && <p className='text-sm text-gray-500'>Chưa có đăng ký.</p>}
+                  <div className='mb-3 flex items-center justify-between gap-3'>
+                    <div className='flex items-center gap-2 font-semibold'><Video className='h-4 w-4' />Người đang trong phòng</div>
+                    <Button
+                      type='button'
+                      size='sm'
+                      variant='outline'
+                      disabled={selectedEvent.status !== 'live' || liveParticipantsQuery.isFetching}
+                      onClick={() => liveParticipantsQuery.refetch()}
+                    >
+                      <RefreshCw />Làm mới
+                    </Button>
                   </div>
+                  {selectedEvent.status !== 'live' ? (
+                    <div className='rounded-md border border-gray-100 bg-gray-50 p-4 text-sm text-gray-600'>Chỉ hiển thị người online khi hội thảo đang live.</div>
+                  ) : liveParticipantsQuery.isError ? (
+                    <div className='rounded-md border border-red-100 bg-red-50 p-4 text-sm text-red-700'>Không thể tải người đang trong phòng.</div>
+                  ) : liveParticipantsQuery.isLoading ? (
+                    <div className='rounded-md border border-gray-100 bg-gray-50 p-4 text-sm text-gray-600'>Đang tải người online...</div>
+                  ) : liveParticipants.length > 0 ? (
+                    <div className='max-h-80 space-y-2 overflow-auto'>
+                      {liveParticipants.map((participant) => {
+                        const microphoneTrack = participant.tracks.find((track) => track.source === 'microphone')
+                        const displayName = participant.name || String(participant.metadata?.userId || participant.identity)
+                        return (
+                          <div key={participant.identity} className='rounded-md border border-gray-100 p-3 text-sm'>
+                            <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+                              <div className='min-w-0'>
+                                <div className='truncate font-medium'>{displayName}</div>
+                                <div className='mt-1 flex flex-wrap gap-1.5 text-xs text-gray-500'>
+                                  <Badge variant='outline'>{participant.metadata?.role === 'host' ? 'Host' : 'Người tham gia'}</Badge>
+                                  <Badge variant={microphoneTrack?.muted ? 'secondary' : 'outline'}>{microphoneTrack ? (microphoneTrack.muted ? 'Mic đã tắt' : 'Mic đang bật') : 'Chưa bật mic'}</Badge>
+                                </div>
+                              </div>
+                              <div className='flex shrink-0 gap-2'>
+                                <Button
+                                  type='button'
+                                  size='sm'
+                                  variant='outline'
+                                  disabled={!microphoneTrack || microphoneTrack.muted || muteParticipantMutation.isPending}
+                                  onClick={() => muteParticipantMutation.mutate({ eventId: selectedEvent._id, userId: participant.identity })}
+                                >
+                                  <MicOff />Mute
+                                </Button>
+                                <Button
+                                  type='button'
+                                  size='sm'
+                                  variant='destructive'
+                                  disabled={kickParticipantMutation.isPending}
+                                  onClick={() => kickParticipantMutation.mutate({ eventId: selectedEvent._id, userId: participant.identity })}
+                                >
+                                  <UserX />Kick
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <p className='rounded-md border border-gray-100 bg-gray-50 p-4 text-sm text-gray-600'>Chưa có ai online trong phòng họp.</p>
+                  )}
                 </div>
                 <div>
                   <div className='mb-3 flex items-center gap-2 font-semibold'><MessageSquare className='h-4 w-4' />Chat trực tiếp</div>
@@ -256,6 +338,14 @@ export function AdminCommunityVideoEventsPage() {
                     Người tham gia nhắn tin ngay trong phòng họp bằng chat realtime. Host/dược sĩ phản hồi trực tiếp trong cuộc gọi, không cần quy trình duyệt chờ xử lý.
                   </div>
                 </div>
+              </div>
+
+              <div className='mt-5'>
+                <div className='mb-3 flex items-center gap-2 font-semibold'><Video className='h-4 w-4' />Lịch sử tham gia</div>
+                  <div className='max-h-80 space-y-2 overflow-auto'>
+                    {registrationsQuery.isError ? <p className='text-sm text-red-600'>Không thể tải đăng ký.</p> : registrationsQuery.data?.items?.map((item) => <div key={item._id || item.userId} className='rounded-md border border-gray-100 p-3 text-sm'><div className='font-medium'>{item.user?.firstName || item.user?.email || item.userId}</div><Badge variant='outline'>{item.status}</Badge></div>)}
+                    {!registrationsQuery.isError && !registrationsQuery.data?.items?.length && <p className='text-sm text-gray-500'>Chưa có người tham gia.</p>}
+                  </div>
               </div>
             </section>
           )}

@@ -299,7 +299,7 @@ export function ProductComparisonPage() {
                 <Button
                   variant='outline'
                   onClick={handleAddAllToCart}
-                  className='border-blue-200 text-blue-700 hover:bg-blue-50'
+                  className='border-[#BFDBFE] text-[#0A2463] hover:bg-[#F0F6FF]'
                 >
                   <ShoppingCart className='w-4 h-4 mr-2' />
                   Thêm tất cả vào giỏ
@@ -308,7 +308,7 @@ export function ProductComparisonPage() {
                 <Button
                   variant='outline'
                   onClick={handleConsultPharmacist}
-                  className='border-blue-200 text-blue-700 hover:bg-blue-50'
+                  className='border-[#BFDBFE] text-[#0A2463] hover:bg-[#F0F6FF]'
                 >
                   Tư vấn dược sĩ
                 </Button>
@@ -334,7 +334,7 @@ export function ProductComparisonPage() {
             placeholder='Tìm sản phẩm để thêm vào so sánh...'
             value={searchTerm}
             onChange={(e) => handleSearch(e.target.value)}
-            className='pl-10 border-2 border-blue-200 focus:border-blue-500'
+            className='pl-10 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
           />
 
           {/* Search results dropdown */}
@@ -352,7 +352,7 @@ export function ProductComparisonPage() {
                       <div className='font-medium text-sm'>{product.name}</div>
                       <div className='text-xs text-gray-500'>{product.brand}</div>
                     </div>
-                    <Plus className='w-4 h-4 text-blue-600' />
+                    <Plus className='w-4 h-4 text-[#1E40AF]' />
                   </div>
                 ))}
               </CardContent>
@@ -363,7 +363,7 @@ export function ProductComparisonPage() {
 
       {/* Feature Highlights */}
       {products.length > 1 && (
-        <Card className='mb-6 bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+        <Card className='mb-6 bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
           <CardHeader>
             <CardTitle className='text-blue-900 flex items-center'>🏆 ĐIỂM NỔI BẬT</CardTitle>
           </CardHeader>
@@ -393,20 +393,20 @@ export function ProductComparisonPage() {
                 </AlertDescription>
               </Alert>
 
-              <Alert className='border-blue-200 bg-blue-50'>
-                <TrendingUp className='h-4 w-4 text-blue-600' />
+              <Alert className='border-[#BFDBFE] bg-[#F0F6FF]'>
+                <TrendingUp className='h-4 w-4 text-[#1E40AF]' />
                 <AlertDescription>
                   <div className='font-medium text-blue-800'>🚀 BÁN CHẠY NHẤT</div>
-                  <div className='text-sm text-blue-700'>{getBestSellerProduct()?.name}</div>
+                  <div className='text-sm text-[#0A2463]'>{getBestSellerProduct()?.name}</div>
                 </AlertDescription>
               </Alert>
 
               {getSafestForChildren() && (
-                <Alert className='border-purple-200 bg-purple-50'>
-                  <Baby className='h-4 w-4 text-purple-600' />
+                <Alert className='border-[#BFDBFE] bg-[#F0F6FF]'>
+                  <Baby className='h-4 w-4 text-[#1E40AF]' />
                   <AlertDescription>
-                    <div className='font-medium text-purple-800'>👶 AN TOÀN CHO TRẺ</div>
-                    <div className='text-sm text-purple-700'>
+                    <div className='font-medium text-[#0A2463]'>👶 AN TOÀN CHO TRẺ</div>
+                    <div className='text-sm text-[#1E40AF]'>
                       {getSafestForChildren()?.name} ({getSafestForChildren()?.targetAudience.childrenAge})
                     </div>
                   </AlertDescription>
@@ -437,14 +437,14 @@ export function ProductComparisonPage() {
           isInWishlist={isInWishlist}
         />
       ) : (
-        <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+        <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
           <CardContent className='p-12 text-center'>
-            <div className='w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4'>
-              <Plus className='w-12 h-12 text-blue-600' />
+            <div className='w-24 h-24 bg-[#E8EDF5] rounded-full flex items-center justify-center mx-auto mb-4'>
+              <Plus className='w-12 h-12 text-[#1E40AF]' />
             </div>
             <h3 className='text-xl mb-2 text-gray-900'>Chưa có sản phẩm nào để so sánh</h3>
             <p className='text-gray-600 mb-6'>Sử dụng thanh tìm kiếm phía trên để thêm sản phẩm vào bảng so sánh</p>
-            <Button onClick={() => navigate('/products')} className='bg-blue-600 hover:bg-blue-700 text-white'>
+            <Button onClick={() => navigate('/products')} className='bg-[#0A2463] hover:bg-[#071A49] text-white'>
               Duyệt sản phẩm
             </Button>
           </CardContent>
@@ -453,7 +453,7 @@ export function ProductComparisonPage() {
 
       {/* Suggested Products */}
       {products.length > 0 && products.length < 4 && (
-        <Card className='mt-6 bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+        <Card className='mt-6 bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
           <CardHeader>
             <CardTitle className='text-blue-900'>➕ THÊM SẢN PHẨM ĐỂ SO SÁNH</CardTitle>
           </CardHeader>
@@ -466,7 +466,7 @@ export function ProductComparisonPage() {
                     key={product.id}
                     variant='outline'
                     onClick={() => handleAddProduct(product.id)}
-                    className='justify-start border-blue-200 text-blue-700 hover:bg-blue-50'
+                    className='justify-start border-[#BFDBFE] text-[#0A2463] hover:bg-[#F0F6FF]'
                   >
                     <Plus className='w-4 h-4 mr-2' />
                     <div className='text-left'>
@@ -483,12 +483,12 @@ export function ProductComparisonPage() {
 
       {/* Action Panel */}
       {products.length > 0 && (
-        <Card className='mt-6 bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-blue-100'>
+        <Card className='mt-6 bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
           <CardContent className='p-6'>
             <div className='flex flex-wrap gap-3 justify-center'>
               <Button
                 onClick={handleAddAllToCart}
-                className='bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-700 hover:to-blue-600'
+                className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white hover:from-[#071A49] hover:to-[#1E40AF]'
               >
                 <ShoppingCart className='w-4 h-4 mr-2' />
                 Thêm tất cả vào giỏ hàng
@@ -497,7 +497,7 @@ export function ProductComparisonPage() {
               <Button
                 variant='outline'
                 onClick={handleConsultPharmacist}
-                className='border-blue-200 text-blue-700 hover:bg-blue-50'
+                className='border-[#BFDBFE] text-[#0A2463] hover:bg-[#F0F6FF]'
               >
                 Tư vấn dược sĩ
               </Button>
