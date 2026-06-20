@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, Link } from 'react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Users, Lock, Globe, RefreshCw, LogIn, MessageCircle, ShieldAlert, Video } from 'lucide-react'
+import { Users, Lock, Globe, RefreshCw, LogIn, MessageCircle, ShieldAlert } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Card, CardContent } from '~/components/ui/card'
@@ -463,11 +463,7 @@ export function CommunityRoomsPage() {
               Đăng nhập
             </Button>
           )}
-          <Button variant='outline' className='border-[#BFDBFE] gap-2' onClick={() => navigate('/community/video-events')}>
-            <Video className='w-4 h-4' />
-            Hội thảo
-          </Button>
-          <Button variant='outline' className='border-[#BFDBFE] gap-2' onClick={() => refetch()} disabled={isFetching}>
+          <Button variant='outline' className='border-blue-200 gap-2' onClick={() => refetch()} disabled={isFetching}>
             <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
             Tải lại
           </Button>

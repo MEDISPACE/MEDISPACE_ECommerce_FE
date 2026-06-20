@@ -150,7 +150,7 @@ export function HomePage() {
                 Nhà thuốc trực tuyến có phép hoạt động
               </div>
 
-              <h1 className='font-display bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text text-4xl font-extrabold leading-[1.1] text-transparent md:text-5xl'>
+              <h1 className='font-display bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text py-1 text-4xl font-extrabold leading-[1.24] text-transparent md:text-5xl md:leading-[1.22]'>
                 Nhà thuốc trực tuyến đáng tin cậy cho gia đình Việt
               </h1>
 

@@ -22,6 +22,9 @@ const { mockCommunityService, mockAdminCommunityService, mockUseAuth, mockUseSoc
     startVideoEvent: vi.fn(),
     endVideoEvent: vi.fn(),
     cancelVideoEvent: vi.fn(),
+    listVideoEventParticipants: vi.fn(),
+    muteVideoEventParticipant: vi.fn(),
+    kickVideoEventParticipant: vi.fn(),
   },
   mockUseAuth: vi.fn(),
   mockUseSocketContext: vi.fn(),
@@ -55,6 +58,7 @@ vi.mock('sonner', () => ({
 import { CommunityVideoEventsPage } from '~/components/community/CommunityVideoEventsPage'
 import { CommunityVideoEventDetailPage } from '~/components/community/CommunityVideoEventDetailPage'
 import { AdminCommunityVideoEventsPage } from '~/components/admin/AdminCommunityVideoEventsPage'
+import { BreadcrumbProvider } from '~/contexts/BreadcrumbContext'
 import { toast } from 'sonner'
 
 function makeQueryClient() {
@@ -64,7 +68,9 @@ function makeQueryClient() {
 function renderWithProviders(ui: React.ReactElement, initialPath = '/') {
   return render(
     <QueryClientProvider client={makeQueryClient()}>
-      <MemoryRouter initialEntries={[initialPath]}>{ui}</MemoryRouter>
+      <BreadcrumbProvider>
+        <MemoryRouter initialEntries={[initialPath]}>{ui}</MemoryRouter>
+      </BreadcrumbProvider>
     </QueryClientProvider>,
   )
 }
@@ -72,12 +78,14 @@ function renderWithProviders(ui: React.ReactElement, initialPath = '/') {
 function renderDetail(eventId = 'event-1') {
   return render(
     <QueryClientProvider client={makeQueryClient()}>
-      <MemoryRouter initialEntries={[`/community/video-events/${eventId}`]}>
-        <Routes>
-          <Route path='/community/video-events/:eventId' element={<CommunityVideoEventDetailPage />} />
-          <Route path='/login' element={<div>Login page</div>} />
-        </Routes>
-      </MemoryRouter>
+      <BreadcrumbProvider>
+        <MemoryRouter initialEntries={[`/community/video-events/${eventId}`]}>
+          <Routes>
+            <Route path='/community/video-events/:eventId' element={<CommunityVideoEventDetailPage />} />
+            <Route path='/login' element={<div>Login page</div>} />
+          </Routes>
+        </MemoryRouter>
+      </BreadcrumbProvider>
     </QueryClientProvider>,
   )
 }
@@ -122,19 +130,22 @@ describe('Community Video Events UI component tests', () => {
     mockAdminCommunityService.listRooms.mockResolvedValue([{ _id: 'room-1', name: 'Diabetes Room', status: 'active' }])
     mockAdminCommunityService.listVideoEvents.mockResolvedValue({ items: [event], page: 1, limit: 50, total: 1 })
     mockAdminCommunityService.listVideoEventRegistrations.mockResolvedValue({ items: [], page: 1, limit: 50, total: 0 })
+    mockAdminCommunityService.listVideoEventParticipants.mockResolvedValue({ eventId: event._id, roomName: 'medispace-event-event-1', participants: [] })
+    mockAdminCommunityService.muteVideoEventParticipant.mockResolvedValue({ eventId: event._id, userId: 'user-2', action: 'muted' })
+    mockAdminCommunityService.kickVideoEventParticipant.mockResolvedValue({ eventId: event._id, userId: 'user-2', action: 'kicked' })
   })
 
-  it('renders public listing with event details, search input, and register action', async () => {
+  it('renders public listing with event details, search input, and direct meeting link', async () => {
     renderWithProviders(<CommunityVideoEventsPage />, '/community/video-events')
 
     expect(await screen.findByText('Diabetes care workshop')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('Tìm hội thảo')).toBeInTheDocument()
-    expect(screen.getByText('3/50')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /đăng ký/i })).toBeInTheDocument()
+    expect(screen.getByText(/3\s*\/50 người tham gia/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /mở link/i })).toHaveAttribute('href', '/community/video-events/event-1')
+    expect(screen.queryByRole('button', { name: /đăng ký/i })).not.toBeInTheDocument()
   })
 
-  it('redirects unauthenticated listing registration to login', async () => {
-    const user = userEvent.setup()
+  it('keeps anonymous listing as a direct link while detail page owns login gate', async () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: false, user: null })
     renderWithProviders(
       <Routes>
@@ -144,8 +155,8 @@ describe('Community Video Events UI component tests', () => {
       '/community/video-events',
     )
 
-    await user.click(await screen.findByRole('button', { name: /đăng ký/i }))
-    expect(await screen.findByText('Login page')).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: /mở link/i })).toHaveAttribute('href', '/community/video-events/event-1')
+    expect(screen.queryByRole('button', { name: /đăng ký/i })).not.toBeInTheDocument()
   })
 
   it('shows login gate on detail page for anonymous users', async () => {
@@ -160,6 +171,7 @@ describe('Community Video Events UI component tests', () => {
 
     expect(await screen.findByText('Diabetes care workshop')).toBeInTheDocument()
     expect(screen.getByText('Camera preview')).toBeInTheDocument()
+    expect(screen.getByTestId('camera-preview-video')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /cuộc họp chưa bắt đầu/i })).toBeDisabled()
   })
 
@@ -224,5 +236,34 @@ describe('Community Video Events UI component tests', () => {
     expect(screen.getByText('Chat trực tiếp')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /duyệt/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /ẩn/i })).not.toBeInTheDocument()
+  })
+
+  it('lets admin mute microphone and kick a live meeting participant', async () => {
+    const user = userEvent.setup()
+    mockAdminCommunityService.listVideoEvents.mockResolvedValue({ items: [{ ...event, status: 'live' }], page: 1, limit: 50, total: 1 })
+    mockAdminCommunityService.listVideoEventParticipants.mockResolvedValue({
+      eventId: event._id,
+      roomName: 'medispace-event-event-1',
+      participants: [
+        {
+          identity: 'user-2',
+          name: 'Nguyen An',
+          metadata: { userId: 'user-2', role: 'attendee' },
+          tracks: [{ sid: 'TR_AUDIO', name: 'microphone', source: 'microphone', muted: false }],
+        },
+      ],
+    })
+
+    renderWithProviders(<AdminCommunityVideoEventsPage />, '/admin/video-events')
+
+    await screen.findByText('Diabetes care workshop')
+    await user.click(screen.getByText('Diabetes care workshop'))
+
+    expect(await screen.findByText('Nguyen An')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /mute/i }))
+    await user.click(screen.getByRole('button', { name: /kick/i }))
+
+    await waitFor(() => expect(mockAdminCommunityService.muteVideoEventParticipant).toHaveBeenCalledWith('event-1', 'user-2'))
+    await waitFor(() => expect(mockAdminCommunityService.kickVideoEventParticipant).toHaveBeenCalledWith('event-1', 'user-2'))
   })
 })
