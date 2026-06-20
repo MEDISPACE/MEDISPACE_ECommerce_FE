@@ -1,11 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Link } from 'react-router'
+import { useQuery } from '@tanstack/react-query'
 import { CalendarDays, Search, Users, Video } from 'lucide-react'
-import { toast } from 'sonner'
 import communityService from '~/services/communityService'
 import type { CommunityVideoEvent } from '~/types/community'
-import { useAuth } from '~/contexts/AuthContext'
 import { Button } from '~/components/ui/button'
 import { Badge } from '~/components/ui/badge'
 import { Input } from '~/components/ui/input'
@@ -21,8 +19,7 @@ function statusLabel(status: string) {
   return labels[status] || status
 }
 
-function EventCard({ event, onRegister }: { event: CommunityVideoEvent; onRegister: (eventId: string) => void }) {
-  const registered = ['registered', 'attended'].includes(event.viewerRegistration?.status || '')
+function EventCard({ event }: { event: CommunityVideoEvent }) {
   return (
     <article className='rounded-lg border border-gray-200 bg-white p-5 shadow-sm'>
       <div className='flex flex-wrap items-start justify-between gap-3'>
@@ -40,17 +37,13 @@ function EventCard({ event, onRegister }: { event: CommunityVideoEvent; onRegist
 
       <div className='mt-4 flex flex-wrap items-center gap-4 text-sm text-gray-600'>
         <span className='inline-flex items-center gap-2'><CalendarDays className='h-4 w-4' />{formatDateTime(event.scheduledStartAt)}</span>
-        <span data-testid='attendee-count' className='inline-flex items-center gap-2'><Users className='h-4 w-4' />{event.registrationCount || 0}{event.capacity ? `/${event.capacity}` : ''}</span>
+        <span data-testid='attendee-count' className='inline-flex items-center gap-2'><Users className='h-4 w-4' />{event.registrationCount || 0}{event.capacity ? `/${event.capacity}` : ''} người tham gia</span>
       </div>
 
       <div className='mt-5 flex flex-wrap gap-2'>
         <Button asChild variant='outline'>
-          <Link to={`/community/video-events/${event._id}`}>Xem chi tiết</Link>
+          <Link to={`/community/video-events/${event._id}`}>{event.status === 'live' ? 'Tham gia' : 'Mở link'}</Link>
         </Button>
-        {event.status !== 'ended' && event.status !== 'cancelled' && !registered && (
-          <Button data-testid='register-event-btn' onClick={() => onRegister(event._id)}>Đăng ký</Button>
-        )}
-        {registered && <Badge className='self-center bg-emerald-600 text-white'>Đã đăng ký</Badge>}
       </div>
     </article>
   )
@@ -59,9 +52,6 @@ function EventCard({ event, onRegister }: { event: CommunityVideoEvent; onRegist
 export function CommunityVideoEventsPage() {
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
-  const { isAuthenticated } = useAuth()
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
   useEffect(() => {
     const timeout = window.setTimeout(() => setDebouncedSearch(search.trim()), 350)
     return () => window.clearTimeout(timeout)
@@ -72,23 +62,6 @@ export function CommunityVideoEventsPage() {
     queryKey,
     queryFn: () => communityService.listVideoEvents({ search: debouncedSearch || undefined, page: 1, limit: 30 }),
   })
-
-  const registerMutation = useMutation({
-    mutationFn: (eventId: string) => communityService.registerVideoEvent(eventId),
-    onSuccess: () => {
-      toast.success('Đã đăng ký hội thảo')
-      queryClient.invalidateQueries({ queryKey: ['community-video-events'] })
-    },
-    onError: (error: any) => toast.error(error?.response?.data?.message || 'Không thể đăng ký hội thảo'),
-  })
-
-  const handleRegister = (eventId: string) => {
-    if (!isAuthenticated) {
-      navigate('/login', { state: { from: { pathname: '/community/video-events' } } })
-      return
-    }
-    registerMutation.mutate(eventId)
-  }
 
   return (
     <main data-testid='video-events-list' className='mx-auto w-full max-w-6xl px-4 py-8'>
@@ -116,7 +89,7 @@ export function CommunityVideoEventsPage() {
         <div className='rounded-lg border border-gray-200 bg-white p-8 text-center text-gray-600'>Đang tải lịch hội thảo...</div>
       ) : data?.items?.length ? (
         <div className='grid gap-4 md:grid-cols-2'>
-          {data.items.map((event) => <EventCard key={event._id} event={event} onRegister={handleRegister} />)}
+          {data.items.map((event) => <EventCard key={event._id} event={event} />)}
         </div>
       ) : (
         <div className='rounded-lg border border-gray-200 bg-white p-8 text-center text-gray-600'>Chưa có hội thảo phù hợp.</div>

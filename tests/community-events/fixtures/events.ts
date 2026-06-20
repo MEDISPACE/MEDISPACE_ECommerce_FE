@@ -15,7 +15,7 @@ export function eventPayload(overrides: Record<string, unknown> = {}) {
     scheduledStartAt: futureDate(60),
     scheduledEndAt: futureDate(120),
     capacity: 50,
-    registrationRequired: true,
+    registrationRequired: false,
     provider: 'livekit',
     tags: ['e2e', 'community-video'],
     materials: [{ title: 'Slides', url: 'https://example.test/slides.pdf' }],
