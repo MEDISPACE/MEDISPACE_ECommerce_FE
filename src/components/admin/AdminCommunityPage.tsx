@@ -16,12 +16,27 @@ import {
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
+import { Switch } from '~/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '~/components/ui/table'
+import { Textarea } from '~/components/ui/textarea'
 import { adminCommunityService } from '~/services/communityService'
 import type { CommunityMember, CommunityRoom } from '~/types/community'
 
-const emptyForm = { name: '', slug: '', visibility: 'public' as 'public' | 'private', diseaseKey: '' }
+const emptyForm = {
+  name: '',
+  slug: '',
+  visibility: 'public' as 'public' | 'private',
+  diseaseKey: '',
+  topicLabel: '',
+  description: '',
+  iconKey: '',
+  coverImage: '',
+  guidelinesText: '',
+  pinnedMessage: '',
+  featured: false,
+  sortOrder: '',
+}
 
 function displayName(member: CommunityMember) {
   const user = member.user
@@ -54,7 +69,7 @@ export function AdminCommunityPage() {
     const needle = roomSearch.trim().toLowerCase()
     if (!needle) return rooms
     return rooms.filter((room) =>
-      [room.name, room.slug, room.diseaseKey].some((value) => value?.toLowerCase().includes(needle)),
+      [room.name, room.slug, room.diseaseKey, room.topicLabel, room.description].some((value) => value?.toLowerCase().includes(needle)),
     )
   }, [roomSearch, rooms])
 
@@ -76,6 +91,14 @@ export function AdminCommunityPage() {
         slug: form.slug.trim() || undefined,
         visibility: form.visibility,
         diseaseKey: form.diseaseKey.trim() || undefined,
+        topicLabel: form.topicLabel.trim() || undefined,
+        description: form.description.trim() || undefined,
+        iconKey: form.iconKey.trim() || undefined,
+        coverImage: form.coverImage.trim() || undefined,
+        guidelines: form.guidelinesText.split('\n').map((item) => item.trim()).filter(Boolean),
+        pinnedMessage: form.pinnedMessage.trim() || undefined,
+        featured: form.featured,
+        sortOrder: form.sortOrder.trim() ? Number(form.sortOrder) : undefined,
       }
       return editingRoom
         ? adminCommunityService.updateRoom(editingRoom._id, payload)
@@ -135,6 +158,14 @@ export function AdminCommunityPage() {
       slug: room.slug,
       visibility: room.visibility,
       diseaseKey: room.diseaseKey || '',
+      topicLabel: room.topicLabel || '',
+      description: room.description || '',
+      iconKey: room.iconKey || '',
+      coverImage: room.coverImage || '',
+      guidelinesText: (room.guidelines || []).join('\n'),
+      pinnedMessage: room.pinnedMessage || '',
+      featured: Boolean(room.featured),
+      sortOrder: room.sortOrder === undefined ? '' : String(room.sortOrder),
     })
     setDialogOpen(true)
   }
@@ -142,7 +173,7 @@ export function AdminCommunityPage() {
   return (
     <div className='space-y-6'>
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className='max-h-[90vh] overflow-y-auto sm:max-w-3xl'>
           <DialogHeader>
             <DialogTitle>{editingRoom ? 'Sửa phòng cộng đồng' : 'Tạo phòng cộng đồng'}</DialogTitle>
           </DialogHeader>
@@ -178,6 +209,76 @@ export function AdminCommunityPage() {
                   onChange={(e) => setForm((prev) => ({ ...prev, diseaseKey: e.target.value }))}
                 />
               </div>
+            </div>
+            <div className='grid grid-cols-2 gap-3'>
+              <div className='space-y-2'>
+                <Label>Nhãn chủ đề</Label>
+                <Input
+                  value={form.topicLabel}
+                  onChange={(e) => setForm((prev) => ({ ...prev, topicLabel: e.target.value }))}
+                  placeholder='Ví dụ: Tim mạch, Mẹ và bé'
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label>Icon key</Label>
+                <Input
+                  value={form.iconKey}
+                  onChange={(e) => setForm((prev) => ({ ...prev, iconKey: e.target.value }))}
+                  placeholder='heart, diabetes, mental-health'
+                />
+              </div>
+            </div>
+            <div className='space-y-2'>
+              <Label>Mô tả ngắn</Label>
+              <Textarea
+                value={form.description}
+                onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
+                rows={3}
+                placeholder='Mô tả hiển thị trên card cộng đồng'
+              />
+            </div>
+            <div className='space-y-2'>
+              <Label>Thông báo ghim</Label>
+              <Input
+                value={form.pinnedMessage}
+                onChange={(e) => setForm((prev) => ({ ...prev, pinnedMessage: e.target.value }))}
+                placeholder='Thông báo ngắn hiển thị trong phòng'
+              />
+            </div>
+            <div className='space-y-2'>
+              <Label>Quy tắc phòng</Label>
+              <Textarea
+                value={form.guidelinesText}
+                onChange={(e) => setForm((prev) => ({ ...prev, guidelinesText: e.target.value }))}
+                rows={4}
+                placeholder='Mỗi dòng là một quy tắc cộng đồng'
+              />
+            </div>
+            <div className='grid grid-cols-2 gap-3'>
+              <div className='space-y-2'>
+                <Label>Ảnh bìa</Label>
+                <Input
+                  value={form.coverImage}
+                  onChange={(e) => setForm((prev) => ({ ...prev, coverImage: e.target.value }))}
+                  placeholder='https://...'
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label>Thứ tự ưu tiên</Label>
+                <Input
+                  type='number'
+                  min={0}
+                  value={form.sortOrder}
+                  onChange={(e) => setForm((prev) => ({ ...prev, sortOrder: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className='flex items-center justify-between rounded-lg border border-[#E8EDF5] p-3'>
+              <div>
+                <Label>Đề xuất trên Community Hub</Label>
+                <p className='text-xs text-gray-500'>Phòng được ưu tiên khi sắp xếp danh sách.</p>
+              </div>
+              <Switch checked={form.featured} onCheckedChange={(checked) => setForm((prev) => ({ ...prev, featured: checked }))} />
             </div>
           </div>
           <DialogFooter>
@@ -327,9 +428,36 @@ export function AdminCommunityPage() {
                     </div>
                     <div className='rounded-lg bg-[#F0F6FF] p-4'>
                       <p className='text-xs text-gray-500'>Nhóm bệnh</p>
-                      <p className='font-semibold'>{selectedRoom.diseaseKey || '-'}</p>
+                      <p className='font-semibold'>{selectedRoom.topicLabel || selectedRoom.diseaseKey || '-'}</p>
                     </div>
                   </div>
+                  <div className='grid gap-3 md:grid-cols-2'>
+                    <div className='rounded-lg border border-[#E8EDF5] p-4'>
+                      <p className='text-xs text-gray-500'>Mô tả hiển thị</p>
+                      <p className='mt-1 text-sm text-gray-700'>{selectedRoom.description || 'Chưa có mô tả'}</p>
+                    </div>
+                    <div className='rounded-lg border border-[#E8EDF5] p-4'>
+                      <p className='text-xs text-gray-500'>Cấu hình hub</p>
+                      <div className='mt-2 flex flex-wrap gap-2'>
+                        <Badge className={selectedRoom.featured ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-700'}>
+                          {selectedRoom.featured ? 'Đang đề xuất' : 'Không đề xuất'}
+                        </Badge>
+                        <Badge className='bg-[#E8EDF5] text-[#0A2463]'>Ưu tiên: {selectedRoom.sortOrder ?? '-'}</Badge>
+                        {selectedRoom.iconKey && <Badge variant='outline'>{selectedRoom.iconKey}</Badge>}
+                      </div>
+                    </div>
+                  </div>
+                  <div className='rounded-lg border border-[#E8EDF5] p-4'>
+                    <p className='text-xs text-gray-500'>Quy tắc phòng</p>
+                    {(selectedRoom.guidelines || []).length ? (
+                      <ul className='mt-2 list-disc space-y-1 pl-5 text-sm text-gray-700'>
+                        {selectedRoom.guidelines?.map((item) => <li key={item}>{item}</li>)}
+                      </ul>
+                    ) : (
+                      <p className='mt-1 text-sm text-gray-500'>Chưa có quy tắc riêng.</p>
+                    )}
+                  </div>
+                  {selectedRoom.pinnedMessage && <p className='rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-800'>Ghim: {selectedRoom.pinnedMessage}</p>}
                   <p className='text-sm text-gray-600'>Tin mới nhất: {selectedRoom.lastMessagePreview || 'Chưa có'}</p>
                 </TabsContent>
 

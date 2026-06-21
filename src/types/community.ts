@@ -7,6 +7,14 @@ export interface CommunityRoom {
   slug: string
   visibility: CommunityRoomVisibility
   diseaseKey?: string
+  topicLabel?: string
+  description?: string
+  iconKey?: string
+  coverImage?: string
+  guidelines?: string[]
+  pinnedMessage?: string
+  featured?: boolean
+  sortOrder?: number
   status?: CommunityRoomStatus
   createdBy?: string
   createdAt?: string
