@@ -92,7 +92,7 @@ export function Header() {
     setActiveMegaMenuCategory(null)
   }
   return (
-    <header className='sticky top-0 z-50 border-b border-[#E8EDF5] bg-white'>
+    <header className='sticky top-0 z-[100] border-b border-[#E8EDF5] bg-white'>
       {/* Top bar */}
       <div className='hidden bg-[#0A2463] py-2 text-white md:block'>
         <div className='max-w-7xl mx-auto px-4 flex justify-between items-center text-sm'>
@@ -359,7 +359,7 @@ export function Header() {
       {/* Navigation */}
       <div className='relative border-t border-[#E8EDF5]'>
         <div className='max-w-7xl mx-auto px-4'>
-          <nav className='relative flex items-center gap-6 overflow-x-auto py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden' onMouseLeave={handleNavigationMouseLeave}>
+          <nav className='relative flex items-center gap-6 overflow-x-auto py-2 [scrollbar-width:none] lg:overflow-visible [&::-webkit-scrollbar]:hidden' onMouseLeave={handleNavigationMouseLeave}>
             {/* Mobile menu button */}
             <div className='lg:hidden'>
               <Link

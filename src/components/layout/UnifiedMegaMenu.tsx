@@ -52,7 +52,7 @@ export function UnifiedMegaMenu({ activeCategory, isVisible, onClose }: UnifiedM
 
   return (
     <div
-      className='absolute top-full bg-white border border-gray-200 shadow-xl z-50 rounded-lg overflow-hidden hidden lg:block'
+      className='absolute top-full z-[110] hidden overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl lg:block'
       style={{
         width: '1200px',
         height: '500px',
