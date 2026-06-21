@@ -6,7 +6,7 @@ import { Label } from '../ui/label'
 import { Checkbox } from '../ui/checkbox'
 import { Alert, AlertDescription } from '../ui/alert'
 import { Mail, AlertCircle, Lock, Eye, EyeOff, LogIn, Sparkles } from 'lucide-react'
-import { Link } from 'react-router'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { useAuth } from '../../contexts/AuthContext'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
@@ -39,10 +39,23 @@ export function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const { login } = useAuth()
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const navigateByRole = useRoleNavigation()
 
   // Memoize Google OAuth URL để tránh tính lại mỗi render
   const googleOAuthUrl = useMemo(() => getGoogleAuthUrl(), [])
+
+  const getRedirectPath = () => {
+    const fromState = (location.state as { from?: { pathname?: string; search?: string; hash?: string } } | null)?.from
+    const statePath = fromState?.pathname ? `${fromState.pathname}${fromState.search || ''}${fromState.hash || ''}` : ''
+    const queryPath = searchParams.get('redirect') || ''
+    const redirectPath = statePath || queryPath
+    return redirectPath.startsWith('/') && !redirectPath.startsWith('//') && redirectPath !== '/login'
+      ? redirectPath
+      : ''
+  }
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
@@ -85,9 +98,14 @@ export function LoginPage() {
           duration: 2000,
         })
 
-        // Navigate based on the returned user's role. Using the returned
-        // user avoids any race where context.user hasn't updated yet.
-        navigateByRole(loggedInUser.role)
+        const redirectPath = getRedirectPath()
+        if (redirectPath) {
+          navigate(redirectPath, { replace: true })
+        } else {
+          // Navigate based on the returned user's role. Using the returned
+          // user avoids any race where context.user hasn't updated yet.
+          navigateByRole(loggedInUser.role)
+        }
       } else {
         throw new Error('Email hoặc mật khẩu không đúng')
       }

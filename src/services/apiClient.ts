@@ -73,7 +73,12 @@ class ApiClient {
           } catch (refreshError) {
             // Refresh failed, clear tokens and redirect to login
             this.expireSession()
-            window.location.replace('/login')
+            const redirectPath = `${window.location.pathname}${window.location.search}${window.location.hash}`
+            const loginUrl =
+              redirectPath && redirectPath !== '/login'
+                ? `/login?redirect=${encodeURIComponent(redirectPath)}`
+                : '/login'
+            window.location.replace(loginUrl)
             return Promise.reject(refreshError)
           }
         }
