@@ -83,7 +83,7 @@ function displayNameFromParts(firstName?: string, lastName?: string, email?: str
 export function CommunityVideoEventDetailPage() {
   const { eventId = '' } = useParams()
   const navigate = useNavigate()
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated, loading: authLoading, user } = useAuth()
   const queryClient = useQueryClient()
   const socket = useSocketContext()
   const [acceptedDisclaimer, setAcceptedDisclaimer] = useState(false)
@@ -134,8 +134,8 @@ export function CommunityVideoEventDetailPage() {
   const eventQuery = useQuery({
     queryKey: ['community-video-event', eventId],
     queryFn: () => communityService.getVideoEvent(eventId),
-    enabled: Boolean(eventId) && isAuthenticated,
-    refetchInterval: isAuthenticated ? 2000 : false,
+    enabled: Boolean(eventId) && !authLoading && isAuthenticated,
+    refetchInterval: !authLoading && isAuthenticated ? 2000 : false,
   })
 
   const event = eventQuery.data
@@ -322,6 +322,14 @@ export function CommunityVideoEventDetailPage() {
     setJoinPayload(null)
     toast.info(status === 'ended' ? 'Cuộc họp đã kết thúc' : 'Cuộc họp đã bị hủy')
   }, [eventQuery.data?.status, joinPayload])
+
+  if (authLoading) {
+    return (
+      <main className='min-h-screen bg-[#202124] p-6 text-white'>
+        <div className='mx-auto mt-20 max-w-xl text-center'>Đang kiểm tra phiên đăng nhập...</div>
+      </main>
+    )
+  }
 
   if (!isAuthenticated) {
     return (
