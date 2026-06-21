@@ -16,7 +16,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         <Button
           variant='outline'
           size='sm'
-          className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white border-0 shadow-sm transition-transform transform hover:-translate-y-1 hover:shadow-lg hover:from-[#071A49] hover:to-[#0A2463] focus:outline-none'
+          className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] !text-white border-0 shadow-sm transition-transform transform hover:-translate-y-1 hover:shadow-lg hover:from-[#071A49] hover:to-[#0A2463] hover:!text-white focus:outline-none focus-visible:!text-white [&_svg]:!text-white'
         >
           <Home className='w-4 h-4 mr-2' />
           Trang chủ
@@ -307,7 +307,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
             <Button
               variant='outline'
               size='sm'
-              className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white border-0 shadow-sm transition-transform transform hover:-translate-y-1 hover:shadow-lg hover:from-[#071A49] hover:to-[#0A2463] focus:outline-none'
+              className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] !text-white border-0 shadow-sm transition-transform transform hover:-translate-y-1 hover:shadow-lg hover:from-[#071A49] hover:to-[#0A2463] hover:!text-white focus:outline-none focus-visible:!text-white [&_svg]:!text-white'
             >
               <Home className='w-4 h-4 mr-2' />
               Trang chủ

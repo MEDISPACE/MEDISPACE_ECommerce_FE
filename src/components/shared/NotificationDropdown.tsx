@@ -61,9 +61,7 @@ function NotificationListItem({
   const colorClass = typeColors[type] ?? typeColors.system
   const isRead = Boolean(n.isRead)
 
-  const timeAgo = n.createdAt
-    ? formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: vi })
-    : ''
+  const timeAgo = n.createdAt ? formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: vi }) : ''
 
   return (
     <motion.div
@@ -85,12 +83,8 @@ function NotificationListItem({
       {/* Content */}
       <div className='flex-1 min-w-0'>
         <div className='flex items-start justify-between gap-2'>
-          <p className={`text-sm font-medium truncate ${!isRead ? 'text-gray-900' : 'text-gray-600'}`}>
-            {n.title}
-          </p>
-          {!isRead && (
-            <span className='flex-shrink-0 w-2 h-2 bg-[#1E40AF] rounded-full mt-1' />
-          )}
+          <p className={`text-sm font-medium truncate ${!isRead ? 'text-gray-900' : 'text-gray-600'}`}>{n.title}</p>
+          {!isRead && <span className='flex-shrink-0 w-2 h-2 bg-[#1E40AF] rounded-full mt-1' />}
         </div>
         <p className='text-xs text-gray-500 line-clamp-2 mt-0.5'>{n.message}</p>
         <p className='text-xs text-gray-400 mt-1'>{timeAgo}</p>
@@ -161,14 +155,14 @@ export function NotificationDropdown({ viewAllUrl = '/account/notifications' }: 
         {open && (
           <>
             {/* Backdrop */}
-            <div className='fixed inset-0 z-40' onClick={() => setOpen(false)} />
+            <div className='fixed inset-0 z-[990]' onClick={() => setOpen(false)} />
 
             <motion.div
               initial={{ opacity: 0, y: -8, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.96 }}
               transition={{ duration: 0.18 }}
-              className='absolute right-0 top-full mt-2 w-96 z-50 bg-white border border-[#1E40AF]/20 rounded-2xl shadow-2xl shadow-blue-500/10 overflow-hidden'
+              className='absolute right-0 top-full mt-2 w-96 z-[1000] bg-white border border-[#1E40AF]/20 rounded-2xl shadow-2xl shadow-blue-500/10 overflow-hidden'
             >
               {/* Header */}
               <div className='flex items-center justify-between px-4 py-3 border-b border-[#1E40AF]/10'>
@@ -176,9 +170,7 @@ export function NotificationDropdown({ viewAllUrl = '/account/notifications' }: 
                   <Bell className='w-4 h-4 text-blue-500' />
                   <span className='font-semibold text-gray-800 text-sm'>Thông báo</span>
                   {unreadCount > 0 && (
-                    <Badge className='bg-red-500 text-white text-xs px-2 py-0.5 rounded-full'>
-                      {unreadCount}
-                    </Badge>
+                    <Badge className='bg-red-500 text-white text-xs px-2 py-0.5 rounded-full'>{unreadCount}</Badge>
                   )}
                 </div>
                 {unreadCount > 0 && (

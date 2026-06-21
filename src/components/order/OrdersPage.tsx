@@ -251,7 +251,7 @@ export function OrdersPage() {
                     <Button variant='outline' size='sm' disabled>
                       Trước
                     </Button>
-                    <Button variant='outline' size='sm' className='bg-[#0A2463] text-white'>
+                    <Button variant='outline' size='sm' className='bg-[#0A2463] text-white hover:!text-white'>
                       1
                     </Button>
                     <Button variant='outline' size='sm'>

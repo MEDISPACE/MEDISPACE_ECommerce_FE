@@ -25,7 +25,8 @@ button {
 
 :root {
   --font-size: 16px;
-  --font-family-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-family-sans:
+    ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   --background: #f8fafb;
   --foreground: #1c2b4a;
   --card: rgba(255, 255, 255, 0.999);
@@ -682,13 +683,13 @@ html.scroll-instant {
   }
 
   /* Fix Radix Checkbox missing checked styles */
-  [data-slot="checkbox"][data-state="checked"] {
+  [data-slot='checkbox'][data-state='checked'] {
     background-color: var(--primary) !important;
     color: white !important;
     border-color: var(--primary) !important;
   }
 
-  [data-slot="checkbox-indicator"] {
+  [data-slot='checkbox-indicator'] {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -870,5 +871,19 @@ html.scroll-instant {
 
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+
+  [data-slot='button'].text-white:hover,
+  [data-slot='button'].text-white:focus-visible,
+  [data-slot='button'].\!text-white:hover,
+  [data-slot='button'].\!text-white:focus-visible {
+    color: white !important;
+  }
+
+  [data-slot='button'].text-white:hover svg,
+  [data-slot='button'].text-white:focus-visible svg,
+  [data-slot='button'].\!text-white:hover svg,
+  [data-slot='button'].\!text-white:focus-visible svg {
+    color: white !important;
   }
 }
