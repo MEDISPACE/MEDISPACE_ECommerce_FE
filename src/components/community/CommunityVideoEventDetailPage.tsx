@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router'
 import { LiveKitRoom, VideoConference } from '@livekit/components-react'
 import '@livekit/components-styles'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, CalendarDays, Copy, MessageSquare, Mic, MicOff, Send, Users, Video, VideoOff } from 'lucide-react'
+import { ArrowLeft, CalendarDays, CheckCircle2, Copy, Loader2, MessageSquare, Mic, MicOff, RefreshCw, Send, Users, Video, VideoOff } from 'lucide-react'
 import { toast } from 'sonner'
 import communityService from '~/services/communityService'
 import type { CommunityMessage, CommunityVideoEvent, CommunityVideoJoinPayload } from '~/types/community'
@@ -13,6 +13,7 @@ import { Button } from '~/components/ui/button'
 import { Checkbox } from '~/components/ui/checkbox'
 import { Textarea } from '~/components/ui/textarea'
 import { UniversalBreadcrumb } from '~/components/shared/UniversalBreadcrumb'
+import { getRoomTopic } from './communityUi'
 
 function formatDateTime(value?: string) {
   if (!value) return ''
@@ -64,13 +65,40 @@ export function CommunityVideoEventDetailPage() {
   const [showChat, setShowChat] = useState(true)
   const [isOffline, setIsOffline] = useState(false)
   const [cameraPreviewError, setCameraPreviewError] = useState<string | null>(null)
+  const [cameraPreviewStatus, setCameraPreviewStatus] = useState<'idle' | 'starting' | 'ready' | 'error'>('idle')
+  const [cameraRetryKey, setCameraRetryKey] = useState(0)
   const previewVideoRef = useRef<HTMLVideoElement | null>(null)
   const previewStreamRef = useRef<MediaStream | null>(null)
+
+  const attachCameraPreview = useCallback((stream: MediaStream) => {
+    const video = previewVideoRef.current
+    if (!video) return
+    video.muted = true
+    video.autoplay = true
+    video.playsInline = true
+    if (video.srcObject !== stream) video.srcObject = stream
+    const playPromise = video.play()
+    if (playPromise && typeof playPromise.catch === 'function') {
+      playPromise.catch(() => {
+        setCameraPreviewError('Trình duyệt đang chặn tự động phát camera. Bấm thử lại hoặc kiểm tra quyền camera.')
+        setCameraPreviewStatus('error')
+      })
+    }
+  }, [])
+
+  const setPreviewVideoNode = useCallback(
+    (node: HTMLVideoElement | null) => {
+      previewVideoRef.current = node
+      if (node && previewStreamRef.current) attachCameraPreview(previewStreamRef.current)
+    },
+    [attachCameraPreview],
+  )
 
   const stopCameraPreview = useCallback(() => {
     previewStreamRef.current?.getTracks().forEach((track) => track.stop())
     previewStreamRef.current = null
     if (previewVideoRef.current) previewVideoRef.current.srcObject = null
+    setCameraPreviewStatus('idle')
   }, [])
 
   const eventQuery = useQuery({
@@ -93,16 +121,26 @@ export function CommunityVideoEventDetailPage() {
   }, [chatQuery.data?.items])
 
   useEffect(() => {
-    if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) return
+    if (typeof window !== 'undefined' && !window.isSecureContext) {
+      setCameraPreviewStatus('error')
+      setCameraPreviewError('Camera preview cần HTTPS hoặc localhost để trình duyệt cho phép truy cập camera.')
+      return
+    }
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+      setCameraPreviewStatus('error')
+      setCameraPreviewError('Trình duyệt hiện tại không hỗ trợ truy cập camera.')
+      return
+    }
     if (joinPayload || !cameraEnabled) {
       stopCameraPreview()
       return
     }
 
     let cancelled = false
+    setCameraPreviewStatus('starting')
     setCameraPreviewError(null)
     navigator.mediaDevices
-      .getUserMedia({ video: true, audio: false })
+      .getUserMedia({ video: { facingMode: 'user' }, audio: false })
       .then((stream) => {
         if (cancelled) {
           stream.getTracks().forEach((track) => track.stop())
@@ -110,20 +148,26 @@ export function CommunityVideoEventDetailPage() {
         }
         stopCameraPreview()
         previewStreamRef.current = stream
-        if (previewVideoRef.current) {
-          previewVideoRef.current.srcObject = stream
-          previewVideoRef.current.play().catch(() => undefined)
-        }
+        setCameraPreviewStatus('ready')
+        attachCameraPreview(stream)
       })
-      .catch(() => {
-        if (!cancelled) setCameraPreviewError('Không thể mở camera. Kiểm tra quyền truy cập camera của trình duyệt.')
+      .catch((error) => {
+        if (!cancelled) {
+          const denied = error?.name === 'NotAllowedError' || error?.name === 'PermissionDeniedError'
+          setCameraPreviewStatus('error')
+          setCameraPreviewError(
+            denied
+              ? 'Bạn chưa cấp quyền camera cho trình duyệt. Hãy cho phép camera rồi bấm thử lại.'
+              : 'Không thể mở camera. Kiểm tra thiết bị camera hoặc quyền truy cập của trình duyệt.',
+          )
+        }
       })
 
     return () => {
       cancelled = true
       stopCameraPreview()
     }
-  }, [cameraEnabled, joinPayload, stopCameraPreview])
+  }, [attachCameraPreview, cameraEnabled, cameraRetryKey, joinPayload, stopCameraPreview])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -208,6 +252,24 @@ export function CommunityVideoEventDetailPage() {
     onError: (error: any) => toast.error(error?.response?.data?.message || 'Không thể gửi tin nhắn'),
   })
 
+  const registerMutation = useMutation({
+    mutationFn: () => communityService.registerVideoEvent(eventId),
+    onSuccess: () => {
+      toast.success('Đã đăng ký hội thảo')
+      queryClient.invalidateQueries({ queryKey: ['community-video-event', eventId] })
+    },
+    onError: (error: any) => toast.error(error?.response?.data?.message || 'Không thể đăng ký hội thảo'),
+  })
+
+  const cancelRegistrationMutation = useMutation({
+    mutationFn: () => communityService.cancelVideoEventRegistration(eventId),
+    onSuccess: () => {
+      toast.success('Đã hủy đăng ký')
+      queryClient.invalidateQueries({ queryKey: ['community-video-event', eventId] })
+    },
+    onError: (error: any) => toast.error(error?.response?.data?.message || 'Không thể hủy đăng ký'),
+  })
+
   const sendChatMessage = () => {
     if (chatText.trim().length < 1 || chatMutation.isPending) return
     chatMutation.mutate()
@@ -215,6 +277,8 @@ export function CommunityVideoEventDetailPage() {
 
   const showReconnectIndicator = isOffline || (Boolean(joinPayload) && socket.isConnecting)
   const backToCommunityPath = event?.roomId ? `/community/${event.roomId}` : '/community'
+  const isRegistered = event?.viewerRegistration?.status === 'registered' || event?.viewerRegistration?.status === 'attended'
+  const isFull = Boolean(event?.capacity && (event.registrationCount || 0) >= event.capacity && !isRegistered)
 
   const copyMeetingLink = async () => {
     await navigator.clipboard.writeText(window.location.href)
@@ -381,10 +445,25 @@ export function CommunityVideoEventDetailPage() {
             <div className='absolute left-5 top-5 z-10 rounded-full bg-black/45 px-3 py-1.5 text-sm text-white'>{cameraEnabled ? 'Camera preview' : 'Camera đang tắt'}</div>
             {cameraEnabled ? (
               <>
-                <video ref={previewVideoRef} data-testid='camera-preview-video' className='h-full w-full object-cover' autoPlay muted playsInline />
+                <video ref={setPreviewVideoNode} data-testid='camera-preview-video' className='h-full w-full object-cover' autoPlay muted playsInline />
+                {cameraPreviewStatus === 'starting' && (
+                  <div className='absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/45 text-white'>
+                    <Loader2 className='h-8 w-8 animate-spin' />
+                    <span className='text-sm'>Đang mở camera...</span>
+                  </div>
+                )}
                 {cameraPreviewError && (
-                  <div className='absolute inset-x-6 top-1/2 -translate-y-1/2 rounded-[16px] bg-black/65 px-4 py-3 text-center text-sm text-white'>
-                    {cameraPreviewError}
+                  <div className='absolute inset-x-6 top-1/2 -translate-y-1/2 rounded-[16px] bg-black/70 px-4 py-4 text-center text-sm text-white'>
+                    <p>{cameraPreviewError}</p>
+                    <Button
+                      type='button'
+                      size='sm'
+                      className='mt-3 rounded-full bg-white text-[#202124] hover:bg-gray-100'
+                      onClick={() => setCameraRetryKey((value) => value + 1)}
+                    >
+                      <RefreshCw className='h-4 w-4' />
+                      Thử lại
+                    </Button>
                   </div>
                 )}
               </>
@@ -415,15 +494,43 @@ export function CommunityVideoEventDetailPage() {
             {(event.status === 'ended' || event.status === 'cancelled') && <div data-testid='session-ended-message' className='rounded-[12px] bg-[#f1f3f4] px-4 py-3 text-sm text-[#3c4043]'>{event.status === 'ended' ? 'Cuộc họp đã kết thúc.' : 'Cuộc họp đã bị hủy.'}</div>}
           </div>
 
+          <div className='space-y-3 rounded-[14px] border border-[#dadce0] bg-white p-4 text-left shadow-sm'>
+            {event.room && <div className='text-xs font-medium text-[#1a73e8]'>{event.room.name} · {getRoomTopic(event.room)}</div>}
+            {event.description && <p className='text-sm leading-6 text-[#3c4043]'>{event.description}</p>}
+            {event.agenda && (
+              <div>
+                <div className='mb-1 text-xs font-medium uppercase tracking-wide text-[#5f6368]'>Nội dung buổi chia sẻ</div>
+                <p className='whitespace-pre-wrap text-sm leading-6 text-[#3c4043]'>{event.agenda}</p>
+              </div>
+            )}
+            {Array.isArray(event.materials) && event.materials.length > 0 && <p className='text-xs text-[#5f6368]'>{event.materials.length} tài liệu sẽ được chia sẻ trong hội thảo.</p>}
+            {isRegistered && <div className='inline-flex items-center gap-2 rounded-full bg-[#e8f0fe] px-3 py-1 text-xs font-medium text-[#174ea6]'><CheckCircle2 className='h-3.5 w-3.5' />Bạn đã đăng ký</div>}
+          </div>
+
+          {event.registrationRequired && event.status === 'scheduled' && (
+            <div className='flex flex-col items-center gap-2'>
+              {isRegistered ? (
+                <Button variant='outline' className='rounded-full border-[#dadce0]' disabled={cancelRegistrationMutation.isPending} onClick={() => cancelRegistrationMutation.mutate()}>
+                  Hủy đăng ký
+                </Button>
+              ) : (
+                <Button className='rounded-full bg-[#0A2463] text-white hover:bg-[#12357D]' disabled={isFull || registerMutation.isPending} onClick={() => registerMutation.mutate()}>
+                  {isFull ? 'Đã đủ chỗ' : 'Đăng ký tham gia'}
+                </Button>
+              )}
+            </div>
+          )}
+
           <label className='flex items-start gap-3 rounded-[14px] border border-[#dadce0] bg-white p-4 text-left text-sm text-[#3c4043] shadow-sm'>
             <Checkbox data-testid='medical-disclaimer-checkbox' checked={acceptedDisclaimer} onCheckedChange={(checked) => setAcceptedDisclaimer(Boolean(checked))} />
             <span>Tôi hiểu hội thảo chỉ mang tính tham khảo, không thay thế tư vấn điều trị cá nhân.</span>
           </label>
 
           <div className='flex flex-col items-center gap-3'>
-            <Button data-testid='join-event-btn' className='h-11 rounded-full bg-[#1a73e8] px-7 text-white hover:bg-[#1765cc]' disabled={!acceptedDisclaimer || event.status !== 'live' || joinMutation.isPending} onClick={() => joinMutation.mutate()}>
+            <Button data-testid='join-event-btn' className='h-11 rounded-full bg-[#1a73e8] px-7 text-white hover:bg-[#1765cc]' disabled={!acceptedDisclaimer || event.status !== 'live' || joinMutation.isPending || (event.registrationRequired && !isRegistered)} onClick={() => joinMutation.mutate()}>
               {event.status === 'live' ? 'Tham gia ngay' : 'Cuộc họp chưa bắt đầu'}
             </Button>
+            {event.registrationRequired && !isRegistered && event.status === 'live' && <p className='text-xs text-[#5f6368]'>Bạn cần đăng ký trước khi tham gia hội thảo này.</p>}
           </div>
 
           <div className='rounded-[14px] border border-[#dadce0] bg-white p-3 text-left shadow-sm'>

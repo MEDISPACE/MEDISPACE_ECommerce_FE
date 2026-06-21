@@ -21,12 +21,12 @@ function unwrap<T>(envelope: Envelope<T>): T {
 }
 
 export const communityService = {
-  async listRooms(params?: { visibility?: 'public' | 'private'; diseaseKey?: string }) {
+  async listRooms(params?: { visibility?: 'public' | 'private'; diseaseKey?: string; search?: string; sort?: 'activity' | 'newest' | 'members' | 'messages' | 'featured' }) {
     const res = await apiClient.get<Envelope<CommunityRoom[]>>('/community/rooms', { params })
     return unwrap(res.data)
   },
 
-  async listMyRooms(params?: { visibility?: 'public' | 'private'; diseaseKey?: string }) {
+  async listMyRooms(params?: { visibility?: 'public' | 'private'; diseaseKey?: string; search?: string; sort?: 'activity' | 'newest' | 'members' | 'messages' | 'featured' }) {
     const res = await apiClient.get<Envelope<CommunityRoom[]>>('/community/rooms/my', { params })
     return unwrap(res.data)
   },
@@ -137,14 +137,14 @@ export const adminCommunityService = {
     return unwrap(res.data)
   },
 
-  async createRoom(data: { name: string; slug?: string; visibility: 'public' | 'private'; diseaseKey?: string }) {
+  async createRoom(data: { name: string; slug?: string; visibility: 'public' | 'private'; diseaseKey?: string; topicLabel?: string; description?: string; iconKey?: string; coverImage?: string; guidelines?: string[]; pinnedMessage?: string; featured?: boolean; sortOrder?: number }) {
     const res = await apiClient.post<Envelope<CommunityRoom>>('/admin/community/rooms', data)
     return unwrap(res.data)
   },
 
   async updateRoom(
     roomId: string,
-    data: { name?: string; slug?: string; visibility?: 'public' | 'private'; diseaseKey?: string },
+    data: { name?: string; slug?: string; visibility?: 'public' | 'private'; diseaseKey?: string; topicLabel?: string; description?: string; iconKey?: string; coverImage?: string; guidelines?: string[]; pinnedMessage?: string; featured?: boolean; sortOrder?: number },
   ) {
     const res = await apiClient.patch<Envelope<CommunityRoom>>(`/admin/community/rooms/${roomId}`, data)
     return unwrap(res.data)

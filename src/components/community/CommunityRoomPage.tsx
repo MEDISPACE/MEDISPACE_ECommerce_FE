@@ -22,6 +22,7 @@ import { useAuth } from '~/contexts/AuthContext'
 import { useSocketContext } from '~/contexts/SocketContext'
 import communityService from '~/services/communityService'
 import type { CommunityMessage, CommunityRoom, CommunityVideoEvent } from '~/types/community'
+import { getRoomDescription, getRoomGuidelines, getRoomTopic, roomInitials } from './communityUi'
 
 const PAGE_SIZE = 20
 
@@ -119,20 +120,10 @@ function formatEventTime(value?: string) {
   return new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value))
 }
 
-function roomInitials(room?: CommunityRoom, fallback = 'MS') {
-  const source = room?.name || room?.slug || fallback
-  return source
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part.charAt(0).toUpperCase())
-    .join('') || fallback
-}
-
 function roomPreview(room: CommunityRoom) {
   if (room.lastMessagePreview) return room.lastMessagePreview
   if (room.messageCount) return `${room.messageCount} tin nhắn trong phòng`
-  return room.visibility === 'private' ? 'Phòng riêng tư' : 'Phòng cộng đồng'
+  return getRoomDescription(room)
 }
 
 function MeetingCard({ event }: { event: CommunityVideoEvent }) {
@@ -547,21 +538,21 @@ export function CommunityRoomPage() {
   const isMine = (message: CommunityMessage) => message.senderId === user?._id
 
   return (
-    <div className='mx-auto flex h-[calc(100vh-96px)] min-h-[680px] max-w-[1440px] gap-0 overflow-hidden border border-gray-200 bg-white shadow-sm lg:my-4 lg:rounded-[18px]'>
-      <aside className='hidden w-[330px] shrink-0 border-r border-gray-200 bg-white md:flex md:flex-col'>
+    <div className='mx-auto flex h-[calc(100dvh-128px)] max-h-[calc(100dvh-128px)] min-h-0 max-w-[1440px] gap-0 overflow-hidden border border-gray-200 bg-white shadow-sm md:h-[calc(100dvh-224px)] md:max-h-[calc(100dvh-224px)] lg:my-4 lg:h-[calc(100dvh-264px)] lg:max-h-[calc(100dvh-264px)] lg:rounded-[18px]'>
+      <aside className='hidden min-h-0 w-[330px] shrink-0 overflow-hidden border-r border-gray-200 bg-white md:flex md:flex-col'>
         <div className='border-b border-gray-100 px-4 py-4'>
           <div className='flex items-center justify-between gap-3'>
             <div>
               <h1 className='text-xl font-bold text-gray-950'>Cộng đồng</h1>
-              <p className='text-xs text-gray-500'>Chat nhóm MediSpace</p>
+              <p className='text-xs text-gray-500'>Nhóm sức khỏe MediSpace</p>
             </div>
             <Button variant='ghost' size='icon' className='rounded-full' onClick={() => navigate('/community')} aria-label='Quay lại cộng đồng'>
               <ArrowLeft className='h-4 w-4' />
             </Button>
           </div>
-          <div className='mt-4 flex h-10 items-center gap-2 rounded-full bg-gray-100 px-3 text-sm text-gray-500'>
+          <div className='mt-4 flex h-10 items-center gap-2 rounded-lg bg-gray-100 px-3 text-sm text-gray-500'>
             <Search className='h-4 w-4' />
-            <span>Tìm phòng chat</span>
+            <span>Tìm nhóm cộng đồng</span>
           </div>
         </div>
 
@@ -597,7 +588,7 @@ export function CommunityRoomPage() {
         </div>
       </aside>
 
-      <main className='flex min-w-0 flex-1 flex-col bg-[#f5f7fb]'>
+      <main className='flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[#f5f7fb]'>
         <header className='flex h-[72px] shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 md:px-5'>
           <div className='flex min-w-0 items-center gap-3'>
             <Button variant='ghost' size='icon' className='rounded-full md:hidden' onClick={() => navigate('/community')} aria-label='Quay lại cộng đồng'>
@@ -610,8 +601,8 @@ export function CommunityRoomPage() {
             <div className='min-w-0'>
               <h2 className='truncate text-base font-semibold text-gray-950'>{room?.name || 'Phòng cộng đồng'}</h2>
               <div className='mt-0.5 flex flex-wrap items-center gap-2 text-xs text-gray-500'>
-                <span>#{room?.slug || roomId}</span>
-                {room?.diseaseKey && <Badge className='h-5 bg-blue-100 px-2 text-[11px] text-blue-700 hover:bg-blue-100'>{room.diseaseKey}</Badge>}
+                {room && <span>{getRoomTopic(room)}</span>}
+                {room?.visibility && <Badge className='h-5 bg-blue-100 px-2 text-[11px] text-blue-700 hover:bg-blue-100'>{room.visibility === 'private' ? 'Riêng tư' : 'Công khai'}</Badge>}
                 {isPending && <Badge className='h-5 bg-yellow-100 px-2 text-[11px] text-yellow-700 hover:bg-yellow-100'>Chờ duyệt</Badge>}
                 {isBanned && <Badge className='h-5 bg-red-100 px-2 text-[11px] text-red-700 hover:bg-red-100'>Đã bị ban</Badge>}
                 {isMuted && <Badge className='h-5 bg-orange-100 px-2 text-[11px] text-orange-700 hover:bg-orange-100'>Đang mute</Badge>}
@@ -718,7 +709,7 @@ export function CommunityRoomPage() {
                         ? 'Bạn đang bị mute trong phòng này'
                         : needsJoin
                           ? 'Tham gia phòng để gửi tin nhắn'
-                          : 'Aa'
+                        : 'Chia sẻ câu hỏi hoặc kinh nghiệm của bạn...'
                 }
                 disabled={!canSend || sending}
               />
@@ -732,24 +723,30 @@ export function CommunityRoomPage() {
                 {sending ? <Loader2 className='h-4 w-4 animate-spin' /> : <Send className='h-4 w-4' />}
               </Button>
             </div>
-            {!isAuthenticated && <p className='mt-2 text-xs text-gray-500'>Vui lòng đăng nhập để tham gia trò chuyện.</p>}
+            <p className='mt-2 text-xs text-gray-500'>Không chia sẻ thông tin cá nhân nhạy cảm. Nội dung có thể được điều phối để giữ cộng đồng an toàn.</p>
+            {!isAuthenticated && <p className='mt-1 text-xs text-gray-500'>Vui lòng đăng nhập để tham gia trò chuyện.</p>}
           </div>
         </footer>
       </main>
 
-      <aside className='hidden w-[300px] shrink-0 border-l border-gray-200 bg-white xl:flex xl:flex-col'>
+      <aside className='hidden min-h-0 w-[300px] shrink-0 overflow-hidden border-l border-gray-200 bg-white xl:flex xl:flex-col'>
         <div className='border-b border-gray-100 px-5 py-5 text-center'>
           <div className='mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-blue-600 text-lg font-semibold text-white'>{roomInitials(room)}</div>
           <h3 className='mt-3 truncate text-base font-semibold text-gray-950'>{room?.name || 'Phòng cộng đồng'}</h3>
-          <p className='mt-1 text-xs text-gray-500'>{room?.memberCount || 0} thành viên</p>
+          <p className='mt-1 text-xs text-gray-500'>{room ? getRoomTopic(room) : 'Nhóm sức khỏe'} · {room?.memberCount || 0} thành viên</p>
         </div>
-        <div className='space-y-4 px-5 py-5 text-sm text-gray-600'>
+        <div className='min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-5 text-sm text-gray-600'>
+          {room && (
+            <div>
+              <h4 className='mb-2 flex items-center gap-2 font-semibold text-gray-950'><Info className='h-4 w-4 text-blue-600' />Thông tin nhóm</h4>
+              <p className='leading-6'>{getRoomDescription(room)}</p>
+              {room.pinnedMessage && <p className='mt-3 rounded-lg border border-blue-100 bg-blue-50 p-3 text-blue-800'>{room.pinnedMessage}</p>}
+            </div>
+          )}
           <div>
             <h4 className='mb-2 flex items-center gap-2 font-semibold text-gray-950'><ShieldAlert className='h-4 w-4 text-amber-500' />Quy tắc cộng đồng</h4>
             <ul className='space-y-2'>
-              <li>Không chia sẻ thông tin cá nhân nhạy cảm.</li>
-              <li>Không spam hoặc chia sẻ liên kết độc hại.</li>
-              <li>Không tư vấn y khoa nguy hiểm.</li>
+              {getRoomGuidelines(room).map((item) => <li key={item}>{item}</li>)}
             </ul>
           </div>
           <Button
