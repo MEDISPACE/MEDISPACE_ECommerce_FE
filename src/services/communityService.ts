@@ -21,12 +21,22 @@ function unwrap<T>(envelope: Envelope<T>): T {
 }
 
 export const communityService = {
-  async listRooms(params?: { visibility?: 'public' | 'private'; diseaseKey?: string; search?: string; sort?: 'activity' | 'newest' | 'members' | 'messages' | 'featured' }) {
+  async listRooms(params?: {
+    visibility?: 'public' | 'private'
+    diseaseKey?: string
+    search?: string
+    sort?: 'activity' | 'newest' | 'members' | 'messages' | 'featured'
+  }) {
     const res = await apiClient.get<Envelope<CommunityRoom[]>>('/community/rooms', { params })
     return unwrap(res.data)
   },
 
-  async listMyRooms(params?: { visibility?: 'public' | 'private'; diseaseKey?: string; search?: string; sort?: 'activity' | 'newest' | 'members' | 'messages' | 'featured' }) {
+  async listMyRooms(params?: {
+    visibility?: 'public' | 'private'
+    diseaseKey?: string
+    search?: string
+    sort?: 'activity' | 'newest' | 'members' | 'messages' | 'featured'
+  }) {
     const res = await apiClient.get<Envelope<CommunityRoom[]>>('/community/rooms/my', { params })
     return unwrap(res.data)
   },
@@ -59,18 +69,22 @@ export const communityService = {
     return unwrap(res.data)
   },
 
-  async listMessages(params: { roomId: string; page: number; limit: number }) {
+  async listMessages(params: { roomId: string; page: number; limit: number; q?: string }) {
     const res = await apiClient.get<Envelope<PaginatedResult<CommunityMessage>>>(
       `/community/rooms/${params.roomId}/messages`,
-      { params: { page: params.page, limit: params.limit } },
+      { params: { page: params.page, limit: params.limit, q: params.q || undefined } },
     )
     return unwrap(res.data)
   },
 
-  async sendMessage(params: { roomId: string; content?: string; imageUrl?: string }) {
+  async sendMessage(params: { roomId: string; content?: string; imageUrl?: string; replyToMessageId?: string }) {
     const res = await apiClient.post<
       Envelope<{ message: CommunityMessage; moderation: CommunityModerationResult; memberRole?: string }>
-    >(`/community/rooms/${params.roomId}/messages`, { content: params.content || '', imageUrl: params.imageUrl })
+    >(`/community/rooms/${params.roomId}/messages`, {
+      content: params.content || '',
+      imageUrl: params.imageUrl,
+      replyToMessageId: params.replyToMessageId,
+    })
     return unwrap(res.data)
   },
 
@@ -90,13 +104,25 @@ export const communityService = {
     return unwrap(res.data)
   },
 
-  async listVideoEvents(params?: { roomId?: string; status?: string; visibility?: 'public' | 'private'; search?: string; upcomingOnly?: boolean; page?: number; limit?: number }) {
-    const res = await apiClient.get<Envelope<PaginatedResult<CommunityVideoEvent>>>('/community/video-events', { params })
+  async listVideoEvents(params?: {
+    roomId?: string
+    status?: string
+    visibility?: 'public' | 'private'
+    search?: string
+    upcomingOnly?: boolean
+    page?: number
+    limit?: number
+  }) {
+    const res = await apiClient.get<Envelope<PaginatedResult<CommunityVideoEvent>>>('/community/video-events', {
+      params,
+    })
     return unwrap(res.data)
   },
 
   async listMyVideoEvents(params?: { status?: string; page?: number; limit?: number }) {
-    const res = await apiClient.get<Envelope<PaginatedResult<CommunityVideoEvent>>>('/community/video-events/my', { params })
+    const res = await apiClient.get<Envelope<PaginatedResult<CommunityVideoEvent>>>('/community/video-events/my', {
+      params,
+    })
     return unwrap(res.data)
   },
 
@@ -106,7 +132,9 @@ export const communityService = {
   },
 
   async registerVideoEvent(eventId: string) {
-    const res = await apiClient.post<Envelope<CommunityVideoEventRegistration>>(`/community/video-events/${eventId}/register`)
+    const res = await apiClient.post<Envelope<CommunityVideoEventRegistration>>(
+      `/community/video-events/${eventId}/register`,
+    )
     return unwrap(res.data)
   },
 
@@ -121,7 +149,6 @@ export const communityService = {
     const res = await apiClient.post<Envelope<CommunityVideoJoinPayload>>(`/community/video-events/${eventId}/join`)
     return unwrap(res.data)
   },
-
 }
 
 export default communityService
@@ -137,14 +164,40 @@ export const adminCommunityService = {
     return unwrap(res.data)
   },
 
-  async createRoom(data: { name: string; slug?: string; visibility: 'public' | 'private'; diseaseKey?: string; topicLabel?: string; description?: string; iconKey?: string; coverImage?: string; guidelines?: string[]; pinnedMessage?: string; featured?: boolean; sortOrder?: number }) {
+  async createRoom(data: {
+    name: string
+    slug?: string
+    visibility: 'public' | 'private'
+    diseaseKey?: string
+    topicLabel?: string
+    description?: string
+    iconKey?: string
+    coverImage?: string
+    guidelines?: string[]
+    pinnedMessage?: string
+    featured?: boolean
+    sortOrder?: number
+  }) {
     const res = await apiClient.post<Envelope<CommunityRoom>>('/admin/community/rooms', data)
     return unwrap(res.data)
   },
 
   async updateRoom(
     roomId: string,
-    data: { name?: string; slug?: string; visibility?: 'public' | 'private'; diseaseKey?: string; topicLabel?: string; description?: string; iconKey?: string; coverImage?: string; guidelines?: string[]; pinnedMessage?: string; featured?: boolean; sortOrder?: number },
+    data: {
+      name?: string
+      slug?: string
+      visibility?: 'public' | 'private'
+      diseaseKey?: string
+      topicLabel?: string
+      description?: string
+      iconKey?: string
+      coverImage?: string
+      guidelines?: string[]
+      pinnedMessage?: string
+      featured?: boolean
+      sortOrder?: number
+    },
   ) {
     const res = await apiClient.patch<Envelope<CommunityRoom>>(`/admin/community/rooms/${roomId}`, data)
     return unwrap(res.data)
@@ -188,12 +241,29 @@ export const adminCommunityService = {
     return unwrap(res.data)
   },
 
-  async listVideoEvents(params?: { roomId?: string; status?: string; visibility?: 'public' | 'private'; search?: string; page?: number; limit?: number }) {
-    const res = await apiClient.get<Envelope<PaginatedResult<CommunityVideoEvent>>>('/admin/community/video-events', { params })
+  async listVideoEvents(params?: {
+    roomId?: string
+    status?: string
+    visibility?: 'public' | 'private'
+    search?: string
+    page?: number
+    limit?: number
+  }) {
+    const res = await apiClient.get<Envelope<PaginatedResult<CommunityVideoEvent>>>('/admin/community/video-events', {
+      params,
+    })
     return unwrap(res.data)
   },
 
-  async createVideoEvent(data: Partial<CommunityVideoEvent> & { roomId: string; title: string; visibility: 'public' | 'private'; scheduledStartAt: string; scheduledEndAt: string }) {
+  async createVideoEvent(
+    data: Partial<CommunityVideoEvent> & {
+      roomId: string
+      title: string
+      visibility: 'public' | 'private'
+      scheduledStartAt: string
+      scheduledEndAt: string
+    },
+  ) {
     const res = await apiClient.post<Envelope<CommunityVideoEvent>>('/admin/community/video-events', data)
     return unwrap(res.data)
   },
@@ -226,7 +296,11 @@ export const adminCommunityService = {
     return unwrap(res.data)
   },
 
-  async updateVideoEventRegistration(eventId: string, userId: string, data: { status?: string; removeReason?: string }) {
+  async updateVideoEventRegistration(
+    eventId: string,
+    userId: string,
+    data: { status?: string; removeReason?: string },
+  ) {
     const res = await apiClient.patch<Envelope<CommunityVideoEventRegistration>>(
       `/admin/community/video-events/${eventId}/registrations/${userId}`,
       data,
@@ -254,5 +328,4 @@ export const adminCommunityService = {
     )
     return unwrap(res.data)
   },
-
 }

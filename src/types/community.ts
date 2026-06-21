@@ -60,6 +60,11 @@ export interface CommunityMessage {
   senderId: string
   content: string
   imageUrl?: string
+  replyToMessageId?: string
+  replyTo?: Pick<
+    CommunityMessage,
+    '_id' | 'roomId' | 'senderId' | 'content' | 'imageUrl' | 'status' | 'createdAt' | 'sender'
+  > | null
   status: CommunityMessageStatus
   createdAt: string
   updatedAt?: string

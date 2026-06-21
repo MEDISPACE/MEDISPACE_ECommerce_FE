@@ -46,10 +46,11 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose 
 
 const getCategoryIcon = (category: Category) => {
   const slug = category.slug?.toLowerCase() ?? ''
-  const normalizedName = category.name
-    ?.normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase() ?? ''
+  const normalizedName =
+    category.name
+      ?.normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase() ?? ''
 
   if (slug.includes('cham-soc-ca-nhan') || normalizedName.includes('cham soc ca nhan')) return User
   if (slug.includes('duoc-my-pham') || normalizedName.includes('duoc my pham')) return Droplets
@@ -148,9 +149,7 @@ export function Header() {
             </Link>
 
             {/* Notifications Bell – show only for customers */}
-            {isAuthenticated && user?.role === UserRole.Customer && (
-              <NotificationDropdown />
-            )}
+            {isAuthenticated && user?.role === UserRole.Customer && <NotificationDropdown />}
 
             {/* Account */}
             {isAuthenticated ? (
@@ -169,7 +168,11 @@ export function Header() {
                     <ChevronDown className='h-4 w-4' />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align='end' className='w-56 bg-white/95 backdrop-blur-lg border-[#E8EDF5]'>
+                <DropdownMenuContent
+                  align='end'
+                  sideOffset={10}
+                  className='z-[1000] w-56 bg-white/95 backdrop-blur-lg border-[#E8EDF5]'
+                >
                   <DropdownMenuLabel className='text-blue-900'>
                     <div className='flex flex-col space-y-1'>
                       <p className='text-sm font-medium truncate'>
@@ -285,34 +288,51 @@ export function Header() {
                 <div className='space-y-5 p-4'>
                   <div className='grid gap-2'>
                     <SheetClose asChild>
-                      <Link to='/' className='rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-[#F0F6FF]'>
+                      <Link
+                        to='/'
+                        className='rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-[#F0F6FF]'
+                      >
                         Trang chủ
                       </Link>
                     </SheetClose>
                     <SheetClose asChild>
-                      <Link to='/products' className='rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-[#F0F6FF]'>
+                      <Link
+                        to='/products'
+                        className='rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-[#F0F6FF]'
+                      >
                         Sản phẩm
                       </Link>
                     </SheetClose>
                     <SheetClose asChild>
-                      <Link to='/health' className='rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-[#F0F6FF]'>
+                      <Link
+                        to='/health'
+                        className='rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-[#F0F6FF]'
+                      >
                         Bệnh & Góc sức khỏe
                       </Link>
                     </SheetClose>
                     <SheetClose asChild>
-                      <Link to='/community' className='rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-[#F0F6FF]'>
+                      <Link
+                        to='/community'
+                        className='rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-[#F0F6FF]'
+                      >
                         Cộng đồng
                       </Link>
                     </SheetClose>
                     <SheetClose asChild>
-                      <Link to='/contact' className='rounded-lg px-3 py-2 text-sm font-medium text-[#0A2463] hover:bg-[#F0F6FF]'>
+                      <Link
+                        to='/contact'
+                        className='rounded-lg px-3 py-2 text-sm font-medium text-[#0A2463] hover:bg-[#F0F6FF]'
+                      >
                         Tư vấn dược sĩ
                       </Link>
                     </SheetClose>
                   </div>
 
                   <div className='border-t border-[#E8EDF5] pt-4'>
-                    <div className='mb-2 px-3 text-xs font-semibold uppercase tracking-wide text-gray-500'>Danh mục</div>
+                    <div className='mb-2 px-3 text-xs font-semibold uppercase tracking-wide text-gray-500'>
+                      Danh mục
+                    </div>
                     <div className='grid gap-1'>
                       {mainCategories.map((category) => {
                         const CategoryIcon = getCategoryIcon(category)
@@ -335,7 +355,10 @@ export function Header() {
                         )
                       })}
                       <SheetClose asChild>
-                        <Link to='/categories' className='rounded-lg px-3 py-2 text-sm font-medium text-[#0A2463] hover:bg-[#F0F6FF]'>
+                        <Link
+                          to='/categories'
+                          className='rounded-lg px-3 py-2 text-sm font-medium text-[#0A2463] hover:bg-[#F0F6FF]'
+                        >
                           Xem tất cả danh mục
                         </Link>
                       </SheetClose>
@@ -359,7 +382,10 @@ export function Header() {
       {/* Navigation */}
       <div className='relative border-t border-[#E8EDF5]'>
         <div className='max-w-7xl mx-auto px-4'>
-          <nav className='relative flex items-center gap-6 overflow-x-auto py-2 [scrollbar-width:none] lg:overflow-visible [&::-webkit-scrollbar]:hidden' onMouseLeave={handleNavigationMouseLeave}>
+          <nav
+            className='relative flex items-center gap-6 overflow-x-auto py-2 [scrollbar-width:none] lg:overflow-visible [&::-webkit-scrollbar]:hidden'
+            onMouseLeave={handleNavigationMouseLeave}
+          >
             {/* Mobile menu button */}
             <div className='lg:hidden'>
               <Link
@@ -449,7 +475,7 @@ function HeaderBreadcrumb() {
   if (items.length === 0) return null
 
   // Lọc bỏ 'Trang chủ' để tránh lặp lại vì đã được render mặc định ở trên
-  const displayItems = items.length > 0 && items[0].label === 'Trang chủ' ? items.slice(1) : items;
+  const displayItems = items.length > 0 && items[0].label === 'Trang chủ' ? items.slice(1) : items
 
   return (
     <div className='bg-blue-40 border-t border-gray-100'>
