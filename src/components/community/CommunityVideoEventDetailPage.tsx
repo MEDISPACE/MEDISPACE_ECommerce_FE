@@ -396,7 +396,11 @@ export function CommunityVideoEventDetailPage() {
           </Button>
         </header>
 
-        <section className='grid min-h-0 flex-1 gap-3 px-3 pb-3 lg:grid-cols-[minmax(0,1fr)_360px]'>
+        <section
+          className={`grid min-h-0 flex-1 gap-3 px-3 pb-3 ${
+            showChat ? 'lg:grid-cols-[minmax(0,1fr)_360px]' : 'lg:grid-cols-1'
+          }`}
+        >
           <div
             data-testid='video-room'
             className='relative min-h-[520px] overflow-hidden rounded-[12px] bg-black shadow-2xl'
