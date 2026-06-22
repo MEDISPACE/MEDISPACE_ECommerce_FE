@@ -1,12 +1,13 @@
 import { useState } from 'react'
-import { Package, Bell, Gift, Heart, Pill, Clock, CheckCircle, Star } from 'lucide-react'
+import { Package, Bell, Gift, Heart, Pill, Clock, CheckCircle, Star, CreditCard, Truck, RotateCcw, Shield, Users } from 'lucide-react'
 import { Card, CardContent } from '../ui/card'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
+import type { NotificationType } from '~/types/account'
 
 interface Notification {
   id: string
-  type: 'order' | 'prescription' | 'promotion' | 'health' | 'system' | 'review'
+  type: NotificationType
   title: string
   message: string
   timestamp: string
@@ -28,12 +29,22 @@ export function NotificationItem({ notification, onMarkAsRead, onAction }: Notif
     switch (notification.type) {
       case 'order':
         return <Package className='w-5 h-5 text-[#1E40AF]' />
+      case 'payment':
+        return <CreditCard className='w-5 h-5 text-emerald-600' />
+      case 'shipping':
+        return <Truck className='w-5 h-5 text-sky-600' />
       case 'prescription':
         return <Pill className='w-5 h-5 text-green-600' />
       case 'promotion':
         return <Gift className='w-5 h-5 text-[#1E40AF]' />
-      case 'health':
+      case 'reminder':
         return <Heart className='w-5 h-5 text-red-500' />
+      case 'return':
+        return <RotateCcw className='w-5 h-5 text-violet-600' />
+      case 'security':
+        return <Shield className='w-5 h-5 text-red-600' />
+      case 'community':
+        return <Users className='w-5 h-5 text-cyan-600' />
       case 'review':
         return <Star className='w-5 h-5 text-amber-500' />
       case 'system':
@@ -47,14 +58,24 @@ export function NotificationItem({ notification, onMarkAsRead, onAction }: Notif
     switch (notification.type) {
       case 'order':
         return 'Đơn hàng'
+      case 'payment':
+        return 'Thanh toán'
+      case 'shipping':
+        return 'Vận chuyển'
       case 'prescription':
         return 'Đơn thuốc'
       case 'promotion':
         return 'Khuyến mãi'
-      case 'health':
-        return 'Sức khỏe'
+      case 'reminder':
+        return 'Nhắc nhở'
       case 'review':
         return 'Đánh giá'
+      case 'return':
+        return 'Đổi trả'
+      case 'security':
+        return 'Bảo mật'
+      case 'community':
+        return 'Cộng đồng'
       case 'system':
         return 'Hệ thống'
       default:
@@ -66,14 +87,24 @@ export function NotificationItem({ notification, onMarkAsRead, onAction }: Notif
     switch (notification.type) {
       case 'order':
         return 'bg-[#E8EDF5] text-blue-800'
+      case 'payment':
+        return 'bg-emerald-100 text-emerald-800'
+      case 'shipping':
+        return 'bg-sky-100 text-sky-800'
       case 'prescription':
         return 'bg-green-100 text-green-800'
       case 'promotion':
         return 'bg-[#E8EDF5] text-[#0A2463]'
-      case 'health':
+      case 'reminder':
         return 'bg-red-100 text-red-800'
       case 'review':
         return 'bg-amber-100 text-amber-800'
+      case 'return':
+        return 'bg-violet-100 text-violet-800'
+      case 'security':
+        return 'bg-red-100 text-red-800'
+      case 'community':
+        return 'bg-cyan-100 text-cyan-800'
       case 'system':
         return 'bg-gray-100 text-gray-800'
       default:

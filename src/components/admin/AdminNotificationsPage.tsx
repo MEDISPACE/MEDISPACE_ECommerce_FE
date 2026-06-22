@@ -9,6 +9,11 @@ import {
   Tag,
   AlertCircle,
   RefreshCw,
+  CreditCard,
+  Truck,
+  RotateCcw,
+  Shield,
+  Users,
 } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
@@ -29,10 +34,11 @@ import { Badge } from '~/components/ui/badge'
 import { Skeleton } from '~/components/ui/skeleton'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { useNotifications, useUnreadNotificationCount } from '~/hooks/useNotifications'
+import type { NotificationFilter } from '~/types/account'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type Filter = 'all' | 'unread' | 'order' | 'prescription' | 'system' | 'promotion'
+type Filter = NotificationFilter
 
 interface Props {
   role?: 'admin' | 'pharmacist'
@@ -44,16 +50,24 @@ const TAB_PILLS: { key: Filter; label: string }[] = [
   { key: 'all', label: 'Tất cả' },
   { key: 'unread', label: 'Chưa đọc' },
   { key: 'order', label: 'Đơn hàng' },
+  { key: 'payment', label: 'Thanh toán' },
   { key: 'prescription', label: 'Đơn thuốc' },
+  { key: 'return', label: 'Đổi trả' },
   { key: 'system', label: 'Hệ thống' },
 ]
 
 const TYPE_META: Record<string, { icon: React.ElementType; color: string; bg: string; label: string }> = {
   order: { icon: Package, color: 'text-[#1E40AF]', bg: 'bg-[#F0F6FF]', label: 'Đơn hàng' },
+  payment: { icon: CreditCard, color: 'text-emerald-600', bg: 'bg-emerald-50', label: 'Thanh toán' },
+  shipping: { icon: Truck, color: 'text-sky-600', bg: 'bg-sky-50', label: 'Vận chuyển' },
   prescription: { icon: FileText, color: 'text-green-600', bg: 'bg-green-50', label: 'Đơn thuốc' },
   promotion: { icon: Tag, color: 'text-[#1E40AF]', bg: 'bg-[#F0F6FF]', label: 'Khuyến mãi' },
   system: { icon: AlertCircle, color: 'text-orange-500', bg: 'bg-orange-50', label: 'Hệ thống' },
   reminder: { icon: Bell, color: 'text-[#1E40AF]', bg: 'bg-[#F0F6FF]', label: 'Nhắc nhở' },
+  review: { icon: Tag, color: 'text-amber-600', bg: 'bg-amber-50', label: 'Đánh giá' },
+  return: { icon: RotateCcw, color: 'text-violet-600', bg: 'bg-violet-50', label: 'Đổi trả' },
+  security: { icon: Shield, color: 'text-red-600', bg: 'bg-red-50', label: 'Bảo mật' },
+  community: { icon: Users, color: 'text-cyan-600', bg: 'bg-cyan-50', label: 'Cộng đồng' },
 }
 const DEFAULT_META = TYPE_META.system
 

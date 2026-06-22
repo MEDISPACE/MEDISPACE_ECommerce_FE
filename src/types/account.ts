@@ -164,11 +164,36 @@ export interface SearchResult {
 export interface Notification {
   id: string
   userId: string
-  type: 'order' | 'prescription' | 'promotion' | 'reminder' | 'system' | 'review'
+  type: NotificationType
   title: string
   message: string
   isRead: boolean
   actionUrl?: string
   createdAt: string
   expiresAt?: string
+}
+
+export type NotificationType =
+  | 'order'
+  | 'payment'
+  | 'shipping'
+  | 'prescription'
+  | 'promotion'
+  | 'reminder'
+  | 'system'
+  | 'review'
+  | 'return'
+  | 'security'
+  | 'community'
+
+export type NotificationFilter = 'all' | 'unread' | NotificationType
+
+export interface NotificationPreferences {
+  channels: {
+    inApp: boolean
+    email: boolean
+    push: boolean
+    sms: boolean
+  }
+  types: Record<NotificationType, boolean>
 }

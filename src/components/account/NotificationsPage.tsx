@@ -19,12 +19,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Separator } from '../ui/separator'
 import { Badge } from '../ui/badge'
 import { toast } from 'sonner'
-import { useNotifications, useUnreadNotificationCount } from '~/hooks/useNotifications'
+import { useNotificationPreferences, useNotifications, useUnreadNotificationCount } from '~/hooks/useNotifications'
+import type { NotificationFilter, NotificationPreferences, NotificationType } from '~/types/account'
 
 
 type UiNotification = {
   id: string
-  type: 'order' | 'prescription' | 'promotion' | 'health' | 'system' | 'review'
+  type: NotificationType
   title: string
   message: string
   timestamp: string
@@ -35,37 +36,32 @@ type UiNotification = {
 
 
 
-interface NotificationSettings {
-  email: boolean
-  sms: boolean
-  push: boolean
-  orderUpdates: boolean
-  prescriptionReminders: boolean
-  promotions: boolean
-  healthTips: boolean
-  systemAlerts: boolean
-  quietHours: boolean
+const DEFAULT_PREFERENCES: NotificationPreferences = {
+  channels: { inApp: true, email: true, push: false, sms: false },
+  types: {
+    order: true,
+    payment: true,
+    shipping: true,
+    prescription: true,
+    promotion: true,
+    reminder: true,
+    system: true,
+    review: true,
+    return: true,
+    security: true,
+    community: true,
+  },
 }
 
 export function NotificationsPage() {
   const [activeTab, setActiveTab] = useState('all')
   const [page, setPage] = useState(1)
-  const [settings, setSettings] = useState<NotificationSettings>({
-    email: true,
-    sms: false,
-    push: true,
-    orderUpdates: true,
-    prescriptionReminders: true,
-    promotions: true,
-    healthTips: false,
-    systemAlerts: true,
-    quietHours: true,
-  })
+  const { preferences = DEFAULT_PREFERENCES, updatePreferences, isUpdatingPreferences } = useNotificationPreferences()
 
   // Use real hook with live data
   const filter = activeTab === 'all' || activeTab === 'unread' || activeTab === 'settings'
     ? activeTab === 'settings' ? 'all' : activeTab as 'all' | 'unread'
-    : activeTab as 'order' | 'prescription' | 'promotion' | 'system' | 'review'
+    : activeTab as NotificationFilter
 
   const { notifications: rawNotifications, pagination, markAsRead, markAllAsRead, deleteNotification } = useNotifications(filter, page)
   const unreadCount = useUnreadNotificationCount()
@@ -104,9 +100,12 @@ export function NotificationsPage() {
     window.location.href = actionUrl
   }
 
-  const handleSettingChange = (key: keyof NotificationSettings, value: boolean) => {
-    setSettings((prev) => ({ ...prev, [key]: value }))
-    toast.success('Đã cập nhật cài đặt thông báo')
+  const handleChannelChange = (key: keyof NotificationPreferences['channels'], value: boolean) => {
+    updatePreferences({ channels: { ...preferences.channels, [key]: value } })
+  }
+
+  const handleTypeChange = (key: NotificationType, value: boolean) => {
+    updatePreferences({ types: { ...preferences.types, [key]: value } })
   }
 
   const getTabCount = (type: string) => {
@@ -217,14 +216,14 @@ export function NotificationsPage() {
                 </span>
               </TabsTrigger>
               <TabsTrigger
-                value='health'
+                value='reminder'
                 className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-[#E8EDF5] text-[#1E40AF] border-0 data-[state=active]:!bg-[#0A2463] data-[state=active]:!text-white data-[state=active]:!shadow-md transition-all duration-200 rounded-md hover:bg-[#BFDBFE]'
               >
                 <span className='whitespace-nowrap flex items-center gap-1'>
-                  Sức khỏe
-                  {getTabCount('health') > 0 && (
+                  Nhắc nhở
+                  {getTabCount('reminder') > 0 && (
                     <span className='ml-1 rounded-full px-2 py-0.5 text-xs font-medium bg-white text-[#1E40AF]'>
-                      {getTabCount('health')}
+                      {getTabCount('reminder')}
                     </span>
                   )}
                 </span>
@@ -324,7 +323,7 @@ export function NotificationsPage() {
             ))}
           </TabsContent>
 
-          <TabsContent value='health' className='p-6 space-y-4'>
+          <TabsContent value='reminder' className='p-6 space-y-4'>
             {filteredNotifications.map((notification) => (
               <NotificationItem
                 key={notification.id}
@@ -348,7 +347,10 @@ export function NotificationsPage() {
                 <CardContent className='space-y-6'>
                   {/* Notification Channels */}
                   <div>
-                    <h3 className='font-medium mb-4'>Kênh nhận thông báo</h3>
+                    <div className='mb-4 flex items-center justify-between gap-3'>
+                      <h3 className='font-medium'>Kênh nhận thông báo</h3>
+                      {isUpdatingPreferences && <span className='text-xs text-gray-500'>Đang lưu...</span>}
+                    </div>
                     <div className='space-y-4'>
                       <div className='flex items-center justify-between'>
                         <div>
@@ -357,8 +359,8 @@ export function NotificationsPage() {
                         </div>
                         <Switch
                           id='email'
-                          checked={settings.email}
-                          onCheckedChange={(checked) => handleSettingChange('email', checked)}
+                          checked={preferences.channels.email}
+                          onCheckedChange={(checked) => handleChannelChange('email', checked)}
                         />
                       </div>
 
@@ -369,8 +371,8 @@ export function NotificationsPage() {
                         </div>
                         <Switch
                           id='sms'
-                          checked={settings.sms}
-                          onCheckedChange={(checked) => handleSettingChange('sms', checked)}
+                          checked={preferences.channels.sms}
+                          onCheckedChange={(checked) => handleChannelChange('sms', checked)}
                         />
                       </div>
 
@@ -381,8 +383,8 @@ export function NotificationsPage() {
                         </div>
                         <Switch
                           id='push'
-                          checked={settings.push}
-                          onCheckedChange={(checked) => handleSettingChange('push', checked)}
+                          checked={preferences.channels.push}
+                          onCheckedChange={(checked) => handleChannelChange('push', checked)}
                         />
                       </div>
                     </div>
@@ -401,8 +403,8 @@ export function NotificationsPage() {
                         </div>
                         <Switch
                           id='orderUpdates'
-                          checked={settings.orderUpdates}
-                          onCheckedChange={(checked) => handleSettingChange('orderUpdates', checked)}
+                          checked={preferences.types.order && preferences.types.payment && preferences.types.shipping}
+                          onCheckedChange={(checked) => { handleTypeChange('order', checked); handleTypeChange('payment', checked); handleTypeChange('shipping', checked) }}
                         />
                       </div>
 
@@ -413,8 +415,8 @@ export function NotificationsPage() {
                         </div>
                         <Switch
                           id='prescriptionReminders'
-                          checked={settings.prescriptionReminders}
-                          onCheckedChange={(checked) => handleSettingChange('prescriptionReminders', checked)}
+                          checked={preferences.types.prescription && preferences.types.reminder}
+                          onCheckedChange={(checked) => { handleTypeChange('prescription', checked); handleTypeChange('reminder', checked) }}
                         />
                       </div>
 
@@ -425,8 +427,8 @@ export function NotificationsPage() {
                         </div>
                         <Switch
                           id='promotions'
-                          checked={settings.promotions}
-                          onCheckedChange={(checked) => handleSettingChange('promotions', checked)}
+                          checked={preferences.types.promotion}
+                          onCheckedChange={(checked) => handleTypeChange('promotion', checked)}
                         />
                       </div>
 
@@ -437,8 +439,8 @@ export function NotificationsPage() {
                         </div>
                         <Switch
                           id='healthTips'
-                          checked={settings.healthTips}
-                          onCheckedChange={(checked) => handleSettingChange('healthTips', checked)}
+                          checked={preferences.types.community}
+                          onCheckedChange={(checked) => handleTypeChange('community', checked)}
                         />
                       </div>
 
@@ -449,8 +451,8 @@ export function NotificationsPage() {
                         </div>
                         <Switch
                           id='systemAlerts'
-                          checked={settings.systemAlerts}
-                          onCheckedChange={(checked) => handleSettingChange('systemAlerts', checked)}
+                          checked={preferences.types.system && preferences.types.review}
+                          onCheckedChange={(checked) => { handleTypeChange('system', checked); handleTypeChange('review', checked) }}
                         />
                       </div>
                     </div>
@@ -468,8 +470,8 @@ export function NotificationsPage() {
                       </div>
                       <Switch
                         id='quietHours'
-                        checked={settings.quietHours}
-                        onCheckedChange={(checked) => handleSettingChange('quietHours', checked)}
+                        checked={!preferences.channels.push}
+                        onCheckedChange={(checked) => handleChannelChange('push', !checked)}
                       />
                     </div>
                   </div>

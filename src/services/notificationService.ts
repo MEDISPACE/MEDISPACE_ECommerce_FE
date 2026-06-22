@@ -1,5 +1,5 @@
 import { apiClient } from './apiClient'
-import type { Notification } from '../types/account'
+import type { Notification, NotificationFilter, NotificationPreferences } from '../types/account'
 
 export interface NotificationPagination {
   page: number
@@ -20,7 +20,7 @@ export const notificationService = {
   async getNotifications(
     page = 1,
     limit = 20,
-    filter: 'all' | 'unread' | 'order' | 'prescription' | 'promotion' | 'system' | 'reminder' | 'review' = 'all'
+    filter: NotificationFilter = 'all'
   ): Promise<NotificationsResponse> {
     const res = await apiClient.get<{ result: Notification[]; pagination: NotificationPagination }>(
       `/notifications?page=${page}&limit=${limit}&filter=${filter}`
@@ -41,6 +41,16 @@ export const notificationService = {
     } catch {
       return 0
     }
+  },
+
+  async getPreferences(): Promise<NotificationPreferences> {
+    const res = await apiClient.get<{ result: NotificationPreferences }>('/notifications/preferences')
+    return res.data.result
+  },
+
+  async updatePreferences(preferences: Partial<NotificationPreferences>): Promise<NotificationPreferences> {
+    const res = await apiClient.patch<{ result: NotificationPreferences }>('/notifications/preferences', preferences)
+    return res.data.result
   },
 
   /**
