@@ -338,7 +338,7 @@ export function PrescriptionsPage() {
 
           {prescription.status === 'completed' && prescription.orderId && (
             <Link to={`/account/orders/${prescription.orderId}`}>
-              <Button size='sm' className='bg-[#0A2463] hover:bg-[#071A49]'>
+              <Button size='sm' className='bg-[#0A2463] text-white hover:bg-[#071A49] hover:text-white'>
                 <ShoppingCart className='w-4 h-4 mr-1' />
                 Xem đơn hàng
               </Button>
@@ -347,7 +347,7 @@ export function PrescriptionsPage() {
 
           {prescription.status === 'approved' && !prescription.orderId && (
             <Link to={`/products?prescriptionId=${prescription.id}`}>
-              <Button size='sm' className='bg-green-600 hover:bg-green-700'>
+              <Button size='sm' className='bg-green-600 text-white hover:bg-green-700 hover:text-white'>
                 <ShoppingCart className='w-4 h-4 mr-1' />
                 Mua thuốc
               </Button>
