@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Bell, Check, Trash2, Package, FileText, Tag, Heart, Settings, AlertCircle, Star } from 'lucide-react'
+import { Bell, Check, Trash2, Package, FileText, Tag, Heart, Settings, AlertCircle, Star, CreditCard, Truck, RotateCcw, Shield, Users } from 'lucide-react'
 import { Link, useNavigate } from 'react-router'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '../ui/button'
@@ -15,22 +15,30 @@ import type { Notification } from '~/types/account'
 // ─── Type icon map ─────────────────────────────────────────────────────────────
 const typeIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   order: Package,
+  payment: CreditCard,
+  shipping: Truck,
   prescription: FileText,
   promotion: Tag,
-  health: Heart,
   reminder: Heart,
   system: AlertCircle,
   review: Star,
+  return: RotateCcw,
+  security: Shield,
+  community: Users,
 }
 
 const typeColors: Record<string, string> = {
   order: 'text-blue-500 bg-[#1E40AF]/10',
+  payment: 'text-emerald-600 bg-emerald-500/10',
+  shipping: 'text-sky-600 bg-sky-500/10',
   prescription: 'text-green-500 bg-green-500/10',
   promotion: 'text-orange-500 bg-orange-500/10',
-  health: 'text-[#1E40AF] bg-[#F0F6FF]',
   reminder: 'text-[#1E40AF] bg-[#F0F6FF]',
   system: 'text-gray-500 bg-gray-500/10',
   review: 'text-amber-500 bg-amber-500/10',
+  return: 'text-violet-600 bg-violet-500/10',
+  security: 'text-red-600 bg-red-500/10',
+  community: 'text-cyan-600 bg-cyan-500/10',
 }
 
 function NotificationListItem({

@@ -48,6 +48,7 @@ export function WishlistPage() {
   const [selectedProducts, setSelectedProducts] = useState<string[]>([])
   const [isShareModalOpen, setIsShareModalOpen] = useState(false)
   const [shareEmail, setShareEmail] = useState('')
+  const [formError, setFormError] = useState('')
 
   // Related dựa trên sản phẩm đầu tiên trong wishlist
   const firstWishlistId = useMemo(() => wishlistProducts[0]?.id || '', [wishlistProducts])
@@ -166,21 +167,8 @@ export function WishlistPage() {
       const product = wishlistProducts.find((p) => p.id === id)
       if (product) {
         try {
-          // Reconstruct Product object for addToCart
-          const productData: any = {
-            _id: product.id,
-            id: product.id,
-            name: product.name,
-            price: product.originalPrice || product.currentPrice,
-            salePrice: product.currentPrice,
-            images: [product.image],
-            featuredImage: product.image,
-            slug: product.slug,
-            stockQuantity: 10, // Assume stock
-            requiresPrescription: product.isRx,
-            isPrescription: product.isRx,
-          }
-
+          const productData = await productService.getProductById(product.id)
+          if (!productData) throw new Error('Product not found')
           await addToCart(productData, 1)
           successCount++
         } catch (error) {
@@ -199,23 +187,22 @@ export function WishlistPage() {
 
   // Custom add to cart for single item that we can implement easily
   const handleAddToCart = async (product: WishlistProduct) => {
-    if (!product.inStock) return
-
-    // We need to reconstruct a Product object compatible with CartContext
-    // This is a bit hacky, ideally we store the full product
-    const productData: any = {
-      _id: product.id,
-      id: product.id,
-      name: product.name,
-      price: product.originalPrice || product.currentPrice,
-      salePrice: product.currentPrice,
-      images: [product.image],
-      slug: product.slug,
-      stockQuantity: 10, // Assume stock
-      isPrescription: product.isRx,
+    if (!product.inStock) {
+      setFormError('Sản phẩm đã hết hàng')
+      toast.error('Sản phẩm đã hết hàng')
+      return
     }
 
-    addToCart(productData, 1)
+    try {
+      const productData = await productService.getProductById(product.id)
+      if (!productData) throw new Error('Product not found')
+      await addToCart(productData, 1)
+      setFormError('')
+      toast.success('Đã thêm sản phẩm vào giỏ hàng')
+    } catch {
+      setFormError('Không thể thêm sản phẩm vào giỏ hàng')
+      toast.error('Không thể thêm sản phẩm vào giỏ hàng')
+    }
   }
 
   const handleRemoveSelected = async () => {
@@ -233,13 +220,7 @@ export function WishlistPage() {
       return
     }
 
-    // TODO: Implement backend API to send wishlist via email
-    toast.info('Tính năng chia sẻ danh sách yêu thích đang được phát triển', {
-      description: 'Chúng tôi sẽ sớm ra mắt tính năng này trong thời gian tới',
-      duration: 4000,
-    })
-    setShareEmail('')
-    setIsShareModalOpen(false)
+    toast.info('Chia sẻ danh sách yêu thích chưa được bật')
   }
 
   const formatAddedDate = (dateStr: string) => {
@@ -282,7 +263,7 @@ export function WishlistPage() {
   }
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-6' data-testid='wishlist-page'>
       {/* Header */}
       <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-6'>
         <div className='flex flex-col md:flex-row md:items-center justify-between gap-4'>
@@ -299,7 +280,7 @@ export function WishlistPage() {
           <div className='flex items-center gap-3'>
             {/* Sort */}
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className='w-40'>
+              <SelectTrigger className='w-40' data-testid='wishlist-sort-trigger'>
                 <SortAsc className='w-4 h-4 mr-2' />
                 <SelectValue />
               </SelectTrigger>
@@ -310,6 +291,18 @@ export function WishlistPage() {
                 <SelectItem value='name'>Tên A-Z</SelectItem>
               </SelectContent>
             </Select>
+            <select
+              aria-label='Sắp xếp danh sách yêu thích'
+              value={sortBy}
+              onChange={(event) => setSortBy(event.target.value)}
+              data-testid='wishlist-sort-select'
+              className='sr-only'
+            >
+              <option value='newest'>Mới nhất</option>
+              <option value='priceAsc'>Giá tăng dần</option>
+              <option value='priceDesc'>Giá giảm dần</option>
+              <option value='name'>Tên A-Z</option>
+            </select>
 
             {/* View Toggle */}
             <div className='flex border rounded-lg'>
@@ -334,9 +327,9 @@ export function WishlistPage() {
             {/* Share */}
             <Dialog open={isShareModalOpen} onOpenChange={setIsShareModalOpen}>
               <DialogTrigger asChild>
-                <Button variant='outline' size='sm'>
+                <Button variant='outline' size='sm' disabled>
                   <Share2 className='w-4 h-4 mr-2' />
-                  Chia sẻ
+                  Chia sẻ sắp có
                 </Button>
               </DialogTrigger>
               <DialogContent>
@@ -368,6 +361,12 @@ export function WishlistPage() {
       </div>
 
       {/* Bulk Actions */}
+      {formError && (
+        <p className='text-sm text-red-600' data-testid='form-error'>
+          {formError}
+        </p>
+      )}
+
       {wishlistProducts.length > 0 && (
         <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-4'>
           <div className='flex items-center justify-between'>
@@ -409,7 +408,7 @@ export function WishlistPage() {
 
       {/* Products */}
       {wishlistProducts.length === 0 ? (
-        <Card className='bg-white/80 backdrop-blur-lg shadow-lg border border-[#E8EDF5]'>
+        <Card className='bg-white/80 backdrop-blur-lg shadow-lg border border-[#E8EDF5]' data-testid='wishlist-empty-state'>
           <CardContent className='p-12 text-center'>
             <Heart className='w-16 h-16 mx-auto text-gray-300 mb-4' />
             <h3 className='text-lg font-medium text-gray-900 mb-2'>Danh sách yêu thích trống</h3>
@@ -424,12 +423,13 @@ export function WishlistPage() {
         </Card>
       ) : (
         <div
+          data-testid='wishlist-grid'
           className={`grid gap-6 ${
             viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'
           }`}
         >
           {sortedProducts.map((product) => (
-            <div key={product.id} className='relative'>
+            <div key={product.id} className='relative' data-testid='wishlist-item'>
               {viewMode === 'list' ? (
                 <Card className='bg-white/80 backdrop-blur-lg shadow-lg border border-[#E8EDF5] hover:shadow-xl transition-all duration-200'>
                   <CardContent className='p-6'>
@@ -451,7 +451,7 @@ export function WishlistPage() {
                           <div className='flex items-center gap-2'>
                             {product.isRx && <Badge className='bg-red-100 text-red-800'>Rx</Badge>}
                             {!product.inStock && (
-                              <Badge variant='outline' className='text-gray-500'>
+                              <Badge variant='outline' className='text-gray-500' data-testid='wishlist-out-of-stock'>
                                 Hết hàng
                               </Badge>
                             )}
@@ -461,7 +461,7 @@ export function WishlistPage() {
                         <div className='flex items-center justify-between'>
                           <div>
                             <div className='flex items-center gap-2 mb-1'>
-                              <span className='font-medium text-[#1E40AF]'>
+                              <span className='font-medium text-[#1E40AF]' data-testid='wishlist-current-price'>
                                 {product.currentPrice.toLocaleString()}đ
                               </span>
                               {product.originalPrice && product.originalPrice > product.currentPrice && (
@@ -476,9 +476,22 @@ export function WishlistPage() {
                       </div>
 
                       <Button
+                        type='button'
+                        variant='outline'
+                        size='sm'
+                        onClick={() => handleAddToCart(product)}
+                        data-testid={product.inStock ? 'wishlist-add-to-cart' : 'wishlist-out-of-stock-add'}
+                        className='text-[#1E40AF] border-[#BFDBFE] hover:bg-[#F0F6FF]'
+                      >
+                        <ShoppingCart className='w-4 h-4 mr-2' />
+                        Thêm giỏ
+                      </Button>
+
+                      <Button
                         variant='ghost'
                         size='sm'
                         onClick={() => handleRemoveFromWishlist(product.id)}
+                        data-testid='wishlist-remove-btn'
                         className='text-red-500 hover:text-red-700 hover:bg-red-50'
                       >
                         <Trash2 className='w-4 h-4' />
@@ -522,9 +535,22 @@ export function WishlistPage() {
                     </div>
 
                     <Button
+                      type='button'
+                      variant='outline'
+                      size='sm'
+                      onClick={() => handleAddToCart(product)}
+                      data-testid={product.inStock ? 'wishlist-add-to-cart' : 'wishlist-out-of-stock-add'}
+                      className='w-full mt-2 text-[#1E40AF] border-[#BFDBFE] hover:bg-[#F0F6FF]'
+                    >
+                      <ShoppingCart className='w-4 h-4 mr-2' />
+                      {product.inStock ? 'Thêm vào giỏ' : 'Hết hàng'}
+                    </Button>
+
+                    <Button
                       variant='ghost'
                       size='sm'
                       onClick={() => handleRemoveFromWishlist(product.id)}
+                      data-testid='wishlist-remove-btn'
                       className='w-full mt-2 text-red-500 hover:text-red-700 hover:bg-red-50'
                     >
                       <Heart className='w-4 h-4 mr-2 fill-current' />

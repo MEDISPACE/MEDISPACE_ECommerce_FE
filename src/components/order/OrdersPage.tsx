@@ -15,6 +15,9 @@ export function OrdersPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedTab, setSelectedTab] = useState('all')
   const [timeFilter, setTimeFilter] = useState('all')
+  const [page, setPage] = useState(1)
+  const [error, setError] = useState('')
+  const pageSize = 10
 
   useEffect(() => {
     fetchOrders()
@@ -23,6 +26,7 @@ export function OrdersPage() {
   const fetchOrders = async () => {
     try {
       setLoading(true)
+      setError('')
       const fetchedOrders = await orderService.getOrders()
       // Transform to account Order type
       const transformedOrders: Order[] = fetchedOrders.map((order) => {
@@ -88,15 +92,20 @@ export function OrdersPage() {
           updatedAt: order.updatedAt,
           deliveryMethod: order.shippingMethod,
           notes: order.notes,
-          timeline: [], // TODO: Add timeline if available,
+          timeline: [],
         }
       })
       setOrders(transformedOrders)
     } catch (error) {
+      setError('Không thể tải lịch sử đơn hàng. Vui lòng thử lại sau.')
     } finally {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    setPage(1)
+  }, [searchTerm, selectedTab, timeFilter])
 
   const filterOrders = (status?: string) => {
     let filtered = orders
@@ -156,6 +165,9 @@ export function OrdersPage() {
 
   const tabCounts = getTabCounts()
   const filteredOrders = filterOrders(selectedTab === 'all' ? undefined : selectedTab)
+  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / pageSize))
+  const currentPage = Math.min(page, totalPages)
+  const paginatedOrders = filteredOrders.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 
   const tabs = [
     { value: 'all', label: 'Tất cả', count: tabCounts.all },
@@ -195,6 +207,7 @@ export function OrdersPage() {
             placeholder='Tìm đơn hàng theo mã hoặc tên sản phẩm...'
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            data-testid='order-search-input'
             className='pl-10 border-[#BFDBFE] focus:border-[#1E40AF]'
           />
         </div>
@@ -220,6 +233,7 @@ export function OrdersPage() {
             <TabsTrigger
               key={tab.value}
               value={tab.value}
+              data-testid={`orders-tab-${tab.value}`}
               className='flex-shrink-0 text-sm px-3 py-2 !bg-white !text-gray-700 border border-[#BFDBFE] data-[state=active]:!bg-[#0A2463] data-[state=active]:!text-white data-[state=active]:!border-[#1E40AF] transition-all duration-200 rounded-md hover:!bg-[#E8EDF5]'
             >
               <span className='whitespace-nowrap'>{tab.label}</span>
@@ -238,29 +252,42 @@ export function OrdersPage() {
 
         {/* Orders List */}
         <div className='mt-5'>
-          {filteredOrders.length > 0 ? (
-            <div className='space-y-4'>
-              {filteredOrders.map((order) => (
+          {error ? (
+            <div className='rounded-lg border border-red-200 bg-red-50 p-6 text-center'>
+              <Package className='w-12 h-12 text-red-300 mx-auto mb-3' />
+              <p className='text-red-700'>{error}</p>
+              <Button variant='outline' className='mt-4' onClick={fetchOrders}>
+                Thử lại
+              </Button>
+            </div>
+          ) : filteredOrders.length > 0 ? (
+            <div className='space-y-4' data-testid='orders-list'>
+              {paginatedOrders.map((order) => (
                 <OrderCard key={order.id} order={order} />
               ))}
 
-              {/* Pagination */}
-              {filteredOrders.length > 10 && (
-                <div className='flex justify-center pt-6'>
+              {totalPages > 1 && (
+                <div className='flex justify-center pt-6' data-testid='orders-pagination'>
                   <div className='flex items-center gap-2'>
-                    <Button variant='outline' size='sm' disabled>
+                    <Button variant='outline' size='sm' disabled={currentPage === 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
                       Trước
                     </Button>
-                    <Button variant='outline' size='sm' className='bg-[#0A2463] text-white hover:!text-white'>
-                      1
-                    </Button>
-                    <Button variant='outline' size='sm'>
-                      2
-                    </Button>
-                    <Button variant='outline' size='sm'>
-                      3
-                    </Button>
-                    <Button variant='outline' size='sm'>
+                    {Array.from({ length: totalPages }).map((_, index) => {
+                      const pageNumber = index + 1
+                      return (
+                        <Button
+                          key={pageNumber}
+                          variant='outline'
+                          size='sm'
+                          data-testid={currentPage === pageNumber ? 'orders-page-current' : undefined}
+                          onClick={() => setPage(pageNumber)}
+                          className={currentPage === pageNumber ? 'bg-[#0A2463] text-white hover:!text-white' : ''}
+                        >
+                          {pageNumber}
+                        </Button>
+                      )
+                    })}
+                    <Button variant='outline' size='sm' disabled={currentPage === totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))} data-testid='orders-page-next'>
                       Sau
                     </Button>
                   </div>
@@ -268,17 +295,19 @@ export function OrdersPage() {
               )}
             </div>
           ) : (
-            <EmptyState
-              icon={<Package className='w-16 h-16' />}
-              title='Không tìm thấy đơn hàng'
-              description={
-                searchTerm || timeFilter !== 'all' || selectedTab !== 'all'
-                  ? 'Không có đơn hàng nào phù hợp với bộ lọc của bạn. Thử thay đổi bộ lọc hoặc tìm kiếm khác.'
-                  : 'Bạn chưa có đơn hàng nào. Hãy bắt đầu mua sắm để tạo đơn hàng đầu tiên!'
-              }
-              actionLabel='Mua sắm ngay'
-              actionUrl='/products'
-            />
+            <div data-testid='orders-empty-state'>
+              <EmptyState
+                icon={<Package className='w-16 h-16' />}
+                title='Không tìm thấy đơn hàng'
+                description={
+                  searchTerm || timeFilter !== 'all' || selectedTab !== 'all'
+                    ? 'Không có đơn hàng nào phù hợp với bộ lọc của bạn. Thử thay đổi bộ lọc hoặc tìm kiếm khác.'
+                    : 'Bạn chưa có đơn hàng nào. Hãy bắt đầu mua sắm để tạo đơn hàng đầu tiên!'
+                }
+                actionLabel='Mua sắm ngay'
+                actionUrl='/products'
+              />
+            </div>
           )}
         </div>
       </Tabs>

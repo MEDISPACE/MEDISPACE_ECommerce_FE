@@ -38,6 +38,7 @@ export function ImageUploader({
   const [images, setImages] = useState<UploadedImage[]>([])
   const [isDragging, setIsDragging] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [formError, setFormError] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const analyzeImageQuality = useCallback((file: File): 'good' | 'fair' | 'poor' => {
@@ -91,11 +92,14 @@ export function ImageUploader({
               isUploaded: false,
             })
           } else {
-            toast.error(`File "${file.name}" không hợp lệ (quá lớn hoặc sai định dạng)`)
+            const message = `File "${file.name}" không hợp lệ (quá lớn hoặc sai định dạng)`
+            setFormError(message)
+            toast.error(message)
           }
         })
 
       if (newImages.length === 0) return
+      setFormError('')
 
       // Update state with local previews immediately
       const updatedImages = [...images, ...newImages]
@@ -328,11 +332,18 @@ export function ImageUploader({
         accept={acceptedTypes.join(',')}
         onChange={(e) => handleFiles(e.target.files)}
         className='hidden'
+        data-testid='prescription-file-input'
       />
+
+      {formError && (
+        <p className='text-sm text-red-600' data-testid='form-error'>
+          {formError}
+        </p>
+      )}
 
       {/* Image Preview */}
       {images.length > 0 && (
-        <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
+        <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]' data-testid='prescription-preview'>
           <div className='p-6'>
             <h3 className='mb-4 text-blue-900 flex items-center'>
               🖼️ ẢNH ĐÃ TẢI LÊN ({images.filter((img) => img.isUploaded).length}/{images.length})

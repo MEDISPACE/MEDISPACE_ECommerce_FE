@@ -5,15 +5,17 @@ import { notificationService } from '../services/notificationService'
 import { useSocketContext } from '../contexts/SocketContext'
 import { useAuth } from '../contexts/AuthContext'
 import { UserStatus } from '../types/user'
+import type { NotificationFilter, NotificationPreferences } from '../types/account'
 
 export const NOTIFICATIONS_QUERY_KEY = ['notifications'] as const
 export const UNREAD_COUNT_QUERY_KEY = ['notifications-unread-count'] as const
+export const NOTIFICATION_PREFERENCES_QUERY_KEY = ['notification-preferences'] as const
 
 /**
  * Main hook: fetch notification list + real-time socket integration
  */
 export function useNotifications(
-  filter: 'all' | 'unread' | 'order' | 'prescription' | 'promotion' | 'system' | 'reminder' | 'review' = 'all',
+  filter: NotificationFilter = 'all',
   page = 1
 ) {
   const queryClient = useQueryClient()
@@ -85,6 +87,35 @@ export function useNotifications(
     deleteNotification: deleteNotificationMutation.mutate,
     isMarkingRead: markAsReadMutation.isPending,
     isMarkingAll: markAllAsReadMutation.isPending,
+  }
+}
+
+export function useNotificationPreferences() {
+  const queryClient = useQueryClient()
+  const { isAuthenticated, user } = useAuth()
+  const canUseNotifications = isAuthenticated && user?.status === UserStatus.Verified
+
+  const query = useQuery({
+    queryKey: NOTIFICATION_PREFERENCES_QUERY_KEY,
+    queryFn: () => notificationService.getPreferences(),
+    enabled: canUseNotifications,
+    staleTime: 1000 * 60,
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: (preferences: Partial<NotificationPreferences>) => notificationService.updatePreferences(preferences),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: NOTIFICATION_PREFERENCES_QUERY_KEY })
+      toast.success('Đã cập nhật cài đặt thông báo')
+    },
+    onError: () => toast.error('Không thể cập nhật cài đặt thông báo'),
+  })
+
+  return {
+    ...query,
+    preferences: query.data,
+    updatePreferences: updateMutation.mutate,
+    isUpdatingPreferences: updateMutation.isPending,
   }
 }
 

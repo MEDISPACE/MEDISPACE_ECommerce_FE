@@ -18,6 +18,10 @@ import returnRequestService, {
 } from '~/services/returnRequestService'
 import { mediaService } from '~/services/mediaService'
 
+const MAX_EVIDENCE_FILES = 5
+const MAX_EVIDENCE_FILE_SIZE = 5 * 1024 * 1024
+const ALLOWED_EVIDENCE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+
 interface OrderItem {
   productId: string
   name: string
@@ -62,6 +66,7 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
     branch: '',
   })
   const [uploading, setUploading] = useState(false)
+  const [formError, setFormError] = useState('')
 
   // Calculate days since delivery
   const daysSinceDelivery = order.deliveredAt
@@ -73,6 +78,8 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
     const orderItem = order.items.find((i) => i.productId === productId)
     return orderItem?.prescriptionRequired
   })
+  const returnWindowDays = hasPrescriptionItem ? 3 : 7
+  const isOutsideReturnWindow = daysSinceDelivery > returnWindowDays
 
   // Get allowed reasons based on item type
   const getAllowedReasons = useCallback((isPrescription: boolean) => {
@@ -132,7 +139,23 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
 
     setUploading(true)
     try {
-      const uploadPromises = Array.from(files).map(async (file) => {
+      const selectedFiles = Array.from(files)
+      if (evidence.length + selectedFiles.length > MAX_EVIDENCE_FILES) {
+        setFormError(`Chỉ được tải tối đa ${MAX_EVIDENCE_FILES} ảnh chứng minh`)
+        toast.error(`Chỉ được tải tối đa ${MAX_EVIDENCE_FILES} ảnh chứng minh`)
+        return
+      }
+
+      const invalidFile = selectedFiles.find(
+        (file) => !ALLOWED_EVIDENCE_TYPES.includes(file.type) || file.size > MAX_EVIDENCE_FILE_SIZE,
+      )
+      if (invalidFile) {
+        setFormError('Ảnh chứng minh phải là JPG, PNG hoặc WebP và không vượt quá 5MB')
+        toast.error('Ảnh chứng minh phải là JPG, PNG hoặc WebP và không vượt quá 5MB')
+        return
+      }
+
+      const uploadPromises = selectedFiles.map(async (file) => {
         // mediaService.uploadImage returns a string URL directly
         const url = await mediaService.uploadImage(file)
         return url
@@ -140,8 +163,10 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
 
       const uploadedUrls = await Promise.all(uploadPromises)
       setEvidence((prev) => [...prev, ...uploadedUrls.filter(Boolean)])
+      setFormError('')
       toast.success('Tải ảnh thành công')
     } catch (error) {
+      setFormError('Không thể tải ảnh lên')
       toast.error('Không thể tải ảnh lên')
     } finally {
       setUploading(false)
@@ -180,7 +205,9 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
       navigate('/account/returns')
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Không thể gửi yêu cầu đổi/trả')
+      const message = error.response?.data?.message || 'Không thể gửi yêu cầu đổi/trả'
+      setFormError(message)
+      toast.error(message)
     },
   })
 
@@ -201,8 +228,31 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
     return sum + getRefundPreview(orderItem, data.quantity).netAmount
   }, 0)
 
-  // Validate form
-  const isValid = selectedItems.size > 0 && mainReason && reasonDetail.length >= 10 && evidence.length >= 1
+  const handleSubmitReturn = () => {
+    if (selectedItems.size === 0) {
+      setFormError('Vui lòng chọn ít nhất một sản phẩm cần đổi/trả')
+      return
+    }
+    if (!mainReason) {
+      setFormError('Vui lòng chọn lý do đổi/trả')
+      return
+    }
+    if (reasonDetail.length < 10) {
+      setFormError('Vui lòng mô tả chi tiết ít nhất 10 ký tự')
+      return
+    }
+    if (evidence.length < 1) {
+      setFormError('Vui lòng tải lên ít nhất một ảnh chứng minh')
+      return
+    }
+    if (isOutsideReturnWindow) {
+      setFormError('Đơn hàng đã quá thời hạn đổi/trả')
+      return
+    }
+
+    setFormError('')
+    submitMutation.mutate()
+  }
 
   return (
     <div className='max-w-4xl mx-auto p-6 space-y-6'>
@@ -242,15 +292,16 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
 
       {/* Return period warning */}
       {daysSinceDelivery > 5 && (
-        <Card className='border-orange-200 bg-orange-50'>
+        <Card className={isOutsideReturnWindow ? 'border-red-200 bg-red-50' : 'border-orange-200 bg-orange-50'}>
           <CardContent className='pt-6'>
             <div className='flex gap-3'>
-              <AlertTriangle className='h-5 w-5 text-orange-600 flex-shrink-0' />
+              <AlertTriangle className={`h-5 w-5 flex-shrink-0 ${isOutsideReturnWindow ? 'text-red-600' : 'text-orange-600'}`} />
               <div>
-                <p className='font-medium text-orange-800'>Sắp hết hạn đổi trả</p>
-                <p className='text-sm text-orange-700'>
-                  Đơn hàng đã được giao {daysSinceDelivery} ngày trước. Thời hạn đổi trả là 7 ngày cho sản phẩm thông
-                  thường.
+                <p className={`font-medium ${isOutsideReturnWindow ? 'text-red-800' : 'text-orange-800'}`}>
+                  {isOutsideReturnWindow ? 'Đã quá hạn đổi/trả' : 'Sắp hết hạn đổi/trả'}
+                </p>
+                <p className={`text-sm ${isOutsideReturnWindow ? 'text-red-700' : 'text-orange-700'}`}>
+                  Đơn hàng đã được giao {daysSinceDelivery} ngày trước. Thời hạn đổi/trả là {returnWindowDays} ngày.
                 </p>
               </div>
             </div>
@@ -284,6 +335,7 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
                   <Checkbox
                     checked={isSelected}
                     onCheckedChange={(checked) => toggleItemSelection(item.productId, checked as boolean)}
+                    data-testid='return-item-checkbox'
                   />
                   <img
                     src={item.image || '/placeholder-product.png'}
@@ -398,12 +450,12 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
             <div>
               <Label className='mb-2 block'>Lý do chính</Label>
               <Select value={mainReason} onValueChange={(v) => setMainReason(v as ReturnReason)}>
-                <SelectTrigger>
+                <SelectTrigger data-testid='return-reason-select'>
                   <SelectValue placeholder='Chọn lý do' />
                 </SelectTrigger>
                 <SelectContent>
                   {Object.values(ReturnReason).map((reason) => (
-                    <SelectItem key={reason} value={reason}>
+                    <SelectItem key={reason} value={reason} data-testid={reason === ReturnReason.DEFECTIVE ? 'return-reason-defective' : undefined}>
                       {returnReasonLabels[reason]}
                     </SelectItem>
                   ))}
@@ -430,6 +482,7 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
               value={reasonDetail}
               onChange={(e) => setReasonDetail(e.target.value)}
               placeholder='Mô tả chi tiết về vấn đề gặp phải với sản phẩm...'
+              data-testid='return-detail-input'
               rows={4}
             />
             <p className='text-xs text-muted-foreground mt-1'>{reasonDetail.length}/1000 ký tự</p>
@@ -442,21 +495,23 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
               <input
                 type='file'
                 multiple
-                accept='image/*,video/*'
+                accept='image/jpeg,image/png,image/webp'
                 onChange={handleImageUpload}
                 className='hidden'
                 id='evidence-upload'
+                data-testid='evidence-upload'
                 disabled={uploading}
               />
               <label htmlFor='evidence-upload' className='cursor-pointer'>
                 <Upload className='h-8 w-8 mx-auto text-muted-foreground mb-2' />
                 <p className='text-sm text-muted-foreground'>
-                  {uploading ? 'Đang tải lên...' : 'Click để tải ảnh hoặc video'}
+                  {uploading ? 'Đang tải lên...' : 'Click để tải ảnh JPG, PNG hoặc WebP'}
                 </p>
+                <p className='text-xs text-muted-foreground mt-1'>Tối đa 5 ảnh, mỗi ảnh không quá 5MB</p>
               </label>
             </div>
             {evidence.length > 0 && (
-              <div className='flex flex-wrap gap-2 mt-3'>
+              <div className='flex flex-wrap gap-2 mt-3' data-testid='evidence-preview'>
                 {evidence.map((url, index) => (
                   <div key={index} className='relative'>
                     <img src={url} alt={`Evidence ${index + 1}`} className='w-20 h-20 object-cover rounded' />
@@ -538,6 +593,11 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
               <p className='text-lg font-semibold'>
                 Tổng tiền hoàn: <span className='text-[#1E40AF]'>{totalRefundAmount.toLocaleString()}đ</span>
               </p>
+              {formError && (
+                <p className='mt-2 text-sm text-red-600' data-testid='form-error'>
+                  {formError}
+                </p>
+              )}
             </div>
             <div className='flex gap-3'>
               <Button
@@ -549,8 +609,9 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
               </Button>
               <Button
                 className='bg-[#0A2463] text-white hover:bg-[#071A49]'
-                onClick={() => submitMutation.mutate()}
-                disabled={!isValid || submitMutation.isPending}
+                onClick={handleSubmitReturn}
+                disabled={isOutsideReturnWindow || submitMutation.isPending}
+                data-testid='submit-return-btn'
               >
                 {submitMutation.isPending ? 'Đang gửi...' : 'Gửi yêu cầu'}
               </Button>

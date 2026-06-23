@@ -371,8 +371,8 @@ export function CommunityVideoEventDetailPage() {
 
   if (joinPayload) {
     return (
-      <main className='flex min-h-screen flex-col bg-[#202124] text-white'>
-        <header className='flex h-14 items-center justify-between px-4 md:px-6'>
+      <main className='flex h-dvh max-h-dvh flex-col overflow-hidden bg-[#202124] text-white'>
+        <header className='flex h-14 shrink-0 items-center justify-between px-4 md:px-6'>
           <div className='min-w-0'>
             <div className='truncate text-sm font-medium'>MediSpace Meet</div>
             <div className='text-xs text-gray-400'>
@@ -397,13 +397,13 @@ export function CommunityVideoEventDetailPage() {
         </header>
 
         <section
-          className={`grid min-h-0 flex-1 gap-3 px-3 pb-3 ${
+          className={`grid min-h-0 flex-1 overflow-hidden gap-3 px-3 pb-3 ${
             showChat ? 'lg:grid-cols-[minmax(0,1fr)_360px]' : 'lg:grid-cols-1'
           }`}
         >
           <div
             data-testid='video-room'
-            className='relative min-h-[520px] overflow-hidden rounded-[12px] bg-black shadow-2xl'
+            className='relative h-full min-h-0 overflow-hidden rounded-[12px] bg-black shadow-2xl'
           >
             <LiveKitRoom
               token={joinPayload.token}
@@ -412,17 +412,17 @@ export function CommunityVideoEventDetailPage() {
               audio={micEnabled}
               video={cameraEnabled}
               data-lk-theme='default'
-              className='medispace-livekit-room'
+              className='medispace-livekit-room h-full min-h-0'
               onDisconnected={() => setJoinPayload(null)}
               onError={(error) => toast.error(error?.message || 'Không thể kết nối LiveKit')}
             >
-              <style>{`.medispace-livekit-room .lk-chat,.medispace-livekit-room .lk-chat-toggle{display:none!important}`}</style>
+              <style>{`.medispace-livekit-room,.medispace-livekit-room .lk-video-conference{height:100%;min-height:0}.medispace-livekit-room .lk-chat,.medispace-livekit-room .lk-chat-toggle{display:none!important}`}</style>
               <VideoConference />
             </LiveKitRoom>
           </div>
 
           {showChat && (
-            <aside className='flex min-h-0 flex-col rounded-[12px] bg-white text-gray-900 shadow-2xl'>
+            <aside className='flex h-full min-h-0 flex-col overflow-hidden rounded-[12px] bg-white text-gray-900 shadow-2xl'>
               <div className='border-b px-4 py-3 font-semibold'>Chat cuộc họp</div>
               <div className='min-h-0 flex-1 space-y-3 overflow-auto p-4'>
                 {chatQuery.isLoading ? <p className='text-sm text-gray-500'>Đang tải chat...</p> : null}
@@ -508,7 +508,7 @@ export function CommunityVideoEventDetailPage() {
           )}
         </section>
 
-        <footer className='grid h-14 grid-cols-[1fr_auto] items-center px-4 md:px-6'>
+        <footer className='grid h-14 shrink-0 grid-cols-[1fr_auto] items-center px-4 md:px-6'>
           <div className='hidden min-w-0 text-sm text-gray-300 md:block'>
             <span className='font-medium'>{formatDateTime(new Date().toISOString())}</span>
             <span className='mx-2 text-gray-500'>|</span>

@@ -54,6 +54,7 @@ export function UploadPrescriptionPage() {
   const [prescriptionId, setPrescriptionId] = useState<string | null>(null)
   const [prescriptionNumber, setPrescriptionNumber] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formError, setFormError] = useState('')
 
   // OCR state
   const [isScanning, setIsScanning] = useState(false)
@@ -116,14 +117,18 @@ export function UploadPrescriptionPage() {
     if (currentStep === 1) {
       const uploadedUrls = getUploadedImageUrls()
       if (uploadedUrls.length === 0) {
+        setFormError('Vui lòng tải lên ít nhất một ảnh đơn thuốc')
         toast.error('Vui lòng tải lên ít nhất một ảnh đơn thuốc')
         return
       }
       const stillUploading = uploadedImages.some((img) => img.isUploading)
       if (stillUploading) {
+        setFormError('Vui lòng đợi ảnh tải lên hoàn tất')
         toast.error('Vui lòng đợi ảnh tải lên hoàn tất')
         return
       }
+
+      setFormError('')
 
       // ★ Tự động quét OCR sau khi upload ảnh
       setIsScanning(true)
@@ -190,6 +195,7 @@ export function UploadPrescriptionPage() {
     medications: MedicationItem[],
   ) => {
     if (!isAuthenticated) {
+      setFormError('Vui lòng đăng nhập để gửi đơn thuốc')
       toast.error('Vui lòng đăng nhập để gửi đơn thuốc')
       navigate('/login', { state: { from: '/upload-prescription' } })
       return
@@ -197,6 +203,7 @@ export function UploadPrescriptionPage() {
 
     const imageUrls = getUploadedImageUrls()
     if (imageUrls.length === 0) {
+      setFormError('Không có ảnh đơn thuốc. Vui lòng quay lại bước 1')
       toast.error('Không có ảnh đơn thuốc. Vui lòng quay lại bước 1')
       setCurrentStep(1)
       return
@@ -258,14 +265,18 @@ export function UploadPrescriptionPage() {
       if (error && typeof error === 'object' && 'response' in error) {
         const apiError = error as { response?: { status?: number; data?: { message?: string } } }
         if (apiError.response?.status === 401) {
+          setFormError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại')
           toast.error('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại')
           navigate('/login', { state: { from: '/upload-prescription' } })
         } else if (apiError.response?.data?.message) {
+          setFormError(apiError.response.data.message)
           toast.error(apiError.response.data.message)
         } else {
+          setFormError('Có lỗi xảy ra khi gửi đơn thuốc. Vui lòng thử lại.')
           toast.error('Có lỗi xảy ra khi gửi đơn thuốc. Vui lòng thử lại.')
         }
       } else {
+        setFormError('Có lỗi xảy ra khi gửi đơn thuốc. Vui lòng thử lại.')
         toast.error('Có lỗi xảy ra khi gửi đơn thuốc. Vui lòng thử lại.')
       }
     } finally {
@@ -422,12 +433,21 @@ export function UploadPrescriptionPage() {
               </Alert>
             )}
 
-            <ImageUploader onImagesChange={handleImagesChange} maxFiles={5} maxSize={10} uploadToServer={true} />
+            <div data-testid='prescription-upload-widget'>
+              <ImageUploader onImagesChange={handleImagesChange} maxFiles={5} maxSize={10} uploadToServer={true} />
+            </div>
+
+            {formError && (
+              <p className='text-sm text-red-600' data-testid='form-error'>
+                {formError}
+              </p>
+            )}
 
             <div className='flex justify-end space-x-3'>
               <Button
                 onClick={handleNextStep}
                 disabled={uploadedImages.length === 0 || uploadedImages.some((img) => img.isUploading)}
+                data-testid='submit-prescription-btn'
                 className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white hover:from-[#071A49] hover:to-[#1E40AF]'
               >
                 Tiếp tục
