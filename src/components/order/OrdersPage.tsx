@@ -7,10 +7,36 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { OrderCard } from './OrderCard'
 import { EmptyState } from '../shared/EmptyState'
 import { orderService } from '../../services/orderService'
-import type { Order } from '../../types/account'
+import type { Order as AccountOrder } from '../../types/account'
+import type { OrderItem as CommerceOrderItem } from '../../types/order'
+
+type CommerceOrderItemWithUnit = CommerceOrderItem & { unit?: string }
+
+const accountOrderStatuses: readonly AccountOrder['status'][] = [
+  'pending',
+  'pending_payment',
+  'confirmed',
+  'processing',
+  'preparing',
+  'shipping',
+  'delivered',
+  'cancelled',
+  'returned',
+]
+
+const isAccountOrderStatus = (status: string): status is AccountOrder['status'] =>
+  accountOrderStatuses.includes(status as AccountOrder['status'])
+
+const mapDisplayStatus = (status: string, paymentStatus: string): AccountOrder['status'] => {
+  if (status === 'pending') return paymentStatus === 'pending' ? 'pending_payment' : 'pending'
+  if (status === 'shipped') return 'shipping'
+  return isAccountOrderStatus(status) ? status : 'pending'
+}
+
+const getOrderItemUnit = (item: CommerceOrderItemWithUnit) => item.unit || item.product.unit || 'viên'
 
 export function OrdersPage() {
-  const [orders, setOrders] = useState<Order[]>([])
+  const [orders, setOrders] = useState<AccountOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedTab, setSelectedTab] = useState('all')
@@ -29,27 +55,8 @@ export function OrdersPage() {
       setError('')
       const fetchedOrders = await orderService.getOrders()
       // Transform to account Order type
-      const transformedOrders: Order[] = fetchedOrders.map((order) => {
-        // Determine display status based on both orderStatus and paymentStatus
-        let displayStatus:
-          | 'pending_payment'
-          | 'confirmed'
-          | 'processing'
-          | 'preparing'
-          | 'shipping'
-          | 'delivered'
-          | 'cancelled'
-          | 'returned'
-          | 'pending'
-
-        if (order.status === 'pending') {
-          // If order is pending, check payment status
-          displayStatus = order.paymentStatus === 'pending' ? 'pending_payment' : 'pending'
-        } else if (order.status === 'shipped') {
-          displayStatus = 'shipping'
-        } else {
-          displayStatus = order.status as any
-        }
+      const transformedOrders: AccountOrder[] = fetchedOrders.map((order) => {
+        const displayStatus = mapDisplayStatus(order.status, order.paymentStatus)
 
         return {
           id: order.id,
@@ -62,7 +69,7 @@ export function OrdersPage() {
             productName: item.product.name,
             productImage: item.product.featuredImage || item.product.image || item.product.images?.[0] || '',
             brand: item.product.brand?.name || '',
-            unit: (item as any).unit || item.product.unit || 'viên',
+            unit: getOrderItemUnit(item),
             quantity: item.quantity,
             unitPrice: item.price,
             subtotal: item.total,
@@ -87,7 +94,7 @@ export function OrdersPage() {
             isDefault: false,
           },
           paymentMethod: order.paymentMethod,
-          paymentStatus: order.paymentStatus as Order['paymentStatus'],
+          paymentStatus: order.paymentStatus as AccountOrder['paymentStatus'],
           createdAt: order.createdAt,
           updatedAt: order.updatedAt,
           deliveryMethod: order.shippingMethod,
@@ -96,7 +103,7 @@ export function OrdersPage() {
         }
       })
       setOrders(transformedOrders)
-    } catch (error) {
+    } catch {
       setError('Không thể tải lịch sử đơn hàng. Vui lòng thử lại sau.')
     } finally {
       setLoading(false)
