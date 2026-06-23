@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Heart, Grid, List, SortAsc, Share2, ShoppingCart, Trash2, TrendingDown, TrendingUp, Clock } from 'lucide-react'
+import { Heart, Grid, List, SortAsc, Share2, ShoppingCart, Trash2, TrendingDown, TrendingUp } from 'lucide-react'
 
 import { ProductCard } from '../products/ProductCard'
 import { Button } from '../ui/button'
@@ -15,7 +15,6 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useCart } from '../../contexts/CartContext'
 import { wishlistService } from '../../services/wishlistService'
 import { productService } from '../../services/productService'
-import type { Product } from '../../types/product'
 import { getProductSalePrice, getProductOriginalPrice } from '../../utils/productHelpers'
 import { RecommendationCarousel } from '../products/RecommendationCarousel'
 import { useRelated, useTrending } from '../../hooks/product/useRecommendations'
@@ -84,7 +83,7 @@ export function WishlistPage() {
         } else {
           setWishlistProducts([])
         }
-      } catch (error) {
+      } catch {
         toast.error('Không thể tải danh sách yêu thích')
       } finally {
         setLoading(false)
@@ -221,17 +220,6 @@ export function WishlistPage() {
     }
 
     toast.info('Chia sẻ danh sách yêu thích chưa được bật')
-  }
-
-  const formatAddedDate = (dateStr: string) => {
-    const date = new Date(dateStr)
-    const now = new Date()
-    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24))
-
-    if (diffDays === 0) return 'Hôm nay'
-    if (diffDays === 1) return 'Hôm qua'
-    if (diffDays < 7) return `${diffDays} ngày trước`
-    return date.toLocaleDateString('vi-VN')
   }
 
   const getPriceChangeIndicator = (change?: number) => {
