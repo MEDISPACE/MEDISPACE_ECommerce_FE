@@ -22,14 +22,14 @@ export function EmptyState({ icon, title, description, actionLabel, actionUrl, o
           <div>
             {actionUrl ? (
               <a href={actionUrl}>
-                <Button className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463]'>
+                <Button className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white hover:from-[#071A49] hover:to-[#0A2463] hover:text-white'>
                   {actionLabel}
                 </Button>
               </a>
             ) : (
               <Button
                 onClick={onAction}
-                className='bg-gradient-to-r text-white from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463]'
+                className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white hover:from-[#071A49] hover:to-[#0A2463] hover:text-white'
               >
                 {actionLabel}
               </Button>
