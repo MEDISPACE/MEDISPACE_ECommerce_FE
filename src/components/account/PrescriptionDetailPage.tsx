@@ -10,7 +10,6 @@ import {
   Calendar,
   User,
   Hospital,
-  Phone,
   Stethoscope,
   FileText,
   Package,

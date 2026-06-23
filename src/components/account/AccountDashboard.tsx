@@ -1,5 +1,5 @@
 import { Link } from 'react-router'
-import { Bell, Package, FileText, Search, Gift, Star, TrendingUp, RefreshCcw, Sparkles } from 'lucide-react'
+import { Bell, Package, FileText, Search, Gift, Star, TrendingUp, RefreshCcw } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import { Button } from '../ui/button'

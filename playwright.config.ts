@@ -8,7 +8,6 @@ config({ path: resolve('../MEDISPACE_ECommerce_BE/.env'), override: false })
 config({ path: resolve('.env.test'), override: false })
 
 const baseURL = process.env.E2E_BASE_URL || 'http://localhost:3000'
-const apiURL = process.env.E2E_API_URL || 'http://localhost:8000'
 
 export default defineConfig({
   testDir: './tests',
