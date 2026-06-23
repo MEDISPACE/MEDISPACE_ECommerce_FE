@@ -223,7 +223,7 @@ export function AdminCommunityVideoEventsPage() {
             <div className='space-y-2'><Label>Sức chứa</Label><Input data-testid='event-capacity-input' type='number' min='1' value={form.capacity} onChange={(event) => setForm((current) => ({ ...current, capacity: event.target.value }))} /></div>
           </div>
           <div className='space-y-2'><Label>Tags</Label><Input value={form.tags} onChange={(event) => setForm((current) => ({ ...current, tags: event.target.value }))} placeholder='ho-hap, phong-ngua' /></div>
-          <Button data-testid='create-event-submit' className='w-full bg-blue-600 hover:bg-blue-700' disabled={!form.roomId || !form.title.trim() || createMutation.isPending}><CalendarPlus />Tạo link Meet</Button>
+          <Button data-testid='create-event-submit' className='w-full bg-blue-600 text-white hover:bg-blue-700 hover:text-white' disabled={!form.roomId || !form.title.trim() || createMutation.isPending}><CalendarPlus />Tạo link Meet</Button>
         </form>
 
         <div className='space-y-4'>

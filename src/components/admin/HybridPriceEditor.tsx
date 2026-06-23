@@ -378,7 +378,7 @@ export function HybridPriceEditor({ variants = [], onChange, disabled = false }:
               <X className='w-4 h-4 mr-1' />
               Hủy
             </Button>
-            <Button type='button' onClick={handleSave} className='bg-[#0A2463] hover:bg-[#071A49]'>
+            <Button type='button' onClick={handleSave} className='bg-[#0A2463] text-white hover:bg-[#071A49] hover:text-white'>
               <Check className='w-4 h-4 mr-1' />
               Lưu
             </Button>

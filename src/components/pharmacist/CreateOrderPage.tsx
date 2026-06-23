@@ -1497,7 +1497,7 @@ export function CreateOrderPage() {
                     <div className='flex items-center gap-2'>
                       <Badge
                         variant={customerInfo.tier === 'vip' ? 'default' : 'secondary'}
-                        className={customerInfo.tier === 'vip' ? 'bg-[#0A2463]' : ''}
+                        className={customerInfo.tier === 'vip' ? 'bg-[#0A2463] text-white' : ''}
                       >
                         Khách {customerInfo.tier.toUpperCase()}
                       </Badge>

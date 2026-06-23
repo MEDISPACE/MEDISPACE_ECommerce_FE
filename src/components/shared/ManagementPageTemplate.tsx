@@ -167,7 +167,7 @@ export function ManagementPageTemplate<T extends { id: string }>({
           {primaryAction && (
             <Button
               onClick={primaryAction.onClick}
-              className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] gap-2'
+            className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white hover:from-[#071A49] hover:to-[#0A2463] hover:text-white gap-2'
             >
               {primaryAction.icon && <primaryAction.icon className='w-4 h-4' />}
               {primaryAction.label}

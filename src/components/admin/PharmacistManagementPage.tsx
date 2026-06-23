@@ -664,7 +664,7 @@ export function PharmacistManagementPage() {
               </Button>
               <Button
                 onClick={handleSaveEdit}
-                className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF]'
+                className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white hover:text-white'
                 disabled={updateMutation.isPending}
               >
                 {updateMutation.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}

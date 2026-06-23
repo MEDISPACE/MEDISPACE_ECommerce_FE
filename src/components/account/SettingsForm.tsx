@@ -72,7 +72,7 @@ export function SettingsForm({ onSuccess }: SettingsFormProps) {
                 size='sm'
                 onClick={handleResendVerification}
                 disabled={isResending}
-                className='bg-[#0A2463] hover:bg-[#071A49]'
+                className='bg-[#0A2463] text-white hover:bg-[#071A49] hover:text-white'
                 data-testid='resend-verification-btn'
               >
                 <Mail className='w-4 h-4 mr-2' />
