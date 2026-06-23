@@ -14,7 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '~/components/ui/alert-dialog'
-import { Loader2, Star, Edit, Trash2, Package, Clock, CheckCircle, XCircle, Zap } from 'lucide-react'
+import { Loader2, Edit, Trash2, Package, Clock, CheckCircle, XCircle, Zap } from 'lucide-react'
 import { ImageWithFallback } from '~/components/shared/ImageWithFallback'
 import { RatingStars } from '~/components/shared/RatingStars'
 import { WriteReviewDialog } from '~/components/reviews/WriteReviewDialog'
@@ -74,7 +74,7 @@ export function AccountReviewsPage() {
     try {
       await deleteReview(reviewId)
       refetch()
-    } catch (error) {
+    } catch {
       // Error handled by hook
     }
   }

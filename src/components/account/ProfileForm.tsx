@@ -42,8 +42,6 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const [isResendingEmail, setIsResendingEmail] = useState(false)
-  const [uploadProgress, setUploadProgress] = useState(0)
-  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
   const [formError, setFormError] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -110,7 +108,6 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
   const handleAvatarRemove = () => {
     setAvatarFile(null)
     setAvatarPreview(null)
-    setUploadProgress(0)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
@@ -142,13 +139,10 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
 
       // Upload avatar nếu có
       if (avatarFile) {
-        setIsUploadingAvatar(true)
         toast.info('Đang upload avatar...')
 
         try {
-          avatarUrl = await mediaService.uploadImageWithProgress(avatarFile, (progress) => {
-            setUploadProgress(progress)
-          })
+          avatarUrl = await mediaService.uploadImageWithProgress(avatarFile, () => undefined)
 
           toast.success('Upload avatar thành công!')
         } catch (error) {
@@ -157,11 +151,8 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
           toast.error('Upload avatar thất bại', {
             description: errorMessage,
           })
-          setIsUploadingAvatar(false)
           setIsSubmitting(false)
           return
-        } finally {
-          setIsUploadingAvatar(false)
         }
       }
 
@@ -188,7 +179,6 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
       // Reset avatar state
       setAvatarFile(null)
       setAvatarPreview(null)
-      setUploadProgress(0)
 
       onSuccess?.()
     } catch (error) {

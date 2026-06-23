@@ -25,7 +25,7 @@ export function AddressBookPage() {
     try {
       const userAddresses = await addressService.getAddresses()
       setAddresses(userAddresses)
-    } catch (error) {
+    } catch {
       toast.error('Không thể tải danh sách địa chỉ')
     }
   }
@@ -56,7 +56,7 @@ export function AddressBookPage() {
       await addressService.deleteAddress(addressId)
       toast.success('Đã xóa địa chỉ thành công')
       loadAddresses() // Reload addresses
-    } catch (error) {
+    } catch {
       toast.error('Không thể xóa địa chỉ')
     }
   }
@@ -66,7 +66,7 @@ export function AddressBookPage() {
       await addressService.setDefaultAddress(addressId)
       toast.success('Đã đặt địa chỉ mặc định thành công')
       loadAddresses() // Reload addresses
-    } catch (error) {
+    } catch {
       toast.error('Không thể đặt địa chỉ mặc định')
     }
   }
