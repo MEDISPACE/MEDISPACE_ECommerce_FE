@@ -263,6 +263,12 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
                 <Button type='button' variant='outline' size='sm' onClick={() => fileInputRef.current?.click()}>
                   Đổi ảnh
                 </Button>
+                {avatarPreview && (
+                  <Button type='button' variant='ghost' size='sm' onClick={handleAvatarRemove}>
+                    <X className='w-4 h-4 mr-2' />
+                    Xóa ảnh mới
+                  </Button>
+                )}
               </div>
 
               <div className='text-center'>
