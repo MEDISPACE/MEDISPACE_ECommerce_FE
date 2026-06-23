@@ -68,7 +68,7 @@ export function AddressCard({ address, onEdit, onDelete, onSetDefault }: Address
     >
       {address.isDefault && (
         <div className='absolute -top-2 -right-2'>
-          <Badge className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white px-3 py-1 rounded-full shadow-lg'>
+          <Badge className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white px-3 py-1 rounded-full shadow-lg' data-testid='default-address-badge'>
             <Star className='w-3 h-3 mr-1 fill-current' />
             Mặc định
           </Badge>
@@ -112,6 +112,7 @@ export function AddressCard({ address, onEdit, onDelete, onSetDefault }: Address
               variant='outline'
               size='sm'
               onClick={() => onEdit(address)}
+              data-testid='edit-address-btn'
               className='text-[#1E40AF] border-[#BFDBFE] hover:bg-[#F0F6FF]'
             >
               <Edit className='w-4 h-4 mr-1' />
@@ -126,12 +127,13 @@ export function AddressCard({ address, onEdit, onDelete, onSetDefault }: Address
                     size='sm'
                     className='text-red-600 border-red-200 hover:bg-red-50'
                     disabled={isDeleting}
+                    data-testid='delete-address-btn'
                   >
                     <Trash2 className='w-4 h-4 mr-1' />
                     Xóa
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent>
+                <AlertDialogContent data-testid='delete-address-dialog'>
                   <AlertDialogHeader>
                     <AlertDialogTitle>Xác nhận xóa địa chỉ</AlertDialogTitle>
                     <AlertDialogDescription>
@@ -140,7 +142,7 @@ export function AddressCard({ address, onEdit, onDelete, onSetDefault }: Address
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Hủy</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete} className='bg-red-600 hover:bg-red-700'>
+                    <AlertDialogAction onClick={handleDelete} className='bg-red-600 hover:bg-red-700' data-testid='confirm-delete-address'>
                       Xóa địa chỉ
                     </AlertDialogAction>
                   </AlertDialogFooter>
@@ -154,6 +156,7 @@ export function AddressCard({ address, onEdit, onDelete, onSetDefault }: Address
               variant='ghost'
               size='sm'
               onClick={() => address.id && onSetDefault(address.id)}
+              data-testid='set-default-address-btn'
               className='text-[#1E40AF] hover:bg-[#F0F6FF]'
             >
               Đặt làm mặc định

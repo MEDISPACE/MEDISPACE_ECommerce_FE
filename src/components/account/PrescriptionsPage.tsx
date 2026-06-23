@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link } from 'react-router'
 import {
   FileText,
   Upload,
@@ -61,6 +61,8 @@ const mapStatus = (status: string): Prescription['status'] => {
       return 'rejected'
     case 'completed':
       return 'completed'
+    case 'expired':
+      return 'expired'
     default:
       return 'pending'
   }
@@ -80,7 +82,7 @@ const mapPrescription = (bp: BackendPrescription): Prescription => ({
     name: med.productName,
     dosage: med.dosage,
     frequency: med.instructions,
-    duration: '',
+    duration: med.quantity ? `${med.quantity} đơn vị` : 'Theo hướng dẫn',
     quantity: med.quantity,
   })),
   status: mapStatus(bp.status),
@@ -93,8 +95,8 @@ const mapPrescription = (bp: BackendPrescription): Prescription => ({
 })
 
 export function PrescriptionsPage() {
-  const navigate = useNavigate()
   const [selectedTab, setSelectedTab] = useState('all')
+  const [visibleCount, setVisibleCount] = useState(5)
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -121,6 +123,10 @@ export function PrescriptionsPage() {
 
     fetchPrescriptions()
   }, [])
+
+  useEffect(() => {
+    setVisibleCount(5)
+  }, [selectedTab])
 
   const filterPrescriptions = (status?: string) => {
     if (!status || status === 'all') {
@@ -204,7 +210,9 @@ export function PrescriptionsPage() {
               </div>
             </div>
           </div>
-          <StatusBadge status={prescription.status} type='prescription' />
+          <span data-testid={`prescription-${prescription.status}-badge`}>
+            <StatusBadge status={prescription.status} type='prescription' />
+          </span>
         </div>
 
         {/* Status Info */}
@@ -249,7 +257,8 @@ export function PrescriptionsPage() {
           <div className='space-y-1'>
             {prescription.medicines.slice(0, 2).map((medicine) => (
               <div key={medicine.id} className='text-sm text-gray-600'>
-                • {medicine.name} - {medicine.frequency} x {medicine.duration}
+                • {medicine.name} - {medicine.frequency}
+                {medicine.duration ? ` (${medicine.duration})` : ''}
               </div>
             ))}
             {prescription.medicines.length > 2 && (
@@ -269,12 +278,12 @@ export function PrescriptionsPage() {
 
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant='outline' size='sm'>
+              <Button variant='outline' size='sm' data-testid='view-prescription-btn'>
                 <Eye className='w-4 h-4 mr-1' />
                 Xem ảnh đơn
               </Button>
             </DialogTrigger>
-            <DialogContent className='max-w-4xl'>
+            <DialogContent className='max-w-4xl' data-testid='prescription-detail-dialog'>
               <DialogHeader>
                 <DialogTitle>Đơn thuốc #{prescription.prescriptionNumber}</DialogTitle>
                 <DialogDescription>Xem chi tiết ảnh đơn thuốc và thông tin thuốc đã kê</DialogDescription>
@@ -290,9 +299,9 @@ export function PrescriptionsPage() {
                     />
                   ))}
                 </div>
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-4 text-sm'>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4 text-sm' data-testid='prescription-items'>
                   <div>
-                    <p>
+                    <p data-testid='prescription-doctor'>
                       <strong>Bác sĩ:</strong> {prescription.doctorName}
                     </p>
                     <p>
@@ -337,14 +346,16 @@ export function PrescriptionsPage() {
           )}
 
           {prescription.status === 'approved' && !prescription.orderId && (
-            <Button size='sm' className='bg-green-600 hover:bg-green-700'>
-              <ShoppingCart className='w-4 h-4 mr-1' />
-              Mua thuốc
-            </Button>
+            <Link to={`/products?prescriptionId=${prescription.id}`}>
+              <Button size='sm' className='bg-green-600 hover:bg-green-700'>
+                <ShoppingCart className='w-4 h-4 mr-1' />
+                Mua thuốc
+              </Button>
+            </Link>
           )}
 
           {prescription.status === 'rejected' && (
-            <Link to={`/upload-prescription?resubmit=${prescription.id}`}>
+            <Link to={`/account/prescriptions/upload?resubmit=${prescription.id}`}>
               <Button size='sm' variant='outline'>
                 <Upload className='w-4 h-4 mr-1' />
                 Gửi lại
@@ -365,7 +376,7 @@ export function PrescriptionsPage() {
   ]
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-6' data-testid='prescriptions-page'>
       {/* Header */}
       <div className='flex items-center justify-between'>
         <div>
@@ -373,7 +384,7 @@ export function PrescriptionsPage() {
           <p className='text-gray-600'>Quản lý và theo dõi tất cả đơn thuốc của bạn</p>
         </div>
 
-        <Link to='/upload-prescription'>
+        <Link to='/account/prescriptions/upload'>
           <Button className='bg-gradient-to-r text-white from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463]'>
             <Upload className='w-4 h-4 mr-2' />
             Gửi đơn thuốc mới
@@ -413,42 +424,45 @@ export function PrescriptionsPage() {
               </Button>
             </div>
           ) : filteredPrescriptions.length > 0 ? (
-            <div className='space-y-6'>
-              {filteredPrescriptions.map((prescription) => (
+            <div className='space-y-6' data-testid='prescriptions-list'>
+              {filteredPrescriptions.slice(0, visibleCount).map((prescription) => (
                 <PrescriptionCard key={prescription.id} prescription={prescription} />
               ))}
 
-              {/* Load More or Pagination */}
-              {filteredPrescriptions.length > 5 && (
+              {filteredPrescriptions.length > visibleCount && (
                 <div className='flex justify-center pt-6'>
-                  <Button variant='outline'>Xem thêm</Button>
+                  <Button variant='outline' onClick={() => setVisibleCount((count) => count + 5)}>
+                    Xem thêm
+                  </Button>
                 </div>
               )}
             </div>
           ) : (
-            <EmptyState
-              icon={<FileText className='w-16 h-16' />}
-              title={
-                selectedTab === 'all'
-                  ? 'Chưa có đơn thuốc nào'
-                  : `Không có đơn thuốc ${
-                      selectedTab === 'pending'
-                        ? 'chờ xử lý'
-                        : selectedTab === 'approved'
-                          ? 'đã xác nhận'
-                          : selectedTab === 'rejected'
-                            ? 'bị từ chối'
-                            : 'hoàn thành'
-                    }`
-              }
-              description={
-                selectedTab === 'all'
-                  ? 'Bạn chưa gửi đơn thuốc nào. Hãy upload đơn thuốc để được dược sĩ tư vấn và tạo đơn hàng.'
-                  : `Hiện tại không có đơn thuốc nào ở trạng thái này.`
-              }
-              actionLabel='Gửi đơn thuốc mới'
-              actionUrl='/upload-prescription'
-            />
+            <div data-testid='prescriptions-empty-state'>
+              <EmptyState
+                icon={<FileText className='w-16 h-16' />}
+                title={
+                  selectedTab === 'all'
+                    ? 'Chưa có đơn thuốc nào'
+                    : `Không có đơn thuốc ${
+                        selectedTab === 'pending'
+                          ? 'chờ xử lý'
+                          : selectedTab === 'approved'
+                            ? 'đã xác nhận'
+                            : selectedTab === 'rejected'
+                              ? 'bị từ chối'
+                              : 'hoàn thành'
+                      }`
+                }
+                description={
+                  selectedTab === 'all'
+                    ? 'Bạn chưa gửi đơn thuốc nào. Hãy upload đơn thuốc để được dược sĩ tư vấn và tạo đơn hàng.'
+                    : `Hiện tại không có đơn thuốc nào ở trạng thái này.`
+                }
+                actionLabel='Gửi đơn thuốc mới'
+                actionUrl='/account/prescriptions/upload'
+              />
+            </div>
           )}
         </div>
       </Tabs>

@@ -7,7 +7,6 @@ import {
   Star,
   FileText,
   MapPin,
-  CreditCard,
   Bell,
   Heart,
   Award,
@@ -33,67 +32,74 @@ interface AccountLayoutProps {
 
 const navigationItems = [
   {
+    id: 'overview',
     label: 'Tổng quan',
     href: '/account',
     icon: BarChart3,
     exact: true,
   },
   {
+    id: 'profile',
     label: 'Thông tin cá nhân',
     href: '/account/profile',
     icon: User,
   },
   {
+    id: 'orders',
     label: 'Đơn hàng của tôi',
     href: '/account/orders',
     icon: Package,
   },
   {
+    id: 'returns',
     label: 'Yêu cầu đổi/trả',
     href: '/account/returns',
     icon: RotateCcw,
   },
   {
+    id: 'reviews',
     label: 'Đánh giá của tôi',
     href: '/account/reviews',
     icon: Star,
   },
   {
+    id: 'prescriptions',
     label: 'Lịch sử đơn thuốc',
     href: '/account/prescriptions',
     icon: FileText,
   },
   {
+    id: 'addresses',
     label: 'Sổ địa chỉ',
     href: '/account/addresses',
     icon: MapPin,
   },
   {
-    label: 'Phương thức thanh toán',
-    href: '/account/payment-methods',
-    icon: CreditCard,
-  },
-  {
+    id: 'notifications',
     label: 'Thông báo',
     href: '/account/notifications',
     icon: Bell,
   },
   {
+    id: 'wishlist',
     label: 'Sản phẩm yêu thích',
     href: '/account/wishlist',
     icon: Heart,
   },
   {
+    id: 'rewards',
     label: 'Điểm thưởng',
     href: '/account/rewards',
     icon: Award,
   },
   {
+    id: 'change-password',
     label: 'Đổi mật khẩu',
     href: '/account/change-password',
     icon: Lock,
   },
   {
+    id: 'settings',
     label: 'Cài đặt',
     href: '/account/settings',
     icon: Settings,
@@ -161,7 +167,7 @@ export function AccountLayout({ children, breadcrumbItems = [] }: AccountLayoutP
           </AvatarFallback>
         </Avatar>
 
-        <h3 className='font-medium text-gray-900'>
+        <h3 className='font-medium text-gray-900' data-testid='sidebar-username'>
           {accountUser?.firstName || 'Người'} {accountUser?.lastName || 'dùng'}
         </h3>
         <p className='text-sm text-gray-500 mb-2'>{accountUser?.email || 'Chưa có email'}</p>
@@ -179,6 +185,8 @@ export function AccountLayout({ children, breadcrumbItems = [] }: AccountLayoutP
             <Link
               key={item.href}
               to={item.href}
+              data-testid={`account-nav-${item.id}`}
+              data-active={isActive ? 'true' : 'false'}
               onClick={() => setIsMobileMenuOpen(false)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
                 isActive ? 'bg-[#F0F6FF] text-[#0A2463] font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
@@ -209,12 +217,12 @@ export function AccountLayout({ children, breadcrumbItems = [] }: AccountLayoutP
           <div className='lg:hidden mb-4'>
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
-                <Button variant='outline' className='border-[#BFDBFE]'>
+                <Button variant='outline' className='border-[#BFDBFE]' data-testid='account-mobile-menu-trigger'>
                   <Menu className='w-4 h-4 mr-2' />
                   Menu tài khoản
                 </Button>
               </SheetTrigger>
-              <SheetContent side='left' className='w-80 p-0'>
+              <SheetContent side='left' className='w-80 p-0' data-testid='account-mobile-menu'>
                 <div className='p-6'>
                   <div className='flex items-center justify-between mb-6'>
                     <h2 className='text-lg font-medium'>Tài khoản</h2>
@@ -226,7 +234,7 @@ export function AccountLayout({ children, breadcrumbItems = [] }: AccountLayoutP
           </div>
 
           {/* Main Content */}
-          <div className='lg:col-span-3'>
+          <div className='lg:col-span-3' data-testid='account-content'>
             <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-6'>
               {children}
             </div>

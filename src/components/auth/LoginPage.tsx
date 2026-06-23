@@ -176,6 +176,7 @@ export function LoginPage() {
             <Input
               id='email'
               type='text'
+              data-testid='login-email'
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               className={`pl-12 h-14 bg-white border-2 rounded-xl transition-all duration-200 ${
@@ -219,6 +220,7 @@ export function LoginPage() {
             <Input
               id='password'
               type={showPassword ? 'text' : 'password'}
+              data-testid='login-password'
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               className={`pl-12 pr-12 h-14 bg-white border-2 rounded-xl transition-all duration-200 ${
@@ -287,6 +289,7 @@ export function LoginPage() {
         >
           <Button
             type='submit'
+            data-testid='login-submit'
             className='w-full bg-gradient-to-r from-[#0A2463] via-[#1E40AF] to-[#3B82F6] hover:from-[#071A49] hover:via-[#0A2463] hover:to-[#1E40AF] text-white h-14 rounded-xl shadow-lg hover:shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 mt-8 uppercase tracking-wide relative overflow-hidden group'
             disabled={isLoading}
           >

@@ -50,6 +50,7 @@ export default [
       route('prescriptions/:id', 'routes/account/prescriptions/$id.tsx'),
       route('returns', 'routes/account/returns/index.tsx'),
       route('returns/:requestId', 'routes/account/returns/$requestId.tsx'),
+      route('loyalty', 'routes/account/loyalty.tsx'),
       route('rewards', 'routes/account/rewards.tsx'),
       route('wishlist', 'routes/account/wishlist.tsx'),
       route('reviews', 'routes/account/reviews.tsx'),

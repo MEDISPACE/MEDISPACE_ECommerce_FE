@@ -271,7 +271,7 @@ export function OrderDetailPage() {
         </div>
 
         <div className='flex flex-wrap items-center gap-3'>
-          {getOrderStatusBadge(order.status)}
+          <span data-testid='order-status'>{getOrderStatusBadge(order.status)}</span>
           {/* <Button variant='outline' size='sm'>
             <Download className='w-4 h-4 mr-2' />
             Tải PDF
@@ -334,9 +334,17 @@ export function OrderDetailPage() {
                   <p className='font-medium text-blue-800'>Mã vận đơn</p>
                   <p className='text-[#1E40AF]'>{order.trackingNumber}</p>
                 </div>
-                <Button size='sm' variant='outline'>
+                <Button
+                  size='sm'
+                  variant='outline'
+                  data-testid='tracking-action-btn'
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(order.trackingNumber || '')
+                    toast.success('Đã sao chép mã vận đơn')
+                  }}
+                >
                   <Truck className='w-4 h-4 mr-2' />
-                  Theo dõi
+                  Sao chép mã
                 </Button>
               </div>
             </div>
@@ -347,7 +355,7 @@ export function OrderDetailPage() {
       <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
         {/* Order Items */}
         <div className='lg:col-span-2 space-y-6'>
-          <Card className='border-[#E8EDF5]'>
+          <Card className='border-[#E8EDF5]' data-testid='order-detail-items'>
             <CardHeader>
               <CardTitle className='text-blue-800'>Sản phẩm đã đặt</CardTitle>
             </CardHeader>
@@ -482,7 +490,7 @@ export function OrderDetailPage() {
                   </div>
                 )}
                 <Separator />
-                <div className='flex justify-between font-medium text-lg'>
+                <div className='flex justify-between font-medium text-lg' data-testid='order-detail-total'>
                   <span>Tổng cộng:</span>
                   <span className='text-[#1E40AF]'>{formatPrice(order.total)}</span>
                 </div>
@@ -578,6 +586,7 @@ export function OrderDetailPage() {
                 <Button
                   variant='outline'
                   className='w-full !border-red-200 !text-red-600 hover:!bg-red-50 hover:!text-red-700'
+                  data-testid='cancel-order-btn'
                   onClick={() => setCancelDialogOpen(true)}
                 >
                   <X className='w-4 h-4 mr-2' />
@@ -606,6 +615,7 @@ export function OrderDetailPage() {
               <Button
                 variant='outline'
                 className='w-full !border-[#BFDBFE] !text-[#1E40AF] hover:!bg-[#F0F6FF] hover:!text-[#0A2463]'
+                data-testid='reorder-btn'
                 onClick={async () => {
                   try {
                     // Add items to cart sequentially
@@ -635,6 +645,7 @@ export function OrderDetailPage() {
                 <Button
                   variant='outline'
                   className='w-full !border-orange-300 !text-orange-600 hover:!bg-orange-50 hover:!text-orange-700'
+                  data-testid='create-return-btn'
                   onClick={() => navigate(`/account/orders/${order.id}/return`)}
                 >
                   <RefreshCw className='w-4 h-4 mr-2' />
@@ -688,7 +699,7 @@ export function OrderDetailPage() {
 
       {/* Cancel Order Confirmation Dialog */}
       <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent data-testid='cancel-order-dialog'>
           <AlertDialogHeader>
             <AlertDialogTitle className='flex items-center gap-2 text-red-600'>
               <AlertTriangle className='w-5 h-5' />
@@ -709,6 +720,7 @@ export function OrderDetailPage() {
             <AlertDialogCancel>Không, giữ lại</AlertDialogCancel>
             <AlertDialogAction
               className='bg-red-600 hover:bg-red-700 text-white'
+              data-testid='confirm-cancel-order'
               onClick={async () => {
                 const isPaid = order.paymentStatus === 'paid'
                 try {
