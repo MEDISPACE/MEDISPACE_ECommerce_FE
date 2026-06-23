@@ -133,6 +133,7 @@ export function RewardsPage() {
   const [activeTab, setActiveTab] = useState('overview')
   const [account, setAccount] = useState<AccountInfo | null>(null)
   const [transactions, setTransactions] = useState<LoyaltyTransaction[]>([])
+  const [txTypeFilter, setTxTypeFilter] = useState<'all' | 'earn' | 'redeem'>('all')
   const [txPage, setTxPage] = useState(1)
   const [txTotal, setTxTotal] = useState(0)
   const [txLoading, setTxLoading] = useState(false)
@@ -217,6 +218,7 @@ export function RewardsPage() {
   const tierConfig = TIER_CONFIG[tier]
   const nextTierConfig = account.nextTier ? TIER_CONFIG[account.nextTier] : null
   const tiers: LoyaltyTier[] = ['member', 'silver', 'gold', 'platinum']
+  const visibleTransactions = txTypeFilter === 'all' ? transactions : transactions.filter((tx) => tx.type === txTypeFilter)
 
   return (
     <EnhancedPageTransition>
@@ -248,7 +250,7 @@ export function RewardsPage() {
                   <Sparkles className='w-5 h-5' />
                   <span className='text-sm'>Điểm hiện tại</span>
                 </div>
-                <div className='text-5xl font-bold mb-1'>{formatPoints(account.pointsBalance)}</div>
+                <div className='text-5xl font-bold mb-1' data-testid='loyalty-balance'>{formatPoints(account.pointsBalance)}</div>
                 <p className='text-sm opacity-75'>điểm ≈ {formatCurrency(account.pointsBalance)}</p>
               </div>
 
@@ -262,7 +264,7 @@ export function RewardsPage() {
                   <div className={`w-12 h-12 bg-gradient-to-br ${tierConfig.color} rounded-full flex items-center justify-center`}>
                     {tierConfig.icon}
                   </div>
-                  <div>
+                  <div data-testid='loyalty-tier'>
                     <div className='text-2xl font-bold'>{tierConfig.label}</div>
                     <div className='text-sm opacity-75'>x{account.multiplier} nhân điểm</div>
                   </div>
@@ -309,6 +311,7 @@ export function RewardsPage() {
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
+                data-testid={tab.value === 'history' ? 'loyalty-history-tab' : undefined}
                 className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-[#E8EDF5] text-[#1E40AF] border-0 data-[state=active]:!bg-[#0A2463] data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-[#BFDBFE]'
               >
                 <span className='whitespace-nowrap flex items-center gap-1'>
@@ -473,7 +476,7 @@ export function RewardsPage() {
             </Card>
 
             <Card className='bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-200'>
-              <CardContent className='p-6'>
+              <CardContent className='p-6' data-testid='loyalty-expiring-warning'>
                 <div className='flex gap-3'>
                   <Info className='w-6 h-6 text-yellow-600 flex-shrink-0' />
                   <div>
@@ -494,7 +497,29 @@ export function RewardsPage() {
           <TabsContent value='history' className='space-y-4'>
             <Card className='bg-white/80 backdrop-blur-lg border-2 border-[#E8EDF5]'>
               <CardHeader>
-                <CardTitle>Lịch sử giao dịch điểm</CardTitle>
+                <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+                  <CardTitle>Lịch sử giao dịch điểm</CardTitle>
+                  <div className='flex gap-2'>
+                    <Button
+                      type='button'
+                      variant={txTypeFilter === 'earn' ? 'default' : 'outline'}
+                      size='sm'
+                      onClick={() => setTxTypeFilter('earn')}
+                      data-testid='loyalty-filter-earned'
+                    >
+                      Tích điểm
+                    </Button>
+                    <Button
+                      type='button'
+                      variant={txTypeFilter === 'redeem' ? 'default' : 'outline'}
+                      size='sm'
+                      onClick={() => setTxTypeFilter('redeem')}
+                      data-testid='loyalty-filter-redeemed'
+                    >
+                      Đổi điểm
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 {txLoading && transactions.length === 0 ? (
@@ -502,16 +527,16 @@ export function RewardsPage() {
                     <Loader2 className='w-6 h-6 animate-spin text-[#1E40AF]' />
                     <span className='text-gray-500'>Đang tải lịch sử...</span>
                   </div>
-                ) : transactions.length === 0 ? (
-                  <div className='text-center py-12 text-gray-400'>
+                ) : visibleTransactions.length === 0 ? (
+                  <div className='text-center py-12 text-gray-400' data-testid='loyalty-empty-state'>
                     <Gift className='w-12 h-12 mx-auto mb-3 opacity-30' />
                     <p>Chưa có giao dịch điểm nào</p>
                     <p className='text-sm mt-1'>Mua sắm để bắt đầu tích điểm!</p>
                   </div>
                 ) : (
                   <>
-                    <div className='space-y-3'>
-                      {transactions.map((tx, idx) => {
+                    <div className='space-y-3' data-testid='loyalty-history-list'>
+                      {visibleTransactions.map((tx, idx) => {
                         const isPositive = tx.points > 0
                         return (
                           <motion.div
@@ -547,7 +572,7 @@ export function RewardsPage() {
                               <p className={`text-lg font-bold ${isPositive ? 'text-green-600' : 'text-red-500'}`}>
                                 {isPositive ? '+' : ''}{formatPoints(tx.points)} điểm
                               </p>
-                              <p className='text-xs text-gray-400'>Số dư: {formatPoints(tx.balanceAfter)}</p>
+                              <p className='text-xs text-gray-400' data-testid='loyalty-history-balance'>Số dư: {formatPoints(tx.balanceAfter)}</p>
                               <Badge
                                 variant='outline'
                                 className='text-xs mt-1'

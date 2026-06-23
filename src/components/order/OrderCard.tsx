@@ -68,7 +68,7 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
 
   if (variant === 'compact') {
     return (
-      <Card className='border-[#E8EDF5] hover:shadow-md transition-all duration-300'>
+      <Card className='border-[#E8EDF5] hover:shadow-md transition-all duration-300' data-testid='order-card'>
         <CardContent className='p-4'>
           <div className='flex items-center justify-between mb-3'>
             <div className='flex items-center gap-3'>
@@ -102,7 +102,10 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
   }
 
   return (
-    <Card className='border-[#E8EDF5] hover:shadow-md transition-all duration-300'>
+    <Card
+      className='border-[#E8EDF5] hover:shadow-md transition-all duration-300'
+      data-testid={`order-${order.status === 'delivered' ? 'delivered' : order.status === 'shipping' ? 'with-tracking' : order.status === 'pending_payment' || order.status === 'confirmed' ? 'cancellable' : 'card'}`}
+    >
       <CardContent className='p-6'>
         <div className='flex justify-between items-start mb-4'>
           <div>
@@ -182,6 +185,7 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
           <Link to={`/account/orders/${order.id}`} className='flex-1'>
             <Button
               variant='outline'
+              data-testid='order-card'
               className='w-full text-[#1E40AF] !border-[#BFDBFE] hover:!bg-[#F0F6FF] hover:!text-[#0A2463]'
             >
               <Eye className='w-4 h-4 mr-2' />

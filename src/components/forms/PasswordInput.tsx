@@ -8,6 +8,7 @@ interface PasswordInputProps {
   onChange: (value: string) => void
   placeholder?: string
   name?: string
+  inputTestId?: string
   error?: string
   showStrength?: boolean
   className?: string
@@ -18,6 +19,7 @@ export function PasswordInput({
   onChange,
   placeholder = 'Mật khẩu',
   name,
+  inputTestId,
   error,
   showStrength = false,
   className = '',
@@ -56,6 +58,7 @@ export function PasswordInput({
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           name={name}
+          data-testid={inputTestId}
           className={`pr-10 h-12 border-2 transition-all ${error ? 'border-red-300 focus:border-red-500' : 'border-[#BFDBFE] focus:border-[#1E40AF]'} ${className}`}
         />
         <Button
@@ -70,7 +73,7 @@ export function PasswordInput({
       </div>
 
       {showStrength && value && (
-        <div className='mt-2'>
+        <div className='mt-2' data-testid='password-strength'>
           <div className='flex gap-1 mb-1'>
             {[1, 2, 3, 4, 5].map((i) => (
               <div

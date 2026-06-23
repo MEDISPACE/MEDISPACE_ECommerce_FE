@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Package, Bell, Gift, Heart, Pill, Clock, CheckCircle, Star, CreditCard, Truck, RotateCcw, Shield, Users } from 'lucide-react'
+import { Package, Bell, Gift, Heart, Pill, Clock, CheckCircle, Star, CreditCard, Truck, RotateCcw, Shield, Users, Trash2 } from 'lucide-react'
 import { Card, CardContent } from '../ui/card'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
@@ -20,9 +20,10 @@ interface NotificationItemProps {
   notification: Notification
   onMarkAsRead: (notificationId: string) => void
   onAction?: (actionUrl: string) => void
+  onDelete?: (notificationId: string) => void
 }
 
-export function NotificationItem({ notification, onMarkAsRead, onAction }: NotificationItemProps) {
+export function NotificationItem({ notification, onMarkAsRead, onAction, onDelete }: NotificationItemProps) {
   const [isProcessing, setIsProcessing] = useState(false)
 
   const getIcon = () => {
@@ -151,6 +152,7 @@ export function NotificationItem({ notification, onMarkAsRead, onAction }: Notif
 
   return (
     <Card
+      data-testid={notification.isRead ? 'notification-item' : 'notification-unread'}
       className={`transition-all duration-200 hover:shadow-md ${
         !notification.isRead
           ? 'border-[#BFDBFE] border-l-4 border-l-blue-500 bg-gradient-to-r from-blue-50/50 to-transparent'
@@ -159,7 +161,7 @@ export function NotificationItem({ notification, onMarkAsRead, onAction }: Notif
     >
       <CardContent className='p-4'>
         <div className='flex items-start gap-4'>
-          <div className='flex-shrink-0 mt-1'>{getIcon()}</div>
+          <div className='flex-shrink-0 mt-1' data-testid='notification-type-icon'>{getIcon()}</div>
 
           <div className='flex-1 min-w-0'>
             <div className='flex items-center justify-between mb-2'>
@@ -187,6 +189,7 @@ export function NotificationItem({ notification, onMarkAsRead, onAction }: Notif
                     variant='outline'
                     size='sm'
                     onClick={handleAction}
+                    data-testid='notification-action'
                     className='text-[#1E40AF] border-[#BFDBFE] hover:bg-[#F0F6FF]'
                   >
                     {notification.actionText}
@@ -200,10 +203,23 @@ export function NotificationItem({ notification, onMarkAsRead, onAction }: Notif
                   size='sm'
                   onClick={handleMarkAsRead}
                   disabled={isProcessing}
+                  data-testid='mark-notification-read-btn'
                   className='text-gray-500 hover:text-gray-700'
                 >
                   <CheckCircle className='w-4 h-4 mr-1' />
                   Đánh dấu đã đọc
+                </Button>
+              )}
+              {onDelete && (
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  onClick={() => onDelete(notification.id)}
+                  data-testid='delete-notification-btn'
+                  className='text-red-500 hover:text-red-700 hover:bg-red-50'
+                >
+                  <Trash2 className='w-4 h-4 mr-1' />
+                  Xóa
                 </Button>
               )}
             </div>

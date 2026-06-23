@@ -1,6 +1,26 @@
-import { Toaster as Sonner, type ToasterProps } from 'sonner'
+import { Toaster as Sonner, toast as sonnerToast, type ToasterProps } from 'sonner'
+
+let testIdsPatched = false
+
+const patchToastTestIds = () => {
+  if (testIdsPatched) return
+
+  const toastApi = sonnerToast as typeof sonnerToast & {
+    success: (...args: any[]) => string | number
+    error: (...args: any[]) => string | number
+  }
+  const originalSuccess = toastApi.success.bind(toastApi)
+  const originalError = toastApi.error.bind(toastApi)
+
+  toastApi.success = (message: any, data: any = {}) => originalSuccess(message, { ...data, testId: data.testId ?? 'toast-success' })
+  toastApi.error = (message: any, data: any = {}) => originalError(message, { ...data, testId: data.testId ?? 'toast-error' })
+
+  testIdsPatched = true
+}
 
 const Toaster = ({ ...props }: ToasterProps) => {
+  patchToastTestIds()
+
   return (
     <Sonner
       theme='light'

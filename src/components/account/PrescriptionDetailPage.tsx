@@ -311,7 +311,7 @@ export function PrescriptionDetailPage() {
         {/* Action buttons based on status */}
         <div className='shrink-0'>
           {status === 'rejected' && (
-            <Link to='/upload-prescription'>
+            <Link to='/account/prescriptions/upload'>
               <Button size='sm' className='bg-red-600 hover:bg-red-700 text-white'>
                 <Upload className='w-4 h-4 mr-1' /> Gửi lại
               </Button>
@@ -555,7 +555,7 @@ export function PrescriptionDetailPage() {
               <CardTitle className='text-base text-blue-900'>Thao tác</CardTitle>
             </CardHeader>
             <CardContent className='space-y-2'>
-              <Link to='/upload-prescription'>
+              <Link to='/account/prescriptions/upload'>
                 <Button
                   variant='outline'
                   size='sm'
@@ -581,7 +581,7 @@ export function PrescriptionDetailPage() {
                 </Link>
               )}
               {status === 'rejected' && (
-                <Link to='/upload-prescription'>
+                <Link to='/account/prescriptions/upload'>
                   <Button size='sm' className='w-full justify-start bg-red-600 hover:bg-red-700 text-white'>
                     <Upload className='w-4 h-4 mr-2' /> Gửi lại đơn thuốc
                   </Button>

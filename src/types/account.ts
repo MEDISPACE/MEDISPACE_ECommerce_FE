@@ -118,7 +118,7 @@ export interface Prescription {
   prescriptionDate: string
   images: string[]
   medicines: PrescriptionMedicine[]
-  status: 'pending' | 'reviewing' | 'approved' | 'rejected' | 'completed'
+  status: 'pending' | 'reviewing' | 'approved' | 'rejected' | 'completed' | 'expired'
   pharmacistId?: string
   pharmacistNotes?: string
   patientName?: string

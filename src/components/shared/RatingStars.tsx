@@ -50,6 +50,7 @@ export function RatingStars({
               key={index}
               type='button'
               onClick={() => handleStarClick(starRating)}
+              data-testid={clickable ? `rating-star-${starRating}` : undefined}
               className={`${clickable ? 'cursor-pointer hover:scale-110' : 'cursor-default'} transition-transform`}
               disabled={!clickable}
             >

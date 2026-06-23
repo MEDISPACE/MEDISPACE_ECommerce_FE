@@ -55,6 +55,7 @@ export function AddressFormDialog({
     type: defaultType as 'home' | 'office' | 'other',
     isDefault: false,
   })
+  const [formError, setFormError] = useState('')
 
   interface GHNProvince {
     ProvinceID: number
@@ -158,13 +159,35 @@ export function AddressFormDialog({
     const missingFields = requiredFields.filter((field) => !formData[field as keyof typeof formData]?.toString().trim())
 
     if (missingFields.length > 0) {
+      setFormError('Vui lòng điền đầy đủ thông tin')
       toast.error('Vui lòng điền đầy đủ thông tin')
       return
     }
 
+    const phone = formData.phone.trim()
+    if (!/^(0|\+84)\d{9,10}$/.test(phone)) {
+      setFormError('Số điện thoại không hợp lệ')
+      toast.error('Số điện thoại không hợp lệ')
+      return
+    }
+
+    if (showEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      setFormError('Email không hợp lệ')
+      toast.error('Email không hợp lệ')
+      return
+    }
+
+    if (formData.address.trim().length < 5) {
+      setFormError('Địa chỉ cụ thể quá ngắn')
+      toast.error('Địa chỉ cụ thể quá ngắn')
+      return
+    }
+
+    setFormError('')
+
     const addressData = {
       name: showNameFields ? `${formData.firstName} ${formData.lastName}` : formData.fullName,
-      phone: formData.phone,
+      phone,
       province: formData.province,
       district: formData.district,
       ward: formData.ward,
@@ -190,6 +213,7 @@ export function AddressFormDialog({
       onSuccess(savedAddress)
       onOpenChange(false)
     } catch (error) {
+      setFormError('Không thể lưu địa chỉ')
       toast.error('Không thể lưu địa chỉ')
     }
   }
@@ -248,6 +272,7 @@ export function AddressFormDialog({
               value={formData.phone}
               onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
               placeholder='Nhập số điện thoại'
+              data-testid='address-phone-input'
             />
           </div>
 
@@ -283,12 +308,16 @@ export function AddressFormDialog({
                   }))
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger data-testid='address-province-select'>
                   <SelectValue placeholder='Chọn tỉnh/thành' />
                 </SelectTrigger>
                 <SelectContent className='max-h-60 overflow-y-auto'>
                   {provinces.map((province) => (
-                    <SelectItem key={province.ProvinceID} value={province.ProvinceID.toString()}>
+                    <SelectItem
+                      key={province.ProvinceID}
+                      value={province.ProvinceID.toString()}
+                      data-testid={province.ProvinceName.includes('Hồ Chí Minh') ? 'address-province-hcm' : undefined}
+                    >
                       {province.ProvinceName}
                     </SelectItem>
                   ))}
@@ -307,12 +336,16 @@ export function AddressFormDialog({
                 }}
                 disabled={!formData.provinceId}
               >
-                <SelectTrigger>
+                <SelectTrigger data-testid='address-district-select'>
                   <SelectValue placeholder='Chọn quận/huyện' />
                 </SelectTrigger>
                 <SelectContent className='max-h-60 overflow-y-auto'>
                   {districts.map((district) => (
-                    <SelectItem key={district.DistrictID} value={district.DistrictID.toString()}>
+                    <SelectItem
+                      key={district.DistrictID}
+                      value={district.DistrictID.toString()}
+                      data-testid={district.DistrictName.includes('1') ? 'address-district-q1' : undefined}
+                    >
                       {district.DistrictName}
                     </SelectItem>
                   ))}
@@ -330,7 +363,7 @@ export function AddressFormDialog({
                 }}
                 disabled={!formData.districtId}
               >
-                <SelectTrigger>
+                <SelectTrigger data-testid='address-ward-select'>
                   <SelectValue placeholder='Chọn phường/xã' />
                 </SelectTrigger>
                 <SelectContent className='max-h-60 overflow-y-auto'>
@@ -351,6 +384,7 @@ export function AddressFormDialog({
               value={formData.address}
               onChange={(e) => setFormData((prev) => ({ ...prev, address: e.target.value }))}
               placeholder='Nhập địa chỉ cụ thể (số nhà, đường, ...)'
+              data-testid='address-detail-input'
               rows={3}
             />
           </div>
@@ -392,11 +426,17 @@ export function AddressFormDialog({
         </div>
 
         <div className='flex justify-end gap-3'>
+          {formError && (
+            <p className='mr-auto self-center text-sm text-red-600' data-testid='form-error'>
+              {formError}
+            </p>
+          )}
           <Button variant='outline' onClick={() => onOpenChange(false)}>
             Hủy
           </Button>
           <Button
             onClick={handleSubmitAddress}
+            data-testid='save-address-btn'
             className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'
           >
             {submitButtonText || (editingAddress ? 'Cập nhật' : 'Thêm địa chỉ')}

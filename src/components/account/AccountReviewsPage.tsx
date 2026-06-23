@@ -4,6 +4,16 @@ import { Card, CardContent } from '~/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { Button } from '~/components/ui/button'
 import { Badge } from '~/components/ui/badge'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '~/components/ui/alert-dialog'
 import { Loader2, Star, Edit, Trash2, Package, Clock, CheckCircle, XCircle, Zap } from 'lucide-react'
 import { ImageWithFallback } from '~/components/shared/ImageWithFallback'
 import { RatingStars } from '~/components/shared/RatingStars'
@@ -20,6 +30,7 @@ export function AccountReviewsPage() {
 
   const [selectedTab, setSelectedTab] = useState<string>('all')
   const [editingReview, setEditingReview] = useState<Review | null>(null)
+  const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null)
   const [showEditDialog, setShowEditDialog] = useState(false)
 
   // Check if review can be edited (within 24 hours for approved reviews)
@@ -60,8 +71,6 @@ export function AccountReviewsPage() {
   }
 
   const handleDelete = async (reviewId: string) => {
-    if (!confirm('Bạn có chắc chắn muốn xóa đánh giá này?')) return
-
     try {
       await deleteReview(reviewId)
       refetch()
@@ -111,7 +120,7 @@ export function AccountReviewsPage() {
 
   return (
     <PageTransition>
-      <div className='space-y-6'>
+      <div className='space-y-6' data-testid='reviews-page'>
         {/* Header */}
         <div>
           <h1 className='text-2xl font-bold text-blue-800 mb-2'>Đánh giá của tôi</h1>
@@ -123,12 +132,14 @@ export function AccountReviewsPage() {
           <TabsList className='inline-flex w-full overflow-x-auto bg-[#E8EDF5] p-1 rounded-lg shadow-sm scrollbar-hide'>
             <TabsTrigger
               value='all'
+              data-testid='reviews-tab-all'
               className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-[#E8EDF5] text-[#1E40AF] border-0 data-[state=active]:!bg-[#0A2463] data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-[#BFDBFE]'
             >
               <span className='whitespace-nowrap flex items-center gap-1'>Tất cả ({reviews.length})</span>
             </TabsTrigger>
             <TabsTrigger
               value='pending'
+              data-testid='reviews-tab-pending'
               className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-[#E8EDF5] text-[#1E40AF] border-0 data-[state=active]:!bg-[#0A2463] data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-[#BFDBFE]'
             >
               <span className='whitespace-nowrap flex items-center gap-1'>
@@ -153,7 +164,7 @@ export function AccountReviewsPage() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value={selectedTab} className='space-y-4'>
+          <TabsContent value={selectedTab} className='space-y-4' data-testid={selectedTab === 'pending' ? 'pending-reviews-list' : 'submitted-reviews-list'}>
             {loading ? (
               <div className='flex justify-center items-center py-12'>
                 <Loader2 className='w-8 h-8 animate-spin text-[#1E40AF]' />
@@ -238,9 +249,10 @@ export function AccountReviewsPage() {
                           variant='outline'
                           size='sm'
                           onClick={() => handleEdit(review)}
+                          data-testid='write-review-btn'
                           className='text-[#1E40AF] hover:text-[#0A2463]'
                         >
-                          <Edit className='w-4 h-4 mr-1' />
+                          <Edit className='w-4 h-4 mr-1' data-testid='edit-review-btn' />
                           Sửa
                         </Button>
                       ) : (
@@ -260,7 +272,8 @@ export function AccountReviewsPage() {
                       <Button
                         variant='outline'
                         size='sm'
-                        onClick={() => handleDelete(review._id)}
+                        onClick={() => setDeletingReviewId(review._id)}
+                        data-testid='delete-review-btn'
                         className='text-red-600 hover:text-red-700'
                       >
                         <Trash2 className='w-4 h-4 mr-1' />
@@ -297,6 +310,31 @@ export function AccountReviewsPage() {
             }}
           />
         )}
+
+        <AlertDialog open={Boolean(deletingReviewId)} onOpenChange={(open) => !open && setDeletingReviewId(null)}>
+          <AlertDialogContent data-testid='delete-review-dialog'>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Xóa đánh giá?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Đánh giá sau khi xóa sẽ không thể khôi phục. Bạn có chắc chắn muốn tiếp tục?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Hủy</AlertDialogCancel>
+              <AlertDialogAction
+                className='bg-red-600 text-white hover:bg-red-700'
+                data-testid='confirm-delete-review'
+                onClick={async () => {
+                  if (!deletingReviewId) return
+                  await handleDelete(deletingReviewId)
+                  setDeletingReviewId(null)
+                }}
+              >
+                Xóa đánh giá
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </PageTransition>
   )

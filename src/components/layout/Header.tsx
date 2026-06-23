@@ -140,11 +140,12 @@ export function Header() {
               <Button variant='ghost' size='sm' className='flex items-center gap-2 text-[#1C2B4A] hover:!bg-[#F0F6FF]'>
                 <ShoppingCart className='w-5 h-5' />
                 <span className='hidden md:inline'>Giỏ hàng</span>
-                {cartCount > 0 && (
-                  <Badge className='absolute -top-2 -right-2 bg-[#DC2626] text-white text-xs w-5 h-5 rounded-full flex items-center justify-center'>
-                    {cartCount}
-                  </Badge>
-                )}
+                <Badge
+                  data-testid='cart-count'
+                  className={`absolute -top-2 -right-2 bg-[#DC2626] text-white text-xs w-5 h-5 rounded-full flex items-center justify-center ${cartCount > 0 ? '' : 'sr-only'}`}
+                >
+                  {cartCount}
+                </Badge>
               </Button>
             </Link>
 

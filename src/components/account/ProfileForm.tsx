@@ -44,6 +44,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
   const [isResendingEmail, setIsResendingEmail] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
+  const [formError, setFormError] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Helper function to format date for input[type="date"]
@@ -82,16 +83,19 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
     if (file) {
       // Validate file type
       if (!file.type.startsWith('image/')) {
+        setFormError('Vui lòng chọn file hình ảnh')
         toast.error('Vui lòng chọn file hình ảnh')
         return
       }
 
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
+        setFormError('Kích thước file không được vượt quá 5MB')
         toast.error('Kích thước file không được vượt quá 5MB')
         return
       }
 
+      setFormError('')
       setAvatarFile(file)
 
       // Create preview
@@ -130,6 +134,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
   }
 
   const onSubmit: SubmitHandler<ProfileFormData> = async (data) => {
+    setFormError('')
     setIsSubmitting(true)
 
     try {
@@ -148,6 +153,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
           toast.success('Upload avatar thành công!')
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Có lỗi xảy ra khi upload avatar'
+          setFormError(errorMessage)
           toast.error('Upload avatar thất bại', {
             description: errorMessage,
           })
@@ -187,6 +193,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
       onSuccess?.()
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Có lỗi xảy ra khi cập nhật hồ sơ'
+      setFormError(errorMessage)
       toast.error('Cập nhật hồ sơ thất bại', {
         description: errorMessage,
       })
@@ -236,7 +243,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
             {/* Avatar Section */}
             <div className='flex flex-col items-center space-y-4'>
               <div className='relative'>
-                <Avatar className='w-24 h-24 border-4 border-[#E8EDF5]'>
+                <Avatar className='w-24 h-24 border-4 border-[#E8EDF5]' data-testid='avatar-preview'>
                   <AvatarImage src={avatarPreview || user?.avatar} alt={`${user?.firstName} ${user?.lastName}`} />
                   <AvatarFallback className='text-2xl bg-[#E8EDF5] text-[#1E40AF]'>
                     {user?.firstName?.[0]}
@@ -258,6 +265,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
                 accept='image/*'
                 capture='environment'
                 onChange={handleAvatarChange}
+                data-testid='avatar-upload-input'
                 className='hidden'
               />
 
@@ -285,7 +293,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
                 <div>
                   <Label className='text-sm font-medium text-gray-700'>Email</Label>
                   <div className='mt-1 p-3 bg-gray-50 border border-gray-200 rounded-md'>
-                    <p className='text-sm text-gray-900'>{user?.email}</p>
+                    <p className='text-sm text-gray-900' data-testid='profile-email'>{user?.email}</p>
                   </div>
                   <p className='text-xs text-gray-500 mt-1'>Email không thể thay đổi</p>
                 </div>
@@ -367,11 +375,12 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
                 <Input
                   id='firstName'
                   {...register('firstName')}
+                  data-testid='profile-first-name'
                   placeholder='Nhập họ của bạn'
                   className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                 />
                 {errors.firstName && (
-                  <p className='text-sm text-red-600 flex items-center gap-1'>
+                  <p className='text-sm text-red-600 flex items-center gap-1' data-testid='form-error'>
                     <X className='w-3 h-3' />
                     {errors.firstName.message}
                   </p>
@@ -387,11 +396,12 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
                 <Input
                   id='lastName'
                   {...register('lastName')}
+                  data-testid='profile-last-name'
                   placeholder='Nhập tên của bạn'
                   className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                 />
                 {errors.lastName && (
-                  <p className='text-sm text-red-600 flex items-center gap-1'>
+                  <p className='text-sm text-red-600 flex items-center gap-1' data-testid='form-error'>
                     <X className='w-3 h-3' />
                     {errors.lastName.message}
                   </p>
@@ -407,11 +417,12 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
                 <Input
                   id='phoneNumber'
                   {...register('phoneNumber')}
+                  data-testid='profile-phone'
                   placeholder='Ví dụ: 0987654321'
                   className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                 />
                 {errors.phoneNumber && (
-                  <p className='text-sm text-red-600 flex items-center gap-1'>
+                  <p className='text-sm text-red-600 flex items-center gap-1' data-testid='form-error'>
                     <X className='w-3 h-3' />
                     {errors.phoneNumber.message}
                   </p>
@@ -431,7 +442,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
                   className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                 />
                 {errors.dateOfBirth && (
-                  <p className='text-sm text-red-600 flex items-center gap-1'>
+                  <p className='text-sm text-red-600 flex items-center gap-1' data-testid='form-error'>
                     <X className='w-3 h-3' />
                     {errors.dateOfBirth.message}
                   </p>
@@ -454,7 +465,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
                   </SelectContent>
                 </Select>
                 {errors.gender && (
-                  <p className='text-sm text-red-600 flex items-center gap-1'>
+                  <p className='text-sm text-red-600 flex items-center gap-1' data-testid='form-error'>
                     <X className='w-3 h-3' />
                     {errors.gender.message}
                   </p>
@@ -462,11 +473,19 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
               </div>
             </div>
 
+            {formError && (
+              <p className='text-sm text-red-600 flex items-center gap-1' data-testid='form-error'>
+                <X className='w-3 h-3' />
+                {formError}
+              </p>
+            )}
+
             {/* Action Buttons */}
             <div className='flex gap-3 pt-6 border-t border-gray-200'>
               <Button
                 type='submit'
                 disabled={isSubmitting}
+                data-testid='save-profile-btn'
                 className='flex-1 bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'
               >
                 {isSubmitting ? (

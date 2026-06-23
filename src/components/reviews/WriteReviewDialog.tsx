@@ -110,7 +110,7 @@ export function WriteReviewDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto'>
+      <DialogContent className='max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto' data-testid='review-dialog'>
         <DialogHeader>
           <DialogTitle>{existingReview ? 'Chỉnh sửa đánh giá' : 'Viết đánh giá'}</DialogTitle>
           <DialogDescription>
@@ -142,7 +142,7 @@ export function WriteReviewDialog({
             <div>
               <RatingStars rating={rating} size='lg' clickable onRatingChange={setRating} />
             </div>
-            {errors.rating && <p className='text-sm text-red-500 mt-1'>{errors.rating}</p>}
+            {errors.rating && <p className='text-sm text-red-500 mt-1' data-testid='form-error'>{errors.rating}</p>}
           </div>
 
           {/* Title */}
@@ -157,7 +157,7 @@ export function WriteReviewDialog({
               placeholder='Tóm tắt đánh giá của bạn'
               maxLength={200}
             />
-            {errors.title && <p className='text-sm text-red-500 mt-1'>{errors.title}</p>}
+            {errors.title && <p className='text-sm text-red-500 mt-1' data-testid='form-error'>{errors.title}</p>}
           </div>
 
           {/* Comment */}
@@ -170,11 +170,12 @@ export function WriteReviewDialog({
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder='Chia sẻ chi tiết về trải nghiệm của bạn với sản phẩm này...'
+              data-testid='review-textarea'
               rows={5}
               maxLength={2000}
             />
             <div className='flex justify-between mt-1'>
-              <div>{errors.comment && <p className='text-sm text-red-500'>{errors.comment}</p>}</div>
+              <div>{errors.comment && <p className='text-sm text-red-500' data-testid='form-error'>{errors.comment}</p>}</div>
               <p className='text-xs text-gray-500'>{comment.length}/2000</p>
             </div>
           </div>
@@ -199,6 +200,7 @@ export function WriteReviewDialog({
             <Button
               type='submit'
               disabled={loading}
+              data-testid='submit-review-btn'
               className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'
             >
               {loading && <Loader2 className='w-4 h-4 mr-2 animate-spin' />}

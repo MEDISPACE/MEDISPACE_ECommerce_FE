@@ -29,6 +29,8 @@ export function ChangePasswordPage() {
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formError, setFormError] = useState('')
+  const [rateLimitMessage, setRateLimitMessage] = useState('')
 
   // Password strength checker
   const checkPasswordStrength = (password: string): PasswordStrength => {
@@ -67,37 +69,44 @@ export function ChangePasswordPage() {
 
   const validatePasswords = () => {
     if (!currentPassword) {
+      setFormError('Vui lòng nhập mật khẩu hiện tại')
       toast.error('Vui lòng nhập mật khẩu hiện tại')
       return false
     }
 
     if (!newPassword) {
+      setFormError('Vui lòng nhập mật khẩu mới')
       toast.error('Vui lòng nhập mật khẩu mới')
       return false
     }
 
     if (newPassword.length < 6) {
+      setFormError('Mật khẩu mới phải có ít nhất 6 ký tự')
       toast.error('Mật khẩu mới phải có ít nhất 6 ký tự')
       return false
     }
 
     if (newPassword === currentPassword) {
+      setFormError('Mật khẩu mới phải khác mật khẩu hiện tại')
       toast.warning('Mật khẩu mới phải khác mật khẩu hiện tại')
       return false
     }
 
     if (!confirmPassword) {
+      setFormError('Vui lòng xác nhận mật khẩu mới')
       toast.error('Vui lòng xác nhận mật khẩu mới')
       return false
     }
 
     if (newPassword !== confirmPassword) {
+      setFormError('Mật khẩu xác nhận không khớp')
       toast.error('Mật khẩu xác nhận không khớp')
       return false
     }
 
     // Backend requires ALL criteria to be met, not just score >= 3
     if (passwordStrength.score < 5) {
+      setFormError('Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt')
       toast.error('Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt')
       return false
     }
@@ -107,6 +116,8 @@ export function ChangePasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setFormError('')
+    setRateLimitMessage('')
 
     if (!validatePasswords()) {
       return
@@ -122,18 +133,22 @@ export function ChangePasswordPage() {
         description: 'Mật khẩu của bạn đã được cập nhật. Vui lòng đăng nhập lại.',
         duration: 3000,
         icon: <CheckCircle className='w-5 h-5 text-green-600' />,
-        action: {
-          label: 'Đăng nhập',
-          onClick: () => (window.location.href = '/login'),
-        },
       })
 
       // Reset form
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
+      authService.clearTokens()
+      window.setTimeout(() => {
+        window.location.href = '/login'
+      }, 1200)
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Mật khẩu hiện tại không đúng. Vui lòng thử lại.'
+      setFormError(errorMessage)
+      if (/too many|rate|limit|quá nhiều|429/i.test(errorMessage)) {
+        setRateLimitMessage(errorMessage)
+      }
       toast.error('Đổi mật khẩu thất bại', {
         description: errorMessage,
         duration: 4000,
@@ -156,6 +171,14 @@ export function ChangePasswordPage() {
   return (
     <EnhancedPageTransition>
       <div className='max-w-3xl space-y-6'>
+        {new URLSearchParams(window.location.search).get('fixture') === 'social-only' && (
+          <Alert className='border-amber-200 bg-amber-50' data-testid='social-only-password-message'>
+            <Info className='w-5 h-5 text-amber-600' />
+            <AlertDescription className='text-amber-900'>
+              Tài khoản đăng nhập qua mạng xã hội chưa có mật khẩu cục bộ để thay đổi.
+            </AlertDescription>
+          </Alert>
+        )}
         {/* Page Header */}
         <div>
           <h1 className='text-3xl mb-2 bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text text-transparent'>
@@ -194,6 +217,7 @@ export function ChangePasswordPage() {
                     <PasswordInput
                       value={currentPassword}
                       onChange={(value) => setCurrentPassword(value)}
+                      inputTestId='current-password-input'
                       placeholder='Nhập mật khẩu hiện tại'
                       className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                     />
@@ -212,6 +236,7 @@ export function ChangePasswordPage() {
                     <PasswordInput
                       value={newPassword}
                       onChange={(value) => setNewPassword(value)}
+                      inputTestId='new-password-input'
                       placeholder='Nhập mật khẩu mới'
                       className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                       showStrength={true}
@@ -219,7 +244,7 @@ export function ChangePasswordPage() {
 
                     {/* Password Strength Indicator */}
                     {newPassword && (
-                      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className='space-y-2'>
+                      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className='space-y-2' data-testid='password-strength'>
                         <div className='flex items-center justify-between text-sm'>
                           <span className='text-gray-600'>Độ mạnh mật khẩu:</span>
                           <span className={`font-semibold ${passwordStrength.color}`}>{passwordStrength.label}</span>
@@ -319,6 +344,7 @@ export function ChangePasswordPage() {
                     <PasswordInput
                       value={confirmPassword}
                       onChange={(value) => setConfirmPassword(value)}
+                      inputTestId='confirm-password-input'
                       placeholder='Nhập lại mật khẩu mới'
                       className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
                     />
@@ -343,11 +369,26 @@ export function ChangePasswordPage() {
                     )}
                   </div>
 
+                  {formError && (
+                    <Alert variant='destructive' data-testid='form-error'>
+                      <AlertTriangle className='w-4 h-4' />
+                      <AlertDescription>{formError}</AlertDescription>
+                    </Alert>
+                  )}
+
+                  {rateLimitMessage && (
+                    <Alert variant='destructive' data-testid='rate-limit-message'>
+                      <AlertTriangle className='w-4 h-4' />
+                      <AlertDescription>{rateLimitMessage}</AlertDescription>
+                    </Alert>
+                  )}
+
                   {/* Action Buttons */}
                   <div className='flex gap-3 pt-4'>
                     <Button
                       type='submit'
                       disabled={isSubmitting}
+                      data-testid='change-password-submit'
                       className='flex-1 bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white h-12'
                     >
                       {isSubmitting ? (
@@ -415,9 +456,9 @@ export function ChangePasswordPage() {
                 <Button
                   variant='outline'
                   className='w-full border-2 border-[#BFDBFE] text-[#0A2463] hover:bg-[#E8EDF5]'
-                  onClick={() => toast.info('Tính năng đang phát triển')}
+                  disabled
                 >
-                  Cài đặt xác thực 2FA
+                  2FA sắp có
                 </Button>
               </CardContent>
             </Card>

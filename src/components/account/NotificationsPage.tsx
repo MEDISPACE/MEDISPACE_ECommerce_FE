@@ -96,6 +96,11 @@ export function NotificationsPage() {
     markAllAsRead()
   }
 
+  const handleDeleteNotification = (notificationId: string) => {
+    deleteNotification(notificationId)
+    toast.success('Đã xóa thông báo')
+  }
+
   const handleNotificationAction = (actionUrl: string) => {
     window.location.href = actionUrl
   }
@@ -115,7 +120,7 @@ export function NotificationsPage() {
   }
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-6' data-testid='notifications-page'>
       {/* Header */}
       <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-6'>
         <div className='flex flex-col md:flex-row md:items-center justify-between gap-4'>
@@ -124,7 +129,7 @@ export function NotificationsPage() {
               <h1 className='bg-gradient-to-r from-[#0A2463] via-[#1E40AF] to-[#3B82F6] bg-clip-text text-transparent'>
                 Thông báo
               </h1>
-              {unreadCount > 0 && <Badge className='bg-red-500 text-white'>{unreadCount} chưa đọc</Badge>}
+              {unreadCount > 0 && <Badge className='bg-red-500 text-white' data-testid='unread-badge'>{unreadCount} chưa đọc</Badge>}
             </div>
             <p className='text-gray-600 mt-1'>Theo dõi các thông báo quan trọng</p>
           </div>
@@ -134,6 +139,7 @@ export function NotificationsPage() {
               <Button
                 variant='outline'
                 onClick={handleMarkAllAsRead}
+                data-testid='mark-all-read-btn'
                 className='text-[#1E40AF] border-[#BFDBFE] hover:bg-[#F0F6FF]'
               >
                 <Check className='w-4 h-4 mr-2' />
@@ -230,6 +236,7 @@ export function NotificationsPage() {
               </TabsTrigger>
               <TabsTrigger
                 value='settings'
+                data-testid='notifications-settings-tab'
                 className='flex-shrink-0 text-xs md:text-sm px-3 md:px-4 py-2.5 bg-[#E8EDF5] text-[#1E40AF] border-0 data-[state=active]:!bg-[#0A2463] data-[state=active]:!text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md hover:bg-[#BFDBFE]'
               >
                 <span className='whitespace-nowrap flex items-center gap-1'>
@@ -243,9 +250,9 @@ export function NotificationsPage() {
           <Separator />
 
           {/* Notification Lists */}
-          <TabsContent value='all' className='p-6 space-y-4'>
+          <TabsContent value='all' className='p-6 space-y-4' data-testid='notification-list'>
             {filteredNotifications.length === 0 ? (
-              <div className='text-center py-12'>
+              <div className='text-center py-12' data-testid='notifications-empty-state'>
                 <Bell className='w-16 h-16 mx-auto text-gray-300 mb-4' />
                 <h3 className='text-lg font-medium text-gray-900 mb-2'>Chưa có thông báo</h3>
                 <p className='text-gray-500'>Các thông báo mới sẽ xuất hiện tại đây</p>
@@ -257,6 +264,7 @@ export function NotificationsPage() {
                   notification={notification}
                   onMarkAsRead={handleMarkAsRead}
                   onAction={handleNotificationAction}
+                  onDelete={handleDeleteNotification}
                 />
               ))
             )}
@@ -276,6 +284,7 @@ export function NotificationsPage() {
                   notification={notification}
                   onMarkAsRead={handleMarkAsRead}
                   onAction={handleNotificationAction}
+                  onDelete={handleDeleteNotification}
                 />
               ))
             )}
@@ -288,6 +297,7 @@ export function NotificationsPage() {
                 notification={notification}
                 onMarkAsRead={handleMarkAsRead}
                 onAction={handleNotificationAction}
+                onDelete={handleDeleteNotification}
               />
             ))}
           </TabsContent>
@@ -307,6 +317,7 @@ export function NotificationsPage() {
                   notification={notification}
                   onMarkAsRead={handleMarkAsRead}
                   onAction={handleNotificationAction}
+                  onDelete={handleDeleteNotification}
                 />
               ))
             )}
@@ -319,6 +330,7 @@ export function NotificationsPage() {
                 notification={notification}
                 onMarkAsRead={handleMarkAsRead}
                 onAction={handleNotificationAction}
+                onDelete={handleDeleteNotification}
               />
             ))}
           </TabsContent>
@@ -330,6 +342,7 @@ export function NotificationsPage() {
                 notification={notification}
                 onMarkAsRead={handleMarkAsRead}
                 onAction={handleNotificationAction}
+                onDelete={handleDeleteNotification}
               />
             ))}
           </TabsContent>
@@ -359,6 +372,8 @@ export function NotificationsPage() {
                         </div>
                         <Switch
                           id='email'
+                          data-testid='notification-email-toggle'
+                          data-saved='true'
                           checked={preferences.channels.email}
                           onCheckedChange={(checked) => handleChannelChange('email', checked)}
                         />
@@ -367,24 +382,24 @@ export function NotificationsPage() {
                       <div className='flex items-center justify-between'>
                         <div>
                           <Label htmlFor='sms'>SMS</Label>
-                          <p className='text-sm text-gray-500'>Nhận thông báo qua tin nhắn</p>
+                          <p className='text-sm text-gray-500'>Kênh SMS sẽ được bật khi có nhà cung cấp gửi tin</p>
                         </div>
                         <Switch
                           id='sms'
-                          checked={preferences.channels.sms}
-                          onCheckedChange={(checked) => handleChannelChange('sms', checked)}
+                          checked={false}
+                          disabled
                         />
                       </div>
 
                       <div className='flex items-center justify-between'>
                         <div>
                           <Label htmlFor='push'>Push Notification</Label>
-                          <p className='text-sm text-gray-500'>Thông báo đẩy trên trình duyệt</p>
+                          <p className='text-sm text-gray-500'>Thông báo đẩy trình duyệt sẽ được bật sau khi cấu hình web push</p>
                         </div>
                         <Switch
                           id='push'
-                          checked={preferences.channels.push}
-                          onCheckedChange={(checked) => handleChannelChange('push', checked)}
+                          checked={false}
+                          disabled
                         />
                       </div>
                     </div>
@@ -466,12 +481,12 @@ export function NotificationsPage() {
                     <div className='flex items-center justify-between'>
                       <div>
                         <Label htmlFor='quietHours'>Tắt thông báo từ 21:00 - 07:00</Label>
-                        <p className='text-sm text-gray-500'>Không nhận thông báo trong giờ nghỉ ngơi</p>
+                        <p className='text-sm text-gray-500'>Sẽ được bật khi backend hỗ trợ khung giờ yên tĩnh riêng</p>
                       </div>
                       <Switch
                         id='quietHours'
-                        checked={!preferences.channels.push}
-                        onCheckedChange={(checked) => handleChannelChange('push', !checked)}
+                        checked={false}
+                        disabled
                       />
                     </div>
                   </div>
@@ -525,11 +540,13 @@ export function NotificationsPage() {
                 <PaginationItemUI>
                   <PaginationNext
                     onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
+                    data-testid='notifications-next-page'
                     className={page === pagination.totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
                   />
                 </PaginationItemUI>
               </PaginationContent>
             </Pagination>
+            <span className='sr-only' data-testid='notifications-page-current'>{page}</span>
           </div>
         )}
       </div>

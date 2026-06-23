@@ -38,6 +38,10 @@ export function AddressBookPage() {
   )
 
   const handleAddAddress = () => {
+    if (addresses.length >= 5) {
+      toast.error('Bạn đã đạt giới hạn tối đa 5 địa chỉ')
+      return
+    }
     setEditingAddress(null)
     setIsAddModalOpen(true)
   }
@@ -79,6 +83,8 @@ export function AddressBookPage() {
 
           <Button
             onClick={handleAddAddress}
+            disabled={addresses.length >= 5}
+            data-testid='add-address-btn'
             className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white shadow-lg'
           >
             <Plus className='w-4 h-4 mr-2' />
@@ -87,7 +93,7 @@ export function AddressBookPage() {
         </div>
 
         {addresses.length >= 5 && (
-          <div className='mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg'>
+          <div className='mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg' data-testid='address-limit-message'>
             <p className='text-sm text-yellow-800'>
               <MapPin className='w-4 h-4 inline mr-1' />
               Bạn đã đạt giới hạn tối đa 5 địa chỉ. Vui lòng xóa địa chỉ cũ để thêm địa chỉ mới.
@@ -111,7 +117,7 @@ export function AddressBookPage() {
       </div>
 
       {/* Address List */}
-      <div className='space-y-4'>
+      <div className='space-y-4' data-testid='address-list'>
         {filteredAddresses.length === 0 ? (
           <Card className='bg-white/80 backdrop-blur-lg shadow-lg border border-[#E8EDF5]'>
             <CardContent className='p-12 text-center'>
@@ -125,6 +131,8 @@ export function AddressBookPage() {
               {!searchQuery && (
                 <Button
                   onClick={handleAddAddress}
+                  disabled={addresses.length >= 5}
+                  data-testid='add-address-btn'
                   className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'
                 >
                   <Plus className='w-4 h-4 mr-2' />

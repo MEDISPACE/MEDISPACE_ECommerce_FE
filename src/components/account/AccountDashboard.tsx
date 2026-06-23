@@ -1,5 +1,5 @@
 import { Link } from 'react-router'
-import { Package, FileText, Search, Gift, Star, TrendingUp, Calendar, RefreshCcw, Sparkles } from 'lucide-react'
+import { Bell, Package, FileText, Search, Gift, Star, TrendingUp, RefreshCcw, Sparkles } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import { Button } from '../ui/button'
@@ -9,6 +9,7 @@ import { OrderCard } from '../order'
 import { useAuth } from '../../contexts/AuthContext'
 import { notificationService } from '../../services/notificationService'
 import { orderService } from '../../services/orderService'
+import { apiClient } from '../../services/apiClient'
 import { RecommendationCarousel } from '../products/RecommendationCarousel'
 import { useForYou, useReplenishment } from '../../hooks/product/useRecommendations'
 import type { RecommendedProduct } from '../../services/recommendationService'
@@ -29,11 +30,14 @@ export function AccountDashboard() {
   const { products: replenishProducts, loading: replenishLoading, algorithm: replenishAlgorithm } = useReplenishment(4, isAuth)
 
   const [orders, setOrders] = useState<Order[]>([])
-  // const [loading, setLoading] = useState(true) // TODO: Add loading state if needed
+  const [ordersLoading, setOrdersLoading] = useState(true)
+  const [ordersError, setOrdersError] = useState('')
+  const [loyaltyPoints, setLoyaltyPoints] = useState<number | null>(null)
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
+        setOrdersError('')
         const fetchedOrders = await orderService.getOrders()
         // Transform to account Order type
         const transformedOrders: Order[] = fetchedOrders.map((order) => ({
@@ -99,17 +103,34 @@ export function AccountDashboard() {
           updatedAt: order.updatedAt,
           deliveryMethod: order.shippingMethod,
           notes: order.notes,
-          timeline: [], // TODO: Add timeline if available
+          timeline: [],
         }))
         setOrders(transformedOrders)
       } catch {
-        // Failed to fetch orders
+        setOrdersError('Không thể tải đơn hàng gần đây')
       } finally {
-        // setLoading(false) // TODO: Add loading state if needed
+        setOrdersLoading(false)
       }
     }
 
     fetchOrders()
+  }, [])
+
+  useEffect(() => {
+    let mounted = true
+    const loadLoyalty = async () => {
+      try {
+        const res = await apiClient.get<{ result: { pointsBalance: number } }>('/loyalty/account')
+        if (mounted) setLoyaltyPoints(res.data.result.pointsBalance)
+      } catch {
+        if (mounted) setLoyaltyPoints(null)
+      }
+    }
+
+    loadLoyalty()
+    return () => {
+      mounted = false
+    }
   }, [])
 
   const getOrderCount = () => {
@@ -140,10 +161,10 @@ export function AccountDashboard() {
   const unreadNotifications = notifications.filter((n) => !n.isRead)
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-6' data-testid='account-page'>
       {/* Welcome Header */}
       <div className='text-center md:text-left'>
-        <h1 className='text-2xl font-bold text-blue-800 mb-2'>
+        <h1 className='text-2xl font-bold text-blue-800 mb-2' data-testid='account-greeting'>
           Chào mừng trở lại, {accountUser?.firstName || 'Người'} {accountUser?.lastName || 'dùng'}! 👋
         </h1>
         <p className='text-gray-600'>Quản lý đơn hàng, đơn thuốc và thông tin cá nhân của bạn</p>
@@ -156,7 +177,7 @@ export function AccountDashboard() {
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-sm text-gray-600'>Đơn hàng</p>
-                <p className='text-2xl font-bold text-[#1E40AF]'>{getOrderCount()}</p>
+                <p className='text-2xl font-bold text-[#1E40AF]' data-testid='overview-order-count'>{getOrderCount()}</p>
               </div>
               <div className='w-12 h-12 bg-[#E8EDF5] rounded-lg flex items-center justify-center'>
                 <Package className='w-6 h-6 text-[#1E40AF]' />
@@ -170,8 +191,8 @@ export function AccountDashboard() {
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-sm text-gray-600'>Điểm thưởng</p>
-                <p className='text-2xl font-bold text-orange-600'>
-                  {(accountUser?.loyaltyPoints || 0).toLocaleString()}
+                <p className='text-2xl font-bold text-orange-600' data-testid='overview-points-balance'>
+                  {(loyaltyPoints ?? 0).toLocaleString()}
                 </p>
               </div>
               <div className='w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center'>
@@ -186,7 +207,9 @@ export function AccountDashboard() {
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-sm text-gray-600'>Đã tiết kiệm</p>
-                <p className='text-2xl font-bold text-green-600'>{formatPrice(accountUser?.totalSaved || 0)}</p>
+                <p className='text-2xl font-bold text-green-600' data-testid='overview-wishlist-count'>
+                  {formatPrice(accountUser?.totalSaved || 0)}
+                </p>
               </div>
               <div className='w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center'>
                 <TrendingUp className='w-6 h-6 text-green-600' />
@@ -203,7 +226,7 @@ export function AccountDashboard() {
         </CardHeader>
         <CardContent>
           <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-            <Link to='/account/orders'>
+            <Link to='/account/orders' data-testid='quick-action-orders'>
               <Button variant='outline' className='w-full h-20 flex-col gap-2 border-[#BFDBFE] hover:bg-[#F0F6FF]'>
                 <Package className='w-6 h-6 text-[#1E40AF]' />
                 <span className='text-sm'>Đơn hàng</span>
@@ -211,7 +234,7 @@ export function AccountDashboard() {
               </Button>
             </Link>
 
-            <Link to='/upload-prescription'>
+            <Link to='/account/prescriptions/upload' data-testid='quick-action-prescriptions'>
               <Button variant='outline' className='w-full h-20 flex-col gap-2 border-[#BFDBFE] hover:bg-[#F0F6FF]'>
                 <FileText className='w-6 h-6 text-[#1E40AF]' />
                 <span className='text-sm'>Đơn thuốc</span>
@@ -219,7 +242,7 @@ export function AccountDashboard() {
               </Button>
             </Link>
 
-            <Link to='/products'>
+            <Link to='/products' data-testid='quick-action-products'>
               <Button variant='outline' className='w-full h-20 flex-col gap-2 border-[#BFDBFE] hover:bg-[#F0F6FF]'>
                 <Search className='w-6 h-6 text-[#1E40AF]' />
                 <span className='text-sm'>Tìm kiếm</span>
@@ -227,7 +250,7 @@ export function AccountDashboard() {
               </Button>
             </Link>
 
-            <Link to='/account/loyalty'>
+            <Link to='/account/rewards' data-testid='quick-action-rewards'>
               <Button variant='outline' className='w-full h-20 flex-col gap-2 border-[#BFDBFE] hover:bg-[#F0F6FF]'>
                 <Gift className='w-6 h-6 text-[#1E40AF]' />
                 <span className='text-sm'>Khuyến mãi</span>
@@ -252,8 +275,18 @@ export function AccountDashboard() {
               </Link>
             </div>
           </CardHeader>
-          <CardContent className='space-y-4'>
-            {recentOrders.length > 0 ? (
+          <CardContent className='space-y-4' data-testid='recent-orders'>
+            {ordersLoading ? (
+              <div className='space-y-3'>
+                <div className='h-20 animate-pulse rounded-lg bg-gray-100' />
+                <div className='h-20 animate-pulse rounded-lg bg-gray-100' />
+              </div>
+            ) : ordersError ? (
+              <div className='text-center py-8'>
+                <Package className='w-12 h-12 text-gray-300 mx-auto mb-3' />
+                <p className='text-gray-500'>{ordersError}</p>
+              </div>
+            ) : recentOrders.length > 0 ? (
               recentOrders.map((order) => <OrderCard key={order.id} order={order} variant='compact' />)
             ) : (
               <div className='text-center py-8'>
@@ -285,39 +318,8 @@ export function AccountDashboard() {
             </div>
           </CardHeader>
           <CardContent className='space-y-4'>
-            {/* Health Reminders */}
-            <div className='space-y-3'>
-              <div className='bg-[#F0F6FF] border border-[#BFDBFE] rounded-lg p-4'>
-                <div className='flex items-start gap-3'>
-                  <div className='w-8 h-8 bg-[#E8EDF5] rounded-full flex items-center justify-center'>💊</div>
-                  <div className='flex-1'>
-                    <h4 className='font-medium text-blue-800'>Nhắc nhở uống thuốc</h4>
-                    <p className='text-sm text-[#1E40AF]'>Amoxicillin - Uống 2 viên sau bữa ăn sáng</p>
-                    <p className='text-xs text-blue-500 mt-1'>
-                      <Calendar className='w-3 h-3 inline mr-1' />
-                      Hôm nay, 8:00 AM
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className='bg-amber-50 border border-amber-200 rounded-lg p-4'>
-                <div className='flex items-start gap-3'>
-                  <div className='w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center'>⚠️</div>
-                  <div className='flex-1'>
-                    <h4 className='font-medium text-amber-800'>Đơn thuốc sắp hết</h4>
-                    <p className='text-sm text-amber-700'>Lisinopril còn 3 ngày. Bạn có muốn đặt mua thêm?</p>
-                    <Button size='sm' className='mt-2' variant='outline'>
-                      Đặt mua ngay
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Recent Notifications */}
-            <div className='space-y-2 pt-2 border-t border-gray-100'>
-              {notifications.slice(0, 2).map((notification) => (
+            <div className='space-y-2'>
+              {notifications.slice(0, 4).map((notification) => (
                 <div
                   key={notification.id}
                   className={`p-3 rounded-lg border ${
@@ -329,6 +331,7 @@ export function AccountDashboard() {
                       {notification.type === 'order' && '📦'}
                       {notification.type === 'prescription' && '📋'}
                       {notification.type === 'promotion' && '🎁'}
+                      {notification.type === 'reminder' && '🔔'}
                     </div>
                     <div className='flex-1'>
                       <h5 className='font-medium text-sm'>{notification.title}</h5>
@@ -338,6 +341,12 @@ export function AccountDashboard() {
                   </div>
                 </div>
               ))}
+              {notifications.length === 0 && (
+                <div className='text-center py-8'>
+                  <Bell className='w-12 h-12 text-gray-300 mx-auto mb-3' />
+                  <p className='text-gray-500'>Chưa có thông báo hoặc nhắc nhở mới</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
