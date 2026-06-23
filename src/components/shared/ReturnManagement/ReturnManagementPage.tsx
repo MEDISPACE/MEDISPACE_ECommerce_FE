@@ -751,7 +751,7 @@ export function ReturnManagementPage({ role = 'admin' }: ReturnManagementPagePro
               Hủy
             </Button>
             <Button
-              className='bg-[#0A2463] hover:bg-[#071A49]'
+              className='bg-[#0A2463] text-white hover:bg-[#071A49] hover:text-white'
               onClick={() => {
                 if (selectedRequest) {
                   receiveMutation.mutate({
@@ -808,7 +808,7 @@ export function ReturnManagementPage({ role = 'admin' }: ReturnManagementPagePro
               Hủy
             </Button>
             <Button
-              className='bg-[#1E40AF] hover:bg-[#0A2463]'
+              className='bg-[#1E40AF] text-white hover:bg-[#0A2463] hover:text-white'
               onClick={() => {
                 if (selectedRequest) {
                   refundMutation.mutate({

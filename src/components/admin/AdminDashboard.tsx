@@ -167,7 +167,7 @@ export function AdminDashboard() {
                 <span className='block text-sm mt-2'>Chi tiết: {statsError.message}</span>
               )}
             </p>
-            <Button onClick={() => refetchStats()} className='bg-red-600 hover:bg-red-700'>
+            <Button onClick={() => refetchStats()} className='bg-red-600 text-white hover:bg-red-700 hover:text-white'>
               Thử lại
             </Button>
           </div>

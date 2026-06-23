@@ -171,7 +171,7 @@ export function PatientHistoryPage() {
               className='pl-10 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
             />
           </div>
-          <Button onClick={handleSearch} disabled={searching} className='bg-[#0A2463] hover:bg-[#071A49]'>
+          <Button onClick={handleSearch} disabled={searching} className='bg-[#0A2463] text-white hover:bg-[#071A49] hover:text-white'>
             {searching ? (
               <>
                 <Loader2 className='w-4 h-4 mr-2 animate-spin' />
