@@ -40,8 +40,9 @@ export function SettingsForm({ onSuccess }: SettingsFormProps) {
       await authService.resendVerifyEmail()
       toast.success('Đã gửi lại email xác thực')
       onSuccess?.()
-    } catch (error: any) {
-      toast.error(error?.message || 'Không thể gửi lại email xác thực')
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Không thể gửi lại email xác thực'
+      toast.error(errorMessage)
     } finally {
       setIsResending(false)
     }
