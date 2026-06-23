@@ -5,7 +5,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { ChevronLeft, ChevronRight, Sparkles, TrendingUp, ShoppingBag, ArrowRight, Info } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Sparkles, TrendingUp, ShoppingBag, ArrowRight } from 'lucide-react'
 import { Link } from 'react-router'
 import { Button } from '../ui/button'
 import { ProductCard } from './ProductCard'
@@ -380,12 +380,6 @@ export function RecommendationCarousel({
                                 onToggleWishlist={() => toggleWishlist(rawProduct._id)}
                                 isInWishlist={isInWishlist(rawProduct._id)}
                               />
-                              {rawProduct.recommendation?.reason && (
-                                <div className='mt-2 flex items-start gap-1.5 px-1 text-xs text-slate-500' title={rawProduct.recommendation.evidence.join(', ')}>
-                                  <Info className='mt-0.5 h-3.5 w-3.5 flex-shrink-0' />
-                                  <span>{rawProduct.recommendation.reason}</span>
-                                </div>
-                              )}
                             </motion.div>
                           )
                         })}
