@@ -1,7 +1,6 @@
 import { Link } from 'react-router'
 import { Home, Shield, Clock, CheckCircle2, Heart, Sparkles, Star, Award } from 'lucide-react'
 import { Button } from '../ui/button'
-import { motion } from 'framer-motion'
 import logoImage from '../../assets/logo-light.svg'
 
 interface AuthLayoutProps {
@@ -28,72 +27,35 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         {/* Enhanced background effects */}
         <div className='absolute inset-0'>
           {/* Animated gradient mesh */}
-          <div className='absolute inset-0 bg-gradient-to-br from-[#0A2463]/30 via-transparent to-[#BFDBFE]/30 animate-gradient' />
+          <div className='absolute inset-0 bg-gradient-to-br from-[#0A2463]/30 via-transparent to-[#BFDBFE]/30' />
 
           {/* Multiple gradient orbs for depth */}
-          <div className='absolute top-20 left-20 w-96 h-96 bg-white/15 rounded-full blur-3xl animate-pulse-soft' />
+          <div className='absolute top-20 left-20 w-96 h-96 bg-white/10 rounded-full blur-2xl' />
           <div
-            className='absolute bottom-20 right-20 w-80 h-80 bg-[#BFDBFE]/30 rounded-full blur-3xl animate-pulse-soft'
-            style={{ animationDelay: '1.5s' }}
+            className='absolute bottom-20 right-20 w-80 h-80 bg-[#BFDBFE]/20 rounded-full blur-2xl'
           />
           <div
-            className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#BFDBFE]/20 rounded-full blur-3xl animate-pulse-soft'
-            style={{ animationDelay: '3s' }}
+            className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#BFDBFE]/10 rounded-full blur-2xl'
           />
 
           {/* Floating decorative elements */}
-          <motion.div
-            className='absolute top-32 right-32'
-            animate={{
-              y: [0, -20, 0],
-              rotate: [0, 5, 0],
-            }}
-            transition={{
-              duration: 4,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            }}
-          >
+          <div className='absolute top-32 right-32'>
             <div className='w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/20'>
               <Sparkles className='w-8 h-8 text-white/60' />
             </div>
-          </motion.div>
+          </div>
 
-          <motion.div
-            className='absolute bottom-40 left-24'
-            animate={{
-              y: [0, 15, 0],
-              rotate: [0, -5, 0],
-            }}
-            transition={{
-              duration: 5,
-              repeat: Infinity,
-              ease: 'easeInOut',
-              delay: 1,
-            }}
-          >
+          <div className='absolute bottom-40 left-24'>
             <div className='w-20 h-20 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/20'>
               <Star className='w-10 h-10 text-yellow-200/70' />
             </div>
-          </motion.div>
+          </div>
 
-          <motion.div
-            className='absolute top-1/2 right-20'
-            animate={{
-              y: [0, -25, 0],
-              x: [0, 10, 0],
-            }}
-            transition={{
-              duration: 6,
-              repeat: Infinity,
-              ease: 'easeInOut',
-              delay: 2,
-            }}
-          >
+          <div className='absolute top-1/2 right-20'>
             <div className='w-14 h-14 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/20'>
               <Award className='w-7 h-7 text-emerald-200/70' />
             </div>
-          </motion.div>
+          </div>
 
           {/* Medical pattern */}
           <div className='absolute inset-0'>
@@ -108,7 +70,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
 
             {/* Animated grid dots */}
             <div
-              className='absolute inset-0 opacity-[0.03] animate-float-pattern'
+              className='absolute inset-0 opacity-[0.03]'
               style={{
                 backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='20' cy='20' r='1.5' fill='%23ffffff'/%3E%3C/svg%3E")`,
                 backgroundSize: '40px 40px',
@@ -118,70 +80,33 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         </div>
 
         {/* Content */}
-        <motion.div
-          className='relative z-10 flex flex-col justify-center px-16 py-16 w-full max-w-2xl mx-auto'
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6 }}
-        >
+        <div className='relative z-10 flex flex-col justify-center px-16 py-16 w-full max-w-2xl mx-auto'>
           {/* Main Heading */}
-          <motion.div
-            className='mb-12'
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
+          <div className='mb-12'>
             <h1 className='text-white text-5xl mb-6 leading-tight'>
-              <motion.span
+              <span
                 className='block text-7xl font-black mb-3 tracking-widest bg-gradient-to-r from-white via-blue-100 to-white bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(255,255,255,0.5)]'
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8, delay: 0.3 }}
                 style={{
                   textShadow: '0 0 40px rgba(255, 255, 255, 0.3), 0 0 80px rgba(147, 197, 253, 0.2)',
                 }}
               >
                 MEDISPACE
-              </motion.span>
-              <motion.span
-                className='text-4xl block mb-3'
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.6, delay: 0.5 }}
-              >
+              </span>
+              <span className='text-4xl block mb-3'>
                 Sức khỏe trong tầm tay
-              </motion.span>
+              </span>
             </h1>
-            <motion.p
-              className='text-blue-50/90 text-lg leading-relaxed'
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.6 }}
-            >
+            <p className='text-blue-50/90 text-lg leading-relaxed'>
               Nền tảng mua thuốc trực tuyến hiện đại, kết nối bạn với
               <br />
               dược sĩ chuyên nghiệp 24/7 và các sản phẩm chăm sóc
               <br />
               sức khỏe chính hãng.
-            </motion.p>
-          </motion.div>
+            </p>
+          </div>
 
           {/* Features Grid */}
-          <motion.div
-            className='grid grid-cols-2 gap-5'
-            initial='hidden'
-            animate='visible'
-            variants={{
-              hidden: { opacity: 0 },
-              visible: {
-                opacity: 1,
-                transition: {
-                  staggerChildren: 0.15,
-                  delayChildren: 0.7,
-                },
-              },
-            }}
-          >
+          <div className='grid grid-cols-2 gap-5'>
             {[
               {
                 icon: Shield,
@@ -230,27 +155,9 @@ export function AuthLayout({ children }: AuthLayoutProps) {
             ].map((feature, index) => {
               const Icon = feature.icon
               return (
-                <motion.div
+                <div
                   key={index}
-                  variants={{
-                    hidden: { opacity: 0, y: 20, scale: 0.9 },
-                    visible: {
-                      opacity: 1,
-                      y: 0,
-                      scale: 1,
-                      transition: {
-                        type: 'spring',
-                        stiffness: 100,
-                        damping: 15,
-                      },
-                    },
-                  }}
-                  whileHover={{
-                    scale: 1.05,
-                    y: -5,
-                    transition: { duration: 0.2 },
-                  }}
-                  className='group relative'
+                  className='group relative transition-transform duration-200 hover:-translate-y-1 hover:scale-[1.02]'
                 >
                   {/* Gradient background overlay */}
                   <div
@@ -274,16 +181,11 @@ export function AuthLayout({ children }: AuthLayoutProps) {
                       <div className='text-white text-xs'>{feature.stat}</div>
                     </div>
 
-                    <motion.div
+                    <div
                       className={`w-16 h-16 rounded-2xl ${feature.iconBg} backdrop-blur-sm flex items-center justify-center mb-4 shadow-xl border border-white/30`}
-                      whileHover={{
-                        rotate: [0, -10, 10, -10, 0],
-                        scale: 1.15,
-                      }}
-                      transition={{ duration: 0.5 }}
                     >
                       <Icon className='w-8 h-8 text-white drop-shadow-2xl' />
-                    </motion.div>
+                    </div>
 
                     <h3 className='text-white mb-2 text-lg group-hover:text-blue-50 transition-colors duration-300'>
                       {feature.title}
@@ -292,11 +194,11 @@ export function AuthLayout({ children }: AuthLayoutProps) {
                       {feature.description}
                     </p>
                   </div>
-                </motion.div>
+                </div>
               )
             })}
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       </div>
 
       {/* Right Side - Form (45%) */}
