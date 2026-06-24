@@ -95,7 +95,6 @@ export function UnifiedMegaMenu({ activeCategory, isVisible, onClose }: UnifiedM
       }
 
       const primaryCategory = selectedSubCategory || activeCategory
-      const fallbackCategory = selectedSubCategory && selectedSubCategory._id !== activeCategory._id ? activeCategory : null
 
       setProductsLoading(true)
       try {
@@ -106,17 +105,6 @@ export function UnifiedMegaMenu({ activeCategory, isVisible, onClose }: UnifiedM
           setProductSource('trending')
           setProductCategoryName(primaryCategory.name)
           return
-        }
-
-        if (fallbackCategory) {
-          const trendingFallback = await recommendationService.getTrending(4, fallbackCategory._id)
-          if (productRequestIdRef.current !== requestId) return
-          if (trendingFallback.products.length > 0) {
-            setProducts(trendingFallback.products.map((product) => toMegaMenuProductFromRecommendation(product, trendingFallback.algorithm)))
-            setProductSource('trending')
-            setProductCategoryName(fallbackCategory.name)
-            return
-          }
         }
 
         const newestPrimary = await productService.getProducts({
@@ -132,23 +120,6 @@ export function UnifiedMegaMenu({ activeCategory, isVisible, onClose }: UnifiedM
           setProductSource('newest')
           setProductCategoryName(primaryCategory.name)
           return
-        }
-
-        if (fallbackCategory) {
-          const newestFallback = await productService.getProducts({
-            categoryId: fallbackCategory._id,
-            limit: 4,
-            sortBy: 'createdAt',
-            sortOrder: 'desc',
-            status: 'active',
-          })
-          if (productRequestIdRef.current !== requestId) return
-          if (newestFallback.length > 0) {
-            setProducts(newestFallback.map(toMegaMenuProductFromCatalog))
-            setProductSource('newest')
-            setProductCategoryName(fallbackCategory.name)
-            return
-          }
         }
 
         setProducts([])
