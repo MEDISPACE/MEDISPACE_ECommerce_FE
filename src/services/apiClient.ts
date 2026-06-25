@@ -1,11 +1,24 @@
 import axios from 'axios'
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError, InternalAxiosRequestConfig } from 'axios'
+import { toast } from 'sonner'
 import { API_ENDPOINTS } from '../constants'
 
 // API base URL - Vite environment variables
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 const AUTH_TOKEN_REFRESHED_EVENT = 'medispace:auth-token-refreshed'
 const AUTH_SESSION_EXPIRED_EVENT = 'medispace:auth-session-expired'
+const USER_NOT_VERIFIED_MESSAGE = 'User not verified. Please verify your email first'
+const USER_NOT_VERIFIED_TOAST_ID = 'medispace:user-not-verified'
+
+const isUserNotVerifiedError = (error: AxiosError) => {
+  const message = (error.response?.data as { message?: string } | undefined)?.message
+  return error.response?.status === 403 && message === USER_NOT_VERIFIED_MESSAGE
+}
+
+const navigateToAccountSettings = () => {
+  window.history.pushState(null, '', '/account/settings')
+  window.dispatchEvent(new PopStateEvent('popstate'))
+}
 
 class ApiClient {
   private client: AxiosInstance
@@ -51,6 +64,18 @@ class ApiClient {
 
         // Only log errors that are NOT 401 or are 401 but already retried
         if (error.response?.status !== 401 || originalRequest._retry) {
+        }
+
+        if (isUserNotVerifiedError(error)) {
+          toast.warning('Cần xác thực email', {
+            id: USER_NOT_VERIFIED_TOAST_ID,
+            description: 'Tài khoản của bạn chưa xác thực email. Vui lòng kiểm tra hộp thư hoặc gửi lại email xác thực.',
+            duration: 7000,
+            action: {
+              label: 'Xác thực ngay',
+              onClick: navigateToAccountSettings,
+            },
+          })
         }
 
         // Handle 401 errors with token refresh

@@ -79,6 +79,8 @@ const RegisterPage = () => {
       newErrors.password = 'Vui lòng nhập mật khẩu'
     } else if (formData.password.length < 6) {
       newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự'
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])/.test(formData.password)) {
+      newErrors.password = 'Mật khẩu phải có chữ hoa, chữ thường, số và ký tự đặc biệt'
     }
 
     if (!formData.confirmPassword) {

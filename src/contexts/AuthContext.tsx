@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 import { authService } from '../services/authService'
 import { logger } from '../utils/logger'
 import type { User } from '../types/user'
-import type { RegisterRequest, RegisterResponse } from '../types/api'
+import type { ApiErrorResponse, RegisterRequest, RegisterResponse } from '../types/api'
 
 type ReactNode = React.ReactNode
 const AUTH_SESSION_EXPIRED_EVENT = 'medispace:auth-session-expired'
@@ -18,6 +18,12 @@ interface AuthContextType {
   setUser: (user: User | null) => void
   setIsAuthenticated: (isAuthenticated: boolean) => void
   updateUser: (user: User) => void
+}
+
+const getApiErrorMessage = (error: unknown, fallback: string) => {
+  const apiError = error as Partial<ApiErrorResponse>
+  const firstFieldError = apiError.errors ? Object.values(apiError.errors)[0]?.msg : undefined
+  return firstFieldError || apiError.message || fallback
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -162,9 +168,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return true
       }
 
-      return false
+      throw new Error(response.message || 'Đăng ký thất bại. Vui lòng thử lại.')
     } catch (error) {
-      return false
+      throw new Error(getApiErrorMessage(error, 'Đăng ký thất bại. Vui lòng thử lại.'))
     } finally {
       setLoading(false)
     }

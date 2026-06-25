@@ -25,7 +25,6 @@ import {
   Building2,
   RotateCcw,
   Gift,
-  Zap,
   Sparkles,
   Archive,
   Video,
@@ -157,11 +156,6 @@ const navigationItems: NavItem[] = [
     label: 'Coupon & Khuyến mãi',
     href: '/admin/coupons',
     icon: Gift,
-  },
-  {
-    label: 'Chiến dịch giảm giá',
-    href: '/admin/campaigns',
-    icon: Zap,
   },
   {
     label: 'Loyalty & Điểm thưởng',
