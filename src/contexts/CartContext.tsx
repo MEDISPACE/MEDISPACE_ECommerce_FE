@@ -6,6 +6,11 @@ import { cartService } from '../services/cartService'
 import type { Cart, AddToCartRequest, UpdateCartItemRequest } from '../types/cart'
 import type { Product } from '../types/product'
 
+const navigateToCart = () => {
+  window.history.pushState(null, '', '/cart')
+  window.dispatchEvent(new PopStateEvent('popstate'))
+}
+
 // Cart state interface - combines backend data with UI state
 interface CartState {
   cart: Cart | null
@@ -168,14 +173,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // Load cart data from API on mount
   useEffect(() => {
     const loadCart = async () => {
-      // Check if user is logged in before fetching cart
-      const token = localStorage.getItem('medispace_access_token')
-      if (!token) {
-        // User not logged in, set empty cart
-        dispatch({ type: 'SET_CART', payload: null })
-        return
-      }
-
       try {
         dispatch({ type: 'SET_LOADING', payload: true })
         const cart = await cartService.getCart()
@@ -184,8 +181,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
         dispatch({ type: 'SET_SELECTED_ITEMS', payload: initialSelections })
         sessionStorage.setItem('medispace_selected_items', JSON.stringify(initialSelections))
       } catch (error) {
-        // For guest users or when API fails, set empty cart
-
         dispatch({ type: 'SET_CART', payload: null })
       } finally {
         dispatch({ type: 'SET_LOADING', payload: false })
@@ -201,14 +196,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (e.key === 'medispace_user_data' || e.key === 'medispace_access_token') {
         // User logged in or out, reload cart
         const loadCart = async () => {
-          // Check if user is logged in
-          const token = localStorage.getItem('medispace_access_token')
-          if (!token) {
-            // User logged out, clear cart
-            dispatch({ type: 'SET_CART', payload: null })
-            return
-          }
-
           try {
             dispatch({ type: 'SET_LOADING', payload: true })
             const cart = await cartService.getCart()
@@ -232,14 +219,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     // Also listen for custom auth events (for same-tab changes)
     const handleAuthChange = () => {
       const loadCart = async () => {
-        // Check if user is logged in
-        const token = localStorage.getItem('medispace_access_token')
-        if (!token) {
-          // User logged out, clear cart
-          dispatch({ type: 'SET_CART', payload: null })
-          return
-        }
-
         try {
           dispatch({ type: 'SET_LOADING', payload: true })
           const cart = await cartService.getCart()
@@ -302,7 +281,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         icon: <ShoppingCart className='w-5 h-5 text-[#1E40AF]' />,
         action: {
           label: 'Xem giỏ hàng',
-          onClick: () => (window.location.href = '/cart'),
+          onClick: navigateToCart,
         },
       })
     } catch (error) {
@@ -416,12 +395,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const refreshCart = async () => {
     try {
-      const token = localStorage.getItem('medispace_access_token')
-      if (!token) {
-        dispatch({ type: 'SET_CART', payload: null })
-        return
-      }
-
       const cart = await cartService.getCart()
       dispatch({ type: 'SET_CART', payload: cart })
       // Don't auto-select items when refreshing cart

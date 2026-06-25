@@ -150,7 +150,6 @@ export default [
     route('video-events', 'routes/admin/video-events.tsx'),
     route('moderation', 'routes/admin/moderation.tsx'),
     route('coupons', 'routes/admin/coupons.tsx'),
-    route('campaigns', 'routes/admin/campaigns.tsx'),
     route('loyalty', 'routes/admin/loyalty.tsx'),
     route('notifications', 'routes/admin/notifications.tsx'),
   ]),
