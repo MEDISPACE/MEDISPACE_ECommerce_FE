@@ -28,6 +28,7 @@ export interface CommunityRoom {
 }
 
 export type CommunityMessageStatus = 'visible' | 'hidden' | 'deleted'
+export type CommunityReactionType = 'like' | 'love' | 'haha' | 'wow' | 'sad' | 'angry' | 'helpful' | 'thanks' | 'care' | 'dislike'
 
 export type CommunityMemberStatus = 'pending' | 'invited' | 'active' | 'left' | 'banned'
 export type CommunityMemberRole = 'member' | 'moderator' | 'admin'
@@ -57,10 +58,12 @@ export interface CommunityMember {
 export interface CommunityMessage {
   _id: string
   roomId: string
+  threadId?: string
   senderId: string
   content: string
   imageUrl?: string
   replyToMessageId?: string
+  isThreadStarter?: boolean
   replyTo?: Pick<
     CommunityMessage,
     '_id' | 'roomId' | 'senderId' | 'content' | 'imageUrl' | 'status' | 'createdAt' | 'sender'
@@ -68,7 +71,11 @@ export interface CommunityMessage {
   status: CommunityMessageStatus
   createdAt: string
   updatedAt?: string
+  editedAt?: string
+  deletedAt?: string
   sender?: CommunityUserSummary
+  reactionCounts?: Partial<Record<CommunityReactionType, number>>
+  viewerReaction?: CommunityReactionType | null
   moderated?: {
     autoHidden?: boolean
     at?: string
@@ -80,6 +87,53 @@ export interface CommunityMessage {
     reviewedBy?: string
     reviewedAt?: string
   }
+}
+
+export type CommunityThreadPrefix = 'question' | 'review' | 'warning' | 'story' | 'experience' | 'pharmacist'
+export type CommunityThreadStatus = 'open' | 'answered' | 'hidden' | 'deleted'
+export type CommunityThreadVideoMeetingStatus = 'scheduled' | 'live' | 'ended'
+
+export interface CommunityThreadVideoMeeting {
+  url: string
+  eventId?: string
+  provider?: 'google_meet' | 'zoom' | 'teams' | 'other' | string
+  status: CommunityThreadVideoMeetingStatus
+  startsAt?: string
+  endsAt?: string
+  title?: string
+  note?: string
+  updatedBy?: string
+  updatedAt?: string
+}
+
+export interface CommunityThread {
+  _id: string
+  roomId: string
+  title: string
+  slug: string
+  prefix: CommunityThreadPrefix
+  authorId: string
+  isAnonymous?: boolean
+  content: string
+  imageUrl?: string
+  videoMeeting?: CommunityThreadVideoMeeting
+  tags?: string[]
+  status: CommunityThreadStatus
+  sticky?: boolean
+  locked?: boolean
+  starterMessageId?: string
+  acceptedReplyId?: string
+  viewCount?: number
+  replyCount?: number
+  lastReplyAt?: string
+  lastReplyId?: string
+  lastReplyPreview?: string
+  createdAt: string
+  updatedAt?: string
+  author?: CommunityUserSummary
+  room?: Pick<CommunityRoom, '_id' | 'name' | 'slug' | 'diseaseKey' | 'topicLabel' | 'visibility'>
+  starterMessage?: CommunityMessage
+  acceptedReply?: CommunityMessage
 }
 
 export interface PaginatedResult<T> {
@@ -188,4 +242,13 @@ export interface CommunityVideoJoinPayload {
   token: string
   role: 'attendee' | 'host'
   expiresAt: string
+}
+
+export interface CommunityLiveKitDiagnostics {
+  configured: boolean
+  reachable: boolean
+  wsUrl: string
+  httpUrl?: string
+  reason?: string
+  statusCode?: number
 }

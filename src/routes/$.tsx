@@ -1,4 +1,4 @@
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { Home, ArrowLeft } from 'lucide-react'
 import { Button } from '~/components/ui/button'
 
@@ -10,6 +10,17 @@ export function meta() {
 }
 
 export default function NotFound() {
+  const navigate = useNavigate()
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1)
+      return
+    }
+
+    navigate('/', { replace: true })
+  }
+
   return (
     <div className='min-h-screen flex items-center justify-center bg-gradient-to-br from-white via-[#F8FAFB] to-[#F0F6FF]'>
       <div className='text-center p-8'>
@@ -22,16 +33,16 @@ export default function NotFound() {
         <div className='space-y-4'>
           <Button asChild className='bg-[#0A2463] hover:bg-[#071A49] text-white mr-4'>
             <Link to='/'>
-              <Home className='bg-whiw-4 h-4 mr-2' />
+              <Home className='w-4 h-4 mr-2' />
               Về trang chủ
             </Link>
           </Button>
 
-          <Button variant='outline' asChild>
-            <Link to='javascript:history.back()'>
+          <Button variant='outline' onClick={handleBack}>
+            <span className='inline-flex items-center'>
               <ArrowLeft className='w-4 h-4 mr-2' />
               Quay lại
-            </Link>
+            </span>
           </Button>
         </div>
       </div>

@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { useLocation, useNavigate, useParams } from 'react-router'
 import { LiveKitRoom, VideoConference } from '@livekit/components-react'
 import '@livekit/components-styles'
 import { LogLevel, setLogLevel } from 'livekit-client'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
+  AlertTriangle,
   ArrowLeft,
   CalendarDays,
   CheckCircle2,
@@ -76,6 +77,11 @@ function isCommunityVideoEventPayload(payload: unknown): payload is CommunityVid
   return typeof event._id === 'string' && typeof event.roomId === 'string' && typeof event.title === 'string'
 }
 
+function liveKitConnectionMessage(reason?: string) {
+  const suffix = reason ? ` Chi tiết: ${reason}` : ''
+  return `Chưa kết nối được máy chủ LiveKit của MediSpace. Vui lòng kiểm tra domain livekit.medispace.io.vn/proxy WebSocket rồi thử lại.${suffix}`
+}
+
 function displayNameFromParts(firstName?: string, lastName?: string, email?: string) {
   return [firstName, lastName].filter(Boolean).join(' ').trim() || email || ''
 }
@@ -83,6 +89,7 @@ function displayNameFromParts(firstName?: string, lastName?: string, email?: str
 export function CommunityVideoEventDetailPage() {
   const { eventId = '' } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const { isAuthenticated, loading: authLoading, user } = useAuth()
   const queryClient = useQueryClient()
   const socket = useSocketContext()
@@ -94,6 +101,8 @@ export function CommunityVideoEventDetailPage() {
   const [cameraEnabled, setCameraEnabled] = useState(true)
   const [showChat, setShowChat] = useState(true)
   const [isOffline, setIsOffline] = useState(false)
+  const [liveKitConnectionError, setLiveKitConnectionError] = useState<string | null>(null)
+  const [isLiveKitConnected, setIsLiveKitConnected] = useState(false)
   const [cameraPreviewError, setCameraPreviewError] = useState<string | null>(null)
   const [cameraPreviewStatus, setCameraPreviewStatus] = useState<'idle' | 'starting' | 'ready' | 'error'>('idle')
   const [cameraRetryKey, setCameraRetryKey] = useState(0)
@@ -259,15 +268,31 @@ export function CommunityVideoEventDetailPage() {
   const joinMutation = useMutation({
     mutationFn: () => communityService.joinVideoEvent(eventId),
     onSuccess: async (payload) => {
+      setLiveKitConnectionError(null)
+      setIsLiveKitConnected(false)
       if (!isValidLiveKitJoinPayload(payload)) {
         setJoinPayload(null)
-        toast.error('LiveKit chưa được cấu hình đúng. Vui lòng kiểm tra LIVEKIT_WS_URL trên backend.')
+        const message = 'LiveKit chưa được cấu hình đúng. Vui lòng kiểm tra LIVEKIT_WS_URL trên backend.'
+        setLiveKitConnectionError(message)
+        toast.error(message)
+        return
+      }
+      const diagnostics = await communityService.getLiveKitDiagnostics().catch(() => null)
+      if (diagnostics && !diagnostics.reachable) {
+        const message = liveKitConnectionMessage(diagnostics.reason)
+        setJoinPayload(null)
+        setLiveKitConnectionError(message)
+        toast.error(message)
         return
       }
       stopCameraPreview()
       setJoinPayload(payload)
     },
-    onError: (error: any) => toast.error(error?.response?.data?.message || 'Không thể tham gia hội thảo'),
+    onError: (error: any) => {
+      const message = error?.response?.data?.message || 'Không thể tham gia hội thảo'
+      setLiveKitConnectionError(message)
+      toast.error(message)
+    },
   })
 
   const chatMutation = useMutation({
@@ -282,24 +307,6 @@ export function CommunityVideoEventDetailPage() {
     onError: (error: any) => toast.error(error?.response?.data?.message || 'Không thể gửi tin nhắn'),
   })
 
-  const registerMutation = useMutation({
-    mutationFn: () => communityService.registerVideoEvent(eventId),
-    onSuccess: () => {
-      toast.success('Đã đăng ký hội thảo')
-      queryClient.invalidateQueries({ queryKey: ['community-video-event', eventId] })
-    },
-    onError: (error: any) => toast.error(error?.response?.data?.message || 'Không thể đăng ký hội thảo'),
-  })
-
-  const cancelRegistrationMutation = useMutation({
-    mutationFn: () => communityService.cancelVideoEventRegistration(eventId),
-    onSuccess: () => {
-      toast.success('Đã hủy đăng ký')
-      queryClient.invalidateQueries({ queryKey: ['community-video-event', eventId] })
-    },
-    onError: (error: any) => toast.error(error?.response?.data?.message || 'Không thể hủy đăng ký'),
-  })
-
   const sendChatMessage = () => {
     if (chatText.trim().length < 1 || chatMutation.isPending) return
     chatMutation.mutate()
@@ -307,9 +314,15 @@ export function CommunityVideoEventDetailPage() {
 
   const showReconnectIndicator = isOffline || (Boolean(joinPayload) && socket.isConnecting)
   const backToCommunityPath = event?.roomId ? `/community/${event.roomId}` : '/community'
-  const isRegistered =
-    event?.viewerRegistration?.status === 'registered' || event?.viewerRegistration?.status === 'attended'
-  const isFull = Boolean(event?.capacity && (event.registrationCount || 0) >= event.capacity && !isRegistered)
+  const hasJoinedBefore = event?.viewerRegistration?.status === 'attended'
+
+  const goBackToPreviousPage = () => {
+    if (window.history.length > 1) {
+      navigate(-1)
+      return
+    }
+    navigate(backToCommunityPath)
+  }
 
   const copyMeetingLink = async () => {
     await navigator.clipboard.writeText(window.location.href)
@@ -323,6 +336,11 @@ export function CommunityVideoEventDetailPage() {
     toast.info(status === 'ended' ? 'Cuộc họp đã kết thúc' : 'Cuộc họp đã bị hủy')
   }, [eventQuery.data?.status, joinPayload])
 
+  useEffect(() => {
+    if (authLoading || isAuthenticated) return
+    navigate('/login', { replace: true, state: { from: location } })
+  }, [authLoading, isAuthenticated, location, navigate])
+
   if (authLoading) {
     return (
       <main className='min-h-screen bg-[#202124] p-6 text-white'>
@@ -333,22 +351,8 @@ export function CommunityVideoEventDetailPage() {
 
   if (!isAuthenticated) {
     return (
-      <main className='mx-auto max-w-4xl px-4 py-10'>
-        <UniversalBreadcrumb items={[{ label: 'Cộng đồng', href: '/community' }, { label: 'Chi tiết hội thảo' }]} />
-
-        <Button variant='ghost' onClick={() => navigate('/community')}>
-          <ArrowLeft />
-          Quay lại cộng đồng
-        </Button>
-        <div className='mt-8 rounded-lg border border-gray-200 bg-white p-8 text-center'>
-          <h1 className='text-xl font-semibold'>Bạn cần đăng nhập để xem hội thảo</h1>
-          <Button
-            className='mt-4'
-            onClick={() => navigate('/login', { state: { from: { pathname: `/community/video-events/${eventId}` } } })}
-          >
-            Đăng nhập
-          </Button>
-        </div>
+      <main className='min-h-screen bg-[#202124] p-6 text-white'>
+        <div className='mx-auto mt-20 max-w-xl text-center'>Đang chuyển đến trang đăng nhập...</div>
       </main>
     )
   }
@@ -413,12 +417,59 @@ export function CommunityVideoEventDetailPage() {
               video={cameraEnabled}
               data-lk-theme='default'
               className='medispace-livekit-room h-full min-h-0'
-              onDisconnected={() => setJoinPayload(null)}
-              onError={(error) => toast.error(error?.message || 'Không thể kết nối LiveKit')}
+              onConnected={() => {
+                setIsLiveKitConnected(true)
+                setLiveKitConnectionError(null)
+              }}
+              onDisconnected={() => {
+                if (isLiveKitConnected) {
+                  setJoinPayload(null)
+                  setIsLiveKitConnected(false)
+                } else {
+                  setLiveKitConnectionError(liveKitConnectionMessage())
+                }
+              }}
+              onError={(error) => {
+                const message = liveKitConnectionMessage(error?.message)
+                setLiveKitConnectionError(message)
+                toast.error(message)
+              }}
             >
               <style>{`.medispace-livekit-room,.medispace-livekit-room .lk-video-conference{height:100%;min-height:0}.medispace-livekit-room .lk-chat,.medispace-livekit-room .lk-chat-toggle{display:none!important}`}</style>
               <VideoConference />
             </LiveKitRoom>
+            {liveKitConnectionError && (
+              <div className='absolute inset-0 z-20 flex items-center justify-center bg-black/70 p-6 text-white'>
+                <div className='max-w-md rounded-[16px] bg-[#202124] p-5 text-center shadow-2xl'>
+                  <AlertTriangle className='mx-auto mb-3 h-8 w-8 text-amber-300' />
+                  <div className='text-base font-semibold'>Không vào được phòng họp</div>
+                  <p className='mt-2 text-sm leading-6 text-gray-200'>{liveKitConnectionError}</p>
+                  <div className='mt-4 flex justify-center gap-2'>
+                    <Button
+                      type='button'
+                      className='rounded-full bg-white text-[#202124] hover:bg-gray-100'
+                      onClick={() => {
+                        setJoinPayload(null)
+                        setLiveKitConnectionError(null)
+                      }}
+                    >
+                      Quay lại
+                    </Button>
+                    <Button
+                      type='button'
+                      className='rounded-full bg-[#1a73e8] text-white hover:bg-[#1765cc]'
+                      onClick={() => {
+                        setJoinPayload(null)
+                        setLiveKitConnectionError(null)
+                        joinMutation.mutate()
+                      }}
+                    >
+                      Thử lại
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {showChat && (
@@ -536,16 +587,28 @@ export function CommunityVideoEventDetailPage() {
       />
 
       <header className='flex h-16 items-center justify-between px-4 text-[#5f6368] md:px-8'>
-        <button
-          type='button'
-          className='flex items-center gap-3 text-[22px] font-normal text-[#5f6368]'
-          onClick={() => navigate(backToCommunityPath)}
-        >
-          <span className='flex h-9 w-9 items-center justify-center rounded bg-[#1a73e8] text-white'>
-            <Video className='h-5 w-5' />
-          </span>
-          <span>MediSpace Meet</span>
-        </button>
+        <div className='flex min-w-0 items-center gap-3'>
+          <Button
+            type='button'
+            variant='ghost'
+            size='icon'
+            aria-label='Quay lại trang trước'
+            className='h-10 w-10 shrink-0 rounded-full text-[#5f6368] hover:bg-gray-100'
+            onClick={goBackToPreviousPage}
+          >
+            <ArrowLeft className='h-5 w-5' />
+          </Button>
+          <button
+            type='button'
+            className='flex min-w-0 items-center gap-3 text-[22px] font-normal text-[#5f6368]'
+            onClick={() => navigate(backToCommunityPath)}
+          >
+            <span className='flex h-9 w-9 shrink-0 items-center justify-center rounded bg-[#1a73e8] text-white'>
+              <Video className='h-5 w-5' />
+            </span>
+            <span className='truncate'>MediSpace Meet</span>
+          </button>
+        </div>
         <div className='flex items-center gap-3 text-sm'>
           <span className='hidden md:inline'>{formatDateTime(new Date().toISOString())}</span>
           <Button
@@ -693,36 +756,13 @@ export function CommunityVideoEventDetailPage() {
                 {event.materials.length} tài liệu sẽ được chia sẻ trong hội thảo.
               </p>
             )}
-            {isRegistered && (
+            {hasJoinedBefore && (
               <div className='inline-flex items-center gap-2 rounded-full bg-[#e8f0fe] px-3 py-1 text-xs font-medium text-[#174ea6]'>
                 <CheckCircle2 className='h-3.5 w-3.5' />
-                Bạn đã đăng ký
+                Bạn đã từng tham gia
               </div>
             )}
           </div>
-
-          {event.registrationRequired && event.status === 'scheduled' && (
-            <div className='flex flex-col items-center gap-2'>
-              {isRegistered ? (
-                <Button
-                  variant='outline'
-                  className='rounded-full border-[#dadce0]'
-                  disabled={cancelRegistrationMutation.isPending}
-                  onClick={() => cancelRegistrationMutation.mutate()}
-                >
-                  Hủy đăng ký
-                </Button>
-              ) : (
-                <Button
-                  className='rounded-full bg-[#0A2463] text-white hover:bg-[#12357D]'
-                  disabled={isFull || registerMutation.isPending}
-                  onClick={() => registerMutation.mutate()}
-                >
-                  {isFull ? 'Đã đủ chỗ' : 'Đăng ký tham gia'}
-                </Button>
-              )}
-            </div>
-          )}
 
           <label className='flex items-start gap-3 rounded-[14px] border border-[#dadce0] bg-white p-4 text-left text-sm text-[#3c4043] shadow-sm'>
             <Checkbox
@@ -740,15 +780,14 @@ export function CommunityVideoEventDetailPage() {
               disabled={
                 !acceptedDisclaimer ||
                 event.status !== 'live' ||
-                joinMutation.isPending ||
-                (event.registrationRequired && !isRegistered)
+                joinMutation.isPending
               }
               onClick={() => joinMutation.mutate()}
             >
-              {event.status === 'live' ? 'Tham gia ngay' : 'Cuộc họp chưa bắt đầu'}
+              {joinMutation.isPending ? 'Đang kiểm tra LiveKit...' : event.status === 'live' ? 'Tham gia ngay' : 'Cuộc họp chưa bắt đầu'}
             </Button>
-            {event.registrationRequired && !isRegistered && event.status === 'live' && (
-              <p className='text-xs text-[#5f6368]'>Bạn cần đăng ký trước khi tham gia hội thảo này.</p>
+            {liveKitConnectionError && !joinPayload && (
+              <p className='max-w-sm text-xs leading-5 text-[#a50e0e]'>{liveKitConnectionError}</p>
             )}
           </div>
 

@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import type { CSSProperties } from 'react'
 import ReactQuill from 'react-quill-new'
 import 'react-quill-new/dist/quill.snow.css'
 import './rich-text-editor.css'
@@ -45,7 +46,7 @@ export function RichTextEditor({ value, onChange, placeholder, height = 400 }: R
   ]
 
   return (
-    <div className='rich-text-editor'>
+    <div className='rich-text-editor' style={{ '--rich-text-editor-height': `${height}px` } as CSSProperties}>
       <ReactQuill
         theme='snow'
         value={value}
@@ -53,7 +54,6 @@ export function RichTextEditor({ value, onChange, placeholder, height = 400 }: R
         modules={modules}
         formats={formats}
         placeholder={placeholder || 'Nhập nội dung bài viết...'}
-        style={{ height: `${height}px` }}
       />
     </div>
   )

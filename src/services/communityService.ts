@@ -4,11 +4,16 @@ import type {
   CommunityMessage,
   CommunityMember,
   CommunityModerationResult,
+  CommunityLiveKitDiagnostics,
   CommunityVideoEvent,
   CommunityVideoEventLiveParticipantsPayload,
   CommunityVideoEventModerationActionPayload,
   CommunityVideoEventRegistration,
   CommunityVideoJoinPayload,
+  CommunityThread,
+  CommunityThreadVideoMeeting,
+  CommunityThreadPrefix,
+  CommunityReactionType,
   PaginatedResult,
 } from '~/types/community'
 
@@ -69,6 +74,75 @@ export const communityService = {
     return unwrap(res.data)
   },
 
+  async listThreads(params: {
+    roomId: string
+    page: number
+    limit: number
+    q?: string
+    prefix?: CommunityThreadPrefix | 'all'
+    sort?: 'latest' | 'newest' | 'hot' | 'unanswered'
+  }) {
+    const res = await apiClient.get<Envelope<PaginatedResult<CommunityThread>>>(
+      `/community/rooms/${params.roomId}/threads`,
+      {
+        params: {
+          page: params.page,
+          limit: params.limit,
+          q: params.q || undefined,
+          prefix: params.prefix && params.prefix !== 'all' ? params.prefix : undefined,
+          sort: params.sort,
+        },
+      },
+    )
+    return unwrap(res.data)
+  },
+
+  async createThread(params: {
+    roomId: string
+    title: string
+    content: string
+    prefix?: CommunityThreadPrefix
+    tags?: string[]
+    isAnonymous?: boolean
+    imageUrl?: string
+  }) {
+    const res = await apiClient.post<
+      Envelope<{ thread: CommunityThread; moderation: CommunityModerationResult; memberRole?: string }>
+    >(`/community/rooms/${params.roomId}/threads`, {
+      title: params.title,
+      content: params.content,
+      prefix: params.prefix,
+      tags: params.tags,
+      isAnonymous: params.isAnonymous,
+      imageUrl: params.imageUrl,
+    })
+    return unwrap(res.data)
+  },
+
+  async getThread(threadId: string) {
+    const res = await apiClient.get<Envelope<CommunityThread>>(`/community/threads/${threadId}`)
+    return unwrap(res.data)
+  },
+
+  async listThreadReplies(params: { threadId: string; page: number; limit: number }) {
+    const res = await apiClient.get<Envelope<PaginatedResult<CommunityMessage>>>(
+      `/community/threads/${params.threadId}/replies`,
+      { params: { page: params.page, limit: params.limit } },
+    )
+    return unwrap(res.data)
+  },
+
+  async createThreadReply(params: { threadId: string; content?: string; imageUrl?: string; replyToMessageId?: string }) {
+    const res = await apiClient.post<
+      Envelope<{ message: CommunityMessage; moderation: CommunityModerationResult; memberRole?: string }>
+    >(`/community/threads/${params.threadId}/replies`, {
+      content: params.content || '',
+      imageUrl: params.imageUrl,
+      replyToMessageId: params.replyToMessageId,
+    })
+    return unwrap(res.data)
+  },
+
   async listMessages(params: { roomId: string; page: number; limit: number; q?: string }) {
     const res = await apiClient.get<Envelope<PaginatedResult<CommunityMessage>>>(
       `/community/rooms/${params.roomId}/messages`,
@@ -92,6 +166,27 @@ export const communityService = {
     const res = await apiClient.post<Envelope<any>>(`/community/messages/${params.messageId}/report`, {
       reason: params.reason,
     })
+    return unwrap(res.data)
+  },
+
+  async reactToMessage(params: { messageId: string; type: CommunityReactionType | null }) {
+    const res = await apiClient.post<Envelope<{ messageId: string; reactionCounts: Partial<Record<CommunityReactionType, number>>; viewerReaction: CommunityReactionType | null }>>(
+      `/community/messages/${params.messageId}/reaction`,
+      { type: params.type },
+    )
+    return unwrap(res.data)
+  },
+
+  async updateMessage(params: { messageId: string; content: string; imageUrl?: string }) {
+    const res = await apiClient.patch<Envelope<{ message: CommunityMessage; moderation?: CommunityModerationResult }>>(
+      `/community/messages/${params.messageId}`,
+      { content: params.content, imageUrl: params.imageUrl },
+    )
+    return unwrap(res.data)
+  },
+
+  async deleteMessage(messageId: string) {
+    const res = await apiClient.delete<Envelope<{ message: CommunityMessage }>>(`/community/messages/${messageId}`)
     return unwrap(res.data)
   },
 
@@ -147,6 +242,11 @@ export const communityService = {
 
   async joinVideoEvent(eventId: string) {
     const res = await apiClient.post<Envelope<CommunityVideoJoinPayload>>(`/community/video-events/${eventId}/join`)
+    return unwrap(res.data)
+  },
+
+  async getLiveKitDiagnostics() {
+    const res = await apiClient.get<Envelope<CommunityLiveKitDiagnostics>>('/community/video-events/livekit/diagnostics')
     return unwrap(res.data)
   },
 }
@@ -238,6 +338,43 @@ export const adminCommunityService = {
       `/admin/community/rooms/${roomId}/invite`,
       data,
     )
+    return unwrap(res.data)
+  },
+
+  async listThreads(params: {
+    roomId: string
+    page: number
+    limit: number
+    q?: string
+    prefix?: CommunityThreadPrefix | 'all'
+    sort?: 'latest' | 'newest' | 'hot' | 'unanswered'
+  }) {
+    const res = await apiClient.get<Envelope<PaginatedResult<CommunityThread>>>(
+      `/admin/community/rooms/${params.roomId}/threads`,
+      {
+        params: {
+          page: params.page,
+          limit: params.limit,
+          q: params.q || undefined,
+          prefix: params.prefix && params.prefix !== 'all' ? params.prefix : undefined,
+          sort: params.sort,
+        },
+      },
+    )
+    return unwrap(res.data)
+  },
+
+  async updateThread(
+    threadId: string,
+    data: {
+      sticky?: boolean
+      locked?: boolean
+      status?: 'open' | 'answered' | 'hidden' | 'deleted'
+      acceptedReplyId?: string | null
+      videoMeeting?: Partial<CommunityThreadVideoMeeting> | null
+    },
+  ) {
+    const res = await apiClient.patch<Envelope<CommunityThread>>(`/admin/community/threads/${threadId}`, data)
     return unwrap(res.data)
   },
 
