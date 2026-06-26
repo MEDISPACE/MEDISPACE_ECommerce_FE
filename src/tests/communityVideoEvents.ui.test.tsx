@@ -13,6 +13,7 @@ const { mockCommunityService, mockAdminCommunityService, mockUseAuth, mockUseSoc
     joinRoom: vi.fn(),
     listMessages: vi.fn(),
     sendMessage: vi.fn(),
+    getLiveKitDiagnostics: vi.fn(),
   },
   mockAdminCommunityService: {
     listRooms: vi.fn(),
@@ -127,6 +128,7 @@ describe('Community Video Events UI component tests', () => {
     })
     mockCommunityService.registerVideoEvent.mockResolvedValue({ eventId: event._id, status: 'registered' })
     mockCommunityService.joinVideoEvent.mockResolvedValue({ token: 'mock-token', wsUrl: 'wss://livekit.test', provider: 'livekit', role: 'attendee', expiresAt: new Date().toISOString() })
+    mockCommunityService.getLiveKitDiagnostics.mockResolvedValue({ configured: true, reachable: true, wsUrl: 'wss://livekit.test', httpUrl: 'https://livekit.test' })
     mockAdminCommunityService.listRooms.mockResolvedValue([{ _id: 'room-1', name: 'Diabetes Room', status: 'active' }])
     mockAdminCommunityService.listVideoEvents.mockResolvedValue({ items: [event], page: 1, limit: 50, total: 1 })
     mockAdminCommunityService.listVideoEventRegistrations.mockResolvedValue({ items: [], page: 1, limit: 50, total: 0 })
@@ -163,7 +165,7 @@ describe('Community Video Events UI component tests', () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: false, user: null })
     renderDetail()
 
-    expect(screen.getByText('Bạn cần đăng nhập để xem hội thảo')).toBeInTheDocument()
+    expect(screen.getByText('Login page')).toBeInTheDocument()
   })
 
   it('renders Meet-style prejoin with preview and disabled join before live', async () => {
