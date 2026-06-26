@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Archive, CheckCircle, Edit, Lock, Plus, RefreshCw, Search, Send, Users } from 'lucide-react'
+import { Archive, CheckCircle, Edit, ExternalLink, Lock, Plus, RefreshCw, Search, Send, Users, Video } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Button } from '~/components/ui/button'
@@ -21,7 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '~/components/ui/table'
 import { Textarea } from '~/components/ui/textarea'
 import { adminCommunityService } from '~/services/communityService'
-import type { CommunityMember, CommunityRoom } from '~/types/community'
+import type { CommunityMember, CommunityRoom, CommunityThread, CommunityThreadVideoMeetingStatus } from '~/types/community'
 
 const emptyForm = {
   name: '',
@@ -36,6 +36,13 @@ const emptyForm = {
   pinnedMessage: '',
   featured: false,
   sortOrder: '',
+}
+
+const emptyMeetingForm = {
+  status: 'scheduled' as CommunityThreadVideoMeetingStatus,
+  startsAt: '',
+  title: '',
+  note: '',
 }
 
 function displayName(member: CommunityMember) {
@@ -54,6 +61,10 @@ export function AdminCommunityPage() {
   const [roomSearch, setRoomSearch] = useState('')
   const [visibilityFilter, setVisibilityFilter] = useState<'all' | 'public' | 'private'>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'archived'>('all')
+  const [threadSearch, setThreadSearch] = useState('')
+  const [meetingDialogOpen, setMeetingDialogOpen] = useState(false)
+  const [editingThread, setEditingThread] = useState<CommunityThread | null>(null)
+  const [meetingForm, setMeetingForm] = useState(emptyMeetingForm)
 
   const { data: rooms = [], isLoading, isFetching, refetch } = useQuery({
     queryKey: ['admin-community-rooms', visibilityFilter, statusFilter, roomSearch.trim()],
@@ -81,6 +92,12 @@ export function AdminCommunityPage() {
   const { data: membersData, refetch: refetchMembers } = useQuery({
     queryKey: ['admin-community-members', selectedRoom?._id],
     queryFn: () => adminCommunityService.listMembers({ roomId: selectedRoom!._id, page: 1, limit: 50 }),
+    enabled: Boolean(selectedRoom?._id),
+  })
+
+  const { data: threadsData, isFetching: isFetchingThreads } = useQuery({
+    queryKey: ['admin-community-room-threads', selectedRoom?._id, threadSearch.trim()],
+    queryFn: () => adminCommunityService.listThreads({ roomId: selectedRoom!._id, page: 1, limit: 40, q: threadSearch.trim() || undefined }),
     enabled: Boolean(selectedRoom?._id),
   })
 
@@ -145,6 +162,88 @@ export function AdminCommunityPage() {
     onError: (err: any) => toast.error(err?.response?.data?.message || 'Không thể mời thành viên'),
   })
 
+  const saveThreadMeeting = useMutation({
+    mutationFn: async () => {
+      if (!editingThread) throw new Error('Chưa chọn thread')
+      if (!selectedRoom?._id) throw new Error('Chưa chọn phòng')
+
+      const startDate = meetingForm.startsAt ? new Date(meetingForm.startsAt) : new Date()
+      const endDate = new Date(startDate.getTime() + 60 * 60 * 1000)
+      const title = meetingForm.title.trim() || editingThread.title
+      const note = meetingForm.note.trim() || 'Phòng LiveKit nội bộ để cộng đồng trao đổi trực tuyến theo thread. Không chia sẻ thông tin cá nhân nhạy cảm.'
+      let eventId = editingThread.videoMeeting?.eventId
+
+      if (!eventId) {
+        const event = await adminCommunityService.createVideoEvent({
+          roomId: selectedRoom._id,
+          title,
+          description: note,
+          agenda: note,
+          visibility: selectedRoom.visibility,
+          scheduledStartAt: startDate.toISOString(),
+          scheduledEndAt: endDate.toISOString(),
+          registrationRequired: false,
+          provider: 'livekit',
+          tags: ['thread-video', editingThread._id],
+        })
+        eventId = event._id
+      } else {
+        await adminCommunityService.updateVideoEvent(eventId, {
+          title,
+          description: note,
+          agenda: note,
+          visibility: selectedRoom.visibility,
+          scheduledStartAt: startDate.toISOString(),
+          scheduledEndAt: endDate.toISOString(),
+          registrationRequired: false,
+          provider: 'livekit',
+          meetingUrl: `/community/video-events/${eventId}`,
+          tags: ['thread-video', editingThread._id],
+        })
+      }
+
+      if (meetingForm.status === 'live' && editingThread.videoMeeting?.status !== 'live') {
+        await adminCommunityService.startVideoEvent(eventId)
+      }
+      if (meetingForm.status === 'ended' && editingThread.videoMeeting?.status === 'live') {
+        await adminCommunityService.endVideoEvent(eventId)
+      }
+
+      return adminCommunityService.updateThread(editingThread._id, {
+        videoMeeting: {
+          eventId,
+          url: `/community/video-events/${eventId}`,
+          provider: 'livekit',
+          status: meetingForm.status,
+          startsAt: startDate.toISOString(),
+          title,
+          note,
+        },
+      })
+    },
+    onSuccess: () => {
+      toast.success('Đã cập nhật phòng video cho thread')
+      setMeetingDialogOpen(false)
+      queryClient.invalidateQueries({ queryKey: ['admin-community-room-threads'] })
+      queryClient.invalidateQueries({ queryKey: ['community'] })
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message || 'Không thể cập nhật phòng video'),
+  })
+
+  const removeThreadMeeting = useMutation({
+    mutationFn: () => {
+      if (!editingThread) throw new Error('Chưa chọn thread')
+      return adminCommunityService.updateThread(editingThread._id, { videoMeeting: null })
+    },
+    onSuccess: () => {
+      toast.success('Đã gỡ phòng video khỏi thread')
+      setMeetingDialogOpen(false)
+      queryClient.invalidateQueries({ queryKey: ['admin-community-room-threads'] })
+      queryClient.invalidateQueries({ queryKey: ['community'] })
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message || 'Không thể gỡ phòng video'),
+  })
+
   const openCreate = () => {
     setEditingRoom(null)
     setForm(emptyForm)
@@ -168,6 +267,18 @@ export function AdminCommunityPage() {
       sortOrder: room.sortOrder === undefined ? '' : String(room.sortOrder),
     })
     setDialogOpen(true)
+  }
+
+  const openMeetingDialog = (thread: CommunityThread) => {
+    const meeting = thread.videoMeeting
+    setEditingThread(thread)
+    setMeetingForm({
+      status: meeting?.status || 'scheduled',
+      startsAt: meeting?.startsAt ? new Date(meeting.startsAt).toISOString().slice(0, 16) : '',
+      title: meeting?.title || '',
+      note: meeting?.note || '',
+    })
+    setMeetingDialogOpen(true)
   }
 
   return (
@@ -296,6 +407,61 @@ export function AdminCommunityPage() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={meetingDialogOpen} onOpenChange={setMeetingDialogOpen}>
+        <DialogContent className='sm:max-w-2xl'>
+          <DialogHeader>
+            <DialogTitle>Phòng thảo luận trực tuyến</DialogTitle>
+          </DialogHeader>
+          <div className='space-y-4 py-2'>
+            <div className='rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-800'>
+              Tạo phòng LiveKit nội bộ gắn trực tiếp vào thread. Người dùng bấm tham gia, không cần đăng ký trước.
+            </div>
+            <div className='space-y-2'>
+              <Label>Thread</Label>
+              <p className='rounded-lg border border-[#E8EDF5] bg-[#F8FBFF] px-3 py-2 text-sm font-medium text-gray-900'>{editingThread?.title || '-'}</p>
+            </div>
+            {editingThread?.videoMeeting?.url && (
+              <div className='space-y-2'>
+                <Label>Link nội bộ</Label>
+                <a href={editingThread.videoMeeting.url} target='_blank' rel='noreferrer' className='block rounded-lg border border-[#E8EDF5] bg-[#F8FBFF] px-3 py-2 text-sm text-blue-700 hover:underline'>
+                  {editingThread.videoMeeting.url}
+                </a>
+              </div>
+            )}
+            <div className='grid gap-3 md:grid-cols-2'>
+              <div className='space-y-2'>
+                <Label>Trạng thái</Label>
+                <Select value={meetingForm.status} onValueChange={(value: CommunityThreadVideoMeetingStatus) => setMeetingForm((prev) => ({ ...prev, status: value }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='scheduled'>Có phòng video</SelectItem>
+                    <SelectItem value='live'>Đang thảo luận trực tuyến</SelectItem>
+                    <SelectItem value='ended'>Đã kết thúc</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className='space-y-2'>
+                <Label>Thời gian hiển thị</Label>
+                <Input type='datetime-local' value={meetingForm.startsAt} onChange={(e) => setMeetingForm((prev) => ({ ...prev, startsAt: e.target.value }))} />
+              </div>
+            </div>
+            <div className='space-y-2'>
+              <Label>Tiêu đề hiển thị</Label>
+              <Input value={meetingForm.title} onChange={(e) => setMeetingForm((prev) => ({ ...prev, title: e.target.value }))} placeholder='Phòng thảo luận trực tuyến' />
+            </div>
+            <div className='space-y-2'>
+              <Label>Ghi chú an toàn</Label>
+              <Textarea value={meetingForm.note} onChange={(e) => setMeetingForm((prev) => ({ ...prev, note: e.target.value }))} rows={3} placeholder='Không chia sẻ thông tin cá nhân nhạy cảm...' />
+            </div>
+          </div>
+          <DialogFooter>
+            {editingThread?.videoMeeting?.url && <Button variant='outline' className='mr-auto text-rose-600' onClick={() => removeThreadMeeting.mutate()} disabled={removeThreadMeeting.isPending}>Gỡ khỏi thread</Button>}
+            <Button variant='outline' onClick={() => setMeetingDialogOpen(false)}>Hủy</Button>
+            <Button onClick={() => saveThreadMeeting.mutate()} disabled={saveThreadMeeting.isPending} className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white'>Lưu phòng video</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <div className='flex items-center justify-between gap-4'>
         <div>
           <h1
@@ -396,6 +562,7 @@ export function AdminCommunityPage() {
                   <TabsList>
                     <TabsTrigger value='info'>Thông tin</TabsTrigger>
                     <TabsTrigger value='members'>Thành viên</TabsTrigger>
+                    <TabsTrigger value='threads'>Threads</TabsTrigger>
                   </TabsList>
                   <div className='flex gap-2'>
                     <Button variant='outline' className='border-[#BFDBFE] gap-2' onClick={() => openEdit(selectedRoom)}>
@@ -536,6 +703,64 @@ export function AdminCommunityPage() {
                       Chưa có thành viên
                     </div>
                   )}
+                </TabsContent>
+
+                <TabsContent value='threads' className='space-y-4'>
+                  <div className='flex items-center gap-2'>
+                    <div className='relative flex-1'>
+                      <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400' />
+                      <Input className='pl-9' placeholder='Tìm thread để gắn phòng video' value={threadSearch} onChange={(e) => setThreadSearch(e.target.value)} />
+                    </div>
+                    <Badge className='bg-[#E8EDF5] text-[#0A2463]'>{threadsData?.total || 0} thread</Badge>
+                  </div>
+                  <div className='overflow-hidden rounded-lg border border-[#E8EDF5]'>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Thread</TableHead>
+                          <TableHead>Video</TableHead>
+                          <TableHead>Trạng thái</TableHead>
+                          <TableHead className='text-right'>Hành động</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {(threadsData?.items || []).map((thread) => (
+                          <TableRow key={thread._id}>
+                            <TableCell>
+                              <div className='font-medium text-gray-900'>{thread.title}</div>
+                              <div className='text-xs text-gray-500'>{thread.replyCount || 0} reply · {thread.viewCount || 0} lượt xem</div>
+                            </TableCell>
+                            <TableCell>
+                              {thread.videoMeeting?.url ? (
+                                <div className='space-y-1'>
+                                  <Badge className={thread.videoMeeting.status === 'live' ? 'bg-rose-100 text-rose-700' : 'bg-blue-100 text-[#0A2463]'}>
+                                    <Video className='mr-1 h-3 w-3' />
+                                    {thread.videoMeeting.status === 'live' ? 'Đang live' : thread.videoMeeting.status === 'ended' ? 'Đã kết thúc' : 'Có phòng video'}
+                                  </Badge>
+                                  <a href={thread.videoMeeting.url} target='_blank' rel='noreferrer' className='flex items-center gap-1 text-xs text-blue-700 hover:underline'>
+                                    Mở link <ExternalLink className='h-3 w-3' />
+                                  </a>
+                                </div>
+                              ) : (
+                                <span className='text-sm text-gray-500'>Chưa gắn</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant='outline'>{thread.status}</Badge>
+                            </TableCell>
+                            <TableCell className='text-right'>
+                              <Button size='sm' variant='outline' className='border-[#BFDBFE]' onClick={() => openMeetingDialog(thread)}>
+                                <Video className='mr-1 h-4 w-4' />
+                                Quản lý video
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                    {isFetchingThreads && <div className='border-t border-[#E8EDF5] p-3 text-center text-sm text-gray-500'>Đang tải threads...</div>}
+                    {!isFetchingThreads && (threadsData?.items || []).length === 0 && <div className='p-8 text-center text-sm text-gray-500'>Chưa có thread phù hợp</div>}
+                  </div>
                 </TabsContent>
               </Tabs>
             )}

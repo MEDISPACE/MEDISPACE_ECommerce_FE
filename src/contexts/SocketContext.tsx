@@ -27,8 +27,11 @@ interface SocketCallbacks {
   }) => void
   onConversationNew?: (data: { conversationId: string }) => void
   onCommunityMessageNew?: (message: CommunityMessage) => void
+  onCommunityMessageUpdated?: (message: CommunityMessage) => void
   onCommunityMessageHidden?: (message: CommunityMessage) => void
   onCommunityMessageDeleted?: (message: CommunityMessage) => void
+  onCommunityMessageReaction?: (data: Record<string, unknown>) => void
+  onCommunityThreadReply?: (data: { threadId: string; message: CommunityMessage }) => void
   onCommunityMemberUpdated?: (data: Record<string, unknown>) => void
   onCommunityMemberJoined?: (data: Record<string, unknown>) => void
   onCommunityMemberLeft?: (data: Record<string, unknown>) => void
@@ -223,8 +226,13 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     )
     s.on('conversation:new', (data: { conversationId: string }) => broadcast('onConversationNew', data))
     s.on('community:message:new', (message: CommunityMessage) => broadcast('onCommunityMessageNew', message))
+    s.on('community:message:updated', (message: CommunityMessage) => broadcast('onCommunityMessageUpdated', message))
     s.on('community:message:hidden', (message: CommunityMessage) => broadcast('onCommunityMessageHidden', message))
     s.on('community:message:deleted', (message: CommunityMessage) => broadcast('onCommunityMessageDeleted', message))
+    s.on('community:message:reaction', (data: Record<string, unknown>) => broadcast('onCommunityMessageReaction', data))
+    s.on('community:thread:reply', (data: { threadId: string; message: CommunityMessage }) =>
+      broadcast('onCommunityThreadReply', data),
+    )
     s.on('community:member:updated', (data: Record<string, unknown>) => broadcast('onCommunityMemberUpdated', data))
     s.on('community:member:joined', (data: Record<string, unknown>) => broadcast('onCommunityMemberJoined', data))
     s.on('community:member:left', (data: Record<string, unknown>) => broadcast('onCommunityMemberLeft', data))
