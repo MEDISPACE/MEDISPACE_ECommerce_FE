@@ -2,6 +2,47 @@
 @tailwind components;
 @tailwind utilities;
 
+.community-rich-content p {
+  margin: 0 0 0.75rem;
+}
+
+.community-rich-content p:last-child {
+  margin-bottom: 0;
+}
+
+.community-rich-content ul,
+.community-rich-content ol {
+  margin: 0.5rem 0 0.75rem 1.25rem;
+  padding-left: 1rem;
+}
+
+.community-rich-content ul {
+  list-style: disc;
+}
+
+.community-rich-content ol {
+  list-style: decimal;
+}
+
+.community-rich-content blockquote {
+  margin: 0.75rem 0;
+  border-left: 4px solid #bfdbfe;
+  background: #eff6ff;
+  padding: 0.5rem 0.75rem;
+  color: #0a2463;
+}
+
+.community-rich-content a {
+  color: #0a2463;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.community-rich-content strong,
+.community-rich-content b {
+  font-weight: 700;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 /* ===== FORCE LIGHT MODE - Prevent Chrome/OS dark mode from affecting UI ===== */

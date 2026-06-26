@@ -35,7 +35,7 @@
 }
 
 .rich-text-editor .ql-editor {
-  min-height: 400px;
+  min-height: var(--rich-text-editor-height, 400px);
   /* Taller editor */
   padding: 1.5rem;
   /* More padding text */

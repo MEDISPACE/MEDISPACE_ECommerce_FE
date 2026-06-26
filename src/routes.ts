@@ -71,6 +71,7 @@ export default [
     // Community
     route('community', 'routes/community/_index.tsx'),
     route('community/video-events', 'routes/community/video-events._index.tsx'),
+    route('community/:roomId/t/:threadId', 'routes/community/$roomId.t.$threadId.tsx'),
     route('community/:roomId', 'routes/community/$roomId.tsx'),
 
     // Search
