@@ -25,6 +25,12 @@ interface SocketCallbacks {
     oldPharmacistId?: string
     transferredAt: string
   }) => void
+  onConversationRequeued?: (data: {
+    conversationId: string
+    oldPharmacistId?: string
+    requeuedAt: string
+    reason?: string
+  }) => void
   onConversationNew?: (data: { conversationId: string }) => void
   onCommunityMessageNew?: (message: CommunityMessage) => void
   onCommunityMessageUpdated?: (message: CommunityMessage) => void
@@ -223,6 +229,11 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       'conversation:transferred',
       (data: { conversationId: string; newPharmacistId: string; oldPharmacistId?: string; transferredAt: string }) =>
         broadcast('onConversationTransferred', data),
+    )
+    s.on(
+      'conversation:requeued',
+      (data: { conversationId: string; oldPharmacistId?: string; requeuedAt: string; reason?: string }) =>
+        broadcast('onConversationRequeued', data),
     )
     s.on('conversation:new', (data: { conversationId: string }) => broadcast('onConversationNew', data))
     s.on('community:message:new', (message: CommunityMessage) => broadcast('onCommunityMessageNew', message))
