@@ -127,6 +127,20 @@ export function PharmacistChatPage() {
           setActiveTab('mine')
         }
       },
+      onConversationRequeued: ({ conversationId, oldPharmacistId }) => {
+        const wasMine = oldPharmacistId === user?._id
+        loadConversations()
+        if (wasMine) {
+          setSelectedConversation((prev) => {
+            if (prev?._id === conversationId) {
+              toast.info('Cuộc hội thoại đã được đưa lại vào hàng chờ vì bạn đang offline quá lâu.')
+              return null
+            }
+            return prev
+          })
+          setActiveTab('pending')
+        }
+      },
     })
     return () => unsubscribe(id)
   }, [id, subscribe, unsubscribe, loadConversations, selectedConversation, user?._id])
@@ -148,6 +162,13 @@ export function PharmacistChatPage() {
       setConversations((prev) =>
         prev.map((c) => (c._id === conversationId ? { ...c, pharmacistId: user?._id || '' } : c)),
       )
+      setSelectedConversation((prev) =>
+        prev?._id === conversationId ? { ...prev, pharmacistId: user?._id || '' } : prev,
+      )
+      selectedConversationRef.current =
+        selectedConversationRef.current?._id === conversationId
+          ? { ...selectedConversationRef.current, pharmacistId: user?._id || '' }
+          : selectedConversationRef.current
       setActiveTab('mine')
       toast.success('Đã nhận cuộc tư vấn thành công')
     } catch (error: any) {
@@ -181,10 +202,16 @@ export function PharmacistChatPage() {
 
   const getFilteredList = () => {
     const list = activeTab === 'pending' ? pendingConversations : myConversations
-    return list.filter((conv) => {
-      const name = `${conv.customer?.firstName} ${conv.customer?.lastName}`.toLowerCase()
-      return name.includes(searchQuery.toLowerCase())
-    })
+    return list
+      .filter((conv) => {
+        const name = `${conv.customer?.firstName} ${conv.customer?.lastName}`.toLowerCase()
+        return name.includes(searchQuery.toLowerCase())
+      })
+      .sort((a, b) => {
+        const aTime = new Date(a.lastMessageAt || a.createdAt).getTime()
+        const bTime = new Date(b.lastMessageAt || b.createdAt).getTime()
+        return activeTab === 'pending' ? aTime - bTime : bTime - aTime
+      })
   }
 
   const filteredConversations = getFilteredList()
