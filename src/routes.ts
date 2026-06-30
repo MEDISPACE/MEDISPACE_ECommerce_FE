@@ -107,7 +107,6 @@ export default [
     route('returns', 'routes/pharmacist/returns.tsx'),
     route('drug-database', 'routes/pharmacist/drug-database.tsx'),
     route('patient-history', 'routes/pharmacist/patient-history.tsx'),
-    route('reports', 'routes/pharmacist/reports.tsx'),
     route('settings', 'routes/pharmacist/settings.tsx'),
     route('chat', 'routes/pharmacist/chat.tsx'),
     route('notifications', 'routes/pharmacist/notifications.tsx'),

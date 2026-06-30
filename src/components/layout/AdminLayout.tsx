@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import {
   LayoutDashboard,
+  ArrowRight,
   Users,
   Package,
   ShoppingCart,
@@ -13,7 +14,6 @@ import {
   Menu,
   X,
   Search,
-  ChevronDown,
   LogOut,
   User,
   Shield,
@@ -180,6 +180,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const { user, logout, isAuthenticated, loading } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [adminSearchQuery, setAdminSearchQuery] = useState('')
+  const [adminSearchOpen, setAdminSearchOpen] = useState(false)
   const isAdmin = user?.role === UserRole.Admin
 
   // Fetch dashboard stats
@@ -218,6 +220,18 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   const handleLogout = () => {
     logout()
+  }
+
+  const adminSearchResults = navigationItems.filter((item) =>
+    item.label.toLowerCase().includes(adminSearchQuery.trim().toLowerCase()),
+  )
+
+  const goToAdminSearchResult = (href?: string) => {
+    const target = href || adminSearchResults[0]?.href
+    if (!target) return
+    setAdminSearchOpen(false)
+    setAdminSearchQuery('')
+    navigate(target)
   }
 
 
@@ -299,62 +313,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </div>
       </div>
 
-      {/* Quick Stats - Fixed at bottom */}
-      <div className='px-6 py-4 border-t border-[#E8EDF5] bg-gradient-to-br from-blue-50 to-blue-100 flex-shrink-0'>
-        <p className='text-xs text-gray-600 mb-3'>Hệ thống</p>
-        <div className='grid grid-cols-2 gap-3'>
-          <div className='text-center p-2 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm'>
-            <p className='text-xs text-gray-600'>Users</p>
-            <p className='text-lg font-semibold text-[#0A2463]'>
-              {dashboardStats?.users.total.toLocaleString() || '...'}
-            </p>
-          </div>
-          <div className='text-center p-2 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm'>
-            <p className='text-xs text-gray-600'>Orders</p>
-            <p className='text-lg font-semibold text-[#1E40AF]'>
-              {dashboardStats?.orders.todayCount.toLocaleString() || '...'}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* User Profile Section - Fixed at bottom */}
-      <div className='p-4 border-t border-[#E8EDF5] flex-shrink-0'>
-        <div className='flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg'>
-          <Avatar className='w-10 h-10 border-2 border-[#0A2463]'>
-            <AvatarImage src={user?.avatar} />
-            <AvatarFallback className='bg-[#0A2463] text-white'>{getUserInitials(user) || 'A'}</AvatarFallback>
-          </Avatar>
-          <div className='flex-1 min-w-0'>
-            <p className='text-sm font-medium text-gray-900 truncate'>{getFullName(user) || 'Admin User'}</p>
-            <p className='text-xs text-[#0A2463]'>Administrator</p>
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant='ghost' size='sm' className='text-gray-600 hover:text-[#0A2463]'>
-                <ChevronDown className='w-4 h-4' />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align='end' className='w-48 z-50 bg-white shadow-lg border border-[#E8EDF5]'>
-              <DropdownMenuLabel>Tài khoản</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate('/admin/settings')}>
-                <User className='w-4 h-4 mr-2' />
-                Hồ sơ cá nhân
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/admin/settings')}>
-                <Settings className='w-4 h-4 mr-2' />
-                Cài đặt hệ thống
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className='text-red-600'>
-                <LogOut className='w-4 h-4 mr-2' />
-                Đăng xuất
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
     </div>
   )
 
@@ -408,33 +366,72 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             </Button>
 
             {/* Search Bar */}
-            <div className='hidden md:flex items-center gap-2 bg-[#F0F6FF] rounded-lg px-4 py-2 w-80 border border-[#BFDBFE]'>
-              <Search className='w-4 h-4 text-[#1E40AF]' />
-              <Input
-                type='search'
-                placeholder='Tìm kiếm...'
-                className='bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm'
-              />
+            <div className='relative hidden md:block w-[360px]'>
+              <div className='flex h-10 items-center gap-2 rounded-lg border border-[#D7E3F5] bg-white px-3 shadow-sm transition-colors focus-within:border-[#1E40AF] focus-within:ring-2 focus-within:ring-[#BFDBFE]/60'>
+                <Search className='h-4 w-4 shrink-0 text-[#1E40AF]' />
+                <Input
+                  type='search'
+                  value={adminSearchQuery}
+                  onChange={(event) => {
+                    setAdminSearchQuery(event.target.value)
+                    setAdminSearchOpen(true)
+                  }}
+                  onFocus={() => setAdminSearchOpen(true)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') goToAdminSearchResult()
+                    if (event.key === 'Escape') setAdminSearchOpen(false)
+                  }}
+                  placeholder='Tìm nhanh module quản trị...'
+                  className='h-8 border-0 bg-transparent px-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0'
+                />
+              </div>
+
+              {adminSearchOpen && adminSearchQuery.trim().length > 0 && (
+                <div className='absolute left-0 top-12 z-[60] w-full overflow-hidden rounded-lg border border-[#E8EDF5] bg-white p-2 shadow-xl'>
+                  {adminSearchResults.length > 0 ? (
+                    adminSearchResults.slice(0, 6).map((item) => {
+                      const Icon = item.icon
+                      return (
+                        <button
+                          key={item.href}
+                          type='button'
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={() => goToAdminSearchResult(item.href)}
+                          className='flex w-full items-center gap-3 rounded-md px-2 py-2 text-left hover:bg-[#F0F6FF]'
+                        >
+                          <div className='flex h-8 w-8 items-center justify-center rounded-md bg-[#E8EDF5]'>
+                            <Icon className='h-4 w-4 text-[#1E40AF]' />
+                          </div>
+                          <span className='min-w-0 flex-1 truncate text-sm font-medium text-gray-900'>{item.label}</span>
+                          <ArrowRight className='h-4 w-4 text-gray-400' />
+                        </button>
+                      )
+                    })
+                  ) : (
+                    <p className='px-2 py-4 text-center text-sm text-gray-500'>Không có module phù hợp</p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
           <div className='flex items-center gap-4'>
             {/* Quick Stats (Desktop) */}
-            <div className='hidden xl:flex items-center gap-4 mr-4'>
-              <div className='flex items-center gap-2 px-3 py-1.5 bg-[#F0F6FF] rounded-lg'>
+            <div className='hidden xl:flex items-center gap-2 mr-2'>
+              <div className='flex h-10 items-center gap-2 rounded-lg border border-[#D7E3F5] bg-white px-3'>
                 <TrendingUp className='w-4 h-4 text-[#0A2463]' />
-                <div>
-                  <p className='text-xs text-gray-600'>Doanh thu</p>
-                  <p className='text-sm font-semibold text-[#0A2463]'>
+                <div className='leading-tight'>
+                  <p className='text-[11px] text-gray-600'>Doanh thu</p>
+                  <p className='text-sm font-bold text-[#0A2463]'>
                     {dashboardStats?.revenue.month ? `₫${(dashboardStats.revenue.month / 1000000).toFixed(1)}M` : '...'}
                   </p>
                 </div>
               </div>
-              <div className='flex items-center gap-2 px-3 py-1.5 bg-[#F0F6FF] rounded-lg'>
+              <div className='flex h-10 items-center gap-2 rounded-lg border border-[#D7E3F5] bg-white px-3'>
                 <ShoppingCart className='w-4 h-4 text-[#1E40AF]' />
-                <div>
-                  <p className='text-xs text-gray-600'>Đơn hàng</p>
-                  <p className='text-sm font-semibold text-[#1E40AF]'>
+                <div className='leading-tight'>
+                  <p className='text-[11px] text-gray-600'>Đơn hàng</p>
+                  <p className='text-sm font-bold text-[#1E40AF]'>
                     {dashboardStats?.orders.todayCount.toLocaleString() || '...'}
                   </p>
                 </div>

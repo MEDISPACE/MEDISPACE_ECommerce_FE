@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router'
 import { Search, User, FileText, Pill, ShoppingCart, AlertTriangle, TrendingUp, Eye, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -84,6 +85,7 @@ const removedMockPatients = [
 ]
 
 export function PatientHistoryPage() {
+  const [searchParams] = useSearchParams()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedPatient, setSelectedPatient] = useState<PatientSearchResult | null>(null)
   const [searchResults, setSearchResults] = useState<PatientSearchResult[]>([])
@@ -93,15 +95,16 @@ export function PatientHistoryPage() {
   const [searching, setSearching] = useState(false)
 
   // Search patients by phone
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) {
+  const handleSearch = async (query = searchQuery) => {
+    const normalizedQuery = query.trim()
+    if (!normalizedQuery) {
       toast.error('Vui lòng nhập số điện thoại')
       return
     }
 
     try {
       setSearching(true)
-      const results = await dashboardService.searchPatient(searchQuery)
+      const results = await dashboardService.searchPatient(normalizedQuery)
       setSearchResults(results)
 
       if (results.length === 0) {
@@ -113,6 +116,14 @@ export function PatientHistoryPage() {
       setSearching(false)
     }
   }
+
+  useEffect(() => {
+    const phone = searchParams.get('phone')
+    if (!phone) return
+
+    setSearchQuery(phone)
+    handleSearch(phone)
+  }, [searchParams])
 
   // Load patient details when selected
   const handleSelectPatient = async (patient: PatientSearchResult) => {
@@ -171,7 +182,7 @@ export function PatientHistoryPage() {
               className='pl-10 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
             />
           </div>
-          <Button onClick={handleSearch} disabled={searching} className='bg-[#0A2463] text-white hover:bg-[#071A49] hover:text-white'>
+          <Button onClick={() => handleSearch()} disabled={searching} className='bg-[#0A2463] text-white hover:bg-[#071A49] hover:text-white'>
             {searching ? (
               <>
                 <Loader2 className='w-4 h-4 mr-2 animate-spin' />

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router'
 import {
   Search,
   Pill,
@@ -26,6 +27,7 @@ import type { Product, Category } from '../../types/product'
 import { getProductPrice, getProductOriginalPrice } from '../../utils/priceUtils'
 
 export function DrugDatabasePage() {
+  const [searchParams] = useSearchParams()
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
@@ -34,6 +36,11 @@ export function DrugDatabasePage() {
   const [typeFilter, setTypeFilter] = useState('all')
   const [stockFilter, setStockFilter] = useState('all')
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+
+  useEffect(() => {
+    const search = searchParams.get('search')
+    if (search) setSearchQuery(search)
+  }, [searchParams])
 
   // Fetch products and categories
   useEffect(() => {
