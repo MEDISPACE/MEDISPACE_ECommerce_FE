@@ -64,9 +64,9 @@ export const prescriptionService = {
         ? {
             page: params.page ? Number(params.page) : undefined,
             limit: params.limit ? Number(params.limit) : undefined,
-            status: params.status,
+            status: params.status ?? 'all',
           }
-        : undefined
+        : { status: 'all' }
 
       // Use /prescriptions/pending endpoint which is designed for pharmacists to see all prescriptions
       const response: AxiosResponse<{ message: string; result: { prescriptions: Prescription[]; pagination: any } }> =
@@ -89,10 +89,9 @@ export const prescriptionService = {
    * Get pending prescriptions
    */
   getPending: async (): Promise<Prescription[]> => {
-    const response: AxiosResponse<{ message: string; result: Prescription[] }> = await apiClient.get(
-      API_ENDPOINTS.PRESCRIPTIONS.PENDING,
-    )
-    return response.data.result
+    const response: AxiosResponse<{ message: string; result: { prescriptions: Prescription[]; pagination: any } }> =
+      await apiClient.get(API_ENDPOINTS.PRESCRIPTIONS.PENDING, { params: { status: 'pending' } })
+    return response.data.result?.prescriptions || []
   },
 
   /**

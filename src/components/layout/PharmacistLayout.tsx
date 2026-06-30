@@ -3,22 +3,22 @@ import { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import {
   LayoutDashboard,
+  ArrowRight,
   FileText,
   Plus,
   MessageSquare,
-  Users,
-  BarChart3,
   Settings,
   Menu,
   X,
-  Bell,
   Search,
-  ChevronDown,
+  Loader2,
   LogOut,
   User,
   CheckCircle,
   Database,
   ShoppingCart,
+  Pill,
+  Phone,
   UserRoundCheck,
   UserRoundX,
   RotateCcw,
@@ -43,7 +43,10 @@ import { toast } from 'sonner'
 import { getFullName, getUserInitials } from '~/utils/lib'
 import type { BreadcrumbItem } from '../shared/UniversalBreadcrumb'
 import { dashboardService, type DashboardStats } from '~/services/pharmacist'
+import type { PatientSearchResult } from '~/services/pharmacist/types'
 import { settingsService } from '~/services/pharmacist/settings.service'
+import { searchService, type SearchProductsHit, type SearchProductsResult } from '~/services/searchService'
+import { useDebounce } from '~/hooks/useDebounce'
 import { NotificationDropdown } from '../shared/NotificationDropdown'
 import faviconLogo from '../../assets/MEDISPACE_Logo_favicon.png'
 
@@ -102,11 +105,6 @@ const navigationItems: NavItem[] = [
     icon: Database,
   },
   {
-    label: 'Báo cáo công việc',
-    href: '/pharmacist/reports',
-    icon: BarChart3,
-  },
-  {
     label: 'Quản lý bài viết',
     href: '/pharmacist/articles',
     icon: FileText,
@@ -126,7 +124,13 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isOnline, setIsOnline] = useState(user?.isOnline ?? true)
   const [stats, setStats] = useState<DashboardStats | null>(null)
-
+  const [globalSearchQuery, setGlobalSearchQuery] = useState('')
+  const [globalSearchOpen, setGlobalSearchOpen] = useState(false)
+  const [globalSearchLoading, setGlobalSearchLoading] = useState(false)
+  const [productResults, setProductResults] = useState<SearchProductsHit[]>([])
+  const [patientResults, setPatientResults] = useState<PatientSearchResult[]>([])
+  const [productSearchSource, setProductSearchSource] = useState<SearchProductsResult['source'] | null>(null)
+  const debouncedGlobalSearch = useDebounce(globalSearchQuery.trim(), 250)
 
   // Redirect if not authenticated or not pharmacist
   useEffect(() => {
@@ -153,6 +157,46 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
     }
     loadStats()
   }, [])
+
+  useEffect(() => {
+    const query = debouncedGlobalSearch
+
+    if (query.length < 2) {
+      setProductResults([])
+      setPatientResults([])
+      setProductSearchSource(null)
+      setGlobalSearchLoading(false)
+      return
+    }
+
+    let cancelled = false
+    const digits = query.replace(/\D/g, '')
+
+    setGlobalSearchLoading(true)
+    Promise.all([
+      searchService.searchProducts({ q: query, limit: 5 }),
+      digits.length >= 3 ? dashboardService.searchPatient(digits) : Promise.resolve([]),
+    ])
+      .then(([products, patients]) => {
+        if (cancelled) return
+        setProductResults(products.hits || [])
+        setProductSearchSource(products.source)
+        setPatientResults(patients)
+      })
+      .catch(() => {
+        if (cancelled) return
+        setProductResults([])
+        setPatientResults([])
+        setProductSearchSource(null)
+      })
+      .finally(() => {
+        if (!cancelled) setGlobalSearchLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [debouncedGlobalSearch])
 
   // Sync isOnline with user profile
   useEffect(() => {
@@ -190,6 +234,34 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
       setIsOnline(previousStatus)
       toast.error('Không thể cập nhật trạng thái. Vui lòng thử lại.')
     }
+  }
+
+  const closeGlobalSearch = () => {
+    setGlobalSearchOpen(false)
+  }
+
+  const goToProductSearch = (query = globalSearchQuery.trim()) => {
+    if (!query) return
+    closeGlobalSearch()
+    navigate(`/pharmacist/drug-database?search=${encodeURIComponent(query)}`)
+  }
+
+  const goToPatientSearch = (phone: string) => {
+    closeGlobalSearch()
+    navigate(`/pharmacist/patient-history?phone=${encodeURIComponent(phone)}`)
+  }
+
+  const handleGlobalSearchSubmit = () => {
+    const query = globalSearchQuery.trim()
+    if (!query) return
+
+    const digits = query.replace(/\D/g, '')
+    if (digits.length >= 3 && productResults.length === 0) {
+      goToPatientSearch(digits)
+      return
+    }
+
+    goToProductSearch(query)
   }
 
   const SidebarContent = () => (
@@ -283,58 +355,6 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
         </div>
       </div>
 
-      {/* Quick Stats - Fixed at bottom */}
-      <div className='px-6 py-4 border-t border-[#E8EDF5] bg-gradient-to-br from-[#F8FAFB] to-[#F0F6FF] flex-shrink-0'>
-        <p className='text-xs text-gray-600 mb-3'>Hôm nay</p>
-        <div className='grid grid-cols-2 gap-3'>
-          <div className='text-center p-2 bg-white rounded-lg shadow-sm'>
-            <p className='text-xs text-gray-600'>Đơn thuốc</p>
-            <p className='text-lg font-semibold text-[#1E40AF]'>{stats?.prescriptionsToday.total ?? 0}</p>
-          </div>
-          <div className='text-center p-2 bg-white rounded-lg shadow-sm'>
-            <p className='text-xs text-gray-600'>Tư vấn</p>
-            <p className='text-lg font-semibold text-green-600'>{stats?.activeChats ?? 0}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* User Profile Section - Fixed at bottom */}
-      <div className='p-4 border-t border-[#E8EDF5] flex-shrink-0'>
-        <div className='flex items-center gap-3 p-3 bg-gradient-to-r from-[#F8FAFB] to-[#F0F6FF] rounded-lg'>
-          <Avatar className='w-10 h-10 border-2 border-[#1E40AF]'>
-            <AvatarImage src={user?.avatar} />
-            <AvatarFallback className='bg-[#0A2463] text-white'>{getUserInitials(user) || 'D'}</AvatarFallback>
-          </Avatar>
-          <div className='flex-1 min-w-0'>
-            <p className='text-sm font-medium text-gray-900 truncate'>{getFullName(user) || 'Dược sĩ'}</p>
-            <p className='text-xs text-[#1E40AF]'>Dược sĩ</p>
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant='ghost' size='sm' className='text-gray-600 hover:text-[#0A2463]'>
-                <ChevronDown className='w-4 h-4' />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align='end' className='w-48 z-50 bg-white shadow-lg border border-[#E8EDF5]'>
-              <DropdownMenuLabel>Tài khoản</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate('/pharmacist/settings')}>
-                <User className='w-4 h-4 mr-2' />
-                Hồ sơ cá nhân
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/pharmacist/settings')}>
-                <Settings className='w-4 h-4 mr-2' />
-                Cài đặt
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className='text-red-600'>
-                <LogOut className='w-4 h-4 mr-2' />
-                Đăng xuất
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
     </div>
   )
 
@@ -388,32 +408,136 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
             </Button>
 
             {/* Search Bar */}
-            <div className='hidden md:flex items-center gap-2 bg-[#F0F6FF] rounded-lg px-4 py-2 flex-1 max-w-md border border-[#BFDBFE]'>
-              <Search className='w-4 h-4 text-blue-400' />
-              <Input
-                type='search'
-                placeholder='Tìm kiếm bệnh nhân, thuốc...'
-                className='bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm'
-              />
+            <div className='relative hidden md:block w-[420px]'>
+              <div className='flex h-10 items-center gap-2 rounded-lg border border-[#D7E3F5] bg-white px-3 shadow-sm transition-colors focus-within:border-[#1E40AF] focus-within:ring-2 focus-within:ring-[#BFDBFE]/60'>
+                <Search className='h-4 w-4 shrink-0 text-[#1E40AF]' />
+                <Input
+                  type='search'
+                  value={globalSearchQuery}
+                  onChange={(event) => {
+                    setGlobalSearchQuery(event.target.value)
+                    setGlobalSearchOpen(true)
+                  }}
+                  onFocus={() => setGlobalSearchOpen(true)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') handleGlobalSearchSubmit()
+                    if (event.key === 'Escape') closeGlobalSearch()
+                  }}
+                  placeholder='Tìm thuốc hoặc số điện thoại bệnh nhân...'
+                  className='h-8 border-0 bg-transparent px-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0'
+                />
+                {globalSearchLoading && <Loader2 className='h-4 w-4 shrink-0 animate-spin text-[#1E40AF]' />}
+              </div>
+
+              {globalSearchOpen && globalSearchQuery.trim().length >= 2 && (
+                <div className='absolute left-0 top-12 z-[60] w-full overflow-hidden rounded-lg border border-[#E8EDF5] bg-white shadow-xl'>
+                  <div className='flex items-center justify-between border-b border-[#E8EDF5] px-3 py-2'>
+                    <span className='text-xs font-medium text-gray-500'>Kết quả tìm kiếm nhanh</span>
+                    {productSearchSource && (
+                      <Badge
+                        variant='outline'
+                        className={
+                          productSearchSource === 'typesense'
+                            ? 'border-green-200 bg-green-50 text-green-700'
+                            : 'border-yellow-200 bg-yellow-50 text-yellow-700'
+                        }
+                      >
+                        {productSearchSource === 'typesense' ? 'Typesense' : 'MongoDB fallback'}
+                      </Badge>
+                    )}
+                  </div>
+
+                  <div className='max-h-[420px] overflow-y-auto p-2'>
+                    {patientResults.length > 0 && (
+                      <div className='mb-2'>
+                        <p className='px-2 pb-1 text-xs font-semibold uppercase text-gray-500'>Bệnh nhân</p>
+                        {patientResults.slice(0, 3).map((patient) => (
+                          <button
+                            key={patient.customerId}
+                            type='button'
+                            onMouseDown={(event) => event.preventDefault()}
+                            onClick={() => goToPatientSearch(patient.phoneNumber)}
+                            className='flex w-full items-center gap-3 rounded-md px-2 py-2 text-left hover:bg-[#F0F6FF]'
+                          >
+                            <Avatar className='h-8 w-8'>
+                              <AvatarImage src={patient.avatar} />
+                              <AvatarFallback className='bg-[#E8EDF5] text-xs text-[#1E40AF]'>
+                                {patient.fullName.charAt(0) || 'B'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className='min-w-0 flex-1'>
+                              <p className='truncate text-sm font-medium text-gray-900'>{patient.fullName}</p>
+                              <p className='flex items-center gap-1 text-xs text-gray-500'>
+                                <Phone className='h-3 w-3' />
+                                {patient.phoneNumber || 'Chưa có số điện thoại'}
+                              </p>
+                            </div>
+                            <ArrowRight className='h-4 w-4 text-gray-400' />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    <div>
+                      <p className='px-2 pb-1 text-xs font-semibold uppercase text-gray-500'>Sản phẩm trong kho</p>
+                      {productResults.length > 0 ? (
+                        productResults.map((hit) => (
+                          <button
+                            key={hit.document.mongoId}
+                            type='button'
+                            onMouseDown={(event) => event.preventDefault()}
+                            onClick={() => goToProductSearch(hit.document.name)}
+                            className='flex w-full items-center gap-3 rounded-md px-2 py-2 text-left hover:bg-[#F0F6FF]'
+                          >
+                            <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[#E8EDF5]'>
+                              <Pill className='h-4 w-4 text-[#1E40AF]' />
+                            </div>
+                            <div className='min-w-0 flex-1'>
+                              <p className='truncate text-sm font-medium text-gray-900'>{hit.document.name}</p>
+                              <p className='truncate text-xs text-gray-500'>
+                                {hit.document.brandName || 'Không có thương hiệu'}
+                                {hit.document.price ? ` - ${hit.document.price.toLocaleString('vi-VN')}đ` : ''}
+                              </p>
+                            </div>
+                            {hit.document.requiresPrescription && (
+                              <Badge className='bg-red-100 text-red-700'>Rx</Badge>
+                            )}
+                          </button>
+                        ))
+                      ) : globalSearchLoading ? (
+                        <p className='px-2 py-4 text-center text-sm text-gray-500'>Đang tìm...</p>
+                      ) : (
+                        <p className='px-2 py-4 text-center text-sm text-gray-500'>Không có sản phẩm phù hợp</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <button
+                    type='button'
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => goToProductSearch()}
+                    className='flex w-full items-center justify-between border-t border-[#E8EDF5] px-3 py-2 text-sm font-medium text-[#0A2463] hover:bg-[#F0F6FF]'
+                  >
+                    Xem toàn bộ trong cơ sở dữ liệu thuốc
+                    <ArrowRight className='h-4 w-4' />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
           <div className='flex items-center gap-4'>
             {/* Quick Stats (Desktop) */}
-            <div className='hidden xl:flex items-center gap-4 mr-4'>
-              <div className='flex items-center gap-2 px-3 py-1.5 bg-yellow-50 rounded-lg border border-yellow-200'>
-                <FileText className='w-4 h-4 text-yellow-600' />
-                <div>
-                  <p className='text-xs text-gray-600'>Đơn chờ</p>
-                  <p className='text-sm font-semibold text-yellow-600'>{stats?.pendingPrescriptions ?? 0}</p>
-                </div>
+            <div className='hidden xl:flex items-center gap-2 mr-2'>
+              <div className='flex h-10 min-w-[132px] items-center justify-center gap-2 rounded-lg border border-yellow-200 bg-yellow-50 px-3'>
+                <FileText className='h-4 w-4 shrink-0 text-yellow-600' />
+                <span className='text-sm font-medium text-yellow-900'>Đơn chờ</span>
+                <span className='text-base font-bold leading-none text-yellow-700'>{stats?.pendingPrescriptions ?? 0}</span>
               </div>
-              <div className='flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-lg border border-green-200'>
-                <CheckCircle className='w-4 h-4 text-green-600' />
-                <div>
-                  <p className='text-xs text-gray-600'>Hoàn thành</p>
-                  <p className='text-sm font-semibold text-green-600'>{stats?.prescriptionsToday.verified ?? 0}</p>
-                </div>
+              <div className='flex h-10 min-w-[148px] items-center justify-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3'>
+                <CheckCircle className='h-4 w-4 shrink-0 text-green-600' />
+                <span className='text-sm font-medium text-green-900'>Hoàn thành</span>
+                <span className='text-base font-bold leading-none text-green-700'>{stats?.prescriptionsToday.verified ?? 0}</span>
               </div>
             </div>
 
