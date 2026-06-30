@@ -163,8 +163,8 @@ export function CreateOrderPage() {
       const full = await productService.getProductById(basicProduct.id)
       if (full) {
         // Map full product to the Product interface
-        const defaultVariant = (full as any).priceVariants?.find((v: any) => v.isDefault)
-          || (full as any).priceVariants?.[0]
+        const defaultVariant =
+          (full as any).priceVariants?.find((v: any) => v.isDefault) || (full as any).priceVariants?.[0]
         setSelectedProduct({
           id: (full as any)._id || basicProduct.id,
           name: (full as any).name || basicProduct.name,
@@ -389,6 +389,12 @@ export function CreateOrderPage() {
         const prescription = (await prescriptionService.getById(prescriptionId)) as any
 
         if (prescription) {
+          if (prescription.status !== 'verified') {
+            toast.error('Chỉ đơn thuốc đã được phê duyệt mới có thể tạo đơn hàng')
+            navigate('/pharmacist/prescriptions')
+            return
+          }
+
           setSourcePrescription(prescription)
           // Extract customer info from populated prescription
           const customer = prescription.customer
@@ -481,17 +487,20 @@ export function CreateOrderPage() {
                   const typesenseSearch = async (q: string): Promise<Product[]> => {
                     if (!q || q.length < 2) return []
                     const result = await searchService.searchProducts({ q, limit: 5 })
-                    return (result.hits || []).map((hit) => ({
-                      id: hit.document.mongoId,
-                      name: hit.document.name,
-                      image: hit.document.featuredImage || '/images/product-placeholder.jpg',
-                      price: hit.document.price || 0,
-                      type: hit.document.requiresPrescription ? 'rx' : 'otc',
-                      brand: hit.document.brandName || 'Unknown',
-                      unit: 'Hộp',
-                      stock: hit.document.inStock ? 999 : 0,
-                      rating: hit.document.rating || 4.5,
-                    } as Product))
+                    return (result.hits || []).map(
+                      (hit) =>
+                        ({
+                          id: hit.document.mongoId,
+                          name: hit.document.name,
+                          image: hit.document.featuredImage || '/images/product-placeholder.jpg',
+                          price: hit.document.price || 0,
+                          type: hit.document.requiresPrescription ? 'rx' : 'otc',
+                          brand: hit.document.brandName || 'Unknown',
+                          unit: 'Hộp',
+                          stock: hit.document.inStock ? 999 : 0,
+                          rating: hit.document.rating || 4.5,
+                        }) as Product,
+                    )
                   }
 
                   // ── Extract brand (before parenthesis) and generic (inside parenthesis) ──
@@ -550,7 +559,7 @@ export function CreateOrderPage() {
     }
 
     fetchPrescriptionData()
-  }, [prescriptionId])
+  }, [navigate, prescriptionId])
 
   const handleProductAdd = (product: Product, quantity: number) => {
     const existingItem = orderItems.find((item) => item.product.id === product.id)
@@ -629,18 +638,19 @@ export function CreateOrderPage() {
 
     setMlLoading(true)
     recommendationService
-      .getPharmacistSuggestions({
-        prescriptionProductIds,
-        chronicDiseases: patientMedicalInfo?.chronicDiseases ?? [],
-        allergies: patientMedicalInfo?.allergies ?? [],
-        currentMedications: patientMedicalInfo?.currentMedications?.map((medication) => medication.name) ?? [],
-      }, 6)
+      .getPharmacistSuggestions(
+        {
+          prescriptionProductIds,
+          chronicDiseases: patientMedicalInfo?.chronicDiseases ?? [],
+          allergies: patientMedicalInfo?.allergies ?? [],
+          currentMedications: patientMedicalInfo?.currentMedications?.map((medication) => medication.name) ?? [],
+        },
+        6,
+      )
       .then((res) => {
         if (!cancelled) {
           // Lọc bỏ sản phẩm đã có trong đơn
-          const filtered = res.products.filter(
-            (p) => !orderItems.some((item) => item.product.id === p._id),
-          )
+          const filtered = res.products.filter((p) => !orderItems.some((item) => item.product.id === p._id))
           setMlSuggestions(filtered)
         }
       })
@@ -690,7 +700,10 @@ export function CreateOrderPage() {
     setPatientMedicalInfo(null)
     const patientId = patient.customerId || patient._id
     if (patientId) {
-      patientService.getMedicalInfo(patientId).then(setPatientMedicalInfo).catch(() => setPatientMedicalInfo(null))
+      patientService
+        .getMedicalInfo(patientId)
+        .then(setPatientMedicalInfo)
+        .catch(() => setPatientMedicalInfo(null))
     }
     toast.success(`Đã chọn khách hàng: ${patient.fullName}`)
   }
@@ -921,8 +934,14 @@ export function CreateOrderPage() {
       <ProductDetailModal
         product={selectedProduct}
         isOpen={isProductModalOpen}
-        onClose={() => { setIsProductModalOpen(false); setSelectedProduct(null) }}
-        onAddToCart={(product, qty) => { handleProductAdd(product, qty); setIsProductModalOpen(false) }}
+        onClose={() => {
+          setIsProductModalOpen(false)
+          setSelectedProduct(null)
+        }}
+        onAddToCart={(product, qty) => {
+          handleProductAdd(product, qty)
+          setIsProductModalOpen(false)
+        }}
       />
       {/* Header */}
       <div className='flex items-center justify-between'>
@@ -986,7 +1005,8 @@ export function CreateOrderPage() {
                     {/* Medication header */}
                     <div className='flex items-center gap-2 mb-3'>
                       <Badge variant='outline' className='bg-[#F0F6FF] border-[#BFDBFE] text-[#1E40AF] text-xs'>
-                        Đơn thuốc: {suggestion.medication.productName || suggestion.medication.name || 'Thuốc ' + (idx + 1)}
+                        Đơn thuốc:{' '}
+                        {suggestion.medication.productName || suggestion.medication.name || 'Thuốc ' + (idx + 1)}
                       </Badge>
                       {suggestion.medication.quantity > 0 && (
                         <span className='text-xs text-gray-500 flex items-center gap-1'>
@@ -1012,7 +1032,9 @@ export function CreateOrderPage() {
 
                             {/* Product info */}
                             <div className='flex-1 min-w-0'>
-                              <p className='text-sm font-medium text-gray-900 line-clamp-2 leading-snug'>{match.name}</p>
+                              <p className='text-sm font-medium text-gray-900 line-clamp-2 leading-snug'>
+                                {match.name}
+                              </p>
                               <div className='flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1'>
                                 <span className='text-xs font-semibold text-[#1E40AF]'>
                                   {match.price > 0 ? `${match.price.toLocaleString('vi-VN')}đ` : 'Liên hệ'}
@@ -1023,14 +1045,13 @@ export function CreateOrderPage() {
                               <div className='flex items-center gap-2 mt-1 flex-wrap'>
                                 {match.stock > 0 && (
                                   <span className='text-[11px] text-gray-500'>
-                                    Tồn: <span className='font-medium text-gray-700'>{match.stock.toLocaleString()}</span>
+                                    Tồn:{' '}
+                                    <span className='font-medium text-gray-700'>{match.stock.toLocaleString()}</span>
                                   </span>
                                 )}
                                 <span
                                   className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
-                                    match.type === 'rx'
-                                      ? 'bg-red-100 text-red-700'
-                                      : 'bg-green-100 text-green-700'
+                                    match.type === 'rx' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
                                   }`}
                                 >
                                   {match.type === 'rx' ? 'Rx' : 'OTC'}
@@ -1108,7 +1129,8 @@ export function CreateOrderPage() {
                 <Alert className='mb-3 border-amber-200 bg-amber-50'>
                   <AlertTriangle className='h-4 w-4 text-amber-600' />
                   <AlertDescription className='text-xs text-amber-800'>
-                    Gợi ý ML chỉ hỗ trợ tham khảo. Dược sĩ phải kiểm tra tương tác thuốc, chống chỉ định và liều dùng trước khi thêm vào đơn.
+                    Gợi ý ML chỉ hỗ trợ tham khảo. Dược sĩ phải kiểm tra tương tác thuốc, chống chỉ định và liều dùng
+                    trước khi thêm vào đơn.
                   </AlertDescription>
                 </Alert>
                 {mlLoading ? (
@@ -1163,7 +1185,11 @@ export function CreateOrderPage() {
                               )
                             }}
                             className='flex-shrink-0 w-8 h-8 rounded-full bg-[#E8EDF5] hover:bg-[#0A2463] text-[#1E40AF] hover:text-white transition-all flex items-center justify-center group-hover:scale-110 disabled:cursor-not-allowed disabled:opacity-40'
-                            title={p.requiresPrescription ? 'Thuốc kê đơn phải được chọn và rà soát thủ công' : 'Thêm vào đơn hàng'}
+                            title={
+                              p.requiresPrescription
+                                ? 'Thuốc kê đơn phải được chọn và rà soát thủ công'
+                                : 'Thêm vào đơn hàng'
+                            }
                           >
                             <Plus className='w-4 h-4' />
                           </button>

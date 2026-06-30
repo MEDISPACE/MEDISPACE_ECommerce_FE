@@ -1,16 +1,18 @@
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import {
+  ArrowRight,
   Plus,
   FileText,
   MessageCircle,
-  BarChart3,
   CheckCircle,
   AlertCircle,
   DollarSign,
   Package,
   Pill,
   Eye,
+  RefreshCw,
+  ShoppingCart,
 } from 'lucide-react'
 
 import { Button } from '../ui/button'
@@ -34,9 +36,11 @@ export function PharmacistDashboard() {
 
   // State for real API data
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [recentPrescriptions, setRecentPrescriptions] = useState<Prescription[]>([])
   const [recentOrders, setRecentOrders] = useState<Order[]>([])
+  const [loadErrors, setLoadErrors] = useState<{ stats?: string; prescriptions?: string; orders?: string }>({})
 
   // State for order details drawer
   const [showOrderDetails, setShowOrderDetails] = useState(false)
@@ -45,48 +49,71 @@ export function PharmacistDashboard() {
   // State for prescription details
   const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null)
 
-  // Load dashboard data from API
-  useEffect(() => {
-    const loadDashboardData = async () => {
-      try {
-        setLoading(true)
+  const handleLoadError = (error: unknown) => {
+    const err = error as { response?: { status?: number; data?: { message?: string } } }
 
-        // Load stats and recent data in parallel
-        const [statsData, prescriptions, ordersResponse] = await Promise.all([
-          dashboardService.getStats(),
-          prescriptionService.getAll({ limit: 5 }),
-          orderService.getOrders({ limit: 5 }),
-        ])
-
-        const orders = ordersResponse.orders
-
-        setStats(statsData)
-        setRecentPrescriptions(prescriptions)
-        setRecentOrders(orders)
-      } catch (error) {
-        const err = error as { response?: { status?: number; data?: { message?: string } } }
-
-        // Check if it's an authentication error
-        if (err.response?.status === 401) {
-          toast.error('Phiên đăng nhập đã hết hạn', {
-            description: 'Vui lòng đăng nhập lại',
-          })
-          // Redirect to login after a short delay
-          setTimeout(() => {
-            window.location.href = '/login'
-          }, 1500)
-        } else {
-          toast.error('Không thể tải dữ liệu dashboard', {
-            description: err.response?.data?.message || 'Vui lòng thử lại sau',
-          })
-        }
-      } finally {
-        setLoading(false)
-      }
+    if (err.response?.status === 401) {
+      toast.error('Phiên đăng nhập đã hết hạn', {
+        description: 'Vui lòng đăng nhập lại',
+      })
+      setTimeout(() => {
+        window.location.href = '/login'
+      }, 1500)
+      return 'Phiên đăng nhập đã hết hạn'
     }
 
-    loadDashboardData()
+    return err.response?.data?.message || 'Không thể tải dữ liệu'
+  }
+
+  const loadDashboardData = useCallback(async (showToast = false) => {
+    try {
+      setRefreshing(true)
+
+      const [statsResult, prescriptionsResult, ordersResult] = await Promise.allSettled([
+        dashboardService.getStats(),
+        prescriptionService.getAll({ limit: 5, status: 'pending' }),
+        orderService.getOrders({ limit: 5 }),
+      ])
+
+      const nextErrors: typeof loadErrors = {}
+
+      if (statsResult.status === 'fulfilled') {
+        setStats(statsResult.value)
+      } else {
+        nextErrors.stats = handleLoadError(statsResult.reason)
+      }
+
+      if (prescriptionsResult.status === 'fulfilled') {
+        setRecentPrescriptions(prescriptionsResult.value)
+      } else {
+        nextErrors.prescriptions = handleLoadError(prescriptionsResult.reason)
+      }
+
+      if (ordersResult.status === 'fulfilled') {
+        setRecentOrders(ordersResult.value.orders)
+      } else {
+        nextErrors.orders = handleLoadError(ordersResult.reason)
+      }
+
+      setLoadErrors(nextErrors)
+
+      if (showToast && Object.keys(nextErrors).length === 0) {
+        toast.success('Dashboard đã được cập nhật')
+      } else if (showToast && Object.keys(nextErrors).length > 0) {
+        toast.error('Một phần dữ liệu dashboard chưa tải được')
+      }
+    } finally {
+      setLoading(false)
+      setRefreshing(false)
+    }
   }, [])
+
+  // Load dashboard data from API and keep it fresh for daily operations.
+  useEffect(() => {
+    loadDashboardData()
+    const interval = window.setInterval(() => loadDashboardData(), 60000)
+    return () => window.clearInterval(interval)
+  }, [loadDashboardData])
 
   const formatTime = (timestamp: string) => {
     return new Date(timestamp).toLocaleTimeString('vi-VN', {
@@ -104,9 +131,7 @@ export function PharmacistDashboard() {
   }
 
   const handlePrescriptionUpdate = async () => {
-    // Reload dashboard data after prescription update
-    const [prescriptions] = await Promise.all([prescriptionService.getAll({ limit: 5 })])
-    setRecentPrescriptions(prescriptions)
+    await loadDashboardData()
   }
 
   const handleCreateOrder = (prescriptionId: string) => {
@@ -220,25 +245,37 @@ export function PharmacistDashboard() {
           }
         : undefined,
     },
+    {
+      title: 'Chat đang mở',
+      value: stats?.activeChats || 0,
+      icon: MessageCircle,
+      color: 'blue',
+    },
   ]
 
   return (
     <div>
       {/* Header */}
-      <div className='mb-6'>
-        <h1
-          className='text-3xl font-bold bg-clip-text text-transparent'
-          style={{
-            backgroundImage: `linear-gradient(to right, #0A2463, #1E40AF)`,
-          }}
-        >
-          Dashboard Tổng quan
-        </h1>
-        <p className='text-gray-600 mt-2'>Quản lý công việc hàng ngày của bạn</p>
+      <div className='mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
+        <div>
+          <h1
+            className='text-3xl font-bold bg-clip-text text-transparent'
+            style={{
+              backgroundImage: `linear-gradient(to right, #0A2463, #1E40AF)`,
+            }}
+          >
+            Dashboard Tổng quan
+          </h1>
+          <p className='text-gray-600 mt-2'>Quản lý công việc hàng ngày của bạn</p>
+        </div>
+        <Button variant='outline' onClick={() => loadDashboardData(true)} disabled={refreshing}>
+          <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+          Làm mới
+        </Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className='space-y-6'>
-        <TabsList className='grid w-full grid-cols-4 bg-white shadow-lg border-2 border-[#E8EDF5] rounded-lg p-1.5 gap-1 h-auto'>
+        <TabsList className='grid w-full grid-cols-3 bg-white shadow-lg border-2 border-[#E8EDF5] rounded-lg p-1.5 gap-1 h-auto'>
           <TabsTrigger
             value='overview'
             className='border-0 outline-none focus-visible:ring-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#0A2463] data-[state=active]:to-[#1E40AF] data-[state=active]:!text-white data-[state=active]:shadow-md text-gray-700 hover:text-[#1E40AF] hover:bg-[#F0F6FF] transition-all rounded-md font-medium py-2'
@@ -256,12 +293,6 @@ export function PharmacistDashboard() {
             className='border-0 outline-none focus-visible:ring-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#0A2463] data-[state=active]:to-[#1E40AF] data-[state=active]:!text-white data-[state=active]:shadow-md text-gray-700 hover:text-[#1E40AF] hover:bg-[#F0F6FF] transition-all rounded-md font-medium py-2'
           >
             Tạo đơn hàng
-          </TabsTrigger>
-          <TabsTrigger
-            value='reports'
-            className='border-0 outline-none focus-visible:ring-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#0A2463] data-[state=active]:to-[#1E40AF] data-[state=active]:!text-white data-[state=active]:shadow-md text-gray-700 hover:text-[#1E40AF] hover:bg-[#F0F6FF] transition-all rounded-md font-medium py-2'
-          >
-            Báo cáo
           </TabsTrigger>
         </TabsList>
 
@@ -289,7 +320,9 @@ export function PharmacistDashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent className='space-y-4'>
-                {recentPrescriptions.length === 0 ? (
+                {loadErrors.prescriptions ? (
+                  <p className='text-center text-red-500 py-4'>{loadErrors.prescriptions}</p>
+                ) : recentPrescriptions.length === 0 ? (
                   <p className='text-center text-gray-500 py-4'>Chưa có đơn thuốc nào</p>
                 ) : (
                   recentPrescriptions.slice(0, 3).map((prescription) => (
@@ -337,7 +370,9 @@ export function PharmacistDashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent className='space-y-4'>
-                {recentOrders.length === 0 ? (
+                {loadErrors.orders ? (
+                  <p className='text-center text-red-500 py-4'>{loadErrors.orders}</p>
+                ) : recentOrders.length === 0 ? (
                   <p className='text-center text-gray-500 py-4'>Chưa có đơn hàng nào</p>
                 ) : (
                   recentOrders.slice(0, 3).map((order) => (
@@ -393,69 +428,76 @@ export function PharmacistDashboard() {
         <TabsContent value='prescriptions'>
           <Card className='bg-white/80 backdrop-blur-lg shadow-lg border-2 border-[#E8EDF5]'>
             <CardHeader>
-              <CardTitle className='text-blue-800 flex items-center justify-between'>
-                Quản lý đơn thuốc
+              <CardTitle className='text-blue-800 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+                <span>Quản lý đơn thuốc</span>
                 <Link to='/pharmacist/prescriptions'>
-                  <Button>
-                    <Plus className='w-4 h-4 mr-2' />
+                  <Button className='w-full sm:w-auto'>
+                    <ArrowRight className='w-4 h-4 mr-2' />
                     Xem chi tiết
                   </Button>
                 </Link>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className='space-y-4'>
-                {recentPrescriptions.length === 0 ? (
+              <div className='space-y-3'>
+                {loadErrors.prescriptions ? (
+                  <p className='text-center text-red-500 py-8'>{loadErrors.prescriptions}</p>
+                ) : recentPrescriptions.length === 0 ? (
                   <p className='text-center text-gray-500 py-8'>Chưa có đơn thuốc nào</p>
                 ) : (
                   recentPrescriptions.map((prescription) => (
-                    <div key={prescription._id} className='border border-gray-200 rounded-lg p-6'>
-                      <div className='flex items-start justify-between mb-4'>
-                        <div className='flex items-center gap-4'>
-                          <Avatar className='bg-[#E8EDF5]'>
-                            <AvatarFallback>
-                              <Pill className='w-5 h-5 text-[#1E40AF]' />
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <h3 className='font-medium'>{prescription.prescriptionNumber}</h3>
-                            <p className='text-sm text-gray-600'>{prescription.doctorName}</p>
-                            <p className='text-xs text-gray-500'>
-                              {formatDate(prescription.createdAt)} lúc {formatTime(prescription.createdAt)}
-                            </p>
+                    <div
+                      key={prescription._id}
+                      className='rounded-lg border border-[#E8EDF5] bg-white px-4 py-4 shadow-sm transition-colors hover:border-[#BFDBFE]'
+                    >
+                      <div className='grid gap-4 lg:grid-cols-[64px_minmax(0,1.6fr)_180px_220px_180px] lg:items-center'>
+                        <Avatar className='h-12 w-12 bg-[#E8EDF5] lg:mx-auto'>
+                          <AvatarFallback>
+                            <Pill className='w-5 h-5 text-[#1E40AF]' />
+                          </AvatarFallback>
+                        </Avatar>
+
+                        <div className='min-w-0'>
+                          <div className='mb-1 flex min-w-0 flex-wrap items-center gap-2'>
+                            <h3 className='truncate font-semibold text-gray-900'>{prescription.prescriptionNumber}</h3>
+                            <Badge className={`shrink-0 ${getStatusColor(prescription.status?.toLowerCase() || 'pending')}`}>
+                              {getStatusText(prescription.status?.toLowerCase() || 'pending')}
+                            </Badge>
                           </div>
+                          <p className='truncate text-sm font-medium text-gray-600'>{prescription.doctorName}</p>
+                          <p className='mt-0.5 text-xs text-gray-500'>
+                            {formatDate(prescription.createdAt)} lúc {formatTime(prescription.createdAt)}
+                          </p>
                         </div>
-                        <Badge className={getStatusColor(prescription.status?.toLowerCase() || 'pending')}>
-                          {getStatusText(prescription.status?.toLowerCase() || 'pending')}
-                        </Badge>
-                      </div>
 
-                      <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mb-4'>
-                        <div>
-                          <p className='text-sm font-medium mb-1'>Thuốc:</p>
-                          <p className='text-sm text-gray-600'>{prescription.medications.length} loại</p>
+                        <div className='min-h-[56px] rounded-md bg-[#F8FAFB] px-3 py-2'>
+                          <p className='text-xs font-medium uppercase text-gray-500'>Thuốc</p>
+                          <p className='text-sm font-semibold text-gray-900'>{prescription.medications.length} loại</p>
                         </div>
-                        <div>
-                          <p className='text-sm font-medium mb-1'>Ghi chú:</p>
-                          <p className='text-sm text-gray-600'>{prescription.notes || 'Không có'}</p>
-                        </div>
-                      </div>
 
-                      <div className='flex items-center gap-3'>
-                        <Button variant='outline' size='sm' onClick={() => handleViewPrescription(prescription)}>
-                          <Eye className='w-4 h-4 mr-1' />
-                          Xem chi tiết
-                        </Button>
-                        {prescription.status === 'verified' && (
-                          <Button
-                            size='sm'
-                            onClick={() => handleCreateOrder(prescription._id)}
-                            className='bg-[#0A2463] hover:bg-[#071A49] text-white'
-                          >
-                            <Plus className='w-4 h-4 mr-1' />
-                            Tạo đơn hàng
+                        <div className='min-h-[56px] rounded-md bg-[#F8FAFB] px-3 py-2'>
+                          <p className='text-xs font-medium uppercase text-gray-500'>Ghi chú</p>
+                          <p className='line-clamp-1 text-sm font-semibold text-gray-900'>
+                            {prescription.notes || 'Không có'}
+                          </p>
+                        </div>
+
+                        <div className='flex flex-wrap items-center gap-2 lg:justify-end'>
+                          <Button className='w-full sm:w-auto lg:w-[164px]' variant='outline' size='sm' onClick={() => handleViewPrescription(prescription)}>
+                            <Eye className='w-4 h-4 mr-1' />
+                            Xem chi tiết
                           </Button>
-                        )}
+                          {prescription.status === 'verified' && (
+                            <Button
+                              size='sm'
+                              onClick={() => handleCreateOrder(prescription._id)}
+                              className='w-full bg-[#0A2463] hover:bg-[#071A49] text-white sm:w-auto lg:w-[164px]'
+                            >
+                              <ShoppingCart className='w-4 h-4 mr-1' />
+                              Tạo đơn hàng
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))
@@ -475,34 +517,94 @@ export function PharmacistDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className='text-center py-12'>
-                <Plus className='w-16 h-16 text-blue-300 mx-auto mb-4' />
-                <h3 className='text-xl font-medium text-gray-900 mb-2'>Module tạo đơn hàng</h3>
-                <p className='text-gray-600 mb-6'>Tính năng này sẽ được triển khai trong phiên bản tiếp theo</p>
-                <Link to='/pharmacist/create-order'>
-                  <Button className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'>
-                    Đi đến trang tạo đơn hàng
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+              <div className='grid gap-4 lg:grid-cols-[1.1fr_0.9fr]'>
+                <div className='rounded-lg border border-[#E8EDF5] bg-[#F8FAFB] p-5'>
+                  <div className='flex items-start gap-4'>
+                    <div className='flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[#E8EDF5] text-[#1E40AF]'>
+                      <ShoppingCart className='h-6 w-6' />
+                    </div>
+                    <div className='min-w-0 flex-1'>
+                      <h3 className='text-lg font-semibold text-gray-900'>Tạo đơn bán tại quầy hoặc giao hàng</h3>
+                      <p className='mt-1 text-sm text-gray-600'>
+                        Tìm khách hàng, thêm sản phẩm, kiểm tra thuốc kê đơn và hoàn tất thanh toán trong flow tạo đơn
+                        hàng đầy đủ.
+                      </p>
+                      <div className='mt-4 flex flex-wrap gap-2'>
+                        <Link to='/pharmacist/create-order'>
+                          <Button className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'>
+                            <Plus className='w-4 h-4 mr-2' />
+                            Tạo đơn mới
+                          </Button>
+                        </Link>
+                        <Link to='/pharmacist/prescriptions'>
+                          <Button variant='outline'>
+                            <FileText className='w-4 h-4 mr-2' />
+                            Chọn từ đơn thuốc
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-        {/* Reports Tab */}
-        <TabsContent value='reports'>
-          <Card className='bg-white/80 backdrop-blur-lg shadow-lg border-2 border-[#E8EDF5]'>
-            <CardHeader>
-              <CardTitle className='text-blue-800'>Báo cáo & Thống kê</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className='text-center py-12'>
-                <BarChart3 className='w-16 h-16 text-blue-300 mx-auto mb-4' />
-                <h3 className='text-xl font-medium text-gray-900 mb-2'>Báo cáo chi tiết</h3>
-                <p className='text-gray-600 mb-6'>Thống kê doanh thu, đơn hàng và hiệu suất làm việc</p>
-                <Button className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'>
-                  Xem báo cáo
-                </Button>
+                <div className='rounded-lg border border-[#E8EDF5] bg-white p-5'>
+                  <h3 className='font-semibold text-gray-900'>Việc cần xử lý trước khi tạo đơn</h3>
+                  <div className='mt-4 space-y-3'>
+                    <div className='flex items-center justify-between rounded-md bg-yellow-50 px-3 py-2'>
+                      <span className='text-sm text-yellow-900'>Đơn thuốc chờ duyệt</span>
+                      <span className='text-lg font-bold text-yellow-700'>{stats?.pendingPrescriptions || 0}</span>
+                    </div>
+                    <div className='flex items-center justify-between rounded-md bg-green-50 px-3 py-2'>
+                      <span className='text-sm text-green-900'>Đơn hàng hôm nay</span>
+                      <span className='text-lg font-bold text-green-700'>{stats?.ordersToday || 0}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className='lg:col-span-2 rounded-lg border border-[#E8EDF5] bg-white p-5'>
+                  <div className='mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
+                    <div>
+                      <h3 className='font-semibold text-gray-900'>Đơn thuốc đang chờ xử lý</h3>
+                      <p className='text-sm text-gray-600'>Duyệt đơn thuốc trước, sau đó tạo đơn hàng từ đơn đã duyệt.</p>
+                    </div>
+                    <Link to='/pharmacist/prescriptions'>
+                      <Button variant='outline' size='sm' className='w-full sm:w-auto'>
+                        Xem toàn bộ
+                        <ArrowRight className='ml-2 h-4 w-4' />
+                      </Button>
+                    </Link>
+                  </div>
+
+                  {loadErrors.prescriptions ? (
+                    <p className='py-4 text-sm text-red-500'>{loadErrors.prescriptions}</p>
+                  ) : recentPrescriptions.length === 0 ? (
+                    <p className='py-6 text-center text-sm text-gray-500'>Không có đơn thuốc chờ xử lý.</p>
+                  ) : (
+                    <div className='grid gap-3 md:grid-cols-2'>
+                      {recentPrescriptions.slice(0, 4).map((prescription) => (
+                        <button
+                          key={prescription._id}
+                          type='button'
+                          onClick={() => handleViewPrescription(prescription)}
+                          className='rounded-lg border border-[#E8EDF5] p-4 text-left transition-colors hover:border-[#BFDBFE] hover:bg-[#F0F6FF]'
+                        >
+                          <div className='flex items-start justify-between gap-3'>
+                            <div className='min-w-0'>
+                              <p className='truncate font-semibold text-gray-900'>{prescription.prescriptionNumber}</p>
+                              <p className='mt-1 text-sm text-gray-600'>{prescription.doctorName}</p>
+                              <p className='mt-1 text-xs text-gray-500'>
+                                {prescription.medications.length} loại thuốc - {formatDate(prescription.createdAt)}
+                              </p>
+                            </div>
+                            <Badge className={getStatusColor(prescription.status?.toLowerCase() || 'pending')}>
+                              {getStatusText(prescription.status?.toLowerCase() || 'pending')}
+                            </Badge>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
