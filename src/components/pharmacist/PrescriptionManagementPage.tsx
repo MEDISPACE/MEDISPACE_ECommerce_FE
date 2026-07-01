@@ -141,14 +141,6 @@ export function PrescriptionManagementPage() {
       value: stats?.pending || 0,
       icon: Clock,
       color: 'yellow',
-      badge:
-        (stats?.pending || 0) > 0
-          ? {
-              text: 'Cần xử lý',
-              icon: AlertTriangle,
-              show: true,
-            }
-          : undefined,
     },
     {
       title: 'Đã duyệt',
@@ -183,7 +175,7 @@ export function PrescriptionManagementPage() {
   }
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-6' data-testid='prescriptions-page'>
       {/* Header */}
       <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-6'>
         <div className='flex flex-col md:flex-row md:items-center justify-between gap-4'>
@@ -204,7 +196,9 @@ export function PrescriptionManagementPage() {
         <div className='mt-6'>
           <StatsCardGrid cols={4}>
             {statsCards.map((stat, index) => (
-              <StatsCard key={index} config={stat} />
+              <div key={index} className='h-full' data-testid={`prescription-stat-${stat.title.replace(/\s+/g, '-').toLowerCase()}`}>
+                <StatsCard config={stat} />
+              </div>
             ))}
           </StatsCardGrid>
         </div>
@@ -217,6 +211,7 @@ export function PrescriptionManagementPage() {
             <div className='relative'>
               <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4' />
               <Input
+                data-testid='prescription-search-input'
                 type='text'
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -227,7 +222,7 @@ export function PrescriptionManagementPage() {
           </div>
 
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className='w-40'>
+            <SelectTrigger className='w-40' data-testid='prescription-status-filter'>
               <SelectValue placeholder='Trạng thái' />
             </SelectTrigger>
             <SelectContent>
@@ -240,7 +235,7 @@ export function PrescriptionManagementPage() {
           </Select>
 
           <Select value={dateFilter} onValueChange={setDateFilter}>
-            <SelectTrigger className='w-40'>
+            <SelectTrigger className='w-40' data-testid='prescription-date-filter'>
               <SelectValue placeholder='Thời gian' />
             </SelectTrigger>
             <SelectContent>
@@ -269,7 +264,7 @@ export function PrescriptionManagementPage() {
         )}
 
         {filteredPrescriptions.length === 0 ? (
-          <Card className='bg-white/80 backdrop-blur-lg shadow-lg border border-[#E8EDF5]'>
+          <Card className='bg-white/80 backdrop-blur-lg shadow-lg border border-[#E8EDF5]' data-testid='prescription-empty-state'>
             <CardContent className='p-12 text-center'>
               <FileText className='w-16 h-16 mx-auto text-gray-300 mb-4' />
               <h3 className='text-lg font-medium text-gray-900 mb-2'>Không tìm thấy đơn thuốc</h3>
@@ -280,6 +275,9 @@ export function PrescriptionManagementPage() {
           paginatedPrescriptions.map((prescription) => (
             <Card
               key={prescription._id}
+              data-testid={`prescription-card-${prescription._id}`}
+              data-status={prescription.status}
+              data-prescription-number={prescription.prescriptionNumber}
               className='bg-white/80 backdrop-blur-lg shadow-lg border border-[#E8EDF5] hover:shadow-xl transition-all duration-200'
             >
               <CardContent className='p-5'>
@@ -298,7 +296,7 @@ export function PrescriptionManagementPage() {
                           (() => {
                             const diffHours = (Date.now() - new Date(prescription.createdAt).getTime()) / 3600000
                             return diffHours > 8 ? (
-                              <span className='flex items-center gap-1 text-xs text-red-600 bg-red-50 px-1.5 py-0.5 rounded-full border border-red-200'>
+                              <span data-testid='urgency-indicator' className='flex items-center gap-1 text-xs text-red-600 bg-red-50 px-1.5 py-0.5 rounded-full border border-red-200'>
                                 <AlertTriangle className='w-3 h-3' />
                                 Chờ {Math.floor(diffHours)}h
                               </span>
@@ -331,6 +329,7 @@ export function PrescriptionManagementPage() {
                       {formatDateTime(prescription.createdAt)}
                     </span>
                     <Button
+                      data-testid='review-prescription-btn'
                       variant='outline'
                       size='sm'
                       onClick={() => handleViewPrescription(prescription)}
@@ -381,6 +380,7 @@ export function PrescriptionManagementPage() {
             <div className='flex gap-1'>
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                 <Button
+                  data-testid='pagination-page-btn'
                   key={page}
                   variant={currentPage === page ? 'default' : 'outline'}
                   size='sm'
