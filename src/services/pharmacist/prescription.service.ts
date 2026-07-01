@@ -24,6 +24,22 @@ export interface UploadPrescriptionData {
 export interface VerifyPrescriptionData {
   status: 'verified' | 'rejected' // lowercase for consistency
   notes?: string
+  corrections?: Partial<{
+    patientName: string
+    patientAge: string | number
+    patientGender: string
+    diagnosis: string
+    doctorName: string
+    hospitalName: string
+    prescriptionDate: string
+    medications: Array<{
+      productId?: string
+      productName: string
+      dosage: string
+      quantity: number
+      instructions: string
+    }>
+  }>
 }
 
 export interface PrescriptionListParams {
@@ -68,9 +84,9 @@ export const prescriptionService = {
           }
         : { status: 'all' }
 
-      // Use /prescriptions/pending endpoint which is designed for pharmacists to see all prescriptions
+      // Use explicit pharmacist management endpoint for all-status lists.
       const response: AxiosResponse<{ message: string; result: { prescriptions: Prescription[]; pagination: any } }> =
-        await apiClient.get(API_ENDPOINTS.PRESCRIPTIONS.PENDING, {
+        await apiClient.get(API_ENDPOINTS.PRESCRIPTIONS.PHARMACIST, {
           params: queryParams,
         })
 

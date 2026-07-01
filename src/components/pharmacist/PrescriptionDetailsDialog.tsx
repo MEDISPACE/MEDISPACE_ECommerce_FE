@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import {
   CheckCircle,
@@ -22,6 +22,7 @@ import {
 
 import { Button } from '~/components/ui/button'
 import { Badge } from '~/components/ui/badge'
+import { Input } from '~/components/ui/input'
 import {
   Dialog,
   DialogContent,
@@ -91,11 +92,65 @@ function OCRConfidenceBadge({ confidence }: { confidence?: string }) {
 
 type ConfirmAction = 'verified' | 'rejected' | null
 
+type PrescriptionCorrections = {
+  patientName: string
+  patientAge: string
+  patientGender: string
+  diagnosis: string
+  doctorName: string
+  hospitalName: string
+  prescriptionDate: string
+  medications: Array<{
+    productId?: string
+    productName: string
+    dosage: string
+    quantity: number
+    instructions: string
+  }>
+}
+
+function buildCorrections(prescription: Prescription): PrescriptionCorrections {
+  return {
+    patientName: prescription.patientName || '',
+    patientAge: prescription.patientAge || '',
+    patientGender: prescription.patientGender || '',
+    diagnosis: prescription.diagnosis || '',
+    doctorName: prescription.doctorName || '',
+    hospitalName: prescription.hospitalName || '',
+    prescriptionDate: prescription.prescriptionDate || '',
+    medications: prescription.medications.map((medication) => ({
+      productId: medication.productId,
+      productName: medication.productName || medication.matchedName || '',
+      dosage: medication.dosage || '',
+      quantity: Number(medication.quantity) || 1,
+      instructions: medication.instructions || '',
+    })),
+  }
+}
+
+function getErrorMessage(error: unknown) {
+  const fallback = 'Vui lòng thử lại sau'
+  if (typeof error !== 'object' || error === null) return fallback
+
+  const maybeAxiosError = error as { response?: { data?: { message?: string; errors?: unknown } }; message?: string }
+  return maybeAxiosError.response?.data?.message || maybeAxiosError.message || fallback
+}
+
 export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpdate }: PrescriptionDetailsDialogProps) {
   const [pharmacistNotes, setPharmacistNotes] = useState(prescription?.pharmacistNotes || '')
+  const [corrections, setCorrections] = useState<PrescriptionCorrections | null>(
+    prescription ? buildCorrections(prescription) : null,
+  )
   const [submitting, setSubmitting] = useState(false)
   const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!prescription) return
+    setPharmacistNotes(prescription.pharmacistNotes || '')
+    setCorrections(buildCorrections(prescription))
+    setConfirmAction(null)
+  }, [prescription?._id])
 
   if (!prescription) return null
 
@@ -124,6 +179,7 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
       await prescriptionService.verify(prescription._id, {
         status: confirmAction,
         notes: pharmacistNotes,
+        corrections: confirmAction === 'verified' && corrections ? corrections : undefined,
       })
       toast.success(
         confirmAction === 'verified' ? '✅ Đơn thuốc đã được phê duyệt thành công!' : '❌ Đơn thuốc đã bị từ chối',
@@ -133,8 +189,8 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
       onClose()
       setPharmacistNotes('')
       setConfirmAction(null)
-    } catch {
-      toast.error('Không thể cập nhật đơn thuốc', { description: 'Vui lòng thử lại sau' })
+    } catch (error) {
+      toast.error('Không thể cập nhật đơn thuốc', { description: getErrorMessage(error) })
     } finally {
       setSubmitting(false)
     }
@@ -142,21 +198,21 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className='max-w-5xl max-h-[90vh] flex flex-col overflow-hidden rounded-xl p-0'>
+      <DialogContent data-testid='prescription-detail-dialog' className='!w-[calc(100vw-2rem)] sm:!w-[calc(100vw-4rem)] 2xl:!w-[1320px] !max-w-none max-h-[94vh] flex flex-col overflow-hidden rounded-xl p-0'>
         {/* ── HEADER ── */}
-        <div className='px-6 pt-5 pb-4 border-b border-gray-100 sticky top-0 bg-white z-10'>
+        <div className='px-6 pt-5 pb-4 border-b border-gray-100 sticky top-0 bg-white z-10 relative'>
           <DialogHeader>
-            <div className='flex items-start justify-between gap-2'>
-              <div>
-                <DialogTitle className='text-lg font-bold text-blue-900 flex items-center gap-2'>
-                  <FileText className='w-5 h-5' />
-                  {prescription.prescriptionNumber}
+            <div className='flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3'>
+              <div className='min-w-0'>
+                <DialogTitle className='text-base sm:text-lg font-bold text-blue-900 flex items-start gap-2 break-words'>
+                  <FileText className='w-5 h-5 shrink-0 mt-0.5' />
+                  <span className='min-w-0 break-words'>{prescription.prescriptionNumber}</span>
                 </DialogTitle>
                 <DialogDescription className='text-sm text-gray-500 mt-0.5'>
                   Gửi lúc {formatDateTime(prescription.createdAt)}
                 </DialogDescription>
               </div>
-              <div className='flex items-center gap-2 shrink-0'>
+              <div className='flex items-center gap-2 flex-wrap sm:flex-nowrap sm:justify-end'>
                 <OCRConfidenceBadge confidence={prescription.ocrConfidence} />
                 {/* Urgency badge */}
                 {isPending && (
@@ -176,6 +232,7 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
                 )}
                 {/* Status badge */}
                 <span
+                  data-testid='prescription-dialog-status'
                   className={`text-xs px-2.5 py-0.5 rounded-full font-medium border
                   ${
                     prescription.status === 'pending'
@@ -198,7 +255,7 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
                 {/* Close button */}
                 <DialogClose asChild>
                   <button
-                    className='ml-1 w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors'
+                    className='absolute top-4 right-4 sm:static sm:ml-1 w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors'
                     aria-label='Đóng'
                   >
                     <svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24'>
@@ -214,10 +271,10 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
           </DialogHeader>
         </div>
 
-        <div className='px-6 py-4 space-y-5 overflow-y-auto flex-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-blue-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-blue-400'>
+        <div className='px-6 py-5 space-y-5 overflow-y-auto flex-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-blue-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-blue-400'>
           {/* ── REJECTION REASON (if rejected) ── */}
           {prescription.status === 'rejected' && (prescription.pharmacistNotes || prescription.notes) && (
-            <div className='p-3 bg-red-50 border border-red-200 rounded-lg flex gap-2'>
+            <div className='p-3 bg-red-50 border border-red-200 rounded-lg flex gap-2' data-testid='rejection-reason'>
               <ShieldAlert className='w-4 h-4 text-red-600 mt-0.5 shrink-0' />
               <div>
                 <p className='text-sm font-medium text-red-700'>Lý do từ chối</p>
@@ -231,7 +288,7 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
 
           {/* ── APPROVED NOTE (if verified) ── */}
           {prescription.status === 'verified' && (
-            <div className='p-3 bg-green-50 border border-green-200 rounded-lg flex gap-2'>
+            <div className='p-3 bg-green-50 border border-green-200 rounded-lg flex gap-2' data-testid='approval-note'>
               <CheckCircle className='w-4 h-4 text-green-600 mt-0.5 shrink-0' />
               <div>
                 <p className='text-sm font-medium text-green-700'>
@@ -245,20 +302,22 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
           )}
 
           {/* ── MAIN 2-COL LAYOUT ── */}
-          <div className='grid grid-cols-1 lg:grid-cols-5 gap-5'>
+          <div className='grid grid-cols-1 xl:grid-cols-[minmax(360px,480px)_minmax(0,1fr)] gap-6'>
             {/* LEFT: images */}
-            <div className='lg:col-span-2'>
+            <div className='min-w-0'>
               <p className='text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2'>
                 Ảnh đơn thuốc ({prescription.images.length})
               </p>
-              <PrescriptionImageViewer images={prescription.images} />
+              <div data-testid='prescription-image-viewer'>
+                <PrescriptionImageViewer images={prescription.images} />
+              </div>
             </div>
 
             {/* RIGHT: info panels */}
-            <div className='lg:col-span-3 space-y-4'>
+            <div className='min-w-0 space-y-4'>
               {/* Patient Info */}
               <InfoSection title='Thông tin bệnh nhân' icon={<User className='w-4 h-4' />}>
-                <div className='grid grid-cols-2 gap-3 text-sm'>
+                <div className='grid grid-cols-2 gap-3 text-sm' data-testid='patient-info-section'>
                   <InfoRow label='Họ và tên' value={prescription.patientName} />
                   <InfoRow label='Tuổi' value={prescription.patientAge} />
                   <InfoRow label='Giới tính' value={genderLabel} />
@@ -276,7 +335,7 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
 
               {/* Doctor / Clinic Info */}
               <InfoSection title='Thông tin khám bệnh' icon={<Hospital className='w-4 h-4' />}>
-                <div className='grid grid-cols-2 gap-3 text-sm'>
+                <div className='grid grid-cols-2 gap-3 text-sm' data-testid='doctor-info-section'>
                   <InfoRow label='Bác sĩ' value={prescription.doctorName} />
                   <InfoRow label='Phòng khám / BV' value={prescription.hospitalName} />
                   <InfoRow label='Ngày kê đơn' value={formatDate(prescription.prescriptionDate)} />
@@ -286,6 +345,7 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
               {/* Customer account info (from DB lookup) */}
               {customerName && (
                 <InfoSection title='Tài khoản khách hàng' icon={<Phone className='w-4 h-4' />}>
+                  <div data-testid='customer-account-section'>
                   <div className='grid grid-cols-2 gap-3 text-sm'>
                     <InfoRow label='Tên tài khoản' value={customerName} />
                     {prescription.customer?.phoneNumber && (
@@ -293,10 +353,61 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
                     )}
                     {prescription.customer?.email && <InfoRow label='Email' value={prescription.customer.email} />}
                   </div>
+                  </div>
                 </InfoSection>
               )}
+              {!customerName && <p data-testid='customer-account-missing' className='text-sm text-gray-500'>Không tìm thấy tài khoản khách hàng liên kết</p>}
             </div>
           </div>
+
+          {isPending && corrections && (
+            <InfoSection title='Dữ liệu xác nhận trước khi duyệt' icon={<Info className='w-4 h-4' />}>
+              <div data-testid='prescription-correction-form' className='grid grid-cols-1 md:grid-cols-3 gap-3 text-sm'>
+                <Input
+                  data-testid='correction-patient-name'
+                  value={corrections.patientName}
+                  onChange={(event) => setCorrections((prev) => (prev ? { ...prev, patientName: event.target.value } : prev))}
+                  placeholder='Tên bệnh nhân'
+                  className='border-[#BFDBFE]'
+                />
+                <Input
+                  data-testid='correction-patient-age'
+                  value={corrections.patientAge}
+                  onChange={(event) => setCorrections((prev) => (prev ? { ...prev, patientAge: event.target.value } : prev))}
+                  placeholder='Tuổi'
+                  className='border-[#BFDBFE]'
+                />
+                <Input
+                  data-testid='correction-patient-gender'
+                  value={corrections.patientGender}
+                  onChange={(event) => setCorrections((prev) => (prev ? { ...prev, patientGender: event.target.value } : prev))}
+                  placeholder='Giới tính'
+                  className='border-[#BFDBFE]'
+                />
+                <Input
+                  data-testid='correction-doctor-name'
+                  value={corrections.doctorName}
+                  onChange={(event) => setCorrections((prev) => (prev ? { ...prev, doctorName: event.target.value } : prev))}
+                  placeholder='Bác sĩ'
+                  className='border-[#BFDBFE]'
+                />
+                <Input
+                  data-testid='correction-hospital-name'
+                  value={corrections.hospitalName}
+                  onChange={(event) => setCorrections((prev) => (prev ? { ...prev, hospitalName: event.target.value } : prev))}
+                  placeholder='Bệnh viện/phòng khám'
+                  className='border-[#BFDBFE]'
+                />
+                <Input
+                  data-testid='correction-diagnosis'
+                  value={corrections.diagnosis}
+                  onChange={(event) => setCorrections((prev) => (prev ? { ...prev, diagnosis: event.target.value } : prev))}
+                  placeholder='Chẩn đoán'
+                  className='border-[#BFDBFE]'
+                />
+              </div>
+            </InfoSection>
+          )}
 
           {/* ── MEDICATIONS ── */}
           <div>
@@ -313,10 +424,12 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
             {prescription.medications.length === 0 ? (
               <p className='text-sm text-gray-400 italic'>Không có thông tin thuốc</p>
             ) : (
-              <div className='grid grid-cols-1 sm:grid-cols-2 gap-2'>
+              <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3' data-testid='drug-list'>
                 {prescription.medications.map((med, idx) => (
                   <div
                     key={idx}
+                    data-testid='drug-item'
+                    data-mapped={Boolean(med.productId)}
                     className={`flex gap-3 p-3 rounded-lg border ${
                       med.productId
                         ? 'bg-emerald-50 border-emerald-200'
@@ -343,10 +456,11 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
                           {med.matchedName || med.productName}
                         </p>
                         {med.productId && (
-                          <span className='text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200 font-medium shrink-0'>
+                          <span data-testid='matched-product-confidence' className='text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200 font-medium shrink-0'>
                             ✓ Có trong kho
                           </span>
                         )}
+                        {!med.productId && <span data-testid='unmatched-drug-warning' className='text-[10px] px-1.5 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200 font-medium shrink-0'>Không tìm thấy trong kho</span>}
                       </div>
                       {med.matchedName && med.matchedName !== med.productName && (
                         <p className='text-[11px] text-gray-400 italic'>AI đọc: {med.productName}</p>
@@ -363,6 +477,65 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
                       </div>
                       {med.instructions && med.instructions !== med.dosage && (
                         <p className='text-xs text-gray-500 mt-0.5 line-clamp-2'>📋 {med.instructions}</p>
+                      )}
+                      {isPending && corrections?.medications[idx] && (
+                        <div className='mt-3 grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_90px_76px] gap-2'>
+                          <Input
+                            data-testid='correction-drug-name'
+                            value={corrections.medications[idx].productName}
+                            onChange={(event) =>
+                              setCorrections((prev) => {
+                                if (!prev) return prev
+                                const medications = [...prev.medications]
+                                medications[idx] = { ...medications[idx], productName: event.target.value }
+                                return { ...prev, medications }
+                              })
+                            }
+                            className='h-8 text-xs border-[#BFDBFE]'
+                          />
+                          <Input
+                            data-testid='correction-drug-dosage'
+                            value={corrections.medications[idx].dosage}
+                            onChange={(event) =>
+                              setCorrections((prev) => {
+                                if (!prev) return prev
+                                const medications = [...prev.medications]
+                                medications[idx] = { ...medications[idx], dosage: event.target.value }
+                                return { ...prev, medications }
+                              })
+                            }
+                            className='h-8 text-xs border-[#BFDBFE]'
+                          />
+                          <Input
+                            data-testid='correction-drug-quantity'
+                            type='number'
+                            min={1}
+                            value={corrections.medications[idx].quantity}
+                            onChange={(event) =>
+                              setCorrections((prev) => {
+                                if (!prev) return prev
+                                const medications = [...prev.medications]
+                                medications[idx] = { ...medications[idx], quantity: Number(event.target.value) || 1 }
+                                return { ...prev, medications }
+                              })
+                            }
+                            className='h-8 text-xs border-[#BFDBFE]'
+                          />
+                          <Textarea
+                            data-testid='correction-drug-instructions'
+                            value={corrections.medications[idx].instructions}
+                            onChange={(event) =>
+                              setCorrections((prev) => {
+                                if (!prev) return prev
+                                const medications = [...prev.medications]
+                                medications[idx] = { ...medications[idx], instructions: event.target.value }
+                                return { ...prev, medications }
+                              })
+                            }
+                            rows={2}
+                            className='sm:col-span-3 text-xs border-[#BFDBFE] resize-none'
+                          />
+                        </div>
                       )}
                     </div>
                   </div>
@@ -382,6 +555,7 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
                 )}
               </label>
               <Textarea
+                data-testid='pharmacist-notes-input'
                 value={pharmacistNotes}
                 onChange={(e) => setPharmacistNotes(e.target.value)}
                 placeholder='Nhập ghi chú, lý do từ chối hoặc hướng dẫn thêm...'
@@ -404,6 +578,7 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
           {/* ── CONFIRM PANEL ── */}
           {confirmAction && (
             <div
+              data-testid='confirmation-panel'
               className={`p-4 rounded-xl border-2 ${
                 confirmAction === 'verified' ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'
               }`}
@@ -429,10 +604,11 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
                   </p>
                 </div>
                 <div className='flex gap-2 shrink-0'>
-                  <Button variant='outline' size='sm' onClick={() => setConfirmAction(null)} disabled={submitting}>
+                  <Button data-testid='cancel-confirmation-btn' variant='outline' size='sm' onClick={() => setConfirmAction(null)} disabled={submitting}>
                     <X className='w-3.5 h-3.5 mr-1' /> Huỷ
                   </Button>
                   <Button
+                    data-testid='confirm-action-btn'
                     size='sm'
                     onClick={handleConfirmAction}
                     disabled={submitting}
@@ -458,6 +634,7 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
             {isPending && !confirmAction && (
               <>
                 <Button
+                  data-testid='reject-btn'
                   variant='outline'
                   size='sm'
                   onClick={() => setConfirmAction('rejected')}
@@ -466,6 +643,7 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
                   <XCircle className='w-4 h-4 mr-1' /> Từ chối
                 </Button>
                 <Button
+                  data-testid='approve-btn'
                   size='sm'
                   onClick={() => setConfirmAction('verified')}
                   className='bg-green-600 hover:bg-green-700 text-white'
@@ -477,6 +655,7 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
 
             {prescription.status === 'verified' && (
               <Button
+                data-testid='create-order-from-prescription-btn'
                 size='sm'
                 onClick={() => {
                   onClose()

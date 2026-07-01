@@ -1,0 +1,95 @@
+import { test, expect } from '@playwright/test'
+import { captureEvidence, cleanupPrescriptionData, getPrescriptionFromDb, newPharmacistPage, openPrescriptionPage, openReviewDialog, seedPrescriptionData, selectRadixOption } from './helpers'
+
+test.describe('prescriptions/e2e/19.edge-cases', () => {
+  test.afterEach(async () => cleanupPrescriptionData())
+
+  test('zero mapped drugs show warning before approval decision', async ({ browser }) => {
+    const data = await seedPrescriptionData({ zeroMapped: true })
+    const page = await newPharmacistPage(browser, data.pharmacist)
+    await openPrescriptionPage(page)
+    await openReviewDialog(page, data.pending)
+    await expect(page.getByTestId('unmatched-drug-warning')).toBeVisible()
+    await captureEvidence(page, '19-01-zero-mapped-warning')
+    await page.getByTestId('approve-btn').click()
+    await expect(page.getByTestId('confirmation-panel')).toBeVisible()
+  })
+
+  test('broken image does not block text review or rejection', async ({ browser }) => {
+    const data = await seedPrescriptionData({ brokenImage: true })
+    const page = await newPharmacistPage(browser, data.pharmacist)
+    await openPrescriptionPage(page)
+    await openReviewDialog(page, data.pending)
+    await expect(page.getByTestId('drug-list')).toContainText('Amoxicillin')
+    await captureEvidence(page, '19-02-broken-image-text-review')
+    await page.getByTestId('reject-btn').click()
+    await page.getByTestId('pharmacist-notes-input').fill('Ảnh lỗi nhưng dữ liệu text đủ để từ chối an toàn')
+    await page.getByTestId('confirm-action-btn').click()
+    await expect.poll(async () => (await getPrescriptionFromDb(data.pending._id))?.status, { timeout: 15_000 }).toBe('rejected')
+  })
+
+  test('very long rejection reason is preserved without breaking UI', async ({ browser }) => {
+    const data = await seedPrescriptionData()
+    const reason = 'Lý do từ chối rất dài '.repeat(80)
+    const page = await newPharmacistPage(browser, data.pharmacist)
+    await openPrescriptionPage(page)
+    await openReviewDialog(page, data.pending)
+    await page.getByTestId('reject-btn').click()
+    await page.getByTestId('pharmacist-notes-input').fill(reason)
+    await page.getByTestId('confirm-action-btn').click()
+    const final = await getPrescriptionFromDb(data.pending._id)
+    expect(final?.status).toBe('rejected')
+    expect(final?.pharmacistNotes.length).toBeGreaterThan(1000)
+  })
+
+  test('midnight Vietnam submission is bucketed into Today filter', async ({ browser }) => {
+    const data = await seedPrescriptionData({ midnight: true })
+    const page = await newPharmacistPage(browser, data.pharmacist)
+    await openPrescriptionPage(page)
+    await selectRadixOption(page, 'prescription-date-filter', 'Hôm nay')
+    await page.getByTestId('prescription-search-input').fill(data.pending.prescriptionNumber)
+    await expect(page.getByTestId(`prescription-card-${data.pending._id}`)).toBeVisible()
+    await captureEvidence(page, '19-03-midnight-vietnam-today')
+  })
+
+  test('mobile viewport keeps review and approve flow usable', async ({ browser }) => {
+    const data = await seedPrescriptionData()
+    const page = await newPharmacistPage(browser, data.pharmacist)
+    await page.setViewportSize({ width: 375, height: 812 })
+    await openPrescriptionPage(page)
+    await openReviewDialog(page, data.pending)
+    await expect(page.getByTestId('prescription-image-viewer')).toBeVisible()
+    await captureEvidence(page, '19-04-mobile-review-modal')
+    await page.getByTestId('approve-btn').click()
+    await page.getByTestId('confirm-action-btn').click()
+    await expect.poll(async () => (await getPrescriptionFromDb(data.pending._id))?.status, { timeout: 15_000 }).toBe('verified')
+  })
+
+  test('browser back during review leaves no partial state', async ({ browser }) => {
+    const data = await seedPrescriptionData()
+    const page = await newPharmacistPage(browser, data.pharmacist)
+    await openPrescriptionPage(page)
+    await openReviewDialog(page, data.pending)
+    await page.goBack()
+    const final = await getPrescriptionFromDb(data.pending._id)
+    expect(final?.status).toBe('pending')
+    expect(final?.verifiedAt).toBeFalsy()
+  })
+
+  test('network failure during approve shows retry and avoids duplicate submission after recovery', async ({ browser }) => {
+    const data = await seedPrescriptionData()
+    const page = await newPharmacistPage(browser, data.pharmacist)
+    await openPrescriptionPage(page)
+    await openReviewDialog(page, data.pending)
+    await page.route(`**/prescriptions/${data.pending._id}/verify`, async (route) => route.abort('failed'))
+    await page.getByTestId('approve-btn').click()
+    await page.getByTestId('confirm-action-btn').click()
+    await expect(page.getByText(/Không thể cập nhật|thử lại/i).first()).toBeVisible({ timeout: 15_000 })
+    await captureEvidence(page, '19-05-network-failure-retry-visible')
+    expect((await getPrescriptionFromDb(data.pending._id))?.status).toBe('pending')
+    await page.unroute(`**/prescriptions/${data.pending._id}/verify`)
+    await page.getByTestId('confirm-action-btn').click()
+    await expect.poll(async () => (await getPrescriptionFromDb(data.pending._id))?.status, { timeout: 15_000 }).toBe('verified')
+    expect((await getPrescriptionFromDb(data.pending._id))?.status).toBe('verified')
+  })
+})

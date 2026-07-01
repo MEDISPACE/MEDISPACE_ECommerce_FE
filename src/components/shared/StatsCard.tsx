@@ -112,7 +112,7 @@ export function StatsCard({ config, onClick }: StatsCardProps) {
 
   return (
     <Card
-      className={`group relative overflow-hidden bg-white backdrop-blur-lg shadow-lg border border-[#E8EDF5] hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 ${onClick ? 'cursor-pointer' : ''}`}
+      className={`group relative h-full overflow-hidden bg-white backdrop-blur-lg shadow-lg border border-[#E8EDF5] hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 ${onClick ? 'cursor-pointer' : ''}`}
       onClick={onClick}
     >
       {/* Gradient overlay on hover */}
@@ -120,7 +120,7 @@ export function StatsCard({ config, onClick }: StatsCardProps) {
         className={`absolute inset-0 bg-gradient-to-br ${colors.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}
       />
 
-      <CardContent className='p-4 relative z-10'>
+      <CardContent className='p-4 relative z-10 h-full flex flex-col'>
         <div className='flex items-start justify-between mb-3'>
           <div className='flex-1'>
             <p className='text-xs text-gray-600 mb-1 uppercase tracking-wide'>{config.title}</p>
@@ -143,32 +143,34 @@ export function StatsCard({ config, onClick }: StatsCardProps) {
         </div>
 
         {/* Trend indicator or Badge */}
-        {config.trend && (
-          <div className='flex items-center gap-2'>
-            <div
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-full ${config.trend.type === 'positive' ? 'bg-green-50' : 'bg-red-50'}`}
-            >
-              {config.trend.type === 'positive' ? (
-                <ArrowUpRight className='w-3.5 h-3.5 text-green-600' />
-              ) : (
-                <ArrowDownRight className='w-3.5 h-3.5 text-red-600' />
-              )}
-              <span className={`text-sm ${config.trend.type === 'positive' ? 'text-green-600' : 'text-red-600'}`}>
-                {config.trend.value}
-              </span>
+        <div className='mt-auto'>
+          {config.trend && (
+            <div className='flex items-center gap-2'>
+              <div
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-full ${config.trend.type === 'positive' ? 'bg-green-50' : 'bg-red-50'}`}
+              >
+                {config.trend.type === 'positive' ? (
+                  <ArrowUpRight className='w-3.5 h-3.5 text-green-600' />
+                ) : (
+                  <ArrowDownRight className='w-3.5 h-3.5 text-red-600' />
+                )}
+                <span className={`text-sm ${config.trend.type === 'positive' ? 'text-green-600' : 'text-red-600'}`}>
+                  {config.trend.value}
+                </span>
+              </div>
+              {config.trend.label && <span className='text-xs text-gray-500'>{config.trend.label}</span>}
             </div>
-            {config.trend.label && <span className='text-xs text-gray-500'>{config.trend.label}</span>}
-          </div>
-        )}
+          )}
 
-        {config.badge && config.badge.show && (
-          <div className='flex items-center gap-1'>
-            <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full ${colors.badgeBg}`}>
-              {BadgeIcon && <BadgeIcon className={`w-3 h-3 ${colors.badgeText}`} />}
-              <span className={`text-xs ${colors.badgeText}`}>{config.badge.text}</span>
+          {config.badge && config.badge.show && (
+            <div className='flex items-center gap-1'>
+              <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full ${colors.badgeBg}`}>
+                {BadgeIcon && <BadgeIcon className={`w-3 h-3 ${colors.badgeText}`} />}
+                <span className={`text-xs ${colors.badgeText}`}>{config.badge.text}</span>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Bottom colored line */}
         <div
@@ -193,5 +195,5 @@ export function StatsCardGrid({ children, cols = 4 }: { children: React.ReactNod
     7: 'lg:grid-cols-7',
   }
 
-  return <div className={`grid grid-cols-2 md:grid-cols-${Math.min(cols, 4)} ${gridCols[cols]} gap-4`}>{children}</div>
+  return <div className={`grid grid-cols-2 md:grid-cols-${Math.min(cols, 4)} ${gridCols[cols]} gap-4 items-stretch`}>{children}</div>
 }

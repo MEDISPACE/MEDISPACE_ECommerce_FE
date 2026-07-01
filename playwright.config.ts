@@ -12,6 +12,7 @@ const baseURL = process.env.E2E_BASE_URL || 'http://localhost:3000'
 export default defineConfig({
   testDir: './tests',
   globalSetup: './tests/e2e/global-setup.ts',
+  workers: Number(process.env.PLAYWRIGHT_WORKERS || 1),
   timeout: 120_000,
   expect: {
     timeout: 10_000,

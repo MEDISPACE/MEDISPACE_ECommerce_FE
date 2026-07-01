@@ -929,7 +929,7 @@ export function CreateOrderPage() {
   }
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-6' data-testid='create-order-page'>
       {/* Product Detail Modal for OCR suggestions */}
       <ProductDetailModal
         product={selectedProduct}
@@ -958,7 +958,7 @@ export function CreateOrderPage() {
         </div>
         {prescriptionId && sourcePrescription && (
           <div className='flex items-center gap-3'>
-            <Badge variant='outline' className='border-[#BFDBFE] text-[#0A2463] py-1.5'>
+            <Badge variant='outline' className='border-[#BFDBFE] text-[#0A2463] py-1.5' data-testid='source-prescription-badge'>
               <FileText className='w-3 h-3 mr-1' />
               Từ đơn thuốc #{sourcePrescription?.prescriptionNumber || prescriptionId}
             </Badge>
@@ -982,7 +982,7 @@ export function CreateOrderPage() {
         <div className='lg:col-span-2 space-y-6'>
           {/* OCR Auto-Mapping Suggestions */}
           {ocrSuggestions.length > 0 && (
-            <Card className='bg-gradient-to-br from-[#F8FAFB] to-white shadow-md rounded-2xl border border-[#E8EDF5] overflow-hidden'>
+            <Card className='bg-gradient-to-br from-[#F8FAFB] to-white shadow-md rounded-2xl border border-[#E8EDF5] overflow-hidden' data-testid='ocr-suggestions'>
               <div className='bg-[#0A2463] px-4 py-2 text-white flex justify-between items-center'>
                 <h3 className='font-medium text-sm flex items-center'>
                   <Sparkles className='w-4 h-4 mr-2 text-[#BFDBFE]' />
@@ -990,6 +990,7 @@ export function CreateOrderPage() {
                 </h3>
                 {ocrSuggestions.some((s) => s.matches.length > 0) && (
                   <Button
+                    data-testid='add-all-suggestions-btn'
                     size='sm'
                     onClick={handleAddAllSuggestions}
                     className='h-7 px-2.5 bg-white/20 hover:bg-white/30 text-white text-xs border-0 transition-colors'
@@ -1239,7 +1240,7 @@ export function CreateOrderPage() {
               ) : (
                 <div className='space-y-3'>
                   {orderItems.map((item) => (
-                    <Card key={item.id} className='p-4 border border-gray-200 hover:border-[#BFDBFE] transition-colors'>
+                    <Card key={item.id} data-testid='order-item' data-product-id={item.product.id} className='p-4 border border-gray-200 hover:border-[#BFDBFE] transition-colors'>
                       <div className='flex gap-4'>
                         {/* Product Image */}
                         <ImageWithFallback
@@ -1288,6 +1289,7 @@ export function CreateOrderPage() {
                               </Button>
 
                               <Input
+                                data-testid='order-item-quantity-input'
                                 type='number'
                                 value={item.quantity}
                                 onChange={(e) => updateItemQuantity(item.id, parseInt(e.target.value) || 0)}
@@ -1533,7 +1535,7 @@ export function CreateOrderPage() {
                     </div>
 
                     {customerInfo.prescriptionId && (
-                      <div className='text-xs text-[#1E40AF] flex items-center bg-[#F0F6FF] px-2 py-1 rounded overflow-hidden'>
+                      <div data-testid='customer-prescription-link' className='text-xs text-[#1E40AF] flex items-center bg-[#F0F6FF] px-2 py-1 rounded overflow-hidden'>
                         <FileText className='w-3 h-3 mr-1 flex-shrink-0' />
                         <span className='truncate'>Đơn thuốc: #{customerInfo.prescriptionId}</span>
                       </div>
@@ -1848,6 +1850,7 @@ export function CreateOrderPage() {
           {/* Action Buttons */}
           <div className='space-y-3'>
             <Button
+              data-testid='create-order-submit-btn'
               onClick={handleCreateOrder}
               className='w-full bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white hover:from-[#071A49] hover:to-[#1E40AF] shadow-lg'
               disabled={orderItems.length === 0 || isCreatingOrder}
@@ -1890,7 +1893,7 @@ export function CreateOrderPage() {
 
       {/* Prescription Image Viewer Dialog */}
       <Dialog open={isPrescriptionModalOpen} onOpenChange={setIsPrescriptionModalOpen}>
-        <DialogContent className='max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden'>
+        <DialogContent data-testid='source-prescription-image-dialog' className='max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden'>
           <DialogHeader className='px-4 py-3 border-b border-black/5 bg-gray-50/50 relative'>
             <DialogTitle className='flex items-center text-lg text-blue-900'>
               <ImageIcon className='w-5 h-5 mr-2 text-[#1E40AF]' />

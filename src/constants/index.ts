@@ -124,6 +124,7 @@ export const API_ENDPOINTS = {
   // Prescription endpoints
   PRESCRIPTIONS: {
     BASE: '/prescriptions',
+    PHARMACIST: '/prescriptions/pharmacist',
     PENDING: '/prescriptions/pending',
     STATS: '/prescriptions/stats',
     BY_ID: (id: string) => `/prescriptions/${id}`,
