@@ -71,8 +71,8 @@ export function PharmacistDashboard() {
 
       const [statsResult, prescriptionsResult, ordersResult] = await Promise.allSettled([
         dashboardService.getStats(),
-        prescriptionService.getAll({ limit: 5, status: 'pending' }),
-        orderService.getOrders({ limit: 5 }),
+        prescriptionService.getAll({ limit: 4, status: 'pending' }),
+        orderService.getOrders({ limit: 3 }),
       ])
 
       const nextErrors: typeof loadErrors = {}

@@ -38,5 +38,6 @@ tests/e2e/.auth/
 tests/e2e/screenshots/
 *.spec.ts
 *.spec.tsx
+!tests/prescriptions/e2e/**/*.spec.ts
 !tests/e2e/specs/**/*.spec.ts
 !tests/community-events/**/*.spec.ts

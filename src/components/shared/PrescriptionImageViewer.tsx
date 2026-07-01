@@ -110,13 +110,13 @@ export function PrescriptionImageViewer({ images, title = 'Ảnh đơn thuốc' 
       <h4 className='font-medium mb-3'>
         {title} ({images.length})
       </h4>
-      <div className='grid grid-cols-2 gap-4'>
+      <div className='grid grid-cols-1 gap-4'>
         {images.map((image, index) => (
           <div key={index} className='relative group'>
             <img
               src={image}
               alt={`Đơn thuốc ${index + 1}`}
-              className='w-full h-48 object-cover rounded-lg border-2 border-gray-200 cursor-pointer hover:border-[#1E40AF] transition-colors'
+              className='w-full h-[360px] xl:h-[520px] object-contain bg-white rounded-lg border-2 border-gray-200 cursor-pointer hover:border-[#1E40AF] transition-colors'
               onClick={() => handleOpenZoom(index)}
             />
             <Badge className='absolute top-2 left-2 bg-white/90 text-gray-800'>Ảnh {index + 1}</Badge>
@@ -153,7 +153,7 @@ export function PrescriptionImageViewer({ images, title = 'Ảnh đơn thuốc' 
 
       {/* Zoom Dialog */}
       <Dialog open={isZoomOpen} onOpenChange={setIsZoomOpen}>
-        <DialogContent className='max-w-5xl w-full h-[90vh] p-0 bg-black/95 border-none'>
+        <DialogContent className='!w-[96vw] !max-w-none h-[94vh] p-0 bg-black/95 border-none'>
           {/* Header */}
           <div className='absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4 bg-gradient-to-b from-black/80 to-transparent'>
             <div className='flex items-center gap-2'>
