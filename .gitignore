@@ -34,6 +34,7 @@ src/tests/
 /playwright-report-product/
 /blob-report/
 /playwright/.cache/
+tests/prescriptions/evidence/
 tests/e2e/.auth/
 tests/e2e/screenshots/
 *.spec.ts
