@@ -12,6 +12,15 @@ export const NOTIFICATIONS_QUERY_KEY = ['notifications'] as const
 export const UNREAD_COUNT_QUERY_KEY = ['notifications-unread-count'] as const
 export const NOTIFICATION_PREFERENCES_QUERY_KEY = ['notification-preferences'] as const
 
+const getResponseStatus = (error: unknown) => {
+  return (error as { response?: { status?: number } } | undefined)?.response?.status
+}
+
+const shouldRetryNotificationQuery = (failureCount: number, error: unknown) => {
+  const status = getResponseStatus(error)
+  return ![401, 403].includes(status ?? 0) && failureCount < 2
+}
+
 /**
  * Main hook: fetch notification list + real-time socket integration
  */
@@ -20,16 +29,16 @@ export function useNotifications(
   page = 1
 ) {
   const queryClient = useQueryClient()
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated, loading: authLoading, user } = useAuth()
   const { subscribe, unsubscribe } = useSocketContext()
   const subscriberId = useId()
-  const canUseNotifications = isAuthenticated && !!authService.getAccessToken() && user?.status === UserStatus.Verified
+  const canUseNotifications = !authLoading && isAuthenticated && !!authService.getAccessToken() && user?.status === UserStatus.Verified
 
   const query = useQuery({
     queryKey: [...NOTIFICATIONS_QUERY_KEY, filter, page],
     queryFn: () => notificationService.getNotifications(page, 20, filter),
     enabled: canUseNotifications,
-    retry: (failureCount, error: any) => ![401, 403].includes(error?.response?.status) && failureCount < 2,
+    retry: shouldRetryNotificationQuery,
     staleTime: 1000 * 30, // 30s
   })
 
@@ -67,7 +76,7 @@ export function useNotifications(
     if (!canUseNotifications) return
 
     subscribe(subscriberId, {
-      onNewNotification: (notification) => {
+      onNewNotification: () => {
         // Invalidate queries to refresh counts and lists
         queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_QUERY_KEY })
         queryClient.invalidateQueries({ queryKey: UNREAD_COUNT_QUERY_KEY })
@@ -93,8 +102,8 @@ export function useNotifications(
 
 export function useNotificationPreferences() {
   const queryClient = useQueryClient()
-  const { isAuthenticated, user } = useAuth()
-  const canUseNotifications = isAuthenticated && !!authService.getAccessToken() && user?.status === UserStatus.Verified
+  const { isAuthenticated, loading: authLoading, user } = useAuth()
+  const canUseNotifications = !authLoading && isAuthenticated && !!authService.getAccessToken() && user?.status === UserStatus.Verified
 
   const query = useQuery({
     queryKey: NOTIFICATION_PREFERENCES_QUERY_KEY,
@@ -126,16 +135,16 @@ export function useNotificationPreferences() {
  */
 export function useUnreadNotificationCount() {
   const queryClient = useQueryClient()
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated, loading: authLoading, user } = useAuth()
   const { subscribe, unsubscribe } = useSocketContext()
   const subscriberId = useId()
-  const canUseNotifications = isAuthenticated && !!authService.getAccessToken() && user?.status === UserStatus.Verified
+  const canUseNotifications = !authLoading && isAuthenticated && !!authService.getAccessToken() && user?.status === UserStatus.Verified
 
   const query = useQuery({
     queryKey: UNREAD_COUNT_QUERY_KEY,
     queryFn: () => notificationService.getUnreadCount(),
     enabled: canUseNotifications,
-    retry: (failureCount, error: any) => ![401, 403].includes(error?.response?.status) && failureCount < 2,
+    retry: shouldRetryNotificationQuery,
     staleTime: 1000 * 60, // 60s
     refetchInterval: 1000 * 60, // poll every 60s as socket fallback
   })

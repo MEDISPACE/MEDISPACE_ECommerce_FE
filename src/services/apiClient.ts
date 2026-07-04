@@ -9,6 +9,7 @@ const AUTH_TOKEN_REFRESHED_EVENT = 'medispace:auth-token-refreshed'
 const AUTH_SESSION_EXPIRED_EVENT = 'medispace:auth-session-expired'
 const USER_NOT_VERIFIED_MESSAGE = 'User not verified. Please verify your email first'
 const USER_NOT_VERIFIED_TOAST_ID = 'medispace:user-not-verified'
+const TOKEN_REFRESH_BUFFER_MS = 30 * 1000
 
 const isUserNotVerifiedError = (error: AxiosError) => {
   const message = (error.response?.data as { message?: string } | undefined)?.message
@@ -18,6 +19,26 @@ const isUserNotVerifiedError = (error: AxiosError) => {
 const navigateToAccountSettings = () => {
   window.history.pushState(null, '', '/account/settings')
   window.dispatchEvent(new PopStateEvent('popstate'))
+}
+
+const getJwtExpiryMs = (token: string): number | null => {
+  try {
+    const payload = token.split('.')[1]
+    if (!payload) return null
+
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/')
+    const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=')
+    const decoded = JSON.parse(window.atob(padded)) as { exp?: number }
+
+    return typeof decoded.exp === 'number' ? decoded.exp * 1000 : null
+  } catch {
+    return null
+  }
+}
+
+const shouldRefreshAccessToken = (token: string) => {
+  const expiresAt = getJwtExpiryMs(token)
+  return expiresAt !== null && expiresAt - Date.now() <= TOKEN_REFRESH_BUFFER_MS
 }
 
 class ApiClient {
@@ -37,17 +58,26 @@ class ApiClient {
 
     // Request interceptor to add auth token
     this.client.interceptors.request.use(
-      (config: InternalAxiosRequestConfig) => {
-        const token = localStorage.getItem('medispace_access_token')
+      async (config: InternalAxiosRequestConfig) => {
+        let token = localStorage.getItem('medispace_access_token')
+
+        if (token && shouldRefreshAccessToken(token) && !config.url?.includes('/refresh-token')) {
+          try {
+            token = await this.refreshToken()
+          } catch (refreshError) {
+            this.expireSession()
+            const redirectPath = `${window.location.pathname}${window.location.search}${window.location.hash}`
+            const loginUrl =
+              redirectPath && redirectPath !== '/login'
+                ? `/login?redirect=${encodeURIComponent(redirectPath)}`
+                : '/login'
+            window.location.replace(loginUrl)
+            return Promise.reject(refreshError)
+          }
+        }
+
         if (token && config.headers) {
           config.headers.Authorization = `Bearer ${token}`
-        } else {
-          // Only warn for protected endpoints that require authentication
-          const protectedEndpoints = ['/cart', '/orders', '/profile', '/admin', '/wishlist', '/users/me']
-          const isProtectedEndpoint = protectedEndpoints.some((endpoint) => config.url?.includes(endpoint))
-
-          if (isProtectedEndpoint) {
-          }
         }
         return config
       },
@@ -61,10 +91,6 @@ class ApiClient {
       (response: AxiosResponse) => response,
       async (error: AxiosError) => {
         const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
-
-        // Only log errors that are NOT 401 or are 401 but already retried
-        if (error.response?.status !== 401 || originalRequest._retry) {
-        }
 
         if (isUserNotVerifiedError(error)) {
           toast.warning('Cần xác thực email', {
