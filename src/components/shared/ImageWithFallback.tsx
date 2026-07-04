@@ -3,6 +3,17 @@ import React, { useState } from 'react'
 const ERROR_IMG_SRC =
   'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODgiIGhlaWdodD0iODgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjMDAwIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBvcGFjaXR5PSIuMyIgZmlsbD0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIzLjciPjxyZWN0IHg9IjE2IiB5PSIxNiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2IiByeD0iNiIvPjxwYXRoIGQ9Im0xNiA1OCAxNi0xOCAzMiAzMiIvPjxjaXJjbGUgY3g9IjUzIiBjeT0iMzUiIHI9IjciLz48L3N2Zz4KCg=='
 
+function isBlockedRemoteImage(src?: string) {
+  if (!src) return false
+
+  try {
+    const url = new URL(src)
+    return url.hostname === 'cdn.nhathuoclongchau.com.vn' && /\/z\d+_/i.test(url.pathname)
+  } catch {
+    return false
+  }
+}
+
 export function ImageWithFallback(props: React.ImgHTMLAttributes<HTMLImageElement>) {
   const [didError, setDidError] = useState(false)
 
@@ -11,7 +22,7 @@ export function ImageWithFallback(props: React.ImgHTMLAttributes<HTMLImageElemen
   }
 
   const { src, alt, style, className, ...rest } = props
-  const hasSrc = typeof src === 'string' && src.trim().length > 0
+  const hasSrc = typeof src === 'string' && src.trim().length > 0 && !isBlockedRemoteImage(src)
 
   return didError || !hasSrc ? (
     <div className={`inline-block bg-gray-100 text-center align-middle ${className ?? ''}`} style={style}>
