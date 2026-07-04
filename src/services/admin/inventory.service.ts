@@ -20,13 +20,13 @@ export interface InventoryProduct {
   stockQuantity: number
   status: string
   isActive: boolean
-  priceVariants: Array<{
+  priceVariants?: Array<{
     unit: string
     price: number
     originalPrice?: number
     isDefault: boolean
     quantityPerUnit: number
-  }>
+  }> | null
   category?: { _id: string; name: string }
   brand?: { _id: string; name: string }
   updatedAt: string
