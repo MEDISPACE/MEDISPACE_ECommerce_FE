@@ -209,10 +209,12 @@ export function OrderDetailsDrawer({ isOpen, onClose, order }: OrderDetailsDrawe
                   </span>
                   <span className='font-medium text-gray-900'>{formatCurrency(order.shippingFee)}</span>
                 </div>
-                <div className='flex justify-between items-center'>
-                  <span className='text-gray-600'>VAT (10%):</span>
-                  <span className='font-medium text-gray-900'>{formatCurrency(order.taxAmount)}</span>
-                </div>
+                {order.taxAmount > 0 && (
+                  <div className='flex justify-between items-center'>
+                    <span className='text-gray-600'>Thuế:</span>
+                    <span className='font-medium text-gray-900'>{formatCurrency(order.taxAmount)}</span>
+                  </div>
+                )}
                 {(order.discountAmount > 0 || (order.appliedCoupons && order.appliedCoupons.length > 0)) && (
                   <>
                     {order.discountAmount > 0 && (

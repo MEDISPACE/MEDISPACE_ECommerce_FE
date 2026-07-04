@@ -43,6 +43,8 @@ export async function cleanupPrescriptionData() {
   await withDb(async (db) => {
     await Promise.all([
       db.collection('orders').deleteMany({ orderNumber: { $regex: '^E2E-RX-' } }),
+      db.collection('orders').deleteMany({ pharmacistNotes: { $regex: 'E2E' } }),
+      db.collection('orders').deleteMany({ 'shippingAddress.email': { $regex: String.raw`^e2e\.rx\.` } }),
       db.collection('prescriptions').deleteMany({ prescriptionNumber: { $regex: '^E2E-RX-' } }),
       db.collection('products').deleteMany({ sku: { $regex: '^E2E-RX-' } }),
       db.collection('notifications').deleteMany({ title: { $regex: 'E2E-RX' } }).catch(() => undefined),
@@ -186,6 +188,7 @@ export async function newPharmacistPage(browser: Browser, account: { email: stri
   await page.evaluate(({ token, user }) => {
     localStorage.setItem('medispace_access_token', token)
     localStorage.setItem('medispace_user_data', JSON.stringify(user))
+    localStorage.setItem('medispace_session_hint', '1')
   }, session)
   return page
 }

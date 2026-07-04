@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useSearchParams } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import { Search, User, FileText, Pill, ShoppingCart, AlertTriangle, TrendingUp, Eye, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import { Separator } from '../ui/separator'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog'
 import { dashboardService, patientService } from '~/services/pharmacist'
-import type { PatientSearchResult, MedicalInfo, PatientNote } from '~/services/pharmacist/types'
+import type { PatientSearchResult, MedicalInfo, PatientNote, PatientHistory } from '~/services/pharmacist/types'
 
 // Removed mockPatients - using real API data
 const removedMockPatients = [
@@ -86,10 +86,12 @@ const removedMockPatients = [
 
 export function PatientHistoryPage() {
   const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedPatient, setSelectedPatient] = useState<PatientSearchResult | null>(null)
   const [searchResults, setSearchResults] = useState<PatientSearchResult[]>([])
   const [medicalInfo, setMedicalInfo] = useState<MedicalInfo | null>(null)
+  const [patientHistory, setPatientHistory] = useState<PatientHistory | null>(null)
   const [patientNotes, setPatientNotes] = useState<PatientNote[]>([])
   const [loading, setLoading] = useState(false)
   const [searching, setSearching] = useState(false)
@@ -131,13 +133,14 @@ export function PatientHistoryPage() {
       setLoading(true)
       setSelectedPatient(patient)
 
-      // Load medical info and notes in parallel
-      const [medicalData, notesData] = await Promise.all([
+      const [medicalData, historyData, notesData] = await Promise.all([
         patientService.getMedicalInfo(patient.customerId),
+        dashboardService.getPatientHistory(patient.customerId),
         patientService.getNotes(patient.customerId),
       ])
 
       setMedicalInfo(medicalData as unknown as MedicalInfo)
+      setPatientHistory(historyData)
       setPatientNotes(notesData)
     } catch (error) {
       toast.error('Lỗi tải thông tin bệnh nhân')
@@ -146,16 +149,24 @@ export function PatientHistoryPage() {
     }
   }
 
-  // Calculate age
-  const calculateAge = (dob: string) => {
-    const today = new Date()
-    const birthDate = new Date(dob)
-    let age = today.getFullYear() - birthDate.getFullYear()
-    const m = today.getMonth() - birthDate.getMonth()
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-      age--
-    }
-    return age
+  const verifiedPrescriptions = patientHistory?.prescriptions.filter((prescription) => prescription.status === 'verified') || []
+
+  const formatDate = (value?: string) => {
+    if (!value) return 'Chưa có'
+    return new Date(value).toLocaleDateString('vi-VN')
+  }
+
+  const formatCurrency = (value: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value || 0)
+
+  const createOrderFromPrescription = (prescription: PatientHistory['prescriptions'][number]) => {
+    const mappedProductIds = prescription.medications
+      .map((medication) => medication.productId)
+      .filter(Boolean)
+      .join(',')
+    const query = mappedProductIds
+      ? `?prescriptionId=${prescription._id}&productIds=${mappedProductIds}`
+      : `?prescriptionId=${prescription._id}`
+    navigate(`/pharmacist/create-order${query}`)
   }
 
   return (
@@ -249,9 +260,11 @@ export function PatientHistoryPage() {
               </div>
             ) : (
               <Tabs defaultValue='info' className='space-y-4'>
-                <TabsList className='grid w-full grid-cols-3'>
+                <TabsList className='grid w-full grid-cols-5'>
                   <TabsTrigger value='info'>Thông tin</TabsTrigger>
                   <TabsTrigger value='medical'>Y tế</TabsTrigger>
+                  <TabsTrigger value='prescriptions'>Đơn xác minh</TabsTrigger>
+                  <TabsTrigger value='orders'>Đơn hàng</TabsTrigger>
                   <TabsTrigger value='notes'>Ghi chú</TabsTrigger>
                 </TabsList>
 
@@ -306,22 +319,25 @@ export function PatientHistoryPage() {
                           <ul className='space-y-2'>
                             {medicalInfo.currentMedications.map((med, idx) => (
                               <li key={idx} className='text-sm text-gray-700'>
-                                • {med}
+                                <span className='font-medium'>{med.name}</span>
+                                {med.dosage ? ` · ${med.dosage}` : ''}
+                                {med.frequency ? ` · ${med.frequency}` : ''}
+                                {med.startDate ? ` · ${formatDate(med.startDate)}` : ''}
                               </li>
                             ))}
                           </ul>
                         </div>
                       )}
 
-                      {/* Medical Conditions */}
-                      {medicalInfo.medicalConditions && medicalInfo.medicalConditions.length > 0 && (
+                      {/* Chronic diseases */}
+                      {medicalInfo.chronicDiseases && medicalInfo.chronicDiseases.length > 0 && (
                         <div className='p-4 bg-yellow-50 border border-yellow-200 rounded-lg'>
                           <div className='flex items-center gap-2 mb-3'>
                             <AlertTriangle className='w-5 h-5 text-yellow-600' />
                             <h4 className='font-semibold text-yellow-800'>Tình trạng y tế</h4>
                           </div>
                           <div className='flex flex-wrap gap-2'>
-                            {medicalInfo.medicalConditions.map((condition, idx) => (
+                            {medicalInfo.chronicDiseases.map((condition, idx) => (
                               <Badge key={idx} className='bg-yellow-100 text-yellow-800 border-yellow-200'>
                                 {condition}
                               </Badge>
@@ -332,6 +348,105 @@ export function PatientHistoryPage() {
                     </>
                   ) : (
                     <p className='text-gray-500 text-center py-8'>Chưa có thông tin y tế</p>
+                  )}
+                </TabsContent>
+
+                <TabsContent value='prescriptions' className='space-y-4'>
+                  <div className='grid grid-cols-2 gap-3'>
+                    <div className='p-3 rounded-lg border border-[#BFDBFE] bg-[#F0F6FF]'>
+                      <p className='text-xs text-gray-600'>Đơn đã xác minh</p>
+                      <p className='text-xl font-semibold text-[#0A2463]'>{verifiedPrescriptions.length}</p>
+                    </div>
+                    <div className='p-3 rounded-lg border border-[#BFDBFE] bg-white'>
+                      <p className='text-xs text-gray-600'>Tổng đơn thuốc</p>
+                      <p className='text-xl font-semibold text-gray-900'>{patientHistory?.prescriptions.length || 0}</p>
+                    </div>
+                  </div>
+
+                  {verifiedPrescriptions.length > 0 ? (
+                    verifiedPrescriptions.map((prescription) => {
+                      const linkedOrder = patientHistory?.orders.find((order) => order.prescriptionId === prescription._id)
+                      return (
+                        <Card key={prescription._id} className='border border-[#BFDBFE]'>
+                          <CardContent className='p-4 space-y-3'>
+                            <div className='flex items-start justify-between gap-3'>
+                              <div>
+                                <div className='flex items-center gap-2 flex-wrap'>
+                                  <FileText className='w-4 h-4 text-[#1E40AF]' />
+                                  <p className='font-semibold text-gray-900'>{prescription.prescriptionNumber}</p>
+                                  <Badge className='bg-green-100 text-green-800 border-green-200'>Đã xác minh</Badge>
+                                </div>
+                                <p className='text-sm text-gray-600 mt-1'>
+                                  {prescription.doctorName} · {formatDate(prescription.prescriptionDate)}
+                                </p>
+                                {prescription.diagnosis && <p className='text-sm text-gray-700 mt-1'>{prescription.diagnosis}</p>}
+                              </div>
+                              <Button size='sm' onClick={() => createOrderFromPrescription(prescription)}>
+                                <ShoppingCart className='w-4 h-4 mr-2' />
+                                Tạo đơn lại
+                              </Button>
+                            </div>
+
+                            <div className='space-y-2'>
+                              {prescription.medications.map((medication, index) => (
+                                <div key={`${prescription._id}-${index}`} className='text-sm rounded-md bg-gray-50 px-3 py-2'>
+                                  <span className='font-medium'>{medication.productName}</span>
+                                  {medication.dosage ? ` · ${medication.dosage}` : ''}
+                                  {medication.quantity ? ` · SL ${medication.quantity}` : ''}
+                                  {medication.instructions ? ` · ${medication.instructions}` : ''}
+                                </div>
+                              ))}
+                            </div>
+
+                            <div className='flex flex-wrap gap-2 text-xs text-gray-500'>
+                              <span>Xác minh: {formatDate(prescription.verifiedAt)}</span>
+                              {prescription.verifiedByInfo?.fullName && <span>· {prescription.verifiedByInfo.fullName}</span>}
+                              {linkedOrder && <span>· Đã tạo đơn {linkedOrder.orderNumber}</span>}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )
+                    })
+                  ) : (
+                    <p className='text-gray-500 text-center py-8'>Chưa có đơn thuốc đã xác minh</p>
+                  )}
+                </TabsContent>
+
+                <TabsContent value='orders' className='space-y-4'>
+                  <div className='grid grid-cols-2 gap-3'>
+                    <div className='p-3 rounded-lg border border-[#BFDBFE] bg-[#F0F6FF]'>
+                      <p className='text-xs text-gray-600'>Tổng đơn hàng</p>
+                      <p className='text-xl font-semibold text-[#0A2463]'>{patientHistory?.totalOrders || 0}</p>
+                    </div>
+                    <div className='p-3 rounded-lg border border-[#BFDBFE] bg-white'>
+                      <p className='text-xs text-gray-600'>Tổng chi tiêu</p>
+                      <p className='text-xl font-semibold text-gray-900'>{formatCurrency(patientHistory?.totalSpent || 0)}</p>
+                    </div>
+                  </div>
+
+                  {patientHistory?.orders.length ? (
+                    patientHistory.orders.map((order) => (
+                      <Card key={order._id} className='border border-[#BFDBFE]'>
+                        <CardContent className='p-4'>
+                          <div className='flex items-start justify-between gap-3'>
+                            <div>
+                              <div className='flex items-center gap-2'>
+                                <ShoppingCart className='w-4 h-4 text-[#1E40AF]' />
+                                <p className='font-semibold text-gray-900'>{order.orderNumber}</p>
+                              </div>
+                              <p className='text-sm text-gray-600 mt-1'>{formatDate(order.createdAt)} · {order.itemCount} sản phẩm</p>
+                              <p className='text-sm text-gray-700 mt-1'>{order.items.map((item) => item.name).join(', ')}</p>
+                            </div>
+                            <div className='text-right'>
+                              <Badge variant='outline'>{order.orderStatus}</Badge>
+                              <p className='font-semibold text-gray-900 mt-2'>{formatCurrency(order.totalAmount)}</p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  ) : (
+                    <p className='text-gray-500 text-center py-8'>Chưa có đơn hàng</p>
                   )}
                 </TabsContent>
 

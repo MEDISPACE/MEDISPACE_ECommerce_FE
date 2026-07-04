@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { Grid, List, Search as SearchIcon, Loader2, PackageX } from 'lucide-react'
-import { useInfiniteQuery } from '@tanstack/react-query'
+import { Link, useSearchParams } from 'react-router'
+import { FileText, Grid, List, Search as SearchIcon, Loader2, PackageX, ShieldCheck } from 'lucide-react'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { useCart } from '../../contexts/CartContext'
 import { useWishlist } from '../../hooks/product/useWishlist'
 import { useBreadcrumbGeneration, useDebounce } from '../../hooks'
@@ -33,8 +34,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Input } from '../ui/input'
 import { Card, CardContent } from '../ui/card'
 import { productService } from '../../services/productService'
+import { prescriptionsAPI } from '~/lib/api/prescriptions'
+
+const PRESCRIPTION_CHECKOUT_STORAGE_KEY = 'medispace_checkout_prescription_id'
+
+interface PrescriptionContext {
+  _id: string
+  prescriptionNumber: string
+  doctorName?: string
+  status: string
+  medications?: Array<{
+    productName?: string
+    productId?: string
+  }>
+}
 
 export function ProductsListingPage() {
+  const [searchParams] = useSearchParams()
   const { addToCart } = useCart()
   const { toggleWishlist, isInWishlist } = useWishlist()
   const observerTarget = useRef<HTMLDivElement>(null)
@@ -51,13 +67,51 @@ export function ProductsListingPage() {
     inStock: false,
     isPrescription: undefined as boolean | undefined,
   })
+  const prescriptionId = searchParams.get('prescriptionId') || ''
+  const isPrescriptionRefill = Boolean(prescriptionId && searchParams.get('rx') === 'verified')
+
+  const { data: prescriptionContext, isLoading: isLoadingPrescriptionContext } = useQuery({
+    queryKey: ['products', 'prescription-context', prescriptionId],
+    queryFn: async () => {
+      const response = (await prescriptionsAPI.getPrescription(prescriptionId)) as { result?: PrescriptionContext }
+      return response.result || null
+    },
+    enabled: isPrescriptionRefill,
+    staleTime: 60 * 1000,
+    retry: 1,
+  })
+
+  const mappedProductIds = useMemo(() => {
+    return new Set(
+      (prescriptionContext?.medications || [])
+        .map((medication) => medication.productId)
+        .filter((productId): productId is string => Boolean(productId)),
+    )
+  }, [prescriptionContext])
+
+  const prescriptionMedications = prescriptionContext?.medications || []
+
+  const { data: mappedProducts = [], isLoading: isLoadingMappedProducts } = useQuery({
+    queryKey: ['products', 'prescription-mapped-products', prescriptionId, Array.from(mappedProductIds).sort()],
+    queryFn: async () => {
+      const products = await Promise.all(Array.from(mappedProductIds).map((productId) => productService.getProductById(productId)))
+      return products.filter(Boolean) as NonNullable<Awaited<ReturnType<typeof productService.getProductById>>>[]
+    },
+    enabled: isPrescriptionRefill && mappedProductIds.size > 0,
+    staleTime: 60 * 1000,
+  })
+
+  useEffect(() => {
+    if (!isPrescriptionRefill) return
+    setFilters((current) => (current.isPrescription === true ? current : { ...current, isPrescription: true }))
+  }, [isPrescriptionRefill])
 
   // Debounce search query to prevent API calls on every keystroke
   const debouncedSearchQuery = useDebounce(searchQuery, 500)
 
   // Infinite query for products with server-side filtering
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isFetching } = useInfiniteQuery({
-    queryKey: ['products', 'infinite', debouncedSearchQuery, filters, sortBy],
+    queryKey: ['products', 'infinite', debouncedSearchQuery, filters, sortBy, isPrescriptionRefill],
     queryFn: ({ pageParam = 1 }) => {
       // Build query params for server-side filtering
       const params: Record<string, unknown> = {
@@ -101,7 +155,9 @@ export function ProductsListingPage() {
       if (filters.brands.length > 0) {
         params.brandId = filters.brands[0]
       }
-      if (filters.isPrescription !== undefined) {
+      if (isPrescriptionRefill) {
+        params.requiresPrescription = true
+      } else if (filters.isPrescription !== undefined) {
         params.requiresPrescription = filters.isPrescription
       }
       if (filters.inStock) {
@@ -189,6 +245,15 @@ export function ProductsListingPage() {
     return data?.pages.flatMap((page) => page) ?? []
   }, [data])
 
+  const displayedProducts = useMemo(() => {
+    if (isPrescriptionRefill && mappedProductIds.size > 0) return mappedProducts
+    if (isPrescriptionRefill && mappedProductIds.size === 0 && !debouncedSearchQuery) return []
+    return allProducts
+  }, [allProducts, debouncedSearchQuery, isPrescriptionRefill, mappedProductIds.size, mappedProducts])
+
+  const shouldShowUnmappedPrescriptionState =
+    isPrescriptionRefill && mappedProductIds.size === 0 && !debouncedSearchQuery && !isLoadingPrescriptionContext
+
   // Breadcrumb generation
   const breadcrumbItems = useBreadcrumbGeneration({ searchQuery })
 
@@ -254,7 +319,13 @@ export function ProductsListingPage() {
   }
 
   // Empty state (after loading is complete)
-  if (!isInitialLoading && allProducts.length === 0) {
+  if (
+    !isInitialLoading &&
+    displayedProducts.length === 0 &&
+    !isLoadingMappedProducts &&
+    !shouldShowUnmappedPrescriptionState &&
+    !(isPrescriptionRefill && isLoadingPrescriptionContext)
+  ) {
     return (
       <EnhancedPageTransition variant='slide' direction='up'>
         <UniversalBreadcrumb items={breadcrumbItems} />
@@ -316,7 +387,7 @@ export function ProductsListingPage() {
           {/* Sidebar */}
           <ScrollReveal direction='left' delay={0.2}>
             <div className='w-full xl:w-80 lg:w-72 xl:sticky xl:top-4 xl:self-start shrink-0 max-h-[calc(100vh-2rem)] overflow-y-auto scrollbar-thin'>
-              <FilterSidebar filters={filters} onFiltersChange={handleFiltersChange} resultCount={totalProducts} />
+              <FilterSidebar filters={filters} onFiltersChange={handleFiltersChange} resultCount={displayedProducts.length} />
             </div>
           </ScrollReveal>
 
@@ -328,19 +399,70 @@ export function ProductsListingPage() {
                 <StaggerItem>
                   <div className='mb-6'>
                     <h1 className='text-2xl font-bold text-blue-800 mb-2'>
-                      {searchQuery ? `Tìm kiếm: "${searchQuery}"` : 'Tất cả sản phẩm'}
+                      {isPrescriptionRefill
+                        ? 'Mua / nạp lại thuốc theo đơn'
+                        : searchQuery
+                          ? `Tìm kiếm: "${searchQuery}"`
+                          : 'Tất cả sản phẩm'}
                     </h1>
                     <p className='text-gray-600 mb-4'>
-                      {searchQuery
-                        ? 'Kết quả tìm kiếm phù hợp với từ khóa của bạn'
-                        : 'Khám phá toàn bộ sản phẩm của MediSpace - từ thuốc kê đơn đến sản phẩm chăm sóc sức khỏe'}
+                      {isPrescriptionRefill
+                        ? 'Các sản phẩm kê đơn được lọc theo đơn thuốc đã xác minh. Nếu đơn có thuốc đã khớp kho, hệ thống ưu tiên hiển thị đúng sản phẩm đã khớp.'
+                        : searchQuery
+                          ? 'Kết quả tìm kiếm phù hợp với từ khóa của bạn'
+                          : 'Khám phá toàn bộ sản phẩm của MediSpace - từ thuốc kê đơn đến sản phẩm chăm sóc sức khỏe'}
                     </p>
                     <div className='text-sm text-gray-600'>
-                      Đang hiển thị <span className='font-medium text-[#1E40AF]'>{totalProducts}</span> sản phẩm
-                      {hasNextPage && <span className='text-gray-500 ml-1'>(tải thêm khi scroll xuống)</span>}
+                      {shouldShowUnmappedPrescriptionState ? (
+                        <span>Chưa có sản phẩm khớp kho tự động, vui lòng tìm theo tên thuốc trong đơn</span>
+                      ) : (
+                        <>
+                          Đang hiển thị <span className='font-medium text-[#1E40AF]'>{displayedProducts.length}</span> sản phẩm
+                          {hasNextPage && mappedProductIds.size === 0 && <span className='text-gray-500 ml-1'>(tải thêm khi scroll xuống)</span>}
+                        </>
+                      )}
                     </div>
                   </div>
                 </StaggerItem>
+
+                {isPrescriptionRefill && (
+                  <StaggerItem>
+                    <Card className='border-[#BFDBFE] bg-[#F0F6FF] mb-6'>
+                      <CardContent className='p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3'>
+                        <div className='flex items-start gap-3'>
+                          <div className='w-10 h-10 rounded-lg bg-white flex items-center justify-center text-[#0A2463] shrink-0'>
+                            <FileText className='w-5 h-5' />
+                          </div>
+                          <div>
+                            <div className='flex items-center gap-2 flex-wrap'>
+                              <p className='font-semibold text-blue-900'>Đang mua theo đơn thuốc đã xác minh</p>
+                              <span className='inline-flex items-center gap-1 text-xs text-green-700 bg-green-100 border border-green-200 rounded px-2 py-0.5'>
+                                <ShieldCheck className='w-3 h-3' /> Verified
+                              </span>
+                            </div>
+                            <p className='text-sm text-gray-700 mt-1'>
+                              {isLoadingPrescriptionContext
+                                ? 'Đang tải thông tin đơn thuốc...'
+                                : prescriptionContext?.prescriptionNumber
+                                  ? `Đơn #${prescriptionContext.prescriptionNumber}${prescriptionContext.doctorName ? ` · BS. ${prescriptionContext.doctorName}` : ''}`
+                                  : `Đơn #${prescriptionId}`}
+                            </p>
+                            <p className='text-xs text-gray-600 mt-1'>
+                              {mappedProductIds.size > 0
+                                ? `Đã tìm thấy ${mappedProductIds.size} sản phẩm khớp từ đơn thuốc.`
+                                : 'Chưa có sản phẩm khớp kho tự động, hãy tìm theo tên thuốc trong đơn để chọn sản phẩm phù hợp.'}
+                            </p>
+                          </div>
+                        </div>
+                        <Link to={`/account/prescriptions/${prescriptionId}`} className='shrink-0'>
+                          <Button variant='outline' className='border-[#BFDBFE] text-[#0A2463] hover:bg-white'>
+                            Xem đơn thuốc
+                          </Button>
+                        </Link>
+                      </CardContent>
+                    </Card>
+                  </StaggerItem>
+                )}
 
                 {/* Search Bar */}
                 <StaggerItem>
@@ -433,6 +555,32 @@ export function ProductsListingPage() {
                       <div className='absolute h-full bg-gradient-to-r from-[#0A2463] to-[#1E40AF] w-1/3 rounded animate-[progressLoop_1.5s_infinite_ease-in-out]' />
                     </div>
                   )}
+                  {shouldShowUnmappedPrescriptionState && (
+                    <Card className='border-[#E8EDF5] bg-white mb-8'>
+                      <CardContent className='p-5'>
+                        <h3 className='font-semibold text-blue-900 mb-2'>Thuốc trong đơn cần tìm</h3>
+                        <p className='text-sm text-gray-600 mb-4'>
+                          Đơn này chưa được khớp trực tiếp với sản phẩm trong kho. Bạn có thể nhập tên thuốc bên dưới để tìm sản phẩm tương ứng.
+                        </p>
+                        <div className='flex flex-wrap gap-2'>
+                          {prescriptionMedications.length > 0 ? (
+                            prescriptionMedications.map((medication, index) => (
+                              <button
+                                key={`${medication.productName || 'medication'}-${index}`}
+                                type='button'
+                                onClick={() => setSearchQuery(medication.productName || '')}
+                                className='rounded-lg border border-[#BFDBFE] bg-[#F0F6FF] px-3 py-2 text-left text-sm text-[#0A2463] hover:bg-[#E8EDF5]'
+                              >
+                                <span className='font-medium'>{medication.productName || `Thuốc ${index + 1}`}</span>
+                              </button>
+                            ))
+                          ) : (
+                            <p className='text-sm text-gray-500'>Đơn thuốc chưa có danh sách thuốc OCR.</p>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
                   <StaggerContainer direction='up' staggerDelay={0.05}>
                     <div
                       className={`
@@ -446,7 +594,7 @@ export function ProductsListingPage() {
                         ${isFetching && !isInitialLoading ? 'opacity-50 pointer-events-none' : ''}
                       `}
                     >
-                      {allProducts.map((product) => (
+                      {displayedProducts.map((product) => (
                         <StaggerItem key={getProductId(product)}>
                           <ProductCard
                             product={{
@@ -470,6 +618,9 @@ export function ProductsListingPage() {
                             onAddToCart={(selectedUnit) => {
                               const variant = product.priceVariants?.find((v) => v.unit === selectedUnit)
                               const price = variant?.price || product.priceVariants?.[0]?.price
+                              if (isPrescriptionRefill && prescriptionId) {
+                                sessionStorage.setItem(PRESCRIPTION_CHECKOUT_STORAGE_KEY, prescriptionId)
+                              }
                               addToCart(product, 1, selectedUnit, price)
                             }}
                             onToggleWishlist={() => {
@@ -484,6 +635,7 @@ export function ProductsListingPage() {
                 </StaggerItem>
 
                 {/* Infinite scroll trigger + loading indicator */}
+                {mappedProductIds.size === 0 && (
                 <StaggerItem>
                   <div ref={observerTarget} className='py-8 flex justify-center'>
                     {isFetchingNextPage && (
@@ -500,6 +652,7 @@ export function ProductsListingPage() {
                     )}
                   </div>
                 </StaggerItem>
+                )}
               </StaggerContainer>
             </div>
           </ScrollReveal>

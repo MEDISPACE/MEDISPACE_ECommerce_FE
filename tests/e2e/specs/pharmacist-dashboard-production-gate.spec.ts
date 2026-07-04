@@ -217,10 +217,10 @@ async function seedDashboardData(): Promise<SeedData> {
       paymentStatus: 'paid',
       orderStatus: 'delivered',
       subtotal: 120000,
-      taxAmount: 12000,
+      taxAmount: 0,
       shippingFee: 0,
       discountAmount: 0,
-      totalAmount: 132000,
+      totalAmount: 120000,
       createdAt: now,
       updatedAt: now,
       paidAt: now,
@@ -291,7 +291,7 @@ test.describe.serial('Pharmacist dashboard production gate', () => {
     const stats = (await statsResponse.json()).result
     expect(stats.pendingPrescriptions).toBeGreaterThanOrEqual(1)
     expect(stats.activeChats).toBeGreaterThanOrEqual(1)
-    expect(stats.totalRevenue).toBeGreaterThanOrEqual(132000)
+    expect(stats.totalRevenue).toBeGreaterThanOrEqual(120000)
 
     const pendingResponse = await request.get(`${API_URL}/prescriptions/pending`, {
       headers: { Authorization: `Bearer ${pharmacistToken}` },
@@ -311,6 +311,7 @@ test.describe.serial('Pharmacist dashboard production gate', () => {
             localStorage: [
               { name: 'medispace_access_token', value: pharmacistToken },
               { name: 'medispace_user_data', value: JSON.stringify(seed.pharmacist) },
+              { name: 'medispace_session_hint', value: '1' },
             ],
           },
         ],
@@ -372,6 +373,7 @@ test.describe.serial('Pharmacist dashboard production gate', () => {
       },
       deliveryMethod: 'instore',
       paymentMethod: 'cash',
+      safetyReviewConfirmed: true,
       pharmacistNotes: 'E2E dashboard production gate',
     }
 

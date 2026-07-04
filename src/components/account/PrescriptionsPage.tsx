@@ -47,6 +47,8 @@ interface BackendPrescription {
   createdAt: string
   updatedAt: string
   orderId?: string
+  orderNumber?: string
+  orderStatus?: string
 }
 
 // Map backend status to frontend status
@@ -85,7 +87,7 @@ const mapPrescription = (bp: BackendPrescription): Prescription => ({
     duration: med.quantity ? `${med.quantity} đơn vị` : 'Theo hướng dẫn',
     quantity: med.quantity,
   })),
-  status: mapStatus(bp.status),
+  status: bp.status === 'verified' && bp.orderId ? 'completed' : mapStatus(bp.status),
   pharmacistNotes: bp.pharmacistNotes || bp.notes,
   contactPhone: '',
   createdAt: bp.createdAt,
@@ -346,16 +348,16 @@ export function PrescriptionsPage() {
           )}
 
           {prescription.status === 'approved' && !prescription.orderId && (
-            <Link to={`/products?prescriptionId=${prescription.id}`}>
+            <Link to={`/products?prescriptionId=${prescription.id}&rx=verified`}>
               <Button size='sm' className='bg-green-600 text-white hover:bg-green-700 hover:text-white'>
                 <ShoppingCart className='w-4 h-4 mr-1' />
-                Mua thuốc
+                Mua / nạp lại thuốc
               </Button>
             </Link>
           )}
 
           {prescription.status === 'rejected' && (
-            <Link to={`/account/prescriptions/upload?resubmit=${prescription.id}`}>
+            <Link to={`/upload-prescription?resubmit=${prescription.id}`}>
               <Button size='sm' variant='outline'>
                 <Upload className='w-4 h-4 mr-1' />
                 Gửi lại
@@ -384,7 +386,7 @@ export function PrescriptionsPage() {
           <p className='text-gray-600'>Quản lý và theo dõi tất cả đơn thuốc của bạn</p>
         </div>
 
-        <Link to='/account/prescriptions/upload'>
+        <Link to='/upload-prescription'>
           <Button className='bg-gradient-to-r text-white from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463]'>
             <Upload className='w-4 h-4 mr-2' />
             Gửi đơn thuốc mới
@@ -460,7 +462,7 @@ export function PrescriptionsPage() {
                     : `Hiện tại không có đơn thuốc nào ở trạng thái này.`
                 }
                 actionLabel='Gửi đơn thuốc mới'
-                actionUrl='/account/prescriptions/upload'
+                actionUrl='/upload-prescription'
               />
             </div>
           )}

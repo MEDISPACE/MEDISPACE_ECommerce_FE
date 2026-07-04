@@ -234,7 +234,7 @@ export function AccountDashboard() {
               </Button>
             </Link>
 
-            <Link to='/account/prescriptions/upload' data-testid='quick-action-prescriptions'>
+            <Link to='/upload-prescription' data-testid='quick-action-prescriptions'>
               <Button variant='outline' className='w-full h-20 flex-col gap-2 border-[#BFDBFE] hover:bg-[#F0F6FF]'>
                 <FileText className='w-6 h-6 text-[#1E40AF]' />
                 <span className='text-sm'>Đơn thuốc</span>

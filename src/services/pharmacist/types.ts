@@ -46,6 +46,11 @@ export interface MedicalInfo {
   bloodType?: string
   allergies: string[]
   chronicDiseases: string[]
-  currentMedications: string[]
-  medicalConditions: string[]
+  currentMedications: Array<{
+    name: string
+    dosage?: string
+    frequency?: string
+    startDate?: string
+    endDate?: string
+  }>
 }

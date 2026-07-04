@@ -8,6 +8,7 @@ function orderPayload(data: Awaited<ReturnType<typeof seedPrescriptionData>>, pr
     shippingAddress: { firstName: 'E2E', lastName: 'Customer', phone: '0900000999', email: 'e2e.rx.customer@medispace.local', address: '1 E2E Street', ward: 'Ben Thanh', district: '1', province: 'TP.HCM' },
     deliveryMethod: 'instore',
     paymentMethod: 'cash',
+    safetyReviewConfirmed: true,
     pharmacistNotes: 'E2E order from prescription'
   }
 }
@@ -28,13 +29,25 @@ test.describe('prescriptions/e2e/16.create-order-from-prescription', () => {
     await captureEvidence(page, '16-01-create-order-prefilled')
   })
 
-  test('server rejects tampered productIds, pending prescription, excessive quantity, and double fulfillment', async ({ request }) => {
+  test('server allows a verified prescription order to contain arbitrary products and no added VAT', async ({ request }) => {
     const data = await seedPrescriptionData()
     const session = await loginSession(data.pharmacist.email, data.pharmacist.password)
     const headers = auth(session.token)
 
-    const tampered = await request.post(`${API_URL}/pharmacist/orders`, { headers, data: orderPayload(data, data.verified._id.toString(), data.extraProduct._id.toString()) })
-    expect(tampered.status()).toBeGreaterThanOrEqual(400)
+    const arbitraryProduct = await request.post(`${API_URL}/pharmacist/orders`, {
+      headers,
+      data: orderPayload(data, data.verified._id.toString(), data.extraProduct._id.toString()),
+    })
+    expect([200, 201]).toContain(arbitraryProduct.status())
+    const arbitraryOrder = (await arbitraryProduct.json()).result.order
+    expect(arbitraryOrder.taxAmount).toBe(0)
+    expect(arbitraryOrder.totalAmount).toBe(arbitraryOrder.subtotal + arbitraryOrder.shippingFee - arbitraryOrder.discountAmount)
+  })
+
+  test('server rejects pending prescription, excessive mapped quantity, and double fulfillment', async ({ request }) => {
+    const data = await seedPrescriptionData()
+    const session = await loginSession(data.pharmacist.email, data.pharmacist.password)
+    const headers = auth(session.token)
 
     const pending = await request.post(`${API_URL}/pharmacist/orders`, { headers, data: orderPayload(data, data.pending._id.toString()) })
     expect(pending.status()).toBeGreaterThanOrEqual(400)

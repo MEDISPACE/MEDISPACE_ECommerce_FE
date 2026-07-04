@@ -45,6 +45,7 @@ export interface OrderStatistics {
 export interface CreateOrderData {
   customerId?: string
   prescriptionId?: string
+  idempotencyKey?: string
   items: Array<{
     productId: string
     quantity: number
@@ -67,15 +68,17 @@ export interface CreateOrderData {
   }
   deliveryMethod: string
   paymentMethod: string
-  shippingFee?: number
   orderNotes?: string
   pharmacistNotes?: string
+  safetyReviewConfirmed?: boolean
 }
 
 export interface CreateOrderResponse {
   order: Order
   orderId: string
   orderNumber: string
+  paymentUrl?: string
+  paymentUrlError?: boolean
 }
 
 // ==================== ORDER SERVICE ====================
@@ -130,9 +133,11 @@ export const orderService = {
    * Create order (for pharmacist)
    */
   createOrder: async (data: CreateOrderData): Promise<CreateOrderResponse> => {
+    const { idempotencyKey, ...payload } = data
     const response: AxiosResponse<{ message: string; result: CreateOrderResponse }> = await apiClient.post(
       '/pharmacist/orders',
-      data,
+      payload,
+      idempotencyKey ? { headers: { 'x-idempotency-key': idempotencyKey } } : undefined,
     )
     return response.data.result
   },
