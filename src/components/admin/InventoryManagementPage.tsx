@@ -35,30 +35,36 @@ const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('vi-VN').format(Math.round(amount)) + ' đ'
 }
 
+function getPriceVariants(product?: InventoryProduct | null) {
+  return Array.isArray(product?.priceVariants) ? product.priceVariants : []
+}
+
 // Helper: lấy đơn vị cơ sở (quantityPerUnit === 1)
-function getBaseUnit(product: InventoryProduct): string {
-  const baseVariant = product.priceVariants?.find((v) => v.quantityPerUnit === 1)
-  return baseVariant?.unit || product.priceVariants?.[0]?.unit || 'Đơn vị'
+function getBaseUnit(product?: InventoryProduct | null): string {
+  const priceVariants = getPriceVariants(product)
+  const baseVariant = priceVariants.find((v) => v.quantityPerUnit === 1)
+  return baseVariant?.unit || priceVariants[0]?.unit || 'Đơn vị'
 }
 
 // Helper: hiển thị stock kèm đơn vị
-function formatStock(stockQuantity: number, product: InventoryProduct): string {
+function formatStock(stockQuantity: number | null | undefined, product?: InventoryProduct | null): string {
   const baseUnit = getBaseUnit(product)
-  return `${stockQuantity.toLocaleString('vi-VN')} ${baseUnit}`
+  return `${(stockQuantity ?? 0).toLocaleString('vi-VN')} ${baseUnit}`
 }
 
 // Helper: tính quy đổi sang các đơn vị khác (vd: "= 3 Hộp 9 Viên")
-function getConversionDisplay(stockQty: number, product: InventoryProduct): string | null {
-  if (!product.priceVariants || product.priceVariants.length <= 1) return null
+function getConversionDisplay(stockQty: number | null | undefined, product?: InventoryProduct | null): string | null {
+  const priceVariants = getPriceVariants(product)
+  if (priceVariants.length <= 1) return null
   // Chỉ hiển thị nếu có variant với quantityPerUnit > 1
-  const higherUnits = product.priceVariants
+  const higherUnits = priceVariants
     .filter((v) => v.quantityPerUnit > 1)
     .sort((a, b) => b.quantityPerUnit - a.quantityPerUnit)
 
   if (higherUnits.length === 0) return null
 
   const parts: string[] = []
-  let remaining = stockQty
+  let remaining = stockQty ?? 0
   for (const variant of higherUnits) {
     const count = Math.floor(remaining / variant.quantityPerUnit)
     if (count > 0) {
@@ -185,7 +191,7 @@ export function InventoryManagementPage() {
     const inputQty = parseFloat(stockDialog.inputQuantity)
     if (isNaN(inputQty) || inputQty < 0) return
 
-    const variant = stockDialog.product.priceVariants?.find((v) => v.unit === stockDialog.selectedUnit)
+    const variant = getPriceVariants(stockDialog.product).find((v) => v.unit === stockDialog.selectedUnit)
     const quantityPerUnit = variant?.quantityPerUnit || 1
     const baseUnitAmount = Math.round(inputQty * quantityPerUnit)
 
@@ -202,7 +208,7 @@ export function InventoryManagementPage() {
     setStockDialog((prev) => ({ ...prev, newAbsoluteQuantity: newAbs }))
   }, [stockDialog.inputQuantity, stockDialog.selectedUnit, stockDialog.adjustmentMode, stockDialog.product])
 
-  const products = productsData?.products || []
+  const products = (productsData?.products || []).filter((product): product is InventoryProduct => Boolean(product?._id))
   const pagination = productsData?.pagination
   const lowStockThreshold = stats?.lowStockThreshold || 10
 
@@ -476,11 +482,13 @@ export function InventoryManagementPage() {
                   </TableRow>
                 ) : (
                   products.map((product) => {
-                    const defaultVariant = product.priceVariants?.find((v) => v.isDefault) || product.priceVariants?.[0]
+                    const priceVariants = getPriceVariants(product)
+                    const stockQuantity = product.stockQuantity ?? 0
+                    const defaultVariant = priceVariants.find((v) => v.isDefault) || priceVariants[0]
                     const price = defaultVariant?.price || 0
                     const baseUnit = getBaseUnit(product)
-                    const conversion = getConversionDisplay(product.stockQuantity, product)
-                    const hasMultiUnit = (product.priceVariants?.length || 0) > 1
+                    const conversion = getConversionDisplay(stockQuantity, product)
+                    const hasMultiUnit = priceVariants.length > 1
 
                     return (
                       <TableRow key={product._id} className='border-b border-[#E8EDF5] hover:bg-[#F0F6FF]/30'>
@@ -523,14 +531,14 @@ export function InventoryManagementPage() {
                           <div className='flex flex-col items-center'>
                             <span
                               className={`text-lg font-bold ${
-                                product.stockQuantity <= 0
+                                stockQuantity <= 0
                                   ? 'text-red-600'
-                                  : product.stockQuantity <= lowStockThreshold
+                                  : stockQuantity <= lowStockThreshold
                                     ? 'text-amber-600'
                                     : 'text-emerald-600'
                               }`}
                             >
-                              {product.stockQuantity.toLocaleString('vi-VN')}
+                              {stockQuantity.toLocaleString('vi-VN')}
                             </span>
                             <span className='text-xs text-gray-500 font-medium'>{baseUnit}</span>
                             {conversion && (
@@ -542,7 +550,7 @@ export function InventoryManagementPage() {
                         <TableCell className='text-center hidden md:table-cell'>
                           {hasMultiUnit ? (
                             <div className='flex flex-wrap gap-1 justify-center'>
-                              {product.priceVariants?.map((v) => (
+                              {priceVariants.map((v) => (
                                 <Badge
                                   key={v.unit}
                                   className={`text-xs px-1.5 py-0 ${
@@ -560,7 +568,7 @@ export function InventoryManagementPage() {
                           )}
                         </TableCell>
                         <TableCell className='text-center'>
-                          {getStockBadge(product.stockQuantity, lowStockThreshold)}
+                          {getStockBadge(stockQuantity, lowStockThreshold)}
                         </TableCell>
                         <TableCell>
                           <span className='text-xs text-gray-500'>
@@ -666,7 +674,7 @@ export function InventoryManagementPage() {
             {/* Unit + Quantity Input */}
             <div className='flex gap-3'>
               {/* Đơn vị selector */}
-              {stockDialog.product && stockDialog.product.priceVariants && stockDialog.product.priceVariants.length > 1 && (
+              {getPriceVariants(stockDialog.product).length > 1 && (
                 <div className='w-36'>
                   <Label className='text-sm font-medium text-gray-700 mb-1.5 block'>Đơn vị</Label>
                   <Select
@@ -677,11 +685,11 @@ export function InventoryManagementPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {stockDialog.product.priceVariants.map((v) => (
+                      {getPriceVariants(stockDialog.product).map((v) => (
                         <SelectItem key={v.unit} value={v.unit}>
                           {v.unit}
                           {v.quantityPerUnit > 1 && (
-                            <span className='ml-1 text-xs text-gray-400'>({v.quantityPerUnit} {getBaseUnit(stockDialog.product!)})</span>
+                            <span className='ml-1 text-xs text-gray-400'>({v.quantityPerUnit} {getBaseUnit(stockDialog.product)})</span>
                           )}
                         </SelectItem>
                       ))}
@@ -693,7 +701,7 @@ export function InventoryManagementPage() {
               {/* Số lượng */}
               <div className='flex-1'>
                 <Label htmlFor='inputQty' className='text-sm font-medium text-gray-700 mb-1.5 block'>
-                  Số lượng ({stockDialog.selectedUnit || getBaseUnit(stockDialog.product!)})
+                  Số lượng ({stockDialog.selectedUnit || getBaseUnit(stockDialog.product)})
                 </Label>
                 <Input
                   id='inputQty'
@@ -736,14 +744,14 @@ export function InventoryManagementPage() {
                     {stockDialog.adjustmentMode === 'add' && (
                       <>
                         {stockDialog.product.stockQuantity} + {
-                          Math.round(parseFloat(stockDialog.inputQuantity || '0') * (stockDialog.product.priceVariants?.find(v => v.unit === stockDialog.selectedUnit)?.quantityPerUnit || 1))
+                          Math.round(parseFloat(stockDialog.inputQuantity || '0') * (getPriceVariants(stockDialog.product).find(v => v.unit === stockDialog.selectedUnit)?.quantityPerUnit || 1))
                         } = {stockDialog.newAbsoluteQuantity} {getBaseUnit(stockDialog.product)}
                       </>
                     )}
                     {stockDialog.adjustmentMode === 'subtract' && (
                       <>
                         {stockDialog.product.stockQuantity} - {
-                          Math.round(parseFloat(stockDialog.inputQuantity || '0') * (stockDialog.product.priceVariants?.find(v => v.unit === stockDialog.selectedUnit)?.quantityPerUnit || 1))
+                          Math.round(parseFloat(stockDialog.inputQuantity || '0') * (getPriceVariants(stockDialog.product).find(v => v.unit === stockDialog.selectedUnit)?.quantityPerUnit || 1))
                         } = {stockDialog.newAbsoluteQuantity} {getBaseUnit(stockDialog.product)}
                       </>
                     )}
