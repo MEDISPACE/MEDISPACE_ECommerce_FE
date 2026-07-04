@@ -54,6 +54,8 @@ interface BackendPrescription {
   createdAt: string
   updatedAt: string
   orderId?: string
+  orderNumber?: string
+  orderStatus?: string
 }
 
 type TrackingStatus = 'pending' | 'approved' | 'rejected' | 'completed'
@@ -243,7 +245,7 @@ export function PrescriptionDetailPage() {
     )
   }
 
-  const status = prescription.status as TrackingStatus
+  const status = (prescription.status === 'verified' && prescription.orderId ? 'completed' : prescription.status) as TrackingStatus
   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.pending
 
   // Compute timeline step states
@@ -310,7 +312,7 @@ export function PrescriptionDetailPage() {
         {/* Action buttons based on status */}
         <div className='shrink-0'>
           {status === 'rejected' && (
-            <Link to='/account/prescriptions/upload'>
+            <Link to='/upload-prescription'>
               <Button size='sm' className='bg-red-600 hover:bg-red-700 text-white'>
                 <Upload className='w-4 h-4 mr-1' /> Gửi lại
               </Button>
@@ -320,6 +322,13 @@ export function PrescriptionDetailPage() {
             <Link to={`/account/orders/${prescription.orderId}`}>
               <Button size='sm' className='bg-green-600 hover:bg-green-700 text-white'>
                 <ShoppingCart className='w-4 h-4 mr-1' /> Xem đơn hàng
+              </Button>
+            </Link>
+          )}
+          {status === 'approved' && !prescription.orderId && (
+            <Link to={`/products?prescriptionId=${prescription._id}&rx=verified`}>
+              <Button size='sm' className='bg-[#0A2463] hover:bg-[#071A49] text-white'>
+                <ShoppingCart className='w-4 h-4 mr-1' /> Mua / nạp lại thuốc
               </Button>
             </Link>
           )}
@@ -550,38 +559,45 @@ export function PrescriptionDetailPage() {
 
           {/* Quick Actions */}
           <Card className='border-[#E8EDF5] shadow-sm'>
-            <CardHeader className='pb-2'>
+            <CardHeader className='pb-3'>
               <CardTitle className='text-base text-blue-900'>Thao tác</CardTitle>
             </CardHeader>
-            <CardContent className='space-y-2'>
-              <Link to='/account/prescriptions/upload'>
+            <CardContent className='flex flex-col gap-3 pt-0'>
+              <Link to='/upload-prescription' className='block'>
                 <Button
                   variant='outline'
                   size='sm'
-                  className='w-full justify-start text-[#0A2463] border-[#BFDBFE] hover:bg-[#F0F6FF]'
+                  className='h-10 w-full justify-start rounded-lg text-[#0A2463] border-[#BFDBFE] hover:bg-[#F0F6FF]'
                 >
                   <Upload className='w-4 h-4 mr-2' /> Gửi đơn thuốc mới
                 </Button>
               </Link>
-              <Link to={`/contact?ref=prescription&id=${prescription._id}`}>
+              <Link to={`/contact?ref=prescription&id=${prescription._id}`} className='block'>
                 <Button
                   variant='outline'
                   size='sm'
-                  className='w-full justify-start text-gray-600 border-gray-200 hover:bg-gray-50'
+                  className='h-10 w-full justify-start rounded-lg text-gray-600 border-gray-200 hover:bg-gray-50'
                 >
                   <MessageCircle className='w-4 h-4 mr-2' /> Liên hệ dược sĩ
                 </Button>
               </Link>
               {status === 'completed' && prescription.orderId && (
-                <Link to={`/account/orders/${prescription.orderId}`}>
-                  <Button size='sm' className='w-full justify-start bg-green-600 hover:bg-green-700 text-white'>
+                <Link to={`/account/orders/${prescription.orderId}`} className='block'>
+                  <Button size='sm' className='h-10 w-full justify-start rounded-lg bg-green-600 hover:bg-green-700 text-white'>
                     <ShoppingCart className='w-4 h-4 mr-2' /> Xem đơn hàng
                   </Button>
                 </Link>
               )}
+              {status === 'approved' && !prescription.orderId && (
+                <Link to={`/products?prescriptionId=${prescription._id}&rx=verified`} className='block'>
+                  <Button size='sm' className='h-10 w-full justify-start rounded-lg bg-[#0A2463] hover:bg-[#071A49] text-white'>
+                    <ShoppingCart className='w-4 h-4 mr-2' /> Mua / nạp lại thuốc
+                  </Button>
+                </Link>
+              )}
               {status === 'rejected' && (
-                <Link to='/account/prescriptions/upload'>
-                  <Button size='sm' className='w-full justify-start bg-red-600 hover:bg-red-700 text-white'>
+                <Link to='/upload-prescription' className='block'>
+                  <Button size='sm' className='h-10 w-full justify-start rounded-lg bg-red-600 hover:bg-red-700 text-white'>
                     <Upload className='w-4 h-4 mr-2' /> Gửi lại đơn thuốc
                   </Button>
                 </Link>
@@ -608,6 +624,12 @@ export function PrescriptionDetailPage() {
                 <div className='flex justify-between'>
                   <span>Xét duyệt lúc:</span>
                   <span>{formatDateTime(prescription.verifiedAt)}</span>
+                </div>
+              )}
+              {prescription.orderNumber && (
+                <div className='flex justify-between'>
+                  <span>Đơn hàng:</span>
+                  <span className='font-mono font-medium text-gray-700'>{prescription.orderNumber}</span>
                 </div>
               )}
             </CardContent>

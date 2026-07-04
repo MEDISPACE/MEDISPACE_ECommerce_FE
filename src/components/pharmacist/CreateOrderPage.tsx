@@ -45,6 +45,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger, PopoverAnchor } from '../ui/popover'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { Tabs, TabsList, TabsTrigger } from '../ui/tabs'
+import { Checkbox } from '../ui/checkbox'
 import { ProductSearchWidget } from '../products/ProductSearchWidget'
 import { DrugInteractionChecker } from '../products/DrugInteractionChecker'
 import { ProductNoteModal } from '../products/ProductNoteModal'
@@ -130,6 +131,10 @@ export function CreateOrderPage() {
   const navigate = useNavigate()
   // Support both 'prescriptionId' and 'prescription' query params
   const prescriptionId = searchParams.get('prescriptionId') || searchParams.get('prescription')
+  const mappedProductIds = (searchParams.get('productIds') || '')
+    .split(',')
+    .map((id) => id.trim())
+    .filter(Boolean)
 
   const [orderItems, setOrderItems] = useState<OrderItem[]>([])
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
@@ -156,41 +161,43 @@ export function CreateOrderPage() {
   const [isProductModalOpen, setIsProductModalOpen] = useState(false)
   const [isLoadingDetail, setIsLoadingDetail] = useState(false)
 
+  const mapApiProductToOrderProduct = (full: any, fallback?: Partial<Product>): Product => {
+    const defaultVariant = full?.priceVariants?.find((v: any) => v.isDefault) || full?.priceVariants?.[0]
+    return {
+      id: full?._id || fallback?.id || '',
+      name: full?.name || fallback?.name || '',
+      image: full?.featuredImage || fallback?.image || '/images/product-placeholder.jpg',
+      price: defaultVariant?.price ?? fallback?.price ?? 0,
+      originalPrice: defaultVariant?.originalPrice ?? fallback?.originalPrice,
+      unit: defaultVariant?.unit || fallback?.unit || 'Hộp',
+      stock: full?.stockQuantity ?? fallback?.stock ?? 0,
+      rating: full?.rating ?? fallback?.rating ?? 0,
+      type: full?.requiresPrescription ? 'rx' : fallback?.type || 'otc',
+      brand: full?.brand?.name || full?.brand?.[0]?.name || fallback?.brand || 'Unknown',
+      sku: full?.sku || fallback?.sku,
+      barcode: full?.barcode || fallback?.barcode,
+      category: full?.category ? { name: full.category.name } : fallback?.category,
+      shortDescription: full?.shortDescription || full?.description || fallback?.shortDescription,
+      description: full?.description || fallback?.description,
+      origin: full?.origin || fallback?.origin,
+      packaging: full?.packaging || fallback?.packaging,
+      ingredients: full?.ingredients || fallback?.ingredients,
+      uses: full?.uses || fallback?.uses,
+      instructions: full?.instructions || fallback?.instructions,
+      warnings: full?.warnings || fallback?.warnings,
+      tags: full?.tags || fallback?.tags,
+      requiresPrescription: full?.requiresPrescription ?? fallback?.requiresPrescription,
+      status: full?.isActive === false ? 'discontinued' : fallback?.status || 'active',
+    } as Product
+  }
+
   // Fetch full product details by ID before opening modal
   const handleOpenDetail = async (basicProduct: Product) => {
     setIsLoadingDetail(true)
     try {
       const full = await productService.getProductById(basicProduct.id)
       if (full) {
-        // Map full product to the Product interface
-        const defaultVariant =
-          (full as any).priceVariants?.find((v: any) => v.isDefault) || (full as any).priceVariants?.[0]
-        setSelectedProduct({
-          id: (full as any)._id || basicProduct.id,
-          name: (full as any).name || basicProduct.name,
-          image: (full as any).featuredImage || basicProduct.image,
-          price: defaultVariant?.price ?? basicProduct.price,
-          originalPrice: defaultVariant?.originalPrice,
-          unit: defaultVariant?.unit || basicProduct.unit,
-          stock: (full as any).stockQuantity ?? basicProduct.stock,
-          rating: (full as any).rating || basicProduct.rating,
-          type: (full as any).requiresPrescription ? 'rx' : 'otc',
-          brand: (full as any).brand?.name || basicProduct.brand,
-          sku: (full as any).sku,
-          barcode: (full as any).barcode,
-          category: (full as any).category ? { name: (full as any).category.name } : undefined,
-          shortDescription: (full as any).shortDescription || (full as any).description,
-          description: (full as any).description,
-          origin: (full as any).origin,
-          packaging: (full as any).packaging,
-          ingredients: (full as any).ingredients,
-          uses: (full as any).uses,
-          instructions: (full as any).instructions,
-          warnings: (full as any).warnings,
-          tags: (full as any).tags,
-          requiresPrescription: (full as any).requiresPrescription,
-          status: (full as any).isActive === false ? 'discontinued' : 'active',
-        } as Product)
+        setSelectedProduct(mapApiProductToOrderProduct(full, basicProduct))
       } else {
         setSelectedProduct(basicProduct)
       }
@@ -202,11 +209,12 @@ export function CreateOrderPage() {
     }
   }
   const [selectedDelivery, setSelectedDelivery] = useState('fast')
-  const [selectedPayment, setSelectedPayment] = useState('cod')
+  const [selectedPayment, setSelectedPayment] = useState('cash')
   const [orderNotes, setOrderNotes] = useState('')
   const [pharmacistNotes, setPharmacistNotes] = useState('')
   const [showInteractionChecker, setShowInteractionChecker] = useState(false)
   const [isCreatingOrder, setIsCreatingOrder] = useState(false)
+  const [safetyReviewConfirmed, setSafetyReviewConfirmed] = useState(false)
   const [noteModalState, setNoteModalState] = useState<{
     isOpen: boolean
     itemId: string | null
@@ -219,6 +227,12 @@ export function CreateOrderPage() {
     currentNote: '',
   })
   const [orderType, setOrderType] = useState<'instore' | 'delivery'>('instore')
+
+  const requiresSafetyReview = orderItems.length > 1 || orderItems.some((item) => item.product.requiresPrescription || item.product.type === 'rx')
+
+  useEffect(() => {
+    setSafetyReviewConfirmed(false)
+  }, [orderItems.map((item) => `${item.product.id}:${item.quantity}`).join('|')])
 
   // ML Pharmacist Suggestions state
   const [mlSuggestions, setMlSuggestions] = useState<RecommendedProduct[]>([])
@@ -301,7 +315,7 @@ export function CreateOrderPage() {
           })
           if (options && options.length > 0) {
             const formattedOptions = options.map((opt) => ({
-              id: String(opt.id),
+              id: `ghn:${opt.id}`,
               label: opt.name,
               time: opt.estimatedDays || 'Giao hàng GHN',
               price: opt.price,
@@ -454,6 +468,43 @@ export function CreateOrderPage() {
             setOrderNotes(prescription.notes)
           }
 
+          if (mappedProductIds.length > 0) {
+            const medicationQuantityByProductId = new Map<string, number>()
+            ;(prescription.medications || []).forEach((med: any) => {
+              if (med.productId) medicationQuantityByProductId.set(String(med.productId), Number(med.quantity) || 1)
+            })
+
+            const prefilledItems = (
+              await Promise.all(
+                mappedProductIds.map(async (productId) => {
+                  try {
+                    const full = await productService.getProductById(productId)
+                    if (!full) return null
+                    const product = mapApiProductToOrderProduct(full, { id: productId })
+                    return {
+                      id: `rx-${product.id}`,
+                      product,
+                      quantity: medicationQuantityByProductId.get(productId) || 1,
+                      unit: product.unit,
+                      notes: '',
+                      warnings: product.type === 'rx' ? ['Cần đối chiếu đơn thuốc đã duyệt trước khi cấp thuốc'] : [],
+                    } as OrderItem
+                  } catch {
+                    return null
+                  }
+                }),
+              )
+            ).filter((item): item is OrderItem => Boolean(item))
+
+            if (prefilledItems.length > 0) {
+              setOrderItems((current) => {
+                const existingIds = new Set(current.map((item) => item.product.id))
+                return [...current, ...prefilledItems.filter((item) => !existingIds.has(item.product.id))]
+              })
+              toast.success(`Đã tự động thêm ${prefilledItems.length} sản phẩm đã map từ đơn thuốc`)
+            }
+          }
+
           // Trigger Auto-mapping for OCR Medications
           if (prescription.medications && prescription.medications.length > 0) {
             setIsMatching(true)
@@ -559,7 +610,7 @@ export function CreateOrderPage() {
     }
 
     fetchPrescriptionData()
-  }, [navigate, prescriptionId])
+  }, [navigate, prescriptionId, mappedProductIds.join(',')])
 
   const handleProductAdd = (product: Product, quantity: number) => {
     const existingItem = orderItems.find((item) => item.product.id === product.id)
@@ -573,6 +624,7 @@ export function CreateOrderPage() {
         id: Math.random().toString(36).substr(2, 9),
         product,
         quantity,
+        unit: product.unit,
         notes: '',
         warnings: product.type === 'rx' ? ['Cần theo dõi dị ứng'] : [],
       }
@@ -789,7 +841,7 @@ export function CreateOrderPage() {
   }
 
   const calculateDiscount = () => {
-    return customerInfo?.tier === 'vip' ? 5000 : 0
+    return 0
   }
 
   const calculateDeliveryFee = () => {
@@ -817,6 +869,11 @@ export function CreateOrderPage() {
       return
     }
 
+    if (requiresSafetyReview && !safetyReviewConfirmed) {
+      toast.error('Vui lòng xác nhận đã kiểm tra an toàn thuốc trước khi tạo đơn')
+      return
+    }
+
     if (orderType === 'delivery') {
       if (
         !shippingAddress.address ||
@@ -837,13 +894,23 @@ export function CreateOrderPage() {
         toast.error('Vui lòng nhập số điện thoại người nhận')
         return
       }
+
+      if (!selectedDelivery || ghnShippingOptions.length === 0) {
+        toast.error('Vui lòng chọn dịch vụ giao hàng GHN')
+        return
+      }
     }
 
     try {
       setIsCreatingOrder(true)
 
       // Prepare order data
+      const idempotencyKey =
+        typeof crypto !== 'undefined' && 'randomUUID' in crypto
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2)}`
       const orderData = {
+        idempotencyKey,
         customerId: customerInfo.phone || undefined, // Using phone as customerId for now
         prescriptionId: prescriptionId || undefined,
         items: orderItems.map((item) => ({
@@ -878,7 +945,7 @@ export function CreateOrderPage() {
               },
         deliveryMethod: orderType === 'instore' ? 'instore' : selectedDelivery,
         paymentMethod: selectedPayment,
-        shippingFee: calculateDeliveryFee(),
+        safetyReviewConfirmed,
         orderNotes: orderNotes || undefined,
         pharmacistNotes: pharmacistNotes || undefined,
       }
@@ -891,10 +958,20 @@ export function CreateOrderPage() {
         duration: 3000,
       })
 
+      if (response.paymentUrl) {
+        window.location.href = response.paymentUrl
+        return
+      }
+
+      if (response.paymentUrlError) {
+        toast.error('Đã tạo đơn hàng nhưng chưa thể tạo liên kết thanh toán. Vui lòng thử lại từ chi tiết đơn hàng.')
+      }
+
       // Reset form
       setOrderItems([])
       setOrderNotes('')
       setPharmacistNotes('')
+      setSafetyReviewConfirmed(false)
       setSearchPhone('')
       setCustomerInfo({
         phone: '',
@@ -1847,13 +1924,32 @@ export function CreateOrderPage() {
             </CardContent>
           </Card>
 
+          {requiresSafetyReview && (
+            <Alert className='border-amber-200 bg-amber-50'>
+              <Shield className='h-4 w-4 text-amber-700' />
+              <AlertDescription className='text-sm text-amber-900'>
+                <label className='flex cursor-pointer items-start gap-3'>
+                  <Checkbox
+                    checked={safetyReviewConfirmed}
+                    onCheckedChange={(checked) => setSafetyReviewConfirmed(Boolean(checked))}
+                    className='mt-0.5 border-amber-500 data-[state=checked]:bg-amber-600'
+                  />
+                  <span>
+                    Tôi xác nhận đã kiểm tra đơn thuốc, tương tác thuốc, dị ứng/chống chỉ định và hướng dẫn dùng thuốc
+                    trước khi tạo đơn.
+                  </span>
+                </label>
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Action Buttons */}
           <div className='space-y-3'>
             <Button
               data-testid='create-order-submit-btn'
               onClick={handleCreateOrder}
               className='w-full bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white hover:from-[#071A49] hover:to-[#1E40AF] shadow-lg'
-              disabled={orderItems.length === 0 || isCreatingOrder}
+              disabled={orderItems.length === 0 || isCreatingOrder || (requiresSafetyReview && !safetyReviewConfirmed)}
             >
               {isCreatingOrder ? (
                 <>

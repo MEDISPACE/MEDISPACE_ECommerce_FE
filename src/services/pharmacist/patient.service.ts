@@ -42,6 +42,17 @@ export interface PatientNote {
   updatedAt: string
 }
 
+interface PatientNoteResponse {
+  _id: string
+  customer_id?: string
+  pharmacist_id?: string
+  note_type?: 'consultation' | 'prescription_verification' | 'general'
+  content?: string
+  related_prescription_id?: string
+  created_at?: string
+  updated_at?: string
+}
+
 export interface CreateNoteData {
   note: string
   noteType: 'General' | 'Medical' | 'Prescription' | 'Order'
@@ -108,10 +119,24 @@ export const patientService = {
    * Get all notes for a patient
    */
   getNotes: async (patientId: string): Promise<PatientNote[]> => {
-    const response: AxiosResponse<{ message: string; result: PatientNote[] }> = await apiClient.get(
+    const response: AxiosResponse<{ message: string; result: PatientNoteResponse[] }> = await apiClient.get(
       `/pharmacist/patients/${patientId}/notes`,
     )
-    return response.data.result
+    return (response.data.result || []).map((note) => ({
+      _id: note._id,
+      patientId: note.customer_id || patientId,
+      pharmacistId: note.pharmacist_id || '',
+      note: note.content || '',
+      noteType:
+        note.note_type === 'prescription_verification'
+          ? 'Prescription'
+          : note.note_type === 'consultation'
+            ? 'Medical'
+            : 'General',
+      relatedId: note.related_prescription_id,
+      createdAt: note.created_at || '',
+      updatedAt: note.updated_at || '',
+    }))
   },
 
   /**

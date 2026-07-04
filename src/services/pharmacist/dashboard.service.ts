@@ -50,12 +50,16 @@ export interface Prescription {
   }>
   status: 'pending' | 'verified' | 'rejected' | 'expired'
   verifiedBy?: string
+  verifiedByInfo?: PharmacistSnapshot
   verifiedAt?: string
   notes?: string
   validUntil?: string
   createdAt: string
   updatedAt: string
   pharmacistNotes?: string
+  correctedBy?: string
+  correctedByInfo?: PharmacistSnapshot
+  correctedAt?: string
   ocrConfidence?: string
   // Customer info (populated from lookup)
   customer?: {
@@ -68,10 +72,23 @@ export interface Prescription {
   }
 }
 
+export interface PharmacistSnapshot {
+  _id: string
+  firstName?: string
+  lastName?: string
+  fullName?: string
+  email?: string
+  phoneNumber?: string
+  avatar?: string
+  lisenseNumber?: string
+  licenseNumber?: string
+}
+
 export interface Order {
   _id: string
   userId: string
   orderNumber: string
+  prescriptionId?: string
   items: Array<{
     productId: string
     name: string
@@ -113,6 +130,12 @@ export interface Order {
   totalAmount: number
   notes?: string
   trackingNumber?: string
+  createdBy?: string
+  createdByInfo?: PharmacistSnapshot
+  safetyReviewConfirmed?: boolean
+  safetyReviewConfirmedAt?: string
+  safetyReviewConfirmedBy?: string
+  safetyReviewConfirmedByInfo?: PharmacistSnapshot
   createdAt: string
   updatedAt: string
   paidAt?: string
