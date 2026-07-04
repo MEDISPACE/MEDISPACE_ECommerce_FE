@@ -46,7 +46,6 @@ export default [
       route('orders/:orderId/return', 'routes/account/orders/$orderId.return.tsx'),
       route('payment-methods', 'routes/account/payment-methods.tsx'),
       route('prescriptions', 'routes/account/prescriptions/index.tsx'),
-      route('prescriptions/upload', 'routes/account/prescriptions/upload.tsx'),
       route('prescriptions/:id', 'routes/account/prescriptions/$id.tsx'),
       route('returns', 'routes/account/returns/index.tsx'),
       route('returns/:requestId', 'routes/account/returns/$requestId.tsx'),

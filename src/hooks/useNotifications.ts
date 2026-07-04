@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { notificationService } from '../services/notificationService'
 import { useSocketContext } from '../contexts/SocketContext'
 import { useAuth } from '../contexts/AuthContext'
+import { authService } from '../services/authService'
 import { UserStatus } from '../types/user'
 import type { NotificationFilter, NotificationPreferences } from '../types/account'
 
@@ -22,13 +23,13 @@ export function useNotifications(
   const { isAuthenticated, user } = useAuth()
   const { subscribe, unsubscribe } = useSocketContext()
   const subscriberId = useId()
-  const canUseNotifications = isAuthenticated && user?.status === UserStatus.Verified
+  const canUseNotifications = isAuthenticated && !!authService.getAccessToken() && user?.status === UserStatus.Verified
 
   const query = useQuery({
     queryKey: [...NOTIFICATIONS_QUERY_KEY, filter, page],
     queryFn: () => notificationService.getNotifications(page, 20, filter),
     enabled: canUseNotifications,
-    retry: (failureCount, error: any) => error?.response?.status !== 403 && failureCount < 2,
+    retry: (failureCount, error: any) => ![401, 403].includes(error?.response?.status) && failureCount < 2,
     staleTime: 1000 * 30, // 30s
   })
 
@@ -93,7 +94,7 @@ export function useNotifications(
 export function useNotificationPreferences() {
   const queryClient = useQueryClient()
   const { isAuthenticated, user } = useAuth()
-  const canUseNotifications = isAuthenticated && user?.status === UserStatus.Verified
+  const canUseNotifications = isAuthenticated && !!authService.getAccessToken() && user?.status === UserStatus.Verified
 
   const query = useQuery({
     queryKey: NOTIFICATION_PREFERENCES_QUERY_KEY,
@@ -128,13 +129,13 @@ export function useUnreadNotificationCount() {
   const { isAuthenticated, user } = useAuth()
   const { subscribe, unsubscribe } = useSocketContext()
   const subscriberId = useId()
-  const canUseNotifications = isAuthenticated && user?.status === UserStatus.Verified
+  const canUseNotifications = isAuthenticated && !!authService.getAccessToken() && user?.status === UserStatus.Verified
 
   const query = useQuery({
     queryKey: UNREAD_COUNT_QUERY_KEY,
     queryFn: () => notificationService.getUnreadCount(),
     enabled: canUseNotifications,
-    retry: (failureCount, error: any) => error?.response?.status !== 403 && failureCount < 2,
+    retry: (failureCount, error: any) => ![401, 403].includes(error?.response?.status) && failureCount < 2,
     staleTime: 1000 * 60, // 60s
     refetchInterval: 1000 * 60, // poll every 60s as socket fallback
   })

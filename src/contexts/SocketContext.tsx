@@ -83,6 +83,7 @@ interface SocketContextType {
 
 const SocketContext = createContext<SocketContextType | null>(null)
 const AUTH_TOKEN_REFRESHED_EVENT = 'medispace:auth-token-refreshed'
+const AUTH_SESSION_EXPIRED_EVENT = 'medispace:auth-session-expired'
 
 const isSocketAuthError = (message: string) => {
   const normalized = message.toLowerCase()
@@ -150,6 +151,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         }
       })
       .catch(() => {
+        socketRef.current?.disconnect()
         setIsConnected(false)
         setIsConnecting(false)
         broadcast('onError', { message: 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.' })
@@ -206,6 +208,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     s.on('connect_error', (error) => {
       setIsConnecting(false)
       if (isSocketAuthError(error.message)) {
+        s.disconnect()
         refreshAndReconnect()
       } else {
         broadcast('onError', { message: 'Không thể kết nối đến máy chủ chat' })
@@ -397,6 +400,12 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     window.addEventListener(AUTH_TOKEN_REFRESHED_EVENT, handleTokenRefreshed)
     return () => window.removeEventListener(AUTH_TOKEN_REFRESHED_EVENT, handleTokenRefreshed)
   }, [connect, isAuthenticated])
+
+  useEffect(() => {
+    const handleSessionExpired = () => disconnect()
+    window.addEventListener(AUTH_SESSION_EXPIRED_EVENT, handleSessionExpired)
+    return () => window.removeEventListener(AUTH_SESSION_EXPIRED_EVENT, handleSessionExpired)
+  }, [disconnect])
 
   // Cleanup khi unmount
   useEffect(() => {

@@ -62,6 +62,8 @@ const GLOBAL_DEFAULT_SHIPPING_METHODS: ShippingMethod[] = [
   },
 ]
 
+const PRESCRIPTION_CHECKOUT_STORAGE_KEY = 'medispace_checkout_prescription_id'
+
 const paymentMethods: PaymentMethod[] = [
   {
     id: 'cod',
@@ -125,6 +127,7 @@ export function CheckoutPage() {
     Array<{ _id: string; prescriptionNumber: string }>
   >([])
   const [selectedPrescriptionId, setSelectedPrescriptionId] = useState('')
+  const preferredPrescriptionId = searchParams.get('prescriptionId') || sessionStorage.getItem(PRESCRIPTION_CHECKOUT_STORAGE_KEY) || ''
 
   // Sync cart coupons on initial load for normal cart flow
   useEffect(() => {
@@ -238,10 +241,15 @@ export function CheckoutPage() {
             (!prescription.validUntil || new Date(prescription.validUntil) >= new Date()),
         )
         setVerifiedPrescriptions(prescriptions)
-        if (prescriptions.length === 1) setSelectedPrescriptionId(prescriptions[0]._id)
+        const preferredPrescription = prescriptions.find((prescription: any) => prescription._id === preferredPrescriptionId)
+        if (preferredPrescription) {
+          setSelectedPrescriptionId(preferredPrescription._id)
+        } else if (prescriptions.length === 1) {
+          setSelectedPrescriptionId(prescriptions[0]._id)
+        }
       })
       .catch(() => setVerifiedPrescriptions([]))
-  }, [requiresPrescription])
+  }, [preferredPrescriptionId, requiresPrescription])
 
   // Calculate selected items subtotal before shipping quote requests.
   const subtotal = isBuyNow ? (buyNowItem ? buyNowItem.totalPrice : 0) : getSelectedItemsTotal()
@@ -418,6 +426,7 @@ export function CheckoutPage() {
       }
 
       const { order, paymentUrl, paymentUrlError } = await orderService.createOrder(orderData)
+      sessionStorage.removeItem(PRESCRIPTION_CHECKOUT_STORAGE_KEY)
 
       // Refresh cart to sync with backend (backend removed selected items for COD)
       await refreshCart()
