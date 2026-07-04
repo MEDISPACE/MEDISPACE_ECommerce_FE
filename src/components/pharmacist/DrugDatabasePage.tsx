@@ -25,6 +25,7 @@ import { productService } from '../../services/productService'
 import { categoryService } from '../../services/categoryService'
 import type { Product, Category } from '../../types/product'
 import { getProductPrice, getProductOriginalPrice } from '../../utils/priceUtils'
+import { ImageWithFallback } from '../shared/ImageWithFallback'
 
 export function DrugDatabasePage() {
   const [searchParams] = useSearchParams()
@@ -212,11 +213,7 @@ export function DrugDatabasePage() {
 
                   {/* Product Image */}
                   <div className='w-full h-24 bg-gray-50 rounded-lg mb-3 flex items-center justify-center overflow-hidden'>
-                    {product.featuredImage ? (
-                      <img src={product.featuredImage} alt={product.name} className='w-full h-full object-contain' />
-                    ) : (
-                      <Pill className='w-10 h-10 text-gray-300' />
-                    )}
+                    <ImageWithFallback src={product.featuredImage} alt={product.name} className='w-full h-full object-contain' />
                   </div>
 
                   {/* Name & Brand */}
@@ -297,15 +294,11 @@ export function DrugDatabasePage() {
                 {/* Product Image */}
                 <div className='flex gap-4'>
                   <div className='w-32 h-32 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0'>
-                    {selectedProduct.featuredImage ? (
-                      <img
-                        src={selectedProduct.featuredImage}
-                        alt={selectedProduct.name}
-                        className='w-full h-full object-contain'
-                      />
-                    ) : (
-                      <Pill className='w-16 h-16 text-gray-300' />
-                    )}
+                    <ImageWithFallback
+                      src={selectedProduct.featuredImage}
+                      alt={selectedProduct.name}
+                      className='w-full h-full object-contain'
+                    />
                   </div>
                   <div className='flex-1'>
                     <h3 className='font-semibold text-lg text-gray-900 mb-2'>{selectedProduct.name}</h3>
