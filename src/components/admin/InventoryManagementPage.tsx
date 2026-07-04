@@ -23,6 +23,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '../ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { PaginationComponent } from '../shared/PaginationComponent'
+import { ImageWithFallback } from '../shared/ImageWithFallback'
 import { toast } from 'sonner'
 import inventoryService, {
   type InventoryStats,
@@ -37,6 +38,22 @@ const formatCurrency = (amount: number) => {
 
 function getPriceVariants(product?: InventoryProduct | null) {
   return Array.isArray(product?.priceVariants) ? product.priceVariants : []
+}
+
+function getInventoryImageSrc(imageUrl?: string | null) {
+  if (!imageUrl) return undefined
+
+  try {
+    const url = new URL(imageUrl)
+    const isLongChauCdn = url.hostname === 'cdn.nhathuoclongchau.com.vn'
+    const isZaloUploadName = /\/z\d+_/i.test(url.pathname)
+
+    if (isLongChauCdn && isZaloUploadName) return undefined
+  } catch {
+    return imageUrl
+  }
+
+  return imageUrl
 }
 
 // Helper: lấy đơn vị cơ sở (quantityPerUnit === 1)
@@ -489,22 +506,17 @@ export function InventoryManagementPage() {
                     const baseUnit = getBaseUnit(product)
                     const conversion = getConversionDisplay(stockQuantity, product)
                     const hasMultiUnit = priceVariants.length > 1
+                    const imageSrc = getInventoryImageSrc(product.featuredImage)
 
                     return (
                       <TableRow key={product._id} className='border-b border-[#E8EDF5] hover:bg-[#F0F6FF]/30'>
                         <TableCell>
                           <div className='flex items-center gap-3'>
-                            {product.featuredImage ? (
-                              <img
-                                src={product.featuredImage}
-                                alt={product.name}
-                                className='w-10 h-10 rounded-lg object-cover border border-gray-200'
-                              />
-                            ) : (
-                              <div className='w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center'>
-                                <Package className='w-5 h-5 text-gray-400' />
-                              </div>
-                            )}
+                            <ImageWithFallback
+                              src={imageSrc}
+                              alt={product.name}
+                              className='w-10 h-10 rounded-lg object-cover border border-gray-200'
+                            />
                             <div className='min-w-0'>
                               <p className='font-medium text-gray-900 truncate max-w-[250px]' title={product.name}>
                                 {product.name}
