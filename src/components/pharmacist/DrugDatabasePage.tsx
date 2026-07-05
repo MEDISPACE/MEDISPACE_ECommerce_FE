@@ -135,11 +135,8 @@ export function DrugDatabasePage() {
         limit: PAGE_SIZE,
       })
     },
-    getNextPageParam: (lastPage) => {
-      if (lastPage.pagination.page < lastPage.pagination.totalPages) {
-        return lastPage.pagination.page + 1
-      }
-      return undefined
+    getNextPageParam: (lastPage, allPages) => {
+      return lastPage.products.length === PAGE_SIZE ? allPages.length + 1 : undefined
     },
     initialPageParam: 1,
     staleTime: 2 * 60 * 1000,
@@ -167,9 +164,8 @@ export function DrugDatabasePage() {
 
   const products = useMemo(() => data?.pages.flatMap((pageData) => pageData.products || []) ?? [], [data])
   const firstPage = data?.pages[0]
-  const latestPage = data?.pages[data.pages.length - 1]
-  const pagination = latestPage?.pagination || { page: 1, limit: PAGE_SIZE, totalPages: 0, totalCount: 0 }
-  const totalCount = firstPage?.pagination.totalCount || 0
+  const loadedCount = products.length
+  const hasMoreProducts = Boolean(hasNextPage)
   const lowStockThreshold = firstPage?.lowStockThreshold || 30
 
   const retryProducts = () => {
@@ -228,7 +224,7 @@ export function DrugDatabasePage() {
           <div>
             <h1 className='text-2xl font-bold text-[#0A2463]'>Cơ sở dữ liệu thuốc</h1>
             <p className='text-gray-600 mt-1' data-testid='total-count'>
-              {totalCount.toLocaleString('vi-VN')} sản phẩm tham chiếu
+              Đã tải {loadedCount.toLocaleString('vi-VN')} sản phẩm tham chiếu{hasMoreProducts ? '+' : ''}
             </p>
           </div>
         </div>
