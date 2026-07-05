@@ -31,7 +31,16 @@ export function EnhancedSearchBar({
   const { recentSearches, addToHistory, removeFromHistory } = useSearchHistory()
 
   // Use multi-collection search hook
-  const { products, brands, categories, articles, querySuggestions, all: suggestions, isLoading } = useSearchSuggestions(searchQuery)
+  const {
+    products,
+    brands,
+    categories,
+    articles,
+    querySuggestions,
+    all: suggestions,
+    isLoading,
+    isSettled,
+  } = useSearchSuggestions(searchQuery)
 
   // Trending searches
   const trendingSearches = ['Paracetamol', 'Vitamin D3', 'Kem dưỡng da', 'Thuốc ho', 'Canxi']
@@ -392,10 +401,15 @@ export function EnhancedSearchBar({
                     </div>
                   )}
                 </div>
-              ) : (
+              ) : isSettled ? (
                 <div className='p-6 text-center text-gray-500'>
                   <Search className='w-8 h-8 mx-auto mb-2 text-gray-300' />
                   <div className='text-sm'>Không tìm thấy kết quả phù hợp</div>
+                </div>
+              ) : (
+                <div className='p-6 text-center'>
+                  <Loader2 className='w-6 h-6 mx-auto animate-spin text-gray-400 mb-2' />
+                  <div className='text-sm text-gray-500'>Đang tìm kiếm...</div>
                 </div>
               )
             ) : (
