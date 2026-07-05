@@ -1,484 +1,498 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
-import {
-  Search,
-  Pill,
-  AlertTriangle,
-  Info,
-  BookOpen,
-  Tag,
-  ChevronRight,
-  Package,
-  ShoppingCart,
-  Loader2,
-} from 'lucide-react'
+import { AlertTriangle, ChevronLeft, ChevronRight, Info, Loader2, Package, Pill, RotateCcw, Search, X } from 'lucide-react'
 
-import { Button } from '../ui/button'
-import { Input } from '../ui/input'
-import { Card, CardContent } from '../ui/card'
 import { Badge } from '../ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
+import { Button } from '../ui/button'
+import { Card, CardContent } from '../ui/card'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog'
+import { Input } from '../ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog'
 import { Separator } from '../ui/separator'
-import { productService } from '../../services/productService'
-import { categoryService } from '../../services/categoryService'
-import type { Product, Category } from '../../types/product'
-import { getProductPrice, getProductOriginalPrice } from '../../utils/priceUtils'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import { ImageWithFallback } from '../shared/ImageWithFallback'
+import { categoryService } from '../../services/categoryService'
+import {
+  pharmacistDrugDatabaseService,
+  type DrugDatabaseProduct,
+  type DrugDatabaseQuery,
+  type DrugDatabaseResponse,
+} from '../../services/pharmacistDrugDatabaseService'
+import type { Category } from '../../types/product'
+import {
+  formatCurrency,
+  formatLastUpdated,
+  formatStockDisplay,
+  getDisplayPrice,
+  getRxBadgeConfig,
+  getStockStatus,
+} from '../../utils/drugDatabaseUtils'
+
+const PAGE_SIZE = 24
+
+function useDebouncedValue<T>(value: T, delayMs: number) {
+  const [debouncedValue, setDebouncedValue] = useState(value)
+
+  useEffect(() => {
+    const id = window.setTimeout(() => setDebouncedValue(value), delayMs)
+    return () => window.clearTimeout(id)
+  }, [value, delayMs])
+
+  return debouncedValue
+}
+
+function formatMissingField(field: string) {
+  const labels: Record<string, string> = {
+    activeIngredients: 'hoạt chất',
+    dosageForm: 'dạng bào chế',
+    packSize: 'quy cách',
+    manufacturer: 'nhà sản xuất',
+    indications: 'chỉ định',
+    dosageInstructions: 'cách dùng',
+    storageInstructions: 'bảo quản',
+  }
+  return labels[field] || field
+}
 
 export function DrugDatabasePage() {
-  const [searchParams] = useSearchParams()
-  const [products, setProducts] = useState<Product[]>([])
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [products, setProducts] = useState<DrugDatabaseProduct[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  const [pagination, setPagination] = useState<DrugDatabaseResponse['pagination']>({ page: 1, limit: PAGE_SIZE, totalPages: 0, totalCount: 0 })
+  const [lowStockThreshold, setLowStockThreshold] = useState(30)
+  const [lastCheckedAt, setLastCheckedAt] = useState<string | null>(null)
+  const [searchSource, setSearchSource] = useState<string>('mongo')
   const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState('all')
-  const [typeFilter, setTypeFilter] = useState('all')
-  const [stockFilter, setStockFilter] = useState('all')
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [detailLoading, setDetailLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [detailError, setDetailError] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '')
+  const [categoryFilter, setCategoryFilter] = useState(searchParams.get('categoryId') || 'all')
+  const [typeFilter, setTypeFilter] = useState<DrugDatabaseQuery['type']>((searchParams.get('type') as DrugDatabaseQuery['type']) || 'all')
+  const [stockFilter, setStockFilter] = useState<DrugDatabaseQuery['stock']>((searchParams.get('stock') as DrugDatabaseQuery['stock']) || 'all')
+  const [activeStatus, setActiveStatus] = useState<DrugDatabaseQuery['activeStatus']>((searchParams.get('activeStatus') as DrugDatabaseQuery['activeStatus']) || 'active')
+  const [page, setPage] = useState(Number(searchParams.get('page') || 1))
+  const [selectedProduct, setSelectedProduct] = useState<DrugDatabaseProduct | null>(null)
 
-  useEffect(() => {
-    const search = searchParams.get('search')
-    if (search) setSearchQuery(search)
-  }, [searchParams])
+  const debouncedSearch = useDebouncedValue(searchQuery, 350)
 
-  // Fetch products and categories
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true)
-      try {
-        const [productsData, categoriesData] = await Promise.all([
-          productService.getProducts({ limit: 1000 }),
-          categoryService.getCategories(),
-        ])
-        setProducts(Array.isArray(productsData) ? productsData : [])
-        setCategories(Array.isArray(categoriesData) ? categoriesData : [])
-      } catch (error) {
-        console.error('Error fetching data:', error)
-        setProducts([])
-        setCategories([])
-      } finally {
-        setLoading(false)
-      }
+  const query = useMemo<DrugDatabaseQuery>(
+    () => ({
+      page,
+      limit: PAGE_SIZE,
+      search: debouncedSearch,
+      categoryId: categoryFilter,
+      type: typeFilter,
+      stock: stockFilter,
+      activeStatus,
+      sortBy: 'name',
+      sortOrder: 'asc',
+    }),
+    [activeStatus, categoryFilter, debouncedSearch, page, stockFilter, typeFilter],
+  )
+
+  const syncUrl = (next: DrugDatabaseQuery) => {
+    const params = new URLSearchParams()
+    if (next.search) params.set('search', next.search)
+    if (next.categoryId && next.categoryId !== 'all') params.set('categoryId', next.categoryId)
+    if (next.type && next.type !== 'all') params.set('type', next.type)
+    if (next.stock && next.stock !== 'all') params.set('stock', next.stock)
+    if (next.activeStatus && next.activeStatus !== 'active') params.set('activeStatus', next.activeStatus)
+    if (next.page && next.page > 1) params.set('page', String(next.page))
+    setSearchParams(params, { replace: true })
+  }
+
+  const loadProducts = async (nextQuery = query) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const [productData, categoryData] = await Promise.all([
+        pharmacistDrugDatabaseService.getProducts(nextQuery),
+        categories.length ? Promise.resolve(categories) : categoryService.getCategories(),
+      ])
+      setProducts(productData.products || [])
+      setPagination(productData.pagination)
+      setLowStockThreshold(productData.lowStockThreshold)
+      setLastCheckedAt(productData.lastCheckedAt)
+      setSearchSource(productData.searchSource)
+      setCategories(Array.isArray(categoryData) ? categoryData : [])
+      syncUrl(nextQuery)
+    } catch (err) {
+      console.error('Error fetching drug database:', err)
+      setProducts([])
+      setError('Không thể tải dữ liệu thuốc. Vui lòng thử lại.')
+    } finally {
+      setLoading(false)
     }
-    fetchData()
-  }, [])
-
-  // Filter products
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch =
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (product.shortDescription || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (product.details?.activeIngredients || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (product.brand?.name || '').toLowerCase().includes(searchQuery.toLowerCase())
-
-    const matchesCategory =
-      categoryFilter === 'all' || product.categoryId === categoryFilter || product.category?._id === categoryFilter
-    const matchesType =
-      typeFilter === 'all' ||
-      (typeFilter === 'Rx' && product.requiresPrescription) ||
-      (typeFilter === 'OTC' && !product.requiresPrescription)
-    const matchesStock =
-      stockFilter === 'all' ||
-      (stockFilter === 'inStock' && product.stockQuantity > 0) ||
-      (stockFilter === 'outOfStock' && product.stockQuantity <= 0)
-
-    return matchesSearch && matchesCategory && matchesType && matchesStock
-  })
-
-  // Get product price formatted
-  const formatPrice = (product: Product) => {
-    const price = getProductPrice(product)
-    return price.toLocaleString('vi-VN') + 'đ'
   }
 
-  // Get product unit
-  const getUnit = (product: Product) => {
-    const defaultVariant = product.priceVariants?.find((v) => v.isDefault) || product.priceVariants?.[0]
-    return defaultVariant?.unit || product.unit || 'Đơn vị'
+  useEffect(() => {
+    loadProducts(query)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query])
+
+  const resetPage = (change: () => void) => {
+    setPage(1)
+    change()
   }
+
+  const clearSearch = () => resetPage(() => setSearchQuery(''))
+
+  const clearFilters = () => {
+    setSearchQuery('')
+    setCategoryFilter('all')
+    setTypeFilter('all')
+    setStockFilter('all')
+    setActiveStatus('active')
+    setPage(1)
+  }
+
+  const openDetail = async (product: DrugDatabaseProduct) => {
+    setSelectedProduct(product)
+    setDetailLoading(true)
+    setDetailError(null)
+    try {
+      const freshProduct = await pharmacistDrugDatabaseService.getProduct(product._id)
+      setSelectedProduct(freshProduct)
+    } catch (err) {
+      console.error('Error fetching drug detail:', err)
+      setDetailError('Không thể tải dữ liệu chi tiết mới nhất.')
+    } finally {
+      setDetailLoading(false)
+    }
+  }
+
+  const activeChips = [
+    searchQuery ? `Từ khóa: ${searchQuery}` : null,
+    categoryFilter !== 'all' ? `Danh mục: ${categories.find((cat) => cat._id === categoryFilter)?.name || categoryFilter}` : null,
+    typeFilter !== 'all' ? `Loại: ${typeFilter}` : null,
+    stockFilter !== 'all' ? `Tồn kho: ${stockFilter}` : null,
+    activeStatus !== 'active' ? `Trạng thái: ${activeStatus}` : null,
+  ].filter(Boolean)
+
+  const selectedPrice = selectedProduct ? getDisplayPrice(selectedProduct) : null
+  const selectedBadge = selectedProduct ? getRxBadgeConfig(selectedProduct) : null
+  const selectedStockStatus = selectedProduct ? getStockStatus(selectedProduct.stockQuantity, lowStockThreshold) : null
 
   return (
-    <div className='space-y-6'>
-      {/* Header */}
+    <div className='space-y-6' data-testid='drug-database-page'>
       <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-6'>
-        <h1 className='text-2xl font-bold bg-gradient-to-r from-[#0A2463] via-[#1E40AF] to-[#3B82F6] bg-clip-text text-transparent'>
-          Cơ sở dữ liệu thuốc
-        </h1>
-        <p className='text-gray-600 mt-1'>
-          Tra cứu thông tin chi tiết về thuốc và sản phẩm y tế ({products.length} sản phẩm)
-        </p>
+        <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
+          <div>
+            <h1 className='text-2xl font-bold text-[#0A2463]'>Cơ sở dữ liệu thuốc</h1>
+            <p className='text-gray-600 mt-1' data-testid='total-count'>
+              {pagination.totalCount.toLocaleString('vi-VN')} sản phẩm tham chiếu
+            </p>
+          </div>
+          <div className='text-sm text-gray-500' data-testid='freshness-indicator'>
+            {lastCheckedAt ? `Cập nhật ${formatLastUpdated(lastCheckedAt)} từ ${searchSource}` : 'Đang kiểm tra dữ liệu'}
+          </div>
+        </div>
       </div>
 
-      {/* Search & Filters */}
-      <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-4'>
-        <div className='flex flex-col md:flex-row gap-4'>
-          <div className='flex-1'>
-            <div className='relative'>
-              <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4' />
+      <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-4' data-testid='filter-bar'>
+        <div className='flex flex-col gap-4'>
+          <div className='flex flex-col md:flex-row gap-3'>
+            <div className='relative flex-1'>
+              <Search className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4' />
               <Input
+                autoFocus
+                data-testid='search-input'
                 type='text'
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(event) => resetPage(() => setSearchQuery(event.target.value))}
                 placeholder='Tìm theo tên thuốc, hoạt chất, thương hiệu...'
-                className='pl-10 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
+                className='pl-10 pr-10 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
               />
+              {searchQuery && (
+                <button
+                  type='button'
+                  data-testid='clear-search-btn'
+                  aria-label='Xóa tìm kiếm'
+                  onClick={clearSearch}
+                  className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700'
+                >
+                  <X className='h-4 w-4' />
+                </button>
+              )}
             </div>
+
+            <Select value={categoryFilter} onValueChange={(value) => resetPage(() => setCategoryFilter(value))}>
+              <SelectTrigger data-testid='category-filter' className='md:w-56 border-2 border-[#BFDBFE]'>
+                <SelectValue placeholder='Danh mục' />
+              </SelectTrigger>
+              <SelectContent data-testid='category-filter-options'>
+                <SelectItem value='all'>Tất cả danh mục</SelectItem>
+                {categories.map((category) => (
+                  <SelectItem key={category._id} value={category._id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={stockFilter} onValueChange={(value) => resetPage(() => setStockFilter(value as DrugDatabaseQuery['stock']))}>
+              <SelectTrigger data-testid='stock-filter' className='md:w-44 border-2 border-[#BFDBFE]'>
+                <SelectValue placeholder='Tồn kho' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='all'>Tất cả tồn kho</SelectItem>
+                <SelectItem value='inStock'>Còn hàng</SelectItem>
+                <SelectItem value='lowStock'>Sắp hết hàng</SelectItem>
+                <SelectItem value='outOfStock'>Hết hàng</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Button data-testid='clear-filters-btn' variant='outline' onClick={clearFilters} className='gap-2'>
+              <RotateCcw className='h-4 w-4' />
+              Xóa lọc
+            </Button>
           </div>
 
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className='w-48 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'>
-              <SelectValue placeholder='Danh mục' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='all'>Tất cả danh mục</SelectItem>
-              {categories.map((cat) => (
-                <SelectItem key={cat._id} value={cat._id}>
-                  {cat.name}
-                </SelectItem>
+          <div className='flex flex-wrap items-center gap-2'>
+            {(['all', 'Rx', 'OTC'] as const).map((type) => (
+              <Button
+                key={type}
+                type='button'
+                data-testid={type === 'Rx' ? 'rxtype-filter-rx' : type === 'OTC' ? 'rxtype-filter-otc' : 'rxtype-filter-all'}
+                variant={typeFilter === type ? 'default' : 'outline'}
+                size='sm'
+                onClick={() => resetPage(() => setTypeFilter(type))}
+              >
+                {type === 'all' ? 'Tất cả' : type === 'Rx' ? 'Rx' : 'OTC'}
+              </Button>
+            ))}
+
+            <Select value={activeStatus} onValueChange={(value) => resetPage(() => setActiveStatus(value as DrugDatabaseQuery['activeStatus']))}>
+              <SelectTrigger data-testid='active-status-filter' className='h-9 w-44'>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='active'>Đang hoạt động</SelectItem>
+                <SelectItem value='inactive'>Ngưng hoạt động</SelectItem>
+                <SelectItem value='all'>Tất cả trạng thái</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <div className='flex flex-wrap gap-2' data-testid='active-filter-chips'>
+              {activeChips.map((chip) => (
+                <Badge key={chip} variant='secondary'>
+                  {chip}
+                </Badge>
               ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className='w-40 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'>
-              <SelectValue placeholder='Loại thuốc' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='all'>Tất cả</SelectItem>
-              <SelectItem value='Rx'>Rx - Kê đơn</SelectItem>
-              <SelectItem value='OTC'>OTC - Không kê đơn</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={stockFilter} onValueChange={setStockFilter}>
-            <SelectTrigger className='w-36 border-2 border-[#BFDBFE] focus:border-[#1E40AF]'>
-              <SelectValue placeholder='Tồn kho' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='all'>Tất cả</SelectItem>
-              <SelectItem value='inStock'>Còn hàng</SelectItem>
-              <SelectItem value='outOfStock'>Hết hàng</SelectItem>
-            </SelectContent>
-          </Select>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Loading State */}
-      {loading ? (
-        <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-12'>
-          <div className='flex flex-col items-center justify-center'>
-            <Loader2 className='w-12 h-12 text-[#1E40AF] animate-spin mb-4' />
-            <p className='text-gray-600'>Đang tải dữ liệu...</p>
-          </div>
-        </div>
-      ) : (
-        /* Drug List */
-        <div className='grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'>
-          {filteredProducts.length === 0 ? (
-            <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] md:col-span-2 lg:col-span-3 xl:col-span-4'>
-              <CardContent className='p-12 text-center'>
-                <Pill className='w-16 h-16 mx-auto text-gray-300 mb-4' />
-                <h3 className='text-lg font-medium text-gray-900 mb-2'>Không tìm thấy sản phẩm</h3>
-                <p className='text-gray-500'>Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
+      {error ? (
+        <Card data-testid='error-state' className='border-red-200 bg-red-50'>
+          <CardContent className='p-8 text-center'>
+            <AlertTriangle className='mx-auto h-10 w-10 text-red-500 mb-3' />
+            <p className='font-medium text-red-900'>{error}</p>
+            <Button data-testid='retry-btn' className='mt-4' onClick={() => loadProducts(query)}>
+              Thử lại
+            </Button>
+          </CardContent>
+        </Card>
+      ) : loading ? (
+        <div data-testid='loading-state' className='grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'>
+          {Array.from({ length: 8 }).map((_, index) => (
+            <Card key={index} data-testid='skeleton-card' className='bg-white/80 border border-[#E8EDF5]'>
+              <CardContent className='p-4 space-y-3'>
+                <div className='h-24 rounded-lg bg-gray-100 animate-pulse' />
+                <div className='h-4 rounded bg-gray-100 animate-pulse' />
+                <div className='h-4 w-2/3 rounded bg-gray-100 animate-pulse' />
               </CardContent>
             </Card>
-          ) : (
-            filteredProducts.slice(0, 50).map((product) => (
+          ))}
+        </div>
+      ) : products.length === 0 ? (
+        <Card data-testid='empty-state' className='bg-white/80 border border-[#E8EDF5]'>
+          <CardContent className='p-12 text-center'>
+            <Pill className='w-16 h-16 mx-auto text-gray-300 mb-4' />
+            <h3 className='text-lg font-medium text-gray-900 mb-2'>Không tìm thấy thuốc phù hợp</h3>
+            <p className='text-gray-500 mb-4'>Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.</p>
+            <Button data-testid='empty-clear-btn' variant='outline' onClick={clearFilters}>Xóa điều kiện lọc</Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div data-testid='product-list' className='grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'>
+          {products.map((product) => {
+            const price = getDisplayPrice(product)
+            const badge = getRxBadgeConfig(product)
+            const stockStatus = getStockStatus(product.stockQuantity, lowStockThreshold)
+            return (
               <Card
                 key={product._id}
-                className='bg-white/80 backdrop-blur-lg shadow-lg rounded-xl border border-[#E8EDF5] hover:shadow-xl transition-all cursor-pointer'
-                onClick={() => setSelectedProduct(product)}
+                data-testid='product-card'
+                data-product-name={product.name}
+                data-category-id={product.categoryId}
+                data-rx={String(product.requiresPrescription)}
+                className='bg-white/80 shadow-lg rounded-xl border border-[#E8EDF5] hover:shadow-xl transition-all cursor-pointer focus-within:ring-2 focus-within:ring-[#1E40AF]'
+                onClick={() => openDetail(product)}
               >
                 <CardContent className='p-4'>
-                  {/* Header with badges */}
-                  <div className='flex items-start justify-between mb-2'>
-                    <div className='flex gap-1'>
-                      <Badge
-                        className={
-                          product.requiresPrescription
-                            ? 'bg-red-500 text-white text-xs'
-                            : 'bg-green-500 text-white text-xs'
-                        }
-                      >
-                        {product.requiresPrescription ? 'Rx' : 'OTC'}
-                      </Badge>
-                      {product.stockQuantity <= 0 && <Badge className='bg-gray-500 text-white text-xs'>Hết hàng</Badge>}
+                  <div className='flex items-start justify-between mb-2 gap-2'>
+                    <div className='flex flex-wrap gap-1'>
+                      <Badge data-testid='rx-badge' className={`${badge.className} text-xs`}>{product.requiresPrescription ? 'Rx' : 'OTC'}</Badge>
+                      {!product.isActive && <Badge data-testid='inactive-badge' className='bg-gray-800 text-white text-xs'>Ngưng</Badge>}
+                      {product.status === 'discontinued' && <Badge data-testid='discontinued-badge' className='bg-gray-600 text-white text-xs'>Ngừng KD</Badge>}
                     </div>
-                    {product.stockQuantity > 0 && product.stockQuantity <= 10 && (
-                      <Badge className='bg-yellow-500 text-white text-xs'>Còn {product.stockQuantity}</Badge>
-                    )}
+                    {stockStatus === 'low_stock' && <Badge data-testid='low-stock-badge' className='bg-yellow-500 text-white text-xs'>Sắp hết</Badge>}
+                    {stockStatus === 'out_of_stock' && <Badge data-testid='out-stock-badge' className='bg-gray-500 text-white text-xs'>Hết hàng</Badge>}
                   </div>
 
-                  {/* Product Image */}
                   <div className='w-full h-24 bg-gray-50 rounded-lg mb-3 flex items-center justify-center overflow-hidden'>
                     <ImageWithFallback src={product.featuredImage} alt={product.name} className='w-full h-full object-contain' />
                   </div>
 
-                  {/* Name & Brand */}
-                  <h3 className='font-medium text-gray-900 text-sm line-clamp-2 mb-1'>{product.name}</h3>
-                  <p className='text-xs text-gray-500 mb-2'>{product.brand?.name || 'Không có thương hiệu'}</p>
-
-                  {/* Active Ingredients */}
-                  {product.details?.activeIngredients && (
-                    <p className='text-xs text-[#1E40AF] mb-2 line-clamp-1'>
-                      <Pill className='w-3 h-3 inline mr-1' />
-                      {product.details.activeIngredients}
-                    </p>
-                  )}
+                  <h3 data-testid='product-name' className='font-medium text-gray-900 text-sm line-clamp-2 mb-1'>{product.name}</h3>
+                  <p data-testid='product-brand' className='text-xs text-gray-500 mb-2'>{product.brand?.name || 'Không có thương hiệu'}</p>
+                  {product.details?.activeIngredients && <p className='text-xs text-[#1E40AF] mb-2 line-clamp-1'>{product.details.activeIngredients}</p>}
 
                   <Separator className='my-2' />
-
-                  {/* Price & Stock */}
-                  <div className='flex items-center justify-between'>
+                  <div className='flex items-center justify-between gap-3'>
                     <div>
-                      <p className='text-[#1E40AF] font-semibold text-sm'>{formatPrice(product)}</p>
-                      <p className='text-xs text-gray-500'>/ {getUnit(product)}</p>
+                      <p data-testid='product-price' className='text-[#1E40AF] font-semibold text-sm'>{formatCurrency(price.price)}</p>
+                      <p data-testid='product-unit' className='text-xs text-gray-500'>/ {price.unit}</p>
                     </div>
                     <div className='flex items-center gap-1 text-xs'>
                       <Package className='w-3 h-3 text-gray-400' />
-                      <span className={product.stockQuantity > 0 ? 'text-green-600' : 'text-red-500'}>
-                        {product.stockQuantity > 0 ? `${product.stockQuantity} trong kho` : 'Hết hàng'}
+                      <span data-testid='stock-status' className={stockStatus === 'out_of_stock' ? 'text-red-500' : stockStatus === 'low_stock' ? 'text-yellow-700' : 'text-green-600'}>
+                        {formatStockDisplay(product.stockQuantity, price.unit, lowStockThreshold)}
                       </span>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            ))
-          )}
+            )
+          })}
         </div>
       )}
 
-      {/* Show more info */}
-      {!loading && filteredProducts.length > 50 && (
-        <p className='text-center text-gray-500 text-sm'>
-          Hiển thị 50/{filteredProducts.length} sản phẩm. Sử dụng bộ lọc để thu hẹp kết quả.
-        </p>
+      {!error && !loading && pagination.totalPages > 0 && (
+        <div data-testid='pagination' className='flex flex-col md:flex-row items-center justify-between gap-3 rounded-xl border bg-white/80 p-3'>
+          <p data-testid='page-indicator' className='text-sm text-gray-600'>Trang {pagination.page}/{Math.max(1, pagination.totalPages)}</p>
+          <div className='flex items-center gap-2'>
+            <Button data-testid='prev-page-btn' variant='outline' disabled={pagination.page <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))}>
+              <ChevronLeft className='h-4 w-4' />
+              Trước
+            </Button>
+            <Button data-testid='next-page-btn' variant='outline' disabled={pagination.page >= pagination.totalPages} onClick={() => setPage((value) => value + 1)}>
+              Sau
+              <ChevronRight className='h-4 w-4' />
+            </Button>
+          </div>
+        </div>
       )}
 
-      {/* Product Detail Modal */}
-      {selectedProduct && (
-        <Dialog open={!!selectedProduct} onOpenChange={() => setSelectedProduct(null)}>
-          <DialogContent className='max-w-4xl max-h-[90vh] overflow-y-auto'>
-            <DialogHeader>
-              <DialogTitle className='flex items-center gap-3'>
-                <span>{selectedProduct.name}</span>
-                <Badge
-                  className={selectedProduct.requiresPrescription ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}
-                >
-                  {selectedProduct.requiresPrescription ? 'Rx - Kê đơn' : 'OTC'}
-                </Badge>
-                {selectedProduct.stockQuantity <= 0 && <Badge className='bg-gray-500 text-white'>Hết hàng</Badge>}
-              </DialogTitle>
-              <DialogDescription>{selectedProduct.brand?.name || 'Không có thương hiệu'}</DialogDescription>
-            </DialogHeader>
+      <Dialog open={!!selectedProduct} onOpenChange={(open) => !open && setSelectedProduct(null)}>
+        <DialogContent data-testid='product-detail' className='max-w-4xl max-h-[90vh] overflow-y-auto'>
+          {selectedProduct && (
+            <>
+              <DialogHeader>
+                <DialogTitle className='flex flex-wrap items-center gap-3'>
+                  <span>{selectedProduct.name}</span>
+                  {selectedBadge && <Badge className={selectedBadge.className}>{selectedBadge.label}</Badge>}
+                  {selectedStockStatus === 'out_of_stock' && <Badge className='bg-gray-500 text-white'>Hết hàng</Badge>}
+                </DialogTitle>
+                <DialogDescription>
+                  {selectedProduct.brand?.name || 'Không có thương hiệu'} · {selectedProduct.lastCheckedAt ? `Kiểm tra ${formatLastUpdated(selectedProduct.lastCheckedAt)}` : 'Đang kiểm tra'}
+                </DialogDescription>
+              </DialogHeader>
 
-            <Tabs defaultValue='info' className='space-y-4'>
-              <TabsList className='grid w-full grid-cols-4 bg-[#F0F6FF]'>
-                <TabsTrigger value='info' className='data-[state=active]:bg-white'>
-                  Thông tin
-                </TabsTrigger>
-                <TabsTrigger value='usage' className='data-[state=active]:bg-white'>
-                  Cách dùng
-                </TabsTrigger>
-                <TabsTrigger value='stock' className='data-[state=active]:bg-white'>
-                  Tồn kho
-                </TabsTrigger>
-                <TabsTrigger value='pricing' className='data-[state=active]:bg-white'>
-                  Giá bán
-                </TabsTrigger>
-              </TabsList>
+              {detailLoading && <p data-testid='detail-loading' className='text-sm text-gray-500 flex items-center gap-2'><Loader2 className='h-4 w-4 animate-spin' />Đang tải dữ liệu mới nhất...</p>}
+              {detailError && <div data-testid='detail-error-state' className='rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800'>{detailError}</div>}
 
-              <TabsContent value='info' className='space-y-4'>
-                {/* Product Image */}
-                <div className='flex gap-4'>
-                  <div className='w-32 h-32 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0'>
-                    <ImageWithFallback
-                      src={selectedProduct.featuredImage}
-                      alt={selectedProduct.name}
-                      className='w-full h-full object-contain'
-                    />
-                  </div>
-                  <div className='flex-1'>
-                    <h3 className='font-semibold text-lg text-gray-900 mb-2'>{selectedProduct.name}</h3>
-                    <p className='text-gray-600 text-sm'>{selectedProduct.shortDescription || 'Không có mô tả'}</p>
-                  </div>
+              {selectedProduct.requiresPrescription && (
+                <div data-testid='rx-warning' className='rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-900 flex gap-2'>
+                  <AlertTriangle className='h-5 w-5 shrink-0' />
+                  Thuốc kê đơn. Cần kiểm tra đơn thuốc và tư vấn theo chỉ định bác sĩ trước khi tạo đơn.
                 </div>
+              )}
 
-                <Separator />
-
-                <div className='grid md:grid-cols-2 gap-4'>
-                  <div>
-                    <label className='text-sm text-gray-600'>Hoạt chất</label>
-                    <p className='text-gray-900 font-medium'>{selectedProduct.details?.activeIngredients || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <label className='text-sm text-gray-600'>Dạng bào chế</label>
-                    <p className='text-gray-900'>{selectedProduct.details?.dosageForm || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <label className='text-sm text-gray-600'>Quy cách đóng gói</label>
-                    <p className='text-gray-900'>
-                      {selectedProduct.details?.packSize || selectedProduct.packaging || 'N/A'}
-                    </p>
-                  </div>
-                  <div>
-                    <label className='text-sm text-gray-600'>Nhà sản xuất</label>
-                    <p className='text-gray-900'>
-                      {selectedProduct.details?.manufacturer || selectedProduct.brand?.name || 'N/A'}
-                    </p>
-                  </div>
-                  <div>
-                    <label className='text-sm text-gray-600'>Danh mục</label>
-                    <p className='text-gray-900'>{selectedProduct.category?.name || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <label className='text-sm text-gray-600'>Mã SKU</label>
-                    <p className='text-gray-900 font-mono text-sm'>{selectedProduct.sku}</p>
-                  </div>
+              {selectedProduct.dataQuality && !selectedProduct.dataQuality.clinicalReferenceReady && (
+                <div data-testid='data-quality-warning' className='rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-900'>
+                  Dữ liệu lâm sàng chưa đầy đủ: {selectedProduct.dataQuality.missingClinicalFields.map(formatMissingField).join(', ')}.
                 </div>
+              )}
 
-                {selectedProduct.details?.indications && (
-                  <div className='p-4 bg-[#F0F6FF] border border-[#BFDBFE] rounded-lg'>
-                    <label className='text-sm text-blue-800 mb-2 block font-medium'>Chỉ định</label>
-                    <p className='text-gray-900'>{selectedProduct.details.indications}</p>
-                  </div>
-                )}
+              <Tabs defaultValue='info' className='space-y-4'>
+                <TabsList className='grid w-full grid-cols-4 bg-[#F0F6FF]'>
+                  <TabsTrigger data-testid='tab-medical-info' value='info'>Thông tin</TabsTrigger>
+                  <TabsTrigger data-testid='tab-warnings' value='usage'>Cách dùng</TabsTrigger>
+                  <TabsTrigger data-testid='tab-stock' value='stock'>Tồn kho</TabsTrigger>
+                  <TabsTrigger data-testid='tab-pricing' value='pricing'>Giá bán</TabsTrigger>
+                </TabsList>
 
-                {selectedProduct.details?.storageInstructions && (
-                  <div className='p-4 bg-gray-50 border border-gray-200 rounded-lg'>
-                    <label className='text-sm text-gray-600 mb-2 block'>Bảo quản</label>
-                    <p className='text-gray-900'>{selectedProduct.details.storageInstructions}</p>
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value='usage' className='space-y-4'>
-                {selectedProduct.details?.dosageInstructions ? (
-                  <div className='p-4 bg-green-50 border border-green-200 rounded-lg'>
-                    <label className='text-sm text-green-800 mb-2 block flex items-center gap-2 font-medium'>
-                      <Pill className='w-4 h-4' />
-                      Liều dùng & Cách dùng
-                    </label>
-                    <p className='text-gray-900 whitespace-pre-line'>{selectedProduct.details.dosageInstructions}</p>
-                  </div>
-                ) : (
-                  <div className='p-8 text-center text-gray-500'>
-                    <Info className='w-12 h-12 mx-auto mb-4 text-gray-300' />
-                    <p>Chưa có thông tin liều dùng cho sản phẩm này</p>
-                  </div>
-                )}
-
-                {selectedProduct.warnings && selectedProduct.warnings.length > 0 && (
-                  <div className='p-4 bg-yellow-50 border border-yellow-200 rounded-lg'>
-                    <label className='text-sm text-yellow-800 mb-3 block flex items-center gap-2 font-medium'>
-                      <AlertTriangle className='w-4 h-4' />
-                      Cảnh báo
-                    </label>
-                    <ul className='space-y-1'>
-                      {selectedProduct.warnings.map((warning, idx) => (
-                        <li key={idx} className='flex items-start gap-2'>
-                          <ChevronRight className='w-4 h-4 text-yellow-600 mt-0.5' />
-                          <span className='text-gray-900'>{warning}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value='stock' className='space-y-4'>
-                <div className='grid md:grid-cols-3 gap-4'>
-                  <div className='p-4 bg-[#F0F6FF] border border-[#BFDBFE] rounded-lg text-center'>
-                    <Package className='w-8 h-8 mx-auto mb-2 text-[#1E40AF]' />
-                    <p className='text-2xl font-bold text-[#1E40AF]'>
-                      {selectedProduct.stockQuantity.toLocaleString('vi-VN')}
-                    </p>
-                    <p className='text-sm text-gray-600'>Tồn kho (đơn vị nhỏ nhất)</p>
-                  </div>
-                  <div className='p-4 bg-green-50 border border-green-200 rounded-lg text-center'>
-                    <ShoppingCart className='w-8 h-8 mx-auto mb-2 text-green-600' />
-                    <p className='text-2xl font-bold text-green-600'>{selectedProduct.maxOrderQuantity}</p>
-                    <p className='text-sm text-gray-600'>SL đặt tối đa/đơn</p>
-                  </div>
-                  <div className='p-4 bg-gray-50 border border-gray-200 rounded-lg text-center'>
-                    <Info className='w-8 h-8 mx-auto mb-2 text-gray-600' />
-                    <p className='text-2xl font-bold text-gray-600'>{selectedProduct.status}</p>
-                    <p className='text-sm text-gray-600'>Trạng thái</p>
-                  </div>
-                </div>
-
-                {/* Stock breakdown by unit */}
-                {selectedProduct.priceVariants && selectedProduct.priceVariants.length > 0 && (
-                  <div className='p-4 bg-white border border-[#BFDBFE] rounded-lg'>
-                    <p className='text-sm font-medium text-gray-700 mb-3'>📦 Quy đổi tồn kho theo đơn vị:</p>
-                    <div className='grid grid-cols-2 md:grid-cols-3 gap-3'>
-                      {selectedProduct.priceVariants.map((variant, idx) => {
-                        const stockByUnit = Math.floor(selectedProduct.stockQuantity / (variant.quantityPerUnit || 1))
-                        return (
-                          <div key={idx} className='flex items-center justify-between p-2 bg-gray-50 rounded-lg'>
-                            <span className='text-sm text-gray-600'>{variant.unit}</span>
-                            <span className='font-semibold text-[#1E40AF]'>{stockByUnit.toLocaleString('vi-VN')}</span>
-                          </div>
-                        )
-                      })}
+                <TabsContent value='info' data-testid='medical-info-section' className='space-y-4'>
+                  <div className='flex gap-4'>
+                    <div className='w-32 h-32 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0'>
+                      <ImageWithFallback src={selectedProduct.featuredImage} alt={selectedProduct.name} className='w-full h-full object-contain' />
+                    </div>
+                    <div className='flex-1'>
+                      <h3 className='font-semibold text-lg text-gray-900 mb-2'>{selectedProduct.name}</h3>
+                      <p className='text-gray-600 text-sm'>{selectedProduct.shortDescription || 'Chưa có thông tin'}</p>
+                      <p data-testid='last-updated' className='mt-2 text-xs text-gray-500'>Cập nhật: {formatLastUpdated(selectedProduct.updatedAt || selectedProduct.lastCheckedAt)}</p>
                     </div>
                   </div>
-                )}
+                  <Separator />
+                  <div className='grid md:grid-cols-2 gap-4 text-sm'>
+                    <div><span className='text-gray-500'>Hoạt chất</span><p className='font-medium'>{selectedProduct.details?.activeIngredients || 'Chưa có thông tin'}</p></div>
+                    <div><span className='text-gray-500'>Dạng bào chế</span><p>{selectedProduct.details?.dosageForm || 'Chưa có thông tin'}</p></div>
+                    <div><span className='text-gray-500'>Quy cách</span><p>{selectedProduct.details?.packSize || selectedProduct.packaging || 'Chưa có thông tin'}</p></div>
+                    <div><span className='text-gray-500'>Nhà sản xuất</span><p>{selectedProduct.details?.manufacturer || selectedProduct.brand?.name || 'Chưa có thông tin'}</p></div>
+                    <div><span className='text-gray-500'>SKU</span><p className='font-mono'>{selectedProduct.sku}</p></div>
+                    <div><span className='text-gray-500'>Danh mục</span><p>{selectedProduct.category?.name || 'Chưa có thông tin'}</p></div>
+                  </div>
+                  <div className='rounded-lg border border-[#BFDBFE] bg-[#F0F6FF] p-4'>
+                    <span className='text-sm font-medium text-blue-800'>Chỉ định</span>
+                    <p>{selectedProduct.details?.indications || 'Chưa có thông tin'}</p>
+                  </div>
+                </TabsContent>
 
-                <div
-                  className={`p-4 rounded-lg ${selectedProduct.stockQuantity > 10 ? 'bg-green-50 border-green-200' : selectedProduct.stockQuantity > 0 ? 'bg-yellow-50 border-yellow-200' : 'bg-red-50 border-red-200'} border`}
-                >
-                  <p
-                    className={`font-medium ${selectedProduct.stockQuantity > 10 ? 'text-green-800' : selectedProduct.stockQuantity > 0 ? 'text-yellow-800' : 'text-red-800'}`}
-                  >
-                    {selectedProduct.stockQuantity > 10
-                      ? '✓ Còn hàng - Sẵn sàng bán'
-                      : selectedProduct.stockQuantity > 0
-                        ? '⚠ Tồn kho thấp - Cần nhập thêm'
-                        : '✗ Hết hàng - Không thể bán'}
-                  </p>
-                </div>
-              </TabsContent>
+                <TabsContent value='usage' data-testid='warnings-section' className='space-y-4'>
+                  <div className='rounded-lg border border-green-200 bg-green-50 p-4'>
+                    <span className='text-sm font-medium text-green-800'>Liều dùng & Cách dùng</span>
+                    <p className='whitespace-pre-line'>{selectedProduct.details?.dosageInstructions || 'Chưa có thông tin'}</p>
+                  </div>
+                  <div className='rounded-lg border border-yellow-200 bg-yellow-50 p-4'>
+                    <span className='text-sm font-medium text-yellow-800 flex items-center gap-2'><AlertTriangle className='h-4 w-4' />Cảnh báo</span>
+                    {selectedProduct.warnings?.length ? selectedProduct.warnings.map((warning, index) => <p key={index}>{warning}</p>) : <p>Chưa có thông tin</p>}
+                  </div>
+                  <div className='rounded-lg border border-gray-200 bg-gray-50 p-4'>
+                    <span className='text-sm font-medium text-gray-700'>Bảo quản</span>
+                    <p>{selectedProduct.details?.storageInstructions || 'Chưa có thông tin'}</p>
+                  </div>
+                </TabsContent>
 
-              <TabsContent value='pricing' className='space-y-4'>
-                <div className='grid md:grid-cols-2 gap-4'>
-                  {selectedProduct.priceVariants && selectedProduct.priceVariants.length > 0 ? (
-                    selectedProduct.priceVariants.map((variant, idx) => (
-                      <div
-                        key={idx}
-                        className={`p-4 rounded-lg border ${variant.isDefault ? 'bg-[#F0F6FF] border-[#BFDBFE]' : 'bg-gray-50 border-gray-200'}`}
-                      >
-                        <div className='flex items-center justify-between mb-2'>
-                          <span className='font-medium text-gray-900'>{variant.unit}</span>
-                          {variant.isDefault && <Badge className='bg-[#1E40AF] text-white text-xs'>Mặc định</Badge>}
-                        </div>
-                        <p className='text-xl font-bold text-[#1E40AF]'>{variant.price.toLocaleString('vi-VN')}đ</p>
-                        {variant.originalPrice && variant.originalPrice > variant.price && (
-                          <p className='text-sm text-gray-400 line-through'>
-                            {variant.originalPrice.toLocaleString('vi-VN')}đ
-                          </p>
-                        )}
-                        {variant.costPrice && (
-                          <p className='text-xs text-gray-500 mt-1'>
-                            Giá vốn: {variant.costPrice.toLocaleString('vi-VN')}đ
-                          </p>
-                        )}
+                <TabsContent value='stock' data-testid='stock-section' className='space-y-4'>
+                  <div className='grid md:grid-cols-3 gap-4'>
+                    <div className='p-4 bg-[#F0F6FF] border border-[#BFDBFE] rounded-lg text-center'><Package className='w-8 h-8 mx-auto mb-2 text-[#1E40AF]' /><p className='text-2xl font-bold text-[#1E40AF]'>{selectedProduct.stockQuantity.toLocaleString('vi-VN')}</p><p className='text-sm text-gray-600'>Tồn kho</p></div>
+                    <div className='p-4 bg-green-50 border border-green-200 rounded-lg text-center'><Info className='w-8 h-8 mx-auto mb-2 text-green-600' /><p className='text-2xl font-bold text-green-600'>{selectedProduct.maxOrderQuantity}</p><p className='text-sm text-gray-600'>Tối đa/đơn</p></div>
+                    <div className='p-4 bg-gray-50 border border-gray-200 rounded-lg text-center'><Info className='w-8 h-8 mx-auto mb-2 text-gray-600' /><p className='text-lg font-bold text-gray-700'>{selectedProduct.status}</p><p className='text-sm text-gray-600'>Trạng thái</p></div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value='pricing' data-testid='pricing-section' className='space-y-4'>
+                  <div className='grid md:grid-cols-2 gap-4'>
+                    {(selectedProduct.priceVariants?.length ? selectedProduct.priceVariants : [{ unit: selectedPrice?.unit || 'Sản phẩm', price: selectedPrice?.price || 0, isDefault: true, quantityPerUnit: 1 }]).map((variant, index) => (
+                      <div key={`${variant.unit}-${index}`} data-testid='price-variant' className={`p-4 rounded-lg border ${variant.isDefault ? 'bg-[#F0F6FF] border-[#BFDBFE]' : 'bg-gray-50 border-gray-200'}`}>
+                        <div className='flex justify-between mb-2'><span className='font-medium'>{variant.unit}</span>{variant.isDefault && <Badge>Mặc định</Badge>}</div>
+                        <p className='text-xl font-bold text-[#1E40AF]'>{formatCurrency(variant.price)}</p>
+                        <p className='text-xs text-gray-500'>Quy đổi: {variant.quantityPerUnit || 1} đơn vị nhỏ nhất</p>
                       </div>
-                    ))
-                  ) : (
-                    <div className='p-4 bg-[#F0F6FF] border border-[#BFDBFE] rounded-lg'>
-                      <p className='text-sm text-gray-600 mb-1'>Giá bán</p>
-                      <p className='text-xl font-bold text-[#1E40AF]'>{formatPrice(selectedProduct)}</p>
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
-            </Tabs>
-          </DialogContent>
-        </Dialog>
-      )}
+                    ))}
+                  </div>
+                </TabsContent>
+              </Tabs>
+
+              <Button data-testid='close-detail-btn' variant='outline' onClick={() => setSelectedProduct(null)}>Đóng</Button>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
