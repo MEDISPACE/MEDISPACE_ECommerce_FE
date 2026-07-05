@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
-import { AlertTriangle, ChevronLeft, ChevronRight, Info, Loader2, Package, Pill, RotateCcw, Search, X } from 'lucide-react'
+import { AlertTriangle, Info, Loader2, Package, Pill, RotateCcw, Search, X } from 'lucide-react'
 
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
@@ -61,6 +61,7 @@ export function DrugDatabasePage() {
   const [pagination, setPagination] = useState<DrugDatabaseResponse['pagination']>({ page: 1, limit: PAGE_SIZE, totalPages: 0, totalCount: 0 })
   const [lowStockThreshold, setLowStockThreshold] = useState(30)
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [detailLoading, setDetailLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [detailError, setDetailError] = useState<string | null>(null)
@@ -96,29 +97,31 @@ export function DrugDatabasePage() {
     if (next.type && next.type !== 'all') params.set('type', next.type)
     if (next.stock && next.stock !== 'all') params.set('stock', next.stock)
     if (next.activeStatus && next.activeStatus !== 'active') params.set('activeStatus', next.activeStatus)
-    if (next.page && next.page > 1) params.set('page', String(next.page))
     setSearchParams(params, { replace: true })
   }
 
   const loadProducts = async (nextQuery = query) => {
-    setLoading(true)
+    const isLoadingMore = Number(nextQuery.page || 1) > 1
+    if (isLoadingMore) setLoadingMore(true)
+    else setLoading(true)
     setError(null)
     try {
       const [productData, categoryData] = await Promise.all([
         pharmacistDrugDatabaseService.getProducts(nextQuery),
         categories.length ? Promise.resolve(categories) : categoryService.getCategories(),
       ])
-      setProducts(productData.products || [])
+      setProducts((currentProducts) => (isLoadingMore ? [...currentProducts, ...(productData.products || [])] : productData.products || []))
       setPagination(productData.pagination)
       setLowStockThreshold(productData.lowStockThreshold)
       setCategories(Array.isArray(categoryData) ? categoryData : [])
       syncUrl(nextQuery)
     } catch (err) {
       console.error('Error fetching drug database:', err)
-      setProducts([])
+      if (!isLoadingMore) setProducts([])
       setError('Không thể tải dữ liệu thuốc. Vui lòng thử lại.')
     } finally {
-      setLoading(false)
+      if (isLoadingMore) setLoadingMore(false)
+      else setLoading(false)
     }
   }
 
@@ -141,6 +144,11 @@ export function DrugDatabasePage() {
     setStockFilter('all')
     setActiveStatus('active')
     setPage(1)
+  }
+
+  const loadMoreProducts = () => {
+    if (loadingMore || pagination.page >= pagination.totalPages) return
+    setPage((value) => value + 1)
   }
 
   const openDetail = async (product: DrugDatabaseProduct) => {
@@ -364,19 +372,25 @@ export function DrugDatabasePage() {
         </div>
       )}
 
-      {!error && !loading && pagination.totalPages > 0 && (
-        <div data-testid='pagination' className='flex flex-col md:flex-row items-center justify-between gap-3 rounded-xl border bg-white/80 p-3'>
-          <p data-testid='page-indicator' className='text-sm text-gray-600'>Trang {pagination.page}/{Math.max(1, pagination.totalPages)}</p>
-          <div className='flex items-center gap-2'>
-            <Button data-testid='prev-page-btn' variant='outline' disabled={pagination.page <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))}>
-              <ChevronLeft className='h-4 w-4' />
-              Trước
+      {!error && !loading && products.length > 0 && (
+        <div data-testid='load-more' className='mt-2 flex flex-col items-center justify-center gap-3 rounded-xl border bg-white/80 p-4'>
+          <p data-testid='loaded-count' className='text-sm text-gray-600'>
+            Đã hiển thị {products.length.toLocaleString('vi-VN')} / {pagination.totalCount.toLocaleString('vi-VN')} thuốc
+          </p>
+          {pagination.page < pagination.totalPages ? (
+            <Button
+              data-testid='load-more-btn'
+              variant='outline'
+              onClick={loadMoreProducts}
+              disabled={loadingMore}
+              className='border-[#BFDBFE] text-[#1E40AF] hover:bg-[#F0F6FF]'
+            >
+              {loadingMore ? <Loader2 className='h-4 w-4 animate-spin' /> : null}
+              {loadingMore ? 'Đang tải thêm thuốc...' : 'Xem thêm thuốc'}
             </Button>
-            <Button data-testid='next-page-btn' variant='outline' disabled={pagination.page >= pagination.totalPages} onClick={() => setPage((value) => value + 1)}>
-              Sau
-              <ChevronRight className='h-4 w-4' />
-            </Button>
-          </div>
+          ) : (
+            <p data-testid='all-products-loaded' className='text-sm text-gray-500'>Đã hiển thị tất cả thuốc phù hợp</p>
+          )}
         </div>
       )}
 
