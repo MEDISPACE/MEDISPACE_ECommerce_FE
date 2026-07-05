@@ -17,16 +17,24 @@ export default defineConfig({
   expect: {
     timeout: 10_000,
   },
-  reporter: [['list']],
+  reporter: [
+    ['html', { outputFolder: 'test-results/report' }],
+    ['list'],
+  ],
   use: {
     baseURL,
     headless: true,
     viewport: { width: 1280, height: 720 },
     actionTimeout: 15_000,
-    screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    screenshot: 'on',
+    video: 'on-first-retry',
+    trace: 'on-first-retry',
     extraHTTPHeaders: {
       'Accept': 'application/json',
     },
   },
+  projects: [
+    { name: 'chromium', use: { browserName: 'chromium' } },
+    { name: 'mobile', use: { browserName: 'chromium', viewport: { width: 375, height: 812 } } },
+  ],
 })

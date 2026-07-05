@@ -17,6 +17,7 @@ src/tests/
 /coverage/
 *.test.ts
 *.test.tsx
+!tests/drug-database/**/*.test.ts
 !src/tests/
 !src/tests/chat/
 !src/tests/chat/AdminChatPage.test.tsx
@@ -32,6 +33,7 @@ src/tests/
 /playwright-report/
 /playwright-report-blog/
 /playwright-report-product/
+/playwright-report-drug-database/
 /blob-report/
 /playwright/.cache/
 tests/prescriptions/evidence/
@@ -39,6 +41,7 @@ tests/e2e/.auth/
 tests/e2e/screenshots/
 *.spec.ts
 *.spec.tsx
+!tests/drug-database/**/*.spec.ts
 !tests/prescriptions/e2e/**/*.spec.ts
 !tests/e2e/specs/**/*.spec.ts
 !tests/community-events/**/*.spec.ts
