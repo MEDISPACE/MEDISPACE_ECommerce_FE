@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import { AlertTriangle, Info, Loader2, Package, Pill, RotateCcw, Search, X } from 'lucide-react'
 
 import { Badge } from '../ui/badge'
@@ -28,7 +29,7 @@ import {
   getStockStatus,
 } from '../../utils/drugDatabaseUtils'
 
-const PAGE_SIZE = 24
+const PAGE_SIZE = 100
 
 function useDebouncedValue<T>(value: T, delayMs: number) {
   const [debouncedValue, setDebouncedValue] = useState(value)
@@ -56,29 +57,21 @@ function formatMissingField(field: string) {
 
 export function DrugDatabasePage() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [products, setProducts] = useState<DrugDatabaseProduct[]>([])
+  const observerTarget = useRef<HTMLDivElement>(null)
   const [categories, setCategories] = useState<Category[]>([])
-  const [pagination, setPagination] = useState<DrugDatabaseResponse['pagination']>({ page: 1, limit: PAGE_SIZE, totalPages: 0, totalCount: 0 })
-  const [lowStockThreshold, setLowStockThreshold] = useState(30)
-  const [loading, setLoading] = useState(true)
-  const [loadingMore, setLoadingMore] = useState(false)
   const [detailLoading, setDetailLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [detailError, setDetailError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '')
   const [categoryFilter, setCategoryFilter] = useState(searchParams.get('categoryId') || 'all')
   const [typeFilter, setTypeFilter] = useState<DrugDatabaseQuery['type']>((searchParams.get('type') as DrugDatabaseQuery['type']) || 'all')
   const [stockFilter, setStockFilter] = useState<DrugDatabaseQuery['stock']>((searchParams.get('stock') as DrugDatabaseQuery['stock']) || 'all')
   const [activeStatus, setActiveStatus] = useState<DrugDatabaseQuery['activeStatus']>((searchParams.get('activeStatus') as DrugDatabaseQuery['activeStatus']) || 'active')
-  const [page, setPage] = useState(Number(searchParams.get('page') || 1))
   const [selectedProduct, setSelectedProduct] = useState<DrugDatabaseProduct | null>(null)
 
   const debouncedSearch = useDebouncedValue(searchQuery, 350)
 
-  const query = useMemo<DrugDatabaseQuery>(
+  const queryBase = useMemo<Omit<DrugDatabaseQuery, 'page' | 'limit'>>(
     () => ({
-      page,
-      limit: PAGE_SIZE,
       search: debouncedSearch,
       categoryId: categoryFilter,
       type: typeFilter,
@@ -87,10 +80,10 @@ export function DrugDatabasePage() {
       sortBy: 'name',
       sortOrder: 'asc',
     }),
-    [activeStatus, categoryFilter, debouncedSearch, page, stockFilter, typeFilter],
+    [activeStatus, categoryFilter, debouncedSearch, stockFilter, typeFilter],
   )
 
-  const syncUrl = (next: DrugDatabaseQuery) => {
+  const syncUrl = (next: Omit<DrugDatabaseQuery, 'page' | 'limit'>) => {
     const params = new URLSearchParams()
     if (next.search) params.set('search', next.search)
     if (next.categoryId && next.categoryId !== 'all') params.set('categoryId', next.categoryId)
@@ -100,38 +93,100 @@ export function DrugDatabasePage() {
     setSearchParams(params, { replace: true })
   }
 
-  const loadProducts = async (nextQuery = query) => {
-    const isLoadingMore = Number(nextQuery.page || 1) > 1
-    if (isLoadingMore) setLoadingMore(true)
-    else setLoading(true)
-    setError(null)
+  useEffect(() => {
+    syncUrl(queryBase)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queryBase])
+
+  useEffect(() => {
+    let active = true
+    const loadCategories = async () => {
+      if (categories.length) return
+      try {
+        const categoryData = await categoryService.getCategories()
+        if (active) setCategories(Array.isArray(categoryData) ? categoryData : [])
+      } catch (err) {
+        console.error('Error fetching drug categories:', err)
+      }
+    }
+
+    loadCategories()
+    return () => {
+      active = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isFetching,
+    isError,
+    refetch,
+  } = useInfiniteQuery<DrugDatabaseResponse, Error>({
+    queryKey: ['pharmacist', 'drug-database', queryBase],
+    queryFn: ({ pageParam = 1 }) => {
+      return pharmacistDrugDatabaseService.getProducts({
+        ...queryBase,
+        page: pageParam as number,
+        limit: PAGE_SIZE,
+      })
+    },
+    getNextPageParam: (lastPage) => {
+      if (lastPage.pagination.page < lastPage.pagination.totalPages) {
+        return lastPage.pagination.page + 1
+      }
+      return undefined
+    },
+    initialPageParam: 1,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    placeholderData: (previousData) => previousData,
+  })
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage()
+        }
+      },
+      { threshold: 0.1 },
+    )
+
+    const currentTarget = observerTarget.current
+    if (currentTarget) observer.observe(currentTarget)
+
+    return () => {
+      if (currentTarget) observer.unobserve(currentTarget)
+    }
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage])
+
+  const products = useMemo(() => data?.pages.flatMap((pageData) => pageData.products || []) ?? [], [data])
+  const firstPage = data?.pages[0]
+  const latestPage = data?.pages[data.pages.length - 1]
+  const pagination = latestPage?.pagination || { page: 1, limit: PAGE_SIZE, totalPages: 0, totalCount: 0 }
+  const totalCount = firstPage?.pagination.totalCount || 0
+  const lowStockThreshold = firstPage?.lowStockThreshold || 30
+
+  const retryProducts = () => {
+    refetch()
+  }
+
+  const loadDetail = async (product: DrugDatabaseProduct) => {
     try {
-      const [productData, categoryData] = await Promise.all([
-        pharmacistDrugDatabaseService.getProducts(nextQuery),
-        categories.length ? Promise.resolve(categories) : categoryService.getCategories(),
-      ])
-      setProducts((currentProducts) => (isLoadingMore ? [...currentProducts, ...(productData.products || [])] : productData.products || []))
-      setPagination(productData.pagination)
-      setLowStockThreshold(productData.lowStockThreshold)
-      setCategories(Array.isArray(categoryData) ? categoryData : [])
-      syncUrl(nextQuery)
+      const freshProduct = await pharmacistDrugDatabaseService.getProduct(product._id)
+      setSelectedProduct(freshProduct)
     } catch (err) {
-      console.error('Error fetching drug database:', err)
-      if (!isLoadingMore) setProducts([])
-      setError('Không thể tải dữ liệu thuốc. Vui lòng thử lại.')
-    } finally {
-      if (isLoadingMore) setLoadingMore(false)
-      else setLoading(false)
+      console.error('Error fetching drug detail:', err)
+      setDetailError('Không thể tải dữ liệu chi tiết mới nhất.')
     }
   }
 
-  useEffect(() => {
-    loadProducts(query)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query])
-
   const resetPage = (change: () => void) => {
-    setPage(1)
     change()
   }
 
@@ -143,27 +198,15 @@ export function DrugDatabasePage() {
     setTypeFilter('all')
     setStockFilter('all')
     setActiveStatus('active')
-    setPage(1)
-  }
-
-  const loadMoreProducts = () => {
-    if (loadingMore || pagination.page >= pagination.totalPages) return
-    setPage((value) => value + 1)
   }
 
   const openDetail = async (product: DrugDatabaseProduct) => {
     setSelectedProduct(product)
     setDetailLoading(true)
     setDetailError(null)
-    try {
-      const freshProduct = await pharmacistDrugDatabaseService.getProduct(product._id)
-      setSelectedProduct(freshProduct)
-    } catch (err) {
-      console.error('Error fetching drug detail:', err)
-      setDetailError('Không thể tải dữ liệu chi tiết mới nhất.')
-    } finally {
+    loadDetail(product).finally(() => {
       setDetailLoading(false)
-    }
+    })
   }
 
   const activeChips = [
@@ -185,7 +228,7 @@ export function DrugDatabasePage() {
           <div>
             <h1 className='text-2xl font-bold text-[#0A2463]'>Cơ sở dữ liệu thuốc</h1>
             <p className='text-gray-600 mt-1' data-testid='total-count'>
-              {pagination.totalCount.toLocaleString('vi-VN')} sản phẩm tham chiếu
+              {totalCount.toLocaleString('vi-VN')} sản phẩm tham chiếu
             </p>
           </div>
         </div>
@@ -286,17 +329,17 @@ export function DrugDatabasePage() {
         </div>
       </div>
 
-      {error ? (
+      {isError ? (
         <Card data-testid='error-state' className='border-red-200 bg-red-50'>
           <CardContent className='p-8 text-center'>
             <AlertTriangle className='mx-auto h-10 w-10 text-red-500 mb-3' />
-            <p className='font-medium text-red-900'>{error}</p>
-            <Button data-testid='retry-btn' className='mt-4' onClick={() => loadProducts(query)}>
+            <p className='font-medium text-red-900'>Không thể tải dữ liệu thuốc. Vui lòng thử lại.</p>
+            <Button data-testid='retry-btn' className='mt-4' onClick={retryProducts}>
               Thử lại
             </Button>
           </CardContent>
         </Card>
-      ) : loading ? (
+      ) : isLoading && !data ? (
         <div data-testid='loading-state' className='grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'>
           {Array.from({ length: 8 }).map((_, index) => (
             <Card key={index} data-testid='skeleton-card' className='bg-white/80 border border-[#E8EDF5]'>
@@ -318,78 +361,80 @@ export function DrugDatabasePage() {
           </CardContent>
         </Card>
       ) : (
-        <div data-testid='product-list' className='grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'>
-          {products.map((product) => {
-            const price = getDisplayPrice(product)
-            const badge = getRxBadgeConfig(product)
-            const stockStatus = getStockStatus(product.stockQuantity, lowStockThreshold)
-            return (
-              <Card
-                key={product._id}
-                data-testid='product-card'
-                data-product-name={product.name}
-                data-category-id={product.categoryId}
-                data-rx={String(product.requiresPrescription)}
-                className='bg-white/80 shadow-lg rounded-xl border border-[#E8EDF5] hover:shadow-xl transition-all cursor-pointer focus-within:ring-2 focus-within:ring-[#1E40AF]'
-                onClick={() => openDetail(product)}
-              >
-                <CardContent className='p-4'>
-                  <div className='flex items-start justify-between mb-2 gap-2'>
-                    <div className='flex flex-wrap gap-1'>
-                      <Badge data-testid='rx-badge' className={`${badge.className} text-xs`}>{product.requiresPrescription ? 'Rx' : 'OTC'}</Badge>
-                      {!product.isActive && <Badge data-testid='inactive-badge' className='bg-gray-800 text-white text-xs'>Ngưng</Badge>}
-                      {product.status === 'discontinued' && <Badge data-testid='discontinued-badge' className='bg-gray-600 text-white text-xs'>Ngừng KD</Badge>}
+        <>
+          {isFetching && !isFetchingNextPage && (
+            <div className='w-full h-0.5 bg-[#F0F6FF] overflow-hidden relative rounded'>
+              <div className='absolute h-full bg-gradient-to-r from-[#0A2463] to-[#1E40AF] w-1/3 rounded animate-[progressLoop_1.5s_infinite_ease-in-out]' />
+            </div>
+          )}
+          <div data-testid='product-list' className={`grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 transition-opacity duration-300 ${isFetching && !isFetchingNextPage ? 'opacity-60 pointer-events-none' : ''}`}>
+            {products.map((product) => {
+              const price = getDisplayPrice(product)
+              const badge = getRxBadgeConfig(product)
+              const stockStatus = getStockStatus(product.stockQuantity, lowStockThreshold)
+              return (
+                <Card
+                  key={product._id}
+                  data-testid='product-card'
+                  data-product-name={product.name}
+                  data-category-id={product.categoryId}
+                  data-rx={String(product.requiresPrescription)}
+                  className='bg-white/80 shadow-lg rounded-xl border border-[#E8EDF5] hover:shadow-xl transition-all cursor-pointer focus-within:ring-2 focus-within:ring-[#1E40AF]'
+                  onClick={() => openDetail(product)}
+                >
+                  <CardContent className='p-4'>
+                    <div className='flex items-start justify-between mb-2 gap-2'>
+                      <div className='flex flex-wrap gap-1'>
+                        <Badge data-testid='rx-badge' className={`${badge.className} text-xs`}>{product.requiresPrescription ? 'Rx' : 'OTC'}</Badge>
+                        {!product.isActive && <Badge data-testid='inactive-badge' className='bg-gray-800 text-white text-xs'>Ngưng</Badge>}
+                        {product.status === 'discontinued' && <Badge data-testid='discontinued-badge' className='bg-gray-600 text-white text-xs'>Ngừng KD</Badge>}
+                      </div>
+                      {stockStatus === 'low_stock' && <Badge data-testid='low-stock-badge' className='bg-yellow-500 text-white text-xs'>Sắp hết</Badge>}
+                      {stockStatus === 'out_of_stock' && <Badge data-testid='out-stock-badge' className='bg-gray-500 text-white text-xs'>Hết hàng</Badge>}
                     </div>
-                    {stockStatus === 'low_stock' && <Badge data-testid='low-stock-badge' className='bg-yellow-500 text-white text-xs'>Sắp hết</Badge>}
-                    {stockStatus === 'out_of_stock' && <Badge data-testid='out-stock-badge' className='bg-gray-500 text-white text-xs'>Hết hàng</Badge>}
-                  </div>
 
-                  <div className='w-full h-24 bg-gray-50 rounded-lg mb-3 flex items-center justify-center overflow-hidden'>
-                    <ImageWithFallback src={product.featuredImage} alt={product.name} className='w-full h-full object-contain' />
-                  </div>
-
-                  <h3 data-testid='product-name' className='font-medium text-gray-900 text-sm line-clamp-2 mb-1'>{product.name}</h3>
-                  <p data-testid='product-brand' className='text-xs text-gray-500 mb-2'>{product.brand?.name || 'Không có thương hiệu'}</p>
-                  {product.details?.activeIngredients && <p className='text-xs text-[#1E40AF] mb-2 line-clamp-1'>{product.details.activeIngredients}</p>}
-
-                  <Separator className='my-2' />
-                  <div className='flex items-center justify-between gap-3'>
-                    <div>
-                      <p data-testid='product-price' className='text-[#1E40AF] font-semibold text-sm'>{formatCurrency(price.price)}</p>
-                      <p data-testid='product-unit' className='text-xs text-gray-500'>/ {price.unit}</p>
+                    <div className='w-full h-24 bg-gray-50 rounded-lg mb-3 flex items-center justify-center overflow-hidden'>
+                      <ImageWithFallback src={product.featuredImage} alt={product.name} className='w-full h-full object-contain' />
                     </div>
-                    <div className='flex items-center gap-1 text-xs'>
-                      <Package className='w-3 h-3 text-gray-400' />
-                      <span data-testid='stock-status' className={stockStatus === 'out_of_stock' ? 'text-red-500' : stockStatus === 'low_stock' ? 'text-yellow-700' : 'text-green-600'}>
-                        {formatStockDisplay(product.stockQuantity, price.unit, lowStockThreshold)}
-                      </span>
+
+                    <h3 data-testid='product-name' className='font-medium text-gray-900 text-sm line-clamp-2 mb-1'>{product.name}</h3>
+                    <p data-testid='product-brand' className='text-xs text-gray-500 mb-2'>{product.brand?.name || 'Không có thương hiệu'}</p>
+                    {product.details?.activeIngredients && <p className='text-xs text-[#1E40AF] mb-2 line-clamp-1'>{product.details.activeIngredients}</p>}
+
+                    <Separator className='my-2' />
+                    <div className='flex items-center justify-between gap-3'>
+                      <div>
+                        <p data-testid='product-price' className='text-[#1E40AF] font-semibold text-sm'>{formatCurrency(price.price)}</p>
+                        <p data-testid='product-unit' className='text-xs text-gray-500'>/ {price.unit}</p>
+                      </div>
+                      <div className='flex items-center gap-1 text-xs'>
+                        <Package className='w-3 h-3 text-gray-400' />
+                        <span data-testid='stock-status' className={stockStatus === 'out_of_stock' ? 'text-red-500' : stockStatus === 'low_stock' ? 'text-yellow-700' : 'text-green-600'}>
+                          {formatStockDisplay(product.stockQuantity, price.unit, lowStockThreshold)}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        </>
       )}
 
-      {!error && !loading && products.length > 0 && (
-        <div data-testid='load-more' className='mt-2 flex flex-col items-center justify-center gap-3 rounded-xl border bg-white/80 p-4'>
-          <p data-testid='loaded-count' className='text-sm text-gray-600'>
-            Đã hiển thị {products.length.toLocaleString('vi-VN')} / {pagination.totalCount.toLocaleString('vi-VN')} thuốc
-          </p>
-          {pagination.page < pagination.totalPages ? (
-            <Button
-              data-testid='load-more-btn'
-              variant='outline'
-              onClick={loadMoreProducts}
-              disabled={loadingMore}
-              className='border-[#BFDBFE] text-[#1E40AF] hover:bg-[#F0F6FF]'
-            >
-              {loadingMore ? <Loader2 className='h-4 w-4 animate-spin' /> : null}
-              {loadingMore ? 'Đang tải thêm thuốc...' : 'Xem thêm thuốc'}
-            </Button>
-          ) : (
-            <p data-testid='all-products-loaded' className='text-sm text-gray-500'>Đã hiển thị tất cả thuốc phù hợp</p>
+      {!isError && !isLoading && products.length > 0 && (
+        <div ref={observerTarget} data-testid='load-more' className='py-8 flex justify-center'>
+          {isFetchingNextPage && (
+            <div className='flex items-center gap-3 text-[#1E40AF]' data-testid='load-more-spinner'>
+              <Loader2 className='w-6 h-6 animate-spin' />
+              <span className='text-sm font-medium'>Đang tải thêm thuốc...</span>
+            </div>
+          )}
+          {!hasNextPage && products.length > 0 && (
+            <div className='text-center text-gray-500 text-sm' data-testid='all-products-loaded'>
+              <p className='font-medium'>Đã hiển thị tất cả {products.length.toLocaleString('vi-VN')} thuốc</p>
+              <p className='text-xs mt-1'>Không còn thuốc nào để tải</p>
+            </div>
           )}
         </div>
       )}
