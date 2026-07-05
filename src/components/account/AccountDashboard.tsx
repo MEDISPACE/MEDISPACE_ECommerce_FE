@@ -16,6 +16,29 @@ import type { RecommendedProduct } from '../../services/recommendationService'
 import { recommendationService } from '../../services/recommendationService'
 import type { User as AccountUser, Notification, Order } from '../../types/account'
 
+const mapRecentOrderStatus = (status: string, paymentStatus: string, paymentMethod: string): Order['status'] => {
+  if (status === 'pending') {
+    const isCodPayment = paymentMethod.toLowerCase() === 'cod'
+    return paymentStatus === 'pending' && !isCodPayment ? 'pending_payment' : 'pending'
+  }
+
+  if (status === 'shipped') return 'shipping'
+
+  const knownStatuses: Order['status'][] = [
+    'pending',
+    'pending_payment',
+    'confirmed',
+    'processing',
+    'preparing',
+    'shipping',
+    'delivered',
+    'cancelled',
+    'returned',
+  ]
+
+  return knownStatuses.includes(status as Order['status']) ? (status as Order['status']) : 'pending'
+}
+
 export function AccountDashboard() {
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN').format(price) + 'đ'
@@ -44,29 +67,7 @@ export function AccountDashboard() {
           id: order.id,
           customerId: order.userId,
           orderNumber: order.orderNumber,
-          status: (order.status === 'pending'
-            ? 'pending_payment'
-            : order.status === 'shipped'
-              ? 'shipping'
-              : order.status === 'confirmed'
-                ? 'confirmed'
-                : order.status === 'processing'
-                  ? 'processing'
-                  : order.status === 'delivered'
-                    ? 'delivered'
-                    : order.status === 'cancelled'
-                      ? 'cancelled'
-                      : order.status === 'returned'
-                        ? 'returned'
-                        : 'pending_payment') as
-            | 'pending_payment'
-            | 'confirmed'
-            | 'processing'
-            | 'preparing'
-            | 'shipping'
-            | 'delivered'
-            | 'cancelled'
-            | 'returned',
+          status: mapRecentOrderStatus(order.status, order.paymentStatus, order.paymentMethod),
           items: order.items.map((item) => ({
             id: item.id,
             productId: item.productId,

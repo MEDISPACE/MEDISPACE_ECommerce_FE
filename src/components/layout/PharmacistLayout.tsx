@@ -63,6 +63,22 @@ interface NavItem {
   badgeVariant?: 'default' | 'destructive' | 'success' | 'warning'
 }
 
+const PHARMACIST_ONLINE_PREFERENCE_KEY = 'medispace_pharmacist_online_preference'
+
+const getStoredOnlinePreference = () => {
+  if (typeof window === 'undefined') return undefined
+
+  const value = window.localStorage.getItem(PHARMACIST_ONLINE_PREFERENCE_KEY)
+  if (value === 'true') return true
+  if (value === 'false') return false
+  return undefined
+}
+
+const storeOnlinePreference = (isOnline: boolean) => {
+  if (typeof window === 'undefined') return
+  window.localStorage.setItem(PHARMACIST_ONLINE_PREFERENCE_KEY, String(isOnline))
+}
+
 const navigationItems: NavItem[] = [
   {
     label: 'Tổng quan',
@@ -119,10 +135,10 @@ const navigationItems: NavItem[] = [
 export function PharmacistLayout({ children }: PharmacistLayoutProps) {
   const location = useLocation()
   const navigate = useNavigate()
-  const { user, logout, isAuthenticated, loading } = useAuth()
+  const { user, logout, isAuthenticated, loading, updateUser } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [isOnline, setIsOnline] = useState(user?.isOnline ?? true)
+  const [isOnline, setIsOnline] = useState(() => getStoredOnlinePreference() ?? user?.isOnline ?? true)
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [globalSearchQuery, setGlobalSearchQuery] = useState('')
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false)
@@ -198,12 +214,31 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
     }
   }, [debouncedGlobalSearch])
 
-  // Sync isOnline with user profile
+  // Keep pharmacist availability stable across refresh/login. Socket presence is separate from this preference.
   useEffect(() => {
-    if (user?.isOnline !== undefined) {
-      setIsOnline(user.isOnline)
+    if (loading || !isAuthenticated || user?.role !== 1) return
+
+    const preferredStatus = getStoredOnlinePreference() ?? true
+    setIsOnline(preferredStatus)
+
+    if (user.isOnline !== preferredStatus) {
+      let cancelled = false
+
+      settingsService
+        .updateOnlineStatus({ isOnline: preferredStatus })
+        .then((updatedProfile) => {
+          if (cancelled) return
+          updateUser({ ...user, isOnline: updatedProfile.isOnline ?? preferredStatus })
+        })
+        .catch(() => {
+          if (!cancelled) setIsOnline(user.isOnline ?? preferredStatus)
+        })
+
+      return () => {
+        cancelled = true
+      }
     }
-  }, [user?.isOnline])
+  }, [isAuthenticated, loading, updateUser, user])
 
   const isActiveRoute = (href: string) => {
     return location.pathname === href || location.pathname.startsWith(href + '/')
@@ -218,9 +253,11 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
     try {
       // Optimistic update
       setIsOnline(checked)
+      storeOnlinePreference(checked)
 
       // Call API to update status in database
-      await settingsService.updateOnlineStatus({ isOnline: checked })
+      const updatedProfile = await settingsService.updateOnlineStatus({ isOnline: checked })
+      if (user) updateUser({ ...user, isOnline: updatedProfile.isOnline ?? checked })
 
       toast.success(checked ? 'Bạn đã online - Sẵn sàng tư vấn' : 'Bạn đã offline - Không nhận tư vấn mới', {
         icon: checked ? (
@@ -232,6 +269,7 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
     } catch (error) {
       // Rollback on error
       setIsOnline(previousStatus)
+      storeOnlinePreference(previousStatus)
       toast.error('Không thể cập nhật trạng thái. Vui lòng thử lại.')
     }
   }
