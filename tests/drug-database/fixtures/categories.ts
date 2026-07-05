@@ -1,0 +1,40 @@
+export const drugDatabaseCategories = [
+  {
+    _id: '65f100000000000000000101',
+    name: 'Thuốc giảm đau',
+    slug: 'thuoc-giam-dau',
+    path: '/thuoc-giam-dau',
+    level: 1,
+    productCount: 3,
+    isActive: true,
+    sortOrder: 1,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    _id: '65f100000000000000000102',
+    name: 'Vitamin và khoáng chất',
+    slug: 'vitamin-khoang-chat',
+    path: '/vitamin-khoang-chat',
+    level: 1,
+    productCount: 2,
+    isActive: true,
+    sortOrder: 2,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    _id: '65f100000000000000000103',
+    name: 'Thuốc mắt',
+    slug: 'thuoc-mat',
+    path: '/thuoc-mat',
+    level: 1,
+    productCount: 1,
+    isActive: true,
+    sortOrder: 3,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  },
+]
+
+export default drugDatabaseCategories
