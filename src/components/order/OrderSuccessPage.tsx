@@ -173,7 +173,9 @@ export function OrderSuccessPage() {
     }
   }
 
-  const isPaymentPending = paymentStatus === 'pending' || order.paymentStatus === 'pending'
+  const isCodPayment = order.paymentMethod?.toLowerCase() === 'cod'
+  const hasPendingPayment = paymentStatus === 'pending' || order.paymentStatus === 'pending'
+  const isPaymentPending = hasPendingPayment && !isCodPayment
   const isPaymentSuccess =
     paymentStatus === 'success' || paymentStatus === 'vnpay_success' || order.paymentStatus === 'paid'
 

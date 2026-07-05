@@ -27,8 +27,11 @@ const accountOrderStatuses: readonly AccountOrder['status'][] = [
 const isAccountOrderStatus = (status: string): status is AccountOrder['status'] =>
   accountOrderStatuses.includes(status as AccountOrder['status'])
 
-const mapDisplayStatus = (status: string, paymentStatus: string): AccountOrder['status'] => {
-  if (status === 'pending') return paymentStatus === 'pending' ? 'pending_payment' : 'pending'
+const mapDisplayStatus = (status: string, paymentStatus: string, paymentMethod: string): AccountOrder['status'] => {
+  if (status === 'pending') {
+    const isCodPayment = paymentMethod.toLowerCase() === 'cod'
+    return paymentStatus === 'pending' && !isCodPayment ? 'pending_payment' : 'pending'
+  }
   if (status === 'shipped') return 'shipping'
   return isAccountOrderStatus(status) ? status : 'pending'
 }
@@ -56,7 +59,7 @@ export function OrdersPage() {
       const fetchedOrders = await orderService.getOrders()
       // Transform to account Order type
       const transformedOrders: AccountOrder[] = fetchedOrders.map((order) => {
-        const displayStatus = mapDisplayStatus(order.status, order.paymentStatus)
+        const displayStatus = mapDisplayStatus(order.status, order.paymentStatus, order.paymentMethod)
 
         return {
           id: order.id,
