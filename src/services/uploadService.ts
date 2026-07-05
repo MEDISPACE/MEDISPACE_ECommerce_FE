@@ -9,11 +9,12 @@ interface UploadResponse {
 }
 
 export const uploadService = {
-  uploadImage: (formData: FormData) => {
+  uploadImage: (formData: FormData, purpose?: 'prescription' | 'general') => {
     return apiClient.post<UploadResponse>('/medias/upload-image', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      params: purpose ? { purpose } : undefined,
     })
   },
 }

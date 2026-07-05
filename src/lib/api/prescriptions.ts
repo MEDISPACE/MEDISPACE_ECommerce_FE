@@ -16,10 +16,19 @@ export interface OCRScanResult {
     diagnosis: string | null
     medications: Array<{
       productName: string
+      activeIngredient?: string | null
       dosage: string | null
       quantity: number | null
       unit: string | null
       instructions: string | null
+      productId?: string
+      matchedName?: string
+      image?: string | null
+      confidence?: string
+      needsReview?: boolean
+      source?: string
+      sourcePage?: number
+      reviewReason?: string
     }>
     specialNotes: string | null
     confidence: string
@@ -30,6 +39,36 @@ export interface OCRScanResult {
     station2_VietOCR_seconds: number
     station3_Extractor_seconds: number
     total_pipeline_seconds: number
+  }
+  quality?: {
+    score?: number
+    level?: string
+    flags?: string[]
+    conflicts?: unknown[]
+    canEarlyReturn?: boolean
+    imageQuality?: {
+      level?: string
+      flags?: string[]
+      width?: number
+      height?: number
+      blurScore?: number
+      brightness?: number
+      contrast?: number
+    }
+    pages?: Array<{
+      page?: number
+      success?: boolean
+      quality?: unknown
+      imageQuality?: {
+        level?: string
+        flags?: string[]
+        width?: number
+        height?: number
+        blurScore?: number
+        brightness?: number
+        contrast?: number
+      }
+    }>
   }
 }
 
@@ -47,12 +86,17 @@ class PrescriptionsAPI {
   }
 
   // ★ SCAN prescription image via OCR Service (qua proxy BE)
-  async scanPrescription(imageUrl: string): Promise<OCRScanResult> {
+  async scanPrescription(
+    imageUrl: string | string[],
+    mode?: 'traditional' | 'vision' | 'parallel' | 'parallel_benchmark',
+  ): Promise<OCRScanResult> {
     // Override timeout: OCR + LLM fallback có thể mất tới ~50s
+    const payload = Array.isArray(imageUrl) ? { imageUrls: imageUrl, mode } : { imageUrl, mode }
+    const pageCount = Array.isArray(imageUrl) ? Math.max(imageUrl.length, 1) : 1
     const response = await apiClient.post<{ message: string; result: OCRScanResult }>(
       '/prescriptions/scan',
-      { imageUrl },
-      { timeout: 150000 },
+      payload,
+      { timeout: Math.min(150000 * pageCount, 450000) },
     )
     return response.data.result
   }
@@ -71,15 +115,25 @@ class PrescriptionsAPI {
     prescriptionDate: string
     medications: {
       productName: string
+      productId?: string
+      matchedName?: string
+      image?: string | null
+      activeIngredient?: string | null
       dosage: string
       quantity: number
       unit?: string
       instructions: string
+      confidence?: string
+      needsReview?: boolean
+      source?: string
+      reviewReason?: string
     }[]
     images?: string[]
     // OCR metadata
     ocrRawText?: string
     ocrConfidence?: string
+    ocrExtractionMethod?: string
+    ocrQuality?: Record<string, unknown>
   }): Promise<{
     message: string
     result: {

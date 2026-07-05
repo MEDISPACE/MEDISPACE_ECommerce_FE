@@ -90,6 +90,95 @@ function OCRConfidenceBadge({ confidence }: { confidence?: string }) {
   return <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${info.cls}`}>{info.label}</span>
 }
 
+interface OCRImageQuality {
+  level?: string
+  flags?: string[]
+  width?: number
+  height?: number
+  blurScore?: number
+  brightness?: number
+  contrast?: number
+}
+
+interface OCRQualityInfo {
+  level?: string
+  score?: number
+  flags?: string[]
+  imageQuality?: OCRImageQuality
+  pages?: Array<{
+    page?: number
+    success?: boolean
+    imageQuality?: OCRImageQuality
+    quality?: {
+      score?: number
+      level?: string
+      flags?: string[]
+    }
+  }>
+}
+
+const imageQualityLabels: Record<string, string> = {
+  blurry: 'Ảnh mờ',
+  too_dark: 'Ảnh tối',
+  too_bright: 'Ảnh quá sáng',
+  low_contrast: 'Tương phản thấp',
+  low_resolution: 'Độ phân giải thấp',
+  extreme_aspect_ratio: 'Khung ảnh bất thường',
+}
+
+function OCRQualityPanel({ quality }: { quality?: Record<string, unknown> }) {
+  const info = quality as OCRQualityInfo | undefined
+  if (!info) return null
+
+  const pageQualities = Array.isArray(info.pages) ? info.pages : []
+  const imageFlags = [
+    ...(info.imageQuality?.flags || []),
+    ...pageQualities.flatMap((page) => page.imageQuality?.flags || []),
+  ]
+  const uniqueImageFlags = Array.from(new Set(imageFlags))
+  const hasWarning = uniqueImageFlags.length > 0 || info.level === 'low' || info.imageQuality?.level === 'poor'
+  if (!hasWarning && pageQualities.length === 0 && info.score == null) return null
+
+  return (
+    <div className={`p-3 rounded-lg border flex gap-2 ${hasWarning ? 'bg-amber-50 border-amber-200' : 'bg-[#F0F6FF] border-[#BFDBFE]'}`}>
+      <AlertCircle className={`w-4 h-4 mt-0.5 shrink-0 ${hasWarning ? 'text-amber-600' : 'text-[#1E40AF]'}`} />
+      <div className='space-y-2 min-w-0'>
+        <div className='flex flex-wrap items-center gap-2'>
+          <p className={`text-sm font-medium ${hasWarning ? 'text-amber-800' : 'text-[#0A2463]'}`}>
+            Chất lượng OCR{pageQualities.length > 0 ? ` (${pageQualities.length} ảnh)` : ''}
+          </p>
+          {info.score != null && (
+            <Badge variant='outline' className='text-xs bg-white border-gray-200 text-gray-600'>
+              Điểm {info.score}
+            </Badge>
+          )}
+          {uniqueImageFlags.map((flag) => (
+            <Badge key={flag} variant='outline' className='text-xs border-amber-300 bg-white text-amber-700'>
+              {imageQualityLabels[flag] || flag}
+            </Badge>
+          ))}
+        </div>
+
+        {pageQualities.length > 0 && (
+          <div className='grid grid-cols-1 sm:grid-cols-2 gap-1.5'>
+            {pageQualities.map((page, idx) => {
+              const flags = page.imageQuality?.flags || []
+              return (
+                <div key={idx} className='text-xs rounded-md bg-white/80 border border-gray-200 px-2 py-1.5 text-gray-600'>
+                  <span className='font-medium text-gray-700'>Trang {page.page || idx + 1}</span>
+                  {page.quality?.score != null && <span> · điểm {page.quality.score}</span>}
+                  {page.imageQuality?.blurScore != null && <span> · blur {page.imageQuality.blurScore}</span>}
+                  {flags.length > 0 && <span> · {flags.map((flag) => imageQualityLabels[flag] || flag).join(', ')}</span>}
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 type ConfirmAction = 'verified' | 'rejected' | null
 
 type PrescriptionCorrections = {
@@ -301,6 +390,8 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
             </div>
           )}
 
+          <OCRQualityPanel quality={prescription.ocrQuality} />
+
           {/* ── MAIN 2-COL LAYOUT ── */}
           <div className='grid grid-cols-1 xl:grid-cols-[minmax(360px,480px)_minmax(0,1fr)] gap-6'>
             {/* LEFT: images */}
@@ -462,8 +553,22 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
                         )}
                         {!med.productId && <span data-testid='unmatched-drug-warning' className='text-[10px] px-1.5 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200 font-medium shrink-0'>Không tìm thấy trong kho</span>}
                       </div>
+                      {med.needsReview && (
+                        <span className='inline-flex w-fit text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200 font-medium'>
+                          Cần kiểm tra
+                        </span>
+                      )}
+                      {med.activeIngredient && (
+                        <p className='text-[11px] text-gray-500'>Hoạt chất: {med.activeIngredient}</p>
+                      )}
                       {med.matchedName && med.matchedName !== med.productName && (
                         <p className='text-[11px] text-gray-400 italic'>AI đọc: {med.productName}</p>
+                      )}
+                      {(med.source || med.confidence || med.sourcePage) && (
+                        <p className='text-[11px] text-gray-400'>Nguồn: {med.source || 'OCR'}{med.confidence ? ` · ${med.confidence}` : ''}</p>
+                      )}
+                      {med.sourcePage && (
+                        <p className='text-[11px] text-gray-400'>Trang ảnh: {med.sourcePage}</p>
                       )}
                       <div className='flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5'>
                         {med.dosage && <p className='text-xs text-gray-600'>💊 {med.dosage}</p>}
