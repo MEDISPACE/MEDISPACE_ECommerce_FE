@@ -60,8 +60,6 @@ export function DrugDatabasePage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [pagination, setPagination] = useState<DrugDatabaseResponse['pagination']>({ page: 1, limit: PAGE_SIZE, totalPages: 0, totalCount: 0 })
   const [lowStockThreshold, setLowStockThreshold] = useState(30)
-  const [lastCheckedAt, setLastCheckedAt] = useState<string | null>(null)
-  const [searchSource, setSearchSource] = useState<string>('mongo')
   const [loading, setLoading] = useState(true)
   const [detailLoading, setDetailLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -113,8 +111,6 @@ export function DrugDatabasePage() {
       setProducts(productData.products || [])
       setPagination(productData.pagination)
       setLowStockThreshold(productData.lowStockThreshold)
-      setLastCheckedAt(productData.lastCheckedAt)
-      setSearchSource(productData.searchSource)
       setCategories(Array.isArray(categoryData) ? categoryData : [])
       syncUrl(nextQuery)
     } catch (err) {
@@ -183,9 +179,6 @@ export function DrugDatabasePage() {
             <p className='text-gray-600 mt-1' data-testid='total-count'>
               {pagination.totalCount.toLocaleString('vi-VN')} sản phẩm tham chiếu
             </p>
-          </div>
-          <div className='text-sm text-gray-500' data-testid='freshness-indicator'>
-            {lastCheckedAt ? `Cập nhật ${formatLastUpdated(lastCheckedAt)} từ ${searchSource}` : 'Đang kiểm tra dữ liệu'}
           </div>
         </div>
       </div>
