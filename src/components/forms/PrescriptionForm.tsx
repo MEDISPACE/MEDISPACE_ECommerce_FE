@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group'
 import { Checkbox } from '../ui/checkbox'
 import { Button } from '../ui/button'
-import { CalendarIcon, Sparkles, X, PhoneCall } from 'lucide-react'
+import { AlertTriangle, CalendarIcon, Sparkles, X, PhoneCall } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { Calendar as CalendarComponent } from '../ui/calendar'
 import { format, parseISO } from 'date-fns'
@@ -36,6 +36,7 @@ interface PrescriptionFormData {
 // Thông tin thuốc từ OCR
 export interface MedicationItem {
   productName: string
+  activeIngredient?: string | null
   dosage: string
   quantity: number | null
   unit: string | null
@@ -43,6 +44,21 @@ export interface MedicationItem {
   productId?: string
   matchedName?: string
   image?: string | null
+  confidence?: string
+  needsReview?: boolean
+  source?: string
+  sourcePage?: number
+  reviewReason?: string
+}
+
+interface OCRImageQuality {
+  level?: string
+  flags?: string[]
+  width?: number
+  height?: number
+  blurScore?: number
+  brightness?: number
+  contrast?: number
 }
 
 // Dữ liệu OCR để auto-fill
@@ -59,6 +75,8 @@ export interface OCRInitialData {
   medications?: MedicationItem[]
   confidence?: string
   rawText?: string
+  _extraction_method?: string
+  quality?: Record<string, unknown>
 }
 
 interface PrescriptionFormProps {
@@ -188,19 +206,88 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
 
   const suggestedPhone = initialData?.phoneNumber
   const showPhoneSuggestion = !!suggestedPhone && suggestedPhone !== formData.phoneNumber
+  const ocrQuality = initialData?.quality as
+    | { level?: unknown; imageQuality?: OCRImageQuality; pages?: Array<{ page?: number; imageQuality?: OCRImageQuality }> }
+    | undefined
+  const ocrImageQuality = ocrQuality?.imageQuality
+  const ocrPageQualities = Array.isArray(ocrQuality?.pages) ? ocrQuality.pages : []
+  const imageQualityFlags = [
+    ...(ocrImageQuality?.flags || []),
+    ...ocrPageQualities.flatMap((page) => page.imageQuality?.flags || []),
+  ]
+  const uniqueImageQualityFlags = Array.from(new Set(imageQualityFlags))
+  const hasImageQualityWarning = uniqueImageQualityFlags.length > 0 || ocrImageQuality?.level === 'poor'
+  const imageQualityLabels: Record<string, string> = {
+    blurry: 'Ảnh mờ',
+    too_dark: 'Ảnh tối',
+    too_bright: 'Ảnh quá sáng',
+    low_contrast: 'Tương phản thấp',
+    low_resolution: 'Độ phân giải thấp',
+    extreme_aspect_ratio: 'Khung ảnh bất thường',
+  }
+  const ocrQualityLevel = String(ocrQuality?.level || '').toLowerCase()
+  const ocrConfidence = String(initialData?.confidence || '').toLowerCase()
+  const needsOcrReview = ocrQualityLevel === 'low' || ocrConfidence === 'low' || hasImageQualityWarning
+  const hasMedicationReview = medications.some((med) => med.needsReview || String(med.confidence || '').toLowerCase() === 'low')
+  const medicationReviewTone = needsOcrReview || hasMedicationReview
+  const confidenceLabel = needsOcrReview
+    ? 'Cần kiểm tra'
+    : ocrConfidence === 'high'
+      ? 'Độ tin cậy: cao'
+      : ocrConfidence === 'medium'
+        ? 'Độ tin cậy: trung bình'
+        : ''
 
   return (
     <form onSubmit={handleSubmit} className={`space-y-6 ${className}`}>
       {/* OCR Auto-fill badge */}
       {isOCRFilled && (
-        <div className='flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl'>
-          <Sparkles className='w-5 h-5 text-emerald-600 shrink-0' />
-          <span className='text-sm text-emerald-800 font-medium'>Form đã được điền tự động từ Đơn thuốc</span>
-          {initialData?.confidence && (
-            <Badge variant='outline' className='ml-auto text-emerald-700 border-emerald-300 text-xs'>
-              Độ tin cậy: {initialData.confidence}
+        <div
+          className={`flex items-center gap-2 p-3 rounded-xl border ${
+            needsOcrReview ? 'bg-amber-50 border-amber-200' : 'bg-emerald-50 border-emerald-200'
+          }`}
+        >
+          {needsOcrReview ? (
+            <AlertTriangle className='w-5 h-5 text-amber-600 shrink-0' />
+          ) : (
+            <Sparkles className='w-5 h-5 text-emerald-600 shrink-0' />
+          )}
+          <span className={`text-sm font-medium ${needsOcrReview ? 'text-amber-800' : 'text-emerald-800'}`}>
+            {needsOcrReview ? 'Cần kiểm tra lại thông tin OCR' : 'Form đã được điền tự động từ Đơn thuốc'}
+          </span>
+          {confidenceLabel && (
+            <Badge
+              variant='outline'
+              className={`ml-auto text-xs ${
+                needsOcrReview ? 'text-amber-700 border-amber-300' : 'text-emerald-700 border-emerald-300'
+              }`}
+            >
+              {confidenceLabel}
             </Badge>
           )}
+        </div>
+      )}
+
+      {isOCRFilled && hasImageQualityWarning && (
+        <div className='p-3 rounded-xl border border-amber-200 bg-amber-50 text-amber-900'>
+          <div className='flex items-start gap-2'>
+            <AlertTriangle className='w-5 h-5 text-amber-600 shrink-0 mt-0.5' />
+            <div className='space-y-2'>
+              <p className='text-sm font-medium'>Ảnh đơn thuốc cần kiểm tra lại trước khi gửi.</p>
+              <div className='flex flex-wrap gap-1.5'>
+                {uniqueImageQualityFlags.map((flag) => (
+                  <Badge key={flag} variant='outline' className='text-xs border-amber-300 bg-white text-amber-700'>
+                    {imageQualityLabels[flag] || flag}
+                  </Badge>
+                ))}
+              </div>
+              {ocrPageQualities.length > 0 && (
+                <p className='text-xs text-amber-700'>
+                  OCR đã quét {ocrPageQualities.length} ảnh. Các dòng thuốc có thể cần đối chiếu lại với ảnh gốc.
+                </p>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -405,17 +492,22 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
 
       {/* Medications từ OCR */}
       {medications.length > 0 && (
-        <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-emerald-100'>
+        <Card className={`bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border ${medicationReviewTone ? 'border-amber-200' : 'border-emerald-100'}`}>
           <div className='p-6'>
-            <h3 className='mb-4 text-emerald-800 flex items-center gap-2'>
-              <Sparkles className='w-5 h-5' />
+            <h3 className={`mb-4 flex items-center gap-2 ${medicationReviewTone ? 'text-amber-800' : 'text-emerald-800'}`}>
+              {medicationReviewTone ? <AlertTriangle className='w-5 h-5' /> : <Sparkles className='w-5 h-5' />}
               💊 DANH SÁCH THUỐC (từ OCR)
+              {medicationReviewTone && (
+                <Badge variant='outline' className='ml-auto text-xs text-amber-700 border-amber-300 bg-amber-50'>
+                  Cần kiểm tra
+                </Badge>
+              )}
             </h3>
             <div className='space-y-2'>
               {medications.map((med, idx) => (
                 <div
                   key={idx}
-                  className='flex items-start justify-between p-3 bg-emerald-50 rounded-lg border border-emerald-100'
+                  className={`flex items-start justify-between p-3 rounded-lg border ${med.needsReview || String(med.confidence || '').toLowerCase() === 'low' ? 'bg-amber-50 border-amber-200' : 'bg-emerald-50 border-emerald-100'}`}
                 >
                   <div className='flex items-start gap-3 flex-1'>
                     {med.image && (
@@ -425,9 +517,14 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
                     )}
                     <div>
                       <div className='flex items-center gap-2'>
-                        <p className='font-medium text-emerald-900 text-sm'>
+                        <p className={`font-medium text-sm ${med.needsReview ? 'text-amber-900' : 'text-emerald-900'}`}>
                           {med.matchedName || med.productName}
                         </p>
+                        {med.needsReview && (
+                          <Badge variant='outline' className='text-[10px] px-1.5 py-0 text-amber-700 border-amber-300 bg-amber-50'>
+                            Cần kiểm tra
+                          </Badge>
+                        )}
                         {med.productId && (
                           <Badge className='bg-emerald-100 text-emerald-700 hover:bg-emerald-200 text-[10px] px-1.5 py-0 border-emerald-200'>
                             ✓ Có trong kho
@@ -438,6 +535,9 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
                         <p className='text-[11px] text-gray-500 italic mt-0.5'>AI đọc: {med.productName}</p>
                       )}
                       {med.dosage && <p className='text-xs text-gray-600 mt-0.5'>Liều: {med.dosage}</p>}
+                      {med.sourcePage && (
+                        <p className='text-[11px] text-gray-500 mt-0.5'>Nguồn ảnh: trang {med.sourcePage}</p>
+                      )}
                       <div className='flex gap-3 mt-0.5'>
                         {med.quantity != null && (
                           <span className='text-xs text-gray-500'>

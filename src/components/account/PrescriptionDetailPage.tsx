@@ -59,6 +59,12 @@ interface BackendPrescription {
 
 type TrackingStatus = 'pending' | 'approved' | 'rejected' | 'completed'
 
+function mapTrackingStatus(status: string): TrackingStatus {
+  if (status === 'verified') return 'approved'
+  if (status === 'approved' || status === 'rejected' || status === 'completed' || status === 'pending') return status
+  return 'pending'
+}
+
 const STATUS_CONFIG: Record<
   string,
   {
@@ -244,7 +250,7 @@ export function PrescriptionDetailPage() {
     )
   }
 
-  const status = prescription.status as TrackingStatus
+  const status = mapTrackingStatus(prescription.status)
   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.pending
 
   // Compute timeline step states

@@ -22,6 +22,10 @@ import {
   ClipboardList,
   Home,
   PlusCircle,
+  ZoomIn,
+  ChevronLeft,
+  ChevronRight,
+  Image as ImageIcon,
 } from 'lucide-react'
 
 import { Button } from '../ui/button'
@@ -29,6 +33,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Alert, AlertDescription } from '../ui/alert'
 import { Badge } from '../ui/badge'
 import { Progress } from '../ui/progress'
+import { Dialog, DialogContent, DialogTitle } from '../ui/dialog'
 import { ImageUploader, type UploadedImage } from '../forms/ImageUploader'
 import { PrescriptionForm } from '../forms/PrescriptionForm'
 import type { OCRInitialData, MedicationItem } from '../forms/PrescriptionForm'
@@ -45,12 +50,163 @@ const uploadSteps = [
   { id: 'complete', title: 'Hoàn thành', description: 'Kết quả' },
 ]
 
+interface UploadedPrescriptionPreviewProps {
+  images: UploadedImage[]
+  selectedIndex: number
+  onSelect: (index: number) => void
+  onBackToUpload: () => void
+  className?: string
+}
+
+function UploadedPrescriptionPreview({
+  images,
+  selectedIndex,
+  onSelect,
+  onBackToUpload,
+  className = '',
+}: UploadedPrescriptionPreviewProps) {
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false)
+  const uploaded = images.filter((image) => image.isUploaded && image.url.startsWith('http'))
+  const activeIndex = uploaded.length > 0 ? Math.min(selectedIndex, uploaded.length - 1) : 0
+  const activeImage = uploaded[activeIndex]
+
+  const handlePrev = () => {
+    if (uploaded.length <= 1) return
+    onSelect(activeIndex === 0 ? uploaded.length - 1 : activeIndex - 1)
+  }
+
+  const handleNext = () => {
+    if (uploaded.length <= 1) return
+    onSelect(activeIndex === uploaded.length - 1 ? 0 : activeIndex + 1)
+  }
+
+  if (!activeImage) {
+    return (
+      <Card className={`bg-white border border-[#E8EDF5] shadow-sm rounded-2xl ${className}`}>
+        <CardContent className='p-4 text-sm text-gray-500'>Chưa có ảnh đơn thuốc đã tải lên.</CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <Card className={`bg-white/90 backdrop-blur-lg border border-[#E8EDF5] shadow-lg rounded-2xl overflow-hidden ${className}`}>
+      <CardHeader className='p-4 pb-3'>
+        <div className='flex items-center justify-between gap-3'>
+          <CardTitle className='text-sm font-bold text-blue-900 flex items-center gap-2'>
+            <ImageIcon className='w-4 h-4 text-[#1E40AF]' />
+            Ảnh đơn thuốc
+          </CardTitle>
+          <Badge className='bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-50'>
+            Đã tải lên
+          </Badge>
+        </div>
+      </CardHeader>
+
+      <CardContent className='p-4 pt-0 space-y-3'>
+        <button
+          type='button'
+          onClick={() => setIsPreviewOpen(true)}
+          className='relative w-full aspect-[4/3] lg:h-60 lg:aspect-auto rounded-xl overflow-hidden bg-gray-50 border border-[#E8EDF5] group focus:outline-none focus:ring-2 focus:ring-[#1E40AF]'
+        >
+          <img src={activeImage.url} alt={activeImage.name} className='w-full h-full object-contain' />
+          <div className='absolute top-2 left-2 flex items-center gap-2'>
+            <Badge className='bg-white/95 text-[#0A2463] border border-[#BFDBFE] hover:bg-white'>
+              Ảnh {activeIndex + 1}/{uploaded.length}
+            </Badge>
+          </div>
+          <div className='absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors' />
+          <div className='absolute bottom-2 right-2 w-9 h-9 rounded-full bg-white/95 shadow-sm flex items-center justify-center text-[#0A2463]'>
+            <ZoomIn className='w-4 h-4' />
+          </div>
+        </button>
+
+        <div className='min-w-0'>
+          <p className='text-sm font-medium text-gray-800 truncate'>{activeImage.name}</p>
+          <p className='text-xs text-gray-500'>Dùng ảnh này để kiểm tra lại thông tin OCR bên dưới.</p>
+        </div>
+
+        {uploaded.length > 1 && (
+          <div className='flex gap-2 overflow-x-auto pb-1'>
+            {uploaded.map((image, index) => (
+              <button
+                type='button'
+                key={image.id}
+                onClick={() => onSelect(index)}
+                className={`h-14 w-14 shrink-0 rounded-lg overflow-hidden border-2 bg-gray-50 transition-colors ${
+                  index === activeIndex ? 'border-[#1E40AF]' : 'border-transparent hover:border-[#BFDBFE]'
+                }`}
+              >
+                <img src={image.url} alt={image.name} className='w-full h-full object-cover' />
+              </button>
+            ))}
+          </div>
+        )}
+
+        <Button
+          type='button'
+          variant='outline'
+          className='w-full border-[#BFDBFE] text-[#0A2463] hover:bg-[#F0F6FF]'
+          onClick={onBackToUpload}
+        >
+          Đổi/Sửa ảnh
+        </Button>
+      </CardContent>
+
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className='max-w-5xl w-[95vw] max-h-[92vh] p-0 bg-black/95 border-none overflow-hidden'>
+          <DialogTitle className='sr-only'>Xem ảnh đơn thuốc</DialogTitle>
+          <div className='absolute top-0 left-0 right-0 z-10 flex items-center justify-between gap-3 p-4 bg-gradient-to-b from-black/80 to-transparent'>
+            <Badge className='bg-white/20 text-white border-white/20 hover:bg-white/20'>
+              Ảnh {activeIndex + 1}/{uploaded.length}
+            </Badge>
+            <Button
+              type='button'
+              variant='ghost'
+              size='sm'
+              className='text-white hover:bg-white/20 hover:text-white'
+              onClick={() => setIsPreviewOpen(false)}
+            >
+              <X className='w-5 h-5' />
+            </Button>
+          </div>
+
+          <div className='h-[88vh] flex items-center justify-center p-12'>
+            <img src={activeImage.url} alt={activeImage.name} className='max-w-full max-h-[85vh] object-contain' />
+          </div>
+
+          {uploaded.length > 1 && (
+            <>
+              <Button
+                type='button'
+                variant='ghost'
+                className='absolute left-4 top-1/2 -translate-y-1/2 h-11 w-11 rounded-full text-white hover:bg-white/20 hover:text-white p-0'
+                onClick={handlePrev}
+              >
+                <ChevronLeft className='w-7 h-7' />
+              </Button>
+              <Button
+                type='button'
+                variant='ghost'
+                className='absolute right-4 top-1/2 -translate-y-1/2 h-11 w-11 rounded-full text-white hover:bg-white/20 hover:text-white p-0'
+                onClick={handleNext}
+              >
+                <ChevronRight className='w-7 h-7' />
+              </Button>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+    </Card>
+  )
+}
+
 export function UploadPrescriptionPage() {
   const navigate = useNavigate()
   const { isAuthenticated, user } = useAuth()
 
   const [currentStep, setCurrentStep] = useState(1)
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([])
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [prescriptionId, setPrescriptionId] = useState<string | null>(null)
   const [prescriptionNumber, setPrescriptionNumber] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -72,14 +228,14 @@ export function UploadPrescriptionPage() {
       if (elapsed < 5) {
         setScanStage(1)
         setScanProgress(Math.min(30, (elapsed / 5) * 30))
-      } else if (elapsed < 17) {
+      } else if (elapsed < 25) {
         setScanStage(2)
-        setScanProgress(Math.min(80, 30 + ((elapsed - 5) / 12) * 50))
+        setScanProgress(Math.min(72, 30 + ((elapsed - 5) / 20) * 42))
       } else {
         setScanStage(3)
-        setScanProgress(Math.min(99, 80 + ((elapsed - 17) / 1) * 19))
+        setScanProgress(Math.min(96, 72 + ((elapsed - 25) / 35) * 24))
       }
-    }, 100)
+    }, 250)
   }
 
   const stopScanProgress = () => {
@@ -94,6 +250,17 @@ export function UploadPrescriptionPage() {
       if (scanTimerRef.current) clearInterval(scanTimerRef.current)
     }
   }, [])
+
+  useEffect(() => {
+    const uploadedCount = uploadedImages.filter((image) => image.isUploaded && image.url.startsWith('http')).length
+    if (uploadedCount === 0) {
+      setSelectedImageIndex(0)
+      return
+    }
+    if (selectedImageIndex >= uploadedCount) {
+      setSelectedImageIndex(uploadedCount - 1)
+    }
+  }, [selectedImageIndex, uploadedImages])
 
   // Find product if specified - TODO: Replace with real API call
   const product: Product | null = null
@@ -129,29 +296,46 @@ export function UploadPrescriptionPage() {
       setIsScanning(true)
       startScanProgress()
       try {
-        const firstImageUrl = uploadedUrls[0]
-        const scanResult = await prescriptionsAPI.scanPrescription(firstImageUrl)
+        const ocrMode = (import.meta.env.VITE_PRESCRIPTION_OCR_MODE || undefined) as
+          | 'traditional'
+          | 'vision'
+          | 'parallel'
+          | 'parallel_benchmark'
+          | undefined
+        const scanResult = await prescriptionsAPI.scanPrescription(uploadedUrls, ocrMode)
         if (scanResult?.data) {
           setOcrData({
             ...scanResult.data,
             rawText: scanResult.rawText,
             confidence: scanResult.data.confidence,
+            quality: scanResult.quality,
             // Chuẩn hóa null → string cho MedicationItem
             medications: (scanResult.data.medications || []).map((m: any) => ({
               productName: m.productName || '',
+              activeIngredient: m.activeIngredient,
               dosage: m.dosage || '',
               quantity: m.quantity,
               unit: m.unit,
               instructions: m.instructions || '',
               productId: m.productId,
               matchedName: m.matchedName,
-              image: m.image
+              image: m.image,
+              confidence: m.confidence,
+              needsReview: m.needsReview,
+              source: m.source,
+              reviewReason: m.reviewReason,
             })),
           })
         }
       } catch (err) {
         console.warn('OCR scan failed, user will fill manually:', err)
-        toast.warning('Không thể quét tự động. Vui lòng nhập thông tin thủ công.')
+        const responseData = (err as any)?.response?.data
+        const rejectedHost = responseData?.rejectedHost ? ` (${responseData.rejectedHost})` : ''
+        if (responseData?.message) {
+          toast.warning(`${responseData.message}${rejectedHost}. Vui lòng nhập thông tin thủ công.`)
+        } else {
+          toast.warning('Không thể quét tự động. Vui lòng nhập thông tin thủ công.')
+        }
       } finally {
         stopScanProgress()
         setIsScanning(false)
@@ -224,6 +408,14 @@ export function UploadPrescriptionPage() {
             ? medications.map((m) => ({
                 productName: m.productName,
                 dosage: m.dosage || 'Theo chỉ định bác sĩ',
+                productId: m.productId,
+                matchedName: m.matchedName,
+                image: m.image,
+                activeIngredient: m.activeIngredient,
+                confidence: m.confidence,
+                needsReview: m.needsReview,
+                source: m.source,
+                reviewReason: m.reviewReason,
                 quantity: m.quantity ?? 1,
                 unit: m.unit || undefined,
                 instructions: m.instructions || 'Theo hướng dẫn của bác sĩ',
@@ -239,6 +431,8 @@ export function UploadPrescriptionPage() {
         // OCR metadata
         ocrRawText: ocrData?.rawText || undefined,
         ocrConfidence: ocrData?.confidence || undefined,
+        ocrExtractionMethod: ocrData?._extraction_method || undefined,
+        ocrQuality: ocrData?.quality || undefined,
       }
 
       const response = await prescriptionsAPI.submitPrescription(prescriptionData)
@@ -305,7 +499,7 @@ export function UploadPrescriptionPage() {
                   <span className='text-sm font-medium text-[#0A2463]'>Đang phân tích đơn thuốc</span>
                 </div>
                 <h2 className='text-xl font-bold text-gray-800 mb-1'>Hệ thống nhận diện đơn thuốc đang làm việc...</h2>
-                <p className='text-sm text-gray-500'>Vui lòng không đóng trang. Thường mất khoảng 15-20 giây.</p>
+                <p className='text-sm text-gray-500'>Vui lòng không đóng trang. Đơn viết tay hoặc ảnh khó đọc có thể mất thêm thời gian.</p>
               </div>
 
               <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
@@ -422,7 +616,14 @@ export function UploadPrescriptionPage() {
               </Alert>
             )}
 
-            <ImageUploader onImagesChange={handleImagesChange} maxFiles={5} maxSize={10} uploadToServer={true} />
+            <ImageUploader
+              onImagesChange={handleImagesChange}
+              maxFiles={5}
+              maxSize={10}
+              initialImages={uploadedImages}
+              uploadToServer={true}
+              uploadPurpose='prescription'
+            />
 
             <div className='flex justify-end space-x-3'>
               <Button
@@ -439,23 +640,20 @@ export function UploadPrescriptionPage() {
       case 2:
         return (
           <div className='space-y-6'>
-            {/* Uploaded images summary */}
-            <Card className='bg-emerald-50 border-emerald-200'>
-              <CardContent className='p-4'>
-                <div className='flex items-center gap-2'>
-                  <CheckCircle className='w-5 h-5 text-emerald-600' />
-                  <span className='text-emerald-800'>Đã tải lên {getUploadedImageUrls().length} ảnh đơn thuốc</span>
-                </div>
-              </CardContent>
-            </Card>
-
+            <UploadedPrescriptionPreview
+              images={uploadedImages}
+              selectedIndex={selectedImageIndex}
+              onSelect={setSelectedImageIndex}
+              onBackToUpload={() => setCurrentStep(1)}
+              className='lg:hidden'
+            />
             {/* OCR scanning spinner */}
             {isScanning && (
               <div className='flex items-center gap-3 p-4 bg-[#F0F6FF] border border-[#BFDBFE] rounded-xl'>
                 <Loader2 className='w-5 h-5 text-[#1E40AF] animate-spin shrink-0' />
                 <div>
                   <p className='text-sm font-medium text-blue-800'>Đang quét đơn thuốc bằng AI...</p>
-                  <p className='text-xs text-[#1E40AF]'>Hệ thống sẽ tự điền thông tin sau vài giây</p>
+                  <p className='text-xs text-[#1E40AF]'>AI đang đọc ảnh, đơn viết tay có thể mất thêm thời gian</p>
                 </div>
               </div>
             )}
@@ -596,6 +794,7 @@ export function UploadPrescriptionPage() {
                       onClick={() => {
                         setCurrentStep(1)
                         setUploadedImages([])
+                        setSelectedImageIndex(0)
                         setPrescriptionId(null)
                         setPrescriptionNumber(null)
                       }}
@@ -629,6 +828,16 @@ export function UploadPrescriptionPage() {
         {/* Sidebar */}
         {currentStep < 3 && (
           <div className='space-y-6'>
+            {currentStep === 2 && (
+              <UploadedPrescriptionPreview
+                images={uploadedImages}
+                selectedIndex={selectedImageIndex}
+                onSelect={setSelectedImageIndex}
+                onBackToUpload={() => setCurrentStep(1)}
+                className='hidden lg:block lg:sticky lg:top-24'
+              />
+            )}
+
             {/* Product Info */}
             {product && (
               <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>

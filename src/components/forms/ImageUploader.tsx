@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { Upload, Camera, Smartphone, X, RotateCw, Check, AlertTriangle, Loader2 } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Card } from '../ui/card'
@@ -22,8 +22,10 @@ interface ImageUploaderProps {
   maxFiles?: number
   maxSize?: number // in MB
   acceptedTypes?: string[]
+  initialImages?: UploadedImage[]
   onImagesChange?: (images: UploadedImage[]) => void
   uploadToServer?: boolean // If true, upload to S3 immediately
+  uploadPurpose?: 'prescription' | 'general'
   className?: string
 }
 
@@ -31,14 +33,25 @@ export function ImageUploader({
   maxFiles = 5,
   maxSize = 10,
   acceptedTypes = ['image/jpeg', 'image/png', 'application/pdf'],
+  initialImages = [],
   onImagesChange,
   uploadToServer = true, // Default to true for prescription upload
+  uploadPurpose = 'general',
   className = '',
 }: ImageUploaderProps) {
-  const [images, setImages] = useState<UploadedImage[]>([])
+  const [images, setImages] = useState<UploadedImage[]>(initialImages)
   const [isDragging, setIsDragging] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const initialImagesSignatureRef = useRef(initialImages.map((image) => image.id).join('|'))
+
+  useEffect(() => {
+    const nextIds = initialImages.map((image) => image.id).join('|')
+    if (initialImagesSignatureRef.current !== nextIds) {
+      initialImagesSignatureRef.current = nextIds
+      setImages(initialImages)
+    }
+  }, [initialImages])
 
   const analyzeImageQuality = useCallback((file: File): 'good' | 'fair' | 'poor' => {
     // Simple quality check based on file size
@@ -53,7 +66,7 @@ export function ImageUploader({
       const formData = new FormData()
       formData.append('image', file)
 
-      const response = await uploadService.uploadImage(formData)
+      const response = await uploadService.uploadImage(formData, uploadPurpose)
 
       if (response.data?.result && response.data.result.length > 0) {
         return response.data.result[0].url
@@ -149,7 +162,7 @@ export function ImageUploader({
         onImagesChange?.(updatedImages)
       }
     },
-    [images, maxFiles, maxSize, acceptedTypes, analyzeImageQuality, onImagesChange, uploadToServer],
+    [images, maxFiles, maxSize, acceptedTypes, analyzeImageQuality, onImagesChange, uploadToServer, uploadPurpose],
   )
 
   const handleDrop = useCallback(
