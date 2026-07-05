@@ -39,6 +39,7 @@ export interface Prescription {
   images: string[]
   medications: Array<{
     productName: string
+    activeIngredient?: string | null
     dosage: string
     quantity: number
     unit?: string
@@ -47,6 +48,11 @@ export interface Prescription {
     productId?: string
     matchedName?: string
     image?: string | null
+    confidence?: string
+    needsReview?: boolean
+    source?: string
+    sourcePage?: number
+    reviewReason?: string
   }>
   status: 'pending' | 'verified' | 'rejected' | 'expired'
   verifiedBy?: string
@@ -61,6 +67,8 @@ export interface Prescription {
   correctedByInfo?: PharmacistSnapshot
   correctedAt?: string
   ocrConfidence?: string
+  ocrExtractionMethod?: string
+  ocrQuality?: Record<string, unknown>
   // Customer info (populated from lookup)
   customer?: {
     _id: string
