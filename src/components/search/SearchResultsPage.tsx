@@ -87,7 +87,7 @@ export function SearchResultsPage() {
   }, [])
 
   // Infinite query for products with server-side filtering using Typesense Search
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isFetching } = useInfiniteQuery({
     queryKey: [
       'search',
       searchQuery,
@@ -218,6 +218,8 @@ export function SearchResultsPage() {
   }, [allProducts])
 
   const totalResults = data?.pages[0]?.found ?? 0
+  const isSearching = isLoading || (isFetching && !isFetchingNextPage && !data)
+  const resultCountLabel = isSearching ? 'Đang tìm kiếm sản phẩm...' : `Tìm thấy ${totalResults} sản phẩm`
 
   const clearFilters = () => {
     setSelectedCategories([])
@@ -385,7 +387,7 @@ export function SearchResultsPage() {
           <h1 className='text-xl font-bold text-gray-900'>
             {searchQuery ? `Kết quả cho "${searchQuery}"` : 'Tất cả sản phẩm'}
           </h1>
-          <p className='text-gray-600' data-testid='search-result-count'>Tìm thấy {totalResults} sản phẩm</p>
+          <p className='text-gray-600' data-testid='search-result-count'>{resultCountLabel}</p>
         </div>
       </div>
 
@@ -503,7 +505,7 @@ export function SearchResultsPage() {
           </div>
 
           {/* Results */}
-          {isLoading ? (
+          {isSearching ? (
             <div className='flex flex-col items-center justify-center py-12'>
               <Loader2 className='w-12 h-12 animate-spin text-[#1E40AF] mb-4' />
               <p className='text-gray-600'>Đang tìm kiếm sản phẩm...</p>
@@ -566,7 +568,7 @@ export function SearchResultsPage() {
               </div>
 
               {/* Related carousel khi kết quả ít (1–5) — liên quan đến sp đầu tiên tìm được */}
-              {!isLoading && allProducts.length < 6 && allProducts.length > 0 && (
+              {!isSearching && allProducts.length < 6 && allProducts.length > 0 && (
                 <div className='mt-4'>
                   <RecommendationCarousel
                     title='Sản phẩm liên quan'

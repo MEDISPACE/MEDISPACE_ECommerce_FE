@@ -23,6 +23,7 @@ export interface GroupedSuggestions {
   querySuggestions: string[]   // text completions: ["Paracetamol", "Panadol", ...]
   all: SearchSuggestion[]
   isLoading: boolean
+  isSettled: boolean
 }
 
 export function useSearchSuggestions(query: string): GroupedSuggestions {
@@ -37,7 +38,11 @@ export function useSearchSuggestions(query: string): GroupedSuggestions {
   }, [query])
 
   // ── Typesense multi-collection suggest ──────────────────────────────────────
-  const { data, isLoading } = useQuery({
+  const trimmedQuery = query.trim()
+  const normalizedQuery = trimmedQuery.toLowerCase()
+  const normalizedDebouncedQuery = debouncedQuery.trim().toLowerCase()
+
+  const { data, isFetching, isPlaceholderData } = useQuery({
     queryKey: ['ts-suggest-multi', debouncedQuery],
     queryFn: async () => {
       if (!debouncedQuery.trim() || debouncedQuery.length < 2) {
@@ -55,6 +60,10 @@ export function useSearchSuggestions(query: string): GroupedSuggestions {
       querySuggestions: [] as string[]
     },
   })
+
+  const isWaitingForDebounce = trimmedQuery.length >= 2 && normalizedQuery !== normalizedDebouncedQuery
+  const isLoading = trimmedQuery.length >= 2 && (isWaitingForDebounce || isFetching || isPlaceholderData)
+  const isSettled = trimmedQuery.length < 2 || (!isLoading && normalizedQuery === normalizedDebouncedQuery)
 
   // Query text completions (max 5)
   const querySuggestions: string[] = (data?.querySuggestions || []).slice(0, 5)
@@ -110,5 +119,6 @@ export function useSearchSuggestions(query: string): GroupedSuggestions {
     querySuggestions,
     all,
     isLoading,
+    isSettled,
   }
 }
