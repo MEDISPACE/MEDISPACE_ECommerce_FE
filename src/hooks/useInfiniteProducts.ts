@@ -78,8 +78,8 @@ export function useInfiniteProducts({
         if (filters.brands && filters.brands.length > 0) {
           params.brandId = filters.brands[0]
         }
-        if (filters.isPrescription !== undefined) {
-          params.requiresPrescription = filters.isPrescription
+        if (filters.isPrescription === true) {
+          params.requiresPrescription = true
         }
         if (filters.inStock) {
           params.inStock = true
