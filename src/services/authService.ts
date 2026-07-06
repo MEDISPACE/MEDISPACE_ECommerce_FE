@@ -11,7 +11,7 @@ class AuthService {
       return response.data
     } catch (error) {
       const axiosError = error as AxiosError<ApiErrorResponse>
-      throw axiosError.response?.data || { message: 'Login failed' }
+      throw axiosError.response?.data || { message: 'Đăng nhập thất bại. Vui lòng thử lại.' }
     }
   }
 
@@ -21,7 +21,7 @@ class AuthService {
       return response.data
     } catch (error) {
       const axiosError = error as AxiosError<ApiErrorResponse>
-      throw axiosError.response?.data || { message: 'Registration failed' }
+      throw axiosError.response?.data || { message: 'Đăng ký thất bại. Vui lòng thử lại.' }
     }
   }
 
@@ -44,7 +44,7 @@ class AuthService {
       return response.data
     } catch (error) {
       const axiosError = error as AxiosError<AuthResponse>
-      throw axiosError.response?.data || { message: 'Token refresh failed' }
+      throw axiosError.response?.data || { message: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.' }
     }
   }
 
@@ -56,7 +56,7 @@ class AuthService {
       return response.data
     } catch (error) {
       const axiosError = error as AxiosError<AuthResponse>
-      throw axiosError.response?.data || { message: 'Email verification failed' }
+      throw axiosError.response?.data || { message: 'Xác thực email thất bại. Token có thể đã hết hạn.' }
     }
   }
 
@@ -65,7 +65,7 @@ class AuthService {
       await apiClient.post(API_ENDPOINTS.AUTH.RESEND_VERIFY_EMAIL)
     } catch (error) {
       const axiosError = error as AxiosError<AuthResponse>
-      throw axiosError.response?.data || { message: 'Failed to resend verification email' }
+      throw axiosError.response?.data || { message: 'Không thể gửi lại email xác thực. Vui lòng thử lại.' }
     }
   }
 
@@ -74,7 +74,7 @@ class AuthService {
       await apiClient.post(API_ENDPOINTS.AUTH.VERIFY_FORGOT_PASSWORD, { forgotPasswordToken })
     } catch (error) {
       const axiosError = error as AxiosError<AuthResponse>
-      throw axiosError.response?.data || { message: 'Invalid token' }
+      throw axiosError.response?.data || { message: 'Token không hợp lệ hoặc đã hết hạn.' }
     }
   }
 
@@ -83,7 +83,7 @@ class AuthService {
       await apiClient.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, { email })
     } catch (error) {
       const axiosError = error as AxiosError<AuthResponse>
-      throw axiosError.response?.data || { message: 'Failed to send reset password email' }
+      throw axiosError.response?.data || { message: 'Không thể gửi email đặt lại mật khẩu. Vui lòng thử lại.' }
     }
   }
 
@@ -96,7 +96,7 @@ class AuthService {
       })
     } catch (error) {
       const axiosError = error as AxiosError<AuthResponse>
-      throw axiosError.response?.data || { message: 'Password reset failed' }
+      throw axiosError.response?.data || { message: 'Đặt lại mật khẩu thất bại. Vui lòng thử lại.' }
     }
   }
 
@@ -109,7 +109,7 @@ class AuthService {
       })
     } catch (error) {
       const axiosError = error as AxiosError<AuthResponse>
-      throw axiosError.response?.data || { message: 'Password change failed' }
+      throw axiosError.response?.data || { message: 'Đổi mật khẩu thất bại. Vui lòng thử lại.' }
     }
   }
 
@@ -122,7 +122,7 @@ class AuthService {
       return response.data.user
     } catch (error) {
       const axiosError = error as AxiosError<AuthResponse>
-      throw axiosError.response?.data || { message: 'Profile update failed' }
+      throw axiosError.response?.data || { message: 'Cập nhật hồ sơ thất bại. Vui lòng thử lại.' }
     }
   }
 
@@ -132,7 +132,7 @@ class AuthService {
       return response.data.user
     } catch (error) {
       const axiosError = error as AxiosError<{ message: string }>
-      throw axiosError.response?.data || { message: 'Failed to get user profile' }
+      throw axiosError.response?.data || { message: 'Không thể tải thông tin tài khoản.' }
     }
   }
 

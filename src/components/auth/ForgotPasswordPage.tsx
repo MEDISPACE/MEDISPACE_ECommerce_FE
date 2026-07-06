@@ -179,11 +179,11 @@ export function ForgotPasswordPage() {
             {isLoading ? (
               <div className='flex items-center gap-2'>
                 <div className='w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin' />
-                Đang gửi...
+                Đang gửi liên kết...
               </div>
             ) : (
               <>
-                Gửi hướng dẫn
+                Gửi liên kết đặt lại mật khẩu
                 <ArrowRight className='w-5 h-5 ml-2' />
               </>
             )}

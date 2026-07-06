@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { authService } from '../services/authService'
 import { logger } from '../utils/logger'
+import { getErrorMessage } from '../constants/errorMapping'
 import type { User } from '../types/user'
 import type { ApiErrorResponse, RegisterRequest, RegisterResponse } from '../types/api'
 
@@ -23,7 +24,7 @@ interface AuthContextType {
 const getApiErrorMessage = (error: unknown, fallback: string) => {
   const apiError = error as Partial<ApiErrorResponse>
   const firstFieldError = apiError.errors ? Object.values(apiError.errors)[0]?.msg : undefined
-  return firstFieldError || apiError.message || fallback
+  return getErrorMessage(firstFieldError || apiError.message || fallback)
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined)

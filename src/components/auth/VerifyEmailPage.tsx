@@ -4,6 +4,7 @@ import { CheckCircle, XCircle, Loader2, ArrowLeft } from 'lucide-react'
 import { Button } from '../ui/button'
 import { authService } from '../../services/authService'
 import { toast } from 'sonner'
+import { getErrorMessage } from '../../constants/errorMapping'
 
 export function VerifyEmailPage() {
   const { token } = useParams()
@@ -25,7 +26,7 @@ export function VerifyEmailPage() {
         setStatus('success')
       } catch (error: any) {
         setStatus('error')
-        setMessage(error.message || 'Xác thực email thất bại. Token có thể đã hết hạn.')
+        setMessage(getErrorMessage(error.message) || 'Xác thực email thất bại. Token có thể đã hết hạn.')
       }
     }
 
