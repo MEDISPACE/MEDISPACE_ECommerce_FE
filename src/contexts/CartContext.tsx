@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react'
+import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react'
 import type { ReactNode } from 'react'
 import { toast } from 'sonner'
 import { ShoppingCart, Heart, Package, AlertCircle, CheckCircle } from 'lucide-react'
 import { cartService } from '../services/cartService'
+import { authService } from '../services/authService'
 import type { Cart, AddToCartRequest, UpdateCartItemRequest } from '../types/cart'
 import type { Product } from '../types/product'
 
@@ -27,6 +28,7 @@ type CartAction =
   | { type: 'UPDATE_QUANTITY_SUCCESS'; payload: Cart }
   | { type: 'REMOVE_FROM_CART_SUCCESS'; payload: Cart }
   | { type: 'CLEAR_CART_SUCCESS'; payload: Cart }
+  | { type: 'RESET_CART' }
   | { type: 'TOGGLE_ITEM_SELECTION'; payload: string }
   | { type: 'SELECT_ALL_ITEMS'; payload: boolean }
   | { type: 'SET_SELECTED_ITEMS'; payload: string[] }
@@ -62,6 +64,9 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 
     case 'CLEAR_CART_SUCCESS':
       return { ...state, cart: action.payload }
+
+    case 'RESET_CART':
+      return { ...state, cart: null, selectedItems: new Set() }
 
     case 'TOGGLE_ITEM_SELECTION': {
       const newSelected = new Set(state.selectedItems)
@@ -170,44 +175,33 @@ const CartContext = createContext<CartContextType | undefined>(undefined)
 export function CartProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(cartReducer, initialState)
 
+  const loadCart = useCallback(async () => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true })
+      const cart = await cartService.getCart()
+      dispatch({ type: 'SET_CART', payload: cart })
+      const initialSelections = getInitialSelectionsForCart(cart)
+      dispatch({ type: 'SET_SELECTED_ITEMS', payload: initialSelections })
+      sessionStorage.setItem('medispace_selected_items', JSON.stringify(initialSelections))
+    } catch (error) {
+      dispatch({ type: 'SET_CART', payload: null })
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false })
+    }
+  }, [])
+
   // Load cart data from API on mount
   useEffect(() => {
-    const loadCart = async () => {
-      try {
-        dispatch({ type: 'SET_LOADING', payload: true })
-        const cart = await cartService.getCart()
-        dispatch({ type: 'SET_CART', payload: cart })
-        const initialSelections = getInitialSelectionsForCart(cart)
-        dispatch({ type: 'SET_SELECTED_ITEMS', payload: initialSelections })
-        sessionStorage.setItem('medispace_selected_items', JSON.stringify(initialSelections))
-      } catch (error) {
-        dispatch({ type: 'SET_CART', payload: null })
-      } finally {
-        dispatch({ type: 'SET_LOADING', payload: false })
-      }
-    }
-
     loadCart()
-  }, [])
+  }, [loadCart])
 
   // Listen for authentication changes via localStorage events
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'medispace_user_data' || e.key === 'medispace_access_token') {
-        // User logged in or out, reload cart
-        const loadCart = async () => {
-          try {
-            dispatch({ type: 'SET_LOADING', payload: true })
-            const cart = await cartService.getCart()
-            dispatch({ type: 'SET_CART', payload: cart })
-            const initialSelections = getInitialSelectionsForCart(cart)
-            dispatch({ type: 'SET_SELECTED_ITEMS', payload: initialSelections })
-            sessionStorage.setItem('medispace_selected_items', JSON.stringify(initialSelections))
-          } catch (error) {
-            dispatch({ type: 'SET_CART', payload: null })
-          } finally {
-            dispatch({ type: 'SET_LOADING', payload: false })
-          }
+        if (!authService.getAccessToken()) {
+          dispatch({ type: 'RESET_CART' })
+          sessionStorage.removeItem('medispace_selected_items')
         }
         loadCart()
       }
@@ -218,19 +212,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     // Also listen for custom auth events (for same-tab changes)
     const handleAuthChange = () => {
-      const loadCart = async () => {
-        try {
-          dispatch({ type: 'SET_LOADING', payload: true })
-          const cart = await cartService.getCart()
-          dispatch({ type: 'SET_CART', payload: cart })
-          const initialSelections = getInitialSelectionsForCart(cart)
-          dispatch({ type: 'SET_SELECTED_ITEMS', payload: initialSelections })
-          sessionStorage.setItem('medispace_selected_items', JSON.stringify(initialSelections))
-        } catch (error) {
-          dispatch({ type: 'SET_CART', payload: null })
-        } finally {
-          dispatch({ type: 'SET_LOADING', payload: false })
-        }
+      if (!authService.getAccessToken()) {
+        dispatch({ type: 'RESET_CART' })
+        sessionStorage.removeItem('medispace_selected_items')
       }
       loadCart()
     }
@@ -241,7 +225,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       window.removeEventListener('storage', handleStorageChange)
       window.removeEventListener('auth-changed', handleAuthChange)
     }
-  }, [])
+  }, [loadCart])
 
   // Load wishlist from localStorage
   useEffect(() => {
