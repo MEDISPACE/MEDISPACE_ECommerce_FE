@@ -19,9 +19,10 @@ interface FilterSidebarProps {
   filters: ProductFilter
   onFiltersChange: (filters: ProductFilter) => void
   resultCount: number
+  searchQuery?: string
 }
 
-export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterSidebarProps) {
+export function FilterSidebar({ filters, onFiltersChange, resultCount, searchQuery = '' }: FilterSidebarProps) {
   const [expandedCategories, setExpandedCategories] = useState<string[]>(['categories'])
   const [brandSearch, setBrandSearch] = useState('')
   const [categorySearch, setCategorySearch] = useState('')
@@ -68,28 +69,51 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
         setCategories(uniqueCategories)
         setBrands(brandsData)
 
-        // Fetch Typesense facet counts
-        try {
-          const result = await searchService.searchProducts({ q: '*', limit: 1 })
-          if (result?.facet_counts) {
-            const counts: Record<string, number> = {}
-            for (const facet of result.facet_counts) {
-              if (facet.fieldName === 'categoryId' || facet.fieldName === 'brandId') {
-                for (const item of facet.counts) {
-                  counts[item.value] = item.count
-                }
-              }
-            }
-            setFacetCounts(counts)
-          }
-        } catch {
-          // Facets unavailable — show without counts
-        }
       } catch (error) {}
     }
 
     fetchData()
   }, [])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const fetchFacetCounts = async () => {
+      try {
+        const priceRange = filters.priceRange || [0, 10000000]
+        const result = await searchService.searchProducts({
+          q: searchQuery.trim() || '*',
+          limit: 1,
+          categoryId: filters.categories?.[0],
+          brandId: filters.brands?.[0],
+          requiresPrescription: filters.isPrescription === true ? true : undefined,
+          inStock: filters.inStock === true ? true : undefined,
+          priceMin: priceRange[0] > 0 ? priceRange[0] : undefined,
+          priceMax: priceRange[1] < 10000000 ? priceRange[1] : undefined,
+          ratingMin: filters.rating && filters.rating > 0 ? filters.rating : undefined,
+        })
+        if (cancelled) return
+
+        const counts: Record<string, number> = {}
+        for (const facet of result.facet_counts || []) {
+          if (facet.fieldName === 'categoryId' || facet.fieldName === 'brandId') {
+            for (const item of facet.counts) {
+              counts[item.value] = item.count
+            }
+          }
+        }
+        setFacetCounts(counts)
+      } catch {
+        if (!cancelled) setFacetCounts({})
+      }
+    }
+
+    fetchFacetCounts()
+
+    return () => {
+      cancelled = true
+    }
+  }, [filters.brands, filters.categories, filters.inStock, filters.isPrescription, filters.priceRange, filters.rating, searchQuery])
 
   const toggleCategory = (categoryId: string) => {
     setExpandedCategories((prev) =>
@@ -97,9 +121,9 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
     )
   }
 
-  const handleCategoryChange = (categorySlug: string, checked: boolean) => {
+  const handleCategoryChange = (categoryId: string, checked: boolean) => {
     // Single-select: backend only supports one categoryId at a time
-    const newCategories = checked ? [categorySlug] : []
+    const newCategories = checked ? [categoryId] : []
     onFiltersChange({ ...filters, categories: newCategories })
   }
 
@@ -144,7 +168,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
 
   const categoryMap = categories.reduce(
     (acc, category) => {
-      acc[category.slug] = category.name
+      acc[category._id] = category.name
       return acc
     },
     {} as Record<string, string>,
@@ -215,8 +239,8 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount }: FilterS
                     <div key={category.slug} className='flex items-center space-x-2 min-h-[20px]'>
                       <Checkbox
                         id={`category-${category.slug}`}
-                        checked={(filters.categories || []).includes(category.slug)}
-                        onCheckedChange={(checked) => handleCategoryChange(category.slug, checked as boolean)}
+                        checked={(filters.categories || []).includes(category._id)}
+                        onCheckedChange={(checked) => handleCategoryChange(category._id, checked as boolean)}
                         className='shrink-0'
                       />
                       <Label

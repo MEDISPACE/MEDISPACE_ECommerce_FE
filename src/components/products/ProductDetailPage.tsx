@@ -649,13 +649,6 @@ export function ProductDetailPage() {
                   <Heart className={`w-4 h-4 mr-2 ${isInWishlist(getProductId(product)) ? 'fill-red-600' : ''}`} />
                   {isInWishlist(getProductId(product)) ? 'Đã yêu thích' : 'Yêu thích'}
                 </Button>
-                {/* <Button
-                  variant='outline'
-                  size='sm'
-                  className='flex-1 border-2 border-[#BFDBFE] text-[#1E40AF] hover:bg-[#F0F6FF] hover:border-[#BFDBFE] transition-all'
-                >
-                  So sánh sản phẩm
-                </Button> */}
                 <Button
                   variant='outline'
                   size='sm'
