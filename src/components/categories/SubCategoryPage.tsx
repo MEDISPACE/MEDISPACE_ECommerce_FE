@@ -74,11 +74,17 @@ export function SubCategoryPage() {
         }
         setCategory(categoryData)
 
-        // Find subcategory
-        let foundSubCategory = null
+        // Find subcategory from the dedicated children endpoint; category detail does not embed children.
+        let foundSubCategory: Category | null = null
         if (subCategorySlug) {
-          foundSubCategory = categoryData.subcategories?.find((sub) => sub.slug === subCategorySlug) || null
+          const subcategories = await categoryService.getCategoryChildren(categoryData._id)
+          foundSubCategory = subcategories.find((sub) => sub.slug === subCategorySlug) || null
           setSubCategory(foundSubCategory)
+        }
+
+        if (subCategorySlug && !foundSubCategory) {
+          setError('Danh mục con không tồn tại')
+          return
         }
 
         // Fetch products for this category/subcategory

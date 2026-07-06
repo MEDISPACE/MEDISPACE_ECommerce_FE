@@ -335,7 +335,7 @@ export function CategoryPage() {
                       {subCategory.name}
                     </h3>
                     <p className='text-xs text-gray-500 mb-3'>{subCategory.productCount} sản phẩm</p>
-                    <Link to={`/categories/${subCategory.slug}`}>
+                    <Link to={`/categories/${category.slug}/${subCategory.slug}`}>
                       <Button
                         size='sm'
                         variant='outline'
@@ -381,7 +381,7 @@ export function CategoryPage() {
                     {(showAllSubcategories ? subcategories : subcategories.slice(0, 6)).map((subCategory) => (
                       <Link
                         key={subCategory._id}
-                        to={`/categories/${subCategory.slug}`}
+                        to={`/categories/${category.slug}/${subCategory.slug}`}
                         className='flex items-center justify-between py-2 px-3 rounded-lg hover:bg-[#F0F6FF] transition-colors group'
                       >
                         <span className='text-sm group-hover:text-[#1E40AF]'>{subCategory.name}</span>

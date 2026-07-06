@@ -157,8 +157,8 @@ export function ProductsListingPage() {
       }
       if (isPrescriptionRefill) {
         params.requiresPrescription = true
-      } else if (filters.isPrescription !== undefined) {
-        params.requiresPrescription = filters.isPrescription
+      } else if (filters.isPrescription === true) {
+        params.requiresPrescription = true
       }
       if (filters.inStock) {
         params.inStock = true
