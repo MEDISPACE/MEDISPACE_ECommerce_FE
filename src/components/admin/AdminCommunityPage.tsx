@@ -172,6 +172,7 @@ export function AdminCommunityPage() {
       const title = meetingForm.title.trim() || editingThread.title
       const note = meetingForm.note.trim() || 'Phòng LiveKit nội bộ để cộng đồng trao đổi trực tuyến theo thread. Không chia sẻ thông tin cá nhân nhạy cảm.'
       let eventId = editingThread.videoMeeting?.eventId
+      let videoEventStatus: string | undefined
 
       if (!eventId) {
         const event = await adminCommunityService.createVideoEvent({
@@ -187,8 +188,9 @@ export function AdminCommunityPage() {
           tags: ['thread-video', editingThread._id],
         })
         eventId = event._id
+        videoEventStatus = event.status
       } else {
-        await adminCommunityService.updateVideoEvent(eventId, {
+        const event = await adminCommunityService.updateVideoEvent(eventId, {
           title,
           description: note,
           agenda: note,
@@ -200,13 +202,19 @@ export function AdminCommunityPage() {
           meetingUrl: `/community/video-events/${eventId}`,
           tags: ['thread-video', editingThread._id],
         })
+        videoEventStatus = event.status
       }
 
-      if (meetingForm.status === 'live' && editingThread.videoMeeting?.status !== 'live') {
+      if (meetingForm.status === 'live' && videoEventStatus !== 'live') {
         await adminCommunityService.startVideoEvent(eventId)
+        videoEventStatus = 'live'
       }
-      if (meetingForm.status === 'ended' && editingThread.videoMeeting?.status === 'live') {
+      if (meetingForm.status === 'ended' && videoEventStatus !== 'ended') {
+        if (videoEventStatus !== 'live') {
+          await adminCommunityService.startVideoEvent(eventId)
+        }
         await adminCommunityService.endVideoEvent(eventId)
+        videoEventStatus = 'ended'
       }
 
       return adminCommunityService.updateThread(editingThread._id, {

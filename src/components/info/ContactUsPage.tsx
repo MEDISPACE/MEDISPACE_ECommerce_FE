@@ -277,7 +277,7 @@ export function ContactUsPage() {
         </Card>
 
         {/* Map & Quick Links */}
-        <div className='space-y-6 animate-slide-in-right'>
+        <div className='min-w-0 space-y-6 animate-slide-in-up'>
           {/* Map */}
           <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] overflow-hidden'>
             <div className='relative h-96'>

@@ -18,6 +18,9 @@ import { formatRelativeTime, getRoomDescription, getRoomGuidelines, getRoomTopic
 
 type ForumTab = 'all' | 'mine' | 'active' | 'private'
 
+const forumTabTriggerClass =
+  'h-9 rounded-md border border-transparent bg-transparent px-3 text-sm font-semibold text-slate-700 outline-none transition hover:bg-white hover:text-[#0A2463] focus:outline-none focus-visible:border-blue-200 focus-visible:ring-2 focus-visible:ring-blue-500/20 data-[state=active]:border-blue-200 data-[state=active]:bg-white data-[state=active]:text-[#0A2463] data-[state=active]:shadow-sm'
+
 function ForumRoomCard({ room, onJoin }: { room: CommunityRoom; onJoin: (room: CommunityRoom) => void }) {
   const active = room.viewerMembership?.status === 'active'
   const pending = room.viewerMembership?.status === 'pending'
@@ -152,11 +155,11 @@ export function CommunityForumPage() {
                 <Input className='pl-9' value={search} onChange={(event) => setSearch(event.target.value)} placeholder='Tìm chuyên mục, bệnh lý hoặc chủ đề' />
               </div>
               <Tabs value={tab} onValueChange={(value) => setTab(value as ForumTab)} className='mt-4'>
-                <TabsList className='flex h-auto flex-wrap justify-start rounded-lg border border-slate-100 bg-[#F7FAFC] p-1'>
-                  <TabsTrigger value='all'>Tất cả</TabsTrigger>
-                  <TabsTrigger value='mine'>Đã tham gia</TabsTrigger>
-                  <TabsTrigger value='active'>Đang hoạt động</TabsTrigger>
-                  <TabsTrigger value='private'>Riêng tư</TabsTrigger>
+                <TabsList className='flex h-auto flex-wrap justify-start gap-1 rounded-lg border border-slate-100 bg-[#F7FAFC] p-1'>
+                  <TabsTrigger className={forumTabTriggerClass} value='all'>Tất cả</TabsTrigger>
+                  <TabsTrigger className={forumTabTriggerClass} value='mine'>Đã tham gia</TabsTrigger>
+                  <TabsTrigger className={forumTabTriggerClass} value='active'>Đang hoạt động</TabsTrigger>
+                  <TabsTrigger className={forumTabTriggerClass} value='private'>Riêng tư</TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>

@@ -85,7 +85,7 @@ export function AboutUsPage() {
   ]
 
   return (
-    <div className='max-w-7xl mx-auto px-4 py-12 space-y-16'>
+    <div className='max-w-7xl mx-auto px-4 py-12 space-y-16 overflow-x-hidden'>
       <UniversalBreadcrumb items={breadcrumbItems} />
       {/* Hero Section */}
       <div className='text-center space-y-6 animate-slide-in-up'>
@@ -141,7 +141,7 @@ export function AboutUsPage() {
             cận dịch vụ y tế dễ dàng và tiện lợi hơn.
           </p>
         </div>
-        <div className='relative animate-slide-in-right'>
+        <div className='relative overflow-hidden rounded-2xl animate-slide-in-up'>
           <div className='absolute inset-0 bg-gradient-to-br from-[#BFDBFE] to-[#1E40AF] rounded-2xl blur-2xl opacity-20'></div>
           <ImageWithFallback
             src='https://images.unsplash.com/photo-1652295372392-3171ab2c0e01?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080'
@@ -228,7 +228,7 @@ export function AboutUsPage() {
       </div>
 
       {/* Team Section */}
-      <div className='bg-gradient-to-r from-[#F8FAFB] to-[#F0F6FF] rounded-2xl p-12 text-center space-y-6'>
+      <div className='bg-gradient-to-r from-[#F8FAFB] to-[#F0F6FF] rounded-2xl p-6 text-center space-y-6 sm:p-12'>
         <h2 className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text text-transparent'>
           Đội ngũ chuyên nghiệp
         </h2>
@@ -236,7 +236,7 @@ export function AboutUsPage() {
           MEDISPACE tự hào sở hữu đội ngũ dược sĩ, bác sĩ và chuyên viên y tế có trình độ chuyên môn cao, nhiều năm kinh
           nghiệm, luôn tận tâm chăm sóc và tư vấn cho khách hàng.
         </p>
-        <div className='relative max-w-4xl mx-auto mt-8'>
+        <div className='relative max-w-4xl mx-auto mt-8 overflow-hidden rounded-2xl'>
           <div className='absolute inset-0 bg-gradient-to-br from-[#BFDBFE] to-[#1E40AF] rounded-2xl blur-2xl opacity-20'></div>
           <ImageWithFallback
             src='https://images.unsplash.com/photo-1758519290233-a03c1d17ecc9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080'
@@ -247,7 +247,7 @@ export function AboutUsPage() {
       </div>
 
       {/* CTA Section */}
-      <div className='text-center space-y-6 bg-gradient-to-r from-[#0A2463] via-[#1E40AF] to-[#3B82F6] rounded-2xl p-12 text-white'>
+      <div className='text-center space-y-6 bg-gradient-to-r from-[#0A2463] via-[#1E40AF] to-[#3B82F6] rounded-2xl p-6 text-white sm:p-12'>
         <h2 className='text-white'>Hãy để MEDISPACE chăm sóc sức khỏe của bạn</h2>
         <p className='text-xl text-blue-50 max-w-2xl mx-auto'>
           Tham gia cộng đồng hơn 500,000 khách hàng đang tin tưởng sử dụng dịch vụ của chúng tôi

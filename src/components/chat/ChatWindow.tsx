@@ -344,7 +344,7 @@ export function ChatWindow({
   }
 
   return (
-    <div className='flex flex-col h-full bg-white'>
+    <div className='flex flex-col h-full min-h-0 bg-white'>
       <MessageList
         messages={messages}
         currentUserId={currentUserId}

@@ -5,15 +5,15 @@ import { FloatingChatWidget } from '../components/chat'
 
 export default function Layout() {
   return (
-    <div className='min-h-screen bg-background'>
+    <div className='min-h-screen w-full min-w-0 overflow-x-hidden bg-background'>
       {/* Header with navigation, user menu, cart icon */}
       <Header />
 
-      <div className='flex'>
+      <div className='flex w-full min-w-0 overflow-x-hidden'>
         {/* Future: Sidebar for navigation/categories */}
         {/* <Sidebar /> */}
 
-        <main className='flex-1'>
+        <main className='w-full min-w-0 flex-1 overflow-x-hidden'>
           <Outlet />
         </main>
       </div>
