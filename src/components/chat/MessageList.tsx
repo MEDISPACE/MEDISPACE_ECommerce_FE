@@ -36,7 +36,7 @@ const DEFAULT_SUGGESTIONS = [
 // Skeleton Loading Component (Task 2.5)
 function MessageSkeleton() {
   return (
-    <div className='flex-1 flex flex-col gap-4 p-4 bg-gray-50 animate-pulse'>
+    <div className='flex-1 min-h-0 flex flex-col gap-4 p-4 bg-gray-50 animate-pulse'>
       {/* Skeleton tin nhắn từ AI (bên trái) */}
       <div className='flex items-end gap-2 max-w-[75%]'>
         <div className='w-8 h-8 rounded-full bg-gray-200 flex-shrink-0' />
@@ -202,7 +202,7 @@ export function MessageList({
     <div
       ref={messagesContainerRef}
       onScroll={handleScroll}
-      className='flex-1 overflow-y-auto bg-gray-50 p-4 space-y-4'
+      className='flex-1 min-h-0 overflow-y-auto bg-gray-50 p-4 space-y-4'
       style={{ scrollBehavior: 'smooth' }}
     >
       {/* Load more indicator */}

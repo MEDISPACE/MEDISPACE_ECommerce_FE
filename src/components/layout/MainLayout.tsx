@@ -67,7 +67,7 @@ export function MainLayout({ children, breadcrumbItems = [], showBreadcrumb = fa
   }, [])
 
   return (
-    <div className='min-h-screen bg-white flex flex-col'>
+    <div className='min-h-screen w-full min-w-0 bg-white flex flex-col overflow-x-hidden'>
       {/* Header: sticky top-0 z-50 - Always visible at top */}
       <Header />
 
@@ -78,7 +78,7 @@ export function MainLayout({ children, breadcrumbItems = [], showBreadcrumb = fa
 
       {/* Main Content Area */}
       <main
-        className='flex-1'
+        className='flex-1 w-full min-w-0 overflow-x-hidden'
         style={{
           backgroundColor: '#F0F6FF',
           position: 'relative',
