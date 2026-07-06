@@ -253,11 +253,15 @@ export function ShoppingCartPage() {
                     className='text-gray-500 hover:text-red-500 hover:!bg-red-100 hover:!border-red-100 hover:shadow-md transition-shadow'
                     disabled={getSelectedItemsCount() === 0}
                     onClick={async () => {
-                      // selectedItems is a Set of keys like "productId-unit"
-                      // Use sequential removal to avoid race conditions with backend/state
-                      for (const key of selectedItems) {
-                        const [productId, unit] = key.split('-')
-                        await removeFromCart(productId, unit)
+                      const itemsToRemove = [...selectedCartItems]
+                      if (itemsToRemove.length === 0) {
+                        toast.info('Vui lòng chọn sản phẩm cần xóa')
+                        return
+                      }
+
+                      // Use cart items directly so productId/unit are exact and stale selection keys are ignored.
+                      for (const item of itemsToRemove) {
+                        await removeFromCart(item.productId, item.unit)
                       }
 
                       // Clear selections after successful deletion
@@ -275,10 +279,9 @@ export function ShoppingCartPage() {
                     disabled={getSelectedItemsCount() === 0}
                     onClick={async () => {
                       let successCount = 0
-                      for (const key of selectedItems) {
-                        const [productId] = key.split('-')
+                      for (const item of selectedCartItems) {
                         try {
-                          await wishlistService.addToWishlist(productId)
+                          await wishlistService.addToWishlist(item.productId)
                           successCount++
                         } catch (error) {
                           console.error('Failed to add to wishlist:', error)

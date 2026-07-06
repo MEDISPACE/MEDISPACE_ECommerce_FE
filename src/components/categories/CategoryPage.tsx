@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, Link } from 'react-router'
 import { Search, Grid, List, SlidersHorizontal, Pill, Shield, User, Stethoscope, Droplets, Loader2, PackageX } from 'lucide-react'
 import { useInView } from 'react-intersection-observer'
@@ -60,6 +60,7 @@ export function CategoryPage() {
   const [currentCategory, setCurrentCategory] = useState<Category | null>(null)
   const [isLoadingCategory, setIsLoadingCategory] = useState(true)
   const [notFound, setNotFound] = useState(false)
+  const [brandOptions, setBrandOptions] = useState<Array<{ id: string; name: string; count: number }>>([])
 
   // Trending trong danh mục này
   const { products: trendingProducts, loading: trendingLoading, algorithm: trendingAlgorithm } = useTrending(8, currentCategory?._id)
@@ -129,11 +130,30 @@ export function CategoryPage() {
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage])
 
   // Flatten all pages into single array
-  const allProducts = productsData?.pages.flatMap((page) => page.products) || []
+  const allProducts = useMemo(() => productsData?.pages.flatMap((page) => page.products) || [], [productsData?.pages])
   const totalCount = productsData?.pages[0]?.pagination.totalCount || 0
 
   const category = currentCategory
-  const brands = Array.from(new Set(allProducts.map((p: Product) => p.brand?.name).filter(Boolean) as string[]))
+
+  useEffect(() => {
+    if ((filters.brands?.length || 0) > 0) return
+
+    const nextBrands = new Map<string, { id: string; name: string; count: number }>()
+    allProducts.forEach((product: Product) => {
+      const brandId = product.brand?._id || product.brandId
+      const brandName = product.brand?.name
+      if (!brandId || !brandName) return
+
+      const existing = nextBrands.get(brandId)
+      nextBrands.set(brandId, {
+        id: brandId,
+        name: brandName,
+        count: (existing?.count || 0) + 1,
+      })
+    })
+
+    setBrandOptions(Array.from(nextBrands.values()))
+  }, [allProducts, filters.brands])
 
   // Get icon component for this category
   const IconComponent = getCategoryIcon(category || { slug })
@@ -309,7 +329,7 @@ export function CategoryPage() {
               <div className='flex items-center gap-4 text-sm text-gray-500'>
                 <span>{category.productCount.toLocaleString()} sản phẩm</span>
                 <span>•</span>
-                <span>{brands.length} thương hiệu</span>
+                <span>{brandOptions.length} thương hiệu</span>
               </div>
             </div>
 
@@ -410,29 +430,29 @@ export function CategoryPage() {
                   <CardTitle className='text-lg'>Thương hiệu</CardTitle>
                 </CardHeader>
                 <CardContent className='space-y-2'>
-                  {brands.slice(0, 6).map((brand: string) => {
-                    const brandProductCount = allProducts.filter((p: Product) => p.brand?.name === brand).length
+                  {brandOptions.slice(0, 6).map((brand) => {
                     return (
-                      <label key={brand} className='flex items-center space-x-2 cursor-pointer'>
+                      <label key={brand.id} className='flex items-center space-x-2 cursor-pointer'>
                         <input
                           type='checkbox'
                           className='rounded border-gray-300'
+                          checked={(filters.brands || []).includes(brand.id)}
                           onChange={(e) => {
                             const isChecked = e.target.checked
                             setFilters((prev) => ({
                               ...prev,
                               brands: isChecked
-                                ? [...(prev.brands || []), brand]
-                                : (prev.brands || []).filter((b: string) => b !== brand),
+                                ? [brand.id]
+                                : (prev.brands || []).filter((brandId: string) => brandId !== brand.id),
                             }))
                           }}
                         />
-                        <span className='text-sm'>{brand}</span>
-                        <span className='text-xs text-gray-500'>({brandProductCount})</span>
+                        <span className='text-sm'>{brand.name}</span>
+                        <span className='text-xs text-gray-500'>({brand.count})</span>
                       </label>
                     )
                   })}
-                  {brands.length > 6 && (
+                  {brandOptions.length > 6 && (
                     <Button variant='ghost' className='text-xs p-0 h-auto text-[#1E40AF]'>
                       + Xem thêm
                     </Button>
