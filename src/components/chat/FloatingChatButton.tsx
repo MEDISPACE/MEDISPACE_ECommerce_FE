@@ -214,9 +214,9 @@ export function FloatingChatWidget() {
           className={cn(
             'fixed left-3 right-3 bottom-20 top-[calc(var(--header-height,64px)+0.75rem)] sm:left-auto sm:top-auto sm:right-[88px] sm:bottom-6 z-50 w-auto sm:w-[min(420px,calc(100vw-7rem))] lg:w-[clamp(400px,24vw,440px)] h-auto bg-white rounded-xl sm:rounded-2xl shadow-2xl border border-[#BFDBFE] sm:border-2 flex flex-col overflow-hidden slide-up-animation',
             isSupportChooser
-              ? 'sm:h-auto sm:min-h-[420px] sm:max-h-[calc(100dvh-var(--header-height,64px)-2rem)]'
+              ? 'sm:h-auto sm:min-h-[460px] sm:max-h-[calc(100dvh-var(--header-height,64px)-2rem)]'
               : isCompactWidget
-                ? 'sm:h-[clamp(380px,46dvh,440px)]'
+                ? 'sm:h-[clamp(440px,52dvh,500px)]'
                 : 'sm:h-[clamp(480px,66dvh,640px)]',
           )}
         >
