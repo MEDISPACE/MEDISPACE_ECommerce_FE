@@ -138,6 +138,8 @@ export interface Order {
   totalAmount: number
   notes?: string
   trackingNumber?: string
+  shippingMethod?: string
+  deliveryMethod?: string
   createdBy?: string
   createdByInfo?: PharmacistSnapshot
   safetyReviewConfirmed?: boolean

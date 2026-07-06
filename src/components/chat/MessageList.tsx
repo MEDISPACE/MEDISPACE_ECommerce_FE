@@ -217,6 +217,17 @@ export function MessageList({
       {/* Messages */}
       {messages.map((message, index) => {
         const isOwnMessage = message.senderRole === currentUserRole
+        const messageTextClassName = isOwnMessage
+          ? '!text-white [color:white]'
+          : message.isAI
+            ? 'text-gray-800'
+            : 'text-gray-900'
+        const displayContent =
+          message.type === 'product'
+            ? message.senderRole === 'pharmacist'
+              ? 'Dược sĩ giới thiệu sản phẩm này:'
+              : 'Sản phẩm được chia sẻ:'
+            : message.content
         const prevMessage = index > 0 ? messages[index - 1] : null
         const nextMessage = index < messages.length - 1 ? messages[index + 1] : null
 
@@ -274,6 +285,8 @@ export function MessageList({
                     )}
 
                     <div
+                      data-chat-tone={isOwnMessage ? 'own' : undefined}
+                      style={isOwnMessage ? { color: '#ffffff', WebkitTextFillColor: '#ffffff' } : undefined}
                       className={`rounded-2xl ${
                         // Ảnh thuần (không có text): không cần padding — ảnh fit khít bubble
                         message.type === 'image' && !message.content
@@ -281,17 +294,12 @@ export function MessageList({
                           : 'px-4 py-2'
                       } ${
                         isOwnMessage
-                          ? 'bg-[#0A2463] text-white rounded-tr-none'
+                          ? 'bg-[#0A2463] !text-white [color:white] rounded-tr-none'
                           : message.isAI
                             ? 'bg-[#F0F6FF] border border-[#BFDBFE] text-gray-800 rounded-tl-none'
                             : 'bg-white border border-gray-200 text-gray-900 rounded-tl-none'
                       } shadow-sm`}
                     >
-                      {/* Product card message */}
-                      {message.type === 'product' && message.productRef && (
-                        <ProductCard product={message.productRef} isOwnMessage={isOwnMessage} />
-                      )}
-
                       {/* Image message — giới hạn kích thước như Zalo/Messenger */}
                       {message.type === 'image' && message.imageUrl && (
                         <div
@@ -314,22 +322,28 @@ export function MessageList({
                         </div>
                       )}
 
-                      {/* Text content – ẩn nếu là product card (đã hiển thị trong card) */}
-                      {message.content && message.type !== 'product' && (
+                      {/* Text content */}
+                      {displayContent && (
                         message.isAI ? (
                           // AI messages: render markdown đẹp với cấu trúc rõ ràng
                           <MarkdownMessage
-                            content={cleanMessageContent(message.content)}
-                            className='py-0.5'
+                            content={cleanMessageContent(displayContent)}
+                            className={`py-0.5 ${messageTextClassName}`}
                           />
                         ) : (
                           // User messages: plain text
-                          <p className='text-sm whitespace-pre-wrap break-words'>
-                            {message.content}
+                          <p className={`text-sm whitespace-pre-wrap break-words ${messageTextClassName}`}>
+                            {displayContent}
                           </p>
                         )
                       )}
                     </div>
+
+                    {message.type === 'product' && message.productRef && (
+                      <div className={`mt-2 flex w-full ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
+                        <ProductCard product={message.productRef} isOwnMessage={isOwnMessage} variant='attachment' />
+                      </div>
+                    )}
 
                     {/* Feedback & Timestamp row for AI message */}
                     {!isOwnMessage && message.isAI ? (

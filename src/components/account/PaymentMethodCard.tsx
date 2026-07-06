@@ -14,6 +14,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '../ui/alert-dialog'
+import { PaymentMethodLogo, normalizePaymentMethod } from '../shared/PaymentMethodDisplay'
 
 interface PaymentMethod {
   id: string
@@ -46,6 +47,11 @@ export function PaymentMethodCard({ paymentMethod, onEdit, onDelete, onSetDefaul
   }
 
   const getIcon = () => {
+    const provider = normalizePaymentMethod(`${paymentMethod.name} ${paymentMethod.details}`)
+    if (provider === 'vnpay' || provider === 'payos') {
+      return <PaymentMethodLogo method={provider} className='h-5 w-auto max-w-[72px]' />
+    }
+
     switch (paymentMethod.type) {
       case 'card':
         return <CreditCard className='w-5 h-5 text-[#1E40AF]' />

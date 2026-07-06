@@ -205,6 +205,15 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
     }
   }
 
+  const profileBadgeClassName =
+    'h-6 rounded-full border px-2.5 text-[11px] font-medium leading-none shadow-none forced-color-adjust-none'
+
+  const getRoleBadge = (role?: number) => (
+    <Badge variant='outline' className={`${profileBadgeClassName} border-[#BFDBFE] bg-[#EFF6FF] text-[#0A2463]`}>
+      {getRoleLabel(role)}
+    </Badge>
+  )
+
   const getStatusBadge = (status?: number) => {
     switch (status) {
       case 0:
@@ -219,11 +228,11 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
   }
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-6 text-gray-900 [color-scheme:light]'>
       {/* Profile Header */}
-      <Card className='border border-[#BFDBFE] hover:shadow-md transition-all duration-300'>
+      <Card className='border border-[#BFDBFE] bg-white text-gray-900 hover:shadow-md transition-all duration-300'>
         <CardHeader>
-          <CardTitle className='flex items-center gap-2'>
+          <CardTitle className='flex items-center gap-2 text-gray-900'>
             <UserIcon className='w-5 h-5 text-[#1E40AF]' />
             Thông tin cá nhân
           </CardTitle>
@@ -276,9 +285,9 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
                   {user?.firstName} {user?.lastName}
                 </p>
                 <p className='text-xs text-gray-500'>{user?.email}</p>
-                <div className='flex gap-2 mt-2 justify-center'>
+                <div className='flex gap-2 mt-2 justify-center [&_[data-slot=badge]]:h-6 [&_[data-slot=badge]]:rounded-full [&_[data-slot=badge]]:px-2.5 [&_[data-slot=badge]]:text-[11px] [&_[data-slot=badge]]:leading-none'>
                   {getStatusBadge(user?.status)}
-                  <Badge variant='outline'>{getRoleLabel(user?.role)}</Badge>
+                  {getRoleBadge(user?.role)}
                 </div>
               </div>
             </div>
@@ -288,7 +297,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
               <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                 <div>
                   <Label className='text-sm font-medium text-gray-700'>Email</Label>
-                  <div className='mt-1 p-3 bg-gray-50 border border-gray-200 rounded-md'>
+                  <div className='mt-1 p-3 bg-slate-50 border border-gray-200 rounded-md text-gray-900 [color-scheme:light]'>
                     <p className='text-sm text-gray-900' data-testid='profile-email'>{user?.email}</p>
                   </div>
                   <p className='text-xs text-gray-500 mt-1'>Email không thể thay đổi</p>
@@ -296,14 +305,14 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
 
                 <div>
                   <Label className='text-sm font-medium text-gray-700'>Vai trò</Label>
-                  <div className='mt-1 p-3 bg-gray-50 border border-gray-200 rounded-md'>
+                  <div className='mt-1 p-3 bg-slate-50 border border-gray-200 rounded-md text-gray-900 [color-scheme:light]'>
                     <p className='text-sm text-gray-900'>{getRoleLabel(user?.role)}</p>
                   </div>
                 </div>
 
                 <div>
                   <Label className='text-sm font-medium text-gray-700'>Trạng thái tài khoản</Label>
-                  <div className='mt-1'>
+                  <div className='mt-1 [&_[data-slot=badge]]:h-6 [&_[data-slot=badge]]:rounded-full [&_[data-slot=badge]]:px-2.5 [&_[data-slot=badge]]:text-[11px] [&_[data-slot=badge]]:leading-none'>
                     {getStatusBadge(user?.status)}
                     {user?.status === 0 && (
                       <div className='mt-3 p-4 bg-amber-50 border border-amber-200 rounded-lg'>
@@ -342,7 +351,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
 
                 <div>
                   <Label className='text-sm font-medium text-gray-700'>Ngày tạo tài khoản</Label>
-                  <div className='mt-1 p-3 bg-gray-50 border border-gray-200 rounded-md'>
+                  <div className='mt-1 p-3 bg-slate-50 border border-gray-200 rounded-md text-gray-900 [color-scheme:light]'>
                     <p className='text-sm text-gray-900'>
                       {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('vi-VN') : 'N/A'}
                     </p>
@@ -355,7 +364,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
       </Card>
 
       {/* Edit Form */}
-      <Card className='border border-[#BFDBFE] hover:shadow-md transition-all duration-300'>
+      <Card className='border border-[#BFDBFE] bg-white text-gray-900 hover:shadow-md transition-all duration-300'>
         <CardHeader>
           <CardTitle>Chỉnh sửa thông tin</CardTitle>
         </CardHeader>
@@ -373,7 +382,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
                   {...register('firstName')}
                   data-testid='profile-first-name'
                   placeholder='Nhập họ của bạn'
-                  className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
+                  className='border-2 border-[#BFDBFE] bg-white text-gray-900 focus:border-[#1E40AF] [color-scheme:light]'
                 />
                 {errors.firstName && (
                   <p className='text-sm text-red-600 flex items-center gap-1' data-testid='form-error'>
@@ -394,7 +403,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
                   {...register('lastName')}
                   data-testid='profile-last-name'
                   placeholder='Nhập tên của bạn'
-                  className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
+                  className='border-2 border-[#BFDBFE] bg-white text-gray-900 focus:border-[#1E40AF] [color-scheme:light]'
                 />
                 {errors.lastName && (
                   <p className='text-sm text-red-600 flex items-center gap-1' data-testid='form-error'>
@@ -415,7 +424,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
                   {...register('phoneNumber')}
                   data-testid='profile-phone'
                   placeholder='Ví dụ: 0987654321'
-                  className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
+                  className='border-2 border-[#BFDBFE] bg-white text-gray-900 focus:border-[#1E40AF] [color-scheme:light]'
                 />
                 {errors.phoneNumber && (
                   <p className='text-sm text-red-600 flex items-center gap-1' data-testid='form-error'>
@@ -435,7 +444,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
                   id='dateOfBirth'
                   type='date'
                   {...register('dateOfBirth')}
-                  className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'
+                  className='border-2 border-[#BFDBFE] bg-white text-gray-900 focus:border-[#1E40AF] [color-scheme:light]'
                 />
                 {errors.dateOfBirth && (
                   <p className='text-sm text-red-600 flex items-center gap-1' data-testid='form-error'>
@@ -452,7 +461,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
                   Giới tính
                 </Label>
                 <Select value={watchedGender} onValueChange={(value) => setValue('gender', value as '0' | '1')}>
-                  <SelectTrigger className='border-2 border-[#BFDBFE] focus:border-[#1E40AF]'>
+                  <SelectTrigger className='border-2 border-[#BFDBFE] bg-white text-gray-900 focus:border-[#1E40AF] [color-scheme:light]'>
                     <SelectValue placeholder='Chọn giới tính' />
                   </SelectTrigger>
                   <SelectContent>

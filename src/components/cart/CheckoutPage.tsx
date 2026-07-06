@@ -7,7 +7,6 @@ import {
   MapPin,
   CreditCard,
   Truck,
-  Clock,
   Smartphone,
   Plus,
   RotateCcw,
@@ -18,6 +17,8 @@ import { Label } from '../ui/label'
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group'
 import { Checkbox } from '../ui/checkbox'
 import { Textarea } from '../ui/textarea'
+import { PaymentMethodDisplay } from '../shared/PaymentMethodDisplay'
+import { ShippingMethodLogo } from '../shared/ShippingMethodDisplay'
 import { Separator } from '../ui/separator'
 import { Badge } from '../ui/badge'
 import { ImageWithFallback } from '../shared/ImageWithFallback'
@@ -533,16 +534,16 @@ export function CheckoutPage() {
                   </div>
                 ) : addresses && addresses.length > 0 ? (
                   <div className='space-y-3'>
-                    <RadioGroup value={selectedAddress} onValueChange={setSelectedAddress}>
+                    <RadioGroup value={selectedAddress} onValueChange={setSelectedAddress} className='w-full'>
                       {addresses.map((address, index) => (
-                        <div key={address.id || index} className='flex items-start space-x-2'>
+                        <div key={address.id || index} className='flex w-full items-start gap-2'>
                           <RadioGroupItem
                             value={address.id || `address-${index}`}
                             id={address.id || `address-${index}`}
                           />
-                          <Label htmlFor={address.id || `address-${index}`} className='flex-1 cursor-pointer'>
-                            <div className='p-3 border border-gray-200 rounded-lg hover:border-[#BFDBFE] transition-colors'>
-                              <div className='flex items-center gap-2 mb-1'>
+                          <Label htmlFor={address.id || `address-${index}`} className='block min-w-0 flex-1 cursor-pointer'>
+                            <div className='w-full p-3 border border-gray-200 rounded-lg hover:border-[#BFDBFE] transition-colors'>
+                              <div className='flex flex-wrap items-center gap-x-2 gap-y-1 mb-1'>
                                 <span className='font-medium'>{address.name}</span>
                                 <span className='text-gray-400'>|</span>
                                 <span className='text-gray-600'>{address.phone}</span>
@@ -618,28 +619,44 @@ export function CheckoutPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <RadioGroup value={shippingMethod} onValueChange={setShippingMethod}>
-                  <div className='space-y-3'>
+                <RadioGroup value={shippingMethod} onValueChange={setShippingMethod} className='w-full'>
+                  <div className='w-full space-y-3'>
                     {shippingMethods.map((method) => (
-                      <div key={method.id} className='flex items-center space-x-2'>
-                        <RadioGroupItem value={method.id} id={method.id} />
-                        <Label htmlFor={method.id} className='flex-1 cursor-pointer'>
-                          <div className='p-3 border border-gray-200 rounded-lg hover:border-[#BFDBFE] transition-colors'>
-                            <div className='flex items-center justify-between mb-1'>
-                              <div className='flex items-center gap-2'>
-                                <Clock className='w-4 h-4 text-blue-500' />
-                                <span className='font-medium'>{method.name}</span>
-                                {subtotal >= 300000 && method.price > 0 && (
-                                  <Badge
-                                    variant='secondary'
-                                    className='bg-green-100 text-green-800 hover:bg-green-100 text-xs'
-                                  >
-                                    Freeship
-                                  </Badge>
+                      <div key={method.id} className='flex w-full items-center gap-2'>
+                        <RadioGroupItem value={method.id} id={method.id} className='shrink-0' />
+                        <Label htmlFor={method.id} className='block min-w-0 flex-1 cursor-pointer'>
+                          <div className='w-full p-3 border border-gray-200 rounded-lg hover:border-[#BFDBFE] transition-colors'>
+                            <div className='grid grid-cols-[72px_minmax(0,1fr)_auto] items-center gap-3'>
+                              <span className='flex h-full min-h-[64px] w-[72px] shrink-0 items-center justify-center rounded-md border border-[#E8EDF5] bg-white px-2'>
+                                <ShippingMethodLogo
+                                  method={method.id}
+                                  label={method.name}
+                                  description={method.description}
+                                  className='h-7 w-full object-contain'
+                                />
+                              </span>
+
+                              <div className='min-w-0 space-y-1'>
+                                <div className='flex min-w-0 flex-wrap items-center gap-2'>
+                                  <span className='truncate font-medium text-gray-900'>{method.name}</span>
+                                  {subtotal >= 300000 && method.price > 0 && (
+                                    <Badge
+                                      variant='secondary'
+                                      className='bg-green-100 text-green-800 hover:bg-green-100 text-xs'
+                                    >
+                                      Freeship
+                                    </Badge>
+                                  )}
+                                </div>
+                                {method.description.trim() !== method.name.trim() && (
+                                  <div className='text-sm text-gray-600'>{method.description}</div>
                                 )}
+                                <div className='text-sm text-[#1E40AF]'>
+                                  Dự kiến: {method.estimatedDays !== 'N/A' ? method.estimatedDays : '2-3 ngày'}
+                                </div>
                               </div>
 
-                              <div className='flex items-center gap-2'>
+                              <div className='flex shrink-0 items-center gap-2 self-start pt-1'>
                                 {subtotal >= 300000 && method.price > 0 && (
                                   <span className='line-through text-gray-400 text-xs'>
                                     {new Intl.NumberFormat('vi-VN').format(method.price)}đ
@@ -649,16 +666,10 @@ export function CheckoutPage() {
                                   {(() => {
                                     // Rule: Orders >= 300k are completely free shipping
                                     const finalPrice = subtotal >= 300000 ? 0 : method.price
-                                    return finalPrice === 0
-                                      ? 'Miễn phí'
-                                      : `${new Intl.NumberFormat('vi-VN').format(finalPrice)}đ`
+                                    return finalPrice === 0 ? 'Miễn phí' : `${new Intl.NumberFormat('vi-VN').format(finalPrice)}đ`
                                   })()}
                                 </span>
                               </div>
-                            </div>
-                            <div className='text-sm text-gray-600'>{method.description}</div>
-                            <div className='text-sm text-[#1E40AF] mt-1'>
-                              Dự kiến: {method.estimatedDays !== 'N/A' ? method.estimatedDays : '2-3 ngày'}
                             </div>
                           </div>
                         </Label>
@@ -711,19 +722,15 @@ export function CheckoutPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
-                  <div className='space-y-3'>
+                <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className='w-full'>
+                  <div className='w-full space-y-3'>
                     {paymentMethods.map((method) => (
-                      <div key={method.id} className='flex items-center space-x-2'>
-                        <RadioGroupItem value={method.id} id={method.id} />
-                        <Label htmlFor={method.id} className='flex-1 cursor-pointer'>
-                          <div className='p-3 border border-gray-200 rounded-lg hover:border-[#BFDBFE] transition-colors'>
+                      <div key={method.id} className='flex w-full items-center gap-2'>
+                        <RadioGroupItem value={method.id} id={method.id} className='shrink-0' />
+                        <Label htmlFor={method.id} className='block min-w-0 flex-1 cursor-pointer'>
+                          <div className='w-full p-3 border border-gray-200 rounded-lg hover:border-[#BFDBFE] transition-colors'>
                             <div className='flex items-center gap-3'>
-                              <span className='text-2xl'>{method.icon}</span>
-                              <div>
-                                <div className='font-medium'>{method.name}</div>
-                                <div className='text-sm text-gray-600'>{method.description}</div>
-                              </div>
+                              <PaymentMethodDisplay method={method.id} label={method.name} description={method.description} />
                             </div>
                           </div>
                         </Label>

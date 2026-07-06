@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { EnhancedPageTransition } from '../shared/EnhancedPageTransition'
 import { ScrollReveal } from '../shared/ScrollReveal'
 import { Button } from '../ui/button'
@@ -32,6 +32,8 @@ import { RecommendationCarousel } from '../products/RecommendationCarousel'
 import { useTrending, useForYou } from '../../hooks/product/useRecommendations'
 import { useAuth } from '../../contexts/AuthContext'
 import { healthNeeds } from '../../data/healthNeeds'
+import articleService from '../../services/articleService'
+import type { Article } from '../../types/article'
 
 const heroImage =
   'https://images.unsplash.com/photo-1576602976047-174e57a47881?auto=format&fit=crop&w=1200&q=82'
@@ -92,40 +94,57 @@ const pharmacists = [
   },
 ]
 
-const healthArticles = [
-  {
-    title: 'Cách chọn thuốc cảm cúm an toàn khi tự chăm sóc tại nhà',
-    category: 'Sức khỏe hô hấp',
-    excerpt: 'Những dấu hiệu cần lưu ý, khi nào nên hỏi dược sĩ và khi nào cần đi khám.',
-    date: '14/06/2026',
-    readTime: '5 phút đọc',
-    image: 'https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    title: 'Vitamin D3, Canxi và những lưu ý khi dùng cho người lớn tuổi',
-    category: 'Xương khớp',
-    excerpt: 'Hướng dẫn đọc liều dùng, thời điểm uống và các tương tác thường gặp.',
-    date: '12/06/2026',
-    readTime: '4 phút đọc',
-    image: 'https://images.unsplash.com/photo-1612531386530-97286d97c2d2?auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    title: 'Đơn thuốc online: quy trình dược sĩ kiểm tra trước khi giao',
-    category: 'An toàn thuốc',
-    excerpt: 'MediSpace xác minh đơn, đối chiếu tương tác và tư vấn trước khi hoàn tất.',
-    date: '10/06/2026',
-    readTime: '6 phút đọc',
-    image: 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&w=800&q=80',
-  },
-]
+const homeHealthFallbackImage =
+  'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=800&q=80'
+
+const formatArticleDate = (date?: string) => {
+  if (!date) return ''
+  return new Intl.DateTimeFormat('vi-VN').format(new Date(date))
+}
+
+const getArticleReadTime = (article: Article) => {
+  if (article.readTime) return article.readTime
+  return Math.max(1, Math.ceil(article.content.split(/\s+/).length / 200))
+}
 
 export function HomePage() {
   const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const [heroSearch, setHeroSearch] = useState('')
+  const [homeHealthArticles, setHomeHealthArticles] = useState<Article[]>([])
+  const [healthArticlesLoading, setHealthArticlesLoading] = useState(true)
   const { products: forYouProducts, loading: forYouLoading, algorithm: forYouAlgorithm } = useForYou(8, isAuthenticated)
   const { products: trendingProducts, loading: trendingLoading, algorithm: trendingAlgorithm } = useTrending(8)
   const { categories: realCategories, loading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useCategories()
+
+  useEffect(() => {
+    let isMounted = true
+
+    const loadHomeHealthArticles = async () => {
+      setHealthArticlesLoading(true)
+      try {
+        const featured = await articleService.getFeaturedArticles(3)
+        const latest = featured.length >= 3 ? [] : await articleService.getLatestArticles(3)
+        const articlesById = new Map<string, Article>()
+
+        for (const article of [...featured, ...latest]) {
+          articlesById.set(article._id, article)
+        }
+
+        if (isMounted) {
+          setHomeHealthArticles(Array.from(articlesById.values()).slice(0, 3))
+        }
+      } finally {
+        if (isMounted) setHealthArticlesLoading(false)
+      }
+    }
+
+    loadHomeHealthArticles()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const submitHeroSearch = (query = heroSearch) => {
     const trimmed = query.trim()
@@ -386,27 +405,37 @@ export function HomePage() {
             <Link to='/health' className='hidden items-center text-sm font-semibold text-[#1E40AF] hover:text-[#0A2463] sm:inline-flex'>Xem tất cả <ArrowRight className='ml-1 h-4 w-4' /></Link>
           </div>
 
-          <div className='grid gap-5 md:grid-cols-3'>
-            {healthArticles.map((article) => (
-              <Link key={article.title} to='/health' className='group overflow-hidden rounded-xl border border-[#E8EDF5] bg-white transition hover:border-[#BFDBFE] hover:shadow-[0_8px_24px_rgba(10,36,99,0.12)]'>
-                <div className='aspect-video overflow-hidden bg-[#F0F6FF]'>
-                  <img src={article.image} alt={article.title} className='h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]' loading='lazy' />
-                </div>
-                <div className='p-5'>
-                  <div className='inline-flex items-center gap-1 rounded-full bg-[#F0F6FF] px-3 py-1 text-xs font-semibold text-[#1E40AF]'>
-                    <BookOpen className='h-3 w-3' />
-                    {article.category}
+          {healthArticlesLoading ? (
+            <div className='grid gap-5 md:grid-cols-3'>
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div key={index} className='h-[360px] animate-pulse rounded-xl border border-[#E8EDF5] bg-white' />
+              ))}
+            </div>
+          ) : homeHealthArticles.length > 0 ? (
+            <div className='grid gap-5 md:grid-cols-3'>
+              {homeHealthArticles.map((article) => (
+                <Link key={article._id} to={`/health/article/${article.slug}`} className='group overflow-hidden rounded-xl border border-[#E8EDF5] bg-white transition hover:border-[#BFDBFE] hover:shadow-[0_8px_24px_rgba(10,36,99,0.12)]'>
+                  <div className='aspect-video overflow-hidden bg-[#F0F6FF]'>
+                    <img src={article.featuredImage || homeHealthFallbackImage} alt={article.title} className='h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]' loading='lazy' />
                   </div>
-                  <h3 className='mt-3 line-clamp-2 font-display text-lg font-semibold leading-7 text-[#1C2B4A] group-hover:text-[#0A2463]'>{article.title}</h3>
-                  <p className='mt-2 line-clamp-2 text-sm leading-6 text-[#4B5E7A]'>{article.excerpt}</p>
-                  <div className='mt-4 flex items-center gap-3 text-xs text-[#8094AE]'>
-                    <span className='inline-flex items-center gap-1'><CalendarDays className='h-3.5 w-3.5' />{article.date}</span>
-                    <span>{article.readTime}</span>
+                  <div className='p-5'>
+                    <div className='inline-flex items-center gap-1 rounded-full bg-[#F0F6FF] px-3 py-1 text-xs font-semibold text-[#1E40AF]'>
+                      <BookOpen className='h-3 w-3' />
+                      {article.category?.name || 'Sức khỏe'}
+                    </div>
+                    <h3 className='mt-3 line-clamp-2 font-display text-lg font-semibold leading-7 text-[#1C2B4A] group-hover:text-[#0A2463]'>{article.title}</h3>
+                    <p className='mt-2 line-clamp-2 text-sm leading-6 text-[#4B5E7A]'>{article.excerpt}</p>
+                    <div className='mt-4 flex items-center gap-3 text-xs text-[#8094AE]'>
+                      <span className='inline-flex items-center gap-1'><CalendarDays className='h-3.5 w-3.5' />{formatArticleDate(article.publishedAt || article.createdAt)}</span>
+                      <span>{getArticleReadTime(article)} phút đọc</span>
+                    </div>
                   </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className='rounded-xl border border-[#E8EDF5] bg-white p-6 text-sm text-[#4B5E7A]'>Chưa có bài viết sức khỏe để hiển thị.</div>
+          )}
         </div>
       </section>
 

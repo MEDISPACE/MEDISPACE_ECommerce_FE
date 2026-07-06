@@ -5,18 +5,18 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '~/utils/lib'
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all [color-scheme:light] forced-color-adjust-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-[#1E40AF] focus-visible:ring-[#1E40AF]/20 focus-visible:ring-[3px] aria-invalid:ring-red-500/20 aria-invalid:border-red-500",
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+        default: 'bg-[#0A2463] text-white hover:bg-[#071A49] hover:text-white',
         destructive:
-          'bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60',
+          'bg-red-600 text-white hover:bg-red-700 hover:text-white focus-visible:ring-red-500/20',
         outline:
-          'border border-gray-300 bg-background text-foreground hover:border-[#1E40AF] hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-gray-400 dark:hover:bg-input/50',
-        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        ghost: 'hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50',
-        link: 'text-primary underline-offset-4 hover:underline',
+          'border border-[#BFDBFE] bg-white text-[#0A2463] hover:border-[#1E40AF] hover:bg-[#F0F6FF] hover:text-[#0A2463]',
+        secondary: 'bg-[#F0F6FF] text-[#0A2463] hover:bg-[#E8EDF5] hover:text-[#0A2463]',
+        ghost: 'bg-transparent text-inherit hover:bg-[#F0F6FF] hover:text-[#0A2463]',
+        link: 'text-[#0A2463] underline-offset-4 hover:underline',
       },
       size: {
         default: 'h-9 px-4 py-2 has-[>svg]:px-3',

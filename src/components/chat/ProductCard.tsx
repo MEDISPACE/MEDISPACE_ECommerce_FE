@@ -1,5 +1,7 @@
 import { useState } from 'react'
-import { ShoppingCart, Pill, Loader2 } from 'lucide-react'
+import type { MouseEvent } from 'react'
+import { Link } from 'react-router'
+import { ArrowRight, Loader2, Pill, ShoppingCart } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
 import type { ProductRef } from '~/types/chat'
@@ -8,9 +10,10 @@ import { useCart } from '~/contexts/CartContext'
 interface ProductCardProps {
   product: ProductRef
   isOwnMessage?: boolean
+  variant?: 'compact' | 'attachment'
 }
 
-export function ProductCard({ product, isOwnMessage }: ProductCardProps) {
+export function ProductCard({ product, variant = 'compact' }: ProductCardProps) {
   const { addToCart } = useCart()
   const [isAdding, setIsAdding] = useState(false)
 
@@ -19,10 +22,11 @@ export function ProductCard({ product, isOwnMessage }: ProductCardProps) {
     currency: 'VND',
   }).format(product.price)
 
-  const handleAddToCart = async (e: React.MouseEvent) => {
+  const handleAddToCart = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()
     e.stopPropagation()
     if (product.requiresPrescription) return
+
     setIsAdding(true)
     try {
       await addToCart(
@@ -31,7 +35,7 @@ export function ProductCard({ product, isOwnMessage }: ProductCardProps) {
           name: product.name,
         } as any,
         1,
-        product.unit
+        product.unit,
       )
     } catch (err) {
       console.error(err)
@@ -42,51 +46,66 @@ export function ProductCard({ product, isOwnMessage }: ProductCardProps) {
 
   return (
     <div
-      className={`rounded-xl overflow-hidden shadow-sm w-[160px] border flex-shrink-0 flex flex-col justify-between transition-all duration-200 hover:shadow-md ${
-        isOwnMessage ? 'border-white/30 bg-white/10' : 'border-slate-100 bg-white'
+      data-chat-product-card
+      className={`flex-shrink-0 overflow-hidden rounded-xl border border-white/60 bg-white text-slate-900 shadow-sm transition-all duration-200 hover:shadow-md ${
+        variant === 'attachment' ? 'w-[260px] max-w-full' : 'w-[196px]'
       }`}
     >
-      <a href={`/products/${product.slug}`} target='_blank' rel='noopener noreferrer' className='flex-1 flex flex-col'>
-        {/* Product image */}
-        <div className='relative w-full h-24 bg-slate-50 overflow-hidden flex items-center justify-center p-2'>
+      <Link to={`/products/${product.slug}`} className='group block' aria-label={`Xem chi tiet ${product.name}`}>
+        <div className='relative flex h-24 w-full items-center justify-center overflow-hidden bg-slate-50 p-2.5'>
           {product.imageUrl ? (
-            <img src={product.imageUrl} alt={product.name} className='object-contain w-full h-full transition-transform hover:scale-105' />
+            <img
+              src={product.imageUrl}
+              alt={product.name}
+              className='h-full w-full object-contain transition-transform duration-200 group-hover:scale-105'
+            />
           ) : (
-            <Pill className='w-8 h-8 text-slate-300' />
+            <Pill className='h-8 w-8 text-slate-300' />
           )}
+
+          <span className='absolute right-2 top-2 rounded-full bg-white/95 p-1 text-[#0A2463] opacity-0 shadow-sm transition-opacity group-hover:opacity-100'>
+            <ArrowRight className='h-3.5 w-3.5' />
+          </span>
+
           {product.requiresPrescription && (
-            <Badge className='absolute top-1 left-1 bg-amber-500 text-white text-[8px] px-1 py-0.5 font-bold uppercase tracking-wider rounded-md'>Kê đơn</Badge>
+            <Badge
+              data-chat-product-badge
+              className='absolute left-2 top-2 rounded-md bg-amber-500 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white'
+            >
+              Kê đơn
+            </Badge>
           )}
         </div>
 
-        {/* Info */}
-        <div className={`p-2.5 flex-1 flex flex-col justify-between ${isOwnMessage ? 'text-white' : 'text-slate-800'}`}>
-          <div>
-            <p className='text-xs font-semibold leading-tight line-clamp-2 mb-1 hover:text-[#0A2463] transition-colors' title={product.name}>{product.name}</p>
-            <p className={`text-[10px] mb-1 font-medium ${isOwnMessage ? 'text-white/70' : 'text-slate-400'}`}>{product.unit}</p>
+        <div className='flex min-h-[86px] flex-col justify-between p-2.5'>
+          <div className='min-w-0'>
+            <p
+              data-chat-product-title
+              className='mb-1 line-clamp-2 text-xs font-semibold leading-tight text-slate-900 transition-colors group-hover:text-[#0A2463]'
+              title={product.name}
+            >
+              {product.name}
+            </p>
+            <p data-chat-product-muted className='text-[10px] font-medium text-slate-500'>
+              {product.unit}
+            </p>
           </div>
-          <p className={`text-sm font-bold mt-1 ${isOwnMessage ? 'text-[#BFDBFE]' : 'text-[#0A2463]'}`}>{formattedPrice}</p>
+          <p data-chat-product-price className='mt-2 text-sm font-bold text-[#0A2463]'>
+            {formattedPrice}
+          </p>
         </div>
-      </a>
+      </Link>
 
-      {/* CTA */}
-      <div className='px-2 pb-2.5 pt-1'>
+      <div className='px-2.5 pb-2.5'>
         <Button
+          data-chat-product-cta
           size='sm'
           disabled={isAdding || Boolean(product.requiresPrescription)}
           onClick={handleAddToCart}
-          className={`w-full text-[10px] h-7 gap-1 font-semibold transition-all duration-200 active:scale-95 ${
-            isOwnMessage
-              ? 'bg-white text-[#0A2463] hover:bg-[#F0F6FF]'
-              : 'bg-[#0A2463] hover:bg-[#1E40AF] text-white shadow-sm hover:shadow'
-          }`}
+          className='h-8 w-full gap-1 rounded-lg bg-[#0A2463] text-[11px] font-semibold text-white shadow-sm transition-all duration-200 hover:bg-[#1E40AF] active:scale-95 disabled:bg-slate-200 disabled:text-slate-500 disabled:opacity-100'
         >
-          {isAdding ? (
-            <Loader2 className='w-3 h-3 animate-spin' />
-          ) : (
-            <ShoppingCart className='w-3 h-3' />
-          )}
-          Thêm vào giỏ
+          {isAdding ? <Loader2 className='h-3.5 w-3.5 animate-spin' /> : <ShoppingCart className='h-3.5 w-3.5' />}
+          {product.requiresPrescription ? 'Cần đơn thuốc' : 'Thêm vào giỏ'}
         </Button>
       </div>
     </div>

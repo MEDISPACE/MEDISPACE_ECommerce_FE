@@ -13,6 +13,7 @@ import {
 import { getOrderStatusBadge, getPaymentStatusBadge } from '../../../utils/badgeUtils'
 import type { Order, RoleConfig } from './types'
 import { formatCurrency } from '~/utils/formatCurrency'
+import { PaymentMethodDisplay } from '../PaymentMethodDisplay'
 
 interface OrderTableProps {
   orders: Order[]
@@ -69,7 +70,7 @@ export function OrderTable({ orders, onUpdateStatus, onViewDetails, config }: Or
               </TableCell>
               <TableCell>
                 <p className={`font-semibold text-${config.themeColor}-600`}>{formatCurrency(order.total)}</p>
-                <p className='text-xs text-gray-500'>{order.paymentMethod}</p>
+                <PaymentMethodDisplay method={order.paymentMethod} className='mt-1 gap-2' logoClassName='h-3.5 w-auto max-w-full' showDescription={false} />
               </TableCell>
               <TableCell>
                 {getPaymentStatusBadge(order.paymentStatus, { paymentMethod: order.paymentMethod })}
