@@ -68,16 +68,21 @@ export function useSearchSuggestions(query: string): GroupedSuggestions {
   // Query text completions (max 5)
   const querySuggestions: string[] = (data?.querySuggestions || []).slice(0, 5)
 
-  // Map products (max 5)
-  const products: SearchSuggestion[] = (data?.products || []).slice(0, 7).map((hit) => ({
-    id: `product-${hit.document.mongoId}`,
-    text: hit.document.name,
-    type: 'product' as const,
-    slug: hit.document.slug,
-    image: hit.document.featuredImage || '',
-    brandName: hit.document.brandName || '',
-    requiresPrescription: hit.document.requiresPrescription === true,
-  }))
+  // Map products (max 7). Accept both Typesense-shaped and Mongo-shaped ids.
+  const products: SearchSuggestion[] = (data?.products || []).slice(0, 7).map((hit) => {
+    const document = hit.document as any
+    const productId = document.mongoId || document._id || document.id || document.slug
+
+    return {
+      id: `product-${productId}`,
+      text: document.name,
+      type: 'product' as const,
+      slug: document.slug,
+      image: document.featuredImage || document.image || '',
+      brandName: document.brandName || document.brand?.name || '',
+      requiresPrescription: document.requiresPrescription === true,
+    }
+  })
 
   // Map brands (max 2)
   const brands: SearchSuggestion[] = (data?.brands || []).slice(0, 2).map((hit) => ({

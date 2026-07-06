@@ -18,7 +18,6 @@ export default [
     // Products
     route('products', 'routes/products/_layout.tsx', [
       index('routes/products/index.tsx'),
-      route('compare', 'routes/products/compare.tsx'),
       route(':slug', 'routes/products/$slug.tsx'),
       route('category/:slug', 'routes/products/category.$slug.tsx'),
       route('brand/:slug', 'routes/products/brand.$slug.tsx'),

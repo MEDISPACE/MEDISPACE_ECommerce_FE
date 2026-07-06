@@ -61,6 +61,7 @@ export function SearchResultsPage() {
   const searchQuery = searchParams.get('q') || ''
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [selectedBrands, setSelectedBrands] = useState<string[]>([])
+  const [facetCounts, setFacetCounts] = useState<Record<string, number>>({})
   const [priceRange, setPriceRange] = useState([0, 10000000])
   const [prescriptionType, setPrescriptionType] = useState('all')
   const [inStockOnly, setInStockOnly] = useState(false)
@@ -116,8 +117,7 @@ export function SearchResultsPage() {
 
       // Add filters
       if (selectedCategories.length > 0) {
-        const category = categories.find((c) => c.slug === selectedCategories[0])
-        if (category) params.categoryId = category._id
+        params.categoryId = selectedCategories[0]
       }
       if (selectedBrands.length > 0) {
         params.brandId = selectedBrands[0]
@@ -159,6 +159,7 @@ export function SearchResultsPage() {
       return {
         products,
         found: res?.found ?? 0,
+        facetCounts: res?.facet_counts ?? [],
       }
     },
     getNextPageParam: (lastPage, allPages) => {
@@ -218,6 +219,17 @@ export function SearchResultsPage() {
   }, [allProducts])
 
   const totalResults = data?.pages[0]?.found ?? 0
+  useEffect(() => {
+    const counts: Record<string, number> = {}
+    for (const facet of data?.pages[0]?.facetCounts || []) {
+      if (facet.fieldName === 'categoryId' || facet.fieldName === 'brandId') {
+        for (const item of facet.counts) {
+          counts[item.value] = item.count
+        }
+      }
+    }
+    setFacetCounts(counts)
+  }, [data?.pages])
   const isSearching = isLoading || (isFetching && !isFetchingNextPage && !data)
   const resultCountLabel = isSearching ? 'Đang tìm kiếm sản phẩm...' : `Tìm thấy ${totalResults} sản phẩm`
 
@@ -260,17 +272,17 @@ export function SearchResultsPage() {
               <div key={category._id} className='flex items-center space-x-2'>
                 <Checkbox
                   id={`category-${category._id}`}
-                  checked={selectedCategories.includes(category.slug)}
+                  checked={selectedCategories.includes(category._id)}
                   onCheckedChange={(checked) => {
                     if (checked) {
-                      setSelectedCategories([...selectedCategories, category.slug])
+                      setSelectedCategories([category._id])
                     } else {
-                      setSelectedCategories(selectedCategories.filter((c) => c !== category.slug))
+                      setSelectedCategories(selectedCategories.filter((c) => c !== category._id))
                     }
                   }}
                 />
                 <Label htmlFor={`category-${category._id}`} className='text-sm cursor-pointer'>
-                  {category.name} ({category.productCount || 0})
+                  {category.name} ({facetCounts[category._id] ?? 0})
                 </Label>
               </div>
             ))}
@@ -300,14 +312,14 @@ export function SearchResultsPage() {
                   checked={selectedBrands.includes(brand._id)}
                   onCheckedChange={(checked) => {
                     if (checked) {
-                      setSelectedBrands([...selectedBrands, brand._id])
+                      setSelectedBrands([brand._id])
                     } else {
                       setSelectedBrands(selectedBrands.filter((b) => b !== brand._id))
                     }
                   }}
                 />
                 <Label htmlFor={`brand-${brand._id}`} className='text-sm cursor-pointer'>
-                  {brand.name}
+                  {brand.name} ({facetCounts[brand._id] ?? 0})
                 </Label>
               </div>
             ))}
@@ -433,13 +445,13 @@ export function SearchResultsPage() {
               {/* Active Filters */}
               {(selectedCategories.length > 0 || selectedBrands.length > 0 || prescriptionType !== 'all') && (
                 <div className='flex flex-wrap items-center gap-2'>
-                  {selectedCategories.map((categorySlug) => {
-                    const category = categories.find((c) => c.slug === categorySlug)
+                  {selectedCategories.map((categoryId) => {
+                    const category = categories.find((c) => c._id === categoryId)
                     return category ? (
-                      <Badge key={categorySlug} variant='outline' className='border-[#BFDBFE] text-[#1E40AF]'>
+                      <Badge key={categoryId} variant='outline' className='border-[#BFDBFE] text-[#1E40AF]'>
                         {category.name}
                         <button
-                          onClick={() => setSelectedCategories(selectedCategories.filter((c) => c !== categorySlug))}
+                          onClick={() => setSelectedCategories(selectedCategories.filter((c) => c !== categoryId))}
                           className='ml-1 hover:text-red-600'
                         >
                           ×
@@ -447,17 +459,20 @@ export function SearchResultsPage() {
                       </Badge>
                     ) : null
                   })}
-                  {selectedBrands.map((brand) => (
-                    <Badge key={brand} variant='outline' className='border-[#BFDBFE] text-[#1E40AF]'>
-                      {brand}
+                  {selectedBrands.map((brandId) => {
+                    const brand = brands.find((item) => item._id === brandId)
+                    return (
+                    <Badge key={brandId} variant='outline' className='border-[#BFDBFE] text-[#1E40AF]'>
+                      {brand?.name || brandId}
                       <button
-                        onClick={() => setSelectedBrands(selectedBrands.filter((b) => b !== brand))}
+                        onClick={() => setSelectedBrands(selectedBrands.filter((b) => b !== brandId))}
                         className='ml-1 hover:text-red-600'
                       >
                         ×
                       </button>
                     </Badge>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </div>

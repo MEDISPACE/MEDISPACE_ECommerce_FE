@@ -2,4 +2,4 @@
 export { CategoriesOverviewPage } from './CategoriesOverviewPage'
 export { CategoryPage } from './CategoryPage'
 export { SubCategoryPage } from './SubCategoryPage'
-export { CategoryNavigation, CategoryQuickActions } from './CategoryNavigation'
+export { CategoryNavigation } from './CategoryNavigation'

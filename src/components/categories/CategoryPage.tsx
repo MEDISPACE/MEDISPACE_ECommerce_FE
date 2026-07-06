@@ -3,7 +3,6 @@ import { useParams, Link } from 'react-router'
 import { Search, Grid, List, SlidersHorizontal, Pill, Shield, User, Stethoscope, Droplets, Loader2, PackageX } from 'lucide-react'
 import { useInView } from 'react-intersection-observer'
 import { EnhancedPageTransition } from '../shared/EnhancedPageTransition'
-import { CategoryQuickActions } from './CategoryNavigation'
 import { ProductCard } from '../products/ProductCard'
 import { ProductCardSkeleton } from '../products/ProductCardSkeleton'
 import { Button } from '../ui/button'
@@ -20,6 +19,8 @@ import { RatingStars } from '../shared/RatingStars'
 import { type ProductFilter, type Product, type Category } from '../../types/product'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
 import { categoryService } from '../../services/categoryService'
+import { brandService } from '../../services/brandService'
+import { searchService } from '../../services/searchService'
 import { useCart } from '../../contexts/CartContext'
 import { useWishlist } from '../../hooks/product/useWishlist'
 import { useInfiniteProducts } from '../../hooks/useInfiniteProducts'
@@ -61,6 +62,7 @@ export function CategoryPage() {
   const [isLoadingCategory, setIsLoadingCategory] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [brandOptions, setBrandOptions] = useState<Array<{ id: string; name: string; count: number }>>([])
+  const [showAllBrands, setShowAllBrands] = useState(false)
 
   // Trending trong danh mục này
   const { products: trendingProducts, loading: trendingLoading, algorithm: trendingAlgorithm } = useTrending(8, currentCategory?._id)
@@ -132,28 +134,78 @@ export function CategoryPage() {
   // Flatten all pages into single array
   const allProducts = useMemo(() => productsData?.pages.flatMap((page) => page.products) || [], [productsData?.pages])
   const totalCount = productsData?.pages[0]?.pagination.totalCount || 0
+  const visibleBrandOptions = showAllBrands ? brandOptions : brandOptions.slice(0, 6)
 
   const category = currentCategory
 
   useEffect(() => {
-    if ((filters.brands?.length || 0) > 0) return
+    if (!currentCategory?._id) return
 
-    const nextBrands = new Map<string, { id: string; name: string; count: number }>()
-    allProducts.forEach((product: Product) => {
-      const brandId = product.brand?._id || product.brandId
-      const brandName = product.brand?.name
-      if (!brandId || !brandName) return
+    let cancelled = false
 
-      const existing = nextBrands.get(brandId)
-      nextBrands.set(brandId, {
-        id: brandId,
-        name: brandName,
-        count: (existing?.count || 0) + 1,
+    const fallbackToLoadedProducts = () => {
+      const nextBrands = new Map<string, { id: string; name: string; count: number }>()
+      allProducts.forEach((product: Product) => {
+        const brandId = product.brand?._id || product.brandId
+        const brandName = product.brand?.name
+        if (!brandId || !brandName) return
+
+        const existing = nextBrands.get(brandId)
+        nextBrands.set(brandId, {
+          id: brandId,
+          name: brandName,
+          count: (existing?.count || 0) + 1,
+        })
       })
-    })
+      setBrandOptions(Array.from(nextBrands.values()))
+    }
 
-    setBrandOptions(Array.from(nextBrands.values()))
-  }, [allProducts, filters.brands])
+    const fetchBrandFacets = async () => {
+      try {
+        const priceRange = filters.priceRange || [0, 10000000]
+        const rating = filters.rating || 0
+        const [facetResult, allBrands] = await Promise.all([
+          searchService.searchProducts({
+            q: debouncedSearchQuery || '*',
+            categoryId: currentCategory._id,
+            limit: 1,
+            requiresPrescription: filters.isPrescription === true ? true : undefined,
+            inStock: filters.inStock || undefined,
+            priceMin: priceRange[0] > 0 ? priceRange[0] : undefined,
+            priceMax: priceRange[1] < 10000000 ? priceRange[1] : undefined,
+            ratingMin: rating > 0 ? rating : undefined,
+          }),
+          brandService.getBrands({ limit: 1000, isActive: 'true' }),
+        ])
+        if (cancelled) return
+
+        const brandNameById = new Map(allBrands.map((brand) => [brand._id || brand.id, brand.name]))
+        const brandIdFacet = facetResult.facet_counts?.find((facet) => facet.fieldName === 'brandId')
+        const nextBrands = (brandIdFacet?.counts || [])
+          .map((item) => ({
+            id: item.value,
+            name: brandNameById.get(item.value) || item.value,
+            count: item.count,
+          }))
+          .filter((brand) => brand.name !== brand.id)
+          .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'vi'))
+
+        if (nextBrands.length > 0) {
+          setBrandOptions(nextBrands)
+        } else {
+          fallbackToLoadedProducts()
+        }
+      } catch {
+        if (!cancelled) fallbackToLoadedProducts()
+      }
+    }
+
+    fetchBrandFacets()
+
+    return () => {
+      cancelled = true
+    }
+  }, [allProducts, currentCategory?._id, debouncedSearchQuery, filters.inStock, filters.isPrescription, filters.priceRange, filters.rating])
 
   // Get icon component for this category
   const IconComponent = getCategoryIcon(category || { slug })
@@ -333,7 +385,6 @@ export function CategoryPage() {
               </div>
             </div>
 
-            <CategoryQuickActions />
           </div>
         </div>
 
@@ -430,7 +481,7 @@ export function CategoryPage() {
                   <CardTitle className='text-lg'>Thương hiệu</CardTitle>
                 </CardHeader>
                 <CardContent className='space-y-2'>
-                  {brandOptions.slice(0, 6).map((brand) => {
+                  {visibleBrandOptions.map((brand) => {
                     return (
                       <label key={brand.id} className='flex items-center space-x-2 cursor-pointer'>
                         <input
@@ -453,8 +504,12 @@ export function CategoryPage() {
                     )
                   })}
                   {brandOptions.length > 6 && (
-                    <Button variant='ghost' className='text-xs p-0 h-auto text-[#1E40AF]'>
-                      + Xem thêm
+                    <Button
+                      variant='ghost'
+                      className='text-xs p-0 h-auto text-[#1E40AF]'
+                      onClick={() => setShowAllBrands((current) => !current)}
+                    >
+                      {showAllBrands ? 'Thu gọn' : `+ Xem thêm ${brandOptions.length - 6} thương hiệu`}
                     </Button>
                   )}
                 </CardContent>

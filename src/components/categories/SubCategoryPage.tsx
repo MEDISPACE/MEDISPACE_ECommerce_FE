@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, Link } from 'react-router'
 import { Search, Grid, List, SlidersHorizontal, PackageX } from 'lucide-react'
 import { EnhancedPageTransition } from '../shared/EnhancedPageTransition'
-import { CategoryNavigation, CategoryQuickActions } from './CategoryNavigation'
+import { CategoryNavigation } from './CategoryNavigation'
 import { ProductCard } from '../products/ProductCard'
 import { PaginationComponent } from '../shared/PaginationComponent'
 import { Button } from '../ui/button'
@@ -19,6 +19,7 @@ import { productService } from '../../services/productService'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
 import { useCart } from '../../contexts/CartContext'
 import { useWishlist } from '../../hooks/product/useWishlist'
+import { useDebounce } from '../../hooks/useDebounce'
 import {
   getProductId,
   getProductImage,
@@ -37,6 +38,34 @@ import { getProductPrice } from '../../utils/priceUtils'
 import type { Category, Product } from '../../types/product'
 import { getCategoryIcon } from '../../utils/categoryIcons'
 
+const PRODUCT_FETCH_LIMIT = 100
+const MAX_FETCH_PAGES = 10
+
+async function fetchCategoryProducts(categoryId: string, searchQuery: string) {
+  const firstPage = await productService.getProductsPaginated({
+    categoryId,
+    search: searchQuery || undefined,
+    page: 1,
+    limit: PRODUCT_FETCH_LIMIT,
+  })
+
+  const pagesToFetch = Math.min(firstPage.pagination.totalPages, MAX_FETCH_PAGES)
+  if (pagesToFetch <= 1) return firstPage.products
+
+  const remainingPages = await Promise.all(
+    Array.from({ length: pagesToFetch - 1 }, (_, index) =>
+      productService.getProductsPaginated({
+        categoryId,
+        search: searchQuery || undefined,
+        page: index + 2,
+        limit: PRODUCT_FETCH_LIMIT,
+      }),
+    ),
+  )
+
+  return [firstPage, ...remainingPages].flatMap((page) => page.products)
+}
+
 export function SubCategoryPage() {
   const { slug: categorySlug, subSlug: subCategorySlug } = useParams()
   const { addToCart } = useCart()
@@ -51,6 +80,8 @@ export function SubCategoryPage() {
   const [ratingFilter, setRatingFilter] = useState(0)
   const [inStockFilter, setInStockFilter] = useState(false)
   const [prescriptionFilter, setPrescriptionFilter] = useState(false)
+  const [showAllBrands, setShowAllBrands] = useState(false)
+  const debouncedSearchQuery = useDebounce(searchQuery.trim(), 400)
 
   const [category, setCategory] = useState<Category | null>(null)
   const [subCategory, setSubCategory] = useState<Category | null>(null)
@@ -87,9 +118,10 @@ export function SubCategoryPage() {
           return
         }
 
-        // Fetch products for this category/subcategory
+        // Fetch products for this category/subcategory. Search uses the products endpoint,
+        // which delegates to Typesense on the backend when search is present.
         const categoryId = foundSubCategory ? foundSubCategory._id : categoryData._id
-        const productsData = await productService.getProducts({ categoryId })
+        const productsData = await fetchCategoryProducts(categoryId, debouncedSearchQuery)
         setProducts(productsData)
       } catch (error) {
         setError('Không thể tải dữ liệu danh mục')
@@ -99,9 +131,26 @@ export function SubCategoryPage() {
     }
 
     fetchData()
-  }, [categorySlug, subCategorySlug])
+  }, [categorySlug, subCategorySlug, debouncedSearchQuery])
 
-  const brands = Array.from(new Set(products.map((p: Product) => p.brand?.name).filter(Boolean) as string[]))
+  const brandOptions = useMemo(() => {
+    const nextBrands = new Map<string, { id: string; name: string; count: number }>()
+    products.forEach((product: Product) => {
+      const brandId = product.brand?._id || product.brandId
+      const brandName = product.brand?.name
+      if (!brandId || !brandName) return
+
+      const existing = nextBrands.get(brandId)
+      nextBrands.set(brandId, {
+        id: brandId,
+        name: brandName,
+        count: (existing?.count || 0) + 1,
+      })
+    })
+
+    return Array.from(nextBrands.values()).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'vi'))
+  }, [products])
+  const visibleBrands = showAllBrands ? brandOptions : brandOptions.slice(0, 6)
 
   const navigationItems = [
     { label: category?.name || 'Danh mục', href: `/categories/${categorySlug}`, count: category?.productCount },
@@ -117,19 +166,16 @@ export function SubCategoryPage() {
 
   // Apply filters and search
   const filteredProducts = products.filter((product: Product) => {
-    const matchesSearch =
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.shortDescription.toLowerCase().includes(searchQuery.toLowerCase())
     const productPrice = getProductPrice(product)
     const matchesPrice = productPrice >= priceRange[0] && productPrice <= priceRange[1]
     const matchesBrands =
       selectedBrands.length === 0 ||
-      selectedBrands.some((brand: string) => product.brand?.name?.toLowerCase().includes(brand.toLowerCase()))
+      selectedBrands.some((brandId: string) => (product.brand?._id || product.brandId) === brandId)
     const matchesRating = (product.rating ?? 0) >= ratingFilter
     const matchesStock = !inStockFilter || product.stockQuantity > 0
     const matchesPrescription = !prescriptionFilter || product.requiresPrescription === true
 
-    return matchesSearch && matchesPrice && matchesBrands && matchesRating && matchesStock && matchesPrescription
+    return matchesPrice && matchesBrands && matchesRating && matchesStock && matchesPrescription
   })
 
   // Apply sorting
@@ -157,9 +203,9 @@ export function SubCategoryPage() {
   const paginatedProducts = sortedProducts.slice(startIndex, startIndex + itemsPerPage)
   const IconComponent = getCategoryIcon(category || { slug: categorySlug })
 
-  const handleBrandToggle = (brandName: string) => {
+  const handleBrandToggle = (brandId: string) => {
     setSelectedBrands((prev: string[]) =>
-      prev.includes(brandName) ? prev.filter((b: string) => b !== brandName) : [...prev, brandName],
+      prev.includes(brandId) ? prev.filter((b: string) => b !== brandId) : [brandId],
     )
   }
 
@@ -180,6 +226,7 @@ export function SubCategoryPage() {
     setRatingFilter(0)
     setInStockFilter(false)
     setPrescriptionFilter(false)
+    setShowAllBrands(false)
     setCurrentPage(1)
   }
 
@@ -248,7 +295,6 @@ export function SubCategoryPage() {
                 </div>
               </div>
 
-              <CategoryQuickActions />
             </div>
           </div>
 
@@ -287,25 +333,28 @@ export function SubCategoryPage() {
                     <CardTitle className='text-lg'>Thương hiệu</CardTitle>
                   </CardHeader>
                   <CardContent className='space-y-2'>
-                    {brands.slice(0, 6).map((brand: string) => {
-                      const brandProductCount = products.filter((p: Product) => p.brand?.name === brand).length
+                    {visibleBrands.map((brand) => {
                       return (
-                        <div key={brand} className='flex items-center space-x-2'>
+                        <div key={brand.id} className='flex items-center space-x-2'>
                           <Checkbox
-                            id={brand}
-                            checked={selectedBrands.includes(brand)}
-                            onCheckedChange={() => handleBrandToggle(brand)}
+                            id={brand.id}
+                            checked={selectedBrands.includes(brand.id)}
+                            onCheckedChange={() => handleBrandToggle(brand.id)}
                           />
-                          <Label htmlFor={brand} className='text-sm cursor-pointer flex-1'>
-                            {brand}
+                          <Label htmlFor={brand.id} className='text-sm cursor-pointer flex-1'>
+                            {brand.name}
                           </Label>
-                          <span className='text-xs text-gray-500'>({brandProductCount})</span>
+                          <span className='text-xs text-gray-500'>({brand.count})</span>
                         </div>
                       )
                     })}
-                    {brands.length > 6 && (
-                      <Button variant='ghost' className='text-xs p-0 h-auto text-[#1E40AF]'>
-                        + Xem thêm
+                    {brandOptions.length > 6 && (
+                      <Button
+                        variant='ghost'
+                        className='text-xs p-0 h-auto text-[#1E40AF]'
+                        onClick={() => setShowAllBrands((current) => !current)}
+                      >
+                        {showAllBrands ? 'Thu gọn' : `+ Xem thêm ${brandOptions.length - 6} thương hiệu`}
                       </Button>
                     )}
                   </CardContent>
@@ -456,7 +505,10 @@ export function SubCategoryPage() {
                     <Input
                       placeholder='Tìm trong danh mục...'
                       value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value)
+                        setCurrentPage(1)
+                      }}
                       className='pl-10 text-sm'
                     />
                   </div>
