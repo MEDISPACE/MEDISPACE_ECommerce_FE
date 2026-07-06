@@ -58,7 +58,7 @@ vi.mock('sonner', () => ({
 
 import { CommunityVideoEventsPage } from '~/components/community/CommunityVideoEventsPage'
 import { CommunityVideoEventDetailPage } from '~/components/community/CommunityVideoEventDetailPage'
-import { AdminCommunityVideoEventsPage } from '~/components/admin/AdminCommunityVideoEventsPage'
+import { AdminCommunityVideoEventsPage, buildAdminVideoEventCreatePayload } from '~/components/admin/AdminCommunityVideoEventsPage'
 import { BreadcrumbProvider } from '~/contexts/BreadcrumbContext'
 import { toast } from 'sonner'
 
@@ -234,10 +234,27 @@ describe('Community Video Events UI component tests', () => {
     expect(await screen.findByText('Hội thảo cộng đồng')).toBeInTheDocument()
     expect(await screen.findByText('Diabetes care workshop')).toBeInTheDocument()
     await userEvent.click(screen.getByText('Diabetes care workshop'))
-    expect(await screen.findByRole('button', { name: /start/i })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /bắt đầu/i })).toBeInTheDocument()
     expect(screen.getByText('Chat trực tiếp')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /duyệt/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /ẩn/i })).not.toBeInTheDocument()
+  })
+
+  it('builds admin create payload without blank optional description', () => {
+    const payload = buildAdminVideoEventCreatePayload({
+      roomId: 'room-1',
+      title: ' New community seminar ',
+      description: '   ',
+      agenda: '',
+      visibility: 'public',
+      scheduledStartAt: '2026-07-07T09:00',
+      scheduledEndAt: '2026-07-07T10:00',
+      capacity: '300',
+      tags: '',
+    })
+
+    expect(payload).toMatchObject({ roomId: 'room-1', title: 'New community seminar', visibility: 'public' })
+    expect(payload).not.toHaveProperty('description')
   })
 
   it('lets admin mute microphone and kick a live meeting participant', async () => {
