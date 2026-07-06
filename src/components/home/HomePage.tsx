@@ -142,19 +142,19 @@ export function HomePage() {
   return (
     <EnhancedPageTransition variant='default' duration={0.35}>
       <section className='bg-[#F8FAFB]'>
-        <div className='mx-auto grid max-w-7xl grid-cols-1 overflow-hidden lg:min-h-[520px] lg:grid-cols-[55%_45%]'>
-          <div className='flex items-center px-4 py-12 md:px-8 lg:px-10 lg:py-16'>
-            <div className='max-w-2xl'>
+        <div className='mx-auto grid w-full max-w-7xl grid-cols-1 overflow-hidden lg:min-h-[520px] lg:grid-cols-[55%_45%]'>
+          <div className='flex min-w-0 items-center px-4 py-12 md:px-8 lg:px-10 lg:py-16'>
+            <div className='w-full min-w-0 max-w-2xl'>
               <div className='mb-5 inline-flex items-center gap-2 rounded-full border border-[#BFDBFE] bg-white px-4 py-2 text-sm font-semibold text-[#0A2463]'>
                 <Shield className='h-4 w-4 text-[#059669]' />
                 Nhà thuốc trực tuyến có phép hoạt động
               </div>
 
-              <h1 className='font-display bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text py-1 text-4xl font-extrabold leading-[1.24] text-transparent md:text-5xl md:leading-[1.22]'>
+              <h1 className='font-display bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text py-1 text-[2rem] font-extrabold leading-[1.2] text-transparent sm:text-4xl md:text-5xl md:leading-[1.22]'>
                 Nhà thuốc trực tuyến đáng tin cậy cho gia đình Việt
               </h1>
 
-              <p className='mt-5 text-lg leading-8 text-[#4B5E7A]'>
+              <p className='mt-5 text-base leading-7 text-[#4B5E7A] sm:text-lg sm:leading-8'>
                 Hơn 10,000 sản phẩm chính hãng, dược sĩ tư vấn 24/7 và giao hàng trong 2 giờ tại khu vực hỗ trợ.
               </p>
 
@@ -226,7 +226,7 @@ export function HomePage() {
       </section>
 
       <section className='border-y border-[#BFDBFE] bg-[#E8EDF5]' aria-label='Thông tin tin cậy nhà thuốc'>
-        <div className='mx-auto grid max-w-7xl grid-cols-2 gap-y-4 px-4 py-4 md:grid-cols-5'>
+        <div className='mx-auto grid w-full max-w-7xl grid-cols-2 gap-y-4 px-4 py-4 md:grid-cols-5'>
           {[
             { icon: Shield, title: 'GPP Certified', text: 'GCN: GPP-MS-2026-001', mono: true },
             { icon: Users, title: '50+ Dược sĩ', text: 'Kiểm tra 24/7' },
