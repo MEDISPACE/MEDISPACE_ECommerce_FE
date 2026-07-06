@@ -168,6 +168,7 @@ export function CategoryPage() {
           searchService.searchProducts({
             q: debouncedSearchQuery || '*',
             categoryId: currentCategory._id,
+            includeSubcategories: true,
             limit: 1,
             requiresPrescription: filters.isPrescription === true ? true : undefined,
             inStock: filters.inStock || undefined,
