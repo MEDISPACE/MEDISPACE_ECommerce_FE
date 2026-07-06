@@ -6,6 +6,7 @@ import { Label } from '../ui/label'
 import { Checkbox } from '../ui/checkbox'
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group'
 import { Alert, AlertDescription } from '../ui/alert'
+import { PasswordInput } from '../forms/PasswordInput'
 import {
   Mail,
   AlertCircle,
@@ -13,8 +14,6 @@ import {
   Phone,
   Lock,
   User,
-  Eye,
-  EyeOff,
   UserCircle2,
   UserPlus,
   Sparkles,
@@ -39,8 +38,6 @@ const RegisterPage = () => {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
   const [success, setSuccess] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const navigate = useNavigate()
   const { register } = useAuth()
 
@@ -97,18 +94,11 @@ const RegisterPage = () => {
     e.preventDefault()
 
     if (!validateForm()) {
-      toast.error('Vui lòng kiểm tra lại thông tin', {
-        description: 'Có một số trường chưa được điền đúng',
-        duration: 3000,
-      })
       return
     }
 
     if (!formData.agreeToTerms) {
-      toast.error('Vui lòng đồng ý với điều khoản', {
-        description: 'Bạn cần đồng ý với điều khoản dịch vụ để tiếp tục',
-        duration: 3000,
-      })
+      setErrors({ general: 'Bạn cần đồng ý với điều khoản dịch vụ để tiếp tục' })
       return
     }
 
@@ -137,24 +127,12 @@ const RegisterPage = () => {
           description: 'Chào mừng bạn đến với MEDISPACE',
           duration: 2000,
         })
-
-        setTimeout(() => {
-          navigate('/login', {
-            state: {
-              message: 'Đăng ký thành công! Vui lòng kiểm tra email để xác thực.',
-            },
-          })
-        }, 5000)
       } else {
         throw new Error('Đăng ký thất bại. Vui lòng thử lại.')
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Đã có lỗi xảy ra. Vui lòng thử lại.'
       setErrors({ general: errorMessage })
-      toast.error('Đăng ký thất bại', {
-        description: errorMessage,
-        duration: 4000,
-      })
     } finally {
       setIsLoading(false)
     }
@@ -215,7 +193,7 @@ const RegisterPage = () => {
             Đăng nhập ngay
           </Button>
 
-          <p className='text-sm text-gray-500'>Tự động chuyển đến trang đăng nhập sau vài giây...</p>
+          <p className='text-sm text-gray-500'>Sau khi xác thực email, bạn có thể quay lại đăng nhập.</p>
         </motion.div>
       </PageTransition>
     )
@@ -433,38 +411,14 @@ const RegisterPage = () => {
             <Lock className='w-4 h-4' />
             MẬT KHẨU
           </Label>
-          <div className='relative group'>
-            <Lock className='absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 w-5 h-5' />
-            <Input
-              id='password'
-              type={showPassword ? 'text' : 'password'}
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              placeholder='Nhập mật khẩu'
-              className={`pl-12 pr-12 h-14 bg-white border-2 rounded-xl transition-all duration-200 ${
-                errors.password
-                  ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-200'
-                  : 'border-[#BFDBFE] focus:border-[#1E40AF] focus:ring-4 focus:ring-blue-100 hover:border-[#BFDBFE]'
-              }`}
-            />
-            <button
-              type='button'
-              onClick={() => setShowPassword(!showPassword)}
-              className='absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#1E40AF] transition-colors'
-            >
-              {showPassword ? <EyeOff className='w-5 h-5' /> : <Eye className='w-5 h-5' />}
-            </button>
-          </div>
-          {errors.password && (
-            <motion.p
-              className='text-red-500 text-sm flex items-center gap-1'
-              initial={{ opacity: 0, y: -5 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <AlertCircle className='w-3 h-3' />
-              {errors.password}
-            </motion.p>
-          )}
+          <PasswordInput
+            value={formData.password}
+            onChange={(password) => setFormData({ ...formData, password })}
+            placeholder='Nhập mật khẩu'
+            error={errors.password}
+            showStrength={true}
+            className='h-14 bg-white rounded-xl focus:ring-4 focus:ring-blue-100 hover:border-[#BFDBFE]'
+          />
         </div>
 
         {/* Confirm Password */}
@@ -476,38 +430,13 @@ const RegisterPage = () => {
             <Lock className='w-4 h-4' />
             XÁC NHẬN MẬT KHẨU
           </Label>
-          <div className='relative group'>
-            <Lock className='absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 w-5 h-5' />
-            <Input
-              id='confirmPassword'
-              type={showConfirmPassword ? 'text' : 'password'}
-              value={formData.confirmPassword}
-              onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-              placeholder='Nhập lại mật khẩu'
-              className={`pl-12 pr-12 h-14 bg-white border-2 rounded-xl transition-all duration-200 ${
-                errors.confirmPassword
-                  ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-200'
-                  : 'border-[#BFDBFE] focus:border-[#1E40AF] focus:ring-4 focus:ring-blue-100 hover:border-[#BFDBFE]'
-              }`}
-            />
-            <button
-              type='button'
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className='absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#1E40AF] transition-colors'
-            >
-              {showConfirmPassword ? <EyeOff className='w-5 h-5' /> : <Eye className='w-5 h-5' />}
-            </button>
-          </div>
-          {errors.confirmPassword && (
-            <motion.p
-              className='text-red-500 text-sm flex items-center gap-1'
-              initial={{ opacity: 0, y: -5 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <AlertCircle className='w-3 h-3' />
-              {errors.confirmPassword}
-            </motion.p>
-          )}
+          <PasswordInput
+            value={formData.confirmPassword}
+            onChange={(confirmPassword) => setFormData({ ...formData, confirmPassword })}
+            placeholder='Nhập lại mật khẩu'
+            error={errors.confirmPassword}
+            className='h-14 bg-white rounded-xl focus:ring-4 focus:ring-blue-100 hover:border-[#BFDBFE]'
+          />
         </div>
 
         {/* Terms and Conditions */}
