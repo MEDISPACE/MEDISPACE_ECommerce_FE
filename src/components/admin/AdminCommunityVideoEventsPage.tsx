@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { CalendarPlus, Copy, ExternalLink, Link as LinkIcon, MessageSquare, MicOff, Play, RefreshCw, Search, Square, UserX, Video, X } from 'lucide-react'
+import { CalendarDays, CalendarPlus, ChevronDown, Clock3, Copy, ExternalLink, Globe2, Link as LinkIcon, LockKeyhole, MessageSquare, MicOff, Minus, Play, Plus, RefreshCw, Search, Square, UserX, Video, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { adminCommunityService } from '~/services/communityService'
 import type { CommunityRoom, CommunityVideoEvent } from '~/types/community'
@@ -10,6 +10,20 @@ import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
 import { Textarea } from '~/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
+import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
+import { Calendar } from '~/components/ui/calendar'
+
+type AdminVideoEventFormState = {
+  roomId: string
+  title: string
+  description: string
+  agenda: string
+  visibility: 'public' | 'private'
+  scheduledStartAt: string
+  scheduledEndAt: string
+  capacity: string
+  tags: string
+}
 
 function toLocalInputValue(date: Date) {
   const offset = date.getTimezoneOffset() * 60000
@@ -26,6 +40,37 @@ function statusLabel(status?: string) {
   return labels[status || ''] || status
 }
 
+function statusBadgeClass(status?: string) {
+  const classes: Record<string, string> = {
+    scheduled: 'border-blue-200 bg-blue-50 text-blue-700',
+    live: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    ended: 'border-gray-200 bg-gray-100 text-gray-700',
+    cancelled: 'border-red-200 bg-red-50 text-red-700',
+    draft: 'border-amber-200 bg-amber-50 text-amber-700',
+  }
+  return classes[status || ''] || 'border-gray-200 bg-gray-50 text-gray-700'
+}
+
+function visibilityLabel(visibility?: string) {
+  return visibility === 'private' ? 'Riêng tư' : 'Công khai'
+}
+
+function visibilityBadgeClass(visibility?: string) {
+  return visibility === 'private'
+    ? 'border-violet-200 bg-violet-50 text-violet-700'
+    : 'border-sky-200 bg-sky-50 text-sky-700'
+}
+
+function VisibilityBadge({ visibility }: { visibility?: string }) {
+  const Icon = visibility === 'private' ? LockKeyhole : Globe2
+  return (
+    <Badge variant='outline' className={visibilityBadgeClass(visibility)}>
+      <Icon />
+      {visibilityLabel(visibility)}
+    </Badge>
+  )
+}
+
 function getMeetingHref(event?: CommunityVideoEvent | null) {
   if (!event?._id) return ''
   const path = event.meetingUrl || `/community/video-events/${event._id}`
@@ -38,6 +83,197 @@ function meetingCode(event?: CommunityVideoEvent | null) {
   if (!event?._id) return '----'
   const compact = event._id.replace(/[^a-zA-Z0-9]/g, '').slice(-12) || event._id.slice(-12)
   return compact.match(/.{1,4}/g)?.join('-').toLowerCase() || event._id
+}
+
+function getApiErrorMessage(error: any, fallback: string) {
+  const data = error?.response?.data
+  const errors = data?.errors
+  if (errors && typeof errors === 'object') {
+    const firstKey = Object.keys(errors)[0]
+    const firstError = firstKey ? errors[firstKey] : null
+    const message = firstError?.msg || firstError?.message
+    if (message) return `${firstKey}: ${message}`
+  }
+  return data?.message || error?.message || fallback
+}
+
+export function buildAdminVideoEventCreatePayload(form: AdminVideoEventFormState) {
+  const scheduledStartAt = new Date(form.scheduledStartAt)
+  const scheduledEndAt = new Date(form.scheduledEndAt)
+  if (Number.isNaN(scheduledStartAt.getTime())) throw new Error('Thời gian bắt đầu không hợp lệ')
+  if (Number.isNaN(scheduledEndAt.getTime())) throw new Error('Thời gian kết thúc không hợp lệ')
+  if (scheduledEndAt <= scheduledStartAt) throw new Error('Thời gian kết thúc phải sau thời gian bắt đầu')
+
+  const description = form.description.trim()
+  const agenda = form.agenda.trim()
+  const tags = form.tags.split(',').map((tag) => tag.trim()).filter(Boolean)
+  return {
+    roomId: form.roomId,
+    title: form.title.trim(),
+    ...(description ? { description } : {}),
+    ...(agenda ? { agenda } : {}),
+    visibility: form.visibility,
+    scheduledStartAt: scheduledStartAt.toISOString(),
+    scheduledEndAt: scheduledEndAt.toISOString(),
+    capacity: Number(form.capacity) || null,
+    ...(tags.length ? { tags } : {}),
+    registrationRequired: false,
+    provider: 'livekit',
+  }
+}
+
+const QUICK_TIMES = [
+  { label: '09:00', hours: 9, minutes: 0 },
+  { label: '14:00', hours: 14, minutes: 0 },
+  { label: '19:30', hours: 19, minutes: 30 },
+]
+
+function parseLocalDateTime(value: string) {
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+function formatDateTimePickerValue(value: string) {
+  const date = parseLocalDateTime(value)
+  if (!date) return 'Chọn ngày giờ'
+  return new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date)
+}
+
+function applySelectedDate(currentValue: string, selectedDate: Date) {
+  const current = parseLocalDateTime(currentValue) || new Date()
+  const next = new Date(selectedDate)
+  next.setHours(current.getHours(), current.getMinutes(), 0, 0)
+  return toLocalInputValue(next)
+}
+
+function applySelectedTime(currentValue: string, hours: number, minutes: number) {
+  const next = parseLocalDateTime(currentValue) || new Date()
+  next.setHours(hours, minutes, 0, 0)
+  return toLocalInputValue(next)
+}
+
+function normalizeTimePart(value: string, min: number, max: number) {
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed)) return min
+  return Math.min(max, Math.max(min, Math.trunc(parsed)))
+}
+
+function adjustSelectedTime(currentValue: string, minutesToAdd: number) {
+  const next = parseLocalDateTime(currentValue) || new Date()
+  next.setMinutes(next.getMinutes() + minutesToAdd)
+  return toLocalInputValue(next)
+}
+
+function padTime(value: number) {
+  return String(value).padStart(2, '0')
+}
+
+function DateTimePicker({ label, value, onChange, testId, minDate }: { label: string; value: string; onChange: (value: string) => void; testId: string; minDate?: Date | null }) {
+  const [open, setOpen] = useState(false)
+  const selectedDate = parseLocalDateTime(value)
+  const hours = selectedDate?.getHours() ?? 9
+  const minutes = selectedDate?.getMinutes() ?? 0
+  const startOfMinDate = minDate ? new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate()) : null
+
+  return (
+    <div className='space-y-2'>
+      <Label>{label}</Label>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            type='button'
+            variant='outline'
+            data-testid={testId}
+            className='h-auto min-h-10 w-full justify-between border-gray-300 bg-white px-3 py-2 text-left font-normal text-gray-900 hover:bg-[#F8FBFF]'
+          >
+            <span className='flex min-w-0 items-center gap-2'>
+              <CalendarDays className='h-4 w-4 shrink-0 text-blue-600' />
+              <span className='truncate'>{formatDateTimePickerValue(value)}</span>
+            </span>
+            <ChevronDown className='h-4 w-4 shrink-0 text-gray-500' />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className='w-[320px] overflow-hidden p-0' align='start'>
+          <div className='space-y-0'>
+            <Calendar
+              mode='single'
+              selected={selectedDate || undefined}
+              defaultMonth={selectedDate || minDate || new Date()}
+              onSelect={(date) => {
+                if (date) onChange(applySelectedDate(value, date))
+              }}
+              disabled={(date) => Boolean(startOfMinDate && date < startOfMinDate)}
+              initialFocus
+            />
+            <div className='border-t border-gray-200 p-3'>
+              <div className='mb-3 flex items-center justify-between gap-2'>
+                <div className='flex items-center gap-2 text-sm font-semibold text-gray-900'>
+                  <Clock3 className='h-4 w-4 text-blue-600' />
+                  Thời gian
+                </div>
+                <div className='rounded-md bg-[#F0F6FF] px-2.5 py-1 text-sm font-semibold text-[#0A2463]'>{padTime(hours)}:{padTime(minutes)}</div>
+              </div>
+              <div className='space-y-2'>
+                <div className='flex items-center justify-between gap-3'>
+                  <div className='w-12 text-xs font-medium text-gray-600'>Giờ</div>
+                  <div className='flex items-center gap-2'>
+                    <Button type='button' variant='outline' size='icon' className='h-9 w-9 bg-white' onClick={() => onChange(adjustSelectedTime(value, -60))}><Minus /></Button>
+                    <Input
+                      type='number'
+                      min='0'
+                      max='23'
+                      inputMode='numeric'
+                      aria-label={`${label} giờ`}
+                      className='h-9 w-14 px-2 text-center text-sm font-semibold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
+                      value={padTime(hours)}
+                      onChange={(event) => onChange(applySelectedTime(value, normalizeTimePart(event.target.value, 0, 23), minutes))}
+                      onBlur={(event) => { event.currentTarget.value = padTime(normalizeTimePart(event.currentTarget.value, 0, 23)) }}
+                    />
+                    <Button type='button' variant='outline' size='icon' className='h-9 w-9 bg-white' onClick={() => onChange(adjustSelectedTime(value, 60))}><Plus /></Button>
+                  </div>
+                </div>
+                <div className='flex items-center justify-between gap-3'>
+                  <div className='w-12 text-xs font-medium text-gray-600'>Phút</div>
+                  <div className='flex items-center gap-2'>
+                    <Button type='button' variant='outline' size='icon' className='h-9 w-9 bg-white' onClick={() => onChange(adjustSelectedTime(value, -5))}><Minus /></Button>
+                    <Input
+                      type='number'
+                      min='0'
+                      max='59'
+                      step='5'
+                      inputMode='numeric'
+                      aria-label={`${label} phút`}
+                      className='h-9 w-14 px-2 text-center text-sm font-semibold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
+                      value={padTime(minutes)}
+                      onChange={(event) => onChange(applySelectedTime(value, hours, normalizeTimePart(event.target.value, 0, 59)))}
+                      onBlur={(event) => { event.currentTarget.value = padTime(normalizeTimePart(event.currentTarget.value, 0, 59)) }}
+                    />
+                    <Button type='button' variant='outline' size='icon' className='h-9 w-9 bg-white' onClick={() => onChange(adjustSelectedTime(value, 5))}><Plus /></Button>
+                  </div>
+                </div>
+              </div>
+              <div className='mt-3 grid grid-cols-3 gap-2'>
+                {QUICK_TIMES.map((time) => (
+                  <Button key={time.label} type='button' variant='outline' size='sm' className='bg-white' onClick={() => onChange(applySelectedTime(value, time.hours, time.minutes))}>
+                    {time.label}
+                  </Button>
+                ))}
+              </div>
+              <Button type='button' className='mt-3 w-full bg-blue-600 text-white hover:bg-blue-700' onClick={() => setOpen(false)}>
+                Xong
+              </Button>
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
+    </div>
+  )
 }
 
 export function AdminCommunityVideoEventsPage() {
@@ -88,12 +324,13 @@ export function AdminCommunityVideoEventsPage() {
     if (Number.isNaN(scheduledEndAt.getTime())) throw new Error('Thời gian kết thúc không hợp lệ')
     if (scheduledEndAt <= scheduledStartAt) throw new Error('Thời gian kết thúc phải sau thời gian bắt đầu')
 
+    const description = form.description.trim()
     const agenda = form.agenda.trim()
     const tags = form.tags.split(',').map((tag) => tag.trim()).filter(Boolean)
     return {
       roomId: form.roomId,
       title: form.title.trim(),
-      description: form.description.trim(),
+      ...(description ? { description } : {}),
       ...(agenda ? { agenda } : {}),
       visibility: form.visibility,
       scheduledStartAt: scheduledStartAt.toISOString(),
@@ -113,7 +350,7 @@ export function AdminCommunityVideoEventsPage() {
       setForm((current) => ({ ...current, title: '', description: '', agenda: '', tags: '' }))
       invalidateEvents()
     },
-    onError: (error: any) => toast.error(error?.response?.data?.message || error?.message || 'Không thể tạo hội thảo'),
+    onError: (error: any) => toast.error(getApiErrorMessage(error, 'Không thể tạo hội thảo')),
   })
 
   const actionMutation = useMutation({
@@ -215,8 +452,27 @@ export function AdminCommunityVideoEventsPage() {
           <div className='space-y-2'><Label>Mô tả</Label><Textarea data-testid='event-description-input' value={form.description} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} /></div>
           <div className='space-y-2'><Label>Agenda</Label><Textarea data-testid='event-agenda-input' value={form.agenda} onChange={(event) => setForm((current) => ({ ...current, agenda: event.target.value }))} /></div>
           <div className='grid gap-3 md:grid-cols-2'>
-            <div className='space-y-2'><Label>Bắt đầu</Label><Input data-testid='event-start-input' type='datetime-local' value={form.scheduledStartAt} onChange={(event) => setForm((current) => ({ ...current, scheduledStartAt: event.target.value }))} /></div>
-            <div className='space-y-2'><Label>Kết thúc</Label><Input data-testid='event-end-input' type='datetime-local' value={form.scheduledEndAt} onChange={(event) => setForm((current) => ({ ...current, scheduledEndAt: event.target.value }))} /></div>
+            <DateTimePicker
+              label='Bắt đầu'
+              value={form.scheduledStartAt}
+              testId='event-start-input'
+              minDate={new Date()}
+              onChange={(scheduledStartAt) => setForm((current) => {
+                const startDate = parseLocalDateTime(scheduledStartAt)
+                const endDate = parseLocalDateTime(current.scheduledEndAt)
+                if (startDate && endDate && endDate <= startDate) {
+                  return { ...current, scheduledStartAt, scheduledEndAt: toLocalInputValue(new Date(startDate.getTime() + 60 * 60_000)) }
+                }
+                return { ...current, scheduledStartAt }
+              })}
+            />
+            <DateTimePicker
+              label='Kết thúc'
+              value={form.scheduledEndAt}
+              testId='event-end-input'
+              minDate={parseLocalDateTime(form.scheduledStartAt) || new Date()}
+              onChange={(scheduledEndAt) => setForm((current) => ({ ...current, scheduledEndAt }))}
+            />
           </div>
           <div className='grid gap-3 md:grid-cols-2'>
             <div className='space-y-2'><Label>Visibility</Label><Select value={form.visibility} onValueChange={(visibility: 'public' | 'private') => setForm((current) => ({ ...current, visibility }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value='public'>Công khai</SelectItem><SelectItem value='private'>Riêng tư</SelectItem></SelectContent></Select></div>
@@ -234,8 +490,15 @@ export function AdminCommunityVideoEventsPage() {
           ) : (
           <div data-testid='admin-event-list' className='grid gap-3 lg:grid-cols-2'>
             {events.map((event) => (
-              <button key={event._id} className={`rounded-lg border bg-white p-4 text-left shadow-sm ${selectedEvent?._id === event._id ? 'border-[#1E40AF]' : 'border-gray-200'}`} onClick={() => setSelectedEvent(event)}>
-                <div className='mb-2 flex flex-wrap gap-2'><Badge data-testid={`event-status-${event.status}`}>{statusLabel(event.status)}</Badge><Badge variant='outline'>{event.visibility}</Badge></div>
+              <button
+                key={event._id}
+                className={`rounded-lg border p-4 text-left shadow-sm outline-none transition focus-visible:ring-2 focus-visible:ring-blue-500/30 ${selectedEvent?._id === event._id ? 'border-blue-300 bg-blue-50/40 shadow-md ring-1 ring-blue-200' : 'border-gray-200 bg-white hover:border-blue-200 hover:bg-[#F8FBFF]'}`}
+                onClick={() => setSelectedEvent(event)}
+              >
+                <div className='mb-2 flex flex-wrap gap-2'>
+                  <Badge data-testid={`event-status-${event.status}`} variant='outline' className={statusBadgeClass(event.status)}>{statusLabel(event.status)}</Badge>
+                  <VisibilityBadge visibility={event.visibility} />
+                </div>
                 <div className='font-semibold text-gray-950'>{event.title}</div>
                 <div className='mt-2 text-sm text-gray-600'>{formatDateTime(event.scheduledStartAt)}</div>
                 <div className='mt-3 flex items-center gap-2 rounded-md bg-[#F0F6FF] px-3 py-2 text-xs text-[#0A2463]'>
@@ -251,12 +514,35 @@ export function AdminCommunityVideoEventsPage() {
             <section className='rounded-lg border border-gray-200 bg-white p-5'>
               <div className='flex flex-col gap-3 md:flex-row md:items-start md:justify-between'>
                 <div><h2 className='text-xl font-semibold text-gray-950'>{selectedEvent.title}</h2><p className='text-sm text-gray-600'>{formatDateTime(selectedEvent.scheduledStartAt)} - {formatDateTime(selectedEvent.scheduledEndAt)}</p></div>
-                <div className='flex flex-wrap gap-2'>
+                <div className='flex flex-wrap gap-2 md:justify-end'>
                   <Button size='sm' variant='outline' onClick={() => copyMeetingLink(selectedEvent)}><Copy />Copy link</Button>
                   <Button size='sm' variant='outline' asChild><a href={getMeetingHref(selectedEvent)} target='_blank' rel='noreferrer'><ExternalLink />Mở link</a></Button>
-                  <Button size='sm' disabled={selectedEvent.status === 'live'} onClick={() => actionMutation.mutate({ eventId: selectedEvent._id, action: 'start' })}><Play />Start</Button>
-                  <Button size='sm' variant='outline' disabled={selectedEvent.status !== 'live'} onClick={() => actionMutation.mutate({ eventId: selectedEvent._id, action: 'end' })}><Square />End</Button>
-                  <Button size='sm' variant='destructive' disabled={selectedEvent.status === 'ended' || selectedEvent.status === 'cancelled'} onClick={() => actionMutation.mutate({ eventId: selectedEvent._id, action: 'cancel' })}><X />Cancel</Button>
+                  <Button
+                    size='sm'
+                    disabled={selectedEvent.status === 'live' || selectedEvent.status === 'ended' || selectedEvent.status === 'cancelled'}
+                    className='bg-emerald-600 text-white hover:bg-emerald-700 disabled:border-gray-200 disabled:bg-gray-100 disabled:text-gray-400'
+                    onClick={() => actionMutation.mutate({ eventId: selectedEvent._id, action: 'start' })}
+                  >
+                    <Play /> Bắt đầu
+                  </Button>
+                  <Button
+                    size='sm'
+                    variant='outline'
+                    disabled={selectedEvent.status !== 'live'}
+                    className='border-red-200 bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800 disabled:border-gray-200 disabled:bg-gray-100 disabled:text-gray-400'
+                    onClick={() => actionMutation.mutate({ eventId: selectedEvent._id, action: 'end' })}
+                  >
+                    <Square /> Kết thúc
+                  </Button>
+                  <Button
+                    size='sm'
+                    variant='outline'
+                    disabled={selectedEvent.status === 'ended' || selectedEvent.status === 'cancelled'}
+                    className='border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:text-amber-800 disabled:border-gray-200 disabled:bg-gray-100 disabled:text-gray-400'
+                    onClick={() => actionMutation.mutate({ eventId: selectedEvent._id, action: 'cancel' })}
+                  >
+                    <X /> Hủy
+                  </Button>
                 </div>
               </div>
 
