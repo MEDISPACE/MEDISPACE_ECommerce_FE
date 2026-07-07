@@ -672,11 +672,6 @@ export function ProductDetailPage() {
                 </div>
               </div>
 
-              <div className='text-sm'>
-                <span className='text-gray-600'>Hạn sử dụng:</span>
-                <span className='ml-2 font-medium'>{product.expiryInfo || '24 tháng kể từ ngày sản xuất'}</span>
-              </div>
-
               <div className='flex items-center gap-1 text-[#1E40AF] text-sm'>
                 <Truck className='w-4 h-4' />
                 <span>Giao hàng nhanh trong 2-4h tại TP.HCM</span>

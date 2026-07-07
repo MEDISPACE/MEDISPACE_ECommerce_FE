@@ -64,6 +64,7 @@ export const productService = {
       sortBy?: string
       sortOrder?: string
       categoryId?: string
+      brandIds?: string
       bypassTypesense?: string
     },
   ): Promise<{

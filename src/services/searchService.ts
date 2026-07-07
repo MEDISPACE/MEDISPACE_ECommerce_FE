@@ -94,6 +94,7 @@ export interface SearchProductsParams {
   categoryId?: string
   includeSubcategories?: boolean
   brandId?: string
+  brandIds?: string
   requiresPrescription?: boolean
   inStock?: boolean
   priceMin?: number
