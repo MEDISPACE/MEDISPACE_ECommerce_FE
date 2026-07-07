@@ -36,14 +36,14 @@ export default function MyReturnRequestsList() {
   const pagination = data?.pagination
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-6 text-gray-900 [color-scheme:light]'>
       {/* Header */}
       <div className='flex items-center justify-between'>
         <div>
           <h2 className='text-2xl font-bold text-blue-900'>Yêu cầu đổi/trả hàng</h2>
           <p className='text-muted-foreground'>Theo dõi các yêu cầu đổi trả của bạn</p>
         </div>
-        <Button variant='outline' size='sm' onClick={() => refetch()}>
+        <Button variant='outline' size='sm' onClick={() => refetch()} className='bg-white text-gray-900 hover:bg-gray-50'>
           <RefreshCw className='h-4 w-4 mr-2' />
           Làm mới
         </Button>
@@ -52,7 +52,7 @@ export default function MyReturnRequestsList() {
       {/* Filters */}
       <div className='flex gap-4'>
         <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as ReturnStatus | 'all')}>
-          <SelectTrigger className='w-[200px]'>
+          <SelectTrigger className='w-[200px] bg-white text-gray-900 border-gray-300 [color-scheme:light]'>
             <SelectValue placeholder='Trạng thái' />
           </SelectTrigger>
           <SelectContent>
@@ -70,7 +70,7 @@ export default function MyReturnRequestsList() {
       {isLoading && (
         <div className='space-y-4'>
           {[1, 2, 3].map((i) => (
-            <Card key={i}>
+            <Card key={i} className='border-[#E8EDF5] bg-white text-gray-900'>
               <CardContent className='pt-6'>
                 <div className='flex gap-4'>
                   <Skeleton className='h-16 w-16 rounded' />
@@ -88,11 +88,11 @@ export default function MyReturnRequestsList() {
 
       {/* Empty state */}
       {!isLoading && requests.length === 0 && (
-        <Card>
-          <CardContent className='pt-12 pb-12 text-center'>
-            <Package className='h-12 w-12 mx-auto text-muted-foreground mb-4' />
+        <Card className='border-[#E8EDF5] bg-white text-gray-900 shadow-sm'>
+          <CardContent className='pt-12 pb-12 text-center border-[#E8EDF5]'>
+            <Package className='h-12 w-12 mx-auto text-[#0A2463] mb-4' />
             <h3 className='font-medium mb-2'>Chưa có yêu cầu đổi/trả nào</h3>
-            <p className='text-sm text-muted-foreground'>
+            <p className='text-sm text-gray-600'>
               Bạn chưa gửi yêu cầu đổi/trả hàng nào. Nếu cần đổi trả sản phẩm, vui lòng vào chi tiết đơn hàng đã giao.
             </p>
           </CardContent>
@@ -103,7 +103,7 @@ export default function MyReturnRequestsList() {
       {!isLoading && requests.length > 0 && (
         <div className='space-y-4'>
           {requests.map((request: ReturnRequest) => (
-            <Card key={request._id} className='hover:shadow-md transition-shadow border-[#E8EDF5]'>
+            <Card key={request._id} className='bg-white text-gray-900 hover:shadow-md transition-shadow border-[#E8EDF5]'>
               <CardContent className='pt-6'>
                 <Link to={`/account/returns/${request._id}`} className='block'>
                   <div className='flex items-start justify-between gap-4'>

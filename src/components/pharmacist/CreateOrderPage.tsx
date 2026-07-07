@@ -51,11 +51,14 @@ import { DrugInteractionChecker } from '../products/DrugInteractionChecker'
 import { ProductNoteModal } from '../products/ProductNoteModal'
 import { ProductDetailModal } from '../products/ProductDetailModal'
 import { ImageWithFallback } from '../shared/ImageWithFallback'
+import { PaymentMethodDisplay, normalizePaymentMethod } from '../shared/PaymentMethodDisplay'
+import { ShippingMethodDisplay } from '../shared/ShippingMethodDisplay'
 import { toast } from 'sonner'
 import { orderService, dashboardService, prescriptionService } from '~/services/pharmacist'
 import { productService } from '~/services/productService'
 import { searchService } from '~/services/searchService'
 import { ghnService } from '~/services/ghnService'
+import { shippingService } from '~/services/shippingService'
 import { recommendationService } from '~/services/recommendationService'
 import type { RecommendedProduct } from '~/services/recommendationService'
 import { patientService, type PatientMedicalInfo } from '~/services/pharmacist/patient.service'
@@ -305,35 +308,58 @@ export function CreateOrderPage() {
   }, [shippingAddress.districtId, orderType])
 
   useEffect(() => {
-    if (shippingAddress.districtId && shippingAddress.wardCode && orderType === 'delivery') {
+    if (shippingAddress.address && shippingAddress.district && shippingAddress.province && orderType === 'delivery') {
       const fetchShippingFee = async () => {
         try {
-          const options = await ghnService.getShippingOptions({
-            to_district_id: shippingAddress.districtId as number,
-            to_ward_code: shippingAddress.wardCode as string,
-            weight: 1000, // Estimated 1kg for typical pharmacy orders
+          const orderValue = orderItems.reduce((sum, item) => sum + (item.product?.price || 0) * (item.quantity || 0), 0)
+          const weight = Math.max(500, orderItems.reduce((sum, item) => sum + (item.quantity || 0) * 250, 0))
+          const options = await shippingService.getRates({
+            toAddress: shippingAddress.address,
+            toWard: shippingAddress.ward,
+            toDistrict: shippingAddress.district,
+            toProvince: shippingAddress.province,
+            toDistrictId: shippingAddress.districtId,
+            toWardCode: shippingAddress.wardCode,
+            weight,
+            orderValue,
           })
+
           if (options && options.length > 0) {
             const formattedOptions = options.map((opt) => ({
-              id: `ghn:${opt.id}`,
+              id: opt.id,
               label: opt.name,
-              time: opt.estimatedDays || 'Giao hàng GHN',
+              description: opt.description,
+              time: opt.estimatedDays || '2-3 ng\u00e0y',
               price: opt.price,
-              icon: Truck,
+              provider: opt.provider,
             }))
             setGhnShippingOptions(formattedOptions)
-            // Auto Select earliest option
-            if (formattedOptions[0]) setSelectedDelivery(formattedOptions[0].id)
+            if (!formattedOptions.some((option) => option.id === selectedDelivery)) {
+              setSelectedDelivery(formattedOptions[0].id)
+            }
           } else {
             setGhnShippingOptions([])
           }
         } catch (error) {
-          console.error('Failed to get GHN shipping options', error)
+          console.error('Failed to get shipping options', error)
+          setGhnShippingOptions([])
         }
       }
       fetchShippingFee()
+    } else {
+      setGhnShippingOptions([])
     }
-  }, [shippingAddress.districtId, shippingAddress.wardCode, orderType])
+  }, [
+    orderItems,
+    orderType,
+    selectedDelivery,
+    shippingAddress.address,
+    shippingAddress.district,
+    shippingAddress.districtId,
+    shippingAddress.province,
+    shippingAddress.ward,
+    shippingAddress.wardCode,
+  ])
 
   // Auto-resolve GHN IDs from string names if IDs are missing (useful for legacy data)
   useEffect(() => {
@@ -881,7 +907,7 @@ export function CreateOrderPage() {
         !shippingAddress.districtId ||
         !shippingAddress.provinceId
       ) {
-        toast.error('Vui lòng nhập đầy đủ địa chỉ giao hàng GHN')
+        toast.error('Vui l\u00f2ng nh\u1eadp \u0111\u1ea7y \u0111\u1ee7 \u0111\u1ecba ch\u1ec9 giao h\u00e0ng')
         return
       }
 
@@ -896,7 +922,7 @@ export function CreateOrderPage() {
       }
 
       if (!selectedDelivery || ghnShippingOptions.length === 0) {
-        toast.error('Vui lòng chọn dịch vụ giao hàng GHN')
+        toast.error('Vui l\u00f2ng ch\u1ecdn ph\u01b0\u01a1ng th\u1ee9c giao h\u00e0ng')
         return
       }
     }
@@ -997,8 +1023,14 @@ export function CreateOrderPage() {
       // Redirect to order list
       navigate('/pharmacist/orders')
     } catch (error) {
+      const apiError = error as { response?: { data?: { message?: string; errors?: Record<string, { msg?: string }> } } }
+      const firstValidationError = apiError.response?.data?.errors
+        ? Object.values(apiError.response.data.errors).find((item) => item?.msg)?.msg
+        : undefined
+      const errorMessage = apiError.response?.data?.message || firstValidationError
+
       toast.error('Không thể tạo đơn hàng', {
-        description: 'Vui lòng kiểm tra lại thông tin và thử lại',
+        description: errorMessage || 'Vui lòng kiểm tra lại thông tin và thử lại',
       })
     } finally {
       setIsCreatingOrder(false)
@@ -1656,7 +1688,7 @@ export function CreateOrderPage() {
               <CardHeader>
                 <CardTitle className='text-blue-900 flex items-center mb-0'>
                   <MapPin className='w-5 h-5 mr-2' />
-                  Địa chỉ giao hàng (GHN)
+                  Địa chỉ giao hàng
                 </CardTitle>
               </CardHeader>
               <CardContent className='space-y-4'>
@@ -1831,7 +1863,6 @@ export function CreateOrderPage() {
                   </div>
                 ) : (
                   ghnShippingOptions.map((option) => {
-                    const Icon = option.icon || Truck
                     return (
                       <div
                         key={option.id}
@@ -1850,11 +1881,12 @@ export function CreateOrderPage() {
                               onChange={() => setSelectedDelivery(option.id)}
                               className='text-[#1E40AF]'
                             />
-                            <Icon className='w-4 h-4 text-gray-600' />
-                            <div>
-                              <div className='text-sm text-gray-900'>{option.label}</div>
-                              <div className='text-xs text-gray-500'>{option.time}</div>
-                            </div>
+                            <ShippingMethodDisplay
+                              method={option.id}
+                              label={option.label}
+                              description={option.description ? `${option.description} - ${option.time}` : option.time}
+                              logoClassName='h-6 w-full object-contain'
+                            />
                           </div>
                           <div className='text-sm text-gray-900 font-medium'>
                             {option.price === 0 ? 'Miễn phí' : `${option.price.toLocaleString('vi-VN')}đ`}
@@ -1879,6 +1911,7 @@ export function CreateOrderPage() {
             <CardContent className='space-y-2'>
               {(orderType === 'instore' ? IN_STORE_PAYMENT_METHODS : DELIVERY_PAYMENT_METHODS).map((method) => {
                 const Icon = method.icon
+                const useProviderLogo = ['payos', 'vnpay'].includes(normalizePaymentMethod(method.id))
                 return (
                   <div
                     key={method.id}
@@ -1896,8 +1929,14 @@ export function CreateOrderPage() {
                         onChange={() => setSelectedPayment(method.id)}
                         className='text-[#1E40AF] w-4 h-4'
                       />
-                      <Icon className='w-4 h-4 text-gray-600' />
-                      <span className='text-sm text-gray-900 font-medium'>{method.label}</span>
+                      {useProviderLogo ? (
+                        <PaymentMethodDisplay method={method.id} label={method.label} className='gap-2' logoClassName='h-6 w-full object-contain' showDescription={false} />
+                      ) : (
+                        <>
+                          <Icon className='w-4 h-4 text-gray-600' />
+                          <span className='text-sm text-gray-900 font-medium'>{method.label}</span>
+                        </>
+                      )}
                     </div>
                   </div>
                 )

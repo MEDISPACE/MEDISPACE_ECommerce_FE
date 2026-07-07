@@ -370,7 +370,7 @@ export function ProductCard({
               ) : (
                 <Button
                   onClick={handleAddToCart}
-                  className='w-full text-sm h-9 border border-[#0A2463] bg-white text-[#0A2463] hover:bg-[#0A2463] hover:text-white'
+                  className='w-full text-sm h-9 border border-[#0A2463] bg-white text-[#0A2463] hover:border-[#1E40AF] hover:bg-[#F0F6FF] hover:text-[#0A2463]'
                 >
                   Chọn mua
                 </Button>

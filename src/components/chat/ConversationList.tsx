@@ -4,6 +4,7 @@ import { Circle, MessageCircle, Trash2 } from 'lucide-react'
 import type { Conversation } from '../../types/chat'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Badge } from '../ui/badge'
+import { getConversationPreview, getConversationPreviewTitle } from '../../utils/chatPreview'
 
 interface ConversationListProps {
   conversations: Conversation[]
@@ -74,24 +75,26 @@ export function ConversationList({
   }
 
   return (
-    <div className='divide-y divide-gray-200'>
+    <div className='divide-y divide-gray-200 overflow-x-hidden'>
       {conversations.map((conversation) => {
         const otherUser = getOtherUser(conversation)
         const unreadCount = getUnreadCount(conversation)
         const isSelected = conversation._id === selectedConversationId
         const isOnline = otherUser?.isOnline || false
         const otherUserName = otherUser ? `${otherUser.firstName} ${otherUser.lastName}` : 'Người dùng'
+        const preview = getConversationPreview(conversation.lastMessage)
+        const previewTitle = getConversationPreviewTitle(conversation.lastMessage)
 
         return (
           <div
             key={conversation._id}
-            className={`relative group w-full p-3 flex items-start gap-3 hover:bg-[#F0F6FF] transition-colors ${
+            className={`relative group w-full min-w-0 overflow-hidden p-3 flex items-start gap-3 hover:bg-[#F0F6FF] transition-colors ${
               isSelected ? 'bg-[#F0F6FF] border-l-4 border-[#0A2463]' : ''
             }`}
           >
             <button
               onClick={() => onSelectConversation(conversation)}
-              className='flex-1 flex items-start gap-3 text-left'
+              className='flex-1 min-w-0 overflow-hidden flex items-start gap-3 text-left'
             >
               <div className='relative flex-shrink-0'>
                 <Avatar className='w-10 h-10 bg-[#0A2463]'>
@@ -109,16 +112,21 @@ export function ConversationList({
 
               {/* Conversation info */}
               <div className='flex-1 min-w-0'>
-                <div className='flex items-center justify-between mb-1'>
-                  <h4 className={`font-medium truncate text-gray-900`}>{otherUserName}</h4>
+                <div className='flex min-w-0 items-center justify-between gap-2 mb-1'>
+                  <h4 className='min-w-0 flex-1 truncate font-medium text-gray-900'>{otherUserName}</h4>
                   <span className='text-xs text-gray-500 flex-shrink-0 ml-2'>
                     {formatTime(conversation.lastMessageAt)}
                   </span>
                 </div>
 
-                <div className='flex items-center justify-between'>
-                  <p className={`text-sm truncate ${unreadCount > 0 ? 'text-gray-900 font-medium' : 'text-gray-600'}`}>
-                    {conversation.lastMessage || 'Chưa có tin nhắn'}
+                <div className='flex min-w-0 items-center justify-between gap-2'>
+                  <p
+                    className={`min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-sm ${
+                      unreadCount > 0 ? 'text-gray-900 font-medium' : 'text-gray-600'
+                    }`}
+                    title={previewTitle || preview}
+                  >
+                    {preview}
                   </p>
                   {/* FIX 3.6: Unread badge */}
                   {unreadCount > 0 && (

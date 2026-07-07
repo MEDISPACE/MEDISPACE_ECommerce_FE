@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Separator } from '../ui/separator'
 import { Badge } from '../ui/badge'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
+import { PaymentMethodDisplay } from '../shared/PaymentMethodDisplay'
+import { ShippingMethodDisplay } from '../shared/ShippingMethodDisplay'
 import { orderService } from '../../services/orderService'
 import type { Order } from '../../types/order'
 import { logger } from '../../utils/logger'
@@ -77,7 +79,7 @@ export function OrderSuccessPage() {
   }
 
   const breadcrumbItems = [
-    { label: 'Trang chủ', href: '/' },
+    { label: 'Trang ch?', href: '/' },
     { label: 'Đơn hàng của tôi', href: '/account/orders' },
     { label: paymentStatus === 'failed' ? 'Thanh toán thất bại' : 'Đặt hàng thành công' },
   ]
@@ -153,26 +155,6 @@ export function OrderSuccessPage() {
       currency: 'VND',
     }).format(amount)
   }
-
-  const getPaymentMethodText = (method: string) => {
-    switch (method) {
-      case 'cod':
-        return 'Thanh toán khi nhận hàng (COD)'
-      case 'bank_transfer':
-        return 'Chuyển khoản ngân hàng'
-      case 'credit_card':
-        return 'Thẻ tín dụng'
-      case 'e_wallet':
-        return 'Ví điện tử'
-      case 'vnpay':
-        return 'VNPay'
-      case 'payos':
-        return 'Thanh toán qua PayOS'
-      default:
-        return 'Thanh toán khi nhận hàng (COD)'
-    }
-  }
-
   const isCodPayment = order.paymentMethod?.toLowerCase() === 'cod'
   const hasPendingPayment = paymentStatus === 'pending' || order.paymentStatus === 'pending'
   const isPaymentPending = hasPendingPayment && !isCodPayment
@@ -251,9 +233,12 @@ export function OrderSuccessPage() {
             <div>
               <p className='text-sm text-gray-500 mb-1'>Phương thức thanh toán</p>
               <div className='flex items-center gap-2'>
-                <CreditCard className='w-4 h-4 text-gray-600' />
-                <span className='text-gray-900'>{getPaymentMethodText(order.paymentMethod)}</span>
+                <PaymentMethodDisplay method={order.paymentMethod} showDescription={false} />
               </div>
+            </div>
+            <div>
+              <p className='text-sm text-gray-500 mb-1'>Ph??ng th?c giao h?ng</p>
+              <ShippingMethodDisplay method={order.shippingMethod} showDescription={false} />
             </div>
             <div>
               <p className='text-sm text-gray-500 mb-1'>Thời gian giao hàng dự kiến</p>

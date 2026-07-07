@@ -54,6 +54,8 @@
 html,
 body {
   color-scheme: only light;
+  background-color: #f8fafb;
+  color: #1c2b4a;
 }
 
 /* Force browser-native form elements to use light colors */
@@ -62,6 +64,123 @@ textarea,
 select,
 button {
   color-scheme: only light;
+  forced-color-adjust: none;
+}
+
+/* Chrome/Edge auto dark mode can still affect native controls and unthemed slots. */
+input,
+textarea,
+select {
+  background-color: #ffffff;
+  color: #0f172a;
+  border-color: #bfdbfe;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #8094ae;
+  opacity: 1;
+}
+
+input[type='checkbox'],
+input[type='radio'] {
+  accent-color: #0a2463;
+  background-color: #ffffff;
+  border-color: #bfdbfe;
+}
+
+input[type='range'] {
+  accent-color: #0a2463;
+}
+
+[data-slot='card'],
+[data-slot='input'],
+[data-slot='textarea'],
+[data-slot='checkbox'],
+[data-slot='slider'],
+[data-slot='button'],
+[data-slot='select-trigger'],
+[data-slot='select-content'],
+[data-slot='dropdown-menu-content'],
+[data-slot='context-menu-content'],
+[data-slot='menubar-content'],
+[data-slot='popover-content'],
+[data-slot='hover-card-content'],
+[data-slot='command-dialog'],
+[data-slot='command'],
+[data-slot='alert'],
+[data-slot='tabs-list'],
+[data-slot='tabs-trigger'],
+[data-slot='table'],
+[data-slot='dialog-content'],
+[data-slot='sheet-content'] {
+  color-scheme: light;
+  forced-color-adjust: none;
+}
+
+[data-slot='card'],
+[data-slot='popover-content'],
+[data-slot='hover-card-content'],
+[data-slot='dropdown-menu-content'],
+[data-slot='context-menu-content'],
+[data-slot='menubar-content'],
+[data-slot='select-content'],
+[data-slot='dialog-content'],
+[data-slot='sheet-content'] {
+  background-color: rgba(255, 255, 255, 0.999);
+}
+
+[data-slot='card']:where(:not([class*='border-'])),
+[data-slot='popover-content']:where(:not([class*='border-'])),
+[data-slot='hover-card-content']:where(:not([class*='border-'])),
+[data-slot='dropdown-menu-content']:where(:not([class*='border-'])),
+[data-slot='context-menu-content']:where(:not([class*='border-'])),
+[data-slot='menubar-content']:where(:not([class*='border-'])),
+[data-slot='select-content']:where(:not([class*='border-'])) {
+  border-color: #e8edf5;
+}
+
+/* Chat bubbles use a dark brand background; keep their text readable even when browser dark-mode tools rewrite colors. */
+[data-chat-tone='own'],
+[data-chat-tone='own'] :where(*:not(img):not(svg):not(path)) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+[data-chat-product-card],
+[data-chat-product-card] :where(*:not(img):not(svg):not(path)) {
+  color: #0f172a !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+[data-chat-product-muted] {
+  color: #64748b !important;
+}
+
+[data-chat-product-title] {
+  color: #0f172a !important;
+}
+
+[data-chat-product-price] {
+  color: #0a2463 !important;
+}
+
+[data-chat-product-badge],
+[data-chat-product-badge] :where(*:not(svg):not(path)) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+[data-chat-product-cta],
+[data-chat-product-cta] :where(*:not(svg):not(path)) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+[data-chat-product-cta]:disabled,
+[data-chat-product-cta]:disabled :where(*:not(svg):not(path)) {
+  color: #64748b !important;
+  -webkit-text-fill-color: #64748b !important;
 }
 
 :root {
@@ -881,7 +1000,7 @@ html.scroll-instant {
   /* ===== CUSTOM SCROLLBAR STYLES ===== */
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: #93c5fd transparent;
+    scrollbar-color: #93c5fd #f8fafc;
   }
 
   .scrollbar-thin::-webkit-scrollbar {
@@ -890,7 +1009,7 @@ html.scroll-instant {
   }
 
   .scrollbar-thin::-webkit-scrollbar-track {
-    background: transparent;
+    background: #f8fafc;
     border-radius: 10px;
   }
 

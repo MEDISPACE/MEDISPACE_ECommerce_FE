@@ -1,5 +1,21 @@
 import { useState, useRef, useEffect } from 'react'
-import { Search, X, History, TrendingUp, Loader2, Camera, Tag, FolderOpen, Newspaper } from 'lucide-react'
+import {
+  Search,
+  X,
+  History,
+  TrendingUp,
+  Loader2,
+  Camera,
+  Tag,
+  FolderOpen,
+  Newspaper,
+  Package,
+  User,
+  Droplets,
+  Leaf,
+  MonitorCheck,
+  Pill,
+} from 'lucide-react'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Card, CardContent } from '../ui/card'
@@ -13,6 +29,28 @@ interface EnhancedSearchBarProps {
   placeholder?: string
   className?: string
   onSearch?: (query: string) => void
+}
+
+const getCategoryIcon = (suggestion: SearchSuggestion) => {
+  const slug = suggestion.slug?.toLowerCase() ?? ''
+  const normalizedText = suggestion.text
+    ?.normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase() ?? ''
+
+  if (slug.includes('cham-soc-ca-nhan') || normalizedText.includes('cham soc ca nhan')) return User
+  if (slug.includes('duoc-my-pham') || normalizedText.includes('duoc my pham')) return Droplets
+  if (slug.includes('thiet-bi-y-te') || normalizedText.includes('thiet bi y te')) return MonitorCheck
+  if (slug === 'thuoc' || normalizedText === 'thuoc') return Pill
+  if (slug.includes('thuc-pham-chuc-nang') || normalizedText.includes('thuc pham chuc nang')) return Leaf
+
+  return Package
+}
+
+function CategorySuggestionIcon({ suggestion }: { suggestion: SearchSuggestion }) {
+  const Icon = getCategoryIcon(suggestion)
+
+  return <Icon className='absolute h-4 w-4 text-green-600' />
 }
 
 export function EnhancedSearchBar({
@@ -297,8 +335,8 @@ export function EnhancedSearchBar({
                             selectedIndex === brands.length + index ? 'bg-green-50 border border-green-200' : 'hover:bg-gray-50'
                           }`}
                         >
-                          <div className='w-8 h-8 bg-green-50 rounded flex items-center justify-center text-base'>
-                            {suggestion.icon || '📁'}
+                          <div aria-hidden='true' className='relative w-8 h-8 bg-green-50 rounded flex items-center justify-center text-transparent'>
+                            <CategorySuggestionIcon suggestion={suggestion} />
                           </div>
                           <div className='flex-1 min-w-0'>
                             <div className='font-medium text-sm truncate'>{suggestion.text}</div>

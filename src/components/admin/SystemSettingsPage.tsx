@@ -8,6 +8,8 @@ import { Label } from '../ui/label'
 import { Switch } from '../ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { Separator } from '../ui/separator'
+import { PaymentMethodLogo } from '../shared/PaymentMethodDisplay'
+import { ShippingMethodDisplay } from '../shared/ShippingMethodDisplay'
 import { toast } from 'sonner'
 
 export function SystemSettingsPage() {
@@ -202,7 +204,7 @@ export function SystemSettingsPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value='VND'>VND (₫)</SelectItem>
+                        <SelectItem value='VND'>VND (â'«)</SelectItem>
                         <SelectItem value='USD'>USD ($)</SelectItem>
                         <SelectItem value='EUR'>EUR (€)</SelectItem>
                       </SelectContent>
@@ -416,7 +418,10 @@ export function SystemSettingsPage() {
                 {/* VNPay */}
                 <div className='p-4 border border-[#BFDBFE] rounded-lg'>
                   <div className='flex items-center justify-between mb-3'>
-                    <h4 className='text-gray-900'>VNPay</h4>
+                    <h4 className='flex items-center gap-2 text-gray-900'>
+                      <PaymentMethodLogo method='vnpay' className='h-5 w-auto max-w-[80px]' />
+                      <span>Gateway</span>
+                    </h4>
                     <Switch
                       checked={settings.vnpayEnabled}
                       onCheckedChange={(val) => handleChange('vnpayEnabled', val)}
@@ -477,7 +482,7 @@ export function SystemSettingsPage() {
                 {/* GHN */}
                 <div className='p-4 border border-[#BFDBFE] rounded-lg'>
                   <div className='flex items-center justify-between mb-3'>
-                    <h4 className='text-gray-900'>Giao Hàng Nhanh (GHN)</h4>
+                    <ShippingMethodDisplay method='ghn' label='Giao Hàng Nhanh (GHN)' showDescription={false} />
                     <Switch checked={settings.ghnEnabled} onCheckedChange={(val) => handleChange('ghnEnabled', val)} />
                   </div>
                   {settings.ghnEnabled && (
@@ -506,7 +511,7 @@ export function SystemSettingsPage() {
                 {/* GHTK */}
                 <div className='p-4 border border-[#BFDBFE] rounded-lg'>
                   <div className='flex items-center justify-between'>
-                    <h4 className='text-gray-900'>Giao Hàng Tiết Kiệm (GHTK)</h4>
+                    <ShippingMethodDisplay method='ghtk' label='Giao Hàng Tiết Kiệm (GHTK)' showDescription={false} />
                     <Switch
                       checked={settings.ghtkEnabled}
                       onCheckedChange={(val) => handleChange('ghtkEnabled', val)}
@@ -590,3 +595,4 @@ export function SystemSettingsPage() {
     </div>
   )
 }
+
