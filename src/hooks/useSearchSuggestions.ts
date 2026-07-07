@@ -100,7 +100,7 @@ export function useSearchSuggestions(query: string): GroupedSuggestions {
     text: hit.document.name,
     type: 'category' as const,
     slug: hit.document.slug,
-    icon: hit.document.icon || '📁',
+    icon: hit.document.icon || '',
     productCount: hit.document.productCount,
   }))
 

@@ -9,6 +9,7 @@ import { chatService } from '~/services/chatService'
 import { useAuth } from '~/contexts/AuthContext'
 import { useSocketContext } from '~/contexts/SocketContext'
 import type { Conversation } from '~/types/chat'
+import { getConversationPreview, getConversationPreviewTitle } from '~/utils/chatPreview'
 import { toast } from 'sonner'
 
 type TabType = 'pending' | 'mine'
@@ -306,23 +307,28 @@ export function PharmacistChatPage() {
               </div>
             ) : /* Tab "Chờ xử lý" – show assign button; Tab "Của tôi" – show delete button */
             activeTab === 'pending' ? (
-              <div className='divide-y divide-gray-100'>
+              <div className='divide-y divide-gray-100 overflow-x-hidden'>
                 {filteredConversations.map((conv) => (
                   <div
                     key={conv._id}
-                    className={`p-3 hover:bg-[#F0F6FF] transition-colors ${
+                    className={`min-w-0 overflow-hidden p-3 hover:bg-[#F0F6FF] transition-colors ${
                       selectedConversation?._id === conv._id ? 'bg-[#F0F6FF] border-l-4 border-[#1E40AF]' : ''
                     }`}
                   >
-                    <div className='flex items-center gap-2 mb-1'>
+                    <div className='flex min-w-0 items-center gap-2 mb-1 overflow-hidden'>
                       <div className='w-8 h-8 bg-gradient-to-r from-[#0A2463] to-[#1E40AF] rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0'>
                         {conv.customer?.firstName?.charAt(0) || 'K'}
                       </div>
-                      <div className='flex-1 min-w-0'>
+                      <div className='flex-1 min-w-0 overflow-hidden'>
                         <p className='font-medium text-sm text-gray-900 truncate'>
                           {conv.customer?.firstName} {conv.customer?.lastName}
                         </p>
-                        <p className='text-xs text-gray-500 truncate'>{conv.lastMessage || 'Chưa có tin nhắn'}</p>
+                        <p
+                          className='min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-xs text-gray-500'
+                          title={getConversationPreviewTitle(conv.lastMessage) || getConversationPreview(conv.lastMessage)}
+                        >
+                          {getConversationPreview(conv.lastMessage)}
+                        </p>
                       </div>
                     </div>
                     {/* Option A: cảnh báo nếu đã assign nhưng pharmacist offline */}

@@ -202,11 +202,11 @@ export function ChatInput({
           disabled={disabled || (!message.trim() && imageUrls.length === 0)}
           className={`flex-shrink-0 w-9 h-9 p-0 rounded-full transition-all duration-200 ${
             message.trim() || imageUrls.length > 0
-              ? 'bg-[#0A2463] hover:bg-[#1E40AF] shadow-md hover:shadow-[#BFDBFE] hover:scale-105'
+              ? 'bg-[#0A2463] text-white hover:bg-[#1E40AF] hover:text-white shadow-md hover:shadow-[#BFDBFE] hover:scale-105'
               : 'bg-gray-200 text-gray-400 cursor-not-allowed'
           }`}
         >
-          <Send className='w-4 h-4' />
+          <Send className={message.trim() || imageUrls.length > 0 ? 'w-4 h-4 text-white' : 'w-4 h-4'} />
         </Button>
       </div>
     </div>

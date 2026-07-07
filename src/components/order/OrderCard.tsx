@@ -9,6 +9,7 @@ import { reviewService } from '../../services/reviewService'
 import { toast } from 'sonner'
 import { getOrderStatusBadge } from '../../utils/badgeUtils'
 import { type Order, type OrderItem } from '../../types/account'
+import { ShippingMethodDisplay } from '../shared/ShippingMethodDisplay'
 
 interface OrderCardProps {
   order: Order
@@ -52,7 +53,7 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
   }
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN').format(price) + 'đ'
+    return new Intl.NumberFormat('vi-VN').format(price) + '\u0111'
   }
 
   const getEstimatedDelivery = () => {
@@ -177,6 +178,14 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
             <p className='text-sm text-gray-600'>
               Tổng thanh toán: <span className='font-medium text-[#1E40AF]'>{formatPrice(order.total)}</span>
             </p>
+            {order.deliveryMethod && (
+              <ShippingMethodDisplay
+                method={order.deliveryMethod}
+                className='pt-1'
+                logoClassName='h-5 w-full object-contain'
+                showDescription={false}
+              />
+            )}
             {order.estimatedDelivery && <p className='text-sm text-gray-600'>{getEstimatedDelivery()}</p>}
           </div>
         </div>

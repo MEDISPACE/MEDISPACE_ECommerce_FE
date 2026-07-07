@@ -37,6 +37,8 @@ import { orderService } from '../../services/orderService'
 import { reviewService } from '../../services/reviewService'
 import { useCart } from '../../contexts/CartContext'
 import { WriteReviewDialog } from '../reviews/WriteReviewDialog'
+import { PaymentMethodDisplay } from '../shared/PaymentMethodDisplay'
+import { ShippingMethodDisplay } from '../shared/ShippingMethodDisplay'
 import type { Order, OrderItem } from '../../types/account'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { RecommendationCarousel } from '../products/RecommendationCarousel'
@@ -240,7 +242,7 @@ export function OrderDetailPage() {
   }
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN').format(price) + 'đ'
+    return new Intl.NumberFormat('vi-VN').format(price) + '\u0111'
   }
 
   const getTimelineIcon = (status: string, isCompleted: boolean) => {
@@ -524,7 +526,7 @@ export function OrderDetailPage() {
               </div>
               <div>
                 <p className='text-sm font-medium'>Phương thức giao hàng:</p>
-                <p className='text-sm text-gray-600'>{order.deliveryMethod}</p>
+                <ShippingMethodDisplay method={order.deliveryMethod} className='mt-1' showDescription={false} />
               </div>
               {order.estimatedDelivery && (
                 <div>
@@ -546,7 +548,7 @@ export function OrderDetailPage() {
             <CardContent className='space-y-3'>
               <div>
                 <p className='text-sm font-medium'>Phương thức thanh toán:</p>
-                <p className='text-sm text-gray-600'>{order.paymentMethod}</p>
+                <PaymentMethodDisplay method={order.paymentMethod} className='mt-1' showDescription={false} />
               </div>
               <div>
                 <p className='text-sm font-medium'>Trạng thái thanh toán:</p>

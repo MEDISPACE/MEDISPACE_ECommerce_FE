@@ -5,6 +5,8 @@ import { Separator } from '../../ui/separator'
 import { Package, MapPin, Phone, ShoppingCart, CreditCard, Truck } from 'lucide-react'
 import type { Order } from '~/services/pharmacist'
 import { formatCurrency } from '~/utils/formatCurrency'
+import { PaymentMethodDisplay } from '../PaymentMethodDisplay'
+import { ShippingMethodDisplay } from '../ShippingMethodDisplay'
 
 interface OrderDetailsDrawerProps {
   isOpen: boolean
@@ -109,6 +111,23 @@ export function OrderDetailsDrawer({ isOpen, onClose, order }: OrderDetailsDrawe
                 <span className='text-sm text-gray-600'>Thanh toán:</span>
                 {getPaymentStatusBadge(order.paymentStatus as PaymentStatus, order.paymentMethod)}
               </div>
+              {order.paymentMethod && (
+                <div className='flex justify-between items-center p-3 bg-gradient-to-r from-blue-50 to-white rounded-lg'>
+                  <span className='text-sm text-gray-600'>Phương thức:</span>
+                  <PaymentMethodDisplay method={order.paymentMethod} className='justify-end gap-2' logoClassName='h-4 w-auto max-w-full' showDescription={false} />
+                </div>
+              )}
+              {(order.shippingMethod || order.deliveryMethod) && (
+                <div className='flex justify-between items-center p-3 bg-white rounded-lg'>
+                  <span className='text-sm text-gray-600'>V?n chuy?n:</span>
+                  <ShippingMethodDisplay
+                    method={order.shippingMethod || order.deliveryMethod}
+                    className='justify-end gap-2'
+                    logoClassName='h-5 w-full object-contain'
+                    showDescription={false}
+                  />
+                </div>
+              )}
             </CardContent>
           </Card>
 

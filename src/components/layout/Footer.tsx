@@ -1,8 +1,9 @@
 import { Phone, Mail, MapPin, Facebook, Youtube, Shield, BadgeCheck, CreditCard } from 'lucide-react'
 import { Link } from 'react-router'
 import medispaceLogo from '../../assets/MEDISPACE_Logo_Final.png'
+import { PaymentMethodLogo } from '../shared/PaymentMethodDisplay'
 
-const paymentMethods = ['VNPay', 'MoMo', 'ZaloPay', 'COD', 'Visa', 'Mastercard']
+const paymentMethods = ['vnpay', 'payos', 'MoMo', 'ZaloPay', 'COD', 'Visa', 'Mastercard']
 
 export function Footer() {
   return (
@@ -24,7 +25,7 @@ export function Footer() {
               </div>
               <div>Số GCN: <span className='font-mono font-semibold'>GPP-MS-2026-001</span></div>
               <div>ĐKKD: <span className='font-mono'>0123456789</span></div>
-              <div>Địa chỉ: 123 Đường ABC, Quận 1, TP. Hồ Chí Minh</div>
+              <div>Địa chỉ: 01 Đường Võ Văn Ngân, phường Thủ Đức, TP. Hồ Chí Minh</div>
               <div className='flex items-center gap-2 text-[#059669]'>
                 <BadgeCheck className='h-4 w-4' />
                 Được cấp phép bởi cơ quan quản lý y tế có thẩm quyền
@@ -33,7 +34,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className='font-display font-semibold text-[#0A2463] mb-4'>Về MediSpace</h4>
+            <h4 className='font-display font-semibold text-[#0A2463] mb-4'>Về MEDISPACE</h4>
             <ul className='space-y-2 text-sm'>
               <li><Link to='/about' className='text-[#4B5E7A] hover:text-[#0A2463]'>Về chúng tôi</Link></li>
               <li><Link to='/products' className='text-[#4B5E7A] hover:text-[#0A2463]'>Sản phẩm</Link></li>
@@ -67,7 +68,7 @@ export function Footer() {
               </a>
               <div className='flex items-start gap-2 text-[#4B5E7A]'>
                 <MapPin className='w-5 h-5 text-[#0A2463] mt-0.5' />
-                <span>123 Đường ABC, Quận 1, TP. Hồ Chí Minh</span>
+                <span>01 Đường Võ Văn Ngân, phường Thủ Đức, TP. Hồ Chí Minh</span>
               </div>
             </div>
 
@@ -78,8 +79,12 @@ export function Footer() {
               </div>
               <div className='flex flex-wrap gap-2'>
                 {paymentMethods.map((method) => (
-                  <span key={method} className='rounded-md border border-[#E8EDF5] bg-[#F8FAFB] px-2.5 py-1 text-xs font-semibold text-[#1C2B4A]'>
-                    {method}
+                  <span key={method} className='inline-flex h-8 items-center rounded-md border border-[#E8EDF5] bg-[#F8FAFB] px-2.5 py-1 text-xs font-semibold text-[#1C2B4A]'>
+                    {method === 'vnpay' || method === 'payos' ? (
+                      <PaymentMethodLogo method={method} className='h-4 w-auto max-w-[64px]' />
+                    ) : (
+                      method
+                    )}
                   </span>
                 ))}
               </div>
