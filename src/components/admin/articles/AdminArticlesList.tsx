@@ -70,6 +70,7 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
   const [loading, setLoading] = useState(true)
   const [insightsLoading, setInsightsLoading] = useState(false)
   const [insightsDays, setInsightsDays] = useState('30')
+  const [activeTab, setActiveTab] = useState('list')
   const [filter, setFilter] = useState({
     status: 'all',
     categoryId: 'all',
@@ -119,6 +120,13 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
     } finally {
       setInsightsLoading(false)
     }
+  }
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value)
+    requestAnimationFrame(() => {
+      document.querySelector('main')?.scrollTo({ top: 0, behavior: 'auto' })
+    })
   }
 
   const handleDelete = async (id: string) => {
@@ -205,7 +213,7 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
     }))
 
     return (
-      <div className='space-y-6'>
+      <div className='space-y-6 scroll-mt-24'>
         <div className='flex flex-wrap items-center justify-between gap-4'>
           <div>
             <h2 className='text-2xl font-bold text-gray-900'>Insights bài viết</h2>
@@ -334,43 +342,43 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
           </Card>
         </div>
 
-        <Card className='bg-white border-amber-100'>
+        <Card className='bg-white border-amber-100 shadow-sm'>
           <CardContent className='p-6'>
             <div className='flex items-center gap-2 mb-4'>
               <ShieldCheck className='h-5 w-5 text-amber-600' />
               <h3 className='text-lg font-semibold text-gray-900'>Cảnh báo editorial cần rà soát</h3>
             </div>
-            <div className='rounded-md border border-amber-100 overflow-hidden'>
-              <Table>
+            <div className='overflow-hidden rounded-md border border-amber-200 bg-white'>
+              <Table className='border-separate border-spacing-0'>
                 <TableHeader>
-                  <TableRow className='bg-amber-50 hover:bg-amber-50'>
-                    <TableHead>Bài viết</TableHead>
-                    <TableHead>Rủi ro</TableHead>
-                    <TableHead>Vấn đề</TableHead>
-                    <TableHead className='text-right'>Views</TableHead>
+                  <TableRow className='border-b border-amber-200 bg-amber-50/80 hover:bg-amber-50/80'>
+                    <TableHead className='px-3 text-gray-900'>Bài viết</TableHead>
+                    <TableHead className='px-3 text-gray-900'>Rủi ro</TableHead>
+                    <TableHead className='px-3 text-gray-900'>Vấn đề</TableHead>
+                    <TableHead className='px-3 text-right text-gray-900'>Views</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {insights.editorialWarnings.length === 0 ? (
-                    <TableRow>
+                    <TableRow className='border-b-0'>
                       <TableCell colSpan={4} className='text-center py-6 text-gray-500'>
                         Không có cảnh báo editorial đáng chú ý.
                       </TableCell>
                     </TableRow>
                   ) : (
                     insights.editorialWarnings.map((article) => (
-                      <TableRow key={article._id}>
-                        <TableCell className='max-w-[360px]'>
+                      <TableRow key={article._id} className='border-b border-amber-100 last:border-b-0 hover:bg-amber-50/35'>
+                        <TableCell className='max-w-[360px] px-3 py-3'>
                           <Link to={`${basePath}/${article._id}/edit`} className='font-medium text-gray-900 hover:text-[#1E40AF] line-clamp-2'>
                             {article.title}
                           </Link>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className='px-3 py-3'>
                           <Badge variant='outline' className={article.riskLevel === 'emergency-sensitive' ? 'border-red-200 text-red-700 bg-red-50' : ''}>
                             {article.riskLevel || 'general'}
                           </Badge>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className='px-3 py-3'>
                           <div className='flex flex-wrap gap-1'>
                             {getEditorialReasons(article).map((reason) => (
                               <Badge key={reason} variant='outline' className='border-amber-200 text-amber-700 bg-amber-50'>
@@ -380,7 +388,7 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
                             ))}
                           </div>
                         </TableCell>
-                        <TableCell className='text-right'>{formatNumber(article.viewCount)}</TableCell>
+                        <TableCell className='px-3 py-3 text-right text-gray-900'>{formatNumber(article.viewCount)}</TableCell>
                       </TableRow>
                     ))
                   )}
@@ -403,7 +411,7 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
   }
 
   return (
-    <div className='p-6 space-y-6'>
+    <div className='p-6 space-y-6 [color-scheme:light] forced-color-adjust-none'>
       <div className='flex justify-between items-center bg-white p-6 rounded-lg shadow-sm border border-blue-50'>
         <div>
           <h1
@@ -471,11 +479,23 @@ export function AdminArticlesList({ basePath = '/admin/articles' }: AdminArticle
         </Card>
       </div>
 
-      <Tabs defaultValue='list' className='space-y-6'>
+      <Tabs value={activeTab} onValueChange={handleTabChange} className='space-y-6'>
         {isAdmin && (
-          <TabsList className='grid w-full max-w-md grid-cols-2 bg-[#F0F6FF] p-1.5 rounded-lg h-auto'>
-            <TabsTrigger value='list'>Danh sách</TabsTrigger>
-            <TabsTrigger value='insights'>Insights</TabsTrigger>
+          <TabsList className='inline-grid h-12 w-full max-w-[360px] grid-cols-2 rounded-md border border-[#D6E4F5] bg-white p-1 shadow-sm'>
+            <TabsTrigger
+              value='list'
+              className='h-10 rounded-[6px] border-0 text-sm font-semibold text-[#4B5E7A] hover:bg-[#F0F6FF] hover:text-[#0A2463] data-[state=active]:bg-[#0A2463] data-[state=active]:text-white data-[state=active]:shadow-sm focus-visible:ring-[#93C5FD]/40'
+            >
+              <FileText className='h-4 w-4' />
+              Danh sách
+            </TabsTrigger>
+            <TabsTrigger
+              value='insights'
+              className='h-10 rounded-[6px] border-0 text-sm font-semibold text-[#4B5E7A] hover:bg-[#F0F6FF] hover:text-[#0A2463] data-[state=active]:bg-[#0A2463] data-[state=active]:text-white data-[state=active]:shadow-sm focus-visible:ring-[#93C5FD]/40'
+            >
+              <BarChart3 className='h-4 w-4' />
+              Insights
+            </TabsTrigger>
           </TabsList>
         )}
 

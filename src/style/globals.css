@@ -1023,6 +1023,65 @@ html.scroll-instant {
     background: #60a5fa;
   }
 
+  .app-sidebar-scrollbar,
+  .admin-sidebar-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.55) transparent;
+  }
+
+  .app-sidebar-scrollbar::-webkit-scrollbar,
+  .admin-sidebar-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .app-sidebar-scrollbar::-webkit-scrollbar-track,
+  .admin-sidebar-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .app-sidebar-scrollbar::-webkit-scrollbar-thumb,
+  .admin-sidebar-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.35);
+    border-radius: 999px;
+  }
+
+  .app-sidebar-scrollbar:hover::-webkit-scrollbar-thumb,
+  .admin-sidebar-scrollbar:hover::-webkit-scrollbar-thumb {
+    background: rgba(30, 64, 175, 0.42);
+  }
+
+  .app-content-scrollbar,
+  .admin-content-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(100, 116, 139, 0.45) transparent;
+  }
+
+  .app-content-scrollbar::-webkit-scrollbar,
+  .admin-content-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .app-content-scrollbar::-webkit-scrollbar-track,
+  .admin-content-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .app-content-scrollbar::-webkit-scrollbar-thumb,
+  .admin-content-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(100, 116, 139, 0.28);
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background-clip: padding-box;
+  }
+
+  .app-content-scrollbar::-webkit-scrollbar-thumb:hover,
+  .admin-content-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(30, 64, 175, 0.45);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
   /* Hide scrollbar but keep functionality */
   .scrollbar-hide {
     -ms-overflow-style: none;

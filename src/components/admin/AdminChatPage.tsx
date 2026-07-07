@@ -22,6 +22,7 @@ import { Badge } from '../ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { MessageList } from '../chat/MessageList'
 import { apiClient } from '~/services/apiClient'
+import { PaginationComponent } from '../shared/PaginationComponent'
 import { format, isToday, isYesterday } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { toast } from 'sonner'
@@ -472,10 +473,10 @@ export function AdminChatPage() {
   return (
     <div className='space-y-6'>
       {/* Page Header */}
-      <div className='flex items-center justify-between'>
+      <div className='flex items-center justify-between rounded-lg border border-[#E8EDF5] bg-white p-6 shadow-sm'>
         <div>
-          <h1 className='text-2xl font-bold text-gray-900 flex items-center gap-2'>
-            <MessageCircle className='w-7 h-7 text-[#1E40AF]' />
+          <h1 className='flex items-center gap-3 bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text text-3xl font-bold text-transparent'>
+            <MessageCircle className='w-8 h-8 text-[#1E40AF]' />
             Quản lý Chat
           </h1>
           <p className='text-sm text-gray-500 mt-1'>Giám sát và quản lý các cuộc tư vấn của dược sĩ</p>
@@ -494,7 +495,7 @@ export function AdminChatPage() {
       </div>
 
       {/* Tabs */}
-      <div className='flex gap-1 bg-gray-100 p-1 rounded-lg w-fit'>
+      <div className='inline-grid h-12 w-full max-w-[360px] grid-cols-2 rounded-md border border-[#D6E4F5] bg-white p-1 shadow-sm'>
         {(
           [
             { id: 'overview', icon: BarChart3, label: 'Tổng quan' },
@@ -504,7 +505,7 @@ export function AdminChatPage() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === tab.id ? 'bg-white text-[#1E40AF] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            className={`flex h-10 items-center justify-center gap-2 rounded-[6px] text-sm font-semibold transition-all ${activeTab === tab.id ? 'bg-[#0A2463] text-white shadow-sm' : 'text-[#4B5E7A] hover:bg-[#F0F6FF] hover:text-[#0A2463]'}`}
           >
             <tab.icon className='w-4 h-4' /> {tab.label}
           </button>
@@ -597,9 +598,9 @@ export function AdminChatPage() {
           style={{ height: 'calc(100vh - 240px)', minHeight: 500 }}
         >
           {/* List Panel */}
-          <div className='bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden'>
+          <div className='flex flex-col overflow-hidden rounded-lg border border-[#D6E4F5] bg-white shadow-sm'>
             {/* Filters */}
-            <div className='p-4 border-b space-y-3 flex-shrink-0'>
+            <div className='flex-shrink-0 space-y-3 border-b border-[#E8EDF5] bg-[#F8FBFF] p-4'>
               <div className='flex gap-2'>
                 <div className='relative flex-1'>
                   <Search className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400' />
@@ -608,23 +609,23 @@ export function AdminChatPage() {
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && loadConversations(1)}
-                    className='pl-9 h-9 text-sm'
+                    className='h-10 border-[#BFDBFE] bg-white pl-9 text-sm focus-visible:border-[#1E40AF] focus-visible:ring-[#BFDBFE]/60'
                   />
                 </div>
                 <Button
                   size='sm'
                   onClick={() => loadConversations(1)}
-                  className='h-9 bg-[#0A2463] hover:bg-[#071A49] text-white'
+                  className='h-10 w-10 bg-[#0A2463] p-0 text-white hover:bg-[#071A49]'
                 >
                   <Filter className='w-4 h-4' />
                 </Button>
               </div>
-              <div className='flex gap-1'>
+              <div className='flex flex-wrap gap-2'>
                 {(['all', 'active', 'closed'] as const).map((s) => (
                   <button
                     key={s}
                     onClick={() => setStatusFilter(s)}
-                    className={`px-3 py-1 text-xs rounded-full font-medium transition-colors ${statusFilter === s ? 'bg-[#0A2463] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                    className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${statusFilter === s ? 'bg-[#0A2463] text-white shadow-sm' : 'bg-white text-[#4B5E7A] ring-1 ring-[#D6E4F5] hover:bg-[#F0F6FF] hover:text-[#0A2463]'}`}
                   >
                     {s === 'all' ? 'Tất cả' : s === 'active' ? 'Đang hoạt động' : 'Đã đóng'}
                   </button>
@@ -644,17 +645,17 @@ export function AdminChatPage() {
                   <p className='text-gray-500 text-sm'>Không có cuộc hội thoại nào</p>
                 </div>
               ) : (
-                <div className='divide-y divide-gray-100'>
+                <div className='divide-y divide-[#E8EDF5]'>
                   {conversations.map((conv) => (
                     <button
                       key={conv._id}
                       onClick={() => setSelectedConversation(conv)}
-                      className={`w-full p-4 text-left hover:bg-[#F0F6FF] transition-colors ${selectedConversation?._id === conv._id ? 'bg-[#F0F6FF] border-l-2 border-[#1E40AF]' : ''}`}
+                      className={`w-full p-4 text-left transition-colors hover:bg-[#F0F6FF] ${selectedConversation?._id === conv._id ? 'bg-[#F0F6FF] shadow-[inset_4px_0_0_#1E40AF]' : ''}`}
                     >
                       <div className='flex items-start gap-3'>
-                        <Avatar className='w-9 h-9 flex-shrink-0'>
+                        <Avatar className='h-10 w-10 flex-shrink-0 ring-2 ring-white shadow-sm'>
                           <AvatarImage src={conv.customer.avatar || undefined} />
-                          <AvatarFallback className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white text-xs'>
+                          <AvatarFallback className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-sm text-white'>
                             {conv.customer.firstName[0]}
                           </AvatarFallback>
                         </Avatar>
@@ -667,23 +668,23 @@ export function AdminChatPage() {
                               {formatTime(conv.lastMessageAt)}
                             </span>
                           </div>
-                          <p className='text-xs text-gray-500 truncate mb-1'>
+                          <p className='mb-2 truncate text-xs leading-5 text-[#4B5E7A]'>
                             {conv.lastMessage || 'Chưa có tin nhắn'}
                           </p>
                           <div className='flex items-center gap-2'>
                             <Badge
-                              className={`text-xs px-1.5 py-0 ${conv.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}
+                              className={`px-2 py-0.5 text-xs ${conv.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}
                             >
                               {conv.status === 'active' ? 'Active' : 'Closed'}
                             </Badge>
                             {conv.pharmacist ? (
-                              <span className='text-xs text-gray-400 truncate'>
+                              <span className='truncate text-xs text-gray-500'>
                                 DS: {conv.pharmacist.firstName} {conv.pharmacist.lastName}
                               </span>
                             ) : (
-                              <span className='text-xs text-amber-600 font-medium'>⚠ Chưa phân công</span>
+                              <span className='rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700'>Chưa phân công</span>
                             )}
-                            <span className='text-xs text-gray-400 ml-auto'>{conv.messageCount} tin</span>
+                            <span className='ml-auto rounded-full bg-[#E8EDF5] px-2 py-0.5 text-xs font-medium text-[#1E40AF]'>{conv.messageCount} tin</span>
                           </div>
                         </div>
                       </div>
@@ -695,28 +696,8 @@ export function AdminChatPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className='flex items-center justify-between px-4 py-3 border-t flex-shrink-0'>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={() => loadConversations(page - 1)}
-                  disabled={page <= 1}
-                  className='h-8 text-xs'
-                >
-                  Trước
-                </Button>
-                <span className='text-xs text-gray-500'>
-                  Trang {page} / {totalPages}
-                </span>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={() => loadConversations(page + 1)}
-                  disabled={page >= totalPages}
-                  className='h-8 text-xs'
-                >
-                  Tiếp
-                </Button>
+              <div className='flex-shrink-0 border-t border-blue-400 px-4 py-4'>
+                <PaginationComponent currentPage={page} totalPages={totalPages} onPageChange={loadConversations} />
               </div>
             )}
           </div>

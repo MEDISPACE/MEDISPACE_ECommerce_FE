@@ -3,12 +3,13 @@ import { motion } from 'framer-motion'
 import {
   Plus, Search, Edit2, Trash2, ToggleLeft, ToggleRight,
   Tag, Calendar, Percent, DollarSign, Users, Copy, CheckCircle,
-  ChevronLeft, ChevronRight, Loader2, AlertCircle, RefreshCw, X
+  Loader2, AlertCircle, RefreshCw, X
 } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Input } from '../ui/input'
 import { Badge } from '../ui/badge'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table'
 import { Label } from '../ui/label'
 import { Textarea } from '../ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
@@ -24,6 +25,7 @@ import { Separator } from '../ui/separator'
 import { apiClient } from '../../services/apiClient'
 import adminService from '../../services/adminService'
 import productService from '../../services/productService'
+import { PaginationComponent } from '../shared/PaginationComponent'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -381,9 +383,12 @@ export function CouponManagementPage() {
       {/* Table */}
       <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
         <CardHeader>
-          <CardTitle className='text-base'>Danh sách coupon ({total})</CardTitle>
+          <CardTitle className='flex items-center gap-2 text-base'>
+            <Tag className='w-5 h-5 text-[#1E40AF]' />
+            Danh sách coupon ({total})
+          </CardTitle>
         </CardHeader>
-        <CardContent className='p-0'>
+        <CardContent>
           {isLoading ? (
             <div className='flex items-center justify-center h-48 gap-3'>
               <Loader2 className='w-6 h-6 animate-spin text-[#1E40AF]' />
@@ -401,18 +406,18 @@ export function CouponManagementPage() {
             </div>
           ) : (
             <div className='overflow-x-auto'>
-              <table className='w-full text-sm'>
-                <thead>
-                  <tr className='!border-b-2 !border-[#BFDBFE] bg-gray-50 text-gray-600'>
-                    <th className='text-left p-3 pl-6'>Mã / Tên</th>
-                    <th className='text-left p-3'>Loại / Giá trị</th>
-                    <th className='text-left p-3'>Thời hạn</th>
-                    <th className='text-left p-3'>Sử dụng</th>
-                    <th className='text-left p-3'>Trạng thái</th>
-                    <th className='text-right p-3 pr-6'>Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <Table>
+                <TableHeader>
+                  <TableRow className='!border-b-2 border-[#BFDBFE] bg-[#F0F6FF] hover:bg-[#F0F6FF]'>
+                    <TableHead>Mã / Tên</TableHead>
+                    <TableHead>Loại / Giá trị</TableHead>
+                    <TableHead>Thời hạn</TableHead>
+                    <TableHead>Sử dụng</TableHead>
+                    <TableHead>Trạng thái</TableHead>
+                    <TableHead className='text-right'>Thao tác</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {coupons.map((c, idx) => (
                     <motion.tr
                       key={c._id}
@@ -421,7 +426,7 @@ export function CouponManagementPage() {
                       transition={{ delay: idx * 0.03 }}
                       className='border-b-2 border-[#BFDBFE] hover:bg-[#F0F6FF]/30 transition-colors'
                     >
-                      <td className='p-3 pl-6'>
+                      <TableCell>
                         <div className='flex items-center gap-2'>
                           <code className='bg-gray-100 px-2 py-0.5 rounded text-xs font-mono font-bold text-gray-800'>
                             {c.code}
@@ -434,8 +439,8 @@ export function CouponManagementPage() {
                           </button>
                         </div>
                         <p className='text-xs text-gray-500 mt-0.5'>{c.name}</p>
-                      </td>
-                      <td className='p-3'>
+                      </TableCell>
+                      <TableCell>
                         <Badge className={`${TYPE_COLORS[c.type]} text-xs`}>{TYPE_LABELS[c.type]}</Badge>
                         <p className='text-xs mt-1 font-semibold'>
                           {c.type === 'percentage' ? `${c.value}%` : (c.type === 'fixed' || c.type === 'fixed_amount') ? formatCurrency(c.value) : 'Miễn phí ship'}
@@ -448,12 +453,12 @@ export function CouponManagementPage() {
                           {c.isPublic === false ? 'Chỉ nhập mã' : 'Công khai'}
                           {c.excludePrescriptionItems ? ' · Không áp dụng Rx' : ''}
                         </p>
-                      </td>
-                      <td className='p-3 text-xs text-gray-600'>
+                      </TableCell>
+                      <TableCell className='text-xs text-gray-600'>
                         <p>{formatDate(c.startDate)}</p>
                         <p className='text-gray-400'>→ {formatDate(c.endDate)}</p>
-                      </td>
-                      <td className='p-3'>
+                      </TableCell>
+                      <TableCell>
                         <div className='text-xs'>
                           <span className='font-semibold'>{c.currentUsageCount || 0}</span>
                           <span className='text-gray-400'>/{c.totalUsageLimit || '∞'}</span>
@@ -465,9 +470,9 @@ export function CouponManagementPage() {
                             style={{ width: `${Math.min(100, ((c.currentUsageCount || 0) / Math.max(c.totalUsageLimit || 1, 1)) * 100)}%` }}
                           />
                         </div>
-                      </td>
-                      <td className='p-3'>{getStatusBadge(c)}</td>
-                      <td className='p-3 pr-6'>
+                      </TableCell>
+                      <TableCell>{getStatusBadge(c)}</TableCell>
+                      <TableCell className='text-right'>
                         <div className='flex items-center justify-end gap-1'>
                           <button
                             onClick={() => handleToggle(c)}
@@ -492,28 +497,21 @@ export function CouponManagementPage() {
                             <Trash2 className='w-4 h-4' />
                           </button>
                         </div>
-                      </td>
+                      </TableCell>
                     </motion.tr>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           )}
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className='flex items-center justify-between px-6 py-4 border-t'>
-              <p className='text-sm text-gray-500'>
-                Trang {page}/{totalPages} — {total} coupon
-              </p>
-              <div className='flex gap-2'>
-                <Button variant='outline' size='sm' disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
-                  <ChevronLeft className='w-4 h-4' />
-                </Button>
-                <Button variant='outline' size='sm' disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
-                  <ChevronRight className='w-4 h-4' />
-                </Button>
+            <div className='mt-6 flex items-center justify-between border-t border-blue-400 pt-4'>
+              <div className='text-sm text-gray-600'>
+                Hiển thị {(page - 1) * LIMIT + 1} - {Math.min(page * LIMIT, total)} trong tổng số {total} coupon
               </div>
+              <PaginationComponent currentPage={page} totalPages={totalPages} onPageChange={setPage} />
             </div>
           )}
         </CardContent>

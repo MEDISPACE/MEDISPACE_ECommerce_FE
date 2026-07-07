@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   Sparkles, Users, TrendingUp, Award, Trophy, Star,
-  ChevronLeft, ChevronRight, Loader2, AlertCircle, RefreshCw,
+  Loader2, AlertCircle, RefreshCw,
   Search, Crown, Gift, Clock, Save, Upload
 } from 'lucide-react'
 import { Button } from '../ui/button'
@@ -10,11 +10,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Input } from '../ui/input'
 import { Badge } from '../ui/badge'
 import { Progress } from '../ui/progress'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog'
 import { Label } from '../ui/label'
 import { Textarea } from '../ui/textarea'
 import { apiClient } from '../../services/apiClient'
+import { PaginationComponent } from '../shared/PaginationComponent'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -242,10 +244,10 @@ export function AdminLoyaltyPage() {
   return (
     <div className='space-y-6'>
       {/* Header */}
-      <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4'>
+      <div className='flex flex-col justify-between gap-4 rounded-lg border border-[#E8EDF5] bg-white p-6 shadow-sm sm:flex-row sm:items-center'>
         <div>
           <h1
-            className='text-3xl font-bold bg-clip-text text-transparent'
+            className='bg-clip-text text-3xl font-bold text-transparent'
             style={{ backgroundImage: `linear-gradient(to right, #0A2463, #1E40AF)` }}
           >
             Loyalty & Điểm thưởng
@@ -298,12 +300,12 @@ export function AdminLoyaltyPage() {
               },
             ].map((s, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}>
-                <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
-                  <CardContent className='p-4 flex items-center gap-3'>
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${s.color}`}>{s.icon}</div>
+                <Card className='bg-white backdrop-blur-lg border-[#E8EDF5] shadow-sm transition-shadow hover:shadow-md'>
+                  <CardContent className='flex items-center gap-4 p-5'>
+                    <div className={`flex h-11 w-11 items-center justify-center rounded-lg ${s.color}`}>{s.icon}</div>
                     <div>
-                      <p className='text-xs text-gray-500'>{s.label}</p>
-                      <p className='text-xl font-bold text-gray-900'>{s.value}</p>
+                      <p className='text-sm font-medium text-gray-500'>{s.label}</p>
+                      <p className='text-2xl font-bold text-gray-900'>{s.value}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -408,35 +410,35 @@ export function AdminLoyaltyPage() {
               </div>
 
               <div className='overflow-x-auto rounded-lg border border-[#E8EDF5]'>
-                <table className='w-full text-sm'>
-                  <thead>
-                    <tr className='bg-[#F0F6FF] text-blue-900'>
-                      <th className='text-left p-3'>Hạng</th>
-                      <th className='text-left p-3'>Tên hiển thị</th>
-                      <th className='text-left p-3'>Chi tiêu tối thiểu</th>
-                      <th className='text-left p-3'>Hệ số tích điểm</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                <Table>
+                  <TableHeader>
+                    <TableRow className='!border-b-2 border-[#BFDBFE] bg-[#F0F6FF] hover:bg-[#F0F6FF]'>
+                      <TableHead>Hạng</TableHead>
+                      <TableHead>Tên hiển thị</TableHead>
+                      <TableHead>Chi tiêu tối thiểu</TableHead>
+                      <TableHead>Hệ số tích điểm</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {tiers.map(code => {
                       const tier = draftConfig.tiers.find(t => t.code === code)!
                       return (
-                        <tr key={code} className='border-t border-[#E8EDF5]'>
-                          <td className='p-3 font-medium'>{code}</td>
-                          <td className='p-3'>
+                        <TableRow key={code} className='border-b border-[#E8EDF5] hover:bg-[#F0F6FF]/30'>
+                          <TableCell className='font-medium'>{code}</TableCell>
+                          <TableCell>
                             <Input value={tier.label} onChange={e => updateDraftTier(code, 'label', e.target.value)} />
-                          </td>
-                          <td className='p-3'>
+                          </TableCell>
+                          <TableCell>
                             <Input type='number' min={0} value={tier.minTotalSpent} onChange={e => updateDraftTier(code, 'minTotalSpent', Number(e.target.value))} />
-                          </td>
-                          <td className='p-3'>
+                          </TableCell>
+                          <TableCell>
                             <Input type='number' min={0.1} step={0.1} value={tier.multiplier} onChange={e => updateDraftTier(code, 'multiplier', Number(e.target.value))} />
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       )
                     })}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
             </>
           ) : (
@@ -474,9 +476,12 @@ export function AdminLoyaltyPage() {
       {/* Accounts Table */}
       <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
         <CardHeader>
-          <CardTitle className='text-base'>Tài khoản điểm thưởng ({total})</CardTitle>
+          <CardTitle className='flex items-center gap-2 text-base'>
+            <Users className='w-5 h-5 text-[#1E40AF]' />
+            Tài khoản điểm thưởng ({total})
+          </CardTitle>
         </CardHeader>
-        <CardContent className='p-0'>
+        <CardContent>
           {isLoading ? (
             <div className='flex items-center justify-center h-48 gap-3'>
               <Loader2 className='w-6 h-6 animate-spin text-[#1E40AF]' />
@@ -493,19 +498,19 @@ export function AdminLoyaltyPage() {
             </div>
           ) : (
             <div className='overflow-x-auto'>
-              <table className='w-full text-sm'>
-                <thead>
-                  <tr className='!border-b-2 !border-[#BFDBFE] bg-gray-50 text-gray-600'>
-                    <th className='text-left p-3 pl-6'>Khách hàng</th>
-                    <th className='text-left p-3'>Hạng</th>
-                    <th className='text-left p-3'>Số dư điểm</th>
-                    <th className='text-left p-3'>Tổng tích / Đổi</th>
-                    <th className='text-left p-3'>Chi tiêu</th>
-                    <th className='text-left p-3'>Ngày tạo</th>
-                    <th className='text-right p-3 pr-6'>Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <Table>
+                <TableHeader>
+                  <TableRow className='!border-b-2 border-[#BFDBFE] bg-[#F0F6FF] hover:bg-[#F0F6FF]'>
+                    <TableHead>Khách hàng</TableHead>
+                    <TableHead>Hạng</TableHead>
+                    <TableHead>Số dư điểm</TableHead>
+                    <TableHead>Tổng tích / Đổi</TableHead>
+                    <TableHead>Chi tiêu</TableHead>
+                    <TableHead>Ngày tạo</TableHead>
+                    <TableHead className='text-right'>Thao tác</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {accounts.map((acc, idx) => {
                     const tierCfg = TIER_CONFIG[acc.tier]
                     return (
@@ -516,7 +521,7 @@ export function AdminLoyaltyPage() {
                         transition={{ delay: idx * 0.02 }}
                         className='border-b-2 border-[#BFDBFE] hover:bg-[#F0F6FF]/30 transition-colors'
                       >
-                        <td className='p-3 pl-6'>
+                        <TableCell>
                           <div>
                             <p className='font-medium text-gray-900'>
                               {acc.userInfo
@@ -528,32 +533,32 @@ export function AdminLoyaltyPage() {
                             )}
                             <p className='text-xs text-gray-400 font-mono mt-0.5'>ID: {acc.userId}</p>
                           </div>
-                        </td>
-                        <td className='p-3'>
+                        </TableCell>
+                        <TableCell>
                           <Badge className={`${tierCfg.bg} ${tierCfg.color} border-0 gap-1 hover:${tierCfg.bg}`}>
                             {tierCfg.icon}
                             {tierCfg.label}
                           </Badge>
-                        </td>
-                        <td className='p-3'>
+                        </TableCell>
+                        <TableCell>
                           <p className='font-bold text-[#0A2463]'>{formatPoints(acc.pointsBalance)}</p>
                           <p className='text-xs text-gray-400'>điểm</p>
-                        </td>
-                        <td className='p-3 text-xs'>
+                        </TableCell>
+                        <TableCell className='text-xs'>
                           <p className='text-green-600'>+{formatPoints(acc.totalPointsEarned)} tích</p>
                           <p className='text-[#1E40AF]'>-{formatPoints(acc.totalPointsRedeemed)} đổi</p>
                           {acc.totalPointsExpired > 0 && (
                             <p className='text-gray-400'>-{formatPoints(acc.totalPointsExpired)} hết hạn</p>
                           )}
-                        </td>
-                        <td className='p-3'>
+                        </TableCell>
+                        <TableCell>
                           <p className='font-semibold'>{formatCurrency(acc.totalSpent)}</p>
-                        </td>
-                        <td className='p-3 text-xs text-gray-500'>
+                        </TableCell>
+                        <TableCell className='text-xs text-gray-500'>
                           <p>{formatDate(acc.createdAt)}</p>
                           <p className='text-gray-400'>Cập nhật: {formatDate(acc.updatedAt)}</p>
-                        </td>
-                        <td className='p-3 pr-6 text-right'>
+                        </TableCell>
+                        <TableCell className='text-right'>
                           <Button
                             variant='outline'
                             size='sm'
@@ -562,26 +567,21 @@ export function AdminLoyaltyPage() {
                           >
                             Điều chỉnh điểm
                           </Button>
-                        </td>
+                        </TableCell>
                       </motion.tr>
                     )
                   })}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           )}
 
           {totalPages > 1 && (
-            <div className='flex items-center justify-between px-6 py-4 border-t'>
-              <p className='text-sm text-gray-500'>Trang {page}/{totalPages} — {total} tài khoản</p>
-              <div className='flex gap-2'>
-                <Button variant='outline' size='sm' disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
-                  <ChevronLeft className='w-4 h-4' />
-                </Button>
-                <Button variant='outline' size='sm' disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
-                  <ChevronRight className='w-4 h-4' />
-                </Button>
+            <div className='mt-6 flex items-center justify-between border-t border-blue-400 pt-4'>
+              <div className='text-sm text-gray-600'>
+                Hiển thị {(page - 1) * LIMIT + 1} - {Math.min(page * LIMIT, total)} trong tổng số {total} tài khoản
               </div>
+              <PaginationComponent currentPage={page} totalPages={totalPages} onPageChange={setPage} />
             </div>
           )}
         </CardContent>

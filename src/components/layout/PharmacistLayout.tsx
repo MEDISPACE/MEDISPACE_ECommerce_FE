@@ -38,7 +38,7 @@ import { Input } from '../ui/input'
 import { Sheet, SheetContent } from '~/components/ui/sheet'
 import { Switch } from '../ui/switch'
 import { useAuth } from '../../contexts/AuthContext'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { getFullName, getUserInitials } from '~/utils/lib'
 import type { BreadcrumbItem } from '../shared/UniversalBreadcrumb'
@@ -302,15 +302,19 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
     goToProductSearch(query)
   }
 
-  const SidebarContent = () => (
+  const SidebarContent = ({ collapsed = false }: { collapsed?: boolean }) => (
     <div className='flex flex-col h-full'>
       {/* Logo Section */}
-      <div className='p-6 border-b border-[#E8EDF5] flex-shrink-0'>
-        <Link to='/pharmacist/dashboard' className='flex items-center gap-3'>
+      <div className={`${collapsed ? 'px-3 py-4' : 'p-6'} border-b border-[#E8EDF5] flex-shrink-0`}>
+        <Link
+          to='/pharmacist/dashboard'
+          title={collapsed ? 'MEDISPACE Pharmacist' : undefined}
+          className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'}`}
+        >
           <div className='w-10 h-10 rounded-lg flex items-center justify-center shadow-lg'>
             <img src={faviconLogo} alt='MEDISPACE' className='w-8 h-8' />
           </div>
-          <div className='flex-1'>
+          <div className={collapsed ? 'hidden' : 'flex-1'}>
             <h2 className='font-semibold text-blue-900'>MEDISPACE</h2>
             <p className='text-xs text-[#1E40AF]'>Dược sĩ</p>
           </div>
@@ -318,7 +322,24 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
       </div>
 
       {/* Status Toggle */}
-      <div className='px-6 py-4 border-b border-[#E8EDF5] flex-shrink-0'>
+      {collapsed && (
+        <div className='border-b border-[#E8EDF5] px-2 py-3 flex-shrink-0'>
+          <button
+            type='button'
+            title={isOnline ? 'Online' : 'Offline'}
+            aria-label={isOnline ? 'Online' : 'Offline'}
+            onClick={() => handleStatusToggle(!isOnline)}
+            className={`mx-auto flex h-11 w-11 items-center justify-center rounded-lg border transition-all ${
+              isOnline
+                ? 'border-green-200 bg-green-50 text-green-600 hover:bg-green-100'
+                : 'border-gray-200 bg-gray-50 text-gray-500 hover:bg-gray-100'
+            }`}
+          >
+            {isOnline ? <UserRoundCheck className='w-5 h-5' /> : <UserRoundX className='w-5 h-5' />}
+          </button>
+        </div>
+      )}
+      <div className={`${collapsed ? 'hidden' : 'px-6 py-4'} border-b border-[#E8EDF5] flex-shrink-0`}>
         <div className='flex items-center justify-between p-3 bg-gradient-to-r from-[#F8FAFB] to-[#F0F6FF] rounded-lg'>
           <div className='flex items-center gap-2'>
             {isOnline ? (
@@ -344,27 +365,34 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
       </div>
 
       {/* Navigation - Scrollable */}
-      <div className='flex-1 overflow-y-auto min-h-0'>
-        <div className='px-3 py-4'>
+      <div className='app-sidebar-scrollbar flex-1 overflow-y-auto min-h-0'>
+        <div className={collapsed ? 'px-2 py-4' : 'px-3 py-4'}>
           <nav className='space-y-1'>
             {navigationItems.map((item) => {
               const Icon = item.icon
               const isActive = isActiveRoute(item.href)
+              const badgeLabel = typeof item.badge === 'number' && item.badge > 99 ? '99+' : item.badge
 
               return (
                 <Link
                   key={item.href}
                   to={item.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative ${
+                  title={collapsed ? item.label : undefined}
+                  aria-label={collapsed ? item.label : undefined}
+                  className={`group relative transition-all ${
+                    collapsed
+                      ? 'mx-auto flex h-11 w-11 items-center justify-center rounded-lg'
+                      : 'flex items-center gap-3 rounded-lg px-3 py-2.5'
+                  } ${
                     isActive
                       ? 'bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white shadow-lg shadow-blue-500/30'
                       : 'text-gray-700 hover:bg-[#F0F6FF] hover:text-[#0A2463]'
                   }`}
                 >
                   <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-500 group-hover:text-[#1E40AF]'}`} />
-                  <span className='flex-1 text-sm font-medium'>{item.label}</span>
-                  {item.badge && (
+                  {!collapsed && <span className='flex-1 text-sm font-medium'>{item.label}</span>}
+                  {item.badge && !collapsed && (
                     <Badge
                       className={`text-xs ${
                         item.badgeVariant === 'destructive'
@@ -376,10 +404,25 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
                               : 'bg-[#1E40AF]'
                       } text-white`}
                     >
-                      {item.badge}
+                      {badgeLabel}
                     </Badge>
                   )}
-                  {isActive && (
+                  {item.badge && collapsed && (
+                    <span
+                      className={`absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold leading-none text-white ring-2 ring-white ${
+                        item.badgeVariant === 'destructive'
+                          ? 'bg-red-500'
+                          : item.badgeVariant === 'warning'
+                            ? 'bg-yellow-500'
+                            : item.badgeVariant === 'success'
+                              ? 'bg-green-500'
+                              : 'bg-[#1E40AF]'
+                      }`}
+                    >
+                      {badgeLabel}
+                    </span>
+                  )}
+                  {isActive && !collapsed && (
                     <motion.div
                       layoutId='activeIndicatorPharmacist'
                       className='absolute left-0 top-0 bottom-0 w-1 bg-white rounded-r-full'
@@ -399,19 +442,13 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
   return (
     <div className='flex h-screen bg-gradient-to-br from-[#F8FAFB] via-white to-[#F0F6FF] overflow-hidden'>
       {/* Desktop Sidebar */}
-      <AnimatePresence mode='wait'>
-        {sidebarOpen && (
-          <motion.aside
-            initial={{ x: -280, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -280, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className='hidden lg:flex w-72 bg-white flex-col shadow-xl border-r border-[#E8EDF5]'
-          >
-            <SidebarContent />
-          </motion.aside>
-        )}
-      </AnimatePresence>
+      <motion.aside
+        animate={{ width: sidebarOpen ? 288 : 72 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        className='hidden lg:flex overflow-hidden bg-white flex-col shadow-xl border-r border-[#E8EDF5]'
+      >
+        <SidebarContent collapsed={!sidebarOpen} />
+      </motion.aside>
 
       {/* Mobile Sidebar */}
       <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
@@ -485,7 +522,7 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
                     )}
                   </div>
 
-                  <div className='max-h-[420px] overflow-y-auto p-2'>
+                  <div className='scrollbar-thin max-h-[420px] overflow-y-auto p-2'>
                     {patientResults.length > 0 && (
                       <div className='mb-2'>
                         <p className='px-2 pb-1 text-xs font-semibold uppercase text-gray-500'>Bệnh nhân</p>
@@ -629,7 +666,7 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
         </header>
 
         {/* Main Content */}
-        <main className='flex-1 overflow-auto'>
+        <main className='app-content-scrollbar flex-1 overflow-auto'>
           {/* Breadcrumb removed - Pharmacist pages don't need breadcrumbs (Option 3: Layer 2) */}
 
           <div className='p-6'>{children}</div>

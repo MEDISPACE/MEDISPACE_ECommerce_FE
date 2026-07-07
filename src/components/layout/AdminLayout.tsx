@@ -19,7 +19,6 @@ import {
   Shield,
   TrendingUp,
   Tag,
-  MessageSquare,
   MessageCircle,
   Star,
   Building2,
@@ -44,7 +43,7 @@ import {
 import { Input } from '../ui/input'
 import { Sheet, SheetContent } from '../ui/sheet'
 import { useAuth } from '../../contexts/AuthContext'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { getFullName, getUserInitials } from '~/utils/lib'
 import type { BreadcrumbItem } from '../shared/UniversalBreadcrumb'
 import { getDashboardStats } from '../../services/adminService'
@@ -136,11 +135,6 @@ const navigationItems: NavItem[] = [
     label: 'Hội thảo cộng đồng',
     href: '/admin/video-events',
     icon: Video,
-  },
-  {
-    label: 'Quản lý nội dung',
-    href: '/admin/content',
-    icon: MessageSquare,
   },
   {
     label: 'Quản lý bài viết',
@@ -236,24 +230,30 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
 
 
-  const SidebarContent = () => (
+  const SidebarContent = ({ collapsed = false }: { collapsed?: boolean }) => (
     <div className='flex flex-col h-full'>
       {/* Logo Section */}
-      <div className='p-6 border-b border-[#E8EDF5] flex-shrink-0'>
-        <Link to='/admin/dashboard' className='flex items-center gap-3'>
+      <div className={`${collapsed ? 'px-3 py-4' : 'p-6'} border-b border-[#E8EDF5] flex-shrink-0`}>
+        <Link
+          to='/admin/dashboard'
+          title={collapsed ? 'MEDISPACE Admin Panel' : undefined}
+          className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'}`}
+        >
           <div className='w-10 h-10 rounded-lg flex items-center justify-center shadow-lg'>
             <img src={faviconLogo} alt='MEDISPACE' className='w-8 h-8' />
           </div>
-          <div className='flex-1'>
-            <h2 className='font-semibold text-gray-900'>MEDISPACE</h2>
-            <p className='text-xs text-[#0A2463]'>Admin Panel</p>
-          </div>
+          {!collapsed && (
+            <div className='flex-1'>
+              <h2 className='font-semibold text-gray-900'>MEDISPACE</h2>
+              <p className='text-xs text-[#0A2463]'>Admin Panel</p>
+            </div>
+          )}
         </Link>
       </div>
 
       {/* Navigation - Scrollable */}
-      <div className='flex-1 overflow-y-auto min-h-0'>
-        <div className='px-3 py-4'>
+      <div className='app-sidebar-scrollbar flex-1 overflow-y-auto min-h-0'>
+        <div className={collapsed ? 'px-2 py-4' : 'px-3 py-4'}>
           <nav className='space-y-1'>
             {navigationItems.map((item) => {
               const Icon = item.icon
@@ -273,20 +273,28 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 }
               }
 
+              const badgeLabel = typeof badge === 'number' && badge > 99 ? '99+' : badge
+
               return (
                 <Link
                   key={item.href}
                   to={item.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative ${
+                  title={collapsed ? item.label : undefined}
+                  aria-label={collapsed ? item.label : undefined}
+                  className={`group relative transition-all ${
+                    collapsed
+                      ? 'mx-auto flex h-11 w-11 items-center justify-center rounded-lg'
+                      : 'flex items-center gap-3 rounded-lg px-3 py-2.5'
+                  } ${
                     isActive
                       ? 'bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white shadow-lg shadow-blue-500/30'
                       : 'text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 hover:text-[#0A2463]'
                   }`}
                 >
                   <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-500 group-hover:text-[#0A2463]'}`} />
-                  <span className='flex-1 text-sm font-medium'>{item.label}</span>
-                  {badge && (
+                  {!collapsed && <span className='flex-1 text-sm font-medium'>{item.label}</span>}
+                  {badge && !collapsed && (
                     <Badge
                       className={`text-xs ${
                         badgeVariant === 'destructive'
@@ -296,10 +304,23 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                             : 'bg-[#1E40AF]'
                       } text-white`}
                     >
-                      {badge}
+                      {badgeLabel}
                     </Badge>
                   )}
-                  {isActive && (
+                  {badge && collapsed && (
+                    <span
+                      className={`absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold leading-none text-white ring-2 ring-white ${
+                        badgeVariant === 'destructive'
+                          ? 'bg-red-500'
+                          : badgeVariant === 'warning'
+                            ? 'bg-yellow-500'
+                            : 'bg-[#1E40AF]'
+                      }`}
+                    >
+                      {badgeLabel}
+                    </span>
+                  )}
+                  {isActive && !collapsed && (
                     <motion.div
                       layoutId='activeIndicator'
                       className='absolute left-0 top-0 bottom-0 w-1 bg-white rounded-r-full'
@@ -319,19 +340,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <div className='flex h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 overflow-hidden'>
       {/* Desktop Sidebar */}
-      <AnimatePresence mode='wait'>
-        {sidebarOpen && (
-          <motion.aside
-            initial={{ x: -280, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -280, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className='hidden lg:flex w-72 bg-white/95 backdrop-blur-lg flex-col shadow-xl border-r border-[#E8EDF5]'
-          >
-            <SidebarContent />
-          </motion.aside>
-        )}
-      </AnimatePresence>
+      <motion.aside
+        animate={{ width: sidebarOpen ? 288 : 72 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        className='hidden lg:flex overflow-hidden bg-white/95 backdrop-blur-lg flex-col shadow-xl border-r border-[#E8EDF5]'
+      >
+        <SidebarContent collapsed={!sidebarOpen} />
+      </motion.aside>
 
       {/* Mobile Sidebar */}
       <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
@@ -481,7 +496,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </header>
 
         {/* Main Content */}
-        <main className='flex-1 overflow-auto'>
+        <main className='app-content-scrollbar flex-1 overflow-auto'>
           {/* Breadcrumb removed - Admin pages don't need breadcrumbs (Option 3: Layer 2) */}
 
           <div className='p-6'>

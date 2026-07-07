@@ -14,8 +14,6 @@ import {
   Clock,
   RefreshCw,
   TrendingUp,
-  ChevronLeft,
-  ChevronRight,
   X,
   MoreVertical,
   Eye,
@@ -27,6 +25,7 @@ import reviewService from '~/services/reviewService'
 import { toast } from 'sonner'
 import { ReviewStatus, type Review } from '~/types/review'
 import { ImageWithFallback } from '../shared/ImageWithFallback'
+import { PaginationComponent } from '../shared/PaginationComponent'
 
 export function ReviewManagementPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -434,44 +433,12 @@ export function ReviewManagementPage() {
 
               {/* Pagination */}
               {pagination.totalPages > 1 && (
-                <div className='flex items-center justify-between border-t border-[#BFDBFE] p-4 sticky bottom-0 bg-white'>
-                  <p className='text-sm text-gray-500'>
-                    Hiển thị {(page - 1) * limit + 1} - {Math.min(page * limit, pagination.total)} của{' '}
-                    <span className='font-medium text-gray-900'>{pagination.total}</span> đánh giá
-                  </p>
-                  <div className='flex items-center gap-2'>
-                    <Button
-                      variant='outline'
-                      size='sm'
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      disabled={page === 1}
-                      className='h-8 w-8 p-0 hover:!bg-[#E8EDF5]'
-                    >
-                      <ChevronLeft className='w-4 h-4' />
-                    </Button>
-                    <div className='flex items-center gap-1'>
-                      {[...Array(pagination.totalPages)].map((_, i) => (
-                        <Button
-                          key={i}
-                          variant={page === i + 1 ? 'default' : 'ghost'}
-                          size='sm'
-                          onClick={() => setPage(i + 1)}
-                          className={`h-8 w-8 p-0 text-xs ${page === i + 1 ? 'bg-[#0A2463] hover:!bg-[#071A49] !text-white' : 'text-gray-600 hover:!bg-[#E8EDF5]'}`}
-                        >
-                          {i + 1}
-                        </Button>
-                      ))}
-                    </div>
-                    <Button
-                      variant='outline'
-                      size='sm'
-                      onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
-                      disabled={page >= pagination.totalPages}
-                      className='h-8 w-8 p-0 hover:!bg-[#E8EDF5]'
-                    >
-                      <ChevronRight className='w-4 h-4' />
-                    </Button>
+                <div className='mx-6 mt-6 flex items-center justify-between border-t border-blue-400 pt-4 pb-6'>
+                  <div className='text-sm text-gray-600'>
+                    Hiển thị {(page - 1) * limit + 1} - {Math.min(page * limit, pagination.total)} trong tổng số{' '}
+                    {pagination.total} đánh giá
                   </div>
+                  <PaginationComponent currentPage={page} totalPages={pagination.totalPages} onPageChange={setPage} />
                 </div>
               )}
             </>
