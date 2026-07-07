@@ -8,7 +8,6 @@ export { CategoryManagementPage } from './CategoryManagementPage';
 export { BrandManagementPage } from './BrandManagementPage';
 export { PharmacistManagementPage } from './PharmacistManagementPage';
 export { PrescriptionManagementPage } from './PrescriptionManagementPage';
-export { ContentManagementPage } from './ContentManagementPage';
 export { ReportsAnalyticsPage } from './ReportsAnalyticsPage';
 export { SystemSettingsPage } from './SystemSettingsPage';
 export { ReviewManagementPage } from './ReviewManagementPage';

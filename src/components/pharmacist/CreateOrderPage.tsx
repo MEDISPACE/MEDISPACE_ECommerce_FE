@@ -17,11 +17,9 @@ import {
   FileText,
   Search,
   User,
-  Building2,
   Sparkles,
   Loader2,
   Eye,
-  CheckCircle,
   ChevronRight,
   Image as ImageIcon,
   Check,
@@ -44,7 +42,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command'
 import { Popover, PopoverContent, PopoverTrigger, PopoverAnchor } from '../ui/popover'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
-import { Tabs, TabsList, TabsTrigger } from '../ui/tabs'
 import { Checkbox } from '../ui/checkbox'
 import { ProductSearchWidget } from '../products/ProductSearchWidget'
 import { DrugInteractionChecker } from '../products/DrugInteractionChecker'
@@ -106,6 +103,7 @@ interface OrderItem {
 }
 
 interface CustomerInfo {
+  id?: string
   phone: string
   name: string
   email: string
@@ -114,17 +112,8 @@ interface CustomerInfo {
   prescriptionId?: string
 }
 
-const IN_STORE_PAYMENT_METHODS = [
-  { id: 'cash', label: 'Tiền mặt', icon: CheckCircle },
-  { id: 'credit_card_pos', label: 'Quẹt thẻ máy POS', icon: CreditCard },
-  { id: 'bank_transfer', label: 'Chuyển khoản ngân hàng', icon: Building2 },
-  { id: 'payos', label: 'Thanh toán qua PayOS', icon: CreditCard },
-  { id: 'vnpay', label: 'Thanh toán qua VNPay', icon: CreditCard },
-]
-
-const DELIVERY_PAYMENT_METHODS = [
+const ORDER_PAYMENT_METHODS = [
   { id: 'cod', label: 'Thanh toán khi nhận hàng (COD)', icon: Package },
-  { id: 'bank_transfer', label: 'Chuyển khoản trước', icon: Building2 },
   { id: 'payos', label: 'Thanh toán qua PayOS', icon: CreditCard },
   { id: 'vnpay', label: 'Thanh toán qua VNPay', icon: CreditCard },
 ]
@@ -212,7 +201,7 @@ export function CreateOrderPage() {
     }
   }
   const [selectedDelivery, setSelectedDelivery] = useState('fast')
-  const [selectedPayment, setSelectedPayment] = useState('cash')
+  const [selectedPayment, setSelectedPayment] = useState('cod')
   const [orderNotes, setOrderNotes] = useState('')
   const [pharmacistNotes, setPharmacistNotes] = useState('')
   const [showInteractionChecker, setShowInteractionChecker] = useState(false)
@@ -229,8 +218,6 @@ export function CreateOrderPage() {
     productName: '',
     currentNote: '',
   })
-  const [orderType, setOrderType] = useState<'instore' | 'delivery'>('instore')
-
   const requiresSafetyReview = orderItems.length > 1 || orderItems.some((item) => item.product.requiresPrescription || item.product.type === 'rx')
 
   useEffect(() => {
@@ -275,16 +262,14 @@ export function CreateOrderPage() {
   const [ghnShippingOptions, setGhnShippingOptions] = useState<any[]>([])
 
   useEffect(() => {
-    if (orderType === 'delivery') {
-      ghnService
-        .getProvinces()
-        .then((data) => setProvinces(data || []))
-        .catch(console.error)
-    }
-  }, [orderType])
+    ghnService
+      .getProvinces()
+      .then((data) => setProvinces(data || []))
+      .catch(console.error)
+  }, [])
 
   useEffect(() => {
-    if (shippingAddress.provinceId && orderType === 'delivery') {
+    if (shippingAddress.provinceId) {
       ghnService
         .getDistricts(shippingAddress.provinceId)
         .then((data) => setDistricts(data || []))
@@ -293,10 +278,10 @@ export function CreateOrderPage() {
       setDistricts([])
       setGhnShippingOptions([])
     }
-  }, [shippingAddress.provinceId, orderType])
+  }, [shippingAddress.provinceId])
 
   useEffect(() => {
-    if (shippingAddress.districtId && orderType === 'delivery') {
+    if (shippingAddress.districtId) {
       ghnService
         .getWards(shippingAddress.districtId)
         .then((data) => setWards(data || []))
@@ -305,10 +290,10 @@ export function CreateOrderPage() {
       setWards([])
       setGhnShippingOptions([])
     }
-  }, [shippingAddress.districtId, orderType])
+  }, [shippingAddress.districtId])
 
   useEffect(() => {
-    if (shippingAddress.address && shippingAddress.district && shippingAddress.province && orderType === 'delivery') {
+    if (shippingAddress.address && shippingAddress.district && shippingAddress.province) {
       const fetchShippingFee = async () => {
         try {
           const orderValue = orderItems.reduce((sum, item) => sum + (item.product?.price || 0) * (item.quantity || 0), 0)
@@ -351,7 +336,6 @@ export function CreateOrderPage() {
     }
   }, [
     orderItems,
-    orderType,
     selectedDelivery,
     shippingAddress.address,
     shippingAddress.district,
@@ -441,9 +425,11 @@ export function CreateOrderPage() {
 
           if (customer) {
             const fullName = `${customer.firstName || ''} ${customer.lastName || ''}`.trim()
+            const customerId = customer.customerId || customer._id
 
             // Update customer info
             setCustomerInfo({
+              id: customerId,
               phone: customer.phoneNumber || '',
               name: fullName,
               email: customer.email || '',
@@ -750,10 +736,12 @@ export function CreateOrderPage() {
     const lastName = nameParts.pop() || ''
     const firstName = nameParts.join(' ') || lastName
     const defaultAddress = patient.addresses?.find((addr: any) => addr.isDefault) || patient.addresses?.[0]
+    const patientId = patient.customerId || patient._id
 
     setSearchPhone(patient.phoneNumber || '')
     setCustomerInfo((prev) => ({
       ...prev,
+      id: patientId,
       phone: patient.phoneNumber,
       name: patient.fullName,
       email: patient.email || '',
@@ -776,7 +764,6 @@ export function CreateOrderPage() {
 
     setOpenCustomerDropdown(false)
     setPatientMedicalInfo(null)
-    const patientId = patient.customerId || patient._id
     if (patientId) {
       patientService
         .getMedicalInfo(patientId)
@@ -790,6 +777,7 @@ export function CreateOrderPage() {
     setPatientMedicalInfo(null)
     setCustomerInfo((prev) => ({
       ...prev,
+      id: undefined,
       phone: '',
       name: '',
       email: '',
@@ -871,13 +859,17 @@ export function CreateOrderPage() {
   }
 
   const calculateDeliveryFee = () => {
-    if (orderType === 'instore') return 0
     try {
-      const option = ghnShippingOptions.find((opt) => opt.id === selectedDelivery)
+      const option = getAvailableShippingOptions().find((opt) => opt.id === selectedDelivery)
       return option?.price || 0
     } catch {
       return 0
     }
+  }
+
+  const getAvailableShippingOptions = () => {
+    if (selectedPayment !== 'cod') return ghnShippingOptions
+    return ghnShippingOptions.filter((option) => option.supportsCod !== false)
   }
 
   const calculateTotal = () => {
@@ -900,7 +892,6 @@ export function CreateOrderPage() {
       return
     }
 
-    if (orderType === 'delivery') {
       if (
         !shippingAddress.address ||
         !shippingAddress.wardCode ||
@@ -921,12 +912,11 @@ export function CreateOrderPage() {
         return
       }
 
-      if (!selectedDelivery || ghnShippingOptions.length === 0) {
+      const availableShippingOptions = getAvailableShippingOptions()
+      if (!selectedDelivery || availableShippingOptions.length === 0 || !availableShippingOptions.some((option) => option.id === selectedDelivery)) {
         toast.error('Vui l\u00f2ng ch\u1ecdn ph\u01b0\u01a1ng th\u1ee9c giao h\u00e0ng')
         return
       }
-    }
-
     try {
       setIsCreatingOrder(true)
 
@@ -937,7 +927,7 @@ export function CreateOrderPage() {
           : `${Date.now()}-${Math.random().toString(36).slice(2)}`
       const orderData = {
         idempotencyKey,
-        customerId: customerInfo.phone || undefined, // Using phone as customerId for now
+        customerId: customerInfo.id || (!prescriptionId ? customerInfo.phone : undefined),
         prescriptionId: prescriptionId || undefined,
         items: orderItems.map((item) => ({
           productId: item.product.id,
@@ -945,31 +935,19 @@ export function CreateOrderPage() {
           unit: item.unit,
           notes: item.notes || undefined,
         })),
-        shippingAddress:
-          orderType === 'delivery'
-            ? {
-                firstName: shippingAddress.firstName,
-                lastName: shippingAddress.lastName,
-                phone: shippingAddress.phone || customerInfo.phone,
-                email: shippingAddress.email || customerInfo.email,
-                address: shippingAddress.address,
-                ward: shippingAddress.ward,
-                district: shippingAddress.district,
-                province: shippingAddress.province,
-                districtId: shippingAddress.districtId,
-                wardCode: shippingAddress.wardCode,
-              }
-            : {
-                firstName: customerInfo.name ? customerInfo.name.split(' ')[0] : 'Khách',
-                lastName: customerInfo.name ? customerInfo.name.split(' ').slice(1).join(' ') : 'vãng lai',
-                phone: customerInfo.phone || '0000000000',
-                email: '',
-                address: 'Tại quầy',
-                ward: '',
-                district: '',
-                province: '',
-              },
-        deliveryMethod: orderType === 'instore' ? 'instore' : selectedDelivery,
+        shippingAddress: {
+          firstName: shippingAddress.firstName,
+          lastName: shippingAddress.lastName,
+          phone: shippingAddress.phone || customerInfo.phone,
+          email: shippingAddress.email || customerInfo.email,
+          address: shippingAddress.address,
+          ward: shippingAddress.ward,
+          district: shippingAddress.district,
+          province: shippingAddress.province,
+          districtId: shippingAddress.districtId,
+          wardCode: shippingAddress.wardCode,
+        },
+        deliveryMethod: selectedDelivery,
         paymentMethod: selectedPayment,
         safetyReviewConfirmed,
         orderNotes: orderNotes || undefined,
@@ -1000,6 +978,7 @@ export function CreateOrderPage() {
       setSafetyReviewConfirmed(false)
       setSearchPhone('')
       setCustomerInfo({
+        id: undefined,
         phone: '',
         name: '',
         email: '',
@@ -1086,9 +1065,9 @@ export function CreateOrderPage() {
         )}
       </div>
 
-      <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
+      <div className='grid min-w-0 grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_380px] 2xl:grid-cols-[minmax(0,1fr)_420px]'>
         {/* LEFT COLUMN - Product Search & Cart */}
-        <div className='lg:col-span-2 space-y-6'>
+        <div className='min-w-0 space-y-6'>
           {/* OCR Auto-Mapping Suggestions */}
           {ocrSuggestions.length > 0 && (
             <Card className='bg-gradient-to-br from-[#F8FAFB] to-white shadow-md rounded-2xl border border-[#E8EDF5] overflow-hidden' data-testid='ocr-suggestions'>
@@ -1501,35 +1480,7 @@ export function CreateOrderPage() {
         </div>
 
         {/* RIGHT COLUMN - Customer Info & Actions */}
-        <div className='space-y-6'>
-          <Tabs
-            defaultValue='instore'
-            value={orderType}
-            onValueChange={(v) => {
-              setOrderType(v as 'instore' | 'delivery')
-              if (v === 'instore') {
-                setSelectedPayment('cash')
-              } else {
-                setSelectedPayment('cod')
-                if (ghnShippingOptions[0]) setSelectedDelivery(ghnShippingOptions[0].id)
-              }
-            }}
-          >
-            <TabsList className='grid grid-cols-2 w-full bg-[#F0F6FF] p-1 rounded-xl h-11 mb-4 border border-[#E8EDF5]'>
-              <TabsTrigger
-                value='instore'
-                className='rounded-lg data-[state=active]:!bg-white data-[state=active]:text-[#0A2463] data-[state=active]:!shadow-sm data-[state=inactive]:bg-transparent text-gray-500 font-medium transition-all text-sm !border-none !outline-none'
-              >
-                Tại quầy
-              </TabsTrigger>
-              <TabsTrigger
-                value='delivery'
-                className='rounded-lg data-[state=active]:!bg-white data-[state=active]:text-[#0A2463] data-[state=active]:!shadow-sm data-[state=inactive]:bg-transparent text-gray-500 font-medium transition-all text-sm !border-none !outline-none'
-              >
-                Giao tận nơi
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+        <div className='min-w-0 space-y-6'>
 
           {/* Customer Info */}
           <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
@@ -1683,8 +1634,7 @@ export function CreateOrderPage() {
           </Card>
 
           {/* Delivery Address */}
-          {orderType === 'delivery' && (
-            <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
+          <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
               <CardHeader>
                 <CardTitle className='text-blue-900 flex items-center mb-0'>
                   <MapPin className='w-5 h-5 mr-2' />
@@ -1845,11 +1795,9 @@ export function CreateOrderPage() {
                 </div>
               </CardContent>
             </Card>
-          )}
 
           {/* Delivery Method */}
-          {orderType === 'delivery' && (
-            <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
+          <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
               <CardHeader>
                 <CardTitle className='text-blue-900 flex items-center'>
                   <Truck className='w-5 h-5 mr-2' />
@@ -1857,29 +1805,29 @@ export function CreateOrderPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className='space-y-2'>
-                {ghnShippingOptions.length === 0 ? (
+                {getAvailableShippingOptions().length === 0 ? (
                   <div className='p-4 text-center text-sm text-gray-500 border border-dashed border-gray-300 rounded-lg'>
                     Vui lòng điền đầy đủ Quận/Huyện và Phường/Xã để xem phí giao hàng
                   </div>
                 ) : (
-                  ghnShippingOptions.map((option) => {
+                  getAvailableShippingOptions().map((option) => {
                     return (
                       <div
                         key={option.id}
-                        className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                        className={`min-w-0 p-3 border rounded-lg cursor-pointer transition-all ${
                           selectedDelivery === option.id
                             ? 'border-[#1E40AF] bg-[#F0F6FF]'
                             : 'border-gray-200 hover:border-[#BFDBFE]'
                         }`}
                         onClick={() => setSelectedDelivery(option.id)}
                       >
-                        <div className='flex items-center justify-between'>
-                          <div className='flex items-center gap-3'>
+                        <div className='flex min-w-0 items-center gap-3'>
+                          <div className='flex min-w-0 flex-1 items-center gap-3'>
                             <input
                               type='radio'
                               checked={selectedDelivery === option.id}
                               onChange={() => setSelectedDelivery(option.id)}
-                              className='text-[#1E40AF]'
+                              className='shrink-0 text-[#1E40AF]'
                             />
                             <ShippingMethodDisplay
                               method={option.id}
@@ -1888,7 +1836,7 @@ export function CreateOrderPage() {
                               logoClassName='h-6 w-full object-contain'
                             />
                           </div>
-                          <div className='text-sm text-gray-900 font-medium'>
+                          <div className='shrink-0 text-right text-sm font-medium text-gray-900'>
                             {option.price === 0 ? 'Miễn phí' : `${option.price.toLocaleString('vi-VN')}đ`}
                           </div>
                         </div>
@@ -1898,7 +1846,6 @@ export function CreateOrderPage() {
                 )}
               </CardContent>
             </Card>
-          )}
 
           {/* Payment Method */}
           <Card className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
@@ -1909,32 +1856,32 @@ export function CreateOrderPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className='space-y-2'>
-              {(orderType === 'instore' ? IN_STORE_PAYMENT_METHODS : DELIVERY_PAYMENT_METHODS).map((method) => {
+              {ORDER_PAYMENT_METHODS.map((method) => {
                 const Icon = method.icon
                 const useProviderLogo = ['payos', 'vnpay'].includes(normalizePaymentMethod(method.id))
                 return (
                   <div
                     key={method.id}
-                    className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                    className={`min-w-0 p-3 border rounded-lg cursor-pointer transition-all ${
                       selectedPayment === method.id
                         ? 'border-[#1E40AF] bg-[#F0F6FF] ring-1 ring-blue-500'
                         : 'border-gray-200 hover:border-[#BFDBFE]'
                     }`}
                     onClick={() => setSelectedPayment(method.id)}
                   >
-                    <div className='flex items-center gap-3'>
+                    <div className='flex min-w-0 items-center gap-3'>
                       <input
                         type='radio'
                         checked={selectedPayment === method.id}
                         onChange={() => setSelectedPayment(method.id)}
-                        className='text-[#1E40AF] w-4 h-4'
+                        className='h-4 w-4 shrink-0 text-[#1E40AF]'
                       />
                       {useProviderLogo ? (
-                        <PaymentMethodDisplay method={method.id} label={method.label} className='gap-2' logoClassName='h-6 w-full object-contain' showDescription={false} />
+                        <PaymentMethodDisplay method={method.id} label={method.label} className='min-w-0 flex-1 gap-2 overflow-hidden' logoClassName='h-6 w-full object-contain' showDescription={false} />
                       ) : (
                         <>
-                          <Icon className='w-4 h-4 text-gray-600' />
-                          <span className='text-sm text-gray-900 font-medium'>{method.label}</span>
+                          <Icon className='h-4 w-4 shrink-0 text-gray-600' />
+                          <span className='min-w-0 flex-1 truncate text-sm font-medium text-gray-900'>{method.label}</span>
                         </>
                       )}
                     </div>
