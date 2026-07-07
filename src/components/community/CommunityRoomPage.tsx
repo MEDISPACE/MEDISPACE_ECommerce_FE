@@ -39,7 +39,7 @@ import { useAuth } from '~/contexts/AuthContext'
 import { useSocketContext } from '~/contexts/SocketContext'
 import communityService from '~/services/communityService'
 import type { CommunityMessage, CommunityRoom, CommunityVideoEvent } from '~/types/community'
-import { getRoomDescription, getRoomGuidelines, getRoomTopic, roomInitials } from './communityUi'
+import { communityPreviewText, getRoomDescription, getRoomGuidelines, getRoomTopic, roomInitials } from './communityUi'
 
 const PAGE_SIZE = 20
 
@@ -176,27 +176,23 @@ function formatEventTime(value?: string) {
 }
 
 function roomPreview(room: CommunityRoom) {
-  if (room.lastMessagePreview) return room.lastMessagePreview
+  const preview = communityPreviewText(room.lastMessagePreview, '')
+  if (preview) return preview
   if (room.messageCount) return `${room.messageCount} tin nhắn trong phòng`
   return getRoomDescription(room)
 }
 
 function MeetingCard({ event }: { event: CommunityVideoEvent }) {
-  const isLive = event.status === 'live'
   return (
     <div className='mx-auto w-full max-w-[620px] rounded-[18px] border border-[#dbe7ff] bg-white p-4 shadow-sm'>
       <div className='flex items-start gap-3'>
-        <div
-          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${isLive ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}
-        >
+        <div className='flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600'>
           <Video className='h-5 w-5' />
         </div>
         <div className='min-w-0 flex-1'>
           <div className='mb-1 flex flex-wrap items-center gap-2'>
-            <span
-              className={`rounded-full px-2.5 py-1 text-xs font-medium ${isLive ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}
-            >
-              {isLive ? 'Đang live' : 'Cuộc họp sắp diễn ra'}
+            <span className='rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700'>
+              Có thể tham gia
             </span>
             <span className='inline-flex items-center gap-1 text-xs text-gray-500'>
               <CalendarDays className='h-3.5 w-3.5' />
@@ -208,7 +204,7 @@ function MeetingCard({ event }: { event: CommunityVideoEvent }) {
           <Button asChild size='sm' className='mt-3 rounded-full bg-blue-600 text-white hover:bg-blue-700'>
             <Link to={`/community/video-events/${event._id}`}>
               <ExternalLink className='h-4 w-4' />
-              {isLive ? 'Tham gia ngay' : 'Mở link họp'}
+              Tham gia ngay
             </Link>
           </Button>
         </div>
@@ -322,7 +318,7 @@ export function CommunityRoomPage() {
                 ...item,
                 messageCount: (item.messageCount || 0) + 1,
                 lastMessageAt: message.createdAt,
-                lastMessagePreview: message.content || (message.imageUrl ? 'Đã gửi ảnh' : ''),
+                lastMessagePreview: communityPreviewText(message.content, message.imageUrl ? 'Đã gửi ảnh' : ''),
                 unreadCount: Math.max((item.unreadCount || 0) + unreadIncrement, 0),
               }
             : item,
@@ -459,10 +455,14 @@ export function CommunityRoomPage() {
       if (result.status === 'pending') {
         toast.success('Đã gửi yêu cầu tham gia, vui lòng chờ admin duyệt')
         setNeedsJoin(true)
+        updateRoomCaches((current) => current.map((item) => item._id === roomId ? { ...item, viewerMembership: { ...(item.viewerMembership || { roomId, userId: user?._id || '' }), roomId, userId: user?._id || '', status: result.status } } : item))
         queryClient.invalidateQueries({ queryKey: ['community', 'rooms'] })
         return
       }
       toast.success('Đã tham gia phòng')
+      setNeedsJoin(false)
+      updateRoomCaches((current) => current.map((item) => item._id === roomId ? { ...item, memberCount: item.viewerMembership?.status !== 'active' ? (item.memberCount || 0) + 1 : item.memberCount, viewerMembership: { ...(item.viewerMembership || { roomId, userId: user?._id || '' }), roomId, userId: user?._id || '', status: result.status, role: item.viewerMembership?.role || 'member' } } : item))
+      queryClient.invalidateQueries({ queryKey: ['community', 'rooms'] })
       await loadMessages(1)
     } catch (err: any) {
       if (err?.response?.status === 403 && !room) {

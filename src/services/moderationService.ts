@@ -1,7 +1,5 @@
 import apiClient from '~/services/apiClient'
 import type {
-  AiModerationJob,
-  AiModerationJobStatus,
   ModerationAction,
   ModerationActionLog,
   ModerationAppeal,
@@ -34,25 +32,6 @@ export const moderationService = {
     return unwrap(res.data)
   },
 
-  async getAiJobs(params: {
-    page: number
-    limit: number
-    status?: AiModerationJobStatus
-    roomId?: string
-    messageId?: string
-    search?: string
-  }) {
-    const res = await apiClient.get<
-      Envelope<{ items: AiModerationJob[]; page: number; limit: number; total: number }>
-    >('/admin/moderation/ai-jobs', { params })
-    return unwrap(res.data)
-  },
-
-  async retryAiJob(jobId: string) {
-    const res = await apiClient.post<Envelope<any>>(`/admin/moderation/ai-jobs/${jobId}/retry`)
-    return unwrap(res.data)
-  },
-
   async takeAction(params: {
     messageId: string
     action: ModerationAction
@@ -69,11 +48,6 @@ export const moderationService = {
     return unwrap(res.data)
   },
 
-  async rerunAiReview(messageId: string) {
-    const res = await apiClient.post<Envelope<any>>(`/admin/moderation/messages/${messageId}/ai-review`)
-    return unwrap(res.data)
-  },
-
   async getActions(params: {
     page: number
     limit: number
@@ -83,6 +57,7 @@ export const moderationService = {
     action?: string
     dateFrom?: string
     dateTo?: string
+    search?: string
   }) {
     const res = await apiClient.get<
       Envelope<{ items: ModerationActionLog[]; page: number; limit: number; total: number }>

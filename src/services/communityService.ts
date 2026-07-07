@@ -13,6 +13,7 @@ import type {
   CommunityThread,
   CommunityThreadVideoMeeting,
   CommunityThreadPrefix,
+  CommunityMemberStatus,
   CommunityReactionType,
   PaginatedResult,
 } from '~/types/community'
@@ -47,14 +48,14 @@ export const communityService = {
   },
 
   async joinRoom(roomId: string) {
-    const res = await apiClient.post<Envelope<{ roomId: string; userId: string; status: string }>>(
+    const res = await apiClient.post<Envelope<{ roomId: string; userId: string; status: CommunityMemberStatus }>>(
       `/community/rooms/${roomId}/join`,
     )
     return unwrap(res.data)
   },
 
   async requestJoin(roomId: string) {
-    const res = await apiClient.post<Envelope<{ roomId: string; userId: string; status: string }>>(
+    const res = await apiClient.post<Envelope<{ roomId: string; userId: string; status: CommunityMemberStatus }>>(
       `/community/rooms/${roomId}/join-request`,
     )
     return unwrap(res.data)
@@ -102,7 +103,6 @@ export const communityService = {
     title: string
     content: string
     prefix?: CommunityThreadPrefix
-    tags?: string[]
     isAnonymous?: boolean
     imageUrl?: string
   }) {
@@ -112,7 +112,6 @@ export const communityService = {
       title: params.title,
       content: params.content,
       prefix: params.prefix,
-      tags: params.tags,
       isAnonymous: params.isAnonymous,
       imageUrl: params.imageUrl,
     })
@@ -202,7 +201,6 @@ export const communityService = {
   async listVideoEvents(params?: {
     roomId?: string
     status?: string
-    visibility?: 'public' | 'private'
     search?: string
     upcomingOnly?: boolean
     page?: number
@@ -245,6 +243,26 @@ export const communityService = {
     return unwrap(res.data)
   },
 
+  async listVideoEventMessages(params: { eventId: string; page: number; limit: number; q?: string }) {
+    const res = await apiClient.get<Envelope<PaginatedResult<CommunityMessage>>>(
+      `/community/video-events/${params.eventId}/messages`,
+      { params: { page: params.page, limit: params.limit, q: params.q } },
+    )
+    return unwrap(res.data)
+  },
+
+  async sendVideoEventMessage(params: { eventId: string; content?: string; imageUrl?: string; replyToMessageId?: string }) {
+    const res = await apiClient.post<Envelope<{ message: CommunityMessage; moderation?: unknown; memberRole?: string }>>(
+      `/community/video-events/${params.eventId}/messages`,
+      {
+        content: params.content,
+        imageUrl: params.imageUrl,
+        replyToMessageId: params.replyToMessageId,
+      },
+    )
+    return unwrap(res.data)
+  },
+
   async getLiveKitDiagnostics() {
     const res = await apiClient.get<Envelope<CommunityLiveKitDiagnostics>>('/community/video-events/livekit/diagnostics')
     return unwrap(res.data)
@@ -268,15 +286,11 @@ export const adminCommunityService = {
     name: string
     slug?: string
     visibility: 'public' | 'private'
-    diseaseKey?: string
     topicLabel?: string
     description?: string
-    iconKey?: string
-    coverImage?: string
     guidelines?: string[]
     pinnedMessage?: string
     featured?: boolean
-    sortOrder?: number
   }) {
     const res = await apiClient.post<Envelope<CommunityRoom>>('/admin/community/rooms', data)
     return unwrap(res.data)
@@ -288,15 +302,11 @@ export const adminCommunityService = {
       name?: string
       slug?: string
       visibility?: 'public' | 'private'
-      diseaseKey?: string
       topicLabel?: string
       description?: string
-      iconKey?: string
-      coverImage?: string
       guidelines?: string[]
       pinnedMessage?: string
       featured?: boolean
-      sortOrder?: number
     },
   ) {
     const res = await apiClient.patch<Envelope<CommunityRoom>>(`/admin/community/rooms/${roomId}`, data)
@@ -381,7 +391,6 @@ export const adminCommunityService = {
   async listVideoEvents(params?: {
     roomId?: string
     status?: string
-    visibility?: 'public' | 'private'
     search?: string
     page?: number
     limit?: number
@@ -396,7 +405,6 @@ export const adminCommunityService = {
     data: Partial<CommunityVideoEvent> & {
       roomId: string
       title: string
-      visibility: 'public' | 'private'
       scheduledStartAt: string
       scheduledEndAt: string
     },
@@ -407,16 +415,6 @@ export const adminCommunityService = {
 
   async updateVideoEvent(eventId: string, data: Partial<CommunityVideoEvent>) {
     const res = await apiClient.patch<Envelope<CommunityVideoEvent>>(`/admin/community/video-events/${eventId}`, data)
-    return unwrap(res.data)
-  },
-
-  async startVideoEvent(eventId: string) {
-    const res = await apiClient.post<Envelope<CommunityVideoEvent>>(`/admin/community/video-events/${eventId}/start`)
-    return unwrap(res.data)
-  },
-
-  async endVideoEvent(eventId: string) {
-    const res = await apiClient.post<Envelope<CommunityVideoEvent>>(`/admin/community/video-events/${eventId}/end`)
     return unwrap(res.data)
   },
 
