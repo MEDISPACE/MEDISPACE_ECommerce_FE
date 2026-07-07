@@ -144,6 +144,8 @@ export function CategoryPage() {
     let cancelled = false
 
     const fallbackToLoadedProducts = () => {
+      if ((filters.brands || []).length > 0 && brandOptions.length > 0) return
+
       const nextBrands = new Map<string, { id: string; name: string; count: number }>()
       allProducts.forEach((product: Product) => {
         const brandId = product.brand?._id || product.brandId
@@ -192,7 +194,14 @@ export function CategoryPage() {
           .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'vi'))
 
         if (nextBrands.length > 0) {
-          setBrandOptions(nextBrands)
+          setBrandOptions((previousBrands) => {
+            const selectedOrPreviousBrands = previousBrands.filter((brand) => (filters.brands || []).includes(brand.id))
+            const mergedBrands = new Map(nextBrands.map((brand) => [brand.id, brand]))
+            selectedOrPreviousBrands.forEach((brand) => {
+              if (!mergedBrands.has(brand.id)) mergedBrands.set(brand.id, brand)
+            })
+            return Array.from(mergedBrands.values()).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'vi'))
+          })
         } else {
           fallbackToLoadedProducts()
         }
@@ -206,7 +215,7 @@ export function CategoryPage() {
     return () => {
       cancelled = true
     }
-  }, [allProducts, currentCategory?._id, debouncedSearchQuery, filters.inStock, filters.isPrescription, filters.priceRange, filters.rating])
+  }, [allProducts, brandOptions.length, currentCategory?._id, debouncedSearchQuery, filters.brands, filters.inStock, filters.isPrescription, filters.priceRange, filters.rating])
 
   // Get icon component for this category
   const IconComponent = getCategoryIcon(category || { slug })
@@ -494,7 +503,7 @@ export function CategoryPage() {
                             setFilters((prev) => ({
                               ...prev,
                               brands: isChecked
-                                ? [brand.id]
+                                ? Array.from(new Set([...(prev.brands || []), brand.id]))
                                 : (prev.brands || []).filter((brandId: string) => brandId !== brand.id),
                             }))
                           }}
