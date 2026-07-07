@@ -29,7 +29,7 @@ import { Button } from '~/components/ui/button'
 import { Checkbox } from '~/components/ui/checkbox'
 import { Textarea } from '~/components/ui/textarea'
 import { UniversalBreadcrumb } from '~/components/shared/UniversalBreadcrumb'
-import { getRoomTopic } from './communityUi'
+import { communityPreviewText, getRoomTopic } from './communityUi'
 
 if (typeof window !== 'undefined') {
   setLogLevel(LogLevel.silent)
@@ -40,10 +40,15 @@ function formatDateTime(value?: string) {
   return new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
 }
 
+function formatChatTime(value?: string) {
+  if (!value) return ''
+  return new Intl.DateTimeFormat('vi-VN', { hour: '2-digit', minute: '2-digit' }).format(new Date(value))
+}
+
 function statusLabel(status?: string) {
   const labels: Record<string, string> = {
-    scheduled: 'Sắp diễn ra',
-    live: 'Đang live',
+    scheduled: 'Có thể tham gia',
+    live: 'Có thể tham gia',
     ended: 'Đã kết thúc',
     cancelled: 'Đã hủy',
     draft: 'Bản nháp',
@@ -97,6 +102,7 @@ export function CommunityVideoEventDetailPage() {
   const [joinPayload, setJoinPayload] = useState<CommunityVideoJoinPayload | null>(null)
   const [chatText, setChatText] = useState('')
   const [chatMessages, setChatMessages] = useState<CommunityMessage[]>([])
+  const [isSendingChat, setIsSendingChat] = useState(false)
   const [micEnabled, setMicEnabled] = useState(true)
   const [cameraEnabled, setCameraEnabled] = useState(true)
   const [showChat, setShowChat] = useState(true)
@@ -149,9 +155,9 @@ export function CommunityVideoEventDetailPage() {
 
   const event = eventQuery.data
   const chatQuery = useQuery({
-    queryKey: ['community-video-event-chat', event?.roomId],
-    queryFn: () => communityService.listMessages({ roomId: event!.roomId, page: 1, limit: 50 }),
-    enabled: Boolean(event?.roomId) && isAuthenticated && Boolean(joinPayload),
+    queryKey: ['community-video-event-chat', eventId],
+    queryFn: () => communityService.listVideoEventMessages({ eventId, page: 1, limit: 50 }),
+    enabled: Boolean(eventId) && isAuthenticated && Boolean(joinPayload),
     retry: false,
   })
 
@@ -240,30 +246,28 @@ export function CommunityVideoEventDetailPage() {
   }, [eventId, isAuthenticated, queryClient, socket])
 
   useEffect(() => {
-    if (!event?.roomId || !isAuthenticated || !joinPayload || !socket.isConnected) return
-    const subscriberId = `video-event-chat-${event.roomId}`
-    socket.joinCommunityRoom(event.roomId)
+    if (!eventId || !isAuthenticated || !joinPayload || !socket.isConnected) return
+    const subscriberId = `video-event-chat-${eventId}`
     socket.subscribe(subscriberId, {
       onCommunityMessageNew: (message) => {
-        if (message.roomId !== event.roomId) return
+        if (message.videoEventId !== eventId) return
         setChatMessages((current) =>
           current.some((item) => item._id === message._id) ? current : [...current, message],
         )
       },
       onCommunityMessageHidden: (message) => {
-        if (message.roomId !== event.roomId) return
+        if (message.videoEventId !== eventId) return
         setChatMessages((current) => current.filter((item) => item._id !== message._id))
       },
       onCommunityMessageDeleted: (message) => {
-        if (message.roomId !== event.roomId) return
+        if (message.videoEventId !== eventId) return
         setChatMessages((current) => current.filter((item) => item._id !== message._id))
       },
     })
     return () => {
-      socket.leaveCommunityRoom(event.roomId)
       socket.unsubscribe(subscriberId)
     }
-  }, [event?.roomId, isAuthenticated, joinPayload, socket])
+  }, [eventId, isAuthenticated, joinPayload, socket])
 
   const joinMutation = useMutation({
     mutationFn: () => communityService.joinVideoEvent(eventId),
@@ -295,23 +299,21 @@ export function CommunityVideoEventDetailPage() {
     },
   })
 
-  const chatMutation = useMutation({
-    mutationFn: async () => {
-      if (!event?.roomId) throw new Error('Không tìm thấy phòng chat')
-      return communityService.sendMessage({ roomId: event.roomId, content: chatText.trim() })
-    },
-    onSuccess: () => {
-      setChatText('')
-      queryClient.invalidateQueries({ queryKey: ['community-video-event-chat', event?.roomId] })
-    },
-    onError: (error: any) => toast.error(error?.response?.data?.message || 'Không thể gửi tin nhắn'),
-  })
-
   const sendChatMessage = () => {
-    if (chatText.trim().length < 1 || chatMutation.isPending) return
-    chatMutation.mutate()
+    if (!canSendChat) return
+    const content = chatText.trim()
+    setIsSendingChat(true)
+    socket.sendCommunityVideoEventMessage({ eventId, content }, (payload) => {
+      setIsSendingChat(false)
+      if (!payload.ok) {
+        toast.error(payload.error || 'Không thể gửi tin nhắn')
+        return
+      }
+      setChatText('')
+    })
   }
 
+  const canSendChat = chatText.trim().length > 0 && !isSendingChat && socket.isConnected
   const showReconnectIndicator = isOffline || (Boolean(joinPayload) && socket.isConnecting)
   const backToCommunityPath = event?.roomId ? `/community/${event.roomId}` : '/community'
   const hasJoinedBefore = event?.viewerRegistration?.status === 'attended'
@@ -491,14 +493,19 @@ export function CommunityVideoEventDetailPage() {
                             message.sender?.lastName,
                             message.sender?.email,
                           ) || 'Thành viên'
+                      const cleanContent = communityPreviewText(message.content, '')
+                      const sentTime = formatChatTime(message.createdAt)
+                      const sentDateTime = formatDateTime(message.createdAt)
                       return (
-                        <div key={message._id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
-                          <div
-                            className={`max-w-[88%] rounded-2xl px-3 py-2 text-sm ${mine ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'}`}
-                          >
-                            <div className={`mb-1 text-xs font-medium ${mine ? 'text-blue-100' : 'text-gray-500'}`}>
+                        <div key={message._id} className={`flex flex-col ${mine ? 'items-end' : 'items-start'}`}>
+                          {!mine && (
+                            <div className='mb-1 max-w-[82%] truncate px-1 text-xs font-medium text-gray-500'>
                               {senderName}
                             </div>
+                          )}
+                          <div
+                            className={`max-w-[82%] rounded-2xl px-3 py-2 text-sm leading-5 shadow-sm ${mine ? 'rounded-br-md bg-blue-600 text-white' : 'rounded-bl-md bg-gray-100 text-gray-900'}`}
+                          >
                             <div className='space-y-2'>
                               {message.imageUrl && (
                                 <a
@@ -515,8 +522,17 @@ export function CommunityVideoEventDetailPage() {
                                   />
                                 </a>
                               )}
-                              {message.content && <p className='whitespace-pre-wrap break-words'>{message.content}</p>}
+                              {cleanContent && <p className='whitespace-pre-wrap break-words'>{cleanContent}</p>}
                             </div>
+                            {sentTime && (
+                              <time
+                                dateTime={message.createdAt}
+                                title={sentDateTime}
+                                className={`mt-1 block text-right text-[11px] leading-none ${mine ? 'text-blue-100/90' : 'text-gray-500'}`}
+                              >
+                                {sentTime}
+                              </time>
+                            )}
                           </div>
                         </div>
                       )
@@ -542,17 +558,15 @@ export function CommunityVideoEventDetailPage() {
                   <Button
                     aria-label='Gửi tin nhắn'
                     size='icon'
-                    className='h-10 w-10 shrink-0 rounded-full'
-                    disabled={!chatText.trim() || chatMutation.isPending}
+                    className='h-10 w-10 shrink-0 rounded-full bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:text-white'
+                    disabled={!canSendChat}
                     onClick={sendChatMessage}
                   >
-                    <Send className='h-4 w-4' />
+                    {isSendingChat ? <Loader2 className='h-4 w-4 animate-spin' /> : <Send className='h-4 w-4' />}
                   </Button>
                 </div>
-                {chatMutation.isError && (
-                  <p className='mt-2 text-xs text-red-600'>
-                    Không thể gửi tin nhắn. Bạn có thể cần tham gia phòng cộng đồng trước.
-                  </p>
+                {!socket.isConnected && (
+                  <p className='mt-2 text-xs text-red-600'>Realtime chưa kết nối. Vui lòng chờ hệ thống kết nối lại.</p>
                 )}
               </div>
             </aside>
@@ -713,19 +727,9 @@ export function CommunityVideoEventDetailPage() {
               </div>
             )}
             <div className='mx-auto flex w-fit items-center gap-2 rounded-full bg-[#f1f3f4] px-4 py-2 text-sm text-[#3c4043]'>
-              <span
-                className={`h-2.5 w-2.5 rounded-full ${event.status === 'live' ? 'bg-[#ea4335]' : 'bg-[#5f6368]'}`}
-              />
+              <span className='h-2.5 w-2.5 rounded-full bg-[#34a853]' />
               {statusLabel(event.status)} · {meetingCode(event._id)}
             </div>
-            {event.status === 'live' && (
-              <div
-                data-testid='event-live-notification'
-                className='rounded-[12px] bg-[#fce8e6] px-4 py-3 text-sm text-[#a50e0e]'
-              >
-                Cuộc họp đang live, bạn có thể tham gia ngay.
-              </div>
-            )}
             {(event.status === 'ended' || event.status === 'cancelled') && (
               <div
                 data-testid='session-ended-message'
@@ -779,12 +783,12 @@ export function CommunityVideoEventDetailPage() {
               className='h-11 rounded-full bg-[#1a73e8] px-7 text-white hover:bg-[#1765cc]'
               disabled={
                 !acceptedDisclaimer ||
-                event.status !== 'live' ||
+                ['draft', 'ended', 'cancelled'].includes(event.status) ||
                 joinMutation.isPending
               }
               onClick={() => joinMutation.mutate()}
             >
-              {joinMutation.isPending ? 'Đang kiểm tra LiveKit...' : event.status === 'live' ? 'Tham gia ngay' : 'Cuộc họp chưa bắt đầu'}
+              {joinMutation.isPending ? 'Đang kiểm tra LiveKit...' : 'Tham gia ngay'}
             </Button>
             {liveKitConnectionError && !joinPayload && (
               <p className='max-w-sm text-xs leading-5 text-[#a50e0e]'>{liveKitConnectionError}</p>

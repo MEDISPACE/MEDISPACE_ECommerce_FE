@@ -34,6 +34,18 @@ export function getRoomGuidelines(room?: CommunityRoom | null) {
   return room?.guidelines?.length ? room.guidelines : DEFAULT_ROOM_GUIDELINES
 }
 
+export function richTextToPlainText(value?: string) {
+  if (!value) return ''
+  if (typeof window !== 'undefined' && typeof DOMParser !== 'undefined') {
+    return new DOMParser().parseFromString(value, 'text/html').body.textContent?.trim() || ''
+  }
+  return value.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim()
+}
+
+export function communityPreviewText(value?: string, fallback = 'Chưa có bài mới') {
+  return richTextToPlainText(value) || fallback
+}
+
 export function formatRelativeTime(value?: string) {
   if (!value) return 'Chưa có hoạt động'
   const diff = Date.now() - new Date(value).getTime()

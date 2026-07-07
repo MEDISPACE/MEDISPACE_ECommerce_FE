@@ -4,15 +4,15 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { mockCommunityService, mockAdminCommunityService, mockUseAuth, mockUseSocketContext } = vi.hoisted(() => ({
+const { mockCommunityService, mockAdminCommunityService, mockUseAuth, mockUseSocketContext, mockSendCommunityVideoEventMessage } = vi.hoisted(() => ({
   mockCommunityService: {
     listVideoEvents: vi.fn(),
     getVideoEvent: vi.fn(),
     registerVideoEvent: vi.fn(),
     joinVideoEvent: vi.fn(),
     joinRoom: vi.fn(),
-    listMessages: vi.fn(),
-    sendMessage: vi.fn(),
+    listVideoEventMessages: vi.fn(),
+    sendVideoEventMessage: vi.fn(),
     getLiveKitDiagnostics: vi.fn(),
   },
   mockAdminCommunityService: {
@@ -20,8 +20,6 @@ const { mockCommunityService, mockAdminCommunityService, mockUseAuth, mockUseSoc
     listVideoEvents: vi.fn(),
     listVideoEventRegistrations: vi.fn(),
     createVideoEvent: vi.fn(),
-    startVideoEvent: vi.fn(),
-    endVideoEvent: vi.fn(),
     cancelVideoEvent: vi.fn(),
     listVideoEventParticipants: vi.fn(),
     muteVideoEventParticipant: vi.fn(),
@@ -29,6 +27,7 @@ const { mockCommunityService, mockAdminCommunityService, mockUseAuth, mockUseSoc
   },
   mockUseAuth: vi.fn(),
   mockUseSocketContext: vi.fn(),
+  mockSendCommunityVideoEventMessage: vi.fn(),
 }))
 
 vi.mock('~/services/communityService', () => ({
@@ -97,7 +96,6 @@ const event = {
   title: 'Diabetes care workshop',
   description: 'Community knowledge sharing.',
   agenda: 'Intro and live chat',
-  visibility: 'public',
   status: 'scheduled',
   scheduledStartAt: new Date(Date.now() + 3_600_000).toISOString(),
   scheduledEndAt: new Date(Date.now() + 7_200_000).toISOString(),
@@ -111,18 +109,22 @@ describe('Community Video Events UI component tests', () => {
     vi.clearAllMocks()
     mockUseAuth.mockReturnValue({ isAuthenticated: true, user: { _id: 'user-1' } })
     mockUseSocketContext.mockReturnValue({
+      isConnected: true,
+      isConnecting: false,
       joinCommunityVideoEvent: vi.fn(),
       leaveCommunityVideoEvent: vi.fn(),
+      sendCommunityVideoEventMessage: mockSendCommunityVideoEventMessage,
       joinCommunityRoom: vi.fn(),
       leaveCommunityRoom: vi.fn(),
       subscribe: vi.fn(),
       unsubscribe: vi.fn(),
     })
+    mockSendCommunityVideoEventMessage.mockImplementation((_data, ack) => ack?.({ ok: true }))
     mockCommunityService.listVideoEvents.mockResolvedValue({ items: [event], page: 1, limit: 30, total: 1 })
     mockCommunityService.getVideoEvent.mockResolvedValue(event)
     mockCommunityService.joinRoom.mockResolvedValue({ roomId: 'room-1', userId: 'user-1', status: 'active' })
-    mockCommunityService.listMessages.mockResolvedValue({ items: [], page: 1, limit: 80, total: 0 })
-    mockCommunityService.sendMessage.mockResolvedValue({
+    mockCommunityService.listVideoEventMessages.mockResolvedValue({ items: [], page: 1, limit: 80, total: 0 })
+    mockCommunityService.sendVideoEventMessage.mockResolvedValue({
       message: { _id: 'm1', roomId: 'room-1', senderId: 'user-1', content: 'Can I take this medicine with food?', status: 'visible', createdAt: new Date().toISOString() },
       moderation: {},
     })
@@ -143,7 +145,7 @@ describe('Community Video Events UI component tests', () => {
     expect(await screen.findByText('Diabetes care workshop')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('Tìm hội thảo')).toBeInTheDocument()
     expect(screen.getByText(/3\s*\/50 người tham gia/i)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /mở link/i })).toHaveAttribute('href', '/community/video-events/event-1')
+    expect(screen.getByRole('link', { name: /vào phòng/i })).toHaveAttribute('href', '/community/video-events/event-1')
     expect(screen.queryByRole('button', { name: /đăng ký/i })).not.toBeInTheDocument()
   })
 
@@ -157,7 +159,7 @@ describe('Community Video Events UI component tests', () => {
       '/community/video-events',
     )
 
-    expect(await screen.findByRole('link', { name: /mở link/i })).toHaveAttribute('href', '/community/video-events/event-1')
+    expect(await screen.findByRole('link', { name: /vào phòng/i })).toHaveAttribute('href', '/community/video-events/event-1')
     expect(screen.queryByRole('button', { name: /đăng ký/i })).not.toBeInTheDocument()
   })
 
@@ -168,13 +170,17 @@ describe('Community Video Events UI component tests', () => {
     expect(screen.getByText('Login page')).toBeInTheDocument()
   })
 
-  it('renders Meet-style prejoin with preview and disabled join before live', async () => {
+  it('renders Meet-style prejoin with preview and enables join after disclaimer', async () => {
+    const user = userEvent.setup()
     renderDetail()
 
     expect(await screen.findByText('Diabetes care workshop')).toBeInTheDocument()
     expect(screen.getByText('Camera preview')).toBeInTheDocument()
     expect(screen.getByTestId('camera-preview-video')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /cuộc họp chưa bắt đầu/i })).toBeDisabled()
+    const joinButton = screen.getByRole('button', { name: /tham gia ngay/i })
+    expect(joinButton).toBeDisabled()
+    await user.click(screen.getByRole('checkbox'))
+    expect(joinButton).toBeEnabled()
   })
 
   it('renders LiveKit shell after accepting disclaimer and joining live event', async () => {
@@ -225,16 +231,20 @@ describe('Community Video Events UI component tests', () => {
     await user.type(input, 'Can I take this medicine with food?')
     await user.click(screen.getByRole('button', { name: /gửi tin nhắn/i }))
 
-    await waitFor(() => expect(mockCommunityService.sendMessage).toHaveBeenCalledWith({ roomId: 'room-1', content: 'Can I take this medicine with food?' }))
+    await waitFor(() => expect(mockSendCommunityVideoEventMessage).toHaveBeenCalledWith(
+      { eventId: 'event-1', content: 'Can I take this medicine with food?' },
+      expect.any(Function),
+    ))
   })
 
-  it('renders admin event dashboard with lifecycle controls and direct chat guidance', async () => {
+  it('renders admin event dashboard without manual lifecycle controls', async () => {
     renderWithProviders(<AdminCommunityVideoEventsPage />, '/admin/video-events')
 
     expect(await screen.findByText('Hội thảo cộng đồng')).toBeInTheDocument()
     expect(await screen.findByText('Diabetes care workshop')).toBeInTheDocument()
     await userEvent.click(screen.getByText('Diabetes care workshop'))
-    expect(await screen.findByRole('button', { name: /bắt đầu/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /bắt đầu/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /kết thúc/i })).not.toBeInTheDocument()
     expect(screen.getByText('Chat trực tiếp')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /duyệt/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /ẩn/i })).not.toBeInTheDocument()
@@ -246,14 +256,13 @@ describe('Community Video Events UI component tests', () => {
       title: ' New community seminar ',
       description: '   ',
       agenda: '',
-      visibility: 'public',
       scheduledStartAt: '2026-07-07T09:00',
       scheduledEndAt: '2026-07-07T10:00',
       capacity: '300',
-      tags: '',
     })
 
-    expect(payload).toMatchObject({ roomId: 'room-1', title: 'New community seminar', visibility: 'public' })
+    expect(payload).toMatchObject({ roomId: 'room-1', title: 'New community seminar' })
+    expect(payload).not.toHaveProperty('visibility')
     expect(payload).not.toHaveProperty('description')
   })
 

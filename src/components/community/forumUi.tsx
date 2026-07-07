@@ -1,4 +1,4 @@
-import { MessageCircle, ShieldCheck, Siren, Sparkles, Stethoscope, Users, Video } from 'lucide-react'
+import { EyeOff, MessageCircle, ShieldCheck, Siren, Sparkles, Stethoscope, Users, Video } from 'lucide-react'
 
 import { Badge } from '~/components/ui/badge'
 import type { CommunityThread, CommunityThreadPrefix, CommunityUserSummary } from '~/types/community'
@@ -38,6 +38,7 @@ export function ThreadStateBadges({ thread }: { thread: CommunityThread }) {
   return (
     <>
       {thread.sticky && <Badge className='h-6 rounded-full bg-[#0A2463] px-2 text-[11px] text-white hover:bg-[#0A2463]'><Sparkles className='h-3 w-3' />Ghim</Badge>}
+      {thread.status === 'hidden' && <Badge className='h-6 rounded-full bg-rose-50 px-2 text-[11px] text-rose-700 hover:bg-rose-50'><EyeOff className='h-3 w-3' />Đã ẩn</Badge>}
       {thread.status === 'answered' && <Badge className='h-6 rounded-full bg-emerald-50 px-2 text-[11px] text-emerald-700 hover:bg-emerald-50'><ShieldCheck className='h-3 w-3' />Đã trả lời</Badge>}
       {thread.videoMeeting?.url && <ThreadVideoMeetingBadge thread={thread} />}
       {thread.locked && <Badge variant='outline' className='h-6 rounded-full border-slate-200 bg-slate-50 px-2 text-[11px] text-slate-700'>Đã khóa</Badge>}
@@ -46,19 +47,13 @@ export function ThreadStateBadges({ thread }: { thread: CommunityThread }) {
 }
 
 export function videoMeetingLabel(thread: CommunityThread) {
-  if (thread.videoMeeting?.status === 'live') return 'Đang thảo luận trực tuyến'
   if (thread.videoMeeting?.status === 'ended') return 'Đã kết thúc video'
   return 'Có phòng video'
 }
 
 export function ThreadVideoMeetingBadge({ thread }: { thread: CommunityThread }) {
   const status = thread.videoMeeting?.status
-  const className =
-    status === 'live'
-      ? 'border-rose-100 bg-rose-50 text-rose-700'
-      : status === 'ended'
-        ? 'border-slate-200 bg-slate-50 text-slate-600'
-        : 'border-blue-100 bg-blue-50 text-[#0A2463]'
+  const className = status === 'ended' ? 'border-slate-200 bg-slate-50 text-slate-600' : 'border-blue-100 bg-blue-50 text-[#0A2463]'
 
   return (
     <Badge variant='outline' className={`h-6 rounded-full px-2 text-[11px] font-semibold ${className}`}>

@@ -8,5 +8,6 @@ export const COMMUNITY_VIDEO_EVENT_SOCKET_EVENTS = {
   ATTENDEE_JOINED: 'community:video-event:attendee:joined',
   ATTENDEE_LEFT: 'community:video-event:attendee:left',
   JOIN_ROOM: 'community:video-event:join',
-  LEAVE_ROOM: 'community:video-event:leave'
+  LEAVE_ROOM: 'community:video-event:leave',
+  SEND_MESSAGE: 'community:video-event:message:send'
 } as const

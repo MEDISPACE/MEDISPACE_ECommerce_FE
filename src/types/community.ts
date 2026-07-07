@@ -20,6 +20,7 @@ export interface CommunityRoom {
   createdAt?: string
   updatedAt?: string
   memberCount?: number
+  pendingMemberCount?: number
   messageCount?: number
   lastMessageAt?: string
   lastMessagePreview?: string
@@ -58,6 +59,7 @@ export interface CommunityMember {
 export interface CommunityMessage {
   _id: string
   roomId: string
+  videoEventId?: string
   threadId?: string
   senderId: string
   content: string
@@ -131,7 +133,7 @@ export interface CommunityThread {
   createdAt: string
   updatedAt?: string
   author?: CommunityUserSummary
-  room?: Pick<CommunityRoom, '_id' | 'name' | 'slug' | 'diseaseKey' | 'topicLabel' | 'visibility'>
+  room?: Pick<CommunityRoom, '_id' | 'name' | 'slug' | 'diseaseKey' | 'topicLabel' | 'visibility' | 'viewerMembership'>
   starterMessage?: CommunityMessage
   acceptedReply?: CommunityMessage
 }
@@ -144,7 +146,6 @@ export interface PaginatedResult<T> {
 }
 
 export type CommunityVideoEventStatus = 'draft' | 'scheduled' | 'live' | 'ended' | 'cancelled'
-export type CommunityVideoEventVisibility = 'public' | 'private'
 export type CommunityVideoRegistrationStatus = 'registered' | 'cancelled' | 'attended' | 'no_show' | 'removed'
 
 export interface CommunityVideoEvent {
@@ -153,7 +154,6 @@ export interface CommunityVideoEvent {
   title: string
   description?: string
   agenda?: string | null
-  visibility: CommunityVideoEventVisibility
   status: CommunityVideoEventStatus
   scheduledStartAt: string
   scheduledEndAt: string
