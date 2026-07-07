@@ -85,7 +85,7 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount, searchQue
           q: searchQuery.trim() || '*',
           limit: 1,
           categoryId: filters.categories?.[0],
-          brandId: filters.brands?.[0],
+          brandIds: filters.brands?.length ? filters.brands.join(',') : undefined,
           requiresPrescription: filters.isPrescription === true ? true : undefined,
           inStock: filters.inStock === true ? true : undefined,
           priceMin: priceRange[0] > 0 ? priceRange[0] : undefined,
@@ -128,8 +128,10 @@ export function FilterSidebar({ filters, onFiltersChange, resultCount, searchQue
   }
 
   const handleBrandChange = (brand: string, checked: boolean) => {
-    // Single-select: backend only supports one brandId at a time
-    const newBrands = checked ? [brand] : []
+    const currentBrands = filters.brands || []
+    const newBrands = checked
+      ? Array.from(new Set([...currentBrands, brand]))
+      : currentBrands.filter((item) => item !== brand)
     onFiltersChange({ ...filters, brands: newBrands })
   }
 

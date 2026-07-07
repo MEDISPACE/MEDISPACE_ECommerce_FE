@@ -76,7 +76,7 @@ export function useInfiniteProducts({
       // Add filters
       if (filters) {
         if (filters.brands && filters.brands.length > 0) {
-          params.brandId = filters.brands[0]
+          params.brandIds = filters.brands.join(',')
         }
         if (filters.isPrescription === true) {
           params.requiresPrescription = true

@@ -42,6 +42,7 @@ const PRODUCTS_PAGE_SIZE = 40
 
 type ProductListQueryParams = NonNullable<Parameters<typeof productService.getProductsPaginated>[0]> & {
   brandId?: string
+  brandIds?: string
   minPrice?: number
   maxPrice?: number
   ratingMin?: number
@@ -220,7 +221,7 @@ export function ProductsListingPage() {
         params.categoryId = filters.categories[0] // Backend expects single category
       }
       if (filters.brands.length > 0) {
-        params.brandId = filters.brands[0]
+        params.brandIds = filters.brands.join(',')
       }
       if (isPrescriptionRefill) {
         params.requiresPrescription = true
@@ -253,7 +254,7 @@ export function ProductsListingPage() {
             page: pageParam as number,
             limit: PRODUCTS_PAGE_SIZE,
             categoryId: params.categoryId,
-            brandId: params.brandId,
+            brandIds: params.brandIds,
             requiresPrescription: params.requiresPrescription,
             inStock: params.inStock,
             priceMin: params.minPrice,
@@ -465,14 +466,10 @@ export function ProductsListingPage() {
                         <span>Chưa có sản phẩm khớp kho tự động, vui lòng tìm theo tên thuốc trong đơn</span>
                       ) : (
                         <>
-                          Đang hiển thị <span className='font-medium text-[#1E40AF]'>{displayedProducts.length}</span>
-                          {totalAvailableProducts > displayedProducts.length && (
-                            <span>
-                              /<span className='font-medium text-[#1E40AF]'>{totalAvailableProducts}</span>
-                            </span>
-                          )}{' '}
-                          sản phẩm
-                          {hasNextPage && mappedProductIds.size === 0 && <span className='text-gray-500 ml-1'>(tải thêm khi scroll xuống)</span>}
+                          Tìm thấy <span className='font-medium text-[#1E40AF]'>{totalAvailableProducts}</span> sản phẩm
+                          {hasNextPage && mappedProductIds.size === 0 && (
+                            <span className='text-gray-500 ml-1'>(đang hiển thị {displayedProducts.length}, tải thêm khi scroll xuống)</span>
+                          )}
                         </>
                       )}
                     </div>
