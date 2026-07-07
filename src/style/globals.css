@@ -38,6 +38,15 @@
   text-decoration: underline;
 }
 
+.community-rich-content img {
+  max-height: 24rem;
+  max-width: 100%;
+  cursor: zoom-in;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+  object-fit: contain;
+}
+
 .community-rich-content strong,
 .community-rich-content b {
   font-weight: 700;

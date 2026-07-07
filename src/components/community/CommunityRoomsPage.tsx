@@ -42,7 +42,7 @@ import { useSocketContext } from '~/contexts/SocketContext'
 import communityService from '~/services/communityService'
 import { UserRole, UserStatus } from '~/types/user'
 import type { CommunityRoom, CommunityVideoEvent } from '~/types/community'
-import { formatRelativeTime, getRoomDescription, getRoomGuidelines, getRoomTopic, roomInitials } from './communityUi'
+import { communityPreviewText, formatRelativeTime, getRoomDescription, getRoomGuidelines, getRoomTopic, roomInitials } from './communityUi'
 
 type AppealType = 'ban' | 'mute'
 type HubTab = 'all' | 'mine' | 'active' | 'unread' | 'private'
@@ -64,20 +64,19 @@ function formatEventTime(value?: string) {
 }
 
 function EventPreviewCard({ event }: { event: CommunityVideoEvent }) {
-  const live = event.status === 'live'
   return (
     <Link
       to={`/community/video-events/${event._id}`}
       className='block rounded-lg border border-[#E2E8F0] bg-white p-4 transition hover:border-blue-200 hover:bg-[#F8FBFF]'
     >
       <div className='flex items-start gap-3'>
-        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${live ? 'bg-rose-50 text-rose-600' : 'bg-blue-50 text-blue-700'}`}>
+        <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700'>
           <Video className='h-5 w-5' />
         </div>
         <div className='min-w-0 flex-1'>
           <div className='mb-1 flex flex-wrap items-center gap-2'>
-            <Badge className={live ? 'bg-rose-600 text-white' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-50'}>
-              {live ? 'Đang live' : 'Sắp diễn ra'}
+            <Badge className='bg-emerald-50 text-emerald-700 hover:bg-emerald-50'>
+              Có thể tham gia
             </Badge>
             {event.room?.name && <span className='truncate text-xs text-slate-500'>{event.room.name}</span>}
           </div>
@@ -182,9 +181,9 @@ function RoomCard({
           <span className='inline-flex items-center gap-1'><Clock3 className='h-3.5 w-3.5' />{formatRelativeTime(room.lastMessageAt)}</span>
         </div>
 
-        {room.lastMessagePreview && isActive && (
+        {communityPreviewText(room.lastMessagePreview, '') && isActive && (
           <div className='mt-4 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-600 line-clamp-2'>
-            {room.lastMessagePreview}
+            {communityPreviewText(room.lastMessagePreview, '')}
           </div>
         )}
 
@@ -281,7 +280,7 @@ export function CommunityRoomsPage() {
         updateRoomList((current) => current.map((room) => {
           if (room._id !== message.roomId) return room
           const mine = String(message.senderId) === user?._id
-          return { ...room, messageCount: (room.messageCount || 0) + 1, lastMessageAt: message.createdAt, lastMessagePreview: message.content, unreadCount: mine ? room.unreadCount || 0 : (room.unreadCount || 0) + 1 }
+          return { ...room, messageCount: (room.messageCount || 0) + 1, lastMessageAt: message.createdAt, lastMessagePreview: communityPreviewText(message.content, message.imageUrl ? 'Đã gửi ảnh' : ''), unreadCount: mine ? room.unreadCount || 0 : (room.unreadCount || 0) + 1 }
         }))
       },
       onCommunityRoomRead: (event) => {
@@ -321,15 +320,16 @@ export function CommunityRoomsPage() {
       if (room?.visibility === 'private' && room.viewerMembership?.status !== 'invited') return communityService.requestJoin(roomId)
       return communityService.joinRoom(roomId)
     },
-    onSuccess: (_res, roomId) => {
+    onSuccess: (result, roomId) => {
       const room = rooms.find((item) => item._id === roomId)
       if (room?.visibility === 'private' && room.viewerMembership?.status !== 'invited') {
         toast.success('Đã gửi yêu cầu tham gia phòng riêng tư')
-        updateRoomList((current) => current.map((item) => item._id === roomId ? { ...item, viewerMembership: { ...(item.viewerMembership || { roomId, userId: user?._id || '' }), roomId, userId: user?._id || '', status: 'pending' } } : item))
+        updateRoomList((current) => current.map((item) => item._id === roomId ? { ...item, viewerMembership: { ...(item.viewerMembership || { roomId, userId: user?._id || '' }), roomId, userId: user?._id || '', status: result.status } } : item))
         queryClient.invalidateQueries({ queryKey: ['community', 'rooms'] })
         return
       }
       toast.success('Đã tham gia phòng')
+      updateRoomList((current) => current.map((item) => item._id === roomId ? { ...item, memberCount: item.viewerMembership?.status !== 'active' ? (item.memberCount || 0) + 1 : item.memberCount, viewerMembership: { ...(item.viewerMembership || { roomId, userId: user?._id || '' }), roomId, userId: user?._id || '', status: result.status, role: item.viewerMembership?.role || 'member' } } : item))
       queryClient.invalidateQueries({ queryKey: ['community', 'rooms'] })
       navigate(`/community/${roomId}`)
     },

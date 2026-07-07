@@ -1,14 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
-import type { ChangeEvent } from 'react'
+import type { ChangeEvent, MouseEvent } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Flag, Link2, Loader2, MessageCircle, Paperclip, Pencil, Plus, Reply, ShieldCheck, Smile, Trash2, Video, X } from 'lucide-react'
+import { ArrowLeft, EyeOff, Flag, Link2, Loader2, MessageCircle, Paperclip, Pencil, Plus, Reply, ShieldCheck, Smile, Trash2, Video, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '~/components/ui/dialog'
-import { PaginationComponent } from '~/components/shared/PaginationComponent'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
 import { Skeleton } from '~/components/ui/skeleton'
 import { Textarea } from '~/components/ui/textarea'
@@ -18,6 +17,7 @@ import { useAuth } from '~/contexts/AuthContext'
 import { useSocketContext } from '~/contexts/SocketContext'
 import communityService from '~/services/communityService'
 import type { CommunityMessage, CommunityReactionType, CommunityThread } from '~/types/community'
+import { CommunityPagination } from './CommunityPagination'
 import { formatRelativeTime } from './communityUi'
 import { ThreadMetric, ThreadPrefixBadge, ThreadStateBadges, authorInitials, authorName } from './forumUi'
 
@@ -50,11 +50,12 @@ const EXTRA_MESSAGE_REACTIONS: Array<{ type: CommunityReactionType; icon: string
 
 const ALL_MESSAGE_REACTIONS = [...MESSAGE_REACTIONS, ...EXTRA_MESSAGE_REACTIONS]
 
-const ALLOWED_COMMUNITY_HTML_TAGS = new Set(['P', 'BR', 'STRONG', 'B', 'EM', 'I', 'U', 'S', 'UL', 'OL', 'LI', 'A', 'BLOCKQUOTE', 'H1', 'H2', 'H3', 'H4', 'SPAN'])
-const ALLOWED_COMMUNITY_HTML_ATTRS = new Set(['href', 'target', 'rel'])
+const ALLOWED_COMMUNITY_HTML_TAGS = new Set(['P', 'BR', 'STRONG', 'B', 'EM', 'I', 'U', 'S', 'UL', 'OL', 'LI', 'A', 'BLOCKQUOTE', 'H1', 'H2', 'H3', 'H4', 'SPAN', 'IMG'])
+const ALLOWED_COMMUNITY_HTML_ATTRS = new Set(['href', 'target', 'rel', 'src', 'alt', 'title', 'width', 'height', 'loading'])
 
 function isEmptyRichText(value?: string) {
   if (!value) return true
+  if (/<img\b[^>]*src=/i.test(value)) return false
   const text = value
     .replace(/<[^>]*>/g, '')
     .replace(/&nbsp;/g, ' ')
@@ -109,6 +110,15 @@ function sanitizeCommunityHtml(value?: string) {
           element.setAttribute('target', '_blank')
           element.setAttribute('rel', 'noreferrer')
         }
+        if (element.tagName === 'IMG') {
+          const src = element.getAttribute('src') || ''
+          const safeImage = /^https?:\/\//i.test(src) || src.startsWith('/') || /^data:image\/(png|jpe?g|gif|webp);base64,/i.test(src)
+          if (!safeImage) {
+            element.remove()
+            return
+          }
+          element.setAttribute('loading', 'lazy')
+        }
       }
       walk(child)
     })
@@ -117,8 +127,17 @@ function sanitizeCommunityHtml(value?: string) {
   return doc.body.innerHTML
 }
 
-function CommunityHtmlContent({ value, className = '' }: { value?: string; className?: string }) {
-  return <div className={`community-rich-content ${className}`} dangerouslySetInnerHTML={{ __html: sanitizeCommunityHtml(value) }} />
+function CommunityHtmlContent({ value, className = '', onImageOpen }: { value?: string; className?: string; onImageOpen?: (src: string) => void }) {
+  const handleClick = (event: MouseEvent<HTMLDivElement>) => {
+    if (!onImageOpen) return
+    if (!(event.target instanceof Element)) return
+    const image = event.target.closest('img') as HTMLImageElement | null
+    if (!image?.src) return
+    event.preventDefault()
+    onImageOpen(image.src)
+  }
+
+  return <div className={`community-rich-content ${className}`} onClick={handleClick} dangerouslySetInnerHTML={{ __html: sanitizeCommunityHtml(value) }} />
 }
 
 function formatMeetingTime(value?: string) {
@@ -130,7 +149,6 @@ function ThreadVideoMeetingPanel({ thread }: { thread: CommunityThread }) {
   const meeting = thread.videoMeeting
   if (!meeting?.url || meeting.status === 'ended') return null
 
-  const live = meeting.status === 'live'
   const isInternalLiveKitRoom = meeting.url.startsWith('/community/video-events/')
   const buttonContent = (
     <>
@@ -139,24 +157,24 @@ function ThreadVideoMeetingPanel({ thread }: { thread: CommunityThread }) {
     </>
   )
   return (
-    <div className={`border-b px-4 py-4 ${live ? 'border-rose-100 bg-rose-50' : 'border-blue-100 bg-[#F4F8FF]'}`}>
+    <div className='border-b border-blue-100 bg-[#F4F8FF] px-4 py-4'>
       <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
         <div className='min-w-0'>
           <div className='flex flex-wrap items-center gap-2'>
-            <span className={`inline-flex h-9 w-9 items-center justify-center rounded-lg ${live ? 'bg-rose-100 text-rose-700' : 'bg-blue-100 text-[#0A2463]'}`}>
+            <span className='inline-flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100 text-[#0A2463]'>
               <Video className='h-4 w-4' />
             </span>
             <div>
-              <p className={`text-sm font-semibold ${live ? 'text-rose-800' : 'text-[#0A2463]'}`}>{live ? 'Đang thảo luận trực tuyến' : 'Phòng thảo luận trực tuyến'}</p>
+              <p className='text-sm font-semibold text-[#0A2463]'>Phòng thảo luận trực tuyến</p>
               <p className='text-xs text-slate-600'>{meeting.title || 'Chủ đề này có phòng video để mọi người trao đổi nhanh hơn.'}</p>
             </div>
           </div>
           <p className='mt-2 text-xs leading-5 text-slate-600'>
-            {meeting.startsAt ? `${live ? 'Bắt đầu' : 'Dự kiến'}: ${formatMeetingTime(meeting.startsAt)}. ` : ''}
+            {meeting.startsAt ? `Thời gian: ${formatMeetingTime(meeting.startsAt)}. ` : ''}
             {meeting.note || 'Không chia sẻ thông tin cá nhân nhạy cảm. Nội dung trao đổi chỉ mang tính tham khảo.'}
           </p>
         </div>
-        <Button asChild className={`${live ? 'bg-rose-600 hover:bg-rose-700' : 'bg-[#0A2463] hover:bg-[#12357D]'} shrink-0 text-white`}>
+        <Button asChild className='shrink-0 bg-[#0A2463] text-white hover:bg-[#12357D]'>
           {isInternalLiveKitRoom ? <Link to={meeting.url}>{buttonContent}</Link> : <a href={meeting.url}>{buttonContent}</a>}
         </Button>
       </div>
@@ -172,14 +190,18 @@ function ReplyBlock({
   onReact,
   onEdit,
   onDelete,
+  onAppeal,
   editing,
   editText,
   editPending,
   onEditTextChange,
   onSubmitEdit,
   onCancelEdit,
+  onImageOpen,
   reacting,
   currentUserId,
+  appealSent,
+  appealPending,
 }: {
   message: CommunityMessage
   onQuote: (message: CommunityMessage) => void
@@ -188,14 +210,18 @@ function ReplyBlock({
   onReact: (message: CommunityMessage, type: CommunityReactionType) => void
   onEdit: (message: CommunityMessage) => void
   onDelete: (message: CommunityMessage) => void
+  onAppeal: (message: CommunityMessage) => void
   editing?: boolean
   editText?: string
   editPending?: boolean
   onEditTextChange: (value: string) => void
   onSubmitEdit: () => void
   onCancelEdit: () => void
+  onImageOpen: (src: string) => void
   reacting?: boolean
   currentUserId?: string
+  appealSent?: boolean
+  appealPending?: boolean
 }) {
   const hidden = message.status === 'hidden'
   const replyText = richTextToPlainText(message.replyTo?.content) || (message.replyTo?.imageUrl ? 'Đã gửi ảnh' : '')
@@ -220,7 +246,22 @@ function ReplyBlock({
         </aside>
         <div className='min-w-0 p-4'>
           {hidden ? (
-            <p className='text-sm text-amber-800'>Reply này đang bị ẩn để chờ điều phối.</p>
+            <div className='space-y-3'>
+              <p className='text-sm text-amber-800'>Reply này đang bị ẩn để chờ điều phối.</p>
+              {isOwner && (
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='sm'
+                  className='border-amber-200 bg-white text-amber-800 hover:bg-amber-100'
+                  onClick={() => onAppeal(message)}
+                  disabled={appealSent || appealPending}
+                >
+                  {appealPending ? <Loader2 className='h-4 w-4 animate-spin' /> : null}
+                  {appealSent ? 'Đã gửi yêu cầu' : 'Yêu cầu xem xét lại'}
+                </Button>
+              )}
+            </div>
           ) : editing ? (
             <div className='space-y-3'>
               <div className='overflow-hidden rounded-lg border border-blue-200 bg-white focus-within:border-[#5B8DEF] focus-within:ring-2 focus-within:ring-blue-50'>
@@ -252,8 +293,10 @@ function ReplyBlock({
                   <p className='mt-0.5 line-clamp-2 break-words'>{replyText}</p>
                 </div>
               )}
-              {message.imageUrl && <img src={message.imageUrl} alt='Ảnh trong reply' className='max-h-80 rounded-lg border border-slate-100 object-cover' loading='lazy' />}
-              {message.content && <CommunityHtmlContent value={message.content} className='break-words' />}
+              {message.imageUrl && <button type='button' className='block w-fit cursor-zoom-in rounded-lg text-left' onClick={() => onImageOpen(message.imageUrl || '')} aria-label='Xem ảnh reply'>
+                <img src={message.imageUrl} alt='Ảnh trong reply' className='max-h-80 rounded-lg border border-slate-100 object-cover' loading='lazy' />
+              </button>}
+              {message.content && <CommunityHtmlContent value={message.content} className='break-words' onImageOpen={onImageOpen} />}
               {message.editedAt && <p className='text-[11px] text-slate-500'>Đã chỉnh sửa {formatRelativeTime(message.editedAt)}</p>}
             </div>
           )}
@@ -283,6 +326,13 @@ function ReactionBar({ message, onReact, disabled }: { message: CommunityMessage
   const longPressTriggeredRef = useRef(false)
   const activeReaction = ALL_MESSAGE_REACTIONS.find((reaction) => reaction.type === message.viewerReaction)
   const totalReactionCount = ALL_MESSAGE_REACTIONS.reduce((total, reaction) => total + (message.reactionCounts?.[reaction.type] || 0), 0)
+  const reactionBreakdown = ALL_MESSAGE_REACTIONS
+    .map((reaction) => ({ ...reaction, count: message.reactionCounts?.[reaction.type] || 0 }))
+    .filter((reaction) => reaction.count > 0)
+  const visibleReactionIcons = reactionBreakdown.slice(0, 3)
+  const reactionSummary = reactionBreakdown.length
+    ? reactionBreakdown.map((reaction) => `${reaction.label}: ${reaction.count}`).join(' · ')
+    : activeReaction?.label || 'Chọn reaction'
 
   const clearLongPressTimer = () => {
     if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current)
@@ -392,9 +442,10 @@ function ReactionBar({ message, onReact, disabled }: { message: CommunityMessage
         type='button'
         variant='outline'
         size='sm'
-        aria-label={activeReaction ? `${activeReaction.label}${totalReactionCount ? `, ${totalReactionCount} reaction` : ''}` : 'Chọn reaction'}
+        aria-label={reactionSummary}
         aria-pressed={Boolean(activeReaction)}
-        className={`h-9 min-w-9 rounded-full px-2.5 text-sm font-semibold transition-colors ${activeReaction ? 'border-[#0A2463] bg-[#EEF5FF] text-[#0A2463] hover:bg-[#E2EEFF]' : 'border-[#d8e2f2] text-slate-600 hover:border-[#0A2463] hover:bg-[#F4F8FF] hover:text-[#0A2463]'}`}
+        title={reactionSummary}
+        className={`group h-9 min-w-9 rounded-full px-2.5 text-sm font-semibold transition-colors ${activeReaction || totalReactionCount > 0 ? 'border-[#0A2463] bg-[#EEF5FF] text-[#0A2463] hover:bg-[#E2EEFF]' : 'border-[#d8e2f2] text-slate-600 hover:border-[#0A2463] hover:bg-[#F4F8FF] hover:text-[#0A2463]'}`}
         disabled={disabled}
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerEnd}
@@ -402,12 +453,25 @@ function ReactionBar({ message, onReact, disabled }: { message: CommunityMessage
         onPointerLeave={handlePointerEnd}
         onClick={handleTogglePicker}
       >
-        {activeReaction ? (
+        {visibleReactionIcons.length > 0 ? (
+          <span className='flex -space-x-1' aria-hidden='true'>
+            {visibleReactionIcons.map((reaction) => (
+              <span key={reaction.type} className='inline-flex h-5 w-5 items-center justify-center rounded-full bg-white text-sm leading-none ring-1 ring-[#EEF5FF]'>
+                {reaction.icon}
+              </span>
+            ))}
+          </span>
+        ) : activeReaction ? (
           <span aria-hidden='true' className='text-base leading-none'>{activeReaction.icon}</span>
         ) : (
           <Smile className='h-4 w-4' />
         )}
         {totalReactionCount > 0 && <span className='text-slate-500'>{totalReactionCount}</span>}
+        {totalReactionCount > 0 && (
+          <span className='pointer-events-none absolute bottom-full right-0 mb-2 hidden max-w-72 whitespace-nowrap rounded-full bg-[#0f172a] px-2.5 py-1 text-[11px] font-medium text-white shadow-sm group-hover:block group-focus:block'>
+            {reactionSummary}
+          </span>
+        )}
       </Button>
     </div>
   )
@@ -431,9 +495,13 @@ export function CommunityThreadPage() {
   const [reportTarget, setReportTarget] = useState<CommunityMessage | null>(null)
   const [reportReason, setReportReason] = useState(REPORT_REASONS[0].value)
   const [reportDetail, setReportDetail] = useState('')
+  const [appealTarget, setAppealTarget] = useState<CommunityMessage | null>(null)
+  const [appealReason, setAppealReason] = useState('')
+  const [appealedMessageIds, setAppealedMessageIds] = useState<Set<string>>(new Set())
   const [editTarget, setEditTarget] = useState<CommunityMessage | null>(null)
   const [editText, setEditText] = useState('')
   const [newReplyCount, setNewReplyCount] = useState(0)
+  const [previewImage, setPreviewImage] = useState<string | null>(null)
   const replyDraftKey = threadId ? `community-reply-draft:${threadId}` : ''
   const page = Math.max(1, Number(searchParams.get('page') || 1))
 
@@ -453,6 +521,41 @@ export function CommunityThreadPage() {
     enabled: Boolean(threadId) && threadReady,
     staleTime: 10_000,
     retry: false,
+  })
+
+  const joinMutation = useMutation({
+    mutationFn: () => {
+      if (!thread?.room) throw new Error('Missing room')
+      return thread.room.visibility === 'private' && thread.room.viewerMembership?.status !== 'invited'
+        ? communityService.requestJoin(thread.roomId)
+        : communityService.joinRoom(thread.roomId)
+    },
+    onSuccess: (result) => {
+      const active = result.status === 'active'
+      toast.success(active ? 'Đã tham gia chuyên mục' : 'Đã gửi yêu cầu tham gia')
+      queryClient.setQueryData<CommunityThread>(['community', 'thread', threadId], (current) =>
+        current
+          ? {
+              ...current,
+              room: current.room
+                ? {
+                    ...current.room,
+                    viewerMembership: {
+                      ...(current.room.viewerMembership || {}),
+                      roomId: result.roomId,
+                      userId: result.userId,
+                      status: result.status,
+                      role: current.room.viewerMembership?.role || 'member',
+                    },
+                  }
+                : current.room,
+            }
+          : current,
+      )
+      queryClient.invalidateQueries({ queryKey: ['community', 'forum-rooms'] })
+      queryClient.invalidateQueries({ queryKey: ['community', 'thread', threadId] })
+    },
+    onError: (error: any) => toast.error(error?.response?.data?.message || 'Không thể tham gia chuyên mục'),
   })
 
   const replyMutation = useMutation({
@@ -477,8 +580,6 @@ export function CommunityThreadPage() {
     },
     onSuccess: () => {
       toast.success('Đã gửi reply')
-      const nextTotal = (repliesQuery.data?.total || 0) + 1
-      const nextPage = Math.max(1, Math.ceil(nextTotal / REPLIES_PER_PAGE))
       setReplyText('')
       setReplyImageFile(null)
       setReplyImagePreview('')
@@ -487,7 +588,6 @@ export function CommunityThreadPage() {
       queryClient.invalidateQueries({ queryKey: ['community', 'thread-replies', threadId] })
       queryClient.invalidateQueries({ queryKey: ['community', 'thread', threadId] })
       queryClient.invalidateQueries({ queryKey: ['community', 'threads', roomId] })
-      updatePage(nextPage)
     },
     onError: (error: any) => toast.error(error?.response?.data?.message || 'Không thể gửi reply'),
   })
@@ -506,6 +606,30 @@ export function CommunityThreadPage() {
       setReportDetail('')
     },
     onError: (error: any) => toast.error(error?.response?.data?.message || 'Không thể báo cáo nội dung'),
+  })
+
+  const appealMutation = useMutation({
+    mutationFn: () => {
+      if (!appealTarget) throw new Error('Missing appeal target')
+      return communityService.createAppeal({
+        roomId: appealTarget.roomId,
+        type: 'message',
+        messageId: appealTarget._id,
+        reason: appealReason.trim(),
+      })
+    },
+    onSuccess: () => {
+      if (appealTarget) setAppealedMessageIds((prev) => new Set(prev).add(appealTarget._id))
+      toast.success('Đã gửi yêu cầu xem xét lại')
+      setAppealTarget(null)
+      setAppealReason('')
+    },
+    onError: (error: any) => {
+      if (error?.response?.status === 409 && appealTarget) {
+        setAppealedMessageIds((prev) => new Set(prev).add(appealTarget._id))
+      }
+      toast.error(error?.response?.data?.message || 'Không thể gửi yêu cầu xem xét lại')
+    },
   })
 
   const reactionMutation = useMutation({
@@ -545,12 +669,17 @@ export function CommunityThreadPage() {
   })
 
   const thread = threadQuery.data
-  const canReply = isAuthenticated && thread && !thread.locked
+  const isActiveMember = thread?.room?.viewerMembership?.status === 'active'
+  const canReply = Boolean(isAuthenticated && isActiveMember && thread && !thread.locked)
 
   const handleReply = () => {
     if (!isAuthenticated) {
       toast.error('Vui lòng đăng nhập để reply')
       navigate('/login', { state: { from: { pathname: `/community/${roomId}/t/${threadId}` } } })
+      return
+    }
+    if (!isActiveMember) {
+      toast.error('Bạn cần tham gia chuyên mục trước')
       return
     }
     if (isEmptyRichText(replyText) && !replyImageFile) {
@@ -566,6 +695,43 @@ export function CommunityThreadPage() {
       return
     }
     setReportTarget(message)
+  }
+
+  const handleOpenAppeal = (message: CommunityMessage) => {
+    if (!isAuthenticated) {
+      toast.error('Vui lòng đăng nhập để gửi yêu cầu xem xét lại')
+      navigate('/login', { state: { from: { pathname: `/community/${roomId}/t/${threadId}` } } })
+      return
+    }
+    if (!user?._id || String(message.senderId) !== user._id) {
+      toast.error('Bạn chỉ có thể yêu cầu xem xét lại nội dung của chính mình')
+      return
+    }
+    setAppealTarget(message)
+  }
+
+  const handleOpenThreadAppeal = () => {
+    if (!thread?.starterMessageId || !user?._id || String(thread.authorId) !== user._id) return
+    handleOpenAppeal({
+      _id: thread.starterMessageId,
+      roomId: thread.roomId,
+      threadId: thread._id,
+      senderId: thread.authorId,
+      content: thread.title,
+      imageUrl: thread.imageUrl,
+      isThreadStarter: true,
+      status: 'hidden',
+      createdAt: thread.createdAt,
+      sender: thread.author,
+    })
+  }
+
+  const handleSubmitAppeal = () => {
+    if (appealReason.trim().length < 10) {
+      toast.error('Vui lòng nhập lý do ít nhất 10 ký tự')
+      return
+    }
+    appealMutation.mutate()
   }
 
   const handleReact = (message: CommunityMessage, type: CommunityReactionType) => {
@@ -759,12 +925,71 @@ export function CommunityThreadPage() {
           </DialogContent>
         </Dialog>
 
-        <Button variant='ghost' className='h-auto px-0 py-0 text-[#0A2463] hover:bg-transparent hover:underline' onClick={() => navigate(`/community/${roomId}`)}><ArrowLeft className='h-4 w-4' />Quay lại chuyên mục</Button>
+        <Dialog open={Boolean(appealTarget)} onOpenChange={(open) => !open && setAppealTarget(null)}>
+          <DialogContent className='sm:max-w-lg'>
+            <DialogHeader>
+              <DialogTitle>Yêu cầu xem xét lại nội dung bị ẩn</DialogTitle>
+              <DialogDescription>
+                Gửi lý do để đội ngũ điều phối kiểm tra lại nội dung của bạn.
+              </DialogDescription>
+            </DialogHeader>
+            <div className='space-y-3'>
+              <div className='rounded-lg border border-[#E8EDF5] bg-[#F8FBFF] p-3 text-sm text-slate-700'>
+                <p className='line-clamp-3 break-words'>{richTextToPlainText(appealTarget?.content) || 'Nội dung bị ẩn'}</p>
+              </div>
+              <Textarea
+                value={appealReason}
+                onChange={(event) => setAppealReason(event.target.value)}
+                rows={5}
+                placeholder='Nhập lý do bạn muốn nội dung này được xem xét lại'
+              />
+            </div>
+            <DialogFooter>
+              <Button variant='outline' onClick={() => setAppealTarget(null)} disabled={appealMutation.isPending}>Hủy</Button>
+              <Button onClick={handleSubmitAppeal} disabled={appealMutation.isPending}>
+                {appealMutation.isPending ? <Loader2 className='h-4 w-4 animate-spin' /> : null}
+                Gửi yêu cầu
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <div className='flex flex-wrap items-center justify-between gap-3'>
+          <Button variant='ghost' className='h-auto px-0 py-0 text-[#0A2463] hover:bg-transparent hover:underline' onClick={() => navigate(`/community/${roomId}`)}><ArrowLeft className='h-4 w-4' />Quay lại chuyên mục</Button>
+          {isAuthenticated && thread?.room && !isActiveMember && (
+            <Button variant='outline' className='border-blue-100 text-[#0A2463]' onClick={() => joinMutation.mutate()} disabled={joinMutation.isPending}>
+              {joinMutation.isPending ? <Loader2 className='h-4 w-4 animate-spin' /> : null}
+              {thread.room.visibility === 'private' ? 'Gửi yêu cầu tham gia' : 'Tham gia chuyên mục'}
+            </Button>
+          )}
+        </div>
 
         {threadQuery.isLoading ? (
           <Skeleton className='h-72 rounded-lg' />
         ) : thread ? (
           <>
+          {thread.status === 'hidden' && (
+            <div className='rounded-lg border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-800'>
+              <p className='flex items-center gap-2 font-semibold'>
+                <EyeOff className='h-4 w-4' />
+                Bài viết này đã bị ẩn và chưa hiển thị công khai.
+              </p>
+              <p className='mt-1 text-rose-700'>Nội dung đang nằm trong hàng chờ kiểm duyệt. Người dùng khác sẽ không thấy bài viết này.</p>
+              {user?._id && String(thread.authorId) === user._id && thread.starterMessageId && (
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='sm'
+                  className='mt-3 border-rose-200 bg-white text-rose-700 hover:bg-rose-100'
+                  onClick={handleOpenThreadAppeal}
+                  disabled={appealedMessageIds.has(thread.starterMessageId) || appealMutation.isPending}
+                >
+                  {appealMutation.isPending && appealTarget?._id === thread.starterMessageId ? <Loader2 className='h-4 w-4 animate-spin' /> : null}
+                  {appealedMessageIds.has(thread.starterMessageId) ? 'Đã gửi yêu cầu' : 'Yêu cầu xem xét lại'}
+                </Button>
+              )}
+            </div>
+          )}
           <article id={thread.starterMessageId ? `post-${thread.starterMessageId}` : undefined} className='scroll-mt-24 overflow-hidden rounded-lg border border-[#DDE7F3] bg-white shadow-sm'>
             <div className='border-b border-[#DDE7F3] bg-[#F0F6FF] px-3 py-2'>
               <div className='mb-1 flex flex-wrap items-center gap-1.5'>
@@ -812,9 +1037,11 @@ export function CommunityThreadPage() {
                       </div>
                     ) : (
                       <>
-                        <CommunityHtmlContent value={thread.content} className='break-words text-sm leading-7 text-slate-950' />
+                        <CommunityHtmlContent value={thread.content} className='break-words text-sm leading-7 text-slate-950' onImageOpen={setPreviewImage} />
                         {thread.starterMessage?.editedAt && <p className='mt-2 text-[11px] text-slate-500'>Đã chỉnh sửa {formatRelativeTime(thread.starterMessage.editedAt)}</p>}
-                        {thread.imageUrl && <img src={thread.imageUrl} alt='Ảnh thread' className='mt-4 max-h-96 rounded-lg border border-slate-100 object-cover' loading='lazy' />}
+                        {thread.imageUrl && <button type='button' className='mt-4 block w-fit cursor-zoom-in rounded-lg text-left' onClick={() => setPreviewImage(thread.imageUrl || '')} aria-label='Xem ảnh thread'>
+                          <img src={thread.imageUrl} alt='Ảnh thread' className='max-h-96 rounded-lg border border-slate-100 object-cover' loading='lazy' />
+                        </button>}
                       </>
                     )}
                 </div>
@@ -864,27 +1091,29 @@ export function CommunityThreadPage() {
                           Sửa
                         </Button>
                       )}
-                      <Button
-                        variant='ghost'
-                        size='sm'
-                        className='h-8 rounded px-2 text-rose-600 hover:text-rose-700'
-                        onClick={() =>
-                          handleOpenReport({
-                            _id: thread.starterMessageId!,
-                            roomId: thread.roomId,
-                            threadId: thread._id,
-                            senderId: thread.authorId,
-                            content: thread.content,
-                            imageUrl: thread.imageUrl,
-                            status: 'visible',
-                            createdAt: thread.createdAt,
-                            sender: thread.author,
-                          })
-                        }
-                      >
-                        <Flag className='h-4 w-4' />
-                        Báo cáo bài viết
-                      </Button>
+                      {(!user?._id || String(thread.authorId) !== user._id) && thread.status !== 'hidden' && (
+                        <Button
+                          variant='ghost'
+                          size='sm'
+                          className='h-8 rounded px-2 text-rose-600 hover:text-rose-700'
+                          onClick={() =>
+                            handleOpenReport({
+                              _id: thread.starterMessageId!,
+                              roomId: thread.roomId,
+                              threadId: thread._id,
+                              senderId: thread.authorId,
+                              content: thread.content,
+                              imageUrl: thread.imageUrl,
+                              status: 'visible',
+                              createdAt: thread.createdAt,
+                              sender: thread.author,
+                            })
+                          }
+                        >
+                          <Flag className='h-4 w-4' />
+                          Báo cáo bài viết
+                        </Button>
+                      )}
                     </div>
                   </div>
                 )}
@@ -895,7 +1124,7 @@ export function CommunityThreadPage() {
         ) : (
           <div className='rounded-lg border border-[#DDE7F3] bg-white p-8 text-center shadow-sm'>
             <h1 className='text-lg font-semibold text-[#0A2463]'>Không tìm thấy thread</h1>
-            <p className='mt-2 text-sm text-slate-600'>Thread này có thể đã bị xóa, bị ẩn hoặc dữ liệu demo đã được seed lại.</p>
+            <p className='mt-2 text-sm text-slate-600'>Thread này có thể đã bị xóa hoặc bị ẩn.</p>
             <div className='mt-4 flex flex-wrap justify-center gap-2'>
               <Button variant='outline' onClick={() => navigate(`/community/${roomId}`)}>Quay lại chuyên mục</Button>
               <Button className='bg-[#0A2463] text-white hover:bg-[#12357D]' onClick={() => navigate('/community')}>Về cộng đồng</Button>
@@ -903,7 +1132,7 @@ export function CommunityThreadPage() {
           </div>
         )}
 
-        {thread && <section className='max-w-6xl space-y-3'>
+        {thread && thread.status !== 'hidden' && <section className='max-w-6xl space-y-3'>
           <div className='flex items-center justify-between gap-3'>
             <h2 className='text-base font-semibold text-[#0A2463]'>Trả lời</h2>
           </div>
@@ -930,6 +1159,7 @@ export function CommunityThreadPage() {
                   onReact={handleReact}
                   onEdit={handleOpenEdit}
                   onDelete={handleDelete}
+                  onAppeal={handleOpenAppeal}
                   editing={editTarget?._id === message._id}
                   editText={editTarget?._id === message._id ? editText : ''}
                   editPending={editMutation.isPending}
@@ -939,11 +1169,14 @@ export function CommunityThreadPage() {
                     setEditTarget(null)
                     setEditText('')
                   }}
+                  onImageOpen={setPreviewImage}
                   reacting={reactionMutation.isPending}
                   currentUserId={user?._id}
+                  appealSent={appealedMessageIds.has(message._id)}
+                  appealPending={appealMutation.isPending && appealTarget?._id === message._id}
                 />
               ))}
-              {totalReplyPages > 1 && <PaginationComponent currentPage={page} totalPages={totalReplyPages} onPageChange={updatePage} className='rounded-lg border border-[#DDE7F3] bg-white py-4 shadow-sm' />}
+              {totalReplyPages > 1 && <CommunityPagination currentPage={page} totalPages={totalReplyPages} onPageChange={updatePage} className='py-2' />}
             </div>
           ) : (
             <div className='rounded-lg border border-dashed border-[#DDE7F3] bg-white p-8 text-center text-sm text-slate-600'>Chưa có trả lời nào.</div>
@@ -977,7 +1210,7 @@ export function CommunityThreadPage() {
                 <RichTextEditor
                   value={replyText}
                   onChange={setReplyText}
-                  placeholder={canReply ? 'Write your reply...' : 'Đăng nhập và tham gia chuyên mục để trả lời'}
+                  placeholder={canReply ? 'Viết trả lời...' : 'Đăng nhập và tham gia chuyên mục để trả lời'}
                   height={130}
                 />
 
@@ -1028,6 +1261,31 @@ export function CommunityThreadPage() {
           </div>
         </section>}
       </div>
+
+      {previewImage && (
+        <div
+          className='fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4'
+          onClick={() => setPreviewImage(null)}
+          role='dialog'
+          aria-modal='true'
+          aria-label='Xem ảnh'
+        >
+          <button
+            type='button'
+            className='absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white/80 transition hover:bg-white/20 hover:text-white'
+            onClick={() => setPreviewImage(null)}
+            aria-label='Đóng ảnh'
+          >
+            <X className='h-6 w-6' />
+          </button>
+          <img
+            src={previewImage}
+            alt='Ảnh phóng to'
+            className='max-h-full max-w-full rounded-lg object-contain shadow-2xl'
+            onClick={(event) => event.stopPropagation()}
+          />
+        </div>
+      )}
     </main>
   )
 }

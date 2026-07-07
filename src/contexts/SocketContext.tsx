@@ -73,6 +73,10 @@ interface SocketContextType {
   leaveCommunityRoom: (roomId: string) => void
   joinCommunityVideoEvent: (eventId: string, onAck?: (payload: { ok: boolean; eventId?: string; message?: string }) => void) => void
   leaveCommunityVideoEvent: (eventId: string) => void
+  sendCommunityVideoEventMessage: (
+    data: { eventId: string; content: string },
+    onAck?: (payload: { ok: boolean; message?: CommunityMessage; error?: string }) => void,
+  ) => void
   requestHuman: (conversationId: string) => void
   // Subscribe/unsubscribe pattern to allow multiple components to listen
   subscribe: (id: string, callbacks: SocketCallbacks) => void
@@ -360,6 +364,20 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     socketRef.current?.connected && socketRef.current.emit(COMMUNITY_VIDEO_EVENT_SOCKET_EVENTS.LEAVE_ROOM, eventId)
   }, [])
 
+  const sendCommunityVideoEventMessage = useCallback(
+    (
+      data: { eventId: string; content: string },
+      onAck?: (payload: { ok: boolean; message?: CommunityMessage; error?: string }) => void,
+    ) => {
+      if (!socketRef.current?.connected) {
+        onAck?.({ ok: false, error: 'Realtime chưa kết nối.' })
+        return
+      }
+      socketRef.current.emit(COMMUNITY_VIDEO_EVENT_SOCKET_EVENTS.SEND_MESSAGE, data, onAck)
+    },
+    [],
+  )
+
   const requestHuman = useCallback((conversationId: string) => {
     socketRef.current?.connected && socketRef.current.emit('conversation:request_human', { conversationId })
   }, [])
@@ -426,6 +444,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       leaveCommunityRoom,
       joinCommunityVideoEvent,
       leaveCommunityVideoEvent,
+      sendCommunityVideoEventMessage,
       subscribe,
       unsubscribe,
       requestHuman,
@@ -443,6 +462,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       leaveCommunityRoom,
       joinCommunityVideoEvent,
       leaveCommunityVideoEvent,
+      sendCommunityVideoEventMessage,
       subscribe,
       unsubscribe,
       requestHuman,

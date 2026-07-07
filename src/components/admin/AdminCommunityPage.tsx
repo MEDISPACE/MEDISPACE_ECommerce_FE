@@ -21,25 +21,32 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '~/components/ui/table'
 import { Textarea } from '~/components/ui/textarea'
 import { adminCommunityService } from '~/services/communityService'
-import type { CommunityMember, CommunityRoom, CommunityThread, CommunityThreadVideoMeetingStatus } from '~/types/community'
+import type { CommunityMember, CommunityRoom, CommunityThread } from '~/types/community'
+import { communityPreviewText } from '~/components/community/communityUi'
 
 const emptyForm = {
   name: '',
   slug: '',
   visibility: 'public' as 'public' | 'private',
-  diseaseKey: '',
   topicLabel: '',
   description: '',
-  iconKey: '',
-  coverImage: '',
   guidelinesText: '',
   pinnedMessage: '',
   featured: false,
-  sortOrder: '',
+}
+
+const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+
+function normalizeSlug(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
 }
 
 const emptyMeetingForm = {
-  status: 'scheduled' as CommunityThreadVideoMeetingStatus,
   startsAt: '',
   title: '',
   note: '',
@@ -80,7 +87,7 @@ export function AdminCommunityPage() {
     const needle = roomSearch.trim().toLowerCase()
     if (!needle) return rooms
     return rooms.filter((room) =>
-      [room.name, room.slug, room.diseaseKey, room.topicLabel, room.description].some((value) => value?.toLowerCase().includes(needle)),
+      [room.name, room.slug, room.topicLabel, room.description].some((value) => value?.toLowerCase().includes(needle)),
     )
   }, [roomSearch, rooms])
 
@@ -103,19 +110,19 @@ export function AdminCommunityPage() {
 
   const saveRoom = useMutation({
     mutationFn: () => {
+      const slug = form.slug.trim()
+      if (slug && !slugPattern.test(slug)) {
+        throw new Error('Slug chỉ dùng chữ thường, số và dấu gạch ngang. Ví dụ: cong-dong-tim-mach')
+      }
       const payload = {
         name: form.name.trim(),
-        slug: form.slug.trim() || undefined,
+        slug: slug || undefined,
         visibility: form.visibility,
-        diseaseKey: form.diseaseKey.trim() || undefined,
         topicLabel: form.topicLabel.trim() || undefined,
         description: form.description.trim() || undefined,
-        iconKey: form.iconKey.trim() || undefined,
-        coverImage: form.coverImage.trim() || undefined,
         guidelines: form.guidelinesText.split('\n').map((item) => item.trim()).filter(Boolean),
         pinnedMessage: form.pinnedMessage.trim() || undefined,
         featured: form.featured,
-        sortOrder: form.sortOrder.trim() ? Number(form.sortOrder) : undefined,
       }
       return editingRoom
         ? adminCommunityService.updateRoom(editingRoom._id, payload)
@@ -126,7 +133,7 @@ export function AdminCommunityPage() {
       setDialogOpen(false)
       queryClient.invalidateQueries({ queryKey: ['admin-community-rooms'] })
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || 'Không thể lưu phòng'),
+    onError: (err: any) => toast.error(err?.response?.data?.message || err?.message || 'Không thể lưu phòng'),
   })
 
   const archiveRoom = useMutation({
@@ -172,7 +179,6 @@ export function AdminCommunityPage() {
       const title = meetingForm.title.trim() || editingThread.title
       const note = meetingForm.note.trim() || 'Phòng LiveKit nội bộ để cộng đồng trao đổi trực tuyến theo thread. Không chia sẻ thông tin cá nhân nhạy cảm.'
       let eventId = editingThread.videoMeeting?.eventId
-      let videoEventStatus: string | undefined
 
       if (!eventId) {
         const event = await adminCommunityService.createVideoEvent({
@@ -180,7 +186,6 @@ export function AdminCommunityPage() {
           title,
           description: note,
           agenda: note,
-          visibility: selectedRoom.visibility,
           scheduledStartAt: startDate.toISOString(),
           scheduledEndAt: endDate.toISOString(),
           registrationRequired: false,
@@ -188,13 +193,11 @@ export function AdminCommunityPage() {
           tags: ['thread-video', editingThread._id],
         })
         eventId = event._id
-        videoEventStatus = event.status
       } else {
-        const event = await adminCommunityService.updateVideoEvent(eventId, {
+        await adminCommunityService.updateVideoEvent(eventId, {
           title,
           description: note,
           agenda: note,
-          visibility: selectedRoom.visibility,
           scheduledStartAt: startDate.toISOString(),
           scheduledEndAt: endDate.toISOString(),
           registrationRequired: false,
@@ -202,19 +205,6 @@ export function AdminCommunityPage() {
           meetingUrl: `/community/video-events/${eventId}`,
           tags: ['thread-video', editingThread._id],
         })
-        videoEventStatus = event.status
-      }
-
-      if (meetingForm.status === 'live' && videoEventStatus !== 'live') {
-        await adminCommunityService.startVideoEvent(eventId)
-        videoEventStatus = 'live'
-      }
-      if (meetingForm.status === 'ended' && videoEventStatus !== 'ended') {
-        if (videoEventStatus !== 'live') {
-          await adminCommunityService.startVideoEvent(eventId)
-        }
-        await adminCommunityService.endVideoEvent(eventId)
-        videoEventStatus = 'ended'
       }
 
       return adminCommunityService.updateThread(editingThread._id, {
@@ -222,7 +212,7 @@ export function AdminCommunityPage() {
           eventId,
           url: `/community/video-events/${eventId}`,
           provider: 'livekit',
-          status: meetingForm.status,
+          status: 'scheduled',
           startsAt: startDate.toISOString(),
           title,
           note,
@@ -264,15 +254,11 @@ export function AdminCommunityPage() {
       name: room.name,
       slug: room.slug,
       visibility: room.visibility,
-      diseaseKey: room.diseaseKey || '',
       topicLabel: room.topicLabel || '',
       description: room.description || '',
-      iconKey: room.iconKey || '',
-      coverImage: room.coverImage || '',
       guidelinesText: (room.guidelines || []).join('\n'),
       pinnedMessage: room.pinnedMessage || '',
       featured: Boolean(room.featured),
-      sortOrder: room.sortOrder === undefined ? '' : String(room.sortOrder),
     })
     setDialogOpen(true)
   }
@@ -281,7 +267,6 @@ export function AdminCommunityPage() {
     const meeting = thread.videoMeeting
     setEditingThread(thread)
     setMeetingForm({
-      status: meeting?.status || 'scheduled',
       startsAt: meeting?.startsAt ? new Date(meeting.startsAt).toISOString().slice(0, 16) : '',
       title: meeting?.title || '',
       note: meeting?.note || '',
@@ -303,49 +288,35 @@ export function AdminCommunityPage() {
             </div>
             <div className='space-y-2'>
               <Label>Slug</Label>
-              <Input value={form.slug} onChange={(e) => setForm((prev) => ({ ...prev, slug: e.target.value }))} />
+              <Input
+                value={form.slug}
+                onChange={(e) => setForm((prev) => ({ ...prev, slug: normalizeSlug(e.target.value) }))}
+                placeholder='vi-du: cong-dong-tim-mach'
+              />
+              <p className='text-xs text-gray-500'>Chỉ dùng chữ thường, số và dấu gạch ngang.</p>
             </div>
-            <div className='grid grid-cols-2 gap-3'>
-              <div className='space-y-2'>
-                <Label>Hiển thị</Label>
-                <Select
-                  value={form.visibility}
-                  onValueChange={(value: 'public' | 'private') => setForm((prev) => ({ ...prev, visibility: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='public'>Công khai</SelectItem>
-                    <SelectItem value='private'>Riêng tư</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className='space-y-2'>
-                <Label>Nhóm bệnh</Label>
-                <Input
-                  value={form.diseaseKey}
-                  onChange={(e) => setForm((prev) => ({ ...prev, diseaseKey: e.target.value }))}
-                />
-              </div>
+            <div className='space-y-2'>
+              <Label>Hiển thị</Label>
+              <Select
+                value={form.visibility}
+                onValueChange={(value: 'public' | 'private') => setForm((prev) => ({ ...prev, visibility: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='public'>Công khai</SelectItem>
+                  <SelectItem value='private'>Riêng tư</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <div className='grid grid-cols-2 gap-3'>
-              <div className='space-y-2'>
-                <Label>Nhãn chủ đề</Label>
-                <Input
-                  value={form.topicLabel}
-                  onChange={(e) => setForm((prev) => ({ ...prev, topicLabel: e.target.value }))}
-                  placeholder='Ví dụ: Tim mạch, Mẹ và bé'
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label>Icon key</Label>
-                <Input
-                  value={form.iconKey}
-                  onChange={(e) => setForm((prev) => ({ ...prev, iconKey: e.target.value }))}
-                  placeholder='heart, diabetes, mental-health'
-                />
-              </div>
+            <div className='space-y-2'>
+              <Label>Nhãn chủ đề</Label>
+              <Input
+                value={form.topicLabel}
+                onChange={(e) => setForm((prev) => ({ ...prev, topicLabel: e.target.value }))}
+                placeholder='Ví dụ: Tim mạch, Mẹ và bé'
+              />
             </div>
             <div className='space-y-2'>
               <Label>Mô tả ngắn</Label>
@@ -372,25 +343,6 @@ export function AdminCommunityPage() {
                 rows={4}
                 placeholder='Mỗi dòng là một quy tắc cộng đồng'
               />
-            </div>
-            <div className='grid grid-cols-2 gap-3'>
-              <div className='space-y-2'>
-                <Label>Ảnh bìa</Label>
-                <Input
-                  value={form.coverImage}
-                  onChange={(e) => setForm((prev) => ({ ...prev, coverImage: e.target.value }))}
-                  placeholder='https://...'
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label>Thứ tự ưu tiên</Label>
-                <Input
-                  type='number'
-                  min={0}
-                  value={form.sortOrder}
-                  onChange={(e) => setForm((prev) => ({ ...prev, sortOrder: e.target.value }))}
-                />
-              </div>
             </div>
             <div className='flex items-center justify-between rounded-lg border border-[#E8EDF5] p-3'>
               <div>
@@ -436,22 +388,9 @@ export function AdminCommunityPage() {
                 </a>
               </div>
             )}
-            <div className='grid gap-3 md:grid-cols-2'>
-              <div className='space-y-2'>
-                <Label>Trạng thái</Label>
-                <Select value={meetingForm.status} onValueChange={(value: CommunityThreadVideoMeetingStatus) => setMeetingForm((prev) => ({ ...prev, status: value }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='scheduled'>Có phòng video</SelectItem>
-                    <SelectItem value='live'>Đang thảo luận trực tuyến</SelectItem>
-                    <SelectItem value='ended'>Đã kết thúc</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className='space-y-2'>
-                <Label>Thời gian hiển thị</Label>
-                <Input type='datetime-local' value={meetingForm.startsAt} onChange={(e) => setMeetingForm((prev) => ({ ...prev, startsAt: e.target.value }))} />
-              </div>
+            <div className='space-y-2'>
+              <Label>Thời gian hiển thị</Label>
+              <Input type='datetime-local' value={meetingForm.startsAt} onChange={(e) => setMeetingForm((prev) => ({ ...prev, startsAt: e.target.value }))} />
             </div>
             <div className='space-y-2'>
               <Label>Tiêu đề hiển thị</Label>
@@ -492,15 +431,15 @@ export function AdminCommunityPage() {
         </div>
       </div>
 
-      <div className='grid grid-cols-1 xl:grid-cols-3 gap-4'>
-        <Card className='xl:col-span-1 bg-white border-[#E8EDF5]'>
-          <CardContent className='p-4 space-y-3'>
+      <div className='grid grid-cols-1 gap-4 xl:grid-cols-3 xl:items-start'>
+        <Card className='bg-white border-[#E8EDF5] xl:col-span-1 xl:max-h-[calc(100vh-180px)]'>
+          <CardContent className='flex min-h-0 flex-col gap-3 p-4 xl:max-h-[calc(100vh-180px)]'>
             <div className='space-y-3'>
               <div className='relative'>
                 <Search className='w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2' />
                 <Input
                   className='pl-9'
-                  placeholder='Tìm tên, slug, nhóm bệnh'
+                  placeholder='Tìm tên, slug, nhãn chủ đề'
                   value={roomSearch}
                   onChange={(e) => setRoomSearch(e.target.value)}
                 />
@@ -528,39 +467,46 @@ export function AdminCommunityPage() {
                 </Select>
               </div>
             </div>
-            {isLoading ? (
-              <div className='text-sm text-gray-500 py-6 text-center'>Đang tải...</div>
-            ) : filteredRooms.length === 0 ? (
-              <div className='text-sm text-gray-500 py-6 text-center'>Không có phòng phù hợp</div>
-            ) : (
-              filteredRooms.map((room) => (
-                <button
-                  key={room._id}
-                  onClick={() => setSelectedRoomId(room._id)}
-                  className={`w-full text-left rounded-lg border p-4 transition ${
-                    selectedRoom?._id === room._id ? 'border-blue-400 bg-[#F0F6FF]' : 'border-[#E8EDF5] hover:bg-[#F0F6FF]'
-                  }`}
-                >
-                  <div className='flex items-start justify-between gap-3'>
-                    <div className='min-w-0'>
-                      <p className='font-semibold text-gray-900 line-clamp-1'>{room.name}</p>
-                      <p className='text-xs text-gray-500'>#{room.slug}</p>
-                    </div>
-                    <Badge className={room.status === 'archived' ? 'bg-gray-100 text-gray-700' : 'bg-[#E8EDF5] text-[#0A2463]'}>
-                      {room.status === 'archived' ? 'archived' : room.visibility}
-                    </Badge>
-                  </div>
-                  <div className='flex gap-3 text-xs text-gray-500 mt-3'>
-                    <span>{room.memberCount || 0} thành viên</span>
-                    <span>{room.messageCount || 0} tin nhắn</span>
-                  </div>
-                </button>
-              ))
-            )}
+            <div className='min-h-0 flex-1 overflow-y-auto pr-1'>
+              {isLoading ? (
+                <div className='text-sm text-gray-500 py-6 text-center'>Đang tải...</div>
+              ) : filteredRooms.length === 0 ? (
+                <div className='text-sm text-gray-500 py-6 text-center'>Không có phòng phù hợp</div>
+              ) : (
+                <div className='space-y-3'>
+                  {filteredRooms.map((room) => (
+                    <button
+                      key={room._id}
+                      onClick={() => setSelectedRoomId(room._id)}
+                      className={`w-full text-left rounded-lg border p-4 transition ${
+                        selectedRoom?._id === room._id ? 'border-blue-400 bg-[#F0F6FF]' : 'border-[#E8EDF5] hover:bg-[#F0F6FF]'
+                      }`}
+                    >
+                      <div className='flex items-start justify-between gap-3'>
+                        <div className='min-w-0'>
+                          <p className='font-semibold text-gray-900 line-clamp-1'>{room.name}</p>
+                          <p className='text-xs text-gray-500'>#{room.slug}</p>
+                        </div>
+                        <Badge className={room.status === 'archived' ? 'bg-gray-100 text-gray-700' : 'bg-[#E8EDF5] text-[#0A2463]'}>
+                          {room.status === 'archived' ? 'archived' : room.visibility}
+                        </Badge>
+                      </div>
+                      <div className='flex flex-wrap gap-3 text-xs text-gray-500 mt-3'>
+                        <span>{room.memberCount || 0} thành viên</span>
+                        {room.visibility === 'private' && (room.pendingMemberCount || 0) > 0 && (
+                          <span className='font-semibold text-amber-700'>{room.pendingMemberCount} chờ duyệt</span>
+                        )}
+                        <span>{room.messageCount || 0} tin nhắn</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
 
-        <Card className='xl:col-span-2 bg-white border-[#E8EDF5]'>
+        <Card className='bg-white border-[#E8EDF5] xl:col-span-2 xl:max-h-[calc(100vh-180px)] xl:overflow-y-auto'>
           <CardContent className='p-5'>
             {!selectedRoom ? (
               <div className='text-center text-gray-500 py-12'>Chọn một phòng để quản lý</div>
@@ -601,9 +547,9 @@ export function AdminCommunityPage() {
                       <p className='text-xs text-gray-500'>Tin nhắn</p>
                       <p className='font-semibold'>{selectedRoom.messageCount || 0}</p>
                     </div>
-                    <div className='rounded-lg bg-[#F0F6FF] p-4'>
-                      <p className='text-xs text-gray-500'>Nhóm bệnh</p>
-                      <p className='font-semibold'>{selectedRoom.topicLabel || selectedRoom.diseaseKey || '-'}</p>
+                    <div className='rounded-lg bg-amber-50 p-4'>
+                      <p className='text-xs text-amber-700'>Chờ duyệt</p>
+                      <p className='font-semibold text-amber-800'>{selectedRoom.pendingMemberCount || 0}</p>
                     </div>
                   </div>
                   <div className='grid gap-3 md:grid-cols-2'>
@@ -612,13 +558,11 @@ export function AdminCommunityPage() {
                       <p className='mt-1 text-sm text-gray-700'>{selectedRoom.description || 'Chưa có mô tả'}</p>
                     </div>
                     <div className='rounded-lg border border-[#E8EDF5] p-4'>
-                      <p className='text-xs text-gray-500'>Cấu hình hub</p>
+                      <p className='text-xs text-gray-500'>Community Hub</p>
                       <div className='mt-2 flex flex-wrap gap-2'>
                         <Badge className={selectedRoom.featured ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-700'}>
                           {selectedRoom.featured ? 'Đang đề xuất' : 'Không đề xuất'}
                         </Badge>
-                        <Badge className='bg-[#E8EDF5] text-[#0A2463]'>Ưu tiên: {selectedRoom.sortOrder ?? '-'}</Badge>
-                        {selectedRoom.iconKey && <Badge variant='outline'>{selectedRoom.iconKey}</Badge>}
                       </div>
                     </div>
                   </div>
@@ -633,7 +577,7 @@ export function AdminCommunityPage() {
                     )}
                   </div>
                   {selectedRoom.pinnedMessage && <p className='rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-800'>Ghim: {selectedRoom.pinnedMessage}</p>}
-                  <p className='text-sm text-gray-600'>Tin mới nhất: {selectedRoom.lastMessagePreview || 'Chưa có'}</p>
+                  <p className='text-sm text-gray-600'>Tin mới nhất: {communityPreviewText(selectedRoom.lastMessagePreview, 'Chưa có')}</p>
                 </TabsContent>
 
                 <TabsContent value='members' className='space-y-4'>
@@ -741,9 +685,9 @@ export function AdminCommunityPage() {
                             <TableCell>
                               {thread.videoMeeting?.url ? (
                                 <div className='space-y-1'>
-                                  <Badge className={thread.videoMeeting.status === 'live' ? 'bg-rose-100 text-rose-700' : 'bg-blue-100 text-[#0A2463]'}>
+                                  <Badge className='bg-blue-100 text-[#0A2463]'>
                                     <Video className='mr-1 h-3 w-3' />
-                                    {thread.videoMeeting.status === 'live' ? 'Đang live' : thread.videoMeeting.status === 'ended' ? 'Đã kết thúc' : 'Có phòng video'}
+                                    Có phòng video
                                   </Badge>
                                   <a href={thread.videoMeeting.url} target='_blank' rel='noreferrer' className='flex items-center gap-1 text-xs text-blue-700 hover:underline'>
                                     Mở link <ExternalLink className='h-3 w-3' />

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
-import { CalendarDays, CheckCircle2, Clock3, Lock, Search, Users, Video } from 'lucide-react'
+import { CalendarDays, CheckCircle2, Clock3, Search, Users, Video } from 'lucide-react'
 
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
@@ -13,7 +13,7 @@ import communityService from '~/services/communityService'
 import type { CommunityVideoEvent } from '~/types/community'
 import { getRoomTopic } from './communityUi'
 
-type EventTab = 'upcoming' | 'live' | 'registered' | 'past'
+type EventTab = 'upcoming' | 'registered' | 'past'
 
 function formatDateTime(value?: string) {
   if (!value) return ''
@@ -21,26 +21,24 @@ function formatDateTime(value?: string) {
 }
 
 function statusLabel(status: string) {
-  const labels: Record<string, string> = { scheduled: 'Sắp diễn ra', live: 'Đang live', ended: 'Đã kết thúc', cancelled: 'Đã hủy', draft: 'Bản nháp' }
+  const labels: Record<string, string> = { scheduled: 'Có thể tham gia', live: 'Có thể tham gia', ended: 'Đã kết thúc', cancelled: 'Đã hủy', draft: 'Bản nháp' }
   return labels[status] || status
 }
 
 function EventCard({ event }: { event: CommunityVideoEvent }) {
-  const live = event.status === 'live'
   const registered = event.viewerRegistration?.status === 'registered' || event.viewerRegistration?.status === 'attended'
   const full = Boolean(event.capacity && (event.registrationCount || 0) >= event.capacity && !registered)
-  const cta = live ? 'Vào phòng' : registered ? 'Mở link' : full ? 'Đã đủ chỗ' : event.registrationRequired ? 'Đăng ký' : 'Mở link'
+  const cta = registered ? 'Mở link' : full ? 'Đã đủ chỗ' : event.registrationRequired ? 'Đăng ký' : 'Vào phòng'
 
   return (
     <article className='rounded-lg border border-[#E2E8F0] bg-white p-5 shadow-sm transition hover:border-blue-200 hover:shadow-md'>
       <div className='flex items-start gap-4'>
-        <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg ${live ? 'bg-rose-50 text-rose-600' : 'bg-blue-50 text-blue-700'}`}>
+        <div className='flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700'>
           <Video className='h-6 w-6' />
         </div>
         <div className='min-w-0 flex-1'>
           <div className='mb-2 flex flex-wrap items-center gap-2'>
-            <Badge className={live ? 'bg-rose-600 text-white' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-50'}>{statusLabel(event.status)}</Badge>
-            <Badge variant='outline' className='border-slate-200 text-slate-600'>{event.visibility === 'public' ? 'Công khai' : <><Lock className='h-3 w-3' />Riêng tư</>}</Badge>
+            <Badge className='bg-emerald-50 text-emerald-700 hover:bg-emerald-50'>{statusLabel(event.status)}</Badge>
             {registered && <Badge className='bg-blue-50 text-blue-700 hover:bg-blue-50'><CheckCircle2 className='h-3 w-3' />Đã đăng ký</Badge>}
           </div>
           <h2 className='line-clamp-2 text-lg font-semibold text-slate-950'>{event.title}</h2>
@@ -58,7 +56,7 @@ function EventCard({ event }: { event: CommunityVideoEvent }) {
 
       <div className='mt-5 flex items-center justify-between gap-3'>
         <span className='text-xs text-slate-500'>{event.room?.name || 'MediSpace Community'}</span>
-        <Button asChild disabled={full} className={live ? 'bg-rose-600 text-white hover:bg-rose-700' : 'bg-[#0A2463] text-white hover:bg-[#12357D]'}>
+        <Button asChild disabled={full} className='bg-[#0A2463] text-white hover:bg-[#12357D]'>
           <Link to={`/community/video-events/${event._id}`}>{cta}</Link>
         </Button>
       </div>
@@ -81,7 +79,7 @@ export function CommunityVideoEventsPage() {
     queryKey,
     queryFn: () => communityService.listVideoEvents({
       search: debouncedSearch || undefined,
-      status: tab === 'live' ? 'live' : tab === 'past' ? 'ended' : undefined,
+      status: tab === 'past' ? 'ended' : undefined,
       upcomingOnly: tab === 'upcoming' || tab === 'registered' ? true : undefined,
       page: 1,
       limit: 30,
@@ -121,7 +119,6 @@ export function CommunityVideoEventsPage() {
             <Tabs value={tab} onValueChange={(value) => setTab(value as EventTab)}>
               <TabsList className='flex h-auto flex-wrap justify-start bg-slate-100 p-1'>
                 <TabsTrigger value='upcoming'>Sắp diễn ra</TabsTrigger>
-                <TabsTrigger value='live'>Đang live</TabsTrigger>
                 <TabsTrigger value='registered'>Đã đăng ký</TabsTrigger>
                 <TabsTrigger value='past'>Đã kết thúc</TabsTrigger>
               </TabsList>

@@ -5,11 +5,10 @@ import {
   EyeOff,
   ShieldAlert,
   Trash2,
-  UserMinus,
   UserX,
+  MoreHorizontal,
   RefreshCw,
   History,
-  RotateCcw,
   Sparkles,
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
@@ -46,10 +45,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '~/components/ui/dropdown-menu'
 import moderationService from '~/services/moderationService'
 import type {
-  AiModerationJob,
-  AiModerationJobStatus,
   ModerationAction,
   ModerationActionLog,
   ModerationAppeal,
@@ -69,11 +74,102 @@ const severityMeta: Record<string, { label: string; className: string }> = {
 const triggerLabel: Record<string, string> = {
   auto: 'Auto mod',
   user_report: 'Báo cáo người dùng',
-  ai: 'AI review',
+  ai: 'AI moderation',
+}
+
+const deprecatedActionTypes = new Set(['mute_user', 'unmute_user', 'restore_message'])
+
+const actionMeta: Record<string, { label: string; sentence: string; className: string }> = {
+  approve: {
+    label: 'Duyệt hiển thị',
+    sentence: 'đã duyệt hiển thị nội dung của',
+    className: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+  },
+  hide: {
+    label: 'Ẩn nội dung',
+    sentence: 'đã ẩn nội dung của',
+    className: 'bg-amber-50 text-amber-700 border-amber-100',
+  },
+  delete: {
+    label: 'Xóa nội dung',
+    sentence: 'đã xóa nội dung của',
+    className: 'bg-rose-50 text-rose-700 border-rose-100',
+  },
+  ban_user: {
+    label: 'Chặn người dùng',
+    sentence: 'đã chặn người dùng',
+    className: 'bg-red-50 text-red-700 border-red-100',
+  },
+  unban_user: {
+    label: 'Bỏ chặn người dùng',
+    sentence: 'đã bỏ chặn người dùng',
+    className: 'bg-blue-50 text-[#0A2463] border-blue-100',
+  },
+}
+
+const statusLabel: Record<string, string> = {
+  visible: 'Đang hiển thị',
+  hidden: 'Đã ẩn',
+  deleted: 'Đã xóa',
+}
+
+function formatActionTime(value?: string) {
+  if (!value) return ''
+  return new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(value))
+}
+
+function getPersonName(user?: { firstName?: string; lastName?: string; email?: string }, fallback?: string) {
+  return `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || fallback || 'Người dùng'
 }
 
 function getQueueKey(item: ModerationQueueItem) {
   return item.messageId || item.message?._id || item._id
+}
+
+function getTriggerText(item: ModerationQueueItem) {
+  if ((item.reportCount || 0) > 0 || item.categories?.includes('user_report')) return triggerLabel.user_report
+  return triggerLabel[item.trigger || 'auto'] || item.trigger || 'Auto mod'
+}
+
+function moderationPlainText(value?: string) {
+  if (!value) return ''
+  if (typeof window !== 'undefined' && typeof DOMParser !== 'undefined') {
+    return new DOMParser().parseFromString(value, 'text/html').body.textContent?.replace(/\u00a0/g, ' ').trim() || ''
+  }
+  return value
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .trim()
+}
+
+function isThreadStarterFinding(item?: ModerationQueueItem | null) {
+  if (!item) return false
+  return Boolean(
+    item.message?.isThreadStarter ||
+      (item.thread?.starterMessageId && item.messageId && item.thread.starterMessageId === item.messageId) ||
+      (item.thread?.starterMessageId && item.message?._id && item.thread.starterMessageId === item.message._id),
+  )
+}
+
+function getModeratedContentLabel(item?: ModerationQueueItem | null) {
+  return isThreadStarterFinding(item) ? 'Tiêu đề bài viết' : 'Nội dung tin nhắn'
+}
+
+function getModeratedContentText(item?: ModerationQueueItem | null) {
+  if (!item) return 'Nội dung không khả dụng'
+  if (isThreadStarterFinding(item) && item.thread?.title) return moderationPlainText(item.thread.title)
+  return moderationPlainText(item.message?.content) || 'Nội dung không khả dụng'
 }
 
 function QueueRow({
@@ -87,6 +183,7 @@ function QueueRow({
 }) {
   const severity = item.severity || 'low'
   const severityBadge = severityMeta[severity] || severityMeta.low
+  const previewText = getModeratedContentText(item)
   const createdAt = item.createdAt
     ? formatDistanceToNow(new Date(item.createdAt), { addSuffix: true, locale: vi })
     : ''
@@ -104,15 +201,14 @@ function QueueRow({
             {item.room?.name || 'Phòng cộng đồng'}
           </p>
           <p className='text-xs text-gray-500 mt-1 line-clamp-2'>
-            {item.message?.content || 'Nội dung không khả dụng'}
+            {previewText}
           </p>
         </div>
         <Badge className={severityBadge.className}>{severityBadge.label}</Badge>
       </div>
 
       <div className='flex flex-wrap items-center gap-2 mt-3 text-xs text-gray-500'>
-        <span>{triggerLabel[item.trigger || 'auto'] || item.trigger || 'Auto mod'}</span>
-        {item.ai ? <span>• AI {item.ai.confidence.toFixed(2)}</span> : null}
+        <span>{getTriggerText(item)}</span>
         {item.reportCount ? <span>• {item.reportCount} báo cáo</span> : null}
         {createdAt ? <span>• {createdAt}</span> : null}
       </div>
@@ -127,15 +223,12 @@ export function AdminModerationPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
   const [notes, setNotes] = useState('')
-  const [duration, setDuration] = useState('60')
   const [isPerforming, setIsPerforming] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [confirmAction, setConfirmAction] = useState<ModerationAction | null>(null)
   const [confirmTargetKey, setConfirmTargetKey] = useState<string | null>(null)
   const [actionLogs, setActionLogs] = useState<ModerationActionLog[]>([])
   const [appeals, setAppeals] = useState<ModerationAppeal[]>([])
-  const [aiJobs, setAiJobs] = useState<AiModerationJob[]>([])
-  const [aiJobTotal, setAiJobTotal] = useState(0)
   const [queueSearch, setQueueSearch] = useState('')
   const [severityFilter, setSeverityFilter] = useState('all')
   const [triggerFilter, setTriggerFilter] = useState('all')
@@ -143,14 +236,9 @@ export function AdminModerationPage() {
   const [appealType, setAppealType] = useState<'all' | ModerationAppealType>('all')
   const [appealSearch, setAppealSearch] = useState('')
   const [actionFilter, setActionFilter] = useState('all')
+  const [actionSearch, setActionSearch] = useState('')
   const [actionDateFrom, setActionDateFrom] = useState('')
   const [actionDateTo, setActionDateTo] = useState('')
-  const [actionRoomId, setActionRoomId] = useState('')
-  const [actionTargetUserId, setActionTargetUserId] = useState('')
-  const [aiJobStatus, setAiJobStatus] = useState<'all' | AiModerationJobStatus>('all')
-  const [aiJobSearch, setAiJobSearch] = useState('')
-  const [aiJobRoomId, setAiJobRoomId] = useState('')
-  const [aiJobMessageId, setAiJobMessageId] = useState('')
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
@@ -189,8 +277,7 @@ export function AdminModerationPage() {
         page: 1,
         limit: 10,
         action: actionFilter === 'all' ? undefined : actionFilter,
-        roomId: actionRoomId.trim() || undefined,
-        targetUserId: actionTargetUserId.trim() || undefined,
+        search: actionSearch.trim() || undefined,
         dateFrom: actionDateFrom || undefined,
         dateTo: actionDateTo || undefined,
       })
@@ -198,7 +285,7 @@ export function AdminModerationPage() {
     } catch {
       // Audit history is secondary; keep queue usable if it fails.
     }
-  }, [actionDateFrom, actionDateTo, actionFilter, actionRoomId, actionTargetUserId])
+  }, [actionDateFrom, actionDateTo, actionFilter, actionSearch])
 
   const loadAppeals = useCallback(async () => {
     try {
@@ -215,29 +302,17 @@ export function AdminModerationPage() {
     }
   }, [appealSearch, appealStatus, appealType])
 
-  const loadAiJobs = useCallback(async () => {
-    try {
-      const res = await moderationService.getAiJobs({
-        page: 1,
-        limit: 20,
-        status: aiJobStatus === 'all' ? undefined : aiJobStatus,
-        roomId: aiJobRoomId.trim() || undefined,
-        messageId: aiJobMessageId.trim() || undefined,
-        search: aiJobSearch.trim() || undefined,
-      })
-      setAiJobs(res.items)
-      setAiJobTotal(res.total)
-    } catch {
-      // AI audit is secondary to moderation actions.
-    }
-  }, [aiJobMessageId, aiJobRoomId, aiJobSearch, aiJobStatus])
-
   useEffect(() => {
     loadQueue(1)
+  }, [loadQueue])
+
+  useEffect(() => {
     loadActions()
+  }, [loadActions])
+
+  useEffect(() => {
     loadAppeals()
-    loadAiJobs()
-  }, [loadActions, loadAiJobs, loadAppeals, loadQueue])
+  }, [loadAppeals])
 
   useEffect(() => {
     if (!selectedKey && items.length > 0) {
@@ -249,8 +324,11 @@ export function AdminModerationPage() {
     () => items.find((item) => getQueueKey(item) === selectedKey) || null,
     [items, selectedKey],
   )
+  const selectedMessageText = getModeratedContentText(selectedItem)
+  const selectedContentLabel = getModeratedContentLabel(selectedItem)
 
   const filteredItems = items
+  const visibleActionLogs = actionLogs.filter((log) => !deprecatedActionTypes.has(log.action))
 
   const performAction = async (action: ModerationAction, target: ModerationQueueItem) => {
     const messageId = target.messageId || target.message?._id
@@ -265,7 +343,6 @@ export function AdminModerationPage() {
         messageId,
         action,
         notes: notes.trim() || undefined,
-        durationMinutes: action === 'mute_user' ? Number(duration) : undefined,
         targetUserId: target.senderId,
       })
 
@@ -293,39 +370,6 @@ export function AdminModerationPage() {
     }
 
     await performAction(action, selectedItem)
-  }
-
-  const handleAiReview = async () => {
-    if (!selectedItem) return
-    const messageId = selectedItem.messageId || selectedItem.message?._id
-    if (!messageId) {
-      toast.error('Không tìm thấy messageId để chạy AI')
-      return
-    }
-
-    try {
-      setIsPerforming(true)
-      await moderationService.rerunAiReview(messageId)
-      toast.success('Đã đưa tin nhắn vào hàng chờ AI moderation')
-      await loadQueue(page)
-    } catch {
-      toast.error('Không thể chạy AI moderation')
-    } finally {
-      setIsPerforming(false)
-    }
-  }
-
-  const handleRetryAiJob = async (job: AiModerationJob) => {
-    try {
-      setIsPerforming(true)
-      await moderationService.retryAiJob(job._id)
-      toast.success('Đã đưa AI job vào hàng chờ chạy lại')
-      await loadAiJobs()
-    } catch {
-      toast.error('Không thể chạy lại AI job')
-    } finally {
-      setIsPerforming(false)
-    }
   }
 
   const handleConfirm = async () => {
@@ -421,9 +465,9 @@ export function AdminModerationPage() {
         </Button>
       </div>
 
-      <div className='grid grid-cols-1 lg:grid-cols-3 gap-4'>
-        <Card className='lg:col-span-1 bg-white border-[#E8EDF5]'>
-          <CardContent className='p-4 space-y-3'>
+      <div className='grid grid-cols-1 gap-4 lg:grid-cols-3 lg:items-start'>
+        <Card className='bg-white border-[#E8EDF5] lg:col-span-1 lg:max-h-[calc(100vh-180px)]'>
+          <CardContent className='flex min-h-0 flex-col gap-3 p-4 lg:max-h-[calc(100vh-180px)]'>
             <div className='flex items-center justify-between'>
               <h3 className='text-sm font-semibold text-gray-900'>Hàng đợi kiểm duyệt</h3>
               <Badge className='bg-[#E8EDF5] text-[#0A2463]'>{filteredItems.length}/{total}</Badge>
@@ -455,38 +499,40 @@ export function AdminModerationPage() {
                     <SelectItem value='all'>Mọi nguồn</SelectItem>
                     <SelectItem value='auto'>Auto mod</SelectItem>
                     <SelectItem value='user_report'>User report</SelectItem>
-                    <SelectItem value='ai'>AI review</SelectItem>
+                    <SelectItem value='ai'>AI moderation</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
-            {isLoading ? (
-              <div className='space-y-3'>
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className='h-20 rounded-xl bg-[#F0F6FF] animate-pulse' />
-                ))}
-              </div>
-            ) : filteredItems.length === 0 ? (
-              <div className='text-center py-10 text-gray-500'>
-                <AlertCircle className='w-8 h-8 mx-auto mb-2 text-blue-400' />
-                Không có nội dung phù hợp
-              </div>
-            ) : (
-              <div className='space-y-3'>
-                {filteredItems.map((item) => {
-                  const key = getQueueKey(item)
-                  return (
-                    <QueueRow
-                      key={key}
-                      item={item}
-                      active={key === selectedKey}
-                      onSelect={() => setSelectedKey(key)}
-                    />
-                  )
-                })}
-              </div>
-            )}
+            <div className='min-h-0 flex-1 overflow-y-auto pr-1'>
+              {isLoading ? (
+                <div className='space-y-3'>
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className='h-20 rounded-xl bg-[#F0F6FF] animate-pulse' />
+                  ))}
+                </div>
+              ) : filteredItems.length === 0 ? (
+                <div className='text-center py-10 text-gray-500'>
+                  <AlertCircle className='w-8 h-8 mx-auto mb-2 text-blue-400' />
+                  Không có nội dung phù hợp
+                </div>
+              ) : (
+                <div className='space-y-3'>
+                  {filteredItems.map((item) => {
+                    const key = getQueueKey(item)
+                    return (
+                      <QueueRow
+                        key={key}
+                        item={item}
+                        active={key === selectedKey}
+                        onSelect={() => setSelectedKey(key)}
+                      />
+                    )
+                  })}
+                </div>
+              )}
+            </div>
 
             {totalPages > 1 && (
               <Pagination>
@@ -506,7 +552,7 @@ export function AdminModerationPage() {
           </CardContent>
         </Card>
 
-        <Card className='lg:col-span-2 bg-white border-[#E8EDF5]'>
+        <Card className='bg-white border-[#E8EDF5] lg:col-span-2 lg:max-h-[calc(100vh-180px)] lg:overflow-y-auto'>
           <CardContent className='p-6 space-y-5'>
             {!selectedItem ? (
               <div className='text-center py-12 text-gray-500'>
@@ -530,9 +576,9 @@ export function AdminModerationPage() {
                 </div>
 
                 <div className='space-y-2'>
-                  <p className='text-sm font-semibold text-gray-700'>Nội dung tin nhắn</p>
-                  <div className='rounded-lg border border-[#E8EDF5] bg-[#F0F6FF] p-4 text-sm text-gray-800'>
-                    {selectedItem.message?.content || 'Nội dung không khả dụng'}
+                  <p className='text-sm font-semibold text-gray-700'>{selectedContentLabel}</p>
+                  <div className='rounded-lg border border-[#E8EDF5] bg-[#F0F6FF] p-4 text-sm text-gray-800 whitespace-pre-wrap break-words'>
+                    {selectedMessageText}
                   </div>
                 </div>
 
@@ -553,75 +599,26 @@ export function AdminModerationPage() {
                       )}
                     </div>
                   </div>
-
-                  <div className='space-y-2'>
-                    <p className='text-sm font-semibold text-gray-700'>Lý do</p>
-                    <ul className='text-sm text-gray-600 space-y-1'>
-                      {(selectedItem.reasons || []).length === 0 ? (
-                        <li>Không có</li>
-                      ) : (
-                        selectedItem.reasons?.map((reason) => <li key={reason}>• {reason}</li>)
-                      )}
-                    </ul>
-                  </div>
-                </div>
-
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                  <div className='space-y-2'>
-                    <p className='text-sm font-semibold text-gray-700'>Độ tin cậy</p>
-                    <Badge className='bg-[#E8EDF5] text-[#0A2463]'>
-                      {typeof selectedItem.confidence === 'number'
-                        ? selectedItem.confidence.toFixed(2)
-                        : (selectedItem.confidence || 'unknown').toString().toUpperCase()}
-                    </Badge>
-                  </div>
                   <div className='space-y-2'>
                     <p className='text-sm font-semibold text-gray-700'>Trigger</p>
                     <Badge variant='outline' className='border-gray-200 text-gray-600'>
-                      {triggerLabel[selectedItem.trigger || 'auto'] || selectedItem.trigger || 'Tự động'}
+                      {getTriggerText(selectedItem)}
                     </Badge>
                   </div>
                 </div>
 
                 <div className='rounded-lg border border-[#E8EDF5] bg-[#F0F6FF] p-4 space-y-3'>
-                  <div className='flex items-center justify-between gap-3'>
-                    <p className='text-sm font-semibold text-gray-800 flex items-center gap-2'>
-                      <Sparkles className='w-4 h-4 text-[#1E40AF]' />
-                      AI moderation
-                    </p>
-                    <Button
-                      variant='outline'
-                      className='border-[#BFDBFE] text-[#1E40AF]'
-                      onClick={handleAiReview}
-                      disabled={isPerforming}
-                    >
-                      <Sparkles className='w-4 h-4 mr-2' />
-                      Chạy AI review
-                    </Button>
-                  </div>
+                  <p className='text-sm font-semibold text-gray-800 flex items-center gap-2'>
+                    <Sparkles className='w-4 h-4 text-[#1E40AF]' />
+                    AI moderation
+                  </p>
                   {selectedItem.ai ? (
-                    <div className='grid grid-cols-1 md:grid-cols-3 gap-3 text-sm'>
-                      <div>
-                        <p className='text-xs text-gray-500'>Đề xuất</p>
-                        <Badge className='bg-[#E8EDF5] text-[#1E40AF]'>{selectedItem.ai.suggestedAction}</Badge>
-                      </div>
-                      <div>
-                        <p className='text-xs text-gray-500'>Confidence</p>
-                        <p className='font-medium text-gray-800'>{selectedItem.ai.confidence.toFixed(2)}</p>
-                      </div>
-                      <div>
-                        <p className='text-xs text-gray-500'>Latency</p>
-                        <p className='font-medium text-gray-800'>
-                          {selectedItem.ai.latencyMs ? `${selectedItem.ai.latencyMs}ms` : 'n/a'}
-                        </p>
-                      </div>
-                      <div className='md:col-span-3'>
-                        <p className='text-xs text-gray-500'>Lý do AI</p>
-                        <p className='text-gray-700'>{selectedItem.ai.reason}</p>
-                      </div>
+                    <div className='text-sm'>
+                      <p className='text-xs text-gray-500'>Lý do AI</p>
+                      <p className='text-gray-700'>{selectedItem.ai.reason}</p>
                     </div>
                   ) : (
-                    <p className='text-sm text-gray-600'>Chưa có kết quả AI cho tin nhắn này.</p>
+                    <p className='text-sm text-gray-600'>Chưa có phân tích AI cho mục này.</p>
                   )}
                 </div>
 
@@ -648,150 +645,35 @@ export function AdminModerationPage() {
                     <EyeOff className='w-4 h-4 mr-2' />
                     Ẩn
                   </Button>
-                  <Button variant='outline' className='border-red-200 text-red-600' onClick={() => handleAction('delete')} disabled={isPerforming}>
-                    <Trash2 className='w-4 h-4 mr-2' />
-                    Xóa
-                  </Button>
-                  <Button variant='outline' className='border-green-200 text-green-700' onClick={() => handleAction('restore_message')} disabled={isPerforming}>
-                    <RotateCcw className='w-4 h-4 mr-2' />
-                    Khôi phục
-                  </Button>
-                </div>
-
-                <div className='flex flex-wrap items-center gap-3 border-t border-[#E8EDF5] pt-4'>
-                  <div className='w-48'>
-                    <Select value={duration} onValueChange={setDuration}>
-                      <SelectTrigger>
-                        <SelectValue placeholder='Thời gian mute' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value='60'>Mute 60 phút</SelectItem>
-                        <SelectItem value='120'>Mute 2 giờ</SelectItem>
-                        <SelectItem value='360'>Mute 6 giờ</SelectItem>
-                        <SelectItem value='1440'>Mute 24 giờ</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button variant='outline' className='border-orange-200 text-orange-600' onClick={() => handleAction('mute_user')} disabled={isPerforming}>
-                    <UserMinus className='w-4 h-4 mr-2' />
-                    Mute user
-                  </Button>
-                  <Button variant='outline' className='border-red-200 text-red-600' onClick={() => handleAction('ban_user')} disabled={isPerforming}>
-                    <UserX className='w-4 h-4 mr-2' />
-                    Ban user
-                  </Button>
-                  <Button variant='outline' className='border-[#BFDBFE] text-[#0A2463]' onClick={() => handleAction('unmute_user')} disabled={isPerforming}>
-                    Unmute
-                  </Button>
-                  <Button variant='outline' className='border-[#BFDBFE] text-[#0A2463]' onClick={() => handleAction('unban_user')} disabled={isPerforming}>
-                    Unban
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant='outline' className='border-[#BFDBFE] text-[#0A2463]' disabled={isPerforming}>
+                        <MoreHorizontal className='w-4 h-4 mr-2' />
+                        Thêm
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align='start' className='w-64 bg-white'>
+                      <DropdownMenuLabel>Hành động nội dung</DropdownMenuLabel>
+                      <DropdownMenuItem className='text-red-600 focus:text-red-600' onClick={() => handleAction('delete')}>
+                        <Trash2 className='w-4 h-4 mr-2' />
+                        Xóa
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuLabel>Hạn chế người dùng</DropdownMenuLabel>
+                      <DropdownMenuItem className='text-red-600 focus:text-red-600' onClick={() => handleAction('ban_user')}>
+                        <UserX className='w-4 h-4 mr-2' />
+                        Ban user
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => handleAction('unban_user')}>Unban</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </>
             )}
           </CardContent>
         </Card>
       </div>
-
-      <Card className='bg-white border-[#E8EDF5]'>
-        <CardContent className='p-5 space-y-3'>
-          <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
-            <h3 className='text-sm font-semibold text-gray-900 flex items-center gap-2'>
-              <Sparkles className='w-4 h-4 text-[#1E40AF]' />
-              AI moderation jobs
-            </h3>
-            <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
-              <Input
-                className='sm:w-72'
-                placeholder='Tìm phòng, slug, message, lỗi'
-                value={aiJobSearch}
-                onChange={(event) => setAiJobSearch(event.target.value)}
-              />
-              <Input
-                className='sm:w-48'
-                placeholder='roomId'
-                value={aiJobRoomId}
-                onChange={(event) => setAiJobRoomId(event.target.value)}
-              />
-              <Input
-                className='sm:w-48'
-                placeholder='messageId'
-                value={aiJobMessageId}
-                onChange={(event) => setAiJobMessageId(event.target.value)}
-              />
-              <Select value={aiJobStatus} onValueChange={(value: 'all' | AiModerationJobStatus) => setAiJobStatus(value)}>
-                <SelectTrigger className='sm:w-40'>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='all'>Mọi trạng thái</SelectItem>
-                  <SelectItem value='pending'>Pending</SelectItem>
-                  <SelectItem value='running'>Running</SelectItem>
-                  <SelectItem value='failed'>Failed</SelectItem>
-                  <SelectItem value='succeeded'>Succeeded</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button variant='outline' className='border-[#BFDBFE] text-[#1E40AF]' onClick={loadAiJobs}>
-                Làm mới AI
-              </Button>
-            </div>
-          </div>
-          <div className='text-xs text-gray-500'>{aiJobs.length}/{aiJobTotal} job</div>
-          {aiJobs.length === 0 ? (
-            <p className='text-sm text-gray-500 py-4'>Chưa có AI moderation job phù hợp.</p>
-          ) : (
-            <div className='divide-y divide-[#E8EDF5]'>
-              {aiJobs.map((job) => (
-                <div key={job._id} className='py-3 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between'>
-                  <div className='min-w-0 space-y-1'>
-                    <div className='flex flex-wrap items-center gap-2'>
-                      <Badge
-                        className={
-                          job.status === 'failed'
-                            ? 'bg-red-100 text-red-700'
-                            : job.status === 'succeeded'
-                              ? 'bg-green-100 text-green-700'
-                              : job.status === 'running'
-                                ? 'bg-[#E8EDF5] text-[#0A2463]'
-                                : 'bg-yellow-100 text-yellow-700'
-                        }
-                      >
-                        {job.status}
-                      </Badge>
-                      <span className='text-sm font-semibold text-gray-900'>
-                        {job.room?.name || job.roomId}
-                      </span>
-                      <span className='text-xs text-gray-500'>attempts {job.attempts || 0}</span>
-                      {job.latencyMs ? <span className='text-xs text-gray-500'>{job.latencyMs}ms</span> : null}
-                    </div>
-                    <p className='text-sm text-gray-600 line-clamp-2'>
-                      {job.message?.content || job.messageId}
-                    </p>
-                    {job.aiResult && (
-                      <p className='text-xs text-gray-500'>
-                        AI: {job.aiResult.severity} / {job.aiResult.confidence.toFixed(2)} / {job.aiResult.suggestedAction}
-                      </p>
-                    )}
-                    {job.lastError && <p className='text-xs text-red-600 line-clamp-2'>Lỗi: {job.lastError}</p>}
-                  </div>
-                  <div className='flex items-center gap-2 shrink-0'>
-                    <Button
-                      size='sm'
-                      variant='outline'
-                      className='border-[#BFDBFE] text-[#1E40AF]'
-                      disabled={isPerforming || job.status === 'running'}
-                      onClick={() => handleRetryAiJob(job)}
-                    >
-                      <RotateCcw className='w-4 h-4 mr-1' />
-                      Retry
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
       <Card className='bg-white border-[#E8EDF5]'>
         <CardContent className='p-5 space-y-3'>
@@ -814,7 +696,6 @@ export function AdminModerationPage() {
                 <SelectContent>
                   <SelectItem value='all'>Mọi loại</SelectItem>
                   <SelectItem value='ban'>Ban</SelectItem>
-                  <SelectItem value='mute'>Mute</SelectItem>
                   <SelectItem value='message'>Message</SelectItem>
                 </SelectContent>
               </Select>
@@ -829,8 +710,14 @@ export function AdminModerationPage() {
                   <SelectItem value='all'>Tất cả</SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant='outline' className='border-[#BFDBFE]' onClick={loadAppeals}>
-                Làm mới appeal
+              <Button
+                variant='outline'
+                className='h-10 w-10 border-[#BFDBFE] p-0'
+                onClick={loadAppeals}
+                title='Làm mới yêu cầu xem xét lại'
+                aria-label='Làm mới yêu cầu xem xét lại'
+              >
+                <RefreshCw className='h-4 w-4' />
               </Button>
             </div>
           </div>
@@ -863,7 +750,7 @@ export function AdminModerationPage() {
                       </div>
                       <p className='text-sm text-gray-600'>{appeal.reason}</p>
                       {appeal.message?.content && (
-                        <p className='text-xs text-gray-500 line-clamp-2'>Tin nhắn: {appeal.message.content}</p>
+                        <p className='text-xs text-gray-500 line-clamp-2'>Tin nhắn: {moderationPlainText(appeal.message.content)}</p>
                       )}
                       {appeal.decisionNotes && (
                         <p className='text-xs text-gray-500'>Ghi chú xử lý: {appeal.decisionNotes}</p>
@@ -919,58 +806,64 @@ export function AdminModerationPage() {
                 onChange={(event) => setActionDateTo(event.target.value)}
               />
               <Input
-                className='sm:w-48'
-                placeholder='roomId'
-                value={actionRoomId}
-                onChange={(event) => setActionRoomId(event.target.value)}
-              />
-              <Input
-                className='sm:w-48'
-                placeholder='targetUserId'
-                value={actionTargetUserId}
-                onChange={(event) => setActionTargetUserId(event.target.value)}
+                className='sm:w-80'
+                placeholder='Tìm phòng, thread, người dùng, hành động'
+                value={actionSearch}
+                onChange={(event) => setActionSearch(event.target.value)}
               />
               <Select value={actionFilter} onValueChange={setActionFilter}>
                 <SelectTrigger className='w-44'>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value='all'>Mọi action</SelectItem>
-                  <SelectItem value='approve'>Approve</SelectItem>
-                  <SelectItem value='hide'>Hide</SelectItem>
-                  <SelectItem value='delete'>Delete</SelectItem>
-                  <SelectItem value='mute_user'>Mute</SelectItem>
-                  <SelectItem value='ban_user'>Ban</SelectItem>
-                  <SelectItem value='unmute_user'>Unmute</SelectItem>
-                  <SelectItem value='unban_user'>Unban</SelectItem>
-                  <SelectItem value='restore_message'>Restore</SelectItem>
+                  <SelectItem value='all'>Tất cả hành động</SelectItem>
+                  <SelectItem value='approve'>{actionMeta.approve.label}</SelectItem>
+                  <SelectItem value='hide'>{actionMeta.hide.label}</SelectItem>
+                  <SelectItem value='delete'>{actionMeta.delete.label}</SelectItem>
+                  <SelectItem value='ban_user'>{actionMeta.ban_user.label}</SelectItem>
+                  <SelectItem value='unban_user'>{actionMeta.unban_user.label}</SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant='outline' className='border-[#BFDBFE]' onClick={loadActions}>
-                Làm mới lịch sử
+              <Button
+                variant='outline'
+                className='h-10 w-10 border-[#BFDBFE] p-0'
+                onClick={loadActions}
+                title='Làm mới lịch sử'
+                aria-label='Làm mới lịch sử'
+              >
+                <RefreshCw className='h-4 w-4' />
               </Button>
             </div>
           </div>
-          {actionLogs.length === 0 ? (
-            <p className='text-sm text-gray-500 py-4'>Chưa có action nào.</p>
+          {visibleActionLogs.length === 0 ? (
+            <p className='text-sm text-gray-500 py-4'>Chưa có lịch sử xử lý phù hợp.</p>
           ) : (
             <div className='divide-y divide-blue-50'>
-              {actionLogs.map((log) => {
-                const actor = `${log.performedByUser?.firstName || ''} ${log.performedByUser?.lastName || ''}`.trim()
-                const target = `${log.targetUser?.firstName || ''} ${log.targetUser?.lastName || ''}`.trim()
+              {visibleActionLogs.map((log) => {
+                const actor = getPersonName(log.performedByUser, log.performedBy)
+                const target = getPersonName(log.targetUser, log.targetUserId)
+                const meta = actionMeta[log.action] || {
+                  label: log.action,
+                  sentence: 'đã thực hiện hành động với',
+                  className: 'bg-gray-50 text-gray-700 border-gray-100',
+                }
+                const previousStatus = log.previousMessageStatus ? statusLabel[log.previousMessageStatus] || log.previousMessageStatus : ''
                 return (
                   <div key={log._id} className='py-3 text-sm flex items-start justify-between gap-3'>
-                    <div>
-                      <p className='font-medium text-gray-900'>
-                        {log.action} {target ? `- ${target}` : ''}
+                    <div className='min-w-0'>
+                      <p className='font-medium text-gray-900 break-words'>
+                        {actor} {meta.sentence} {target}
                       </p>
-                      <p className='text-gray-500'>
-                        {actor || log.performedBy} · {log.createdAt ? new Date(log.createdAt).toLocaleString('vi-VN') : ''}
+                      {log.thread?.title && (
+                        <p className='mt-1 line-clamp-1 text-gray-600'>Thread: {log.thread.title}</p>
+                      )}
+                      <p className='mt-1 text-gray-500'>
+                        {formatActionTime(log.createdAt)}{previousStatus ? ` · Trước đó: ${previousStatus}` : ''}
                       </p>
                       {log.notes && <p className='text-gray-600 mt-1'>{log.notes}</p>}
                     </div>
-                    <Badge variant='outline' className='border-[#BFDBFE] text-[#0A2463]'>
-                      {log.previousMessageStatus || 'n/a'}
+                    <Badge variant='outline' className={`shrink-0 ${meta.className}`}>
+                      {meta.label}
                     </Badge>
                   </div>
                 )

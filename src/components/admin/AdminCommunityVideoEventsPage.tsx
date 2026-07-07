@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { CalendarDays, CalendarPlus, ChevronDown, Clock3, Copy, ExternalLink, Globe2, Link as LinkIcon, LockKeyhole, MessageSquare, MicOff, Minus, Play, Plus, RefreshCw, Search, Square, UserX, Video, X } from 'lucide-react'
+import { CalendarDays, CalendarPlus, ChevronDown, Clock3, Copy, ExternalLink, Link as LinkIcon, MessageSquare, MicOff, Minus, Plus, RefreshCw, Search, UserX, Video, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { adminCommunityService } from '~/services/communityService'
 import type { CommunityRoom, CommunityVideoEvent } from '~/types/community'
@@ -18,11 +18,9 @@ type AdminVideoEventFormState = {
   title: string
   description: string
   agenda: string
-  visibility: 'public' | 'private'
   scheduledStartAt: string
   scheduledEndAt: string
   capacity: string
-  tags: string
 }
 
 function toLocalInputValue(date: Date) {
@@ -49,26 +47,6 @@ function statusBadgeClass(status?: string) {
     draft: 'border-amber-200 bg-amber-50 text-amber-700',
   }
   return classes[status || ''] || 'border-gray-200 bg-gray-50 text-gray-700'
-}
-
-function visibilityLabel(visibility?: string) {
-  return visibility === 'private' ? 'Riêng tư' : 'Công khai'
-}
-
-function visibilityBadgeClass(visibility?: string) {
-  return visibility === 'private'
-    ? 'border-violet-200 bg-violet-50 text-violet-700'
-    : 'border-sky-200 bg-sky-50 text-sky-700'
-}
-
-function VisibilityBadge({ visibility }: { visibility?: string }) {
-  const Icon = visibility === 'private' ? LockKeyhole : Globe2
-  return (
-    <Badge variant='outline' className={visibilityBadgeClass(visibility)}>
-      <Icon />
-      {visibilityLabel(visibility)}
-    </Badge>
-  )
 }
 
 function getMeetingHref(event?: CommunityVideoEvent | null) {
@@ -106,17 +84,14 @@ export function buildAdminVideoEventCreatePayload(form: AdminVideoEventFormState
 
   const description = form.description.trim()
   const agenda = form.agenda.trim()
-  const tags = form.tags.split(',').map((tag) => tag.trim()).filter(Boolean)
   return {
     roomId: form.roomId,
     title: form.title.trim(),
     ...(description ? { description } : {}),
     ...(agenda ? { agenda } : {}),
-    visibility: form.visibility,
     scheduledStartAt: scheduledStartAt.toISOString(),
     scheduledEndAt: scheduledEndAt.toISOString(),
     capacity: Number(form.capacity) || null,
-    ...(tags.length ? { tags } : {}),
     registrationRequired: false,
     provider: 'livekit',
   }
@@ -285,11 +260,9 @@ export function AdminCommunityVideoEventsPage() {
     title: '',
     description: '',
     agenda: '',
-    visibility: 'public' as 'public' | 'private',
     scheduledStartAt: toLocalInputValue(new Date(now.getTime() + 24 * 60 * 60 * 1000)),
     scheduledEndAt: toLocalInputValue(new Date(now.getTime() + 25 * 60 * 60 * 1000)),
     capacity: '300',
-    tags: '',
   })
   const queryClient = useQueryClient()
 
@@ -306,8 +279,8 @@ export function AdminCommunityVideoEventsPage() {
   const liveParticipantsQuery = useQuery({
     queryKey: ['admin-community-video-event-live-participants', selectedEvent?._id],
     queryFn: () => adminCommunityService.listVideoEventParticipants(selectedEvent!._id),
-    enabled: Boolean(selectedEvent?._id && selectedEvent.status === 'live'),
-    refetchInterval: selectedEvent?.status === 'live' ? 10_000 : false,
+    enabled: Boolean(selectedEvent?._id),
+    refetchInterval: selectedEvent?._id ? 10_000 : false,
   })
   const invalidateEvents = () => {
     queryClient.invalidateQueries({ queryKey: ['admin-community-video-events'] })
@@ -326,17 +299,14 @@ export function AdminCommunityVideoEventsPage() {
 
     const description = form.description.trim()
     const agenda = form.agenda.trim()
-    const tags = form.tags.split(',').map((tag) => tag.trim()).filter(Boolean)
     return {
       roomId: form.roomId,
       title: form.title.trim(),
       ...(description ? { description } : {}),
       ...(agenda ? { agenda } : {}),
-      visibility: form.visibility,
       scheduledStartAt: scheduledStartAt.toISOString(),
       scheduledEndAt: scheduledEndAt.toISOString(),
       capacity: Number(form.capacity) || null,
-      ...(tags.length ? { tags } : {}),
       registrationRequired: false,
       provider: 'livekit',
     }
@@ -347,18 +317,14 @@ export function AdminCommunityVideoEventsPage() {
     onSuccess: (event) => {
       toast.success('Đã tạo link cuộc họp')
       setSelectedEvent(event)
-      setForm((current) => ({ ...current, title: '', description: '', agenda: '', tags: '' }))
+      setForm((current) => ({ ...current, title: '', description: '', agenda: '' }))
       invalidateEvents()
     },
     onError: (error: any) => toast.error(getApiErrorMessage(error, 'Không thể tạo hội thảo')),
   })
 
   const actionMutation = useMutation({
-    mutationFn: async ({ eventId, action }: { eventId: string; action: 'start' | 'end' | 'cancel' }) => {
-      if (action === 'start') return adminCommunityService.startVideoEvent(eventId)
-      if (action === 'end') return adminCommunityService.endVideoEvent(eventId)
-      return adminCommunityService.cancelVideoEvent(eventId)
-    },
+    mutationFn: (eventId: string) => adminCommunityService.cancelVideoEvent(eventId),
     onSuccess: (event) => {
       toast.success('Đã cập nhật trạng thái hội thảo')
       setSelectedEvent(event)
@@ -421,25 +387,6 @@ export function AdminCommunityVideoEventsPage() {
             <div className='flex items-center gap-2 font-semibold text-gray-950'><CalendarPlus className='h-4 w-4 text-blue-600' />Tạo link cuộc họp</div>
             <p className='mt-1 text-sm text-gray-600'>Nhập thông tin buổi chia sẻ, bấm tạo là có ngay link phòng giống Google Meet.</p>
           </div>
-
-          {selectedEvent && (
-            <div className='rounded-lg border border-blue-200 bg-blue-50 p-4'>
-              <div className='mb-2 flex items-center justify-between gap-2'>
-                <div>
-                  <div className='text-sm font-semibold text-blue-950'>Link cuộc họp đã sẵn sàng</div>
-                  <div className='text-xs text-blue-700'>Mã phòng: {meetingCode(selectedEvent)}</div>
-                </div>
-                <Button type='button' size='sm' onClick={() => copyMeetingLink(selectedEvent)}><Copy />Copy</Button>
-              </div>
-              <div className='flex items-center gap-2 rounded-md bg-white px-3 py-2 text-sm text-gray-700'>
-                <LinkIcon className='h-4 w-4 shrink-0 text-blue-600' />
-                <span className='truncate font-mono'>{getMeetingHref(selectedEvent)}</span>
-              </div>
-              <Button type='button' variant='outline' className='mt-3 w-full bg-white' asChild>
-                <a href={getMeetingHref(selectedEvent)} target='_blank' rel='noreferrer'><ExternalLink />Mở giao diện phòng họp</a>
-              </Button>
-            </div>
-          )}
           <div className='space-y-2'>
             <Label>Phòng cộng đồng</Label>
           {roomsQuery.isError && <p className='text-sm text-red-600'>Không thể tải danh sách phòng.</p>}
@@ -450,10 +397,10 @@ export function AdminCommunityVideoEventsPage() {
           </div>
           <div className='space-y-2'><Label>Tiêu đề</Label><Input data-testid='event-title-input' value={form.title} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} /></div>
           <div className='space-y-2'><Label>Mô tả</Label><Textarea data-testid='event-description-input' value={form.description} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} /></div>
-          <div className='space-y-2'><Label>Agenda</Label><Textarea data-testid='event-agenda-input' value={form.agenda} onChange={(event) => setForm((current) => ({ ...current, agenda: event.target.value }))} /></div>
+          <div className='space-y-2'><Label>Nội dung buổi chia sẻ</Label><Textarea data-testid='event-agenda-input' value={form.agenda} onChange={(event) => setForm((current) => ({ ...current, agenda: event.target.value }))} /></div>
           <div className='grid gap-3 md:grid-cols-2'>
             <DateTimePicker
-              label='Bắt đầu'
+              label='Thời gian diễn ra'
               value={form.scheduledStartAt}
               testId='event-start-input'
               minDate={new Date()}
@@ -467,51 +414,20 @@ export function AdminCommunityVideoEventsPage() {
               })}
             />
             <DateTimePicker
-              label='Kết thúc'
+              label='Dự kiến đến'
               value={form.scheduledEndAt}
               testId='event-end-input'
               minDate={parseLocalDateTime(form.scheduledStartAt) || new Date()}
               onChange={(scheduledEndAt) => setForm((current) => ({ ...current, scheduledEndAt }))}
             />
           </div>
-          <div className='grid gap-3 md:grid-cols-2'>
-            <div className='space-y-2'><Label>Visibility</Label><Select value={form.visibility} onValueChange={(visibility: 'public' | 'private') => setForm((current) => ({ ...current, visibility }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value='public'>Công khai</SelectItem><SelectItem value='private'>Riêng tư</SelectItem></SelectContent></Select></div>
-            <div className='space-y-2'><Label>Sức chứa</Label><Input data-testid='event-capacity-input' type='number' min='1' value={form.capacity} onChange={(event) => setForm((current) => ({ ...current, capacity: event.target.value }))} /></div>
-          </div>
-          <div className='space-y-2'><Label>Tags</Label><Input value={form.tags} onChange={(event) => setForm((current) => ({ ...current, tags: event.target.value }))} placeholder='ho-hap, phong-ngua' /></div>
+          <div className='space-y-2'><Label>Sức chứa</Label><Input data-testid='event-capacity-input' type='number' min='1' value={form.capacity} onChange={(event) => setForm((current) => ({ ...current, capacity: event.target.value }))} /></div>
           <Button data-testid='create-event-submit' className='w-full bg-blue-600 text-white hover:bg-blue-700 hover:text-white' disabled={!form.roomId || !form.title.trim() || createMutation.isPending}><CalendarPlus />Tạo link Meet</Button>
         </form>
 
-        <div className='space-y-4'>
-          {eventsQuery.isError ? (
-            <div className='rounded-lg border border-red-200 bg-red-50 p-6 text-center text-red-700'>Không thể tải danh sách hội thảo.</div>
-          ) : eventsQuery.isLoading ? (
-            <div className='rounded-lg border border-gray-200 bg-white p-6 text-center text-gray-600'>Đang tải hội thảo...</div>
-          ) : (
-          <div data-testid='admin-event-list' className='grid gap-3 lg:grid-cols-2'>
-            {events.map((event) => (
-              <button
-                key={event._id}
-                className={`rounded-lg border p-4 text-left shadow-sm outline-none transition focus-visible:ring-2 focus-visible:ring-blue-500/30 ${selectedEvent?._id === event._id ? 'border-blue-300 bg-blue-50/40 shadow-md ring-1 ring-blue-200' : 'border-gray-200 bg-white hover:border-blue-200 hover:bg-[#F8FBFF]'}`}
-                onClick={() => setSelectedEvent(event)}
-              >
-                <div className='mb-2 flex flex-wrap gap-2'>
-                  <Badge data-testid={`event-status-${event.status}`} variant='outline' className={statusBadgeClass(event.status)}>{statusLabel(event.status)}</Badge>
-                  <VisibilityBadge visibility={event.visibility} />
-                </div>
-                <div className='font-semibold text-gray-950'>{event.title}</div>
-                <div className='mt-2 text-sm text-gray-600'>{formatDateTime(event.scheduledStartAt)}</div>
-                <div className='mt-3 flex items-center gap-2 rounded-md bg-[#F0F6FF] px-3 py-2 text-xs text-[#0A2463]'>
-                  <LinkIcon className='h-3.5 w-3.5' />
-                  <span className='truncate'>{getMeetingHref(event)}</span>
-                </div>
-              </button>
-            ))}
-          </div>
-          )}
-
-          {selectedEvent && (
-            <section className='rounded-lg border border-gray-200 bg-white p-5'>
+        <div className='min-w-0'>
+          {selectedEvent ? (
+            <section className='rounded-lg border border-blue-200 bg-white p-5 shadow-sm'>
               <div className='flex flex-col gap-3 md:flex-row md:items-start md:justify-between'>
                 <div><h2 className='text-xl font-semibold text-gray-950'>{selectedEvent.title}</h2><p className='text-sm text-gray-600'>{formatDateTime(selectedEvent.scheduledStartAt)} - {formatDateTime(selectedEvent.scheduledEndAt)}</p></div>
                 <div className='flex flex-wrap gap-2 md:justify-end'>
@@ -519,27 +435,10 @@ export function AdminCommunityVideoEventsPage() {
                   <Button size='sm' variant='outline' asChild><a href={getMeetingHref(selectedEvent)} target='_blank' rel='noreferrer'><ExternalLink />Mở link</a></Button>
                   <Button
                     size='sm'
-                    disabled={selectedEvent.status === 'live' || selectedEvent.status === 'ended' || selectedEvent.status === 'cancelled'}
-                    className='bg-emerald-600 text-white hover:bg-emerald-700 disabled:border-gray-200 disabled:bg-gray-100 disabled:text-gray-400'
-                    onClick={() => actionMutation.mutate({ eventId: selectedEvent._id, action: 'start' })}
-                  >
-                    <Play /> Bắt đầu
-                  </Button>
-                  <Button
-                    size='sm'
-                    variant='outline'
-                    disabled={selectedEvent.status !== 'live'}
-                    className='border-red-200 bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800 disabled:border-gray-200 disabled:bg-gray-100 disabled:text-gray-400'
-                    onClick={() => actionMutation.mutate({ eventId: selectedEvent._id, action: 'end' })}
-                  >
-                    <Square /> Kết thúc
-                  </Button>
-                  <Button
-                    size='sm'
                     variant='outline'
                     disabled={selectedEvent.status === 'ended' || selectedEvent.status === 'cancelled'}
                     className='border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:text-amber-800 disabled:border-gray-200 disabled:bg-gray-100 disabled:text-gray-400'
-                    onClick={() => actionMutation.mutate({ eventId: selectedEvent._id, action: 'cancel' })}
+                    onClick={() => actionMutation.mutate(selectedEvent._id)}
                   >
                     <X /> Hủy
                   </Button>
@@ -562,15 +461,13 @@ export function AdminCommunityVideoEventsPage() {
                       type='button'
                       size='sm'
                       variant='outline'
-                      disabled={selectedEvent.status !== 'live' || liveParticipantsQuery.isFetching}
+                      disabled={liveParticipantsQuery.isFetching}
                       onClick={() => liveParticipantsQuery.refetch()}
                     >
                       <RefreshCw />Làm mới
                     </Button>
                   </div>
-                  {selectedEvent.status !== 'live' ? (
-                    <div className='rounded-md border border-gray-100 bg-gray-50 p-4 text-sm text-gray-600'>Chỉ hiển thị người online khi hội thảo đang live.</div>
-                  ) : liveParticipantsQuery.isError ? (
+                  {liveParticipantsQuery.isError ? (
                     <div className='rounded-md border border-red-100 bg-red-50 p-4 text-sm text-red-700'>Không thể tải người đang trong phòng.</div>
                   ) : liveParticipantsQuery.isLoading ? (
                     <div className='rounded-md border border-gray-100 bg-gray-50 p-4 text-sm text-gray-600'>Đang tải người online...</div>
@@ -634,8 +531,51 @@ export function AdminCommunityVideoEventsPage() {
                   </div>
               </div>
             </section>
+          ) : (
+            <section className='flex min-h-[360px] items-center justify-center rounded-lg border border-dashed border-blue-200 bg-blue-50/40 p-6 text-center'>
+              <div className='max-w-sm'>
+                <Video className='mx-auto mb-3 h-10 w-10 text-blue-600' />
+                <h2 className='text-lg font-semibold text-gray-950'>Chưa có link cuộc họp</h2>
+                <p className='mt-2 text-sm leading-6 text-gray-600'>Sau khi tạo, link cuộc họp và người đang trong phòng sẽ hiển thị tại đây để admin copy hoặc mở ngay.</p>
+              </div>
+            </section>
           )}
         </div>
+      </section>
+
+      <section className='rounded-lg border border-gray-200 bg-white p-4 shadow-sm'>
+        <div className='mb-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between'>
+          <div>
+            <h2 className='font-semibold text-gray-950'>Danh sách meet đã tạo</h2>
+            <p className='text-sm text-gray-500'>Chọn một meet để xem lại link và người đang trong phòng.</p>
+          </div>
+          <Badge variant='outline' className='w-fit'>{eventsQuery.data?.total || 0} meet</Badge>
+        </div>
+
+        {eventsQuery.isError ? (
+          <div className='rounded-lg border border-red-200 bg-red-50 p-4 text-center text-sm text-red-700'>Không thể tải danh sách hội thảo.</div>
+        ) : eventsQuery.isLoading ? (
+          <div className='rounded-lg border border-gray-200 bg-gray-50 p-4 text-center text-sm text-gray-600'>Đang tải hội thảo...</div>
+        ) : events.length > 0 ? (
+          <div data-testid='admin-event-list' className='max-h-[360px] divide-y divide-gray-100 overflow-auto rounded-md border border-gray-100'>
+            {events.map((event) => (
+              <button
+                key={event._id}
+                className={`flex w-full items-center gap-3 px-3 py-3 text-left outline-none transition focus-visible:ring-2 focus-visible:ring-blue-500/30 ${selectedEvent?._id === event._id ? 'bg-blue-50' : 'bg-white hover:bg-[#F8FBFF]'}`}
+                onClick={() => setSelectedEvent(event)}
+              >
+                <Badge data-testid={`event-status-${event.status}`} variant='outline' className={`${statusBadgeClass(event.status)} shrink-0`}>{statusLabel(event.status)}</Badge>
+                <div className='min-w-0 flex-1'>
+                  <div className='truncate text-sm font-semibold text-gray-950'>{event.title}</div>
+                  <div className='mt-1 truncate text-xs text-gray-500'>{formatDateTime(event.scheduledStartAt)} · {meetingCode(event)}</div>
+                </div>
+                <LinkIcon className='h-4 w-4 shrink-0 text-blue-600' />
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className='rounded-lg border border-gray-100 bg-gray-50 p-4 text-center text-sm text-gray-500'>Chưa có meet nào.</div>
+        )}
       </section>
     </main>
   )
