@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import {
   CheckCircle,
   XCircle,
@@ -18,6 +18,8 @@ import {
   ShieldAlert,
   Info,
   X,
+  ExternalLink,
+  ShoppingCart,
 } from 'lucide-react'
 
 import { Button } from '~/components/ui/button'
@@ -582,6 +584,59 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
                       </div>
                       {med.instructions && med.instructions !== med.dosage && (
                         <p className='text-xs text-gray-500 mt-0.5 line-clamp-2'>📋 {med.instructions}</p>
+                      )}
+                      {med.slug && (
+                        <div className='mt-2 flex flex-wrap items-center gap-2'>
+                          <Link
+                            to={`/products/${med.slug}`}
+                            className='inline-flex h-7 items-center gap-1.5 rounded-md border border-[#BFDBFE] bg-white px-2 text-[11px] font-medium text-[#0A2463] hover:bg-[#F0F6FF]'
+                          >
+                            <ExternalLink className='h-3 w-3' />
+                            Xem chi tiet
+                          </Link>
+                          {med.requiresPrescription === false && (
+                            <Link
+                              to={`/products/${med.slug}`}
+                              className='inline-flex h-7 items-center gap-1.5 rounded-md bg-[#0A2463] px-2 text-[11px] font-medium text-white hover:bg-[#071A49]'
+                            >
+                              <ShoppingCart className='h-3 w-3' />
+                              OTC mua ngay
+                            </Link>
+                          )}
+                        </div>
+                      )}
+                      {med.equivalentProducts && med.equivalentProducts.length > 0 && (
+                        <div className='mt-3 rounded-lg border border-[#E8EDF5] bg-white p-2'>
+                          <p className='mb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-500'>
+                            Thuốc tương đương / thay thế
+                          </p>
+                          <div className='space-y-1.5'>
+                            {med.equivalentProducts.slice(0, 3).map((product) => (
+                              <Link
+                                key={product.productId}
+                                to={`/products/${product.slug}`}
+                                className='flex min-w-0 items-center gap-2 rounded-md border border-gray-100 bg-white p-1.5 hover:border-[#BFDBFE] hover:bg-[#F0F6FF]'
+                              >
+                                {product.image && (
+                                  <img src={product.image} alt={product.name} className='h-8 w-8 shrink-0 rounded object-cover' />
+                                )}
+                                <span className='min-w-0 flex-1'>
+                                  <span className='block truncate text-[11px] font-medium text-gray-900'>{product.name}</span>
+                                  <span className='block truncate text-[10px] text-gray-500'>
+                                    {product.reason || 'Goi y tuong duong'}
+                                    {product.price != null ? ` - ${Number(product.price).toLocaleString('vi-VN')}d` : ''}
+                                  </span>
+                                </span>
+                                <Badge
+                                  variant='outline'
+                                  className={`shrink-0 text-[10px] ${product.requiresPrescription ? 'border-red-200 text-red-600' : 'border-emerald-200 text-emerald-600'}`}
+                                >
+                                  {product.requiresPrescription ? 'Rx' : 'OTC'}
+                                </Badge>
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
                       )}
                       {isPending && corrections?.medications[idx] && (
                         <div className='mt-3 grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_90px_76px] gap-2'>

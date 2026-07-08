@@ -23,12 +23,30 @@ export interface OCRScanResult {
       instructions: string | null
       productId?: string
       matchedName?: string
+      slug?: string
       image?: string | null
+      price?: number | null
+      stockQuantity?: number
+      requiresPrescription?: boolean
       confidence?: string
       needsReview?: boolean
       source?: string
       sourcePage?: number
       reviewReason?: string
+      equivalentProducts?: Array<{
+        productId: string
+        name: string
+        slug: string
+        image?: string | null
+        price?: number | null
+        unit?: string
+        stockQuantity?: number
+        requiresPrescription?: boolean
+        activeIngredients?: string
+        strength?: string
+        dosageForm?: string
+        reason?: string
+      }>
     }>
     specialNotes: string | null
     confidence: string
@@ -117,7 +135,11 @@ class PrescriptionsAPI {
       productName: string
       productId?: string
       matchedName?: string
+      slug?: string
       image?: string | null
+      price?: number | null
+      stockQuantity?: number
+      requiresPrescription?: boolean
       activeIngredient?: string | null
       dosage: string
       quantity: number
@@ -127,6 +149,20 @@ class PrescriptionsAPI {
       needsReview?: boolean
       source?: string
       reviewReason?: string
+      equivalentProducts?: Array<{
+        productId: string
+        name: string
+        slug: string
+        image?: string | null
+        price?: number | null
+        unit?: string
+        stockQuantity?: number
+        requiresPrescription?: boolean
+        activeIngredients?: string
+        strength?: string
+        dosageForm?: string
+        reason?: string
+      }>
     }[]
     images?: string[]
     // OCR metadata
