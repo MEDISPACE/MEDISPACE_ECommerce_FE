@@ -220,6 +220,21 @@ describe('Community Video Events UI component tests', () => {
   it('sends live chat messages inside the meeting room', async () => {
     const user = userEvent.setup()
     mockCommunityService.getVideoEvent.mockResolvedValue({ ...event, status: 'live', viewerRegistration: { status: 'registered' } })
+    mockSendCommunityVideoEventMessage.mockImplementation((_data, ack) =>
+      ack?.({
+        ok: true,
+        message: {
+          _id: 'msg-live-1',
+          roomId: 'room-1',
+          videoEventId: 'event-1',
+          senderId: 'user-1',
+          content: 'Can I take this medicine with food?',
+          status: 'visible',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      }),
+    )
     renderDetail()
 
     await screen.findByText('Diabetes care workshop')
@@ -235,6 +250,8 @@ describe('Community Video Events UI component tests', () => {
       { eventId: 'event-1', content: 'Can I take this medicine with food?' },
       expect.any(Function),
     ))
+    expect(await screen.findByText('Can I take this medicine with food?')).toBeInTheDocument()
+    expect(input).toHaveValue('')
   })
 
   it('renders admin event dashboard without manual lifecycle controls', async () => {

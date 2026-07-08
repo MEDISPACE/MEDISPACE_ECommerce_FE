@@ -115,6 +115,10 @@ export function CommunityVideoEventDetailPage() {
   const previewVideoRef = useRef<HTMLVideoElement | null>(null)
   const previewStreamRef = useRef<MediaStream | null>(null)
 
+  const appendChatMessage = useCallback((message: CommunityMessage) => {
+    setChatMessages((current) => (current.some((item) => item._id === message._id) ? current : [...current, message]))
+  }, [])
+
   const attachCameraPreview = useCallback((stream: MediaStream) => {
     const video = previewVideoRef.current
     if (!video) return
@@ -252,9 +256,7 @@ export function CommunityVideoEventDetailPage() {
     socket.subscribe(subscriberId, {
       onCommunityMessageNew: (message) => {
         if (message.videoEventId !== eventId) return
-        setChatMessages((current) =>
-          current.some((item) => item._id === message._id) ? current : [...current, message],
-        )
+        appendChatMessage(message)
       },
       onCommunityMessageHidden: (message) => {
         if (message.videoEventId !== eventId) return
@@ -268,7 +270,7 @@ export function CommunityVideoEventDetailPage() {
     return () => {
       socket.unsubscribe(subscriberId)
     }
-  }, [eventId, isAuthenticated, joinPayload, socket])
+  }, [appendChatMessage, eventId, isAuthenticated, joinPayload, socket])
 
   const joinMutation = useMutation({
     mutationFn: () => communityService.joinVideoEvent(eventId),
@@ -310,6 +312,7 @@ export function CommunityVideoEventDetailPage() {
         toast.error(payload.error || 'Không thể gửi tin nhắn')
         return
       }
+      if (payload.message) appendChatMessage(payload.message)
       setChatText('')
     })
   }
