@@ -34,6 +34,15 @@ export interface ModerationQueueItem {
     senderId?: string
     status?: string
     createdAt?: string
+    isThreadStarter?: boolean
+    threadId?: string
+  }
+  thread?: {
+    _id?: string
+    title?: string
+    status?: string
+    slug?: string
+    starterMessageId?: string
   }
   severity?: ModerationSeverity
   categories?: string[]
@@ -45,42 +54,6 @@ export interface ModerationQueueItem {
   reportCount?: number
   createdAt?: string
   updatedAt?: string
-}
-
-export type AiModerationJobStatus = 'pending' | 'running' | 'failed' | 'succeeded'
-
-export interface AiModerationJob {
-  _id: string
-  roomId: string
-  messageId: string
-  senderId?: string
-  promptVersion?: string
-  status: AiModerationJobStatus
-  attempts?: number
-  lastError?: string | null
-  lockedUntil?: string | null
-  latencyMs?: number
-  aiResult?: AiModerationResult
-  applied?: {
-    queued?: boolean
-    autoHidden?: boolean
-    findingId?: string
-  }
-  createdAt?: string
-  updatedAt?: string
-  room?: {
-    _id?: string
-    name?: string
-    slug?: string
-    visibility?: string
-    diseaseKey?: string
-  }
-  message?: {
-    _id?: string
-    content?: string
-    status?: string
-    createdAt?: string
-  }
 }
 
 export type ModerationAction =
@@ -105,6 +78,12 @@ export interface ModerationActionLog {
   durationMinutes?: number
   previousMessageStatus?: string
   createdAt: string
+  thread?: {
+    _id?: string
+    title?: string
+    slug?: string
+    status?: string
+  }
   performedByUser?: CommunityUserSummary
   targetUser?: CommunityUserSummary
 }

@@ -14,7 +14,7 @@ import { useAuth } from '~/contexts/AuthContext'
 import communityService from '~/services/communityService'
 import type { CommunityRoom, CommunityVideoEvent } from '~/types/community'
 import { UserStatus } from '~/types/user'
-import { formatRelativeTime, getRoomDescription, getRoomGuidelines, getRoomTopic, roomInitials } from './communityUi'
+import { communityPreviewText, formatRelativeTime, getRoomDescription, getRoomGuidelines, getRoomTopic, roomInitials } from './communityUi'
 
 type ForumTab = 'all' | 'mine' | 'active' | 'private'
 
@@ -55,7 +55,7 @@ function ForumRoomCard({ room, onJoin }: { room: CommunityRoom; onJoin: (room: C
       <div className='hidden text-center text-xs text-slate-600 md:block'><b className='block text-sm text-slate-950'>{room.messageCount || 0}</b>chủ đề</div>
       <div className='hidden text-center text-xs text-slate-600 md:block'><b className='block text-sm text-slate-950'>{room.memberCount || 0}</b>thành viên</div>
       <div className='rounded-lg border border-slate-100 bg-[#F8FBFF] px-2 py-1.5 text-xs text-slate-600 md:bg-transparent md:border-0 md:p-0'>
-        <p className='line-clamp-1 font-medium text-slate-950'>{room.lastMessagePreview || 'Chưa có bài mới'}</p>
+        <p className='line-clamp-1 font-medium text-slate-950'>{communityPreviewText(room.lastMessagePreview)}</p>
         <p className='mt-0.5 text-[11px]'>{formatRelativeTime(room.lastMessageAt)}</p>
       </div>
     </div>
@@ -106,10 +106,28 @@ export function CommunityForumPage() {
 
   const joinMutation = useMutation({
     mutationFn: (room: CommunityRoom) => (room.visibility === 'private' && room.viewerMembership?.status !== 'invited' ? communityService.requestJoin(room._id) : communityService.joinRoom(room._id)),
-    onSuccess: (_result, room) => {
-      toast.success(room.visibility === 'private' && room.viewerMembership?.status !== 'invited' ? 'Đã gửi yêu cầu tham gia' : 'Đã tham gia chuyên mục')
+    onSuccess: (result, room) => {
+      const active = result.status === 'active'
+      toast.success(active ? 'Đã tham gia chuyên mục' : 'Đã gửi yêu cầu tham gia')
+      queryClient.setQueriesData<CommunityRoom[]>({ queryKey: ['community', 'forum-rooms'] }, (current) =>
+        current?.map((item) =>
+          item._id === result.roomId
+            ? {
+                ...item,
+                memberCount: active && item.viewerMembership?.status !== 'active' ? (item.memberCount || 0) + 1 : item.memberCount,
+                viewerMembership: {
+                  ...(item.viewerMembership || {}),
+                  roomId: result.roomId,
+                  userId: result.userId,
+                  status: result.status,
+                  role: item.viewerMembership?.role || 'member',
+                },
+              }
+            : item,
+        ),
+      )
       queryClient.invalidateQueries({ queryKey: ['community', 'forum-rooms'] })
-      if (room.visibility === 'public' || room.viewerMembership?.status === 'invited') navigate(`/community/${room._id}`)
+      if (active && (room.visibility === 'public' || room.viewerMembership?.status === 'invited')) navigate(`/community/${room._id}`)
     },
     onError: (error: any) => toast.error(error?.response?.data?.message || 'Không thể tham gia chuyên mục'),
   })

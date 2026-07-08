@@ -10,20 +10,30 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '~/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
 import { Skeleton } from '~/components/ui/skeleton'
-import { Textarea } from '~/components/ui/textarea'
-import { PaginationComponent } from '~/components/shared/PaginationComponent'
+import { RichTextEditor } from '~/components/ui/rich-text-editor'
 import { UniversalBreadcrumb } from '~/components/shared/UniversalBreadcrumb'
 import { useAuth } from '~/contexts/AuthContext'
 import communityService from '~/services/communityService'
 import type { CommunityRoom, CommunityThread, CommunityThreadPrefix } from '~/types/community'
 import { UserStatus } from '~/types/user'
+import { CommunityPagination } from './CommunityPagination'
 import { formatRelativeTime, getRoomDescription, getRoomGuidelines, getRoomTopic } from './communityUi'
 import { THREAD_PREFIX_OPTIONS, ThreadPrefixBadge, ThreadStateBadges, authorName, formatCount } from './forumUi'
 
 type ThreadSort = 'latest' | 'newest' | 'hot' | 'unanswered'
 const THREADS_PER_PAGE = 30
 
+function richTextToPlainText(value?: string) {
+  if (!value) return ''
+  if (typeof window !== 'undefined' && typeof DOMParser !== 'undefined') {
+    return new DOMParser().parseFromString(value, 'text/html').body.textContent?.trim() || ''
+  }
+  return value.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim()
+}
+
 function ThreadListItem({ thread, roomId }: { thread: CommunityThread; roomId: string }) {
+  const previewText = richTextToPlainText(thread.content) || (thread.imageUrl ? 'Đã gửi ảnh' : '')
+
   return (
     <div className='grid gap-3 border-b border-slate-100 bg-white px-3 py-3 transition hover:bg-[#F8FBFF] md:grid-cols-[minmax(0,1fr)_74px_74px_190px] md:items-center'>
       <div className='min-w-0'>
@@ -35,7 +45,7 @@ function ThreadListItem({ thread, roomId }: { thread: CommunityThread; roomId: s
               <ThreadStateBadges thread={thread} />
             </div>
             <Link to={`/community/${roomId}/t/${thread._id}`} className='line-clamp-2 text-[15px] font-semibold text-[#0A2463] hover:underline'>{thread.title}</Link>
-            <p className='mt-0.5 line-clamp-1 text-xs text-slate-600'>{thread.content}</p>
+            <p className='mt-0.5 line-clamp-1 text-xs text-slate-600'>{previewText}</p>
             <p className='mt-1 text-[11px] text-slate-500'>bởi {authorName(thread.author, thread.isAnonymous)}, {formatRelativeTime(thread.createdAt)}</p>
           </div>
         </div>
@@ -66,7 +76,6 @@ export function CommunityForumRoomPage() {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [newPrefix, setNewPrefix] = useState<CommunityThreadPrefix>('question')
-  const [tags, setTags] = useState('')
   const [threadImageFile, setThreadImageFile] = useState<File | null>(null)
   const [threadImagePreview, setThreadImagePreview] = useState('')
   const [uploadingThreadImage, setUploadingThreadImage] = useState(false)
@@ -95,8 +104,26 @@ export function CommunityForumRoomPage() {
       if (!room) throw new Error('Missing room')
       return room.visibility === 'private' && room.viewerMembership?.status !== 'invited' ? communityService.requestJoin(room._id) : communityService.joinRoom(room._id)
     },
-    onSuccess: () => {
-      toast.success(room?.visibility === 'private' ? 'Đã gửi yêu cầu tham gia' : 'Đã tham gia chuyên mục')
+    onSuccess: (result) => {
+      const active = result.status === 'active'
+      toast.success(active ? 'Đã tham gia chuyên mục' : 'Đã gửi yêu cầu tham gia')
+      queryClient.setQueriesData<CommunityRoom[]>({ queryKey: ['community', 'forum-rooms'] }, (current) =>
+        current?.map((item) =>
+          item._id === result.roomId
+            ? {
+                ...item,
+                memberCount: active && item.viewerMembership?.status !== 'active' ? (item.memberCount || 0) + 1 : item.memberCount,
+                viewerMembership: {
+                  ...(item.viewerMembership || {}),
+                  roomId: result.roomId,
+                  userId: result.userId,
+                  status: result.status,
+                  role: item.viewerMembership?.role || 'member',
+                },
+              }
+            : item,
+        ),
+      )
       queryClient.invalidateQueries({ queryKey: ['community', 'forum-rooms'] })
     },
     onError: (error: any) => toast.error(error?.response?.data?.message || 'Không thể tham gia chuyên mục'),
@@ -120,20 +147,27 @@ export function CommunityForumRoomPage() {
         title: title.trim(),
         content: content.trim(),
         prefix: newPrefix,
-        tags: tags.split(',').map((tag) => tag.trim()).filter(Boolean),
         imageUrl,
       })
     },
     onSuccess: (result) => {
-      toast.success('Đã tạo thread')
       setCreateOpen(false)
       setTitle('')
       setContent('')
-      setTags('')
       setThreadImageFile(null)
       setThreadImagePreview('')
       if (draftKey) window.localStorage.removeItem(draftKey)
       queryClient.invalidateQueries({ queryKey: ['community', 'threads', roomId] })
+      if (result.thread.status === 'hidden' || result.moderation?.shouldHide || result.moderation?.autoHidden) {
+        toast.warning('Bài viết đã được gửi vào hàng chờ kiểm duyệt và chưa hiển thị công khai.', {
+          action: {
+            label: 'Xem bài',
+            onClick: () => navigate(`/community/${roomId}/t/${result.thread._id}`),
+          },
+        })
+        return
+      }
+      toast.success('Đã tạo thread')
       navigate(`/community/${roomId}/t/${result.thread._id}`)
     },
     onError: (error: any) => toast.error(error?.response?.data?.message || 'Không thể tạo thread'),
@@ -153,7 +187,7 @@ export function CommunityForumRoomPage() {
   }
 
   const handleSubmitThread = () => {
-    if (title.trim().length < 8 || content.trim().length < 10) {
+    if (title.trim().length < 8 || richTextToPlainText(content).length < 10) {
       toast.error('Tiêu đề tối thiểu 8 ký tự, nội dung tối thiểu 10 ký tự')
       return
     }
@@ -194,11 +228,10 @@ export function CommunityForumRoomPage() {
     if (!rawDraft) return
 
     try {
-      const draft = JSON.parse(rawDraft) as { title?: string; content?: string; prefix?: CommunityThreadPrefix; tags?: string }
+      const draft = JSON.parse(rawDraft) as { title?: string; content?: string; prefix?: CommunityThreadPrefix }
       setTitle(draft.title || '')
       setContent(draft.content || '')
       setNewPrefix(draft.prefix || 'question')
-      setTags(draft.tags || '')
     } catch {
       window.localStorage.removeItem(draftKey)
     }
@@ -206,14 +239,14 @@ export function CommunityForumRoomPage() {
 
   useEffect(() => {
     if (!draftKey || typeof window === 'undefined') return
-    const hasDraft = title.trim() || content.trim() || tags.trim()
+    const hasDraft = title.trim() || content.trim()
     if (!hasDraft) {
       window.localStorage.removeItem(draftKey)
       return
     }
 
-    window.localStorage.setItem(draftKey, JSON.stringify({ title, content, prefix: newPrefix, tags }))
-  }, [content, draftKey, newPrefix, tags, title])
+    window.localStorage.setItem(draftKey, JSON.stringify({ title, content, prefix: newPrefix }))
+  }, [content, draftKey, newPrefix, title])
 
   useEffect(() => {
     if (!threadImagePreview) return
@@ -252,9 +285,15 @@ export function CommunityForumRoomPage() {
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>{THREAD_PREFIX_OPTIONS.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SelectContent>
                 </Select>
-                <Input value={tags} onChange={(event) => setTags(event.target.value)} placeholder='Tags, cách nhau bằng dấu phẩy' />
               </div>
-              <Textarea value={content} onChange={(event) => setContent(event.target.value)} rows={8} placeholder='Nội dung thread' />
+              <div className='overflow-hidden rounded-lg border border-blue-200 bg-white focus-within:border-[#5B8DEF] focus-within:ring-2 focus-within:ring-blue-50'>
+                <RichTextEditor
+                  value={content}
+                  onChange={setContent}
+                  placeholder='Nội dung thread'
+                  height={240}
+                />
+              </div>
               {threadImagePreview && (
                 <div className='relative mx-1 w-fit'>
                   <img src={threadImagePreview} alt='Ảnh đính kèm thread' className='h-24 w-24 rounded-lg border border-blue-100 object-cover shadow-sm' />
@@ -332,7 +371,7 @@ export function CommunityForumRoomPage() {
                 <Select value={prefix} onValueChange={(value) => setPrefix(value as CommunityThreadPrefix | 'all')}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value='all'>Tất cả prefix</SelectItem>
+                    <SelectItem value='all'>Tất cả</SelectItem>
                     {THREAD_PREFIX_OPTIONS.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -358,7 +397,7 @@ export function CommunityForumRoomPage() {
                   </div>
                   {threadsQuery.data.items.map((thread) => <ThreadListItem key={thread._id} thread={thread} roomId={roomId} />)}
                 </div>
-                {totalThreadPages > 1 && <PaginationComponent currentPage={page} totalPages={totalThreadPages} onPageChange={updatePage} className='rounded-lg border border-[#DDE7F3] bg-white py-4 shadow-sm' />}
+                {totalThreadPages > 1 && <CommunityPagination currentPage={page} totalPages={totalThreadPages} onPageChange={updatePage} className='py-2' />}
               </div>
             ) : (
               <div className='rounded-lg border border-[#DDE7F3] bg-white p-8 text-center shadow-sm'>
