@@ -48,7 +48,7 @@ import {
   ImageUploadField,
   MultipleImageUploadField,
 } from '../shared/EntityFormFields'
-import { getStatusBadge, getPrescriptionBadge } from '../../utils/badgeUtils'
+import { getPrescriptionBadge } from '../../utils/badgeUtils'
 import productService from '../../services/productService'
 import adminService from '../../services/adminService'
 import brandService from '../../services/brandService'
@@ -63,6 +63,36 @@ import type { Product } from '../../types/product'
 // Format currency helper
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('vi-VN').format(Math.round(amount)) + ' đ'
+}
+
+const PRODUCT_STATUS_BADGES: Record<Product['status'], { label: string; className: string; icon: typeof CheckCircle }> = {
+  active: {
+    label: 'Đang bán',
+    className: 'bg-green-100 text-green-700 border-green-200 hover:bg-green-100',
+    icon: CheckCircle,
+  },
+  discontinued: {
+    label: 'Ngừng kinh doanh',
+    className: 'bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-100',
+    icon: X,
+  },
+  out_of_stock: {
+    label: 'Hết hàng',
+    className: 'bg-red-100 text-red-700 border-red-200 hover:bg-red-100',
+    icon: AlertTriangle,
+  },
+}
+
+const getProductStatusBadge = (status: Product['status']) => {
+  const config = PRODUCT_STATUS_BADGES[status] || PRODUCT_STATUS_BADGES.active
+  const Icon = config.icon
+
+  return (
+    <Badge className={config.className}>
+      <Icon className='w-3 h-3 mr-1' />
+      {config.label}
+    </Badge>
+  )
 }
 
 export function ProductManagementPage() {
@@ -854,12 +884,7 @@ export function ProductManagementPage() {
                         </div>
                       </TableCell>
                       <TableCell className='hidden lg:table-cell'>
-                        <div
-                          className='cursor-pointer'
-                          onClick={() => toggleStatusMutation.mutate({ id: product._id, isActive: !product.isActive })}
-                        >
-                          {getStatusBadge(product.status)}
-                        </div>
+                        {getProductStatusBadge(product.status)}
                       </TableCell>
                       <TableCell className='text-right'>
                         <DropdownMenu>

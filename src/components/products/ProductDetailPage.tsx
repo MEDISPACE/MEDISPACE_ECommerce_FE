@@ -46,6 +46,7 @@ import {
   getProductReviewCount,
   getProductSalePrice,
   isProductInStock,
+  getProductStatusLabel,
   isProductPrescription,
   getBrandName,
   getProductDescription,
@@ -120,6 +121,7 @@ export function ProductDetailPage() {
 
   // Get currently selected price variant
   const selectedVariant: PriceVariant | null = product?.priceVariants?.[selectedVariantIndex] || null
+  const productStatusLabel = product ? getProductStatusLabel(product) : ''
 
   // Fetch all categories for breadcrumb name lookup
   const [allCategoriesFlat, setAllCategoriesFlat] = useState<Category[]>([])
@@ -543,8 +545,7 @@ export function ProductDetailPage() {
             <div className='flex items-center gap-2'>
               <div className={`w-3 h-3 rounded-full ${isProductInStock(product) ? 'bg-green-500' : 'bg-red-500'}`} />
               <span className={`font-medium ${isProductInStock(product) ? 'text-green-600' : 'text-red-600'}`}>
-                {/* {isProductInStock(product) ? `Còn hàng (${product.stockQuantity} sản phẩm)` : 'Hết hàng'} */}
-                {isProductInStock(product) ? `Còn hàng` : 'Hết hàng'}
+                {productStatusLabel}
               </span>
             </div>
 

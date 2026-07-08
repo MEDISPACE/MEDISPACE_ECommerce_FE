@@ -665,6 +665,7 @@ export function ProductsListingPage() {
                                 rating: getProductRating(product),
                                 reviewCount: getProductReviewCount(product),
                                 inStock: isProductInStock(product),
+                                status: product.status,
                                 isPrescription: isProductPrescription(product),
                                 isOnSale: isProductOnSale(product),
                                 unit: getProductUnit(product),

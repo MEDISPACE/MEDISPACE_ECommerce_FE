@@ -24,6 +24,7 @@ export interface RecommendedProduct {
   rating: number
   reviewCount: number
   stockQuantity: number
+  status?: 'active' | 'discontinued' | 'out_of_stock'
   requiresPrescription: boolean
   category?: Array<{ name: string }>
   brand?: Array<{ name: string }>

@@ -203,12 +203,12 @@ export function ProductDetailModal({ product, isOpen, onClose, onAddToCart }: Pr
                     <div className='flex items-center gap-2 text-sm'>
                       <span className='text-gray-600'>Trạng thái:</span>
                       <Badge
-                        className={
-                          product.status === 'active'
-                            ? 'bg-green-100 text-green-700'
-                            : product.status === 'discontinued'
-                              ? 'bg-red-100 text-red-700'
-                              : 'bg-gray-100 text-gray-700'
+                    className={
+                      product.status === 'active'
+                        ? 'bg-green-100 text-green-700'
+                        : product.status === 'discontinued'
+                          ? 'bg-orange-100 text-orange-700'
+                          : 'bg-red-100 text-red-700'
                         }
                       >
                         {product.status === 'active'
@@ -316,10 +316,10 @@ export function ProductDetailModal({ product, isOpen, onClose, onAddToCart }: Pr
                       onClose()
                     }}
                     className='flex-1 bg-[#0A2463] hover:bg-[#071A49] text-white'
-                    disabled={product.stock === 0}
+                    disabled={product.stock === 0 || product.status !== 'active'}
                   >
                     <ShoppingCart className='w-4 h-4 mr-2' />
-                    {product.stock === 0 ? 'Hết hàng' : 'Thêm vào đơn'}
+                    {product.status === 'discontinued' ? 'Ngừng kinh doanh' : product.stock === 0 || product.status === 'out_of_stock' ? 'Hết hàng' : 'Thêm vào đơn'}
                   </Button>
                   <Button variant='outline' onClick={onClose} className='border-[#BFDBFE] text-[#0A2463]'>
                     Đóng
