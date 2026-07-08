@@ -19,6 +19,7 @@ interface Props {
 }
 
 const WARNING_PREFIX = '\u26A0\uFE0F'
+const JUSTIFIED_TEXT_CLASS = 'text-justify [text-align-last:left] hyphens-auto'
 
 // ── Inline formatter: **bold**, *italic*, `code` ───────────────────────────
 function renderInline(text: string): React.ReactNode[] {
@@ -168,11 +169,11 @@ function renderBlocks(lines: string[]): React.ReactNode[] {
               const li = item as { type: 'li'; ordered: true; index?: number; text: string }
               const num = li.index ?? idx + 1
               return (
-                <li key={idx} className='flex gap-2.5 items-start'>
-                  <span className='flex-shrink-0 w-5 h-5 bg-[#0A2463] text-white text-[10px] font-bold rounded-full flex items-center justify-center mt-0.5'>
+                <li key={idx} className='grid grid-cols-[1.25rem_minmax(0,1fr)] gap-3 items-start'>
+                  <span className='w-5 h-5 bg-[#0A2463] text-white text-[10px] font-bold rounded-full flex items-center justify-center mt-0.5'>
                     {num}
                   </span>
-                  <span className='text-sm text-gray-800 leading-relaxed'>
+                  <span className={`text-sm text-gray-800 leading-relaxed ${JUSTIFIED_TEXT_CLASS}`}>
                     {renderInline(li.text)}
                   </span>
                 </li>
@@ -186,9 +187,9 @@ function renderBlocks(lines: string[]): React.ReactNode[] {
             {listItems.map((item, idx) => {
               const li = item as { type: 'li'; ordered: false; text: string }
               return (
-                <li key={idx} className='flex gap-2 items-start'>
-                  <span className='flex-shrink-0 w-1.5 h-1.5 bg-[#1E40AF] rounded-full mt-2' />
-                  <span className='text-sm text-gray-800 leading-relaxed'>
+                <li key={idx} className='grid grid-cols-[0.375rem_minmax(0,1fr)] gap-3 items-start'>
+                  <span className='w-1.5 h-1.5 bg-[#1E40AF] rounded-full mt-2' />
+                  <span className={`text-sm text-gray-800 leading-relaxed ${JUSTIFIED_TEXT_CLASS}`}>
                     {renderInline(li.text)}
                   </span>
                 </li>
@@ -203,7 +204,7 @@ function renderBlocks(lines: string[]): React.ReactNode[] {
     // --- paragraph ---
     if (block.type === 'paragraph') {
       elements.push(
-        <p key={i} className='text-sm text-gray-800 leading-relaxed mb-1.5'>
+        <p key={i} className={`text-sm text-gray-800 leading-relaxed mb-1.5 ${JUSTIFIED_TEXT_CLASS}`}>
           {renderInline(block.text)}
         </p>
       )

@@ -202,7 +202,7 @@ export function MessageList({
     <div
       ref={messagesContainerRef}
       onScroll={handleScroll}
-      className='flex-1 min-h-0 overflow-y-auto bg-gray-50 p-4 space-y-4'
+      className='flex-1 min-h-0 overflow-y-auto bg-gray-50 px-[var(--chat-gutter,1rem)] py-4 space-y-4'
       style={{ scrollBehavior: 'smooth' }}
     >
       {/* Load more indicator */}
@@ -268,7 +268,7 @@ export function MessageList({
               <div className='flex flex-col mb-2'>
                 <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-1`}>
                   {/* Message bubble */}
-                  <div className={`flex flex-col ${isOwnMessage ? 'items-end' : 'items-start'} max-w-[75%] min-w-0`}>
+                  <div className={`flex flex-col ${isOwnMessage ? 'items-end' : 'items-start'} max-w-[82%] min-w-0`}>
                     
                     {/* AI Badge */}
                     {!isOwnMessage && message.isAI && (

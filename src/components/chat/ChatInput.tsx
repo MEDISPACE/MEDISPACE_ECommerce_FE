@@ -120,7 +120,7 @@ export function ChatInput({
   }
 
   return (
-    <div className='border-t border-gray-200 bg-white p-3 flex-shrink-0 relative'>
+    <div className='border-t border-gray-200 bg-white px-[var(--chat-gutter,1rem)] py-3 flex-shrink-0 relative'>
       {/* ProductPicker overlay */}
       {showProductPicker && (
         <ProductPicker onSelect={handleProductSelect} onClose={() => setShowProductPicker(false)} />

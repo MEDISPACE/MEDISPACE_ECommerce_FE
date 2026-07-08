@@ -92,7 +92,8 @@ export function FloatingChatWidget() {
     return () => unsubscribe(id)
   }, [id, subscribe, unsubscribe])
 
-  // Load conversation khi mở widget — chỉ lấy active conversation theo độ ưu tiên: Dược sĩ -> AI
+  // Khi mở float chat, luôn hiện portal chọn kênh hỗ trợ.
+  // Chỉ vào AI hoặc dược sĩ sau khi user bấm một trong hai nút.
   useEffect(() => {
     if (!isAuthenticated || !isCustomer || !isOpen) {
       if (!isOpen) {
@@ -104,28 +105,10 @@ export function FloatingChatWidget() {
     const load = async () => {
       try {
         setIsLoading(true)
-        // 1. Tìm cuộc trò chuyện với dược sĩ đang hoạt động trước
-        const pharmRes = await chatService.getConversations({ page: 1, limit: 1, status: 'active', type: 'pharmacist' })
-        if (pharmRes.conversations.length > 0) {
-          const conv = pharmRes.conversations[0]
-          setConversation(conv)
-          setUnreadCount(conv.unreadCount.customer || 0)
-          setAiMode(false)
-          return
-        }
-
-        // 2. Nếu không có, tìm cuộc trò chuyện với AI đang hoạt động
-        const aiRes = await chatService.getConversations({ page: 1, limit: 1, status: 'active', type: 'ai' })
-        if (aiRes.conversations.length > 0) {
-          const conv = aiRes.conversations[0]
-          setConversation(conv)
-          setUnreadCount(conv.unreadCount.customer || 0)
-          setAiMode(true)
-          return
-        }
-
+        setAiMode(true)
         setConversation(null)
       } catch {
+        setAiMode(true)
         setConversation(null)
       } finally {
         setIsLoading(false)
@@ -138,12 +121,20 @@ export function FloatingChatWidget() {
 
   if (!canShow) return null
 
-  const handleToggle = () => {
+  const handleToggle = (event?: React.MouseEvent<HTMLButtonElement>) => {
+    const isProgrammaticClick = event ? !event.nativeEvent.isTrusted : false
+
     if (isMinimized) {
       setIsMinimized(false)
       setUnreadCount(0)
     } else {
       if (!isOpen) setUnreadCount(0)
+      if (isProgrammaticClick && isAuthenticated && isCustomer) {
+        setIsOpen(true)
+        setIsMinimized(false)
+        handleCreateConversation(false)
+        return
+      }
       setIsOpen((o) => !o)
     }
   }
@@ -204,7 +195,6 @@ export function FloatingChatWidget() {
   }
 
   const isSupportChooser = isAuthenticated && !conversation && !isLoading
-  const isCompactWidget = !isAuthenticated || isSupportChooser
 
   return (
     <>
@@ -212,16 +202,11 @@ export function FloatingChatWidget() {
       {isOpen && !isMinimized && (
         <div
           className={cn(
-            'fixed left-3 right-3 bottom-20 top-[calc(var(--header-height,64px)+0.75rem)] sm:left-auto sm:top-auto sm:right-[88px] sm:bottom-6 z-50 w-auto sm:w-[min(420px,calc(100vw-7rem))] lg:w-[clamp(400px,24vw,440px)] h-auto bg-white rounded-xl sm:rounded-2xl shadow-2xl border border-[#BFDBFE] sm:border-2 flex flex-col overflow-hidden slide-up-animation',
-            isSupportChooser
-              ? 'sm:h-auto sm:min-h-[460px] sm:max-h-[calc(100dvh-var(--header-height,64px)-2rem)]'
-              : isCompactWidget
-                ? 'sm:h-[clamp(440px,52dvh,500px)]'
-                : 'sm:h-[clamp(480px,66dvh,640px)]',
+            'fixed left-3 right-3 bottom-20 top-[calc(var(--header-height,64px)+0.75rem)] sm:left-auto sm:top-auto sm:right-[88px] sm:bottom-6 z-50 w-auto sm:w-[min(420px,calc(100vw-7rem))] lg:w-[clamp(400px,24vw,440px)] h-auto sm:h-[clamp(560px,72dvh,720px)] sm:max-h-[calc(100dvh-var(--header-height,64px)-2rem)] bg-white rounded-xl sm:rounded-2xl shadow-2xl border border-[#BFDBFE] sm:border-2 flex flex-col overflow-hidden slide-up-animation [--chat-gutter:1rem] sm:[--chat-gutter:1.25rem]',
           )}
         >
           {/* Header */}
-          <div className='text-white px-3 py-2.5 sm:px-4 sm:py-3 flex items-center justify-between bg-[#0A2463] flex-shrink-0'>
+          <div className='text-white px-[var(--chat-gutter)] py-2.5 sm:py-3 flex items-center justify-between bg-[#0A2463] flex-shrink-0'>
             <div className='flex items-center gap-3 min-w-0 flex-1 mr-2'>
               {conversation && (
                 <Button
@@ -234,7 +219,7 @@ export function FloatingChatWidget() {
                   <ArrowLeft className='w-4 h-4' />
                 </Button>
               )}
-              {aiMode && conversation ? (
+              {aiMode ? (
                 <div className='relative flex items-center justify-center w-9 h-9 bg-white/20 rounded-full border border-white/30 backdrop-blur-sm shadow-inner flex-shrink-0'>
                   <Bot className='w-5 h-5 text-white' />
                   <span className='absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 border border-white rounded-full animate-pulse' />
@@ -247,10 +232,10 @@ export function FloatingChatWidget() {
               )}
               <div className='min-w-0 flex-1'>
                 <h3 className='font-semibold text-sm truncate leading-tight'>
-                  {aiMode && conversation ? 'Trợ lý Sức khỏe AI' : 'Chat với Dược sĩ'}
+                  {aiMode ? 'Trợ lý Sức khỏe AI' : 'Chat với Dược sĩ'}
                 </h3>
                 <p className='text-xs opacity-90 truncate leading-normal'>
-                  {aiMode && conversation ? 'Tư vấn tự động 24/7' : 'Tư vấn trực tuyến'}
+                  {aiMode ? 'Tư vấn tự động 24/7' : 'Tư vấn trực tuyến'}
                 </p>
               </div>
             </div>
@@ -288,7 +273,7 @@ export function FloatingChatWidget() {
 
           {/* AI Info & Transfer Banner */}
           {aiMode && conversation && (
-            <div className='bg-[#F0F6FF] border-b border-[#BFDBFE] px-4 py-2 flex items-center justify-between text-xs text-[#0A2463] flex-shrink-0 slide-down-animation'>
+            <div className='bg-[#F0F6FF] border-b border-[#BFDBFE] px-[var(--chat-gutter)] py-2 flex items-center justify-between text-xs text-[#0A2463] flex-shrink-0 slide-down-animation'>
               <div className='flex items-center gap-1.5 min-w-0'>
                 <span className='w-2 h-2 rounded-full bg-[#1E40AF] animate-pulse flex-shrink-0' />
                 <span className='truncate font-medium text-[#0A2463]'>Trợ lý AI đang hoạt động</span>
@@ -352,7 +337,7 @@ export function FloatingChatWidget() {
                 setAiMode={setAiMode}
               />
             ) : (
-              <div className='flex h-full flex-col p-5 text-left sm:p-6'>
+              <div className='flex h-full flex-col p-[var(--chat-gutter)] text-left'>
                 <div className='mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-[#BFDBFE] bg-[#F0F6FF] shadow-inner'>
                   <MessageCircle className='h-7 w-7 text-[#0A2463]' />
                 </div>
@@ -405,7 +390,7 @@ export function FloatingChatWidget() {
         >
           <div className='flex items-center justify-center sm:justify-start gap-2'>
             <MessageCircle className='w-5 h-5' />
-            <span className='font-medium text-sm'>Chat với Dược sĩ</span>
+            <span className='font-medium text-sm'>{aiMode ? 'Trợ lý Sức khỏe AI' : 'Chat với Dược sĩ'}</span>
             <Maximize2 className='w-4 h-4 ml-2' />
           </div>
         </div>
