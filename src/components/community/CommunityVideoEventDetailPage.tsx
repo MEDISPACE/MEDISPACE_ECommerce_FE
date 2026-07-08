@@ -150,7 +150,7 @@ export function CommunityVideoEventDetailPage() {
     queryKey: ['community-video-event', eventId],
     queryFn: () => communityService.getVideoEvent(eventId),
     enabled: Boolean(eventId) && !authLoading && isAuthenticated,
-    refetchInterval: !authLoading && isAuthenticated ? 2000 : false,
+    refetchOnWindowFocus: false,
   })
 
   const event = eventQuery.data
@@ -235,6 +235,7 @@ export function CommunityVideoEventDetailPage() {
       onCommunityVideoEventUpdated: (updatedEvent) => {
         if (isCommunityVideoEventPayload(updatedEvent) && updatedEvent._id === eventId) {
           queryClient.setQueryData(['community-video-event', eventId], updatedEvent)
+          return
         }
         queryClient.invalidateQueries({ queryKey: ['community-video-event', eventId] })
       },
@@ -528,7 +529,7 @@ export function CommunityVideoEventDetailPage() {
                               <time
                                 dateTime={message.createdAt}
                                 title={sentDateTime}
-                                className={`mt-1 block text-right text-[11px] leading-none ${mine ? 'text-blue-100/90' : 'text-gray-500'}`}
+                                className={`mt-1 block text-right text-[11px] leading-none ${mine ? 'text-white/80' : 'text-gray-500'}`}
                               >
                                 {sentTime}
                               </time>
