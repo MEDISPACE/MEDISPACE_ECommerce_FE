@@ -394,6 +394,7 @@ export const adminCommunityService = {
     search?: string
     page?: number
     limit?: number
+    sort?: 'scheduled_asc' | 'created_desc'
   }) {
     const res = await apiClient.get<Envelope<PaginatedResult<CommunityVideoEvent>>>('/admin/community/video-events', {
       params,

@@ -9,6 +9,7 @@ import { Card, CardContent } from '~/components/ui/card'
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -48,8 +49,19 @@ function normalizeSlug(value: string) {
 
 const emptyMeetingForm = {
   startsAt: '',
+  endsAt: '',
   title: '',
   note: '',
+}
+
+function toLocalDateTimeInputValue(date: Date) {
+  const offset = date.getTimezoneOffset() * 60000
+  return new Date(date.getTime() - offset).toISOString().slice(0, 16)
+}
+
+function parseDateTimeInput(value: string) {
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? null : date
 }
 
 function displayName(member: CommunityMember) {
@@ -174,8 +186,10 @@ export function AdminCommunityPage() {
       if (!editingThread) throw new Error('Chưa chọn thread')
       if (!selectedRoom?._id) throw new Error('Chưa chọn phòng')
 
-      const startDate = meetingForm.startsAt ? new Date(meetingForm.startsAt) : new Date()
-      const endDate = new Date(startDate.getTime() + 60 * 60 * 1000)
+      const startDate = parseDateTimeInput(meetingForm.startsAt)
+      const endDate = parseDateTimeInput(meetingForm.endsAt)
+      if (!startDate || !endDate) throw new Error('Vui lòng nhập đầy đủ thời gian hiển thị')
+      if (endDate <= startDate) throw new Error('Thời gian kết thúc phải sau thời gian bắt đầu')
       const title = meetingForm.title.trim() || editingThread.title
       const note = meetingForm.note.trim() || 'Phòng LiveKit nội bộ để cộng đồng trao đổi trực tuyến theo thread. Không chia sẻ thông tin cá nhân nhạy cảm.'
       let eventId = editingThread.videoMeeting?.eventId
@@ -214,6 +228,7 @@ export function AdminCommunityPage() {
           provider: 'livekit',
           status: 'scheduled',
           startsAt: startDate.toISOString(),
+          endsAt: endDate.toISOString(),
           title,
           note,
         },
@@ -265,14 +280,21 @@ export function AdminCommunityPage() {
 
   const openMeetingDialog = (thread: CommunityThread) => {
     const meeting = thread.videoMeeting
+    const startsAt = meeting?.startsAt ? new Date(meeting.startsAt) : null
+    const endsAt = meeting?.endsAt ? new Date(meeting.endsAt) : null
     setEditingThread(thread)
     setMeetingForm({
-      startsAt: meeting?.startsAt ? new Date(meeting.startsAt).toISOString().slice(0, 16) : '',
+      startsAt: startsAt ? toLocalDateTimeInputValue(startsAt) : '',
+      endsAt: endsAt ? toLocalDateTimeInputValue(endsAt) : '',
       title: meeting?.title || '',
       note: meeting?.note || '',
     })
     setMeetingDialogOpen(true)
   }
+
+  const meetingStartDate = parseDateTimeInput(meetingForm.startsAt)
+  const meetingEndDate = parseDateTimeInput(meetingForm.endsAt)
+  const canSaveThreadMeeting = Boolean(meetingStartDate && meetingEndDate && meetingEndDate > meetingStartDate)
 
   return (
     <div className='space-y-6'>
@@ -280,6 +302,7 @@ export function AdminCommunityPage() {
         <DialogContent className='max-h-[90vh] overflow-y-auto sm:max-w-3xl'>
           <DialogHeader>
             <DialogTitle>{editingRoom ? 'Sửa phòng cộng đồng' : 'Tạo phòng cộng đồng'}</DialogTitle>
+            <DialogDescription>Thiết lập tên, quyền hiển thị, chủ đề và hướng dẫn cho phòng cộng đồng.</DialogDescription>
           </DialogHeader>
           <div className='grid gap-4 py-2'>
             <div className='space-y-2'>
@@ -371,6 +394,7 @@ export function AdminCommunityPage() {
         <DialogContent className='sm:max-w-2xl'>
           <DialogHeader>
             <DialogTitle>Phòng thảo luận trực tuyến</DialogTitle>
+            <DialogDescription>Gắn phòng LiveKit vào thread và cấu hình thời gian hiển thị cho người dùng.</DialogDescription>
           </DialogHeader>
           <div className='space-y-4 py-2'>
             <div className='rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-800'>
@@ -389,8 +413,20 @@ export function AdminCommunityPage() {
               </div>
             )}
             <div className='space-y-2'>
-              <Label>Thời gian hiển thị</Label>
-              <Input type='datetime-local' value={meetingForm.startsAt} onChange={(e) => setMeetingForm((prev) => ({ ...prev, startsAt: e.target.value }))} />
+              <Label>Hiển thị từ</Label>
+              <Input
+                type='datetime-local'
+                required
+                value={meetingForm.startsAt}
+                onChange={(e) => setMeetingForm((prev) => ({ ...prev, startsAt: e.target.value }))}
+              />
+            </div>
+            <div className='space-y-2'>
+              <Label>Hiển thị đến</Label>
+              <Input type='datetime-local' required value={meetingForm.endsAt} onChange={(e) => setMeetingForm((prev) => ({ ...prev, endsAt: e.target.value }))} />
+              {meetingStartDate && meetingEndDate && meetingEndDate <= meetingStartDate && (
+                <p className='text-sm text-rose-600'>Thời gian kết thúc phải sau thời gian bắt đầu.</p>
+              )}
             </div>
             <div className='space-y-2'>
               <Label>Tiêu đề hiển thị</Label>
@@ -404,7 +440,7 @@ export function AdminCommunityPage() {
           <DialogFooter>
             {editingThread?.videoMeeting?.url && <Button variant='outline' className='mr-auto text-rose-600' onClick={() => removeThreadMeeting.mutate()} disabled={removeThreadMeeting.isPending}>Gỡ khỏi thread</Button>}
             <Button variant='outline' onClick={() => setMeetingDialogOpen(false)}>Hủy</Button>
-            <Button onClick={() => saveThreadMeeting.mutate()} disabled={saveThreadMeeting.isPending} className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white'>Lưu phòng video</Button>
+            <Button onClick={() => saveThreadMeeting.mutate()} disabled={!canSaveThreadMeeting || saveThreadMeeting.isPending} className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white'>Lưu phòng video</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

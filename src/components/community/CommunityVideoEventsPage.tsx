@@ -25,10 +25,20 @@ function statusLabel(status: string) {
   return labels[status] || status
 }
 
+function effectiveEventStatus(event: Pick<CommunityVideoEvent, 'status' | 'scheduledStartAt' | 'scheduledEndAt'>) {
+  const startAt = event.scheduledStartAt ? new Date(event.scheduledStartAt).getTime() : Number.NaN
+  const endAt = event.scheduledEndAt ? new Date(event.scheduledEndAt).getTime() : Number.NaN
+  const now = Date.now()
+  if ((event.status === 'scheduled' || event.status === 'live') && !Number.isNaN(endAt) && endAt <= now) return 'ended'
+  if (event.status === 'scheduled' && !Number.isNaN(startAt) && startAt <= now) return 'live'
+  return event.status
+}
+
 function EventCard({ event }: { event: CommunityVideoEvent }) {
+  const status = effectiveEventStatus(event)
   const registered = event.viewerRegistration?.status === 'registered' || event.viewerRegistration?.status === 'attended'
   const full = Boolean(event.capacity && (event.registrationCount || 0) >= event.capacity && !registered)
-  const cta = registered ? 'Mở link' : full ? 'Đã đủ chỗ' : event.registrationRequired ? 'Đăng ký' : 'Vào phòng'
+  const cta = status === 'ended' ? 'Xem thông tin' : registered ? 'Mở link' : full ? 'Đã đủ chỗ' : event.registrationRequired ? 'Đăng ký' : 'Vào phòng'
 
   return (
     <article className='rounded-lg border border-[#E2E8F0] bg-white p-5 shadow-sm transition hover:border-blue-200 hover:shadow-md'>
@@ -38,7 +48,7 @@ function EventCard({ event }: { event: CommunityVideoEvent }) {
         </div>
         <div className='min-w-0 flex-1'>
           <div className='mb-2 flex flex-wrap items-center gap-2'>
-            <Badge className='bg-emerald-50 text-emerald-700 hover:bg-emerald-50'>{statusLabel(event.status)}</Badge>
+            <Badge className={status === 'ended' ? 'bg-slate-100 text-slate-700 hover:bg-slate-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-50'}>{statusLabel(status)}</Badge>
             {registered && <Badge className='bg-blue-50 text-blue-700 hover:bg-blue-50'><CheckCircle2 className='h-3 w-3' />Đã đăng ký</Badge>}
           </div>
           <h2 className='line-clamp-2 text-lg font-semibold text-slate-950'>{event.title}</h2>

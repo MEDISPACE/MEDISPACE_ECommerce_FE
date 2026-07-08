@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, ImagePlus, Loader2, PenLine, Search, ShieldCheck, Users, X } from 'lucide-react'
+import { ArrowLeft, ImagePlus, Loader2, PenLine, Search, ShieldCheck, Users, Video, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Button } from '~/components/ui/button'
@@ -14,7 +14,7 @@ import { RichTextEditor } from '~/components/ui/rich-text-editor'
 import { UniversalBreadcrumb } from '~/components/shared/UniversalBreadcrumb'
 import { useAuth } from '~/contexts/AuthContext'
 import communityService from '~/services/communityService'
-import type { CommunityRoom, CommunityThread, CommunityThreadPrefix } from '~/types/community'
+import type { CommunityRoom, CommunityThread, CommunityThreadPrefix, CommunityVideoEvent } from '~/types/community'
 import { UserStatus } from '~/types/user'
 import { CommunityPagination } from './CommunityPagination'
 import { formatRelativeTime, getRoomDescription, getRoomGuidelines, getRoomTopic } from './communityUi'
@@ -60,6 +60,66 @@ function ThreadListItem({ thread, roomId }: { thread: CommunityThread; roomId: s
   )
 }
 
+function formatEventTime(value?: string) {
+  if (!value) return ''
+  return new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value))
+}
+
+function formatEventTimeRange(event: Pick<CommunityVideoEvent, 'scheduledStartAt' | 'scheduledEndAt'>) {
+  const start = formatEventTime(event.scheduledStartAt)
+  const end = formatEventTime(event.scheduledEndAt)
+  if (start && end) return `${start} - ${end}`
+  return start || end
+}
+
+function effectiveEventStatus(event: Pick<CommunityVideoEvent, 'status' | 'scheduledStartAt' | 'scheduledEndAt'>) {
+  const startAt = event.scheduledStartAt ? new Date(event.scheduledStartAt).getTime() : Number.NaN
+  const endAt = event.scheduledEndAt ? new Date(event.scheduledEndAt).getTime() : Number.NaN
+  const now = Date.now()
+  if ((event.status === 'scheduled' || event.status === 'live') && !Number.isNaN(endAt) && endAt <= now) return 'ended'
+  if (event.status === 'scheduled' && !Number.isNaN(startAt) && startAt <= now) return 'live'
+  return event.status
+}
+
+function RoomMeetBanner({ event }: { event: CommunityVideoEvent }) {
+  const status = effectiveEventStatus(event)
+  const isLive = status === 'live'
+  const note = event.description?.trim() || 'Buổi meet chung của cộng đồng, mọi thành viên có thể mở link để xem thông tin và tham gia khi đến giờ.'
+
+  return (
+    <section className='overflow-hidden rounded-lg border border-[#DDE7F3] bg-white shadow-sm'>
+      <div className='flex flex-col gap-3 px-4 py-4 md:flex-row md:items-center md:justify-between'>
+        <div className='min-w-0'>
+          <div className='flex flex-wrap items-center gap-2'>
+            <span className={`inline-flex h-10 w-10 items-center justify-center rounded-lg ${isLive ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-[#0A2463]'}`}>
+              <Video className='h-4 w-4' />
+            </span>
+            <div className='min-w-0'>
+              <div className='flex flex-wrap items-center gap-2'>
+                <p className='text-sm font-semibold text-[#0A2463]'>{isLive ? 'Meet cộng đồng đang live' : 'Meet cộng đồng sắp diễn ra'}</p>
+                <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${isLive ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'}`}>
+                  Cấp cộng đồng
+                </span>
+              </div>
+              <p className='truncate text-sm font-medium text-slate-950'>{event.title}</p>
+            </div>
+          </div>
+          <p className='mt-2 text-xs leading-5 text-slate-600'>
+            {formatEventTimeRange(event) ? `Thời gian: ${formatEventTimeRange(event)}. ` : ''}
+            {note}
+          </p>
+        </div>
+        <Button asChild className='shrink-0 bg-[#0A2463] text-white hover:bg-[#12357D]'>
+          <Link to={`/community/video-events/${event._id}`}>
+            <Video className='h-5 w-5' />
+            {isLive ? 'Tham gia meet' : 'Xem meet'}
+          </Link>
+        </Button>
+      </div>
+    </section>
+  )
+}
+
 export function CommunityForumRoomPage() {
   const navigate = useNavigate()
   const params = useParams()
@@ -98,6 +158,18 @@ export function CommunityForumRoomPage() {
     enabled: Boolean(roomId),
     staleTime: 20_000,
   })
+
+  const roomEventsQuery = useQuery({
+    queryKey: ['community', 'forum-room-video-events', roomId],
+    queryFn: () => communityService.listVideoEvents({ roomId, upcomingOnly: true, page: 1, limit: 3 }),
+    enabled: Boolean(roomId),
+    staleTime: 30_000,
+  })
+
+  const featuredRoomEvent = useMemo(() => {
+    const events = roomEventsQuery.data?.items || []
+    return events.find((event) => effectiveEventStatus(event) === 'live') || events[0] || null
+  }, [roomEventsQuery.data?.items])
 
   const joinMutation = useMutation({
     mutationFn: () => {
@@ -359,6 +431,8 @@ export function CommunityForumRoomPage() {
             </div>
           </div>
         </section>
+
+        {featuredRoomEvent && <RoomMeetBanner event={featuredRoomEvent} />}
 
         <div className='grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]'>
           <section className='space-y-3'>
