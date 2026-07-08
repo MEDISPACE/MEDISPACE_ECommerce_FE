@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { CalendarDays, CalendarPlus, ChevronDown, Clock3, Copy, ExternalLink, Link as LinkIcon, MessageSquare, MicOff, Minus, Plus, RefreshCw, Search, UserX, Video, X } from 'lucide-react'
+import { Ban, CalendarDays, CalendarPlus, Camera, CameraOff, ChevronDown, Clock3, Copy, ExternalLink, Link as LinkIcon, MessageSquare, Mic, MicOff, Minus, Plus, RefreshCw, ScreenShare, ScreenShareOff, Search, UserX, Video, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { adminCommunityService } from '~/services/communityService'
 import type { CommunityRoom, CommunityVideoEvent } from '~/types/community'
@@ -254,6 +254,7 @@ function DateTimePicker({ label, value, onChange, testId, minDate }: { label: st
 export function AdminCommunityVideoEventsPage() {
   const now = useMemo(() => new Date(), [])
   const [search, setSearch] = useState('')
+  const [participantSearch, setParticipantSearch] = useState('')
   const [selectedEvent, setSelectedEvent] = useState<CommunityVideoEvent | null>(null)
   const [form, setForm] = useState({
     roomId: '',
@@ -271,11 +272,6 @@ export function AdminCommunityVideoEventsPage() {
     queryKey: ['admin-community-video-events', search.trim()],
     queryFn: () => adminCommunityService.listVideoEvents({ search: search.trim() || undefined, page: 1, limit: 50 }),
   })
-  const registrationsQuery = useQuery({
-    queryKey: ['admin-community-video-event-registrations', selectedEvent?._id],
-    queryFn: () => adminCommunityService.listVideoEventRegistrations({ eventId: selectedEvent!._id, page: 1, limit: 50 }),
-    enabled: Boolean(selectedEvent?._id),
-  })
   const liveParticipantsQuery = useQuery({
     queryKey: ['admin-community-video-event-live-participants', selectedEvent?._id],
     queryFn: () => adminCommunityService.listVideoEventParticipants(selectedEvent!._id),
@@ -285,7 +281,6 @@ export function AdminCommunityVideoEventsPage() {
   const invalidateEvents = () => {
     queryClient.invalidateQueries({ queryKey: ['admin-community-video-events'] })
     if (selectedEvent?._id) {
-      queryClient.invalidateQueries({ queryKey: ['admin-community-video-event-registrations', selectedEvent._id] })
       queryClient.invalidateQueries({ queryKey: ['admin-community-video-event-live-participants', selectedEvent._id] })
     }
   }
@@ -342,6 +337,51 @@ export function AdminCommunityVideoEventsPage() {
     onError: (error: any) => toast.error(error?.response?.data?.message || 'Không thể tắt micro người tham gia'),
   })
 
+  const unmuteParticipantMutation = useMutation({
+    mutationFn: ({ eventId, userId }: { eventId: string; userId: string }) => adminCommunityService.unmuteVideoEventParticipant(eventId, userId),
+    onSuccess: () => {
+      toast.success('Đã mở khóa micro người tham gia')
+      if (selectedEvent?._id) queryClient.invalidateQueries({ queryKey: ['admin-community-video-event-live-participants', selectedEvent._id] })
+    },
+    onError: (error: any) => toast.error(error?.response?.data?.message || 'Không thể mở khóa micro người tham gia'),
+  })
+
+  const disableCameraMutation = useMutation({
+    mutationFn: ({ eventId, userId }: { eventId: string; userId: string }) => adminCommunityService.disableVideoEventParticipantCamera(eventId, userId),
+    onSuccess: () => {
+      toast.success('Đã khóa camera người tham gia')
+      if (selectedEvent?._id) queryClient.invalidateQueries({ queryKey: ['admin-community-video-event-live-participants', selectedEvent._id] })
+    },
+    onError: (error: any) => toast.error(error?.response?.data?.message || 'Không thể khóa camera người tham gia'),
+  })
+
+  const enableCameraMutation = useMutation({
+    mutationFn: ({ eventId, userId }: { eventId: string; userId: string }) => adminCommunityService.enableVideoEventParticipantCamera(eventId, userId),
+    onSuccess: () => {
+      toast.success('Đã mở khóa camera người tham gia')
+      if (selectedEvent?._id) queryClient.invalidateQueries({ queryKey: ['admin-community-video-event-live-participants', selectedEvent._id] })
+    },
+    onError: (error: any) => toast.error(error?.response?.data?.message || 'Không thể mở khóa camera người tham gia'),
+  })
+
+  const disableScreenShareMutation = useMutation({
+    mutationFn: ({ eventId, userId }: { eventId: string; userId: string }) => adminCommunityService.disableVideoEventParticipantScreenShare(eventId, userId),
+    onSuccess: () => {
+      toast.success('Đã khóa chia sẻ màn hình người tham gia')
+      if (selectedEvent?._id) queryClient.invalidateQueries({ queryKey: ['admin-community-video-event-live-participants', selectedEvent._id] })
+    },
+    onError: (error: any) => toast.error(error?.response?.data?.message || 'Không thể khóa chia sẻ màn hình người tham gia'),
+  })
+
+  const enableScreenShareMutation = useMutation({
+    mutationFn: ({ eventId, userId }: { eventId: string; userId: string }) => adminCommunityService.enableVideoEventParticipantScreenShare(eventId, userId),
+    onSuccess: () => {
+      toast.success('Đã mở khóa chia sẻ màn hình người tham gia')
+      if (selectedEvent?._id) queryClient.invalidateQueries({ queryKey: ['admin-community-video-event-live-participants', selectedEvent._id] })
+    },
+    onError: (error: any) => toast.error(error?.response?.data?.message || 'Không thể mở khóa chia sẻ màn hình người tham gia'),
+  })
+
   const kickParticipantMutation = useMutation({
     mutationFn: ({ eventId, userId }: { eventId: string; userId: string }) => adminCommunityService.kickVideoEventParticipant(eventId, userId),
     onSuccess: () => {
@@ -349,6 +389,17 @@ export function AdminCommunityVideoEventsPage() {
       if (selectedEvent?._id) queryClient.invalidateQueries({ queryKey: ['admin-community-video-event-live-participants', selectedEvent._id] })
     },
     onError: (error: any) => toast.error(error?.response?.data?.message || 'Không thể mời người tham gia khỏi phòng họp'),
+  })
+
+  const banParticipantMutation = useMutation({
+    mutationFn: ({ eventId, userId }: { eventId: string; userId: string }) => adminCommunityService.banVideoEventParticipant(eventId, userId),
+    onSuccess: () => {
+      toast.success('Đã cấm người tham gia vào lại phòng họp')
+      if (selectedEvent?._id) {
+        queryClient.invalidateQueries({ queryKey: ['admin-community-video-event-live-participants', selectedEvent._id] })
+      }
+    },
+    onError: (error: any) => toast.error(error?.response?.data?.message || 'Không thể cấm người tham gia vào lại phòng họp'),
   })
 
   const copyMeetingLink = async (event: CommunityVideoEvent) => {
@@ -360,6 +411,16 @@ export function AdminCommunityVideoEventsPage() {
 
   const events = eventsQuery.data?.items || []
   const liveParticipants = liveParticipantsQuery.data?.participants || []
+  const filteredLiveParticipants = useMemo(() => {
+    const needle = participantSearch.trim().toLowerCase()
+    if (!needle) return liveParticipants
+    return liveParticipants.filter((participant) => {
+      const displayName = participant.name || String(participant.metadata?.userId || participant.identity)
+      return [displayName, participant.identity, participant.metadata?.userId, participant.metadata?.role]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(needle))
+    })
+  }, [liveParticipants, participantSearch])
 
   useEffect(() => {
     const firstRoom = roomsQuery.data?.[0]
@@ -374,10 +435,6 @@ export function AdminCommunityVideoEventsPage() {
         <div>
           <h1 className='text-2xl font-bold text-gray-950'>Hội thảo cộng đồng</h1>
           <p className='text-sm text-gray-600'>Tạo link họp, vận hành live session và để cộng đồng trao đổi ngay bằng chat trong phòng.</p>
-        </div>
-        <div className='relative w-full md:w-80'>
-          <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400' />
-          <Input className='pl-9' value={search} onChange={(event) => setSearch(event.target.value)} placeholder='Tìm hội thảo' />
         </div>
       </div>
 
@@ -425,8 +482,50 @@ export function AdminCommunityVideoEventsPage() {
           <Button data-testid='create-event-submit' className='w-full bg-blue-600 text-white hover:bg-blue-700 hover:text-white' disabled={!form.roomId || !form.title.trim() || createMutation.isPending}><CalendarPlus />Tạo link Meet</Button>
         </form>
 
-        <div className='min-w-0'>
+        <div className='min-w-0 space-y-4'>
+          <section className='rounded-lg border border-gray-200 bg-white p-4 shadow-sm'>
+            <div className='mb-3 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
+              <div>
+                <h2 className='font-semibold text-gray-950'>Danh sách meet đã tạo</h2>
+                <p className='text-sm text-gray-500'>Chọn một meet để xem lại link và người đang trong phòng.</p>
+              </div>
+              <div className='flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:w-auto'>
+                <div className='relative w-full sm:w-80'>
+                  <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400' />
+                  <Input className='pl-9' value={search} onChange={(event) => setSearch(event.target.value)} placeholder='Tìm meet đã tạo' />
+                </div>
+                <Badge variant='outline' className='w-fit shrink-0'>{eventsQuery.data?.total || 0} meet</Badge>
+              </div>
+            </div>
+
+            {eventsQuery.isError ? (
+              <div className='rounded-lg border border-red-200 bg-red-50 p-4 text-center text-sm text-red-700'>Không thể tải danh sách hội thảo.</div>
+            ) : eventsQuery.isLoading ? (
+              <div className='rounded-lg border border-gray-200 bg-gray-50 p-4 text-center text-sm text-gray-600'>Đang tải hội thảo...</div>
+            ) : events.length > 0 ? (
+              <div data-testid='admin-event-list' className='max-h-[280px] divide-y divide-gray-100 overflow-auto rounded-md border border-gray-100'>
+                {events.map((event) => (
+                  <button
+                    key={event._id}
+                    className={`flex w-full items-center gap-3 px-3 py-3 text-left outline-none transition focus-visible:ring-2 focus-visible:ring-blue-500/30 ${selectedEvent?._id === event._id ? 'bg-blue-50' : 'bg-white hover:bg-[#F8FBFF]'}`}
+                    onClick={() => setSelectedEvent(event)}
+                  >
+                    <Badge data-testid={`event-status-${event.status}`} variant='outline' className={`${statusBadgeClass(event.status)} shrink-0`}>{statusLabel(event.status)}</Badge>
+                    <div className='min-w-0 flex-1'>
+                      <div className='truncate text-sm font-semibold text-gray-950'>{event.title}</div>
+                      <div className='mt-1 truncate text-xs text-gray-500'>{formatDateTime(event.scheduledStartAt)} · {meetingCode(event)}</div>
+                    </div>
+                    <LinkIcon className='h-4 w-4 shrink-0 text-blue-600' />
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className='rounded-lg border border-gray-100 bg-gray-50 p-4 text-center text-sm text-gray-500'>Chưa có meet nào.</div>
+            )}
+          </section>
+
           {selectedEvent ? (
+            <>
             <section className='rounded-lg border border-blue-200 bg-white p-5 shadow-sm'>
               <div className='flex flex-col gap-3 md:flex-row md:items-start md:justify-between'>
                 <div><h2 className='text-xl font-semibold text-gray-950'>{selectedEvent.title}</h2><p className='text-sm text-gray-600'>{formatDateTime(selectedEvent.scheduledStartAt)} - {formatDateTime(selectedEvent.scheduledEndAt)}</p></div>
@@ -436,7 +535,7 @@ export function AdminCommunityVideoEventsPage() {
                   <Button
                     size='sm'
                     variant='outline'
-                    disabled={selectedEvent.status === 'ended' || selectedEvent.status === 'cancelled'}
+                    disabled={selectedEvent.status === 'ended' || selectedEvent.status === 'cancelled' || actionMutation.isPending}
                     className='border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:text-amber-800 disabled:border-gray-200 disabled:bg-gray-100 disabled:text-gray-400'
                     onClick={() => actionMutation.mutate(selectedEvent._id)}
                   >
@@ -455,82 +554,92 @@ export function AdminCommunityVideoEventsPage() {
 
               <div className='mt-5 grid gap-5 lg:grid-cols-2'>
                 <div>
-                  <div className='mb-3 flex items-center justify-between gap-3'>
-                    <div className='flex items-center gap-2 font-semibold'><Video className='h-4 w-4' />Người đang trong phòng</div>
-                    <Button
-                      type='button'
-                      size='sm'
-                      variant='outline'
-                      disabled={liveParticipantsQuery.isFetching}
-                      onClick={() => liveParticipantsQuery.refetch()}
-                    >
-                      <RefreshCw />Làm mới
-                    </Button>
-                  </div>
-                  {liveParticipantsQuery.isError ? (
-                    <div className='rounded-md border border-red-100 bg-red-50 p-4 text-sm text-red-700'>Không thể tải người đang trong phòng.</div>
-                  ) : liveParticipantsQuery.isLoading ? (
-                    <div className='rounded-md border border-gray-100 bg-gray-50 p-4 text-sm text-gray-600'>Đang tải người online...</div>
-                  ) : liveParticipants.length > 0 ? (
-                    <div className='max-h-80 space-y-2 overflow-auto'>
-                      {liveParticipants.map((participant) => {
-                        const microphoneTrack = participant.tracks.find((track) => track.source === 'microphone')
-                        const displayName = participant.name || String(participant.metadata?.userId || participant.identity)
-                        return (
-                          <div key={participant.identity} className='rounded-md border border-gray-100 p-3 text-sm'>
-                            <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
-                              <div className='min-w-0'>
-                                <div className='truncate font-medium'>{displayName}</div>
-                                <div className='mt-1 flex flex-wrap gap-1.5 text-xs text-gray-500'>
-                                  <Badge variant='outline'>{participant.metadata?.role === 'host' ? 'Host' : 'Người tham gia'}</Badge>
-                                  <Badge variant={microphoneTrack?.muted ? 'secondary' : 'outline'}>{microphoneTrack ? (microphoneTrack.muted ? 'Mic đã tắt' : 'Mic đang bật') : 'Chưa bật mic'}</Badge>
-                                </div>
-                              </div>
-                              <div className='flex shrink-0 gap-2'>
-                                <Button
-                                  type='button'
-                                  size='sm'
-                                  variant='outline'
-                                  disabled={!microphoneTrack || microphoneTrack.muted || muteParticipantMutation.isPending}
-                                  onClick={() => muteParticipantMutation.mutate({ eventId: selectedEvent._id, userId: participant.identity })}
-                                >
-                                  <MicOff />Mute
-                                </Button>
-                                <Button
-                                  type='button'
-                                  size='sm'
-                                  variant='destructive'
-                                  disabled={kickParticipantMutation.isPending}
-                                  onClick={() => kickParticipantMutation.mutate({ eventId: selectedEvent._id, userId: participant.identity })}
-                                >
-                                  <UserX />Kick
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  ) : (
-                    <p className='rounded-md border border-gray-100 bg-gray-50 p-4 text-sm text-gray-600'>Chưa có ai online trong phòng họp.</p>
-                  )}
-                </div>
-                <div>
                   <div className='mb-3 flex items-center gap-2 font-semibold'><MessageSquare className='h-4 w-4' />Chat trực tiếp</div>
                   <div className='rounded-md border border-blue-100 bg-blue-50 p-4 text-sm text-blue-950'>
                     Người tham gia nhắn tin ngay trong phòng họp bằng chat realtime. Host/dược sĩ phản hồi trực tiếp trong cuộc gọi, không cần quy trình duyệt chờ xử lý.
                   </div>
                 </div>
               </div>
-
-              <div className='mt-5'>
-                <div className='mb-3 flex items-center gap-2 font-semibold'><Video className='h-4 w-4' />Lịch sử tham gia</div>
-                  <div className='max-h-80 space-y-2 overflow-auto'>
-                    {registrationsQuery.isError ? <p className='text-sm text-red-600'>Không thể tải đăng ký.</p> : registrationsQuery.data?.items?.map((item) => <div key={item._id || item.userId} className='rounded-md border border-gray-100 p-3 text-sm'><div className='font-medium'>{item.user?.firstName || item.user?.email || item.userId}</div><Badge variant='outline'>{item.status}</Badge></div>)}
-                    {!registrationsQuery.isError && !registrationsQuery.data?.items?.length && <p className='text-sm text-gray-500'>Chưa có người tham gia.</p>}
-                  </div>
-              </div>
             </section>
+
+            <section className='rounded-lg border border-gray-200 bg-white p-4 shadow-sm'>
+              <div className='mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
+                <div>
+                  <div className='flex items-center gap-2 font-semibold text-gray-950'><Video className='h-4 w-4 text-blue-600' />Người đang trong phòng</div>
+                  <p className='text-sm text-gray-500'>{liveParticipants.length} online{participantSearch.trim() ? ` · ${filteredLiveParticipants.length} phù hợp` : ''}</p>
+                </div>
+                <div className='flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:w-auto'>
+                  <div className='relative w-full sm:w-80'>
+                    <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400' />
+                    <Input className='pl-9' value={participantSearch} onChange={(event) => setParticipantSearch(event.target.value)} placeholder='Tìm người trong phòng' />
+                  </div>
+                  <Button
+                    type='button'
+                    size='sm'
+                    variant='outline'
+                    disabled={liveParticipantsQuery.isFetching}
+                    onClick={() => liveParticipantsQuery.refetch()}
+                  >
+                    <RefreshCw />Làm mới
+                  </Button>
+                </div>
+              </div>
+
+              {liveParticipantsQuery.isError ? (
+                <div className='rounded-md border border-red-100 bg-red-50 p-4 text-sm text-red-700'>Không thể tải người đang trong phòng.</div>
+              ) : liveParticipantsQuery.isLoading ? (
+                <div className='rounded-md border border-gray-100 bg-gray-50 p-4 text-sm text-gray-600'>Đang tải người online...</div>
+              ) : filteredLiveParticipants.length > 0 ? (
+                <div className='max-h-[520px] overflow-auto rounded-md border border-gray-100'>
+                  <div className='divide-y divide-gray-100'>
+                    {filteredLiveParticipants.map((participant) => {
+                      const microphoneTrack = participant.tracks.find((track) => track.source === 'microphone')
+                      const audioPublishAllowed = participant.audioPublishAllowed !== false
+                      const cameraPublishAllowed = participant.cameraPublishAllowed !== false
+                      const screenSharePublishAllowed = participant.screenSharePublishAllowed !== false
+                      const displayName = participant.name || String(participant.metadata?.userId || participant.identity)
+                      return (
+                        <div key={participant.identity} className='grid gap-3 px-3 py-3 text-sm sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center'>
+                          <div className='min-w-0'>
+                            <div className='truncate font-medium text-gray-950'>{displayName}</div>
+                            <div className='mt-1 flex flex-wrap gap-1.5 text-xs text-gray-500'>
+                              <Badge variant='outline'>{participant.metadata?.role === 'host' ? 'Host' : 'Người tham gia'}</Badge>
+                              <Badge variant={!audioPublishAllowed || microphoneTrack?.muted ? 'secondary' : 'outline'}>
+                                {!audioPublishAllowed ? 'Mic bị khóa' : microphoneTrack ? (microphoneTrack.muted ? 'Mic đã tắt' : 'Mic đang bật') : 'Chưa bật mic'}
+                              </Badge>
+                              {!cameraPublishAllowed && <Badge variant='secondary'>Cam bị khóa</Badge>}
+                              {!screenSharePublishAllowed && <Badge variant='secondary'>Share bị khóa</Badge>}
+                            </div>
+                          </div>
+                          <div className='flex flex-wrap gap-2 sm:max-w-[620px] sm:justify-end'>
+                            {audioPublishAllowed ? (
+                              <Button type='button' size='sm' variant='outline' disabled={muteParticipantMutation.isPending} onClick={() => muteParticipantMutation.mutate({ eventId: selectedEvent._id, userId: participant.identity })}><MicOff />Khóa mic</Button>
+                            ) : (
+                              <Button type='button' size='sm' variant='outline' disabled={unmuteParticipantMutation.isPending} onClick={() => unmuteParticipantMutation.mutate({ eventId: selectedEvent._id, userId: participant.identity })}><Mic />Mở mic</Button>
+                            )}
+                            {cameraPublishAllowed ? (
+                              <Button type='button' size='sm' variant='outline' disabled={disableCameraMutation.isPending} onClick={() => disableCameraMutation.mutate({ eventId: selectedEvent._id, userId: participant.identity })}><CameraOff />Khóa cam</Button>
+                            ) : (
+                              <Button type='button' size='sm' variant='outline' disabled={enableCameraMutation.isPending} onClick={() => enableCameraMutation.mutate({ eventId: selectedEvent._id, userId: participant.identity })}><Camera />Mở cam</Button>
+                            )}
+                            {screenSharePublishAllowed ? (
+                              <Button type='button' size='sm' variant='outline' disabled={disableScreenShareMutation.isPending} onClick={() => disableScreenShareMutation.mutate({ eventId: selectedEvent._id, userId: participant.identity })}><ScreenShareOff />Khóa share</Button>
+                            ) : (
+                              <Button type='button' size='sm' variant='outline' disabled={enableScreenShareMutation.isPending} onClick={() => enableScreenShareMutation.mutate({ eventId: selectedEvent._id, userId: participant.identity })}><ScreenShare />Mở share</Button>
+                            )}
+                            <Button type='button' size='sm' variant='destructive' disabled={kickParticipantMutation.isPending} onClick={() => kickParticipantMutation.mutate({ eventId: selectedEvent._id, userId: participant.identity })}><UserX />Kick</Button>
+                            <Button type='button' size='sm' variant='destructive' disabled={banParticipantMutation.isPending} onClick={() => banParticipantMutation.mutate({ eventId: selectedEvent._id, userId: participant.identity })}><Ban />Cấm</Button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <p className='rounded-md border border-gray-100 bg-gray-50 p-4 text-sm text-gray-600'>{liveParticipants.length ? 'Không tìm thấy người phù hợp.' : 'Chưa có ai online trong phòng họp.'}</p>
+              )}
+            </section>
+            </>
           ) : (
             <section className='flex min-h-[360px] items-center justify-center rounded-lg border border-dashed border-blue-200 bg-blue-50/40 p-6 text-center'>
               <div className='max-w-sm'>
@@ -541,41 +650,6 @@ export function AdminCommunityVideoEventsPage() {
             </section>
           )}
         </div>
-      </section>
-
-      <section className='rounded-lg border border-gray-200 bg-white p-4 shadow-sm'>
-        <div className='mb-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between'>
-          <div>
-            <h2 className='font-semibold text-gray-950'>Danh sách meet đã tạo</h2>
-            <p className='text-sm text-gray-500'>Chọn một meet để xem lại link và người đang trong phòng.</p>
-          </div>
-          <Badge variant='outline' className='w-fit'>{eventsQuery.data?.total || 0} meet</Badge>
-        </div>
-
-        {eventsQuery.isError ? (
-          <div className='rounded-lg border border-red-200 bg-red-50 p-4 text-center text-sm text-red-700'>Không thể tải danh sách hội thảo.</div>
-        ) : eventsQuery.isLoading ? (
-          <div className='rounded-lg border border-gray-200 bg-gray-50 p-4 text-center text-sm text-gray-600'>Đang tải hội thảo...</div>
-        ) : events.length > 0 ? (
-          <div data-testid='admin-event-list' className='max-h-[360px] divide-y divide-gray-100 overflow-auto rounded-md border border-gray-100'>
-            {events.map((event) => (
-              <button
-                key={event._id}
-                className={`flex w-full items-center gap-3 px-3 py-3 text-left outline-none transition focus-visible:ring-2 focus-visible:ring-blue-500/30 ${selectedEvent?._id === event._id ? 'bg-blue-50' : 'bg-white hover:bg-[#F8FBFF]'}`}
-                onClick={() => setSelectedEvent(event)}
-              >
-                <Badge data-testid={`event-status-${event.status}`} variant='outline' className={`${statusBadgeClass(event.status)} shrink-0`}>{statusLabel(event.status)}</Badge>
-                <div className='min-w-0 flex-1'>
-                  <div className='truncate text-sm font-semibold text-gray-950'>{event.title}</div>
-                  <div className='mt-1 truncate text-xs text-gray-500'>{formatDateTime(event.scheduledStartAt)} · {meetingCode(event)}</div>
-                </div>
-                <LinkIcon className='h-4 w-4 shrink-0 text-blue-600' />
-              </button>
-            ))}
-          </div>
-        ) : (
-          <div className='rounded-lg border border-gray-100 bg-gray-50 p-4 text-center text-sm text-gray-500'>Chưa có meet nào.</div>
-        )}
       </section>
     </main>
   )

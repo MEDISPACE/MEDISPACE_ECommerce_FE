@@ -210,6 +210,9 @@ export interface CommunityVideoEventLiveParticipant {
     [key: string]: unknown
   } | null
   joinedAt?: string
+  audioPublishAllowed?: boolean
+  cameraPublishAllowed?: boolean
+  screenSharePublishAllowed?: boolean
   tracks: CommunityVideoEventLiveTrack[]
 }
 
@@ -222,7 +225,15 @@ export interface CommunityVideoEventLiveParticipantsPayload {
 export interface CommunityVideoEventModerationActionPayload {
   eventId: string
   userId: string
-  action: 'muted' | 'kicked'
+  action:
+    | 'muted'
+    | 'camera-disabled'
+    | 'screen-share-disabled'
+    | 'audio-enabled'
+    | 'camera-enabled'
+    | 'screen-share-enabled'
+    | 'kicked'
+    | 'banned'
   track?: CommunityVideoEventLiveTrack
 }
 

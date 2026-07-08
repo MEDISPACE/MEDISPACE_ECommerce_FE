@@ -7,8 +7,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   AlertTriangle,
   ArrowLeft,
-  CalendarDays,
-  CheckCircle2,
   Copy,
   Loader2,
   MessageSquare,
@@ -16,7 +14,6 @@ import {
   MicOff,
   RefreshCw,
   Send,
-  Users,
   Video,
   VideoOff,
 } from 'lucide-react'
@@ -320,7 +317,7 @@ export function CommunityVideoEventDetailPage() {
   const canSendChat = chatText.trim().length > 0 && !isSendingChat && socket.isConnected
   const showReconnectIndicator = isOffline || (Boolean(joinPayload) && socket.isConnecting)
   const backToCommunityPath = event?.roomId ? `/community/${event.roomId}` : '/community'
-  const hasJoinedBefore = event?.viewerRegistration?.status === 'attended'
+  const isClosedEvent = event?.status === 'ended' || event?.status === 'cancelled'
 
   const goBackToPreviousPage = () => {
     if (window.history.length > 1) {
@@ -703,22 +700,17 @@ export function CommunityVideoEventDetailPage() {
               </Button>
             </div>
           </div>
-          <div className='flex flex-wrap items-center justify-center gap-4 text-sm text-[#5f6368]'>
-            <span className='inline-flex items-center gap-2'>
-              <CalendarDays className='h-4 w-4' />
-              {formatDateTime(event.scheduledStartAt)}
-            </span>
-            <span data-testid='attendee-count' className='inline-flex items-center gap-2'>
-              <Users className='h-4 w-4' />
-              {event.registrationCount || 0}
-              {event.capacity ? `/${event.capacity}` : ''} người đã tham gia
-            </span>
-          </div>
         </div>
 
         <aside className='mx-auto w-full max-w-[420px] space-y-6 text-center'>
           <div className='space-y-4'>
-            <h1 className='text-[32px] font-normal leading-tight text-[#202124] md:text-[36px]'>Sẵn sàng tham gia?</h1>
+            <h1 className='text-[32px] font-normal leading-tight text-[#202124] md:text-[36px]'>
+              {event.status === 'ended'
+                ? 'Cuộc họp đã kết thúc'
+                : event.status === 'cancelled'
+                  ? 'Cuộc họp đã bị hủy'
+                  : 'Sẵn sàng tham gia?'}
+            </h1>
             <p data-testid='event-title' className='mx-auto max-w-sm text-sm leading-6 text-[#5f6368]'>
               {event.title}
             </p>
@@ -731,15 +723,25 @@ export function CommunityVideoEventDetailPage() {
               </div>
             )}
             <div className='mx-auto flex w-fit items-center gap-2 rounded-full bg-[#f1f3f4] px-4 py-2 text-sm text-[#3c4043]'>
-              <span className='h-2.5 w-2.5 rounded-full bg-[#34a853]' />
+              <span className={`h-2.5 w-2.5 rounded-full ${isClosedEvent ? 'bg-[#9aa0a6]' : 'bg-[#34a853]'}`} />
               {statusLabel(event.status)} · {meetingCode(event._id)}
             </div>
-            {(event.status === 'ended' || event.status === 'cancelled') && (
+            {isClosedEvent && (
               <div
                 data-testid='session-ended-message'
-                className='rounded-[12px] bg-[#f1f3f4] px-4 py-3 text-sm text-[#3c4043]'
+                className='rounded-[16px] border border-[#dadce0] bg-white px-4 py-4 text-left shadow-sm'
               >
-                {event.status === 'ended' ? 'Cuộc họp đã kết thúc.' : 'Cuộc họp đã bị hủy.'}
+                <div className='flex items-start gap-3'>
+                  <AlertTriangle className='mt-0.5 h-5 w-5 shrink-0 text-[#5f6368]' />
+                  <div>
+                    <p className='text-sm font-medium text-[#202124]'>Không thể tham gia phòng này nữa.</p>
+                    <p className='mt-1 text-sm leading-6 text-[#5f6368]'>
+                      {event.status === 'ended'
+                        ? 'Buổi meet đã được đánh dấu là kết thúc. Bạn vẫn có thể xem thông tin và copy link, nhưng phòng không còn mở cho người tham gia.'
+                        : 'Buổi meet đã bị hủy. Bạn vẫn có thể xem thông tin, nhưng phòng không còn mở cho người tham gia.'}
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -764,40 +766,34 @@ export function CommunityVideoEventDetailPage() {
                 {event.materials.length} tài liệu sẽ được chia sẻ trong hội thảo.
               </p>
             )}
-            {hasJoinedBefore && (
-              <div className='inline-flex items-center gap-2 rounded-full bg-[#e8f0fe] px-3 py-1 text-xs font-medium text-[#174ea6]'>
-                <CheckCircle2 className='h-3.5 w-3.5' />
-                Bạn đã từng tham gia
+          </div>
+
+          {!isClosedEvent && (
+            <>
+              <label className='flex items-start gap-3 rounded-[14px] border border-[#dadce0] bg-white p-4 text-left text-sm text-[#3c4043] shadow-sm'>
+                <Checkbox
+                  data-testid='medical-disclaimer-checkbox'
+                  checked={acceptedDisclaimer}
+                  onCheckedChange={(checked) => setAcceptedDisclaimer(Boolean(checked))}
+                />
+                <span>Tôi hiểu hội thảo chỉ mang tính tham khảo, không thay thế tư vấn điều trị cá nhân.</span>
+              </label>
+
+              <div className='flex flex-col items-center gap-3'>
+                <Button
+                  data-testid='join-event-btn'
+                  className='h-11 rounded-full bg-[#1a73e8] px-7 text-white hover:bg-[#1765cc]'
+                  disabled={!acceptedDisclaimer || event.status === 'draft' || joinMutation.isPending}
+                  onClick={() => joinMutation.mutate()}
+                >
+                  {joinMutation.isPending ? 'Đang kiểm tra ...' : 'Tham gia ngay'}
+                </Button>
+                {liveKitConnectionError && !joinPayload && (
+                  <p className='max-w-sm text-xs leading-5 text-[#a50e0e]'>{liveKitConnectionError}</p>
+                )}
               </div>
-            )}
-          </div>
-
-          <label className='flex items-start gap-3 rounded-[14px] border border-[#dadce0] bg-white p-4 text-left text-sm text-[#3c4043] shadow-sm'>
-            <Checkbox
-              data-testid='medical-disclaimer-checkbox'
-              checked={acceptedDisclaimer}
-              onCheckedChange={(checked) => setAcceptedDisclaimer(Boolean(checked))}
-            />
-            <span>Tôi hiểu hội thảo chỉ mang tính tham khảo, không thay thế tư vấn điều trị cá nhân.</span>
-          </label>
-
-          <div className='flex flex-col items-center gap-3'>
-            <Button
-              data-testid='join-event-btn'
-              className='h-11 rounded-full bg-[#1a73e8] px-7 text-white hover:bg-[#1765cc]'
-              disabled={
-                !acceptedDisclaimer ||
-                ['draft', 'ended', 'cancelled'].includes(event.status) ||
-                joinMutation.isPending
-              }
-              onClick={() => joinMutation.mutate()}
-            >
-              {joinMutation.isPending ? 'Đang kiểm tra LiveKit...' : 'Tham gia ngay'}
-            </Button>
-            {liveKitConnectionError && !joinPayload && (
-              <p className='max-w-sm text-xs leading-5 text-[#a50e0e]'>{liveKitConnectionError}</p>
-            )}
-          </div>
+            </>
+          )}
 
           <div className='rounded-[14px] border border-[#dadce0] bg-white p-3 text-left shadow-sm'>
             <div className='mb-2 text-xs font-medium uppercase tracking-wide text-[#5f6368]'>Link cuộc họp</div>

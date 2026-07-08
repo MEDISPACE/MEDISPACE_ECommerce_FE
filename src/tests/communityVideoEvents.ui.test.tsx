@@ -18,12 +18,17 @@ const { mockCommunityService, mockAdminCommunityService, mockUseAuth, mockUseSoc
   mockAdminCommunityService: {
     listRooms: vi.fn(),
     listVideoEvents: vi.fn(),
-    listVideoEventRegistrations: vi.fn(),
     createVideoEvent: vi.fn(),
     cancelVideoEvent: vi.fn(),
     listVideoEventParticipants: vi.fn(),
     muteVideoEventParticipant: vi.fn(),
+    unmuteVideoEventParticipant: vi.fn(),
+    disableVideoEventParticipantCamera: vi.fn(),
+    enableVideoEventParticipantCamera: vi.fn(),
+    disableVideoEventParticipantScreenShare: vi.fn(),
+    enableVideoEventParticipantScreenShare: vi.fn(),
     kickVideoEventParticipant: vi.fn(),
+    banVideoEventParticipant: vi.fn(),
   },
   mockUseAuth: vi.fn(),
   mockUseSocketContext: vi.fn(),
@@ -133,10 +138,15 @@ describe('Community Video Events UI component tests', () => {
     mockCommunityService.getLiveKitDiagnostics.mockResolvedValue({ configured: true, reachable: true, wsUrl: 'wss://livekit.test', httpUrl: 'https://livekit.test' })
     mockAdminCommunityService.listRooms.mockResolvedValue([{ _id: 'room-1', name: 'Diabetes Room', status: 'active' }])
     mockAdminCommunityService.listVideoEvents.mockResolvedValue({ items: [event], page: 1, limit: 50, total: 1 })
-    mockAdminCommunityService.listVideoEventRegistrations.mockResolvedValue({ items: [], page: 1, limit: 50, total: 0 })
     mockAdminCommunityService.listVideoEventParticipants.mockResolvedValue({ eventId: event._id, roomName: 'medispace-event-event-1', participants: [] })
     mockAdminCommunityService.muteVideoEventParticipant.mockResolvedValue({ eventId: event._id, userId: 'user-2', action: 'muted' })
+    mockAdminCommunityService.unmuteVideoEventParticipant.mockResolvedValue({ eventId: event._id, userId: 'user-2', action: 'audio-enabled' })
+    mockAdminCommunityService.disableVideoEventParticipantCamera.mockResolvedValue({ eventId: event._id, userId: 'user-2', action: 'camera-disabled' })
+    mockAdminCommunityService.enableVideoEventParticipantCamera.mockResolvedValue({ eventId: event._id, userId: 'user-2', action: 'camera-enabled' })
+    mockAdminCommunityService.disableVideoEventParticipantScreenShare.mockResolvedValue({ eventId: event._id, userId: 'user-2', action: 'screen-share-disabled' })
+    mockAdminCommunityService.enableVideoEventParticipantScreenShare.mockResolvedValue({ eventId: event._id, userId: 'user-2', action: 'screen-share-enabled' })
     mockAdminCommunityService.kickVideoEventParticipant.mockResolvedValue({ eventId: event._id, userId: 'user-2', action: 'kicked' })
+    mockAdminCommunityService.banVideoEventParticipant.mockResolvedValue({ eventId: event._id, userId: 'user-2', action: 'banned' })
   })
 
   it('renders public listing with event details, search input, and direct meeting link', async () => {
@@ -194,6 +204,16 @@ describe('Community Video Events UI component tests', () => {
 
     expect(await screen.findByTestId('livekit-room')).toBeInTheDocument()
     expect(screen.getByTestId('video-conference')).toBeInTheDocument()
+  })
+
+  it('shows a clear closed-state message for ended meetings instead of a disabled join flow', async () => {
+    mockCommunityService.getVideoEvent.mockResolvedValue({ ...event, status: 'ended', viewerRegistration: { status: 'attended' } })
+    renderDetail()
+
+    expect(await screen.findByRole('heading', { name: /cuộc họp đã kết thúc/i })).toBeInTheDocument()
+    expect(screen.getByTestId('session-ended-message')).toHaveTextContent('Không thể tham gia phòng này nữa')
+    expect(screen.queryByTestId('medical-disclaimer-checkbox')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('join-event-btn')).not.toBeInTheDocument()
   })
 
   it('blocks placeholder LiveKit server URLs before mounting LiveKit', async () => {
@@ -283,7 +303,7 @@ describe('Community Video Events UI component tests', () => {
     expect(payload).not.toHaveProperty('description')
   })
 
-  it('lets admin mute microphone and kick a live meeting participant', async () => {
+  it('lets admin moderate live meeting participant permissions', async () => {
     const user = userEvent.setup()
     mockAdminCommunityService.listVideoEvents.mockResolvedValue({ items: [{ ...event, status: 'live' }], page: 1, limit: 50, total: 1 })
     mockAdminCommunityService.listVideoEventParticipants.mockResolvedValue({
@@ -294,6 +314,9 @@ describe('Community Video Events UI component tests', () => {
           identity: 'user-2',
           name: 'Nguyen An',
           metadata: { userId: 'user-2', role: 'attendee' },
+          audioPublishAllowed: true,
+          cameraPublishAllowed: true,
+          screenSharePublishAllowed: true,
           tracks: [{ sid: 'TR_AUDIO', name: 'microphone', source: 'microphone', muted: false }],
         },
       ],
@@ -305,10 +328,50 @@ describe('Community Video Events UI component tests', () => {
     await user.click(screen.getByText('Diabetes care workshop'))
 
     expect(await screen.findByText('Nguyen An')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: /mute/i }))
+    await user.click(screen.getByRole('button', { name: /khóa mic/i }))
+    await user.click(screen.getByRole('button', { name: /khóa cam/i }))
+    await user.click(screen.getByRole('button', { name: /khóa share/i }))
     await user.click(screen.getByRole('button', { name: /kick/i }))
+    await user.click(screen.getByRole('button', { name: /cấm/i }))
 
     await waitFor(() => expect(mockAdminCommunityService.muteVideoEventParticipant).toHaveBeenCalledWith('event-1', 'user-2'))
+    await waitFor(() => expect(mockAdminCommunityService.disableVideoEventParticipantCamera).toHaveBeenCalledWith('event-1', 'user-2'))
+    await waitFor(() => expect(mockAdminCommunityService.disableVideoEventParticipantScreenShare).toHaveBeenCalledWith('event-1', 'user-2'))
     await waitFor(() => expect(mockAdminCommunityService.kickVideoEventParticipant).toHaveBeenCalledWith('event-1', 'user-2'))
+    await waitFor(() => expect(mockAdminCommunityService.banVideoEventParticipant).toHaveBeenCalledWith('event-1', 'user-2'))
+  })
+
+  it('lets admin unlock live meeting participant permissions', async () => {
+    const user = userEvent.setup()
+    mockAdminCommunityService.listVideoEvents.mockResolvedValue({ items: [{ ...event, status: 'live' }], page: 1, limit: 50, total: 1 })
+    mockAdminCommunityService.listVideoEventParticipants.mockResolvedValue({
+      eventId: event._id,
+      roomName: 'medispace-event-event-1',
+      participants: [
+        {
+          identity: 'user-2',
+          name: 'Nguyen An',
+          metadata: { userId: 'user-2', role: 'attendee' },
+          audioPublishAllowed: false,
+          cameraPublishAllowed: false,
+          screenSharePublishAllowed: false,
+          tracks: [{ sid: 'TR_AUDIO', name: 'microphone', source: 'microphone', muted: true }],
+        },
+      ],
+    })
+
+    renderWithProviders(<AdminCommunityVideoEventsPage />, '/admin/video-events')
+
+    await screen.findByText('Diabetes care workshop')
+    await user.click(screen.getByText('Diabetes care workshop'))
+
+    expect(await screen.findByText('Nguyen An')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /mở mic/i }))
+    await user.click(screen.getByRole('button', { name: /mở cam/i }))
+    await user.click(screen.getByRole('button', { name: /mở share/i }))
+
+    await waitFor(() => expect(mockAdminCommunityService.unmuteVideoEventParticipant).toHaveBeenCalledWith('event-1', 'user-2'))
+    await waitFor(() => expect(mockAdminCommunityService.enableVideoEventParticipantCamera).toHaveBeenCalledWith('event-1', 'user-2'))
+    await waitFor(() => expect(mockAdminCommunityService.enableVideoEventParticipantScreenShare).toHaveBeenCalledWith('event-1', 'user-2'))
   })
 })
