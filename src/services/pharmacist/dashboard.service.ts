@@ -122,6 +122,18 @@ export interface Order {
   paymentMethod: string
   paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded' | 'partially_refunded'
   orderStatus: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'returned'
+  returnStatus?:
+    | 'none'
+    | 'requested'
+    | 'approved'
+    | 'awaiting_return'
+    | 'received'
+    | 'refund_processing'
+    | 'completed'
+    | 'rejected'
+    | 'cancelled'
+  latestReturnRequestId?: string
+  returnUpdatedAt?: string
   subtotal: number
   taxAmount: number
   shippingFee: number

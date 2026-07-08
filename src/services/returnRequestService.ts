@@ -1,8 +1,9 @@
-import { apiClient } from './apiClient'
+﻿import { apiClient } from './apiClient'
 
 // Types
 export interface ReturnItem {
   productId: string
+  unit: string
   quantity: number
   returnReason: ReturnReason
   reasonDetail?: string
@@ -61,10 +62,46 @@ export interface CreateReturnRequestPayload {
   bankInfo?: BankInfo
 }
 
+export interface PaymentTransaction {
+  _id: string
+  orderId: string
+  orderNumber: string
+  provider: string
+  paymentMethod: string
+  amount: number
+  currency: string
+  status: 'pending' | 'pending_collection' | 'paid' | 'failed' | 'cancelled' | 'expired'
+  providerOrderCode?: string | number
+  providerTransactionId?: string
+  providerResponseCode?: string
+  providerMessage?: string
+  paidAt?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface RefundTransaction {
+  _id: string
+  orderId: string
+  orderNumber: string
+  returnRequestId: string
+  paymentTransactionId?: string
+  provider: string
+  refundMethod: string
+  amount: number
+  currency: string
+  status: 'pending' | 'processing' | 'succeeded' | 'failed' | 'cancelled'
+  providerTransactionId?: string
+  adminNote?: string
+  processedAt?: string
+  createdAt: string
+  updatedAt: string
+}
+
 export interface ReturnRequestItem {
   productId: string
   productName: string
-  productImage?: string // Ảnh sản phẩm
+  productImage?: string
   sku: string
   unit: string
   quantity: number
@@ -100,12 +137,28 @@ export interface ReturnRequest {
   reviewNotes?: string
   rejectionReason?: string
   refundTransactionId?: string
+  refundLedgerId?: string
+  paymentTransaction?: PaymentTransaction | null
+  refundTransactions?: RefundTransaction[]
   refundedAt?: string
   refundNotes?: string
   returnShippingInfo?: {
     trackingNumber?: string
     carrier?: string
+    carrierTrackingCode?: string
+    trackingUrl?: string
+    trackingStatus?: 'arranged' | 'picked_up' | 'in_transit' | 'delivered_to_store' | 'failed' | 'cancelled'
+    trackingEvents?: Array<{
+      status: string
+      message?: string
+      location?: string
+      updatedBy?: string
+      occurredAt: string
+    }>
     shippedAt?: string
+    arrangedAt?: string
+    arrangedBy?: string
+    pickupNotes?: string
     receivedAt?: string
     condition?: 'good' | 'damaged' | 'opened' | 'unusable'
     conditionNotes?: string
@@ -120,8 +173,10 @@ export interface ReturnRequestStats {
   pending: number
   reviewing: number
   approved: number
+  awaitingReturn?: number
   rejected: number
   received: number
+  refundProcessing?: number
   completed: number
   totalRefunded: number
 }
@@ -143,9 +198,9 @@ export const returnReasonLabels: Record<ReturnReason, string> = {
 export const returnStatusLabels: Record<ReturnStatus, string> = {
   [ReturnStatus.PENDING]: 'Chờ xử lý',
   [ReturnStatus.REVIEWING]: 'Đang xem xét',
-  [ReturnStatus.APPROVED]: 'Đã duyệt',
+  [ReturnStatus.APPROVED]: 'Đã duyệt, chờ sắp xếp thu hồi',
   [ReturnStatus.REJECTED]: 'Từ chối',
-  [ReturnStatus.AWAITING_RETURN]: 'Chờ gửi hàng trả',
+  [ReturnStatus.AWAITING_RETURN]: 'Đang thu hồi hàng trả',
   [ReturnStatus.RECEIVED]: 'Đã nhận hàng trả',
   [ReturnStatus.REFUND_PROCESSING]: 'Đang hoàn tiền',
   [ReturnStatus.COMPLETED]: 'Hoàn tất',
@@ -197,6 +252,7 @@ class ReturnRequestService {
     page?: number
     limit?: number
     status?: ReturnStatus
+    search?: string
   }): Promise<PaginatedResult<ReturnRequest>> {
     const response = await apiClient.get<ApiResponse<PaginatedResult<ReturnRequest>>>('/returns', { params })
     return response.data.result
@@ -218,17 +274,6 @@ class ReturnRequestService {
     return response.data
   }
 
-  /**
-   * Update return shipping info
-   */
-  async updateReturnShipping(requestId: string, trackingNumber: string, carrier?: string): Promise<ReturnRequest> {
-    const response = await apiClient.patch<ApiResponse<ReturnRequest>>(`/returns/${requestId}/shipping`, {
-      trackingNumber,
-      carrier,
-    })
-    return response.data.result
-  }
-
   // ========== Admin/Pharmacist APIs ==========
 
   /**
@@ -238,6 +283,7 @@ class ReturnRequestService {
     page?: number
     limit?: number
     status?: ReturnStatus
+    search?: string
   }): Promise<PaginatedResult<ReturnRequest>> {
     const response = await apiClient.get<ApiResponse<PaginatedResult<ReturnRequest>>>('/returns/admin/all', { params })
     return response.data.result
@@ -272,6 +318,35 @@ class ReturnRequestService {
     },
   ): Promise<ReturnRequest> {
     const response = await apiClient.patch<ApiResponse<ReturnRequest>>(`/returns/admin/${requestId}/review`, payload)
+    return response.data.result
+  }
+
+  /**
+   * Arrange return pickup/shipping. Backend generates return tracking number automatically.
+   */
+  async arrangeReturnShipping(
+    requestId: string,
+    payload: { carrier?: string; notes?: string },
+  ): Promise<ReturnRequest> {
+    const response = await apiClient.patch<ApiResponse<ReturnRequest>>(
+      `/returns/admin/${requestId}/arrange-return`,
+      payload,
+    )
+    return response.data.result
+  }
+
+  async updateMockReturnTracking(
+    requestId: string,
+    payload: {
+      status: 'arranged' | 'picked_up' | 'in_transit' | 'delivered_to_store' | 'failed' | 'cancelled'
+      message?: string
+      location?: string
+    },
+  ): Promise<ReturnRequest> {
+    const response = await apiClient.patch<ApiResponse<ReturnRequest>>(
+      `/returns/admin/${requestId}/tracking/mock`,
+      payload,
+    )
     return response.data.result
   }
 

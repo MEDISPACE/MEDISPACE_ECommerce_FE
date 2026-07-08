@@ -9,6 +9,16 @@ export type OrderStatus =
   | 'returned'
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded' | 'partially_refunded'
 export type UserRole = 'admin' | 'pharmacist'
+export type OrderReturnStatus =
+  | 'none'
+  | 'requested'
+  | 'approved'
+  | 'awaiting_return'
+  | 'received'
+  | 'refund_processing'
+  | 'completed'
+  | 'rejected'
+  | 'cancelled'
 
 export interface Order {
   id: string
@@ -19,11 +29,17 @@ export interface Order {
   total: number
   status: OrderStatus
   paymentStatus: PaymentStatus
+  returnStatus?: OrderReturnStatus
+  latestReturnRequestId?: string
+  returnUpdatedAt?: string
   date: string
   requiresPrescription?: boolean
   shippingAddress?: string
   items?: number
   paymentMethod?: string
+  pharmacistName?: string
+  pharmacistPhone?: string
+  pharmacistSource?: 'assigned' | 'created' | 'unassigned'
 }
 
 export interface OrderStats {
@@ -31,6 +47,7 @@ export interface OrderStats {
   pending: number
   processing: number
   delivered: number
+  returned: number
   cancelled: number
   revenue: number
   avgOrder: number

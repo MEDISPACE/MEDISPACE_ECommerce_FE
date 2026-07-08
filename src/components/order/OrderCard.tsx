@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router'
-import { Calendar, Package, Star, RotateCcw, Eye } from 'lucide-react'
+import { Calendar, Package, Star, RotateCcw, Eye, RefreshCw } from 'lucide-react'
 import { Card, CardContent } from '../ui/card'
 import { Button } from '../ui/button'
+import { Badge } from '../ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog'
 import { WriteReviewDialog } from '../reviews/WriteReviewDialog'
 import { reviewService } from '../../services/reviewService'
@@ -14,6 +15,27 @@ import { ShippingMethodDisplay } from '../shared/ShippingMethodDisplay'
 interface OrderCardProps {
   order: Order
   variant?: 'default' | 'compact'
+}
+
+const ACTIVE_RETURN_STATUSES = new Set(['requested', 'approved', 'awaiting_return', 'received', 'refund_processing', 'completed'])
+
+const returnStatusLabels: Record<string, string> = {
+  requested: 'Đã yêu cầu hoàn trả',
+  approved: 'Đã duyệt hoàn trả',
+  awaiting_return: 'Đang thu hồi hàng',
+  received: 'Đã nhận hàng trả',
+  refund_processing: 'Đang hoàn tiền',
+  completed: 'Hoàn trả hoàn tất',
+  rejected: 'Từ chối hoàn trả',
+  cancelled: 'Đã hủy hoàn trả',
+}
+
+const getReturnStatusBadge = (status?: string) => {
+  if (!status || status === 'none') return null
+  const terminalTone = status === 'completed' ? 'bg-green-100 text-green-700 border-green-200' : ''
+  const rejectedTone = ['rejected', 'cancelled'].includes(status) ? 'bg-red-100 text-red-700 border-red-200' : ''
+  const activeTone = !terminalTone && !rejectedTone ? 'bg-amber-100 text-amber-700 border-amber-200' : ''
+  return <Badge className={terminalTone || rejectedTone || activeTone}>{returnStatusLabels[status] || status}</Badge>
 }
 
 export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
@@ -66,6 +88,7 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
   // Check if all products in order have been reviewed
   const allProductsReviewed =
     order.items && order.items.length > 0 && order.items.every((item) => reviewedProductIds.has(item.productId))
+  const hasActiveReturnRequest = ACTIVE_RETURN_STATUSES.has(order.returnStatus || '') && !!order.latestReturnRequestId
 
   if (variant === 'compact') {
     return (
@@ -79,7 +102,9 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
                 <p className='text-sm text-gray-500'>{formatDate(order.createdAt)}</p>
               </div>
             </div>
-            {getOrderStatusBadge(order.status)}
+            <div className='flex flex-col items-end gap-1'>
+              {hasActiveReturnRequest ? getReturnStatusBadge(order.returnStatus) : getOrderStatusBadge(order.status)}
+            </div>
           </div>
 
           <div className='flex items-center justify-between'>
@@ -90,10 +115,10 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
               <p className='font-medium text-[#1E40AF]'>{formatPrice(order.total)}</p>
             </div>
 
-            <Link to={`/account/orders/${order.id}`}>
+            <Link to={hasActiveReturnRequest ? `/account/returns/${order.latestReturnRequestId}` : `/account/orders/${order.id}`}>
               <Button size='sm' variant='outline' className='text-[#1E40AF] border-[#BFDBFE]'>
                 <Eye className='w-4 h-4 mr-1' />
-                Xem
+                {hasActiveReturnRequest ? 'Xem hoàn trả' : 'Xem'}
               </Button>
             </Link>
           </div>
@@ -122,7 +147,9 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
             </div>
           </div>
 
-          {getOrderStatusBadge(order.status)}
+          <div className='flex flex-col items-end gap-1'>
+            {hasActiveReturnRequest ? getReturnStatusBadge(order.returnStatus) : getOrderStatusBadge(order.status)}
+          </div>
         </div>
 
         <div className='border-t border-b py-4 my-4 border-[#BFDBFE]'>
@@ -202,14 +229,23 @@ export function OrderCard({ order, variant = 'default' }: OrderCardProps) {
             </Button>
           </Link>
 
-          {order.status === 'delivered' && (
+          {hasActiveReturnRequest && (
+            <Link to={`/account/returns/${order.latestReturnRequestId}`} className='flex-1'>
+              <Button className='w-full bg-amber-600 text-white hover:!bg-amber-700 hover:!text-white'>
+                <RefreshCw className='w-4 h-4 mr-2' />
+                Xem yêu cầu hoàn trả
+              </Button>
+            </Link>
+          )}
+
+          {order.status === 'delivered' && !hasActiveReturnRequest && (
             <Button variant='outline' className='text-[#1E40AF] !border-[#BFDBFE] hover:!bg-[#F0F6FF] hover:!text-[#0A2463]'>
               <RotateCcw className='w-4 h-4 mr-2' />
               Mua lại
             </Button>
           )}
 
-          {order.status === 'delivered' && order.items && order.items.length > 0 && (
+          {order.status === 'delivered' && !hasActiveReturnRequest && order.items && order.items.length > 0 && (
             <>
               {allProductsReviewed ? (
                 <Link to='/account/reviews' className='flex-1'>

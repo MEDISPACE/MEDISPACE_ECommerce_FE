@@ -1,7 +1,7 @@
 import { apiClient } from './apiClient'
 import { API_ENDPOINTS } from '../constants'
 import type { Order, CreateOrderRequest } from '../types/order'
-import type { OrderStatus, PaymentStatus, PaymentMethod } from '../types/order'
+import type { OrderStatus, PaymentStatus, PaymentMethod, OrderReturnStatus } from '../types/order'
 
 // Backend response types
 interface BackendOrderItem {
@@ -62,6 +62,10 @@ interface BackendOrder {
   paymentMethod: string
   paymentStatus: string
   orderStatus: string
+  returnStatus?: OrderReturnStatus
+  returnRequestIds?: string[]
+  latestReturnRequestId?: string
+  returnUpdatedAt?: string
   createdAt: string
   updatedAt: string
   shippingMethod?: string
@@ -210,6 +214,10 @@ class OrderService {
       paymentMethod: backendOrder.paymentMethod as PaymentMethod,
       paymentStatus: backendOrder.paymentStatus as PaymentStatus,
       status: backendOrder.orderStatus as OrderStatus,
+      returnStatus: backendOrder.returnStatus || 'none',
+      returnRequestIds: backendOrder.returnRequestIds || [],
+      latestReturnRequestId: backendOrder.latestReturnRequestId,
+      returnUpdatedAt: backendOrder.returnUpdatedAt,
       requiresPrescription: backendOrder.items?.some((item: BackendOrderItem) => item.prescriptionRequired) || false,
       notes: backendOrder.notes,
       createdAt: backendOrder.createdAt,

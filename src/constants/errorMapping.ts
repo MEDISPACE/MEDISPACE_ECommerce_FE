@@ -102,6 +102,21 @@ export const ERROR_MESSAGES_MAP: Record<string, string> = {
 
   // Brands
   'Brand not found': 'Không tìm thấy thương hiệu',
+  // Pharmacist workflow
+  'Invalid payment status': 'Trạng thái thanh toán không hợp lệ.',
+  'Pharmacist does not have a license': 'Bạn cần cập nhật số chứng chỉ hành nghề trong Cài đặt trước khi sử dụng chức năng dược sĩ.',
+  'Pharmacist is currently offline': 'Bạn cần bật trạng thái Online để sử dụng chức năng dược sĩ.',
+  'Failed to check pharmacist license': 'Không thể kiểm tra thông tin hành nghề. Vui lòng thử lại sau.',
+  'An order has already been created for this prescription': 'Đơn thuốc này đã được dùng để tạo đơn hàng trước đó.',
+  'Duplicate order number. Please retry order creation.': 'Mã đơn hàng bị trùng. Vui lòng thử tạo lại đơn.',
+  'Unable to calculate selected shipping fee': 'Không thể tính phí vận chuyển đã chọn. Vui lòng kiểm tra lại địa chỉ giao hàng.',
+  'Unable to resolve customer for pharmacist order': 'Không thể xác định khách hàng cho đơn hàng. Vui lòng kiểm tra lại thông tin khách hàng.',
+  'Prescription is not linked to a customer account': 'Đơn thuốc chưa liên kết với tài khoản khách hàng.',
+  'Prescription does not belong to the selected customer': 'Đơn thuốc không thuộc khách hàng đã chọn.',
+  'Order item quantity must be a positive integer': 'Số lượng sản phẩm phải là số nguyên dương.',
+  'Complete delivery address is required': 'Vui lòng nhập đầy đủ địa chỉ giao hàng.',
+  'GHN district and ward are required for delivery orders': 'Vui lòng chọn đầy đủ quận/huyện và phường/xã để tính phí giao hàng.',
+  'Selected shipping method does not support COD': 'Đơn vị vận chuyển đã chọn không hỗ trợ thanh toán COD.',
 }
 
 export const getErrorMessage = (message: string): string => {

@@ -237,7 +237,7 @@ export function OrderSuccessPage() {
               </div>
             </div>
             <div>
-              <p className='text-sm text-gray-500 mb-1'>Ph??ng th?c giao h?ng</p>
+              <p className='text-sm text-gray-500 mb-1'>Phương thức giao hàng</p>
               <ShippingMethodDisplay method={order.shippingMethod} showDescription={false} />
             </div>
             <div>

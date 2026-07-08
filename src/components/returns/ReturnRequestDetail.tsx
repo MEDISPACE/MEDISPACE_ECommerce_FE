@@ -1,11 +1,9 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
 import { Button } from '~/components/ui/button'
 import { Badge } from '~/components/ui/badge'
-import { Input } from '~/components/ui/input'
-import { Label } from '~/components/ui/label'
 import { Skeleton } from '~/components/ui/skeleton'
 import {
   Dialog,
@@ -26,6 +24,7 @@ import {
   AlertTriangle,
   FileText,
   CreditCard,
+  ExternalLink,
 } from 'lucide-react'
 import returnRequestService, {
   ReturnStatus,
@@ -47,19 +46,54 @@ const statusOrder: ReturnStatus[] = [
   ReturnStatus.COMPLETED,
 ]
 
+const getCarrierDisplayName = (carrier?: string) => {
+  const carriers: Record<string, string> = {
+    mock_carrier: 'MEDISPACE Delivery',
+    ghn: 'GHN',
+    ghtk: 'GHTK',
+    ahamove: 'Ahamove',
+  }
+  return carrier ? carriers[carrier] || carrier : ''
+}
+
+const getTrackingStatusLabel = (status?: string) => {
+  const labels: Record<string, string> = {
+    arranged: 'Đã sắp xếp thu hồi',
+    picked_up: 'Đã lấy hàng',
+    in_transit: 'Đang vận chuyển',
+    delivered_to_store: 'Đã về MEDISPACE',
+    failed: 'Thu hồi chưa thành công',
+    cancelled: 'Đã hủy thu hồi',
+  }
+  return status ? labels[status] || status : ''
+}
+
+const getTrackingEventMessage = (event: { status: string; message?: string }) => {
+  const legacyMessages: Record<string, string> = {
+    'Return pickup has been arranged by MEDISPACE': 'MEDISPACE đã sắp xếp thu hồi hàng trả',
+    'Return pickup has been arranged': 'MEDISPACE đã sắp xếp thu hồi hàng trả',
+    'Returned items have been picked up from customer': 'Đã lấy hàng trả từ khách',
+    'Returned items are in transit to MEDISPACE': 'Hàng trả đang vận chuyển về MEDISPACE',
+    'Returned items have arrived at MEDISPACE': 'Hàng trả đã về MEDISPACE',
+    'Returned items have been received by MEDISPACE': 'MEDISPACE đã nhận hàng trả',
+    'Return pickup failed and needs follow-up': 'Thu hồi hàng trả chưa thành công, cần xử lý lại',
+    'Return pickup has been cancelled': 'Đã hủy lịch thu hồi hàng trả',
+  }
+  if (event.message && legacyMessages[event.message]) return legacyMessages[event.message]
+  return event.message || getTrackingStatusLabel(event.status)
+}
+
 export default function ReturnRequestDetail() {
   const { requestId } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [showCancelDialog, setShowCancelDialog] = useState(false)
-  const [showShippingDialog, setShowShippingDialog] = useState(false)
-  const [trackingNumber, setTrackingNumber] = useState('')
-  const [carrier, setCarrier] = useState('')
 
   const { data: request, isLoading } = useQuery({
     queryKey: ['return-request', requestId],
     queryFn: () => returnRequestService.getReturnRequestById(requestId!),
     enabled: !!requestId,
+    refetchInterval: 5000,
   })
 
   // Cancel mutation
@@ -75,24 +109,13 @@ export default function ReturnRequestDetail() {
     },
   })
 
-  // Update shipping mutation
-  const updateShippingMutation = useMutation({
-    mutationFn: () => returnRequestService.updateReturnShipping(requestId!, trackingNumber, carrier || undefined),
-    onSuccess: () => {
-      toast.success('Đã cập nhật thông tin vận chuyển')
-      queryClient.invalidateQueries({ queryKey: ['return-request', requestId] })
-      setShowShippingDialog(false)
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Không thể cập nhật')
-    },
-  })
-
   // Check if can cancel
   const canCancel = request && [ReturnStatus.PENDING, ReturnStatus.REVIEWING].includes(request.status as ReturnStatus)
 
-  // Check if can add shipping
-  const canAddShipping = request && request.status === ReturnStatus.APPROVED
+  // Check if the approved return request is past its pickup deadline
+  const isReturnDeadlinePassed = request?.returnDeadline
+    ? new Date(request.returnDeadline).getTime() < Date.now()
+    : false
 
   // Get status index for timeline
   const getStatusIndex = (status: ReturnStatus) => {
@@ -140,6 +163,10 @@ export default function ReturnRequestDetail() {
           <h1 className='text-2xl font-bold text-blue-900'>Chi tiết yêu cầu #{request.requestNumber}</h1>
           <p className='text-muted-foreground'>Đơn hàng: #{request.orderNumber}</p>
         </div>
+        <Button variant='outline' onClick={() => navigate(`/account/orders/${request.orderId}`)}>
+          <ExternalLink className='h-4 w-4 mr-2' />
+          Xem đơn hàng
+        </Button>
         <Badge className={returnStatusColors[request.status]}>{returnStatusLabels[request.status]}</Badge>
       </div>
 
@@ -226,9 +253,8 @@ export default function ReturnRequestDetail() {
           </CardContent>
         </Card>
       )}
-
       {/* Action buttons */}
-      {(canCancel || canAddShipping) && (
+      {(canCancel || request.status === ReturnStatus.APPROVED || request.status === ReturnStatus.AWAITING_RETURN) && (
         <Card className='border-[#E8EDF5]'>
           <CardContent className='pt-6'>
             <div className='flex gap-3'>
@@ -237,17 +263,29 @@ export default function ReturnRequestDetail() {
                   Hủy yêu cầu
                 </Button>
               )}
-              {canAddShipping && (
-                <Button onClick={() => setShowShippingDialog(true)}>
-                  <Truck className='h-4 w-4 mr-2' />
-                  Cập nhật mã vận đơn
-                </Button>
-              )}
             </div>
-            {canAddShipping && request.returnDeadline && (
+            {request.status === ReturnStatus.APPROVED && !isReturnDeadlinePassed && (
+              <p className='text-sm text-[#1E40AF] mt-2'>
+                <Truck className='h-4 w-4 inline mr-1' />
+                Yêu cầu đã được duyệt. MEDISPACE đang sắp xếp thu hồi hàng trả, bạn vui lòng chuẩn bị sản phẩm và giữ nguyên tình trạng hàng.
+              </p>
+            )}
+            {request.status === ReturnStatus.APPROVED && request.returnDeadline && !isReturnDeadlinePassed && (
               <p className='text-sm text-amber-600 mt-2'>
                 <AlertTriangle className='h-4 w-4 inline mr-1' />
-                Vui lòng gửi hàng trước: {format(new Date(request.returnDeadline), 'dd/MM/yyyy')}
+                Hạn xử lý thu hồi: {format(new Date(request.returnDeadline), 'dd/MM/yyyy')}
+              </p>
+            )}
+            {request.status === ReturnStatus.APPROVED && isReturnDeadlinePassed && (
+              <p className='text-sm text-red-600 mt-2'>
+                <AlertTriangle className='h-4 w-4 inline mr-1' />
+                Yêu cầu đã quá hạn thu hồi hàng trả.
+              </p>
+            )}
+            {request.status === ReturnStatus.AWAITING_RETURN && (
+              <p className='text-sm text-[#1E40AF] mt-2'>
+                <Truck className='h-4 w-4 inline mr-1' />
+                MEDISPACE đang thu hồi hàng trả. Mã vận đơn thu hồi sẽ được dùng để đối soát khi nhận hàng.
               </p>
             )}
           </CardContent>
@@ -387,26 +425,52 @@ export default function ReturnRequestDetail() {
           <CardHeader>
             <CardTitle className='flex items-center gap-2 text-blue-800'>
               <Truck className='h-5 w-5' />
-              Thông tin gửi hàng trả
+              Thông tin thu hồi hàng trả
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className='grid grid-cols-2 gap-4'>
               {request.returnShippingInfo.trackingNumber && (
                 <div>
-                  <p className='text-sm text-muted-foreground'>Mã vận đơn</p>
+                  <p className='text-sm text-muted-foreground'>Mã thu hồi nội bộ</p>
                   <p className='font-medium'>{request.returnShippingInfo.trackingNumber}</p>
+                </div>
+              )}
+              {request.returnShippingInfo.carrierTrackingCode && (
+                <div>
+                  <p className='text-sm text-muted-foreground'>Mã vận đơn hãng</p>
+                  <p className='font-medium'>{request.returnShippingInfo.carrierTrackingCode}</p>
+                </div>
+              )}
+              {request.returnShippingInfo.trackingUrl && (
+                <div>
+                  <p className='text-sm text-muted-foreground'>Theo dõi vận chuyển</p>
+                  <a
+                    href={request.returnShippingInfo.trackingUrl}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    className='inline-flex items-center gap-1 font-medium text-[#1E40AF] hover:underline'
+                  >
+                    Mở tracking
+                    <ExternalLink className='h-3.5 w-3.5' />
+                  </a>
+                </div>
+              )}
+              {request.returnShippingInfo.trackingStatus && (
+                <div>
+                  <p className='text-sm text-muted-foreground'>Trạng thái tracking</p>
+                  <p className='font-medium'>{getTrackingStatusLabel(request.returnShippingInfo.trackingStatus)}</p>
                 </div>
               )}
               {request.returnShippingInfo.carrier && (
                 <div>
-                  <p className='text-sm text-muted-foreground'>Đơn vị vận chuyển</p>
-                  <p className='font-medium'>{request.returnShippingInfo.carrier}</p>
+                  <p className='text-sm text-muted-foreground'>Đơn vị thu hồi</p>
+                  <p className='font-medium'>{getCarrierDisplayName(request.returnShippingInfo.carrier)}</p>
                 </div>
               )}
               {request.returnShippingInfo.shippedAt && (
                 <div>
-                  <p className='text-sm text-muted-foreground'>Ngày gửi</p>
+                  <p className='text-sm text-muted-foreground'>Ngày sắp xếp thu hồi</p>
                   <p className='font-medium'>
                     {format(new Date(request.returnShippingInfo.shippedAt), 'dd/MM/yyyy', { locale: vi })}
                   </p>
@@ -435,6 +499,20 @@ export default function ReturnRequestDetail() {
                 </div>
               )}
             </div>
+            {!!request.returnShippingInfo.trackingEvents?.length && (
+              <div className='mt-4 space-y-2 rounded-lg bg-[#F8FAFB] p-3'>
+                <p className='text-sm text-muted-foreground'>Nhật ký tracking</p>
+                {request.returnShippingInfo.trackingEvents.map((event, index) => (
+                  <div key={`${event.status}-${event.occurredAt}-${index}`} className='border-l-2 border-[#BFDBFE] pl-3 text-sm'>
+                    <p className='font-medium'>{getTrackingEventMessage(event)}</p>
+                    <p className='text-xs text-muted-foreground'>
+                      {format(new Date(event.occurredAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                    </p>
+                    {event.location && <p className='text-xs text-muted-foreground'>{event.location}</p>}
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
@@ -472,7 +550,7 @@ export default function ReturnRequestDetail() {
               <div className='text-sm text-muted-foreground'>
                 Phương thức:{' '}
                 {request.refundMethod === 'original'
-                  ? 'Hoàn về PT thanh toán ban đầu'
+                  ? 'Hoàn về phương thức thanh toán ban đầu'
                   : request.refundMethod === 'bank_transfer'
                     ? 'Chuyển khoản ngân hàng'
                     : 'Ví điện tử'}
@@ -497,45 +575,6 @@ export default function ReturnRequestDetail() {
             </Button>
             <Button variant='destructive' onClick={() => cancelMutation.mutate()} disabled={cancelMutation.isPending}>
               {cancelMutation.isPending ? 'Đang hủy...' : 'Xác nhận hủy'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Shipping Dialog */}
-      <Dialog open={showShippingDialog} onOpenChange={setShowShippingDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Cập nhật thông tin vận chuyển</DialogTitle>
-            <DialogDescription>Nhập mã vận đơn sau khi bạn đã gửi hàng trả về cho chúng tôi.</DialogDescription>
-          </DialogHeader>
-          <div className='space-y-4 py-4'>
-            <div>
-              <Label>Mã vận đơn *</Label>
-              <Input
-                value={trackingNumber}
-                onChange={(e) => setTrackingNumber(e.target.value)}
-                placeholder='Nhập mã vận đơn'
-              />
-            </div>
-            <div>
-              <Label>Đơn vị vận chuyển</Label>
-              <Input
-                value={carrier}
-                onChange={(e) => setCarrier(e.target.value)}
-                placeholder='Ví dụ: GHN, GHTK, Viettel Post...'
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant='outline' onClick={() => setShowShippingDialog(false)}>
-              Hủy
-            </Button>
-            <Button
-              onClick={() => updateShippingMutation.mutate()}
-              disabled={!trackingNumber || updateShippingMutation.isPending}
-            >
-              {updateShippingMutation.isPending ? 'Đang cập nhật...' : 'Xác nhận'}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -29,6 +29,7 @@ import { OrderDetailsDrawer } from '~/components/shared/OrderManagement/OrderDet
 import { PrescriptionDetailsDialog } from './PrescriptionDetailsDialog'
 import { toast } from 'sonner'
 import { formatCurrency } from '~/utils/formatCurrency'
+import { getErrorMessage } from '~/constants/errorMapping'
 
 export function PharmacistDashboard() {
   const [activeTab, setActiveTab] = useState('overview')
@@ -62,7 +63,8 @@ export function PharmacistDashboard() {
       return 'Phiên đăng nhập đã hết hạn'
     }
 
-    return err.response?.data?.message || 'Không thể tải dữ liệu'
+    const backendMessage = err.response?.data?.message
+    return backendMessage ? getErrorMessage(backendMessage) : 'Không thể tải dữ liệu'
   }
 
   const loadDashboardData = useCallback(async (showToast = false) => {
