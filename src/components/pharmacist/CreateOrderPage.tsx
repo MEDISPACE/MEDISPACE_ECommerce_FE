@@ -1230,7 +1230,7 @@ export function CreateOrderPage() {
                       <div className='mt-3 rounded-xl border border-[#E8EDF5] bg-[#F8FAFB] p-3'>
                         <div className='mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500'>
                           <Sparkles className='h-3.5 w-3.5 text-[#1E40AF]' />
-                          Thuốc tương đương / thay thế
+                          Sản phẩm Medispace gợi ý
                         </div>
                         <div className='space-y-2'>
                           {suggestion.equivalents.slice(0, 4).map((product) => (

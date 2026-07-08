@@ -19,7 +19,6 @@ import {
   MessageCircle,
   RefreshCw,
   ClipboardList,
-  ExternalLink,
 } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
@@ -534,19 +533,8 @@ export function PrescriptionDetailPage() {
                       </div>
                       <div className='flex-1 min-w-0'>
                         <div className='flex flex-wrap items-center gap-2'>
-                          <p className='font-medium text-sm text-blue-900'>{med.matchedName || med.productName}</p>
-                          {med.productId && (
-                            <Badge className='bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-50'>
-                              Co trong he thong
-                            </Badge>
-                          )}
-                          {med.requiresPrescription === false && (
-                            <Badge className='bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-50'>OTC</Badge>
-                          )}
+                          <p className='font-medium text-sm text-blue-900'>{med.productName}</p>
                         </div>
-                        {med.matchedName && med.matchedName !== med.productName && (
-                          <p className='text-[11px] text-gray-500 italic mt-0.5'>OCR doc: {med.productName}</p>
-                        )}
                         <div className='flex flex-wrap gap-x-4 gap-y-0.5 mt-1'>
                           {med.dosage && <p className='text-xs text-gray-600'>💊 Liều: {med.dosage}</p>}
                           <p className='text-xs text-gray-600'>
@@ -559,30 +547,10 @@ export function PrescriptionDetailPage() {
                             <p className='text-xs text-gray-500 w-full mt-0.5'>📋 {med.instructions}</p>
                           )}
                         </div>
-                        {med.slug && (
-                          <div className='mt-2 flex flex-wrap items-center gap-2'>
-                            <Link
-                              to={`/products/${med.slug}`}
-                              className='inline-flex h-8 items-center gap-1.5 rounded-md border border-[#BFDBFE] bg-white px-2.5 text-xs font-medium text-[#0A2463] hover:bg-[#F0F6FF]'
-                            >
-                              <ExternalLink className='h-3.5 w-3.5' />
-                              Xem chi tiet
-                            </Link>
-                            {med.requiresPrescription === false && (
-                              <Link
-                                to={`/products/${med.slug}`}
-                                className='inline-flex h-8 items-center gap-1.5 rounded-md bg-[#0A2463] px-2.5 text-xs font-medium text-white hover:bg-[#071A49]'
-                              >
-                                <ShoppingCart className='h-3.5 w-3.5' />
-                                Mua ngay
-                              </Link>
-                            )}
-                          </div>
-                        )}
                         {med.equivalentProducts && med.equivalentProducts.length > 0 && (
                           <div className='mt-3 rounded-lg border border-[#E8EDF5] bg-white p-2'>
                             <p className='mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500'>
-                              Thuốc tương đương / thay thế
+                              Sản phẩm Medispace gợi ý
                             </p>
                             <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
                               {med.equivalentProducts.slice(0, 4).map((product) => (
@@ -597,7 +565,7 @@ export function PrescriptionDetailPage() {
                                   <span className='min-w-0 flex-1'>
                                     <span className='block truncate text-xs font-medium text-gray-900'>{product.name}</span>
                                     <span className='block truncate text-[11px] text-gray-500'>
-                                      {product.reason || 'Goi y tuong duong'}
+                                      {product.reason || 'San pham Medispace goi y'}
                                       {product.price != null ? ` - ${Number(product.price).toLocaleString('vi-VN')}d` : ''}
                                     </span>
                                   </span>

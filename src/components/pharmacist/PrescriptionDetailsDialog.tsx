@@ -18,8 +18,6 @@ import {
   ShieldAlert,
   Info,
   X,
-  ExternalLink,
-  ShoppingCart,
 } from 'lucide-react'
 
 import { Button } from '~/components/ui/button'
@@ -522,38 +520,17 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
                   <div
                     key={idx}
                     data-testid='drug-item'
-                    data-mapped={Boolean(med.productId)}
-                    className={`flex gap-3 p-3 rounded-lg border ${
-                      med.productId
-                        ? 'bg-emerald-50 border-emerald-200'
-                        : 'bg-[#F0F6FF] border-[#E8EDF5]'
-                    }`}
+                    data-mapped={false}
+                    className='flex gap-3 p-3 rounded-lg border bg-[#F0F6FF] border-[#E8EDF5]'
                   >
-                    {/* Product thumbnail or numbered circle */}
-                    {med.image ? (
-                      <div className='w-12 h-12 rounded-lg overflow-hidden border border-emerald-200 bg-white shrink-0 shadow-sm'>
-                        <img src={med.image} alt={med.matchedName || med.productName} className='w-full h-full object-cover' />
-                      </div>
-                    ) : (
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 mt-0.5 ${
-                        med.productId ? 'bg-emerald-600' : 'bg-[#0A2463]'
-                      }`}>
-                        {idx + 1}
-                      </div>
-                    )}
+                    <div className='w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 mt-0.5 bg-[#0A2463]'>
+                      {idx + 1}
+                    </div>
                     <div className='min-w-0 flex-1'>
                       <div className='flex items-start gap-1.5 flex-wrap'>
-                        <p className={`text-sm font-semibold truncate ${
-                          med.productId ? 'text-emerald-900' : 'text-blue-900'
-                        }`}>
-                          {med.matchedName || med.productName}
+                        <p className='text-sm font-semibold truncate text-blue-900'>
+                          {med.productName}
                         </p>
-                        {med.productId && (
-                          <span data-testid='matched-product-confidence' className='text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200 font-medium shrink-0'>
-                            ✓ Có trong kho
-                          </span>
-                        )}
-                        {!med.productId && <span data-testid='unmatched-drug-warning' className='text-[10px] px-1.5 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200 font-medium shrink-0'>Không tìm thấy trong kho</span>}
                       </div>
                       {med.needsReview && (
                         <span className='inline-flex w-fit text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200 font-medium'>
@@ -562,9 +539,6 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
                       )}
                       {med.activeIngredient && (
                         <p className='text-[11px] text-gray-500'>Hoạt chất: {med.activeIngredient}</p>
-                      )}
-                      {med.matchedName && med.matchedName !== med.productName && (
-                        <p className='text-[11px] text-gray-400 italic'>AI đọc: {med.productName}</p>
                       )}
                       {(med.source || med.confidence || med.sourcePage) && (
                         <p className='text-[11px] text-gray-400'>Nguồn: {med.source || 'OCR'}{med.confidence ? ` · ${med.confidence}` : ''}</p>
@@ -585,30 +559,10 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
                       {med.instructions && med.instructions !== med.dosage && (
                         <p className='text-xs text-gray-500 mt-0.5 line-clamp-2'>📋 {med.instructions}</p>
                       )}
-                      {med.slug && (
-                        <div className='mt-2 flex flex-wrap items-center gap-2'>
-                          <Link
-                            to={`/products/${med.slug}`}
-                            className='inline-flex h-7 items-center gap-1.5 rounded-md border border-[#BFDBFE] bg-white px-2 text-[11px] font-medium text-[#0A2463] hover:bg-[#F0F6FF]'
-                          >
-                            <ExternalLink className='h-3 w-3' />
-                            Xem chi tiet
-                          </Link>
-                          {med.requiresPrescription === false && (
-                            <Link
-                              to={`/products/${med.slug}`}
-                              className='inline-flex h-7 items-center gap-1.5 rounded-md bg-[#0A2463] px-2 text-[11px] font-medium text-white hover:bg-[#071A49]'
-                            >
-                              <ShoppingCart className='h-3 w-3' />
-                              OTC mua ngay
-                            </Link>
-                          )}
-                        </div>
-                      )}
                       {med.equivalentProducts && med.equivalentProducts.length > 0 && (
                         <div className='mt-3 rounded-lg border border-[#E8EDF5] bg-white p-2'>
                           <p className='mb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-500'>
-                            Thuốc tương đương / thay thế
+                            Sản phẩm Medispace gợi ý
                           </p>
                           <div className='space-y-1.5'>
                             {med.equivalentProducts.slice(0, 3).map((product) => (
@@ -623,7 +577,7 @@ export function PrescriptionDetailsDialog({ isOpen, onClose, prescription, onUpd
                                 <span className='min-w-0 flex-1'>
                                   <span className='block truncate text-[11px] font-medium text-gray-900'>{product.name}</span>
                                   <span className='block truncate text-[10px] text-gray-500'>
-                                    {product.reason || 'Goi y tuong duong'}
+                                    {product.reason || 'San pham Medispace goi y'}
                                     {product.price != null ? ` - ${Number(product.price).toLocaleString('vi-VN')}d` : ''}
                                   </span>
                                 </span>
