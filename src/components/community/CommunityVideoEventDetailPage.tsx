@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
 import { LiveKitRoom, VideoConference } from '@livekit/components-react'
 import '@livekit/components-styles'
-import { LogLevel, setLogLevel } from 'livekit-client'
+import { DisconnectReason, LogLevel, setLogLevel } from 'livekit-client'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   AlertTriangle,
@@ -12,6 +12,7 @@ import {
   MessageSquare,
   Mic,
   MicOff,
+  Users,
   RefreshCw,
   Send,
   Video,
@@ -53,6 +54,16 @@ function statusLabel(status?: string) {
   return labels[status || ''] || status
 }
 
+function effectiveEventStatus(event?: Pick<CommunityVideoEvent, 'status' | 'scheduledStartAt' | 'scheduledEndAt'> | null) {
+  if (!event) return undefined
+  const startAt = event.scheduledStartAt ? new Date(event.scheduledStartAt).getTime() : Number.NaN
+  const endAt = event.scheduledEndAt ? new Date(event.scheduledEndAt).getTime() : Number.NaN
+  const now = Date.now()
+  if ((event.status === 'scheduled' || event.status === 'live') && !Number.isNaN(endAt) && endAt <= now) return 'ended'
+  if (event.status === 'scheduled' && !Number.isNaN(startAt) && startAt <= now) return 'live'
+  return event.status
+}
+
 function meetingCode(eventId: string) {
   const compact = eventId.replace(/[^a-zA-Z0-9]/g, '').slice(-12) || eventId.slice(-12)
   return (
@@ -82,6 +93,11 @@ function isCommunityVideoEventPayload(payload: unknown): payload is CommunityVid
 function liveKitConnectionMessage(reason?: string) {
   const suffix = reason ? ` Chi tiết: ${reason}` : ''
   return `Chưa kết nối được máy chủ LiveKit của MediSpace. Vui lòng kiểm tra domain livekit.medispace.io.vn/proxy WebSocket rồi thử lại.${suffix}`
+}
+
+function isExpectedLiveKitDisconnect(reason?: unknown) {
+  if (reason === DisconnectReason.CLIENT_INITIATED) return true
+  return String(reason || '').toLowerCase().includes('client initiated disconnect')
 }
 
 function displayNameFromParts(firstName?: string, lastName?: string, email?: string) {
@@ -317,7 +333,8 @@ export function CommunityVideoEventDetailPage() {
   const canSendChat = chatText.trim().length > 0 && !isSendingChat && socket.isConnected
   const showReconnectIndicator = isOffline || (Boolean(joinPayload) && socket.isConnecting)
   const backToCommunityPath = event?.roomId ? `/community/${event.roomId}` : '/community'
-  const isClosedEvent = event?.status === 'ended' || event?.status === 'cancelled'
+  const eventStatus = effectiveEventStatus(event)
+  const isClosedEvent = eventStatus === 'ended' || eventStatus === 'cancelled'
 
   const goBackToPreviousPage = () => {
     if (window.history.length > 1) {
@@ -424,7 +441,13 @@ export function CommunityVideoEventDetailPage() {
                 setIsLiveKitConnected(true)
                 setLiveKitConnectionError(null)
               }}
-              onDisconnected={() => {
+              onDisconnected={(reason) => {
+                if (isExpectedLiveKitDisconnect(reason)) {
+                  setJoinPayload(null)
+                  setIsLiveKitConnected(false)
+                  setLiveKitConnectionError(null)
+                  return
+                }
                 if (isLiveKitConnected) {
                   setJoinPayload(null)
                   setIsLiveKitConnected(false)
@@ -433,6 +456,12 @@ export function CommunityVideoEventDetailPage() {
                 }
               }}
               onError={(error) => {
+                if (isExpectedLiveKitDisconnect(error?.message)) {
+                  setJoinPayload(null)
+                  setIsLiveKitConnected(false)
+                  setLiveKitConnectionError(null)
+                  return
+                }
                 const message = liveKitConnectionMessage(error?.message)
                 setLiveKitConnectionError(message)
                 toast.error(message)
@@ -705,9 +734,9 @@ export function CommunityVideoEventDetailPage() {
         <aside className='mx-auto w-full max-w-[420px] space-y-6 text-center'>
           <div className='space-y-4'>
             <h1 className='text-[32px] font-normal leading-tight text-[#202124] md:text-[36px]'>
-              {event.status === 'ended'
+              {eventStatus === 'ended'
                 ? 'Cuộc họp đã kết thúc'
-                : event.status === 'cancelled'
+                : eventStatus === 'cancelled'
                   ? 'Cuộc họp đã bị hủy'
                   : 'Sẵn sàng tham gia?'}
             </h1>
@@ -724,8 +753,20 @@ export function CommunityVideoEventDetailPage() {
             )}
             <div className='mx-auto flex w-fit items-center gap-2 rounded-full bg-[#f1f3f4] px-4 py-2 text-sm text-[#3c4043]'>
               <span className={`h-2.5 w-2.5 rounded-full ${isClosedEvent ? 'bg-[#9aa0a6]' : 'bg-[#34a853]'}`} />
-              {statusLabel(event.status)} · {meetingCode(event._id)}
+              {statusLabel(eventStatus)} · {meetingCode(event._id)}
             </div>
+            {event.room && (
+              <div className='mx-auto flex w-full max-w-sm items-center gap-3 rounded-[14px] border border-[#d2e3fc] bg-[#f8fbff] px-4 py-3 text-left'>
+                <span className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#e8f0fe] text-[#1a73e8]'>
+                  <Users className='h-5 w-5' />
+                </span>
+                <div className='min-w-0'>
+                  <div className='text-xs font-medium uppercase tracking-wide text-[#5f6368]'>Phòng cộng đồng</div>
+                  <div className='truncate text-sm font-semibold text-[#202124]'>{event.room.name}</div>
+                  <div className='truncate text-xs text-[#5f6368]'>{getRoomTopic(event.room)}</div>
+                </div>
+              </div>
+            )}
             {isClosedEvent && (
               <div
                 data-testid='session-ended-message'
@@ -736,7 +777,7 @@ export function CommunityVideoEventDetailPage() {
                   <div>
                     <p className='text-sm font-medium text-[#202124]'>Không thể tham gia phòng này nữa.</p>
                     <p className='mt-1 text-sm leading-6 text-[#5f6368]'>
-                      {event.status === 'ended'
+                      {eventStatus === 'ended'
                         ? 'Buổi meet đã được đánh dấu là kết thúc. Bạn vẫn có thể xem thông tin và copy link, nhưng phòng không còn mở cho người tham gia.'
                         : 'Buổi meet đã bị hủy. Bạn vẫn có thể xem thông tin, nhưng phòng không còn mở cho người tham gia.'}
                     </p>
@@ -747,11 +788,6 @@ export function CommunityVideoEventDetailPage() {
           </div>
 
           <div className='space-y-3 rounded-[14px] border border-[#dadce0] bg-white p-4 text-left shadow-sm'>
-            {event.room && (
-              <div className='text-xs font-medium text-[#1a73e8]'>
-                {event.room.name} · {getRoomTopic(event.room)}
-              </div>
-            )}
             {event.description && <p className='text-sm leading-6 text-[#3c4043]'>{event.description}</p>}
             {event.agenda && (
               <div>
