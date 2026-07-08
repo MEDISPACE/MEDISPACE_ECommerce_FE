@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -185,6 +185,8 @@ describe('Community Video Events UI component tests', () => {
     renderDetail()
 
     expect(await screen.findByText('Diabetes care workshop')).toBeInTheDocument()
+    expect(screen.getByText('Phòng cộng đồng')).toBeInTheDocument()
+    expect(screen.getByText('Diabetes Room')).toBeInTheDocument()
     expect(screen.getByText('Camera preview')).toBeInTheDocument()
     expect(screen.getByTestId('camera-preview-video')).toBeInTheDocument()
     const joinButton = screen.getByRole('button', { name: /tham gia ngay/i })
@@ -279,12 +281,35 @@ describe('Community Video Events UI component tests', () => {
 
     expect(await screen.findByText('Hội thảo cộng đồng')).toBeInTheDocument()
     expect(await screen.findByText('Diabetes care workshop')).toBeInTheDocument()
+    expect(mockAdminCommunityService.listVideoEvents).toHaveBeenCalledWith({ search: undefined, page: 1, limit: 50, sort: 'created_desc' })
     await userEvent.click(screen.getByText('Diabetes care workshop'))
+    const selectedEventRoom = screen.getByTestId('selected-event-room')
+    expect(within(selectedEventRoom).getByText('Phòng cộng đồng:')).toBeInTheDocument()
+    expect(within(selectedEventRoom).getByText('Diabetes Room')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /bắt đầu/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /kết thúc/i })).not.toBeInTheDocument()
-    expect(screen.getByText('Chat trực tiếp')).toBeInTheDocument()
+    expect(screen.getByText('Người đang trong phòng')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /duyệt/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /ẩn/i })).not.toBeInTheDocument()
+  })
+
+  it('shows a scheduled meet as live after its start time', async () => {
+    mockAdminCommunityService.listVideoEvents.mockResolvedValue({
+      items: [{
+        ...event,
+        status: 'scheduled',
+        scheduledStartAt: new Date(Date.now() - 10 * 60_000).toISOString(),
+        scheduledEndAt: new Date(Date.now() + 50 * 60_000).toISOString(),
+      }],
+      page: 1,
+      limit: 50,
+      total: 1,
+    })
+
+    renderWithProviders(<AdminCommunityVideoEventsPage />, '/admin/video-events')
+
+    expect(await screen.findByTestId('event-status-live')).toHaveTextContent('Live')
+    expect(screen.queryByTestId('event-status-scheduled')).not.toBeInTheDocument()
   })
 
   it('builds admin create payload without blank optional description', () => {
