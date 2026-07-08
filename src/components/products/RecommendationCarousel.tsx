@@ -21,6 +21,7 @@ import {
   getProductUnit,
   getDiscountPercentage,
   isProductOnSale,
+  isProductInStock,
 } from '../../utils/productHelpers'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -105,10 +106,11 @@ function toProductCardFormat(p: RecommendedProduct) {
     rating: p.rating,
     reviewCount: p.reviewCount,
     stockQuantity: p.stockQuantity,
+    status: p.status,
     requiresPrescription: p.requiresPrescription,
     priceVariants: p.priceVariants,
     brand: p.brand?.[0] ? { name: p.brand[0].name } : undefined,
-    inStock: p.stockQuantity > 0,
+    inStock: p.status ? p.status === 'active' && p.stockQuantity > 0 : p.stockQuantity > 0,
   } as Parameters<typeof getProductSalePrice>[0]
 
   return {
@@ -121,7 +123,8 @@ function toProductCardFormat(p: RecommendedProduct) {
     salePrice: getProductSalePrice(productLike) ?? defaultVariant?.price ?? 0,
     rating: p.rating ?? 0,
     reviewCount: p.reviewCount ?? 0,
-    inStock: p.stockQuantity > 0,
+    inStock: isProductInStock(productLike),
+    status: p.status,
     isPrescription: p.requiresPrescription ?? false,
     isOnSale: isProductOnSale(productLike),
     discountPercentage: getDiscountPercentage(productLike),
@@ -150,7 +153,9 @@ export function RecommendationCarousel({
   const { addToCart } = useCart()
   const { toggleWishlist, isInWishlist } = useWishlist()
   const [currentPage, setCurrentPage] = useState(0)
-  const availableProducts = products.filter((product) => product.stockQuantity > 0)
+  const availableProducts = products.filter((product) =>
+    isProductInStock({ stockQuantity: product.stockQuantity, status: product.status, inStock: product.stockQuantity > 0 } as Product),
+  )
   const visibleProducts = availableProducts
   const totalPages = Math.ceil(visibleProducts.length / itemsPerPage)
   const badgeConfig = badge ? BADGE_CONFIG[badge] : null

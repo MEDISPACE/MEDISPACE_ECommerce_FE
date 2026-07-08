@@ -15,7 +15,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useCart } from '../../contexts/CartContext'
 import { wishlistService } from '../../services/wishlistService'
 import { productService } from '../../services/productService'
-import { getProductSalePrice, getProductOriginalPrice } from '../../utils/productHelpers'
+import { getProductSalePrice, getProductOriginalPrice, isProductInStock } from '../../utils/productHelpers'
 import { RecommendationCarousel } from '../products/RecommendationCarousel'
 import { useRelated, useTrending } from '../../hooks/product/useRecommendations'
 
@@ -28,6 +28,7 @@ interface WishlistProduct {
   addedDate: string
   priceChange?: number // Positive for increase, negative for decrease
   inStock: boolean
+  status?: 'active' | 'discontinued' | 'out_of_stock'
   isRx: boolean
   rating: number
   reviewCount: number
@@ -71,7 +72,8 @@ export function WishlistPage() {
               originalPrice: getProductOriginalPrice(product),
               addedDate: product.createdAt || new Date().toISOString(),
               priceChange: 0, // API doesn't provide this yet
-              inStock: (product.stockQuantity || 0) > 0,
+              inStock: isProductInStock(product),
+              status: product.status,
               isRx: product.requiresPrescription || product.isPrescription || false,
               rating: product.rating || 0,
               reviewCount: product.reviewCount || 0,
@@ -509,6 +511,7 @@ export function WishlistPage() {
                       rating: product.rating,
                       reviewCount: product.reviewCount,
                       inStock: product.inStock,
+                      status: product.status,
                       isPrescription: product.isRx,
                       isOnSale: product.originalPrice ? product.originalPrice > product.currentPrice : false,
                     }}
@@ -528,10 +531,11 @@ export function WishlistPage() {
                       size='sm'
                       onClick={() => handleAddToCart(product)}
                       data-testid={product.inStock ? 'wishlist-add-to-cart' : 'wishlist-out-of-stock-add'}
+                      disabled={!product.inStock}
                       className='w-full mt-2 text-[#1E40AF] border-[#BFDBFE] hover:bg-[#F0F6FF]'
                     >
                       <ShoppingCart className='w-4 h-4 mr-2' />
-                      {product.inStock ? 'Thêm vào giỏ' : 'Hết hàng'}
+                      {product.status === 'discontinued' ? 'Ngừng kinh doanh' : product.inStock ? 'Thêm vào giỏ' : 'Hết hàng'}
                     </Button>
 
                     <Button

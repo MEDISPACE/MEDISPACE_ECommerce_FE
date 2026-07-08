@@ -172,7 +172,7 @@ export function SubCategoryPage() {
       selectedBrands.length === 0 ||
       selectedBrands.some((brandId: string) => (product.brand?._id || product.brandId) === brandId)
     const matchesRating = (product.rating ?? 0) >= ratingFilter
-    const matchesStock = !inStockFilter || product.stockQuantity > 0
+    const matchesStock = !inStockFilter || isProductInStock(product)
     const matchesPrescription = !prescriptionFilter || product.requiresPrescription === true
 
     return matchesPrice && matchesBrands && matchesRating && matchesStock && matchesPrescription
@@ -572,6 +572,7 @@ export function SubCategoryPage() {
                           rating: getProductRating(product),
                           reviewCount: getProductReviewCount(product),
                           inStock: isProductInStock(product),
+                          status: product.status,
                           isPrescription: isProductPrescription(product),
                           isOnSale: isProductOnSale(product),
                           discountPercentage: getDiscountPercentage(product),

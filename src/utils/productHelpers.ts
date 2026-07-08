@@ -32,10 +32,22 @@ export const getProductImages = (product: Product): string[] => {
 }
 
 export const isProductInStock = (product: Product): boolean => {
+  if (product.status) {
+    if (product.status !== 'active') return false
+    return product.inStock !== undefined ? product.inStock && product.stockQuantity > 0 : product.stockQuantity > 0
+  }
+
   if (product.inStock !== undefined) {
     return product.inStock
   }
   return product.stockQuantity > 0
+}
+
+export const getProductStatusLabel = (product: Pick<Product, 'status' | 'stockQuantity' | 'inStock'>): string => {
+  if (product.status === 'discontinued') return 'Ngừng kinh doanh'
+  if (product.status === 'out_of_stock') return 'Hết hàng'
+  if (product.status === 'active') return product.stockQuantity > 0 || product.inStock ? 'Đang bán' : 'Hết hàng'
+  return (product.inStock ?? product.stockQuantity > 0) ? 'Đang bán' : 'Hết hàng'
 }
 
 export const isProductPrescription = (product: Product): boolean => {

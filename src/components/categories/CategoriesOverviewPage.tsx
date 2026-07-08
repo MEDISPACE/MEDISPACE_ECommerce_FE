@@ -31,6 +31,7 @@ import { ProductCard } from '../products/ProductCard'
 import { UniversalBreadcrumb } from '../shared/UniversalBreadcrumb'
 import type { Category, Product } from '../../types/product'
 import { getCategoryIcon } from '../../utils/categoryIcons'
+import { isProductInStock } from '../../utils/productHelpers'
 
 type CategoryIconType = React.ComponentType<React.SVGProps<SVGSVGElement>>
 
@@ -323,7 +324,8 @@ export function CategoriesOverviewPage() {
                               salePrice: salePrice,
                               rating: product.rating || 0,
                               reviewCount: product.reviewCount || 0,
-                              inStock: product.stockQuantity > 0,
+                              inStock: isProductInStock(product),
+                              status: product.status,
                               isPrescription: product.requiresPrescription,
                               isOnSale: hasDiscount,
                               discountPercentage: discountPercentage,

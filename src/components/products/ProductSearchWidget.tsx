@@ -88,7 +88,7 @@ export function ProductSearchWidget({ onProductAdd, onProductInfo, className = '
       sku: p.sku || '',
       category: { name: p.categoryName || p.category?.name || '' },
       shortDescription: p.shortDescription || p.description || '',
-      status: p.isActive === false ? 'discontinued' : 'active',
+      status: p.status || (p.isActive === false ? 'discontinued' : p.stockQuantity <= 0 ? 'out_of_stock' : 'active'),
       requiresPrescription: p.requiresPrescription,
     } as Product
   }
