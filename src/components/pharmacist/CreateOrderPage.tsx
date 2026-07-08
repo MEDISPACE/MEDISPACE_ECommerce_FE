@@ -59,6 +59,7 @@ import { shippingService } from '~/services/shippingService'
 import { recommendationService } from '~/services/recommendationService'
 import type { RecommendedProduct } from '~/services/recommendationService'
 import { patientService, type PatientMedicalInfo } from '~/services/pharmacist/patient.service'
+import { getErrorMessage } from '~/constants/errorMapping'
 
 interface Product {
   id: string
@@ -1006,7 +1007,8 @@ export function CreateOrderPage() {
       const firstValidationError = apiError.response?.data?.errors
         ? Object.values(apiError.response.data.errors).find((item) => item?.msg)?.msg
         : undefined
-      const errorMessage = apiError.response?.data?.message || firstValidationError
+      const rawErrorMessage = apiError.response?.data?.message || firstValidationError
+      const errorMessage = rawErrorMessage ? getErrorMessage(rawErrorMessage) : undefined
 
       toast.error('Không thể tạo đơn hàng', {
         description: errorMessage || 'Vui lòng kiểm tra lại thông tin và thử lại',

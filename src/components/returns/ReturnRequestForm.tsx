@@ -40,6 +40,7 @@ interface Order {
   _id: string
   orderNumber: string
   items: OrderItem[]
+  total?: number
   deliveredAt?: string
 }
 
@@ -49,11 +50,19 @@ interface ReturnRequestFormProps {
   onCancel?: () => void
 }
 
+type SelectedReturnItem = {
+  productId: string
+  unit: string
+  quantity: number
+  reason: ReturnReason
+  reasonDetail: string
+}
+
+const getOrderItemKey = (item: Pick<OrderItem, 'productId' | 'unit'>) => `${item.productId}::${item.unit}`
+
 export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnRequestFormProps) {
   const navigate = useNavigate()
-  const [selectedItems, setSelectedItems] = useState<
-    Map<string, { quantity: number; reason: ReturnReason; reasonDetail: string }>
-  >(new Map())
+  const [selectedItems, setSelectedItems] = useState<Map<string, SelectedReturnItem>>(new Map())
   const [mainReason, setMainReason] = useState<ReturnReason | ''>('')
   const [reasonDetail, setReasonDetail] = useState('')
   const [evidence, setEvidence] = useState<string[]>([])
@@ -74,8 +83,8 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
     : 0
 
   // Check if any selected item is prescription
-  const hasPrescriptionItem = Array.from(selectedItems.keys()).some((productId) => {
-    const orderItem = order.items.find((i) => i.productId === productId)
+  const hasPrescriptionItem = Array.from(selectedItems.keys()).some((lineKey) => {
+    const orderItem = order.items.find((i) => getOrderItemKey(i) === lineKey)
     return orderItem?.prescriptionRequired
   })
   const returnWindowDays = hasPrescriptionItem ? 3 : 7
@@ -97,37 +106,39 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
   }, [])
 
   // Toggle item selection
-  const toggleItemSelection = (productId: string, checked: boolean) => {
+  const toggleItemSelection = (item: OrderItem, checked: boolean) => {
+    const lineKey = getOrderItemKey(item)
     const newSelected = new Map(selectedItems)
     if (checked) {
-      const orderItem = order.items.find((i) => i.productId === productId)
-      newSelected.set(productId, {
-        quantity: orderItem?.quantity || 1,
+      newSelected.set(lineKey, {
+        productId: item.productId,
+        unit: item.unit,
+        quantity: item.quantity || 1,
         reason: ReturnReason.DEFECTIVE,
         reasonDetail: '',
       })
     } else {
-      newSelected.delete(productId)
+      newSelected.delete(lineKey)
     }
     setSelectedItems(newSelected)
   }
 
   // Update item quantity
-  const updateItemQuantity = (productId: string, quantity: number) => {
-    const current = selectedItems.get(productId)
+  const updateItemQuantity = (lineKey: string, quantity: number) => {
+    const current = selectedItems.get(lineKey)
     if (current) {
       const newSelected = new Map(selectedItems)
-      newSelected.set(productId, { ...current, quantity })
+      newSelected.set(lineKey, { ...current, quantity })
       setSelectedItems(newSelected)
     }
   }
 
   // Update item reason
-  const updateItemReason = (productId: string, reason: ReturnReason) => {
-    const current = selectedItems.get(productId)
+  const updateItemReason = (lineKey: string, reason: ReturnReason) => {
+    const current = selectedItems.get(lineKey)
     if (current) {
       const newSelected = new Map(selectedItems)
-      newSelected.set(productId, { ...current, reason })
+      newSelected.set(lineKey, { ...current, reason })
       setSelectedItems(newSelected)
     }
   }
@@ -181,8 +192,9 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
   // Submit mutation
   const submitMutation = useMutation({
     mutationFn: async () => {
-      const items = Array.from(selectedItems.entries()).map(([productId, data]) => ({
-        productId,
+      const items = Array.from(selectedItems.values()).map((data) => ({
+        productId: data.productId,
+        unit: data.unit,
         quantity: data.quantity,
         returnReason: data.reason,
         reasonDetail: data.reasonDetail || undefined,
@@ -222,11 +234,20 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
     return { grossAmount, couponDiscount, pointsDiscount, netAmount }
   }
 
-  const totalRefundAmount = Array.from(selectedItems.entries()).reduce((sum, [productId, data]) => {
-    const orderItem = order.items.find((i) => i.productId === productId)
+  const selectedRefundAmount = Array.from(selectedItems.entries()).reduce((sum, [lineKey, data]) => {
+    const orderItem = order.items.find((i) => getOrderItemKey(i) === lineKey)
     if (!orderItem) return sum
     return sum + getRefundPreview(orderItem, data.quantity).netAmount
   }, 0)
+
+  const isFullOrderReturn = order.items.length > 0 && order.items.every((item) => {
+    const selected = selectedItems.get(getOrderItemKey(item))
+    return selected && selected.quantity >= item.quantity
+  })
+
+  const totalRefundAmount = isFullOrderReturn && Number(order.total || 0) > 0
+    ? Math.max(selectedRefundAmount, Number(order.total || 0))
+    : selectedRefundAmount
 
   const handleSubmitReturn = () => {
     if (selectedItems.size === 0) {
@@ -244,6 +265,12 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
     if (evidence.length < 1) {
       setFormError('Vui lòng tải lên ít nhất một ảnh chứng minh')
       return
+    }
+    if (returnType === ReturnType.REFUND && refundMethod === RefundMethod.BANK_TRANSFER) {
+      if (!bankInfo.bankName.trim() || !bankInfo.accountNumber.trim() || !bankInfo.accountHolder.trim()) {
+        setFormError('Vui lòng nhập đầy đủ thông tin tài khoản ngân hàng')
+        return
+      }
     }
     if (isOutsideReturnWindow) {
       setFormError('Đơn hàng đã quá thời hạn đổi/trả')
@@ -320,13 +347,14 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
         </CardHeader>
         <CardContent className='space-y-4'>
           {order.items.map((item) => {
-            const isSelected = selectedItems.has(item.productId)
-            const selectedData = selectedItems.get(item.productId)
+            const lineKey = getOrderItemKey(item)
+            const isSelected = selectedItems.has(lineKey)
+            const selectedData = selectedItems.get(lineKey)
             const allowedReasons = getAllowedReasons(item.prescriptionRequired)
 
             return (
               <div
-                key={item.productId}
+                key={lineKey}
                 className={`border rounded-lg p-4 transition-colors ${
                   isSelected ? 'border-[#1E40AF] bg-[#F0F6FF]' : 'border-[#E8EDF5]'
                 }`}
@@ -334,7 +362,7 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
                 <div className='flex items-start gap-4'>
                   <Checkbox
                     checked={isSelected}
-                    onCheckedChange={(checked) => toggleItemSelection(item.productId, checked as boolean)}
+                    onCheckedChange={(checked) => toggleItemSelection(item, checked as boolean)}
                     data-testid='return-item-checkbox'
                   />
                   <img
@@ -371,7 +399,7 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
                         <Label className='mb-2 block'>Số lượng trả</Label>
                         <Select
                           value={String(selectedData.quantity)}
-                          onValueChange={(v) => updateItemQuantity(item.productId, Number(v))}
+                          onValueChange={(v) => updateItemQuantity(lineKey, Number(v))}
                         >
                           <SelectTrigger>
                             <SelectValue />
@@ -389,7 +417,7 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
                         <Label className='mb-2 block'>Lý do trả</Label>
                         <Select
                           value={selectedData.reason}
-                          onValueChange={(v) => updateItemReason(item.productId, v as ReturnReason)}
+                          onValueChange={(v) => updateItemReason(lineKey, v as ReturnReason)}
                         >
                           <SelectTrigger>
                             <SelectValue />
@@ -470,7 +498,6 @@ export default function ReturnRequestForm({ order, onSubmit, onCancel }: ReturnR
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={ReturnType.REFUND}>Hoàn tiền</SelectItem>
-                  <SelectItem value={ReturnType.EXCHANGE}>Đổi hàng</SelectItem>
                 </SelectContent>
               </Select>
             </div>

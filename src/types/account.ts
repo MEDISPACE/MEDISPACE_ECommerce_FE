@@ -51,6 +51,10 @@ export interface Order {
   shippingAddress: Address
   paymentMethod: string
   paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded' | 'partially_refunded'
+  returnStatus?: OrderReturnStatus
+  returnRequestIds?: string[]
+  latestReturnRequestId?: string
+  returnUpdatedAt?: string
   createdAt: string
   updatedAt: string
   estimatedDelivery?: string
@@ -60,6 +64,17 @@ export interface Order {
   prescriptionId?: string
   timeline: OrderTimeline[]
 }
+
+export type OrderReturnStatus =
+  | 'none'
+  | 'requested'
+  | 'approved'
+  | 'awaiting_return'
+  | 'received'
+  | 'refund_processing'
+  | 'completed'
+  | 'rejected'
+  | 'cancelled'
 
 export interface AppliedCoupon {
   code: string

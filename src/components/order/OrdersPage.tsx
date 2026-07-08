@@ -38,6 +38,11 @@ const mapDisplayStatus = (status: string, paymentStatus: string, paymentMethod: 
 
 const getOrderItemUnit = (item: CommerceOrderItemWithUnit) => item.unit || item.product.unit || 'viên'
 
+const RETURN_FLOW_STATUSES = new Set(['requested', 'approved', 'awaiting_return', 'received', 'refund_processing', 'completed'])
+
+const isOrderInReturnFlow = (order: AccountOrder) =>
+  order.status === 'returned' || RETURN_FLOW_STATUSES.has(order.returnStatus || '')
+
 export function OrdersPage() {
   const [orders, setOrders] = useState<AccountOrder[]>([])
   const [loading, setLoading] = useState(true)
@@ -98,6 +103,10 @@ export function OrdersPage() {
           },
           paymentMethod: order.paymentMethod,
           paymentStatus: order.paymentStatus as AccountOrder['paymentStatus'],
+          returnStatus: order.returnStatus || 'none',
+          returnRequestIds: order.returnRequestIds || [],
+          latestReturnRequestId: order.latestReturnRequestId,
+          returnUpdatedAt: order.returnUpdatedAt,
           createdAt: order.createdAt,
           updatedAt: order.updatedAt,
           deliveryMethod: order.shippingMethod,
@@ -122,7 +131,13 @@ export function OrdersPage() {
 
     // Filter by status
     if (status && status !== 'all') {
-      filtered = filtered.filter((order) => order.status === status)
+      if (status === 'returned') {
+        filtered = filtered.filter(isOrderInReturnFlow)
+      } else if (status === 'delivered') {
+        filtered = filtered.filter((order) => order.status === 'delivered' && !isOrderInReturnFlow(order))
+      } else {
+        filtered = filtered.filter((order) => order.status === status)
+      }
     }
 
     // Filter by search term
@@ -167,8 +182,8 @@ export function OrdersPage() {
       confirmed: orders.filter((o) => o.status === 'confirmed').length,
       processing: orders.filter((o) => o.status === 'processing').length,
       shipping: orders.filter((o) => o.status === 'shipping').length,
-      delivered: orders.filter((o) => o.status === 'delivered').length,
-      returned: orders.filter((o) => o.status === 'returned').length,
+      delivered: orders.filter((o) => o.status === 'delivered' && !isOrderInReturnFlow(o)).length,
+      returned: orders.filter(isOrderInReturnFlow).length,
       cancelled: orders.filter((o) => o.status === 'cancelled').length,
     }
   }
@@ -186,7 +201,7 @@ export function OrdersPage() {
     { value: 'processing', label: 'Đang xử lý', count: tabCounts.processing },
     { value: 'shipping', label: 'Đang giao', count: tabCounts.shipping },
     { value: 'delivered', label: 'Hoàn thành', count: tabCounts.delivered },
-    { value: 'returned', label: 'Đã trả hàng', count: tabCounts.returned },
+    { value: 'returned', label: 'Đổi/trả', count: tabCounts.returned },
     { value: 'cancelled', label: 'Đã hủy', count: tabCounts.cancelled },
   ]
 

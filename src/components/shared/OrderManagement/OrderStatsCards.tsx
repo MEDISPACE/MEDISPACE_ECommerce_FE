@@ -1,4 +1,4 @@
-import { ShoppingCart, Clock, Package, CheckCircle, XCircle, Coins, CreditCard } from 'lucide-react'
+import { ShoppingCart, Clock, Package, CheckCircle, XCircle, CreditCard, RotateCcw } from 'lucide-react'
 import { Card, CardContent } from '../../ui/card'
 import type { OrderStats, RoleConfig } from './types'
 import { formatCurrency } from '~/utils/formatCurrency'
@@ -10,7 +10,7 @@ interface OrderStatsCardsProps {
 
 export function OrderStatsCards({ stats, config }: OrderStatsCardsProps) {
   return (
-    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4'>
+    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-8 gap-4'>
       <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
         <CardContent className='p-4'>
           <div className='flex items-center justify-between'>
@@ -55,6 +55,18 @@ export function OrderStatsCards({ stats, config }: OrderStatsCardsProps) {
               <p className='text-2xl font-semibold text-green-600'>{stats.delivered}</p>
             </div>
             <CheckCircle className='w-8 h-8 text-green-400' />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
+        <CardContent className='p-4'>
+          <div className='flex items-center justify-between'>
+            <div>
+              <p className='text-xs text-gray-600'>Đổi/trả</p>
+              <p className='text-2xl font-semibold text-amber-600'>{stats.returned}</p>
+            </div>
+            <RotateCcw className='w-8 h-8 text-amber-400' />
           </div>
         </CardContent>
       </Card>

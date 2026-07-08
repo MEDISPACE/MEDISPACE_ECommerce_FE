@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router'
 import {
   Package,
   RotateCcw,
@@ -11,6 +12,8 @@ import {
   ChevronRight,
   User,
   Wallet,
+  Truck,
+  ExternalLink,
 } from 'lucide-react'
 import { Badge } from '../../ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card'
@@ -25,7 +28,14 @@ interface ReturnRequestDetailsSheetProps {
   isOpen: boolean
   onClose: () => void
   request: ReturnRequest | null
+  orderSearchPath?: string
   onReview?: (request: ReturnRequest, action: 'approved' | 'rejected') => void
+  onArrangeReturn?: (request: ReturnRequest) => void
+  onMockTracking?: (
+    request: ReturnRequest,
+    status: 'picked_up' | 'in_transit' | 'delivered_to_store',
+    message: string,
+  ) => void
 }
 
 // Status badge colors
@@ -57,7 +67,72 @@ const formatPrice = (price: number) => {
   return new Intl.NumberFormat('vi-VN').format(price) + 'đ'
 }
 
-export function ReturnRequestDetailsSheet({ isOpen, onClose, request, onReview }: ReturnRequestDetailsSheetProps) {
+const getCarrierDisplayName = (carrier?: string) => {
+  const carriers: Record<string, string> = {
+    mock_carrier: 'MEDISPACE Delivery',
+    ghn: 'GHN',
+    ghtk: 'GHTK',
+    ahamove: 'Ahamove',
+  }
+  return carrier ? carriers[carrier] || carrier : ''
+}
+
+const getTrackingStatusLabel = (status?: string) => {
+  const labels: Record<string, string> = {
+    arranged: 'Đã sắp xếp thu hồi',
+    picked_up: 'Đã lấy hàng',
+    in_transit: 'Đang vận chuyển',
+    delivered_to_store: 'Đã về MEDISPACE',
+    failed: 'Thu hồi chưa thành công',
+    cancelled: 'Đã hủy thu hồi',
+  }
+  return status ? labels[status] || status : ''
+}
+
+const getTrackingEventMessage = (event: { status: string; message?: string }) => {
+  const legacyMessages: Record<string, string> = {
+    'Return pickup has been arranged by MEDISPACE': 'MEDISPACE đã sắp xếp thu hồi hàng trả',
+    'Return pickup has been arranged': 'MEDISPACE đã sắp xếp thu hồi hàng trả',
+    'Returned items have been picked up from customer': 'Đã lấy hàng trả từ khách',
+    'Returned items are in transit to MEDISPACE': 'Hàng trả đang vận chuyển về MEDISPACE',
+    'Returned items have arrived at MEDISPACE': 'Hàng trả đã về MEDISPACE',
+    'Returned items have been received by MEDISPACE': 'MEDISPACE đã nhận hàng trả',
+    'Return pickup failed and needs follow-up': 'Thu hồi hàng trả chưa thành công, cần xử lý lại',
+    'Return pickup has been cancelled': 'Đã hủy lịch thu hồi hàng trả',
+  }
+  if (event.message && legacyMessages[event.message]) return legacyMessages[event.message]
+  return event.message || getTrackingStatusLabel(event.status)
+}
+
+const providerLabels: Record<string, string> = {
+  cod: 'COD',
+  vnpay: 'VNPay',
+  payos: 'PayOS',
+  bank_transfer: 'Chuyển khoản ngân hàng',
+  wallet: 'Ví điện tử',
+  manual: 'Ghi nhận thủ công',
+}
+
+const transactionStatusLabels: Record<string, string> = {
+  pending: 'Chờ thanh toán',
+  pending_collection: 'Chờ thu tiền',
+  paid: 'Đã thanh toán',
+  failed: 'Thất bại',
+  cancelled: 'Đã hủy',
+  expired: 'Hết hạn',
+  processing: 'Đang xử lý',
+  succeeded: 'Đã hoàn tiền',
+}
+
+export function ReturnRequestDetailsSheet({
+  isOpen,
+  onClose,
+  request,
+  orderSearchPath,
+  onReview,
+  onArrangeReturn,
+  onMockTracking,
+}: ReturnRequestDetailsSheetProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
@@ -107,7 +182,17 @@ export function ReturnRequestDetailsSheet({ isOpen, onClose, request, onReview }
                 </div>
                 <div className='flex justify-between items-center p-3 bg-white rounded-lg'>
                   <span className='text-sm text-gray-600'>Đơn hàng:</span>
-                  <span className='font-medium text-[#1E40AF] font-mono'>{request.orderNumber}</span>
+                  {orderSearchPath ? (
+                    <Link
+                      to={orderSearchPath}
+                      className='inline-flex items-center gap-1 font-medium text-[#1E40AF] font-mono hover:underline'
+                    >
+                      {request.orderNumber}
+                      <ExternalLink className='h-3.5 w-3.5' />
+                    </Link>
+                  ) : (
+                    <span className='font-medium text-[#1E40AF] font-mono'>{request.orderNumber}</span>
+                  )}
                 </div>
                 <div className='flex justify-between items-center p-3 bg-gradient-to-r from-blue-50 to-white rounded-lg'>
                   <span className='text-sm text-gray-600'>Ngày tạo:</span>
@@ -304,6 +389,78 @@ export function ReturnRequestDetailsSheet({ isOpen, onClose, request, onReview }
               </Card>
             )}
 
+            {/* Payment & Refund Ledger */}
+            {(request.paymentTransaction || request.refundTransactions?.length) && (
+              <Card className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
+                <CardHeader className='pb-3'>
+                  <CardTitle className='text-lg font-semibold text-blue-900 flex items-center gap-2'>
+                    <Wallet className='w-5 h-5 text-[#1E40AF]' />
+                    Thanh toán & hoàn tiền
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className='space-y-3'>
+                  {request.paymentTransaction && (
+                    <div className='rounded-xl border border-[#E8EDF5] bg-gradient-to-r from-blue-50 to-white p-4 space-y-2'>
+                      <div className='flex items-center justify-between'>
+                        <span className='text-sm text-gray-600'>Giao dịch thanh toán gốc</span>
+                        <Badge className='bg-green-100 text-green-700'>
+                          {transactionStatusLabels[request.paymentTransaction.status] || request.paymentTransaction.status}
+                        </Badge>
+                      </div>
+                      <div className='grid grid-cols-2 gap-3 text-sm'>
+                        <div>
+                          <p className='text-gray-500'>Phương thức</p>
+                          <p className='font-medium text-gray-900'>
+                            {providerLabels[request.paymentTransaction.provider] || request.paymentTransaction.provider}
+                          </p>
+                        </div>
+                        <div>
+                          <p className='text-gray-500'>Số tiền</p>
+                          <p className='font-medium text-[#1E40AF]'>{formatPrice(request.paymentTransaction.amount)}</p>
+                        </div>
+                        {request.paymentTransaction.providerOrderCode && (
+                          <div>
+                            <p className='text-gray-500'>Mã đơn thanh toán</p>
+                            <p className='font-mono text-gray-900'>{request.paymentTransaction.providerOrderCode}</p>
+                          </div>
+                        )}
+                        {request.paymentTransaction.providerTransactionId && (
+                          <div>
+                            <p className='text-gray-500'>Mã giao dịch cổng</p>
+                            <p className='font-mono text-gray-900'>{request.paymentTransaction.providerTransactionId}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {!!request.refundTransactions?.length && (
+                    <div className='space-y-2'>
+                      <p className='text-sm font-medium text-gray-700'>Giao dịch hoàn tiền</p>
+                      {request.refundTransactions.map((refund) => (
+                        <div key={refund._id} className='rounded-xl border border-emerald-100 bg-emerald-50/60 p-3 text-sm'>
+                          <div className='flex items-center justify-between gap-3'>
+                            <div>
+                              <p className='font-medium text-gray-900'>
+                                {providerLabels[refund.provider] || refund.provider} - {formatPrice(refund.amount)}
+                              </p>
+                              {refund.providerTransactionId && (
+                                <p className='font-mono text-xs text-gray-600'>Mã chứng từ: {refund.providerTransactionId}</p>
+                              )}
+                            </div>
+                            <Badge className='bg-emerald-100 text-emerald-700'>
+                              {transactionStatusLabels[refund.status] || refund.status}
+                            </Badge>
+                          </div>
+                          {refund.adminNote && <p className='mt-2 text-gray-600'>{refund.adminNote}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
             {/* Review Notes */}
             {request.reviewNotes && (
               <Card className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-green-200'>
@@ -317,6 +474,111 @@ export function ReturnRequestDetailsSheet({ isOpen, onClose, request, onReview }
                   <div className='bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-xl border border-green-200'>
                     <p className='text-green-800'>{request.reviewNotes}</p>
                   </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Return Pickup Info */}
+            {request.returnShippingInfo && (
+              <Card className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
+                <CardHeader className='pb-3'>
+                  <CardTitle className='text-lg font-semibold text-blue-900 flex items-center gap-2'>
+                    <Truck className='w-5 h-5 text-[#1E40AF]' />
+                    Thông tin thu hồi
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className='space-y-3'>
+                  {request.returnShippingInfo.trackingNumber && (
+                    <div className='flex justify-between items-center p-3 bg-gradient-to-r from-blue-50 to-white rounded-lg'>
+                      <span className='text-sm text-gray-600'>Mã thu hồi nội bộ:</span>
+                      <span className='font-semibold text-blue-900 font-mono'>{request.returnShippingInfo.trackingNumber}</span>
+                    </div>
+                  )}
+                  {request.returnShippingInfo.carrierTrackingCode && (
+                    <div className='flex justify-between items-center p-3 bg-white rounded-lg'>
+                      <span className='text-sm text-gray-600'>Mã vận đơn hãng:</span>
+                      <span className='font-semibold text-blue-900 font-mono'>{request.returnShippingInfo.carrierTrackingCode}</span>
+                    </div>
+                  )}
+                  {request.returnShippingInfo.trackingUrl && (
+                    <div className='flex justify-between items-center p-3 bg-gradient-to-r from-blue-50 to-white rounded-lg'>
+                      <span className='text-sm text-gray-600'>Theo dõi vận chuyển:</span>
+                      <a
+                        href={request.returnShippingInfo.trackingUrl}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className='inline-flex items-center gap-1 font-medium text-[#1E40AF] hover:underline'
+                      >
+                        Mở tracking
+                        <ExternalLink className='h-3.5 w-3.5' />
+                      </a>
+                    </div>
+                  )}
+                  {request.returnShippingInfo.trackingStatus && (
+                    <div className='flex justify-between items-center p-3 bg-white rounded-lg'>
+                      <span className='text-sm text-gray-600'>Trạng thái tracking:</span>
+                      <span className='font-medium text-gray-900'>{getTrackingStatusLabel(request.returnShippingInfo.trackingStatus)}</span>
+                    </div>
+                  )}
+                  {request.returnShippingInfo.carrier && (
+                    <div className='flex justify-between items-center p-3 bg-white rounded-lg'>
+                      <span className='text-sm text-gray-600'>Đơn vị thu hồi:</span>
+                      <span className='font-medium text-gray-900'>{getCarrierDisplayName(request.returnShippingInfo.carrier)}</span>
+                    </div>
+                  )}
+                  {(request.returnShippingInfo.arrangedAt || request.returnShippingInfo.shippedAt) && (
+                    <div className='flex justify-between items-center p-3 bg-gradient-to-r from-blue-50 to-white rounded-lg'>
+                      <span className='text-sm text-gray-600'>Thời điểm sắp xếp:</span>
+                      <span className='font-medium text-gray-900'>
+                        {formatDate(request.returnShippingInfo.arrangedAt || request.returnShippingInfo.shippedAt || '')}
+                      </span>
+                    </div>
+                  )}
+                  {request.returnShippingInfo.pickupNotes && (
+                    <div className='p-3 bg-white rounded-lg'>
+                      <span className='text-sm text-gray-600 block mb-1'>Ghi chú thu hồi:</span>
+                      <p className='text-gray-900'>{request.returnShippingInfo.pickupNotes}</p>
+                    </div>
+                  )}
+                  {!!request.returnShippingInfo.trackingEvents?.length && (
+                    <div className='space-y-2 rounded-lg bg-white p-3'>
+                      <span className='text-sm text-gray-600 block'>Nhật ký tracking:</span>
+                      {request.returnShippingInfo.trackingEvents.map((event, index) => (
+                        <div key={`${event.status}-${event.occurredAt}-${index}`} className='border-l-2 border-[#BFDBFE] pl-3 text-sm'>
+                          <p className='font-medium text-gray-900'>{getTrackingEventMessage(event)}</p>
+                          <p className='text-xs text-gray-500'>{formatDate(event.occurredAt)}</p>
+                          {event.location && <p className='text-xs text-gray-500'>{event.location}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {request.returnShippingInfo.carrier === 'mock_carrier' &&
+                    request.status === 'awaiting_return' &&
+                    onMockTracking && (
+                      <div className='flex flex-wrap gap-2 rounded-lg bg-[#F8FAFB] p-3'>
+                        <Button
+                          size='sm'
+                          variant='outline'
+                          onClick={() => onMockTracking(request, 'picked_up', 'Đã lấy hàng trả từ khách')}
+                        >
+                          Đã lấy hàng
+                        </Button>
+                        <Button
+                          size='sm'
+                          variant='outline'
+                          onClick={() => onMockTracking(request, 'in_transit', 'Hàng trả đang vận chuyển về MEDISPACE')}
+                        >
+                          Đang vận chuyển
+                        </Button>
+                        <Button
+                          size='sm'
+                          className='bg-[#0A2463] text-white hover:bg-[#071A49] hover:text-white'
+                          onClick={() => onMockTracking(request, 'delivered_to_store', 'Hàng trả đã về MEDISPACE')}
+                        >
+                          Đã về MEDISPACE
+                        </Button>
+                      </div>
+                    )}
                 </CardContent>
               </Card>
             )}
@@ -361,6 +623,21 @@ export function ReturnRequestDetailsSheet({ isOpen, onClose, request, onReview }
                 >
                   <CheckCircle className='w-4 h-4 mr-2' />
                   Duyệt yêu cầu
+                </Button>
+              </div>
+            )}
+
+            {onArrangeReturn && request.status === 'approved' && (
+              <div className='sticky bottom-0 bg-white border-t border-[#E8EDF5] p-4 -mx-2 mt-6 flex gap-3 justify-end'>
+                <Button
+                  className='bg-[#0A2463] hover:!bg-[#071A49] !text-white'
+                  onClick={() => {
+                    onArrangeReturn(request)
+                    onClose()
+                  }}
+                >
+                  <Truck className='w-4 h-4 mr-2' />
+                  Sắp xếp thu hồi
                 </Button>
               </div>
             )}

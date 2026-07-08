@@ -27,6 +27,17 @@ export enum PaymentMethod {
   Credit = 'credit',
 }
 
+export type OrderReturnStatus =
+  | 'none'
+  | 'requested'
+  | 'approved'
+  | 'awaiting_return'
+  | 'received'
+  | 'refund_processing'
+  | 'completed'
+  | 'rejected'
+  | 'cancelled'
+
 export interface OrderItem {
   id: string
   productId: string
@@ -98,6 +109,10 @@ export interface Order {
 
   // Status
   status: OrderStatus
+  returnStatus?: OrderReturnStatus
+  returnRequestIds?: string[]
+  latestReturnRequestId?: string
+  returnUpdatedAt?: string
   notes?: string
   cancelReason?: string
 

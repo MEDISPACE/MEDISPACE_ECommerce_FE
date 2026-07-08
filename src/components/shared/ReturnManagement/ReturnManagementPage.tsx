@@ -10,6 +10,7 @@ import {
   Check,
   X,
   Package,
+  Truck,
   CreditCard,
   AlertTriangle,
   Search,
@@ -44,6 +45,9 @@ import { ReturnStatus as ReturnStatusEnum } from '../../../types/returnRequest'
 import { StatsCard, type StatCardConfig } from '../../../utils/useStatsCards'
 import { PaginationComponent } from '../PaginationComponent'
 import { ReturnRequestDetailsSheet } from './ReturnRequestDetailsSheet'
+import ahamoveLogo from '../../../assets/ahamoveLogo.svg'
+import GHNLogo from '../../../assets/GHN_Logo.png'
+import GHTKLogo from '../../../assets/GHTKLogo.svg'
 
 interface ReturnManagementPageProps {
   role?: 'admin' | 'pharmacist'
@@ -62,9 +66,63 @@ const statusColors: Record<ReturnStatus, { bg: string; text: string }> = {
   cancelled: { bg: 'bg-gray-100', text: 'text-gray-800' },
 }
 
+const paymentProviderLabels: Record<string, string> = {
+  cod: 'COD',
+  vnpay: 'VNPay',
+  payos: 'PayOS',
+  bank_transfer: 'Chuyển khoản ngân hàng',
+  wallet: 'Ví điện tử',
+  manual: 'Ghi nhận thủ công',
+}
+
+const refundMethodLabels: Record<string, string> = {
+  original: 'Hoàn về phương thức thanh toán ban đầu',
+  bank_transfer: 'Chuyển khoản ngân hàng',
+  wallet: 'Ví điện tử',
+  manual: 'Ghi nhận thủ công',
+}
+
+const paymentStatusLabels: Record<string, string> = {
+  pending: 'Chờ thanh toán',
+  pending_collection: 'Chờ thu tiền',
+  paid: 'Đã thanh toán',
+  failed: 'Thất bại',
+  cancelled: 'Đã hủy',
+  expired: 'Hết hạn',
+}
+
+const returnCarrierOptions = [
+  {
+    value: 'mock_carrier',
+    label: 'MEDISPACE Delivery',
+    description: 'Đội thu hồi nội bộ MEDISPACE',
+    recommended: true,
+  },
+  {
+    value: 'ghn',
+    label: 'GHN',
+    description: 'Giao hàng nhanh toàn quốc',
+    logo: GHNLogo,
+  },
+  {
+    value: 'ghtk',
+    label: 'GHTK',
+    description: 'Giao hàng tiết kiệm toàn quốc',
+    logo: GHTKLogo,
+  },
+  {
+    value: 'ahamove',
+    label: 'Ahamove',
+    description: 'Thu hồi nhanh trong nội thành',
+    logo: ahamoveLogo,
+  },
+]
+
 export function ReturnManagementPage({ role = 'admin' }: ReturnManagementPageProps) {
   const queryClient = useQueryClient()
   const basePath = role === 'admin' ? '/admin' : '/pharmacist'
+  const canProcessRefund = role === 'admin'
+  const canCompleteReturn = role === 'admin'
 
   // State
   const [searchQuery, setSearchQuery] = useState('')
@@ -80,6 +138,10 @@ export function ReturnManagementPage({ role = 'admin' }: ReturnManagementPagePro
   const [reviewNotes, setReviewNotes] = useState('')
   const [rejectionReason, setRejectionReason] = useState('')
   const [approvedAmount, setApprovedAmount] = useState(0)
+
+  const [arrangeDialogOpen, setArrangeDialogOpen] = useState(false)
+  const [arrangeCarrier, setArrangeCarrier] = useState('mock_carrier')
+  const [arrangeNotes, setArrangeNotes] = useState('')
 
   const [receiveDialogOpen, setReceiveDialogOpen] = useState(false)
   const [itemCondition, setItemCondition] = useState<'good' | 'damaged' | 'opened' | 'unusable'>('good')
@@ -107,8 +169,13 @@ export function ReturnManagementPage({ role = 'admin' }: ReturnManagementPagePro
         page: currentPage,
         limit: pageSize,
         status: statusFilter !== 'all' ? (statusFilter as ReturnStatus) : undefined,
+        search: searchQuery.trim() || undefined,
       }),
   })
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [statusFilter, searchQuery])
 
   // Fetch stats
   const { data: stats } = useQuery({
@@ -143,6 +210,24 @@ export function ReturnManagementPage({ role = 'admin' }: ReturnManagementPagePro
     },
   })
 
+  const arrangeMutation = useMutation({
+    mutationFn: (data: { requestId: string; carrier?: string; notes?: string }) =>
+      returnRequestService.arrangeReturnShipping(data.requestId, {
+        carrier: data.carrier,
+        notes: data.notes,
+      }),
+    onSuccess: (updatedRequest) => {
+      toast.success(`Đã sắp xếp thu hồi. Mã vận đơn: ${updatedRequest.returnShippingInfo?.trackingNumber || 'đã tạo'}`)
+      queryClient.invalidateQueries({ queryKey: ['admin-return-requests'] })
+      queryClient.invalidateQueries({ queryKey: ['return-request-stats'] })
+      setArrangeDialogOpen(false)
+      resetArrangeForm()
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi sắp xếp thu hồi')
+    },
+  })
+
   const receiveMutation = useMutation({
     mutationFn: (data: { requestId: string; condition: string; conditionNotes?: string }) =>
       returnRequestService.receiveReturnItems(data.requestId, {
@@ -158,6 +243,28 @@ export function ReturnManagementPage({ role = 'admin' }: ReturnManagementPagePro
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Có lỗi xảy ra')
+    },
+  })
+
+  const mockTrackingMutation = useMutation({
+    mutationFn: (data: {
+      requestId: string
+      status: 'picked_up' | 'in_transit' | 'delivered_to_store'
+      message: string
+    }) =>
+      returnRequestService.updateMockReturnTracking(data.requestId, {
+        status: data.status,
+        message: data.message,
+        location: 'MEDISPACE Demo Hub',
+      }),
+    onSuccess: (updatedRequest) => {
+      toast.success('Đã cập nhật tracking thu hồi')
+      setSelectedRequest(updatedRequest)
+      queryClient.invalidateQueries({ queryKey: ['admin-return-requests'] })
+      queryClient.invalidateQueries({ queryKey: ['return-request-stats'] })
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Không thể cập nhật tracking')
     },
   })
 
@@ -205,6 +312,12 @@ export function ReturnManagementPage({ role = 'admin' }: ReturnManagementPagePro
     setSelectedRequest(null)
   }
 
+  const resetArrangeForm = () => {
+    setArrangeCarrier('mock_carrier')
+    setArrangeNotes('')
+    setSelectedRequest(null)
+  }
+
   const resetReceiveForm = () => {
     setItemCondition('good')
     setConditionNotes('')
@@ -235,14 +348,28 @@ export function ReturnManagementPage({ role = 'admin' }: ReturnManagementPagePro
     }
   }
 
+  const handleArrangeReturn = (request: ReturnRequest) => {
+    setSelectedRequest(request)
+    setArrangeCarrier(request.returnShippingInfo?.carrier || 'mock_carrier')
+    setArrangeNotes(request.returnShippingInfo?.pickupNotes || '')
+    setArrangeDialogOpen(true)
+  }
+
   const handleReceive = (request: ReturnRequest) => {
     setSelectedRequest(request)
     setReceiveDialogOpen(true)
   }
 
-  const handleRefund = (request: ReturnRequest) => {
-    setSelectedRequest(request)
-    setRefundAmount(request.approvedAmount || request.requestedAmount)
+  const handleRefund = async (request: ReturnRequest) => {
+    try {
+      const detailedRequest = await returnRequestService.getReturnRequestByIdAdmin(request._id)
+      setSelectedRequest(detailedRequest)
+      setRefundAmount(detailedRequest.approvedAmount || detailedRequest.requestedAmount)
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Không thể tải thông tin thanh toán gốc')
+      setSelectedRequest(request)
+      setRefundAmount(request.approvedAmount || request.requestedAmount)
+    }
     setRefundDialogOpen(true)
   }
 
@@ -250,8 +377,22 @@ export function ReturnManagementPage({ role = 'admin' }: ReturnManagementPagePro
     completeMutation.mutate(request._id)
   }
 
-  const handleViewDetails = (request: ReturnRequest) => {
-    setSelectedRequest(request)
+  const handleMockTracking = (
+    request: ReturnRequest,
+    status: 'picked_up' | 'in_transit' | 'delivered_to_store',
+    message: string,
+  ) => {
+    mockTrackingMutation.mutate({ requestId: request._id, status, message })
+  }
+
+  const handleViewDetails = async (request: ReturnRequest) => {
+    try {
+      const detailedRequest = await returnRequestService.getReturnRequestByIdAdmin(request._id)
+      setSelectedRequest(detailedRequest)
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Không thể tải chi tiết giao dịch hoàn trả')
+      setSelectedRequest(request)
+    }
     setDetailsOpen(true)
   }
 
@@ -318,10 +459,22 @@ export function ReturnManagementPage({ role = 'admin' }: ReturnManagementPagePro
       color: 'blue',
     },
     {
+      title: 'Đang thu hồi',
+      value: stats?.awaitingReturn || 0,
+      icon: Truck,
+      color: 'blue',
+    },
+    {
       title: 'Đã từ chối',
       value: stats?.rejected || 0,
       icon: XCircle,
       color: 'red',
+    },
+    {
+      title: 'Đang hoàn tiền',
+      value: stats?.refundProcessing || 0,
+      icon: CreditCard,
+      color: 'purple',
     },
     {
       title: 'Hoàn tất',
@@ -368,7 +521,7 @@ export function ReturnManagementPage({ role = 'admin' }: ReturnManagementPagePro
       </div>
 
       {/* Stats Cards */}
-      <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+      <div className='grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4'>
         {statsCards.map((stat, idx) => (
           <StatsCard key={idx} config={stat} />
         ))}
@@ -557,7 +710,19 @@ export function ReturnManagementPage({ role = 'admin' }: ReturnManagementPagePro
                           </>
                         )}
 
-                        {(request.status === 'approved' || request.status === 'awaiting_return') && (
+                        {request.status === 'approved' && (
+                          <Button
+                            variant='ghost'
+                            size='sm'
+                            className='text-[#1E40AF] hover:text-[#1E40AF] hover:bg-[#F0F6FF]'
+                            onClick={() => handleArrangeReturn(request)}
+                            title='Sắp xếp thu hồi'
+                          >
+                            <Truck className='h-4 w-4' />
+                          </Button>
+                        )}
+
+                        {request.status === 'awaiting_return' && (
                           <Button
                             variant='ghost'
                             size='sm'
@@ -569,7 +734,7 @@ export function ReturnManagementPage({ role = 'admin' }: ReturnManagementPagePro
                           </Button>
                         )}
 
-                        {request.status === 'received' && (
+                        {canProcessRefund && request.status === 'received' && (
                           <Button
                             variant='ghost'
                             size='sm'
@@ -581,7 +746,7 @@ export function ReturnManagementPage({ role = 'admin' }: ReturnManagementPagePro
                           </Button>
                         )}
 
-                        {request.status === 'refund_processing' && (
+                        {canCompleteReturn && request.status === 'refund_processing' && (
                           <Button
                             variant='ghost'
                             size='sm'
@@ -713,6 +878,91 @@ export function ReturnManagementPage({ role = 'admin' }: ReturnManagementPagePro
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Arrange Return Pickup Dialog */}
+      <Dialog open={arrangeDialogOpen} onOpenChange={setArrangeDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Sắp xếp thu hồi hàng trả</DialogTitle>
+            <DialogDescription>
+              Yêu cầu: {selectedRequest?.requestNumber}. Mã vận đơn thu hồi sẽ được hệ thống tự tạo khi xác nhận.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className='space-y-4'>
+            <div>
+              <Label className='mb-2 block'>Đơn vị thu hồi</Label>
+              <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
+                {returnCarrierOptions.map((carrier) => {
+                  const selected = arrangeCarrier === carrier.value
+                  return (
+                    <button
+                      key={carrier.value}
+                      type='button'
+                      onClick={() => setArrangeCarrier(carrier.value)}
+                      className={`relative rounded-lg border p-3 text-left transition-all ${
+                        selected
+                          ? 'border-[#1E40AF] bg-[#F0F6FF] shadow-sm ring-2 ring-[#BFDBFE]'
+                          : 'border-[#E8EDF5] bg-white hover:border-[#BFDBFE] hover:bg-[#F8FAFC]'
+                      }`}
+                    >
+                      <div className='flex items-start justify-between gap-3'>
+                        <div className='flex items-center gap-2'>
+                          <span
+                            className={`flex h-9 w-9 items-center justify-center rounded-md border ${
+                              selected ? 'border-[#BFDBFE] bg-white text-[#1E40AF]' : 'border-[#E8EDF5] bg-white text-[#0A2463]'
+                            }`}
+                          >
+                            {carrier.logo ? (
+                              <img src={carrier.logo} alt={carrier.label} className='max-h-6 max-w-7 object-contain' />
+                            ) : (
+                              <Truck className='h-4 w-4' />
+                            )}
+                          </span>
+                          <div>
+                            <p className='font-semibold text-gray-900'>{carrier.label}</p>
+                          </div>
+                        </div>
+                        {selected && <CheckCircle className='h-5 w-5 text-[#1E40AF]' />}
+                      </div>
+                      <p className='mt-2 text-xs leading-5 text-gray-500'>{carrier.description}</p>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+            <div>
+              <Label className='mb-2 block'>Ghi chú thu hồi</Label>
+              <Textarea
+                value={arrangeNotes}
+                onChange={(e) => setArrangeNotes(e.target.value)}
+                placeholder='Ví dụ: gọi khách trước khi đến, thu hồi tại địa chỉ giao hàng...'
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant='outline' onClick={() => setArrangeDialogOpen(false)}>
+              Hủy
+            </Button>
+            <Button
+              className='bg-[#0A2463] text-white hover:bg-[#071A49] hover:text-white'
+              onClick={() => {
+                if (selectedRequest) {
+                  arrangeMutation.mutate({
+                    requestId: selectedRequest._id,
+                    carrier: arrangeCarrier.trim() || undefined,
+                    notes: arrangeNotes.trim() || undefined,
+                  })
+                }
+              }}
+              disabled={arrangeMutation.isPending}
+            >
+              {arrangeMutation.isPending ? 'Đang sắp xếp...' : 'Xác nhận thu hồi'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Receive Items Dialog */}
       <Dialog open={receiveDialogOpen} onOpenChange={setReceiveDialogOpen}>
         <DialogContent>
@@ -771,35 +1021,121 @@ export function ReturnManagementPage({ role = 'admin' }: ReturnManagementPagePro
 
       {/* Process Refund Dialog */}
       <Dialog open={refundDialogOpen} onOpenChange={setRefundDialogOpen}>
-        <DialogContent>
+        <DialogContent className='max-w-2xl'>
           <DialogHeader>
-            <DialogTitle>Xử lý hoàn tiền</DialogTitle>
-            <DialogDescription>Yêu cầu: {selectedRequest?.requestNumber}</DialogDescription>
+            <DialogTitle className='flex items-center gap-2 text-[#0A2463]'>
+              <CreditCard className='h-5 w-5' />
+              Xác nhận hoàn tiền
+            </DialogTitle>
+            <DialogDescription>
+              Kiểm tra giao dịch thanh toán gốc và chứng từ hoàn tiền trước khi xác nhận.
+            </DialogDescription>
           </DialogHeader>
 
-          <div className='space-y-4'>
-            <div>
-              <Label className='mb-2 block'>Số tiền hoàn</Label>
-              <Input type='number' value={refundAmount} onChange={(e) => setRefundAmount(Number(e.target.value))} />
-              <p className='text-xs text-gray-500 mt-1'>
-                Đã duyệt: {formatPrice(selectedRequest?.approvedAmount || 0)}
+          <div className='space-y-5'>
+            <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
+              <div className='rounded-lg border border-gray-200 bg-gray-50 p-3'>
+                <p className='text-xs font-medium text-gray-500'>Yêu cầu hoàn hàng</p>
+                <p className='mt-1 font-semibold text-gray-900'>{selectedRequest?.requestNumber || '-'}</p>
+              </div>
+              <div className='rounded-lg border border-gray-200 bg-gray-50 p-3'>
+                <p className='text-xs font-medium text-gray-500'>Đơn hàng mua</p>
+                <p className='mt-1 font-semibold text-gray-900'>{selectedRequest?.orderNumber || '-'}</p>
+              </div>
+            </div>
+
+            <div className='rounded-lg border border-gray-200 p-4'>
+              <div className='mb-3 flex items-center justify-between gap-3'>
+                <div>
+                  <p className='font-semibold text-gray-900'>Giao dịch thanh toán gốc</p>
+                  <p className='text-xs text-gray-500'>Căn cứ để đối soát và ghi nhận hoàn tiền</p>
+                </div>
+                <Badge className='bg-[#E8EDF5] text-[#0A2463] hover:bg-[#E8EDF5]'>
+                  {selectedRequest?.paymentTransaction
+                    ? paymentStatusLabels[selectedRequest.paymentTransaction.status] || selectedRequest.paymentTransaction.status
+                    : 'Cần kiểm tra'}
+                </Badge>
+              </div>
+
+              {selectedRequest?.paymentTransaction ? (
+                <div className='grid grid-cols-1 gap-3 text-sm sm:grid-cols-2'>
+                  <div>
+                    <p className='text-gray-500'>Phương thức thanh toán</p>
+                    <p className='font-medium text-gray-900'>
+                      {paymentProviderLabels[selectedRequest.paymentTransaction.provider] ||
+                        selectedRequest.paymentTransaction.provider}
+                    </p>
+                  </div>
+                  <div>
+                    <p className='text-gray-500'>Số tiền đã thanh toán</p>
+                    <p className='font-medium text-gray-900'>
+                      {formatPrice(selectedRequest.paymentTransaction.amount || 0)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className='text-gray-500'>Mã đơn từ cổng thanh toán</p>
+                    <p className='font-medium text-gray-900'>{selectedRequest.paymentTransaction.providerOrderCode || '-'}</p>
+                  </div>
+                  <div>
+                    <p className='text-gray-500'>Mã giao dịch thanh toán</p>
+                    <p className='font-medium text-gray-900'>
+                      {selectedRequest.paymentTransaction.providerTransactionId || '-'}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className='rounded-md bg-amber-50 p-3 text-sm text-amber-800'>
+                  Chưa tìm thấy giao dịch thanh toán đã xác nhận cho đơn hàng này. Vui lòng kiểm tra trạng thái thanh toán của đơn hàng trước khi hoàn tiền.
+                </div>
+              )}
+            </div>
+
+            <div className='rounded-lg border border-gray-200 p-4'>
+              <p className='mb-3 font-semibold text-gray-900'>Thông tin hoàn tiền</p>
+              <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+                <div>
+                  <Label className='mb-2 block'>Số tiền hoàn</Label>
+                  <Input
+                    type='number'
+                    min={0}
+                    value={refundAmount}
+                    onChange={(e) => setRefundAmount(Number(e.target.value))}
+                  />
+                  <p className='mt-1 text-xs text-gray-500'>Đã duyệt: {formatPrice(selectedRequest?.approvedAmount || 0)}</p>
+                </div>
+                <div>
+                  <Label className='mb-2 block'>Phương thức hoàn tiền</Label>
+                  <div className='flex min-h-10 items-center rounded-md border border-gray-200 bg-gray-50 px-3 text-sm font-medium text-gray-900'>
+                    {refundMethodLabels[selectedRequest?.refundMethod || 'original'] || 'Theo phương thức đã duyệt'}
+                  </div>
+                </div>
+                <div className='sm:col-span-2'>
+                  <Label className='mb-2 block'>Mã chứng từ hoàn tiền</Label>
+                  <Input
+                    value={refundTransactionId}
+                    onChange={(e) => setRefundTransactionId(e.target.value)}
+                    placeholder='VD: RF-20260708-001 hoặc mã giao dịch ngân hàng'
+                  />
+                  <p className='mt-1 text-xs text-gray-500'>
+                    Dùng để đối soát sao kê, biên lai chuyển khoản hoặc mã hoàn từ cổng thanh toán. Nếu để trống, hệ thống sẽ dùng mã ghi sổ nội bộ.
+                  </p>
+                </div>
+                <div className='sm:col-span-2'>
+                  <Label className='mb-2 block'>Ghi chú xử lý</Label>
+                  <Textarea
+                    value={refundNotes}
+                    onChange={(e) => setRefundNotes(e.target.value)}
+                    placeholder='Nhập ghi chú đối soát, tài khoản nhận tiền hoặc nội dung chuyển khoản nếu cần'
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className='flex gap-2 rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-900'>
+              <AlertTriangle className='mt-0.5 h-4 w-4 shrink-0' />
+              <p>
+                Sau khi xác nhận, hệ thống sẽ ghi nhận giao dịch hoàn tiền cho yêu cầu này và cập nhật trạng thái hoàn tiền. Không thực hiện lại nếu chưa kiểm tra lịch sử đối soát.
               </p>
-            </div>
-            <div>
-              <Label className='mb-2 block'>Mã giao dịch (tùy chọn)</Label>
-              <Input
-                value={refundTransactionId}
-                onChange={(e) => setRefundTransactionId(e.target.value)}
-                placeholder='Mã giao dịch hoàn tiền...'
-              />
-            </div>
-            <div>
-              <Label className='mb-2 block'>Ghi chú</Label>
-              <Textarea
-                value={refundNotes}
-                onChange={(e) => setRefundNotes(e.target.value)}
-                placeholder='Ghi chú hoàn tiền...'
-              />
             </div>
           </div>
 
@@ -821,18 +1157,20 @@ export function ReturnManagementPage({ role = 'admin' }: ReturnManagementPagePro
               }}
               disabled={refundMutation.isPending || refundAmount <= 0}
             >
-              {refundMutation.isPending ? 'Đang xử lý...' : 'Xử lý hoàn tiền'}
+              {refundMutation.isPending ? 'Đang xử lý...' : 'Xác nhận hoàn tiền'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
       {/* Details Sheet */}
       <ReturnRequestDetailsSheet
         isOpen={detailsOpen}
         onClose={() => setDetailsOpen(false)}
         request={selectedRequest}
+        orderSearchPath={selectedRequest ? `${basePath}/orders?search=${selectedRequest.orderNumber}` : undefined}
         onReview={handleReview}
+        onArrangeReturn={handleArrangeReturn}
+        onMockTracking={handleMockTracking}
       />
     </div>
   )

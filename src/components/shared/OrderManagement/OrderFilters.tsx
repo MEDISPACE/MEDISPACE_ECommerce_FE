@@ -59,7 +59,7 @@ export function OrderFilters({
                 <SelectItem value='shipped'>🚚 Đã gửi hàng</SelectItem>
                 <SelectItem value='delivered'>✔️ Đã giao</SelectItem>
                 <SelectItem value='cancelled'>❌ Đã hủy</SelectItem>
-                <SelectItem value='returned'>↩️ Đã trả hàng</SelectItem>
+                <SelectItem value='returned'>↩️ Đổi/trả</SelectItem>
               </SelectContent>
             </Select>
 

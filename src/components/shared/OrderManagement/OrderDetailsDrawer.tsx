@@ -25,6 +25,17 @@ type OrderStatus =
   | 'returned'
 type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded' | 'partially_refunded'
 
+const returnStatusLabels: Record<string, string> = {
+  requested: 'Đã yêu cầu hoàn trả',
+  approved: 'Đã duyệt hoàn trả',
+  awaiting_return: 'Đang thu hồi hàng',
+  received: 'Đã nhận hàng trả',
+  refund_processing: 'Đang hoàn tiền',
+  completed: 'Hoàn trả hoàn tất',
+  rejected: 'Từ chối hoàn trả',
+  cancelled: 'Đã hủy hoàn trả',
+}
+
 export function OrderDetailsDrawer({ isOpen, onClose, order }: OrderDetailsDrawerProps) {
   const formatDate = (timestamp: string) => {
     return new Date(timestamp).toLocaleDateString('vi-VN', {
@@ -73,6 +84,14 @@ export function OrderDetailsDrawer({ isOpen, onClose, order }: OrderDetailsDrawe
     )
   }
 
+  const getReturnStatusBadge = (status?: string) => {
+    if (!status || status === 'none') return null
+    const terminalTone = status === 'completed' ? 'bg-green-100 text-green-700 border-green-200' : ''
+    const rejectedTone = ['rejected', 'cancelled'].includes(status) ? 'bg-red-100 text-red-700 border-red-200' : ''
+    const activeTone = !terminalTone && !rejectedTone ? 'bg-amber-100 text-amber-700 border-amber-200' : ''
+    return <Badge className={terminalTone || rejectedTone || activeTone}>{returnStatusLabels[status] || status}</Badge>
+  }
+
   if (!order) return null
 
   return (
@@ -107,6 +126,12 @@ export function OrderDetailsDrawer({ isOpen, onClose, order }: OrderDetailsDrawe
                 <span className='text-sm text-gray-600'>Trạng thái:</span>
                 {getOrderStatusBadge(order.orderStatus as OrderStatus)}
               </div>
+              {order.returnStatus && order.returnStatus !== 'none' && (
+                <div className='flex justify-between items-center p-3 bg-white rounded-lg'>
+                  <span className='text-sm text-gray-600'>Hoàn trả:</span>
+                  {getReturnStatusBadge(order.returnStatus)}
+                </div>
+              )}
               <div className='flex justify-between items-center p-3 bg-white rounded-lg'>
                 <span className='text-sm text-gray-600'>Thanh toán:</span>
                 {getPaymentStatusBadge(order.paymentStatus as PaymentStatus, order.paymentMethod)}
@@ -119,7 +144,7 @@ export function OrderDetailsDrawer({ isOpen, onClose, order }: OrderDetailsDrawe
               )}
               {(order.shippingMethod || order.deliveryMethod) && (
                 <div className='flex justify-between items-center p-3 bg-white rounded-lg'>
-                  <span className='text-sm text-gray-600'>V?n chuy?n:</span>
+                  <span className='text-sm text-gray-600'>Vận chuyển:</span>
                   <ShippingMethodDisplay
                     method={order.shippingMethod || order.deliveryMethod}
                     className='justify-end gap-2'

@@ -7,6 +7,8 @@ import { Package } from 'lucide-react'
 import { Button } from '~/components/ui/button'
 import { Link } from 'react-router'
 
+const ACTIVE_RETURN_STATUSES = new Set(['requested', 'approved', 'awaiting_return', 'received', 'refund_processing', 'completed'])
+
 export default function CreateReturnRequestPage() {
   const { orderId } = useParams()
   const [order, setOrder] = useState<any>(null)
@@ -31,11 +33,18 @@ export default function CreateReturnRequestPage() {
           return
         }
 
+        if (ACTIVE_RETURN_STATUSES.has(fetchedOrder.returnStatus || '') && fetchedOrder.latestReturnRequestId) {
+          setOrder({ latestReturnRequestId: fetchedOrder.latestReturnRequestId })
+          setError('Đơn hàng này đã có yêu cầu đổi/trả đang được xử lý')
+          return
+        }
+
         // Transform order for ReturnRequestForm
         const transformedOrder = {
           _id: fetchedOrder.id,
           orderNumber: fetchedOrder.orderNumber,
           deliveredAt: fetchedOrder.deliveredAt || fetchedOrder.updatedAt,
+          total: fetchedOrder.total,
           items: fetchedOrder.items.map((item: any) => ({
             productId: item.productId,
             name: item.product?.name || item.productName || 'Sản phẩm',
@@ -78,9 +87,16 @@ export default function CreateReturnRequestPage() {
         <Package className='h-16 w-16 text-muted-foreground mx-auto mb-4' />
         <h2 className='text-xl font-medium mb-2'>{error || 'Không tìm thấy đơn hàng'}</h2>
         <p className='text-muted-foreground mb-4'>Vui lòng quay lại và thử lại.</p>
-        <Link to='/account/orders'>
-          <Button>Quay lại đơn hàng</Button>
-        </Link>
+        <div className='flex flex-col items-center justify-center gap-3 sm:flex-row'>
+          {order?.latestReturnRequestId && (
+            <Link to={`/account/returns/${order.latestReturnRequestId}`}>
+              <Button>Xem yêu cầu hoàn trả</Button>
+            </Link>
+          )}
+          <Link to='/account/orders'>
+            <Button variant={order?.latestReturnRequestId ? 'outline' : 'default'}>Quay lại đơn hàng</Button>
+          </Link>
+        </div>
       </div>
     )
   }

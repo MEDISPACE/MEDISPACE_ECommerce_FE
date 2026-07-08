@@ -23,12 +23,13 @@ import { OrderFilters } from './OrderFilters'
 import { OrderStatsCards } from './OrderStatsCards'
 import { OrderTable } from './OrderTable'
 import { OrderDetailsDrawer } from './OrderDetailsDrawer'
-import type { Order, OrderStatus, PaymentStatus, UserRole } from './types'
+import type { Order, OrderReturnStatus, OrderStatus, PaymentStatus, UserRole } from './types'
 import { PaginationComponent } from '../PaginationComponent'
 import { orderService as pharmacistOrderService } from '../../../services/pharmacist/order.service'
 import { orderService as generalOrderService } from '../../../services/orderService'
 import adminService from '../../../services/adminService'
 import type { Order as ApiOrder } from '../../../services/pharmacist/dashboard.service'
+import { getErrorMessage } from '../../../constants/errorMapping'
 
 import { OrderStatus as OrderStatusEnum } from '../../../types/order'
 
@@ -50,9 +51,22 @@ const formatDate = (dateValue: string | Date | undefined): string => {
   }
 }
 
+const toUiOrderStatus = (status?: string): OrderStatus => {
+  if (status === 'shipped') return 'shipping'
+  return (status || 'pending') as OrderStatus
+}
+
+const getPersonName = (person?: any) => {
+  const fullName = person?.fullName || `${person?.firstName ?? ''} ${person?.lastName ?? ''}`.trim()
+  return fullName || person?.email || undefined
+}
+
 // Map API order to component order format
 const mapApiOrderToOrder = (apiOrder: ApiOrder): Order => {
   const addr = apiOrder.shippingAddress
+  const assignedPharmacist = (apiOrder as any).assignedPharmacist
+  const createdByPharmacist = (apiOrder as any).createdByPharmacist || (apiOrder as any).createdByInfo
+  const pharmacistName = getPersonName(assignedPharmacist) || getPersonName(createdByPharmacist)
   return {
     id: apiOrder._id,
     orderNumber: apiOrder.orderNumber,
@@ -60,9 +74,15 @@ const mapApiOrderToOrder = (apiOrder: ApiOrder): Order => {
     customerPhone: addr?.phone ?? '',
     products: apiOrder.itemCount,
     total: apiOrder.totalAmount,
-    status: apiOrder.orderStatus as OrderStatus,
+    status: toUiOrderStatus(apiOrder.orderStatus),
     paymentStatus: apiOrder.paymentStatus as PaymentStatus,
+    returnStatus: (apiOrder.returnStatus || 'none') as OrderReturnStatus,
+    latestReturnRequestId: apiOrder.latestReturnRequestId,
+    returnUpdatedAt: apiOrder.returnUpdatedAt,
     date: formatDate(apiOrder.createdAt),
+    pharmacistName,
+    pharmacistPhone: assignedPharmacist?.phoneNumber || createdByPharmacist?.phoneNumber,
+    pharmacistSource: assignedPharmacist?._id ? 'assigned' : createdByPharmacist?._id ? 'created' : 'unassigned',
   }
 }
 
@@ -73,7 +93,7 @@ const ORDER_STATUS_OPTIONS: Array<{ value: OrderStatus; label: string }> = [
   { value: 'shipping', label: 'Đang giao' },
   { value: 'delivered', label: 'Đã giao' },
   { value: 'cancelled', label: 'Đã hủy' },
-  { value: 'returned', label: 'Đã trả hàng' },
+  { value: 'returned', label: 'Đổi/trả' },
 ]
 
 const PAYMENT_STATUS_OPTIONS: Array<{ value: PaymentStatus; label: string }> = [
@@ -83,6 +103,14 @@ const PAYMENT_STATUS_OPTIONS: Array<{ value: PaymentStatus; label: string }> = [
   { value: 'refunded', label: 'Đã hoàn tiền' },
   { value: 'partially_refunded', label: 'Hoàn tiền một phần' },
 ]
+
+const toApiOrderStatus = (status?: OrderStatus) => {
+  if (!status) return undefined
+  return status === 'shipping' ? 'shipped' : status
+}
+
+const RETURN_FLOW_STATUSES = new Set(['requested', 'approved', 'awaiting_return', 'received', 'refund_processing', 'completed'])
+const isOrderInReturnFlow = (order: Order) => order.status === 'returned' || RETURN_FLOW_STATUSES.has(order.returnStatus || '')
 
 const TERMINAL_ORDER_STATUSES: OrderStatus[] = ['delivered', 'cancelled', 'returned']
 const TERMINAL_PAYMENT_STATUSES: PaymentStatus[] = ['refunded']
@@ -216,15 +244,17 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
             customerPhone: order.shippingAddress?.phone ?? '',
             products: order.items.length,
             total: order.total,
-            status: order.status.toLowerCase() as OrderStatus,
+            status: toUiOrderStatus(order.status.toLowerCase()),
             paymentStatus: order.paymentStatus.toLowerCase() as PaymentStatus,
             date: formatDate(order.createdAt),
           }))
           setOrders(mappedOrders)
         }
       } catch (error) {
+        const apiError = error as { response?: { data?: { message?: string } } }
+        const message = apiError.response?.data?.message
         toast.error('Không thể tải danh sách đơn hàng', {
-          description: 'Vui lòng thử lại sau',
+          description: message ? getErrorMessage(message) : 'Vui lòng thử lại sau',
         })
       } finally {
         setLoading(false)
@@ -247,7 +277,8 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
     total: orders.length,
     pending: orders.filter((o) => o.status === 'pending').length,
     processing: orders.filter((o) => o.status === 'processing' || o.status === 'shipping').length,
-    delivered: orders.filter((o) => o.status === 'delivered').length,
+    delivered: orders.filter((o) => o.status === 'delivered' && !isOrderInReturnFlow(o)).length,
+    returned: orders.filter(isOrderInReturnFlow).length,
     cancelled: orders.filter((o) => o.status === 'cancelled').length,
     revenue: orders.filter((o) => o.status !== 'cancelled').reduce((sum, o) => sum + o.total, 0),
     avgOrder:
@@ -261,7 +292,13 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
       (order.orderNumber && order.orderNumber.toLowerCase().includes(searchQuery.toLowerCase())) ||
       order.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.customerPhone.includes(searchQuery)
-    const matchesStatus = filterStatus === 'all' || order.status === filterStatus
+    const matchesStatus =
+      filterStatus === 'all' ||
+      (filterStatus === 'returned'
+        ? isOrderInReturnFlow(order)
+        : filterStatus === 'delivered'
+          ? order.status === 'delivered' && !isOrderInReturnFlow(order)
+          : order.status === filterStatus)
     const matchesPayment = filterPayment === 'all' || order.paymentStatus === filterPayment
     return matchesSearch && matchesStatus && matchesPayment
   })
@@ -315,6 +352,7 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
     if (!currentOrder || !newStatus) return
 
     try {
+      const statusToSend = newStatus !== currentOrder.status ? toApiOrderStatus(newStatus) : undefined
       // Send payment status (only if different from current)
       const paymentStatusToSend = newPaymentStatus !== currentOrder.paymentStatus ? newPaymentStatus : undefined
 
@@ -322,14 +360,14 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
       if (role === 'pharmacist') {
         // Use pharmacist-specific API - backend expects 'status' not 'orderStatus'
         updatedOrder = await pharmacistOrderService.updateStatus(currentOrder.id, {
-          status: newStatus,
+          status: statusToSend,
           paymentStatus: paymentStatusToSend,
           notes: notes || undefined,
         })
       } else if (role === 'admin') {
         // Use admin-specific API
         updatedOrder = await adminService.updateOrderStatus(currentOrder.id, {
-          status: newStatus,
+          status: statusToSend,
           paymentStatus: paymentStatusToSend,
           notes: notes || undefined,
         })
@@ -355,8 +393,11 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
           : updatedOrder?.id
             ? {
                 ...currentOrder,
-                status: updatedOrder.status as OrderStatus,
+                status: toUiOrderStatus(updatedOrder.status),
                 paymentStatus: updatedOrder.paymentStatus as PaymentStatus,
+                returnStatus: updatedOrder.returnStatus || currentOrder.returnStatus,
+                latestReturnRequestId: updatedOrder.latestReturnRequestId || currentOrder.latestReturnRequestId,
+                returnUpdatedAt: updatedOrder.returnUpdatedAt || currentOrder.returnUpdatedAt,
                 total: updatedOrder.total ?? currentOrder.total,
               }
             : null
@@ -382,8 +423,10 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
       setNotes('')
       setNewPaymentStatus('')
     } catch (error) {
+      const apiError = error as { response?: { data?: { message?: string } } }
+      const message = apiError.response?.data?.message
       toast.error('Cập nhật thất bại', {
-        description: (error as any)?.response?.data?.message || 'Vui lòng thử lại sau',
+        description: message ? getErrorMessage(message) : 'Vui lòng thử lại sau',
       })
     }
   }
