@@ -34,6 +34,7 @@ import {
   getDiscountPercentage,
   isProductOnSale,
   getProductPrice,
+  isProductInStock,
 } from '../../utils/productHelpers'
 import { getProductPrice as getPriceFromVariants } from '../../utils/priceUtils'
 import { getCategoryIcon } from '../../utils/categoryIcons'
@@ -291,7 +292,8 @@ export function CategoryPage() {
     salePrice: getProductSalePrice(product) || 0,
     rating: product.rating || 0,
     reviewCount: product.reviewCount || 0,
-    inStock: product.stockQuantity > 0,
+    inStock: isProductInStock(product),
+    status: product.status,
     isPrescription: product.requiresPrescription,
     isOnSale: isProductOnSale(product),
     discountPercentage: getDiscountPercentage(product),

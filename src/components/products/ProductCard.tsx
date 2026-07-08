@@ -28,6 +28,7 @@ interface ProductCardProps {
     rating: number
     reviewCount: number
     inStock: boolean
+    status?: 'active' | 'discontinued' | 'out_of_stock'
     isPrescription?: boolean
     isOnSale?: boolean
     discountPercentage?: number
@@ -69,6 +70,19 @@ export function ProductCard({
     : (currentVariant?.originalPrice || product.originalPrice)
   const hasDiscount = currentOriginalPrice && currentOriginalPrice > currentPrice
   const hasCampaign = !!product.campaign
+  const statusLabel =
+    product.status === 'discontinued'
+      ? 'Ngừng kinh doanh'
+      : product.status === 'out_of_stock' || !product.inStock
+        ? 'Hết hàng'
+        : 'Đang bán'
+  const statusClass =
+    product.status === 'discontinued'
+      ? 'bg-orange-100 text-orange-700 border-orange-200'
+      : product.status === 'out_of_stock' || !product.inStock
+        ? 'bg-red-100 text-red-700 border-red-200'
+        : 'bg-green-100 text-green-700 border-green-200'
+  const unavailableLabel = product.status === 'discontinued' ? 'Ngừng kinh doanh' : 'Hết hàng'
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -118,13 +132,14 @@ export function ProductCard({
                     {/* Out of stock overlay */}
                     {!product.inStock && (
                       <div className='absolute inset-0 bg-black/40 flex items-center justify-center rounded-xl'>
-                        <div className='bg-gray-600 text-white px-3 py-1.5 rounded-full text-xs'>Hết hàng</div>
+                        <div className='bg-gray-700 text-white px-3 py-1.5 rounded-full text-xs'>{unavailableLabel}</div>
                       </div>
                     )}
                   </div>
 
                   {/* Badges */}
-                  <div className='absolute top-2 left-2'>
+                  <div className='absolute top-2 left-2 flex flex-col gap-1'>
+                    <Badge className={`text-xs px-2 py-0.5 rounded-full border ${statusClass}`}>{statusLabel}</Badge>
                     {product.inStock && product.isPrescription && <RxBadge size='sm' />}
                   </div>
 
@@ -190,7 +205,7 @@ export function ProductCard({
                                 {currentOriginalPrice?.toLocaleString('vi-VN')}đ
                               </span>
                             )}
-                            {!product.inStock && <span className='text-xs text-red-500 font-medium'>Tạm hết hàng</span>}
+                            {!product.inStock && <span className='text-xs text-red-500 font-medium'>{unavailableLabel}</span>}
                           </div>
                         </>
                       )}
@@ -209,7 +224,7 @@ export function ProductCard({
 
                       {!product.inStock ? (
                         <Button size='sm' disabled className='bg-gray-300 text-gray-500 cursor-not-allowed h-9 px-4'>
-                          Hết hàng
+                          {unavailableLabel}
                         </Button>
                       ) : isConsultationRequired ? (
                         <Button
@@ -266,14 +281,15 @@ export function ProductCard({
               {!product.inStock && (
                 <div className='absolute inset-0 bg-black/40 flex items-center justify-center'>
                   <div className='bg-gray-600 text-white w-16 h-16 rounded-full flex items-center justify-center text-xs'>
-                    Hết hàng
+                    {unavailableLabel}
                   </div>
                 </div>
               )}
             </div>
 
             {/* Top badges */}
-            <div className='absolute top-3 left-3'>
+            <div className='absolute top-3 left-3 flex flex-col gap-1'>
+              <Badge className={`text-xs px-2 py-0.5 rounded-full border ${statusClass}`}>{statusLabel}</Badge>
               {product.inStock && product.isPrescription && <RxBadge size='sm' />}
             </div>
 
@@ -342,7 +358,7 @@ export function ProductCard({
                       {currentOriginalPrice?.toLocaleString('vi-VN')}đ
                     </span>
                   )}
-                  {!product.inStock && <p className='text-xs text-red-500 font-medium mt-1'>Tạm hết hàng</p>}
+                  {!product.inStock && <p className='text-xs text-red-500 font-medium mt-1'>{unavailableLabel}</p>}
                 </>
               )}
             </div>
@@ -354,7 +370,7 @@ export function ProductCard({
             <div className='mt-auto'>
               {!product.inStock ? (
                 <Button disabled className='w-full text-sm h-8 bg-gray-300 text-gray-500 cursor-not-allowed'>
-                  Hết hàng
+                  {unavailableLabel}
                 </Button>
               ) : isConsultationRequired ? (
                 <Button

@@ -8,6 +8,13 @@ import type { Review, ReviewStats } from '~/types/review'
  * @see https://developers.google.com/search/docs/appearance/structured-data/product
  */
 export function generateProductStructuredData(product: Product, reviews: Review[], stats: ReviewStats | null) {
+  const availability =
+    product.status === 'discontinued'
+      ? 'https://schema.org/Discontinued'
+      : product.status === 'active' && product.stockQuantity > 0
+        ? 'https://schema.org/InStock'
+        : 'https://schema.org/OutOfStock'
+
   // Base product data
   const structuredData: any = {
     '@context': 'https://schema.org',
@@ -28,7 +35,7 @@ export function generateProductStructuredData(product: Product, reviews: Review[
       '@type': 'Offer',
       price: product.salePrice || product.price,
       priceCurrency: 'VND',
-      availability: product.stockQuantity > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      availability,
       url: typeof window !== 'undefined' ? window.location.href : '',
       priceValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
     }
