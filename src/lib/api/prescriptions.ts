@@ -108,13 +108,13 @@ class PrescriptionsAPI {
     imageUrl: string | string[],
     mode?: 'traditional' | 'vision' | 'parallel' | 'parallel_benchmark',
   ): Promise<OCRScanResult> {
-    // Override timeout: OCR + LLM fallback có thể mất tới ~50s
+    // Override timeout: OCR vision fallback can run longer than the default API timeout.
     const payload = Array.isArray(imageUrl) ? { imageUrls: imageUrl, mode } : { imageUrl, mode }
     const pageCount = Array.isArray(imageUrl) ? Math.max(imageUrl.length, 1) : 1
     const response = await apiClient.post<{ message: string; result: OCRScanResult }>(
       '/prescriptions/scan',
       payload,
-      { timeout: Math.min(150000 * pageCount, 450000) },
+      { timeout: Math.min(220000 * pageCount, 660000) },
     )
     return response.data.result
   }
