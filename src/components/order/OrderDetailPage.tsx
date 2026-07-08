@@ -53,6 +53,27 @@ const ORDER_STEPS = [
   { status: 'delivered', statusText: 'Đã giao', description: 'Đơn hàng đã được giao thành công' },
 ]
 
+const ACTIVE_RETURN_STATUSES = new Set(['requested', 'approved', 'awaiting_return', 'received', 'refund_processing', 'completed'])
+
+const returnStatusLabels: Record<string, string> = {
+  requested: 'Đã yêu cầu hoàn trả',
+  approved: 'Đã duyệt hoàn trả',
+  awaiting_return: 'Đang thu hồi hàng',
+  received: 'Đã nhận hàng trả',
+  refund_processing: 'Đang hoàn tiền',
+  completed: 'Hoàn trả hoàn tất',
+  rejected: 'Từ chối hoàn trả',
+  cancelled: 'Đã hủy hoàn trả',
+}
+
+const getReturnStatusBadge = (status?: string) => {
+  if (!status || status === 'none') return null
+  const terminalTone = status === 'completed' ? 'bg-green-100 text-green-700 border-green-200' : ''
+  const rejectedTone = ['rejected', 'cancelled'].includes(status) ? 'bg-red-100 text-red-700 border-red-200' : ''
+  const activeTone = !terminalTone && !rejectedTone ? 'bg-amber-100 text-amber-700 border-amber-200' : ''
+  return <Badge className={terminalTone || rejectedTone || activeTone}>{returnStatusLabels[status] || status}</Badge>
+}
+
 // Generate timeline based on current order status
 const generateOrderTimeline = (currentStatus: string, createdAt: string, updatedAt: string) => {
   const statusOrder = ['pending', 'pending_payment', 'confirmed', 'processing', 'preparing', 'shipping', 'delivered']
@@ -190,6 +211,10 @@ export function OrderDetailPage() {
           },
           paymentMethod: fetchedOrder.paymentMethod,
           paymentStatus: fetchedOrder.paymentStatus as Order['paymentStatus'],
+          returnStatus: fetchedOrder.returnStatus,
+          returnRequestIds: fetchedOrder.returnRequestIds,
+          latestReturnRequestId: fetchedOrder.latestReturnRequestId,
+          returnUpdatedAt: fetchedOrder.returnUpdatedAt,
           createdAt: fetchedOrder.createdAt,
           updatedAt: fetchedOrder.updatedAt,
           deliveryMethod: fetchedOrder.shippingMethod,
@@ -245,6 +270,8 @@ export function OrderDetailPage() {
     return new Intl.NumberFormat('vi-VN').format(price) + '\u0111'
   }
 
+  const hasActiveReturnRequest = ACTIVE_RETURN_STATUSES.has(order.returnStatus || '') && !!order.latestReturnRequestId
+
   const getTimelineIcon = (status: string, isCompleted: boolean) => {
     if (isCompleted) {
       return <CheckCircle className='w-5 h-5 text-green-600' />
@@ -273,7 +300,9 @@ export function OrderDetailPage() {
         </div>
 
         <div className='flex flex-wrap items-center gap-3'>
-          <span data-testid='order-status'>{getOrderStatusBadge(order.status)}</span>
+          <span data-testid='order-status'>
+            {hasActiveReturnRequest ? getReturnStatusBadge(order.returnStatus) : getOrderStatusBadge(order.status)}
+          </span>
           {/* <Button variant='outline' size='sm'>
             <Download className='w-4 h-4 mr-2' />
             Tải PDF
@@ -642,8 +671,19 @@ export function OrderDetailPage() {
                 Mua lại đơn hàng
               </Button>
 
-              {/* Return Request Button - Only for delivered orders */}
-              {order.status === 'delivered' && (
+              {/* Return request action */}
+              {order.status === 'delivered' && hasActiveReturnRequest && (
+                <Button
+                  className='w-full bg-amber-600 text-white hover:!bg-amber-700 hover:!text-white'
+                  data-testid='view-return-btn'
+                  onClick={() => navigate(`/account/returns/${order.latestReturnRequestId}`)}
+                >
+                  <RefreshCw className='w-4 h-4 mr-2' />
+                  Xem yêu cầu hoàn trả
+                </Button>
+              )}
+
+              {order.status === 'delivered' && !hasActiveReturnRequest && (
                 <Button
                   variant='outline'
                   className='w-full !border-orange-300 !text-orange-600 hover:!bg-orange-50 hover:!text-orange-700'

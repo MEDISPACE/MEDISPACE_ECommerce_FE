@@ -22,7 +22,30 @@ interface OrderTableProps {
   config: RoleConfig
 }
 
+const ACTIVE_RETURN_STATUSES = new Set(['requested', 'approved', 'awaiting_return', 'received', 'refund_processing', 'completed'])
+
+const returnStatusLabels: Record<string, string> = {
+  requested: 'Đã yêu cầu hoàn trả',
+  approved: 'Đã duyệt hoàn trả',
+  awaiting_return: 'Đang thu hồi hàng',
+  received: 'Đã nhận hàng trả',
+  refund_processing: 'Đang hoàn tiền',
+  completed: 'Hoàn trả hoàn tất',
+  rejected: 'Từ chối hoàn trả',
+  cancelled: 'Đã hủy hoàn trả',
+}
+
+const getReturnStatusBadge = (status?: string) => {
+  if (!status || status === 'none') return null
+  const terminalTone = status === 'completed' ? 'bg-green-100 text-green-700 border-green-200' : ''
+  const rejectedTone = ['rejected', 'cancelled'].includes(status) ? 'bg-red-100 text-red-700 border-red-200' : ''
+  const activeTone = !terminalTone && !rejectedTone ? 'bg-amber-100 text-amber-700 border-amber-200' : ''
+  return <Badge className={`${terminalTone || rejectedTone || activeTone} mt-1 text-xs`}>{returnStatusLabels[status] || status}</Badge>
+}
+
 export function OrderTable({ orders, onUpdateStatus, onViewDetails, config }: OrderTableProps) {
+  const showPharmacistColumn = config.themeColor === 'blue'
+
   return (
     <div className='overflow-x-auto'>
       <Table>
@@ -32,6 +55,7 @@ export function OrderTable({ orders, onUpdateStatus, onViewDetails, config }: Or
             <TableHead>Khách hàng</TableHead>
             <TableHead>Sản phẩm</TableHead>
             <TableHead>Tổng tiền</TableHead>
+            {showPharmacistColumn && <TableHead>Dược sĩ xử lý</TableHead>}
             <TableHead>Thanh toán</TableHead>
             <TableHead>Trạng thái</TableHead>
             <TableHead>Ngày đặt</TableHead>
@@ -72,10 +96,30 @@ export function OrderTable({ orders, onUpdateStatus, onViewDetails, config }: Or
                 <p className={`font-semibold text-${config.themeColor}-600`}>{formatCurrency(order.total)}</p>
                 <PaymentMethodDisplay method={order.paymentMethod} className='mt-1 gap-2' logoClassName='h-3.5 w-auto max-w-full' showDescription={false} />
               </TableCell>
+              {showPharmacistColumn && (
+                <TableCell>
+                  {order.pharmacistName ? (
+                    <div className='space-y-1'>
+                      <p className='font-medium text-gray-900'>{order.pharmacistName}</p>
+                      {order.pharmacistPhone && <p className='text-xs text-gray-500'>{order.pharmacistPhone}</p>}
+                      <Badge className='bg-green-100 text-green-700 border-green-200 text-xs'>Đang xử lý</Badge>
+                    </div>
+                  ) : (
+                    <Badge className='bg-gray-100 text-gray-600 border-gray-200 text-xs'>Chưa phân công</Badge>
+                  )}
+                </TableCell>
+              )}
               <TableCell>
                 {getPaymentStatusBadge(order.paymentStatus, { paymentMethod: order.paymentMethod })}
               </TableCell>
-              <TableCell>{getOrderStatusBadge(order.status)}</TableCell>
+              <TableCell>
+                <div className='flex flex-col items-start gap-1'>
+                  {ACTIVE_RETURN_STATUSES.has(order.returnStatus || '') ? getReturnStatusBadge(order.returnStatus) : getOrderStatusBadge(order.status)}
+                  {ACTIVE_RETURN_STATUSES.has(order.returnStatus || '') && (
+                    <span className='text-xs text-gray-500'>Đơn gốc: Đã giao</span>
+                  )}
+                </div>
+              </TableCell>
               <TableCell>
                 <div className='flex items-center gap-2 text-sm text-gray-600'>
                   <Calendar className='w-3 h-3' />

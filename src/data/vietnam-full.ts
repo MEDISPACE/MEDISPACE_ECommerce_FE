@@ -22416,7 +22416,7 @@ export const vietnamProvinces: Province[] = [
             code: '17305',
           },
           {
-            name: 'X�� Nghĩa Dũng',
+            name: 'Xã Nghĩa Dũng',
             code: '17308',
           },
           {
@@ -43428,7 +43428,7 @@ export const vietnamProvinces: Province[] = [
             code: '31490',
           },
           {
-            name: 'Xã Lư��ng Tâm',
+            name: 'Xã Lương Tâm',
             code: '31492',
           },
           {

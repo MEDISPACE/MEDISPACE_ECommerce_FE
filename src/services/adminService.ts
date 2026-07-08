@@ -261,7 +261,7 @@ export const getOrderDetails = async (orderId: string) => {
 export const updateOrderStatus = async (
   orderId: string,
   data: {
-    status: string
+    status?: string
     paymentStatus?: string
     notes?: string
     trackingNumber?: string

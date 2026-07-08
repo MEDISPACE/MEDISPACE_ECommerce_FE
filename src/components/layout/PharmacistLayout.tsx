@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import {
   LayoutDashboard,
@@ -147,6 +147,7 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
   const [patientResults, setPatientResults] = useState<PatientSearchResult[]>([])
   const [productSearchSource, setProductSearchSource] = useState<SearchProductsResult['source'] | null>(null)
   const debouncedGlobalSearch = useDebounce(globalSearchQuery.trim(), 250)
+  const onlineSyncKeyRef = useRef<string | null>(null)
 
   // Redirect if not authenticated or not pharmacist
   useEffect(() => {
@@ -221,22 +222,26 @@ export function PharmacistLayout({ children }: PharmacistLayoutProps) {
     const preferredStatus = getStoredOnlinePreference() ?? true
     setIsOnline(preferredStatus)
 
-    if (user.isOnline !== preferredStatus) {
-      let cancelled = false
+    const syncKey = `${user._id}:${preferredStatus}`
+    if (onlineSyncKeyRef.current === syncKey) return
+    onlineSyncKeyRef.current = syncKey
 
-      settingsService
-        .updateOnlineStatus({ isOnline: preferredStatus })
-        .then((updatedProfile) => {
-          if (cancelled) return
-          updateUser({ ...user, isOnline: updatedProfile.isOnline ?? preferredStatus })
-        })
-        .catch(() => {
-          if (!cancelled) setIsOnline(user.isOnline ?? preferredStatus)
-        })
+    let cancelled = false
 
-      return () => {
-        cancelled = true
-      }
+    settingsService
+      .updateOnlineStatus({ isOnline: preferredStatus })
+      .then((updatedProfile) => {
+        if (cancelled) return
+        updateUser({ ...user, isOnline: updatedProfile.isOnline ?? preferredStatus })
+        setIsOnline(updatedProfile.isOnline ?? preferredStatus)
+      })
+      .catch(() => {
+        if (!cancelled) setIsOnline(user.isOnline ?? preferredStatus)
+        onlineSyncKeyRef.current = null
+      })
+
+    return () => {
+      cancelled = true
     }
   }, [isAuthenticated, loading, updateUser, user])
 

@@ -25,6 +25,7 @@ import { StatsCardGrid, type StatCardConfig } from '~/components/shared/StatsCar
 import { getPrescriptionStatusBadge } from '../../utils/badgeUtils'
 import { prescriptionService, type Prescription, type PrescriptionStats } from '~/services/pharmacist'
 import { PrescriptionDetailsDialog } from './PrescriptionDetailsDialog'
+import { getErrorMessage } from '~/constants/errorMapping'
 
 export function PrescriptionManagementPage() {
   // State management
@@ -63,8 +64,10 @@ export function PrescriptionManagementPage() {
       setStats(statsData)
       setPrescriptions(prescriptionsData)
     } catch (error) {
+      const apiError = error as { response?: { data?: { message?: string } } }
+      const message = apiError.response?.data?.message
       toast.error('Không thể tải danh sách đơn thuốc', {
-        description: 'Vui lòng thử lại sau',
+        description: message ? getErrorMessage(message) : 'Vui lòng thử lại sau',
       })
     } finally {
       setLoading(false)

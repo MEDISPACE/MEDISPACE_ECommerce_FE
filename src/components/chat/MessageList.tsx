@@ -483,7 +483,7 @@ export function MessageList({
                 onClick={onRetryStream}
                 className='mt-2 text-xs font-semibold text-[#1E40AF] hover:text-[#0A2463] underline'
               >
-                Thá»­ láº¡i
+                Thử lại
               </button>
             )}
           </div>
