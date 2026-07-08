@@ -396,6 +396,7 @@ export function CommunityRoomPage() {
     const id = `community-room-${roomId}`
     subscribe(id, {
       onCommunityMessageNew: (message) => {
+        if (message.videoEventId) return
         if (message.roomId !== roomId) return
         setMessages((prev) => {
           if (prev.some((item) => item._id === message._id)) return prev

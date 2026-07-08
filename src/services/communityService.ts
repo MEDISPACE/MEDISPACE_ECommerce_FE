@@ -457,9 +457,51 @@ export const adminCommunityService = {
     return unwrap(res.data)
   },
 
+  async unmuteVideoEventParticipant(eventId: string, userId: string) {
+    const res = await apiClient.post<Envelope<CommunityVideoEventModerationActionPayload>>(
+      `/admin/community/video-events/${eventId}/participants/${userId}/unmute`,
+    )
+    return unwrap(res.data)
+  },
+
+  async disableVideoEventParticipantCamera(eventId: string, userId: string) {
+    const res = await apiClient.post<Envelope<CommunityVideoEventModerationActionPayload>>(
+      `/admin/community/video-events/${eventId}/participants/${userId}/disable-camera`,
+    )
+    return unwrap(res.data)
+  },
+
+  async enableVideoEventParticipantCamera(eventId: string, userId: string) {
+    const res = await apiClient.post<Envelope<CommunityVideoEventModerationActionPayload>>(
+      `/admin/community/video-events/${eventId}/participants/${userId}/enable-camera`,
+    )
+    return unwrap(res.data)
+  },
+
+  async disableVideoEventParticipantScreenShare(eventId: string, userId: string) {
+    const res = await apiClient.post<Envelope<CommunityVideoEventModerationActionPayload>>(
+      `/admin/community/video-events/${eventId}/participants/${userId}/disable-screen-share`,
+    )
+    return unwrap(res.data)
+  },
+
+  async enableVideoEventParticipantScreenShare(eventId: string, userId: string) {
+    const res = await apiClient.post<Envelope<CommunityVideoEventModerationActionPayload>>(
+      `/admin/community/video-events/${eventId}/participants/${userId}/enable-screen-share`,
+    )
+    return unwrap(res.data)
+  },
+
   async kickVideoEventParticipant(eventId: string, userId: string) {
     const res = await apiClient.post<Envelope<CommunityVideoEventModerationActionPayload>>(
       `/admin/community/video-events/${eventId}/participants/${userId}/kick`,
+    )
+    return unwrap(res.data)
+  },
+
+  async banVideoEventParticipant(eventId: string, userId: string) {
+    const res = await apiClient.post<Envelope<CommunityVideoEventModerationActionPayload>>(
+      `/admin/community/video-events/${eventId}/participants/${userId}/ban`,
     )
     return unwrap(res.data)
   },

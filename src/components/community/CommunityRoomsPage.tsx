@@ -277,6 +277,7 @@ export function CommunityRoomsPage() {
     const subscriberId = 'community-rooms-list'
     subscribe(subscriberId, {
       onCommunityMessageNew: (message) => {
+        if (message.videoEventId) return
         updateRoomList((current) => current.map((room) => {
           if (room._id !== message.roomId) return room
           const mine = String(message.senderId) === user?._id
