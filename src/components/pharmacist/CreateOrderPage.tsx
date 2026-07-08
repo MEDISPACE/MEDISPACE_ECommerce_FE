@@ -64,6 +64,7 @@ import { getErrorMessage } from '~/constants/errorMapping'
 interface Product {
   id: string
   name: string
+  slug?: string
   image: string
   price: number
   originalPrice?: number
@@ -159,6 +160,7 @@ export function CreateOrderPage() {
     return {
       id: full?._id || fallback?.id || '',
       name: full?.name || fallback?.name || '',
+      slug: full?.slug || fallback?.slug,
       image: full?.featuredImage || fallback?.image || '/images/product-placeholder.jpg',
       price: defaultVariant?.price ?? fallback?.price ?? 0,
       originalPrice: defaultVariant?.originalPrice ?? fallback?.originalPrice,
@@ -398,6 +400,7 @@ export function CreateOrderPage() {
     {
       medication: { productName?: string; name?: string; dosage: string; quantity: number }
       matches: Product[]
+      equivalents?: Product[]
     }[]
   >([])
   const [isMatching, setIsMatching] = useState(false)
@@ -556,6 +559,7 @@ export function CreateOrderPage() {
                         ({
                           id: hit.document.mongoId,
                           name: hit.document.name,
+                          slug: hit.document.slug,
                           image: hit.document.featuredImage || '/images/product-placeholder.jpg',
                           price: hit.document.price || 0,
                           type: hit.document.requiresPrescription ? 'rx' : 'otc',
@@ -566,6 +570,21 @@ export function CreateOrderPage() {
                         }) as Product,
                     )
                   }
+
+                  const equivalentToProduct = (product: any): Product => ({
+                    id: product.productId,
+                    name: product.name,
+                    slug: product.slug,
+                    image: product.image || '/images/product-placeholder.jpg',
+                    price: product.price || 0,
+                    unit: product.unit || 'Hop',
+                    stock: product.stockQuantity || 0,
+                    rating: 0,
+                    type: product.requiresPrescription ? 'rx' : 'otc',
+                    brand: product.reason || 'Equivalent',
+                    requiresPrescription: product.requiresPrescription,
+                    shortDescription: product.activeIngredients,
+                  })
 
                   // ── Extract brand (before parenthesis) and generic (inside parenthesis) ──
                   const brandPart = rawText.split(/[([,\-]/)[0].trim()
@@ -588,11 +607,16 @@ export function CreateOrderPage() {
                     finalMatches = await typesenseSearch(brandQuery)
                   }
 
-                  if (finalMatches.length === 0) return { medication: med, matches: [] }
+                  const equivalents = Array.isArray(med.equivalentProducts)
+                    ? med.equivalentProducts.map(equivalentToProduct)
+                    : []
+
+                  if (finalMatches.length === 0) return { medication: med, matches: [], equivalents }
 
                   return {
                     medication: med,
                     matches: finalMatches.slice(0, 3),
+                    equivalents,
                   }
                 }),
               )
@@ -601,7 +625,20 @@ export function CreateOrderPage() {
               const suggestions = results.map((result, idx) => {
                 if (result.status === 'fulfilled') return result.value
                 const med = prescription.medications[idx]
-                return { medication: med, matches: [] }
+                return { medication: med, matches: [], equivalents: Array.isArray(med.equivalentProducts) ? med.equivalentProducts.map((product: any) => ({
+                  id: product.productId,
+                  name: product.name,
+                  slug: product.slug,
+                  image: product.image || '/images/product-placeholder.jpg',
+                  price: product.price || 0,
+                  unit: product.unit || 'Hop',
+                  stock: product.stockQuantity || 0,
+                  rating: 0,
+                  type: product.requiresPrescription ? 'rx' : 'otc',
+                  brand: product.reason || 'Equivalent',
+                  requiresPrescription: product.requiresPrescription,
+                  shortDescription: product.activeIngredients,
+                } as Product)) : [] }
               })
 
               setOcrSuggestions(suggestions)
@@ -1187,6 +1224,58 @@ export function CreateOrderPage() {
                         <p className='text-xs text-orange-600 flex items-center mb-1'>
                           <AlertTriangle className='w-3 h-3 mr-1' /> Không tìm thấy tên thuốc này trong kho dữ liệu.
                         </p>
+                      </div>
+                    )}
+                    {suggestion.equivalents && suggestion.equivalents.length > 0 && (
+                      <div className='mt-3 rounded-xl border border-[#E8EDF5] bg-[#F8FAFB] p-3'>
+                        <div className='mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500'>
+                          <Sparkles className='h-3.5 w-3.5 text-[#1E40AF]' />
+                          Thuốc tương đương / thay thế
+                        </div>
+                        <div className='space-y-2'>
+                          {suggestion.equivalents.slice(0, 4).map((product) => (
+                            <div
+                              key={product.id}
+                              className='flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-2.5 hover:border-[#BFDBFE] hover:bg-[#F0F6FF]/30'
+                            >
+                              <ImageWithFallback
+                                src={product.image}
+                                alt={product.name}
+                                className='h-12 w-12 shrink-0 rounded-lg border border-gray-200 object-cover'
+                              />
+                              <div className='min-w-0 flex-1'>
+                                <p className='line-clamp-2 text-sm font-medium text-gray-900'>{product.name}</p>
+                                <div className='mt-1 flex flex-wrap items-center gap-2'>
+                                  <span className='text-xs font-semibold text-[#1E40AF]'>
+                                    {product.price > 0 ? `${product.price.toLocaleString('vi-VN')}d` : 'Lien he'}
+                                  </span>
+                                  <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${product.type === 'rx' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                                    {product.type === 'rx' ? 'Rx' : 'OTC'}
+                                  </span>
+                                  {product.brand && <span className='text-[11px] text-gray-500'>{product.brand}</span>}
+                                </div>
+                              </div>
+                              <div className='flex shrink-0 flex-col gap-1.5'>
+                                <Button
+                                  size='sm'
+                                  onClick={() => handleProductAdd(product, Number(suggestion.medication.quantity) || 1)}
+                                  className='h-8 px-3 bg-[#0A2463] text-xs text-white hover:bg-[#071A49]'
+                                >
+                                  <Plus className='mr-1 h-3 w-3' /> Them
+                                </Button>
+                                <Button
+                                  size='sm'
+                                  variant='outline'
+                                  disabled={isLoadingDetail}
+                                  onClick={() => handleOpenDetail(product)}
+                                  className='h-8 px-3 border-[#BFDBFE] text-xs text-[#1E40AF] hover:bg-[#F0F6FF]'
+                                >
+                                  <Info className='mr-1 h-3 w-3' /> Chi tiet
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>

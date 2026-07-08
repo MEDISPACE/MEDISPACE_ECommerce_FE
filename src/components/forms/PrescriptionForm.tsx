@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router'
 import { Card } from '../ui/card'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
@@ -7,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group'
 import { Checkbox } from '../ui/checkbox'
 import { Button } from '../ui/button'
-import { AlertTriangle, CalendarIcon, Sparkles, X, PhoneCall } from 'lucide-react'
+import { AlertTriangle, CalendarIcon, Sparkles, X, PhoneCall, ExternalLink, ShoppingCart } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { Calendar as CalendarComponent } from '../ui/calendar'
 import { format, parseISO } from 'date-fns'
@@ -34,6 +35,21 @@ interface PrescriptionFormData {
 }
 
 // Thông tin thuốc từ OCR
+export interface MedicationProductSummary {
+  productId: string
+  name: string
+  slug: string
+  image?: string | null
+  price?: number | null
+  unit?: string
+  stockQuantity?: number
+  requiresPrescription?: boolean
+  activeIngredients?: string
+  strength?: string
+  dosageForm?: string
+  reason?: string
+}
+
 export interface MedicationItem {
   productName: string
   activeIngredient?: string | null
@@ -43,12 +59,17 @@ export interface MedicationItem {
   instructions: string
   productId?: string
   matchedName?: string
+  slug?: string
   image?: string | null
+  price?: number | null
+  stockQuantity?: number
+  requiresPrescription?: boolean
   confidence?: string
   needsReview?: boolean
   source?: string
   sourcePage?: number
   reviewReason?: string
+  equivalentProducts?: MedicationProductSummary[]
 }
 
 interface OCRImageQuality {
@@ -515,7 +536,7 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
                         <img src={med.image} alt={med.matchedName || med.productName} className='w-full h-full object-cover' />
                       </div>
                     )}
-                    <div>
+                    <div className='min-w-0 flex-1'>
                       <div className='flex items-center gap-2'>
                         <p className={`font-medium text-sm ${med.needsReview ? 'text-amber-900' : 'text-emerald-900'}`}>
                           {med.matchedName || med.productName}
@@ -546,6 +567,69 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
                         )}
                         {med.instructions && <span className='text-xs text-gray-500'>{med.instructions}</span>}
                       </div>
+                      {(med.slug || (med.equivalentProducts && med.equivalentProducts.length > 0)) && (
+                        <div className='mt-3 space-y-2'>
+                          {med.slug && (
+                            <div className='flex flex-wrap items-center gap-2'>
+                              <Link
+                                to={`/products/${med.slug}`}
+                                className='inline-flex h-8 items-center gap-1.5 rounded-md border border-[#BFDBFE] bg-white px-2.5 text-xs font-medium text-[#0A2463] hover:bg-[#F0F6FF]'
+                              >
+                                <ExternalLink className='h-3.5 w-3.5' />
+                                Xem chi tiet
+                              </Link>
+                              {med.requiresPrescription === false && (
+                                <Link
+                                  to={`/products/${med.slug}`}
+                                  className='inline-flex h-8 items-center gap-1.5 rounded-md bg-[#0A2463] px-2.5 text-xs font-medium text-white hover:bg-[#071A49]'
+                                >
+                                  <ShoppingCart className='h-3.5 w-3.5' />
+                                  Mua ngay
+                                </Link>
+                              )}
+                              {med.price != null && (
+                                <span className='text-xs font-semibold text-[#1E40AF]'>
+                                  {Number(med.price).toLocaleString('vi-VN')}d{med.unit ? `/${med.unit}` : ''}
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                          {med.equivalentProducts && med.equivalentProducts.length > 0 && (
+                            <div className='rounded-lg border border-[#E8EDF5] bg-white/80 p-2'>
+                              <p className='mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500'>
+                                Thuốc tương đương / thay thế
+                              </p>
+                              <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
+                                {med.equivalentProducts.slice(0, 4).map((product) => (
+                                  <Link
+                                    key={product.productId}
+                                    to={`/products/${product.slug}`}
+                                    className='flex min-w-0 items-center gap-2 rounded-md border border-gray-100 bg-white p-2 hover:border-[#BFDBFE] hover:bg-[#F0F6FF]'
+                                  >
+                                    {product.image && (
+                                      <img src={product.image} alt={product.name} className='h-9 w-9 shrink-0 rounded object-cover' />
+                                    )}
+                                    <span className='min-w-0 flex-1'>
+                                      <span className='block truncate text-xs font-medium text-gray-900'>{product.name}</span>
+                                      <span className='block truncate text-[11px] text-gray-500'>
+                                        {product.reason || 'Goi y tuong duong'}
+                                        {product.price != null ? ` - ${Number(product.price).toLocaleString('vi-VN')}d` : ''}
+                                      </span>
+                                    </span>
+                                    <Badge
+                                      variant='outline'
+                                      className={`shrink-0 text-[10px] ${product.requiresPrescription ? 'border-red-200 text-red-600' : 'border-emerald-200 text-emerald-600'}`}
+                                    >
+                                      {product.requiresPrescription ? 'Rx' : 'OTC'}
+                                    </Badge>
+                                  </Link>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <button
@@ -634,10 +718,6 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
         </Button>
 
         <div className='flex flex-col sm:flex-row gap-3'>
-          <Button type='button' variant='outline' className='border-gray-300 text-gray-700 hover:bg-gray-50'>
-            Quay lại
-          </Button>
-
           <Button
             type='submit'
             disabled={!isFormValid() || isSubmitting}

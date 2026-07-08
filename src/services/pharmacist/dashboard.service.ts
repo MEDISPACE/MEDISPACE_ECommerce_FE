@@ -47,12 +47,30 @@ export interface Prescription {
     // Mapped from DB by BE after OCR
     productId?: string
     matchedName?: string
+    slug?: string
     image?: string | null
+    price?: number | null
+    stockQuantity?: number
+    requiresPrescription?: boolean
     confidence?: string
     needsReview?: boolean
     source?: string
     sourcePage?: number
     reviewReason?: string
+    equivalentProducts?: Array<{
+      productId: string
+      name: string
+      slug: string
+      image?: string | null
+      price?: number | null
+      unit?: string
+      stockQuantity?: number
+      requiresPrescription?: boolean
+      activeIngredients?: string
+      strength?: string
+      dosageForm?: string
+      reason?: string
+    }>
   }>
   status: 'pending' | 'verified' | 'rejected' | 'expired'
   verifiedBy?: string
