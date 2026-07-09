@@ -353,13 +353,6 @@ export function PrescriptionDetailPage() {
               </Button>
             </Link>
           )}
-          {status === 'approved' && !prescription.orderId && (
-            <Link to={`/products?prescriptionId=${prescription._id}&rx=verified`}>
-              <Button size='sm' className='bg-[#0A2463] hover:bg-[#071A49] text-white'>
-                <ShoppingCart className='w-4 h-4 mr-1' /> Mua / nạp lại thuốc
-              </Button>
-            </Link>
-          )}
         </div>
       </div>
 
@@ -648,13 +641,6 @@ export function PrescriptionDetailPage() {
                 <Link to={`/account/orders/${prescription.orderId}`} className='block'>
                   <Button size='sm' className='h-10 w-full justify-start rounded-lg bg-green-600 hover:bg-green-700 text-white'>
                     <ShoppingCart className='w-4 h-4 mr-2' /> Xem đơn hàng
-                  </Button>
-                </Link>
-              )}
-              {status === 'approved' && !prescription.orderId && (
-                <Link to={`/products?prescriptionId=${prescription._id}&rx=verified`} className='block'>
-                  <Button size='sm' className='h-10 w-full justify-start rounded-lg bg-[#0A2463] hover:bg-[#071A49] text-white'>
-                    <ShoppingCart className='w-4 h-4 mr-2' /> Mua / nạp lại thuốc
                   </Button>
                 </Link>
               )}
