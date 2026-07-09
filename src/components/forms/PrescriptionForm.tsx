@@ -8,13 +8,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group'
 import { Checkbox } from '../ui/checkbox'
 import { Button } from '../ui/button'
-import { AlertTriangle, CalendarIcon, Sparkles, X, PhoneCall } from 'lucide-react'
+import { AlertTriangle, CalendarIcon, Sparkles, X, PhoneCall, ShoppingCart, Loader2 } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { Calendar as CalendarComponent } from '../ui/calendar'
 import { format, parseISO } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { Badge } from '../ui/badge'
 import { useAuth } from '../../contexts/AuthContext'
+import { useCart } from '../../contexts/CartContext'
+import type { Product } from '../../types/product'
 
 interface PrescriptionFormData {
   patientName: string
@@ -109,6 +111,8 @@ interface PrescriptionFormProps {
 
 export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className = '' }: PrescriptionFormProps) {
   const { user } = useAuth()
+  const { addToCart } = useCart()
+  const [addingProductId, setAddingProductId] = useState<string | null>(null)
 
   const [formData, setFormData] = useState<PrescriptionFormData>(() => ({
     patientName: initialData?.patientName || '',
@@ -223,6 +227,36 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
 
   const handleSaveDraft = () => {
     onSaveDraft(formData)
+  }
+
+  const handleAddSuggestedProduct = async (event: React.MouseEvent<HTMLButtonElement>, product: MedicationProductSummary) => {
+    event.preventDefault()
+    event.stopPropagation()
+    if (product.requiresPrescription || addingProductId) return
+
+    setAddingProductId(product.productId)
+    try {
+      await addToCart(
+        {
+          _id: product.productId,
+          name: product.name,
+          slug: product.slug,
+          featuredImage: product.image || undefined,
+          requiresPrescription: false,
+        } as Product,
+        1,
+        product.unit,
+      )
+    } catch (error) {
+      console.error('Failed to add suggested prescription product to cart:', error)
+    } finally {
+      setAddingProductId(null)
+    }
+  }
+
+  const formatSuggestedProductPrice = (price?: number | null) => {
+    if (price == null) return ''
+    return `${Number(price).toLocaleString('vi-VN')}đ`
   }
 
   const suggestedPhone = initialData?.phoneNumber
@@ -563,6 +597,7 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
                             <Link
                               key={product.productId}
                               to={`/products/${product.slug}`}
+                              state={{ fromPrescriptionScan: true }}
                               className='flex min-w-0 items-center gap-2 rounded-md border border-gray-100 bg-white p-2 hover:border-[#BFDBFE] hover:bg-[#F0F6FF]'
                             >
                               {product.image && (
@@ -570,17 +605,32 @@ export function PrescriptionForm({ onSubmit, onSaveDraft, initialData, className
                               )}
                               <span className='min-w-0 flex-1'>
                                 <span className='block truncate text-xs font-medium text-gray-900'>{product.name}</span>
-                                <span className='block truncate text-[11px] text-gray-500'>
-                                  {product.reason || 'San pham Medispace goi y'}
-                                  {product.price != null ? ` - ${Number(product.price).toLocaleString('vi-VN')}d` : ''}
-                                </span>
+                                {product.price != null && (
+                                  <span className='block truncate text-[11px] text-gray-500'>
+                                    {formatSuggestedProductPrice(product.price)}
+                                  </span>
+                                )}
                               </span>
-                              <Badge
-                                variant='outline'
-                                className={`shrink-0 text-[10px] ${product.requiresPrescription ? 'border-red-200 text-red-600' : 'border-emerald-200 text-emerald-600'}`}
-                              >
-                                {product.requiresPrescription ? 'Rx' : 'OTC'}
-                              </Badge>
+                              {product.requiresPrescription ? (
+                                <Badge variant='outline' className='shrink-0 text-[10px] border-red-200 text-red-600'>
+                                  Rx
+                                </Badge>
+                              ) : (
+                                <button
+                                  type='button'
+                                  onClick={(event) => handleAddSuggestedProduct(event, product)}
+                                  disabled={addingProductId === product.productId}
+                                  className='flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-60'
+                                  aria-label={`Thêm ${product.name} vào giỏ hàng`}
+                                  title='Thêm vào giỏ hàng'
+                                >
+                                  {addingProductId === product.productId ? (
+                                    <Loader2 className='h-4 w-4 animate-spin' />
+                                  ) : (
+                                    <ShoppingCart className='h-4 w-4' />
+                                  )}
+                                </button>
+                              )}
                             </Link>
                           ))}
                         </div>
