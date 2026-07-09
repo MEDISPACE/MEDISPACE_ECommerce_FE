@@ -33,7 +33,9 @@ export const ERROR_MESSAGES_MAP: Record<string, string> = {
   'User not found': 'Không tìm thấy người dùng',
   'Email not found': 'Email không tồn tại trong hệ thống',
   'User not verified. Please verify your email first': 'Tài khoản chưa được xác thực. Vui lòng kiểm tra email.',
-  'User account is banned': 'Tài khoản của bạn đã bị khóa.',
+  'User account is banned': 'Tài khoản của bạn hiện đã bị khóa vui lòng liên hệ quản trị viên.',
+  'Password reset is required. Please check your email to set a new password.':
+    'Tài khoản của bạn cần đặt lại mật khẩu. Vui lòng kiểm tra email để tạo mật khẩu mới.',
   'Current password is incorrect': 'Mật khẩu hiện tại không đúng',
   'Old password is incorrect': 'Mật khẩu hiện tại không đúng',
   'Change password successful': 'Đổi mật khẩu thành công',

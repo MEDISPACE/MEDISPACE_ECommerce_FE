@@ -145,7 +145,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // Dispatch custom event for cart reload
           window.dispatchEvent(new CustomEvent('auth-changed'))
           return userProfile
-        } catch (profileError) {
+        } catch {
           authService.clearTokens()
           return null
         }
@@ -153,7 +153,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       return null
     } catch (error) {
-      return null
+      throw new Error(getApiErrorMessage(error, 'Đăng nhập thất bại. Vui lòng thử lại.'))
     } finally {
       setLoading(false)
     }

@@ -53,6 +53,7 @@ export interface User {
   medicalProfile?: MedicalProfile
   lisenseNumber?: string
   isOnline?: boolean
+  forcePasswordChange?: boolean
   emailVerifyToken?: string
   forgotPasswordToken?: string
   createdAt?: string

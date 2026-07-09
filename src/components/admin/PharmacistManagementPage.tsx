@@ -8,6 +8,7 @@ import {
   Calendar,
   FileText,
   RefreshCw,
+  Plus,
   MoreVertical,
   Trash2,
   Edit,
@@ -44,6 +45,7 @@ interface UserData {
   lastName: string
   email: string
   phoneNumber: string
+  lisenseNumber?: string
   role: number
   status: number
   createdAt?: string
@@ -64,8 +66,34 @@ interface UsersResponse {
 }
 
 interface ResetPasswordResponse {
-  newPassword: string
   message: string
+}
+
+interface CreatePharmacistFormData {
+  firstName: string
+  lastName: string
+  email: string
+  phoneNumber: string
+  lisenseNumber: string
+  password: string
+  gender: string
+}
+
+type UpdatePharmacistData = Partial<
+  Pick<UserData, 'firstName' | 'lastName' | 'email' | 'phoneNumber' | 'lisenseNumber' | 'status'>
+>
+
+interface AdminApiError {
+  response?: {
+    data?: {
+      message?: string
+      errors?: {
+        email?: {
+          msg?: string
+        }
+      }
+    }
+  }
 }
 
 // Status mapping
@@ -87,11 +115,22 @@ export function PharmacistManagementPage() {
   const [selectedPharmacist, setSelectedPharmacist] = useState<UserData | null>(null)
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [createFormData, setCreateFormData] = useState<CreatePharmacistFormData>({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phoneNumber: '',
+    lisenseNumber: '',
+    password: '',
+    gender: '0',
+  })
   const [editFormData, setEditFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     phoneNumber: '',
+    lisenseNumber: '',
   })
 
   // Confirm dialog state
@@ -136,6 +175,40 @@ export function PharmacistManagementPage() {
     queryFn: adminService.getPharmacistStats,
   })
 
+  // Create pharmacist mutation
+  const createMutation = useMutation({
+    mutationFn: (data: typeof createFormData) =>
+      adminService.createUser({
+        firstName: data.firstName.trim(),
+        lastName: data.lastName.trim(),
+        email: data.email.trim(),
+        phoneNumber: data.phoneNumber.trim(),
+        lisenseNumber: data.lisenseNumber.trim(),
+        password: data.password,
+        role: 1,
+        gender: Number(data.gender),
+      }),
+    onSuccess: () => {
+      toast.success('Đã tạo tài khoản dược sĩ thành công')
+      setIsCreateDialogOpen(false)
+      setCreateFormData({
+        firstName: '',
+        lastName: '',
+        email: '',
+        phoneNumber: '',
+        lisenseNumber: '',
+        password: '',
+        gender: '0',
+      })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'pharmacists'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
+    },
+    onError: (error: AdminApiError) => {
+      const message = error.response?.data?.message || error.response?.data?.errors?.email?.msg
+      toast.error(message || 'Không thể tạo tài khoản dược sĩ')
+    },
+  })
+
   // Delete user mutation
   const deleteMutation = useMutation({
     mutationFn: (userId: string) => adminService.deleteUser(userId),
@@ -154,11 +227,11 @@ export function PharmacistManagementPage() {
       const response = await adminService.resetUserPassword(userId)
       return response as ResetPasswordResponse
     },
-    onSuccess: (data: ResetPasswordResponse) => {
-      toast.success(`Đã reset mật khẩu. Mật khẩu mới: ${data.newPassword}`)
+    onSuccess: () => {
+      toast.success('Đã gửi email đặt lại mật khẩu cho dược sĩ')
     },
     onError: () => {
-      toast.error('Không thể reset mật khẩu')
+      toast.error('Không thể gửi email đặt lại mật khẩu')
     },
   })
 
@@ -176,7 +249,8 @@ export function PharmacistManagementPage() {
 
   // Update user mutation (for ban/unban)
   const updateMutation = useMutation({
-    mutationFn: ({ userId, data }: { userId: string; data: any }) => adminService.updateUser(userId, data),
+    mutationFn: ({ userId, data }: { userId: string; data: UpdatePharmacistData }) =>
+      adminService.updateUser(userId, data),
     onSuccess: () => {
       toast.success('Đã cập nhật thông tin dược sĩ')
       queryClient.invalidateQueries({ queryKey: ['admin', 'pharmacists'] })
@@ -201,7 +275,8 @@ export function PharmacistManagementPage() {
     setConfirmDialog({
       open: true,
       title: 'Reset mật khẩu',
-      description: 'Bạn có chắc chắn muốn reset mật khẩu dược sĩ này? Mật khẩu mới sẽ được tạo tự động.',
+      description:
+        'Bạn có chắc chắn muốn gửi link đặt lại mật khẩu cho dược sĩ này? Các phiên đăng nhập hiện tại của tài khoản sẽ bị thu hồi.',
       onConfirm: () => resetPasswordMutation.mutate(userId),
     })
   }
@@ -227,6 +302,7 @@ export function PharmacistManagementPage() {
       lastName: pharmacist.lastName,
       email: pharmacist.email,
       phoneNumber: pharmacist.phoneNumber,
+      lisenseNumber: pharmacist.lisenseNumber || '',
     })
     setIsEditDialogOpen(true)
   }
@@ -246,6 +322,29 @@ export function PharmacistManagementPage() {
         },
       },
     )
+  }
+
+  const handleCreatePharmacist = () => {
+    const requiredFields = [
+      createFormData.firstName,
+      createFormData.lastName,
+      createFormData.email,
+      createFormData.phoneNumber,
+      createFormData.lisenseNumber,
+      createFormData.password,
+    ]
+
+    if (requiredFields.some((value) => !value.trim())) {
+      toast.error('Vui lòng nhập đầy đủ thông tin dược sĩ')
+      return
+    }
+
+    if (createFormData.password.length < 8) {
+      toast.error('Mật khẩu cần có ít nhất 8 ký tự')
+      return
+    }
+
+    createMutation.mutate(createFormData)
   }
 
   const handleToggleBan = (pharmacist: UserData) => {
@@ -300,6 +399,13 @@ export function PharmacistManagementPage() {
           <p className='text-gray-600 mt-2'>Quản lý đội ngũ dược sĩ tư vấn</p>
         </div>
         <div className='flex items-center gap-3'>
+          <Button
+            className='gap-2 bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white hover:text-white'
+            onClick={() => setIsCreateDialogOpen(true)}
+          >
+            <Plus className='w-4 h-4' />
+            Thêm dược sĩ
+          </Button>
           <Button variant='outline' className='gap-2' onClick={handleRefresh}>
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
             Làm mới
@@ -447,6 +553,7 @@ export function PharmacistManagementPage() {
                     <TableRow className='!border-b-2 !border-[#BFDBFE]'>
                       <TableHead>Dược sĩ</TableHead>
                       <TableHead>Liên hệ</TableHead>
+                      <TableHead>Chứng chỉ</TableHead>
                       <TableHead>Trạng thái</TableHead>
                       <TableHead>Ngày tham gia</TableHead>
                       <TableHead className='text-right'>Thao tác</TableHead>
@@ -475,6 +582,13 @@ export function PharmacistManagementPage() {
                             <p className='text-sm text-gray-900'>{pharmacist.email}</p>
                             <p className='text-sm text-gray-500'>{pharmacist.phoneNumber}</p>
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          {pharmacist.lisenseNumber ? (
+                            <Badge className='bg-[#E8EDF5] text-[#0A2463]'>{pharmacist.lisenseNumber}</Badge>
+                          ) : (
+                            <Badge className='bg-yellow-100 text-yellow-700'>Chưa có</Badge>
+                          )}
                         </TableCell>
                         <TableCell>{getStatusBadge(pharmacist.status)}</TableCell>
                         <TableCell>
@@ -591,6 +705,10 @@ export function PharmacistManagementPage() {
                   <p className='text-base'>{selectedPharmacist.phoneNumber}</p>
                 </div>
                 <div>
+                  <p className='text-sm font-medium text-gray-500'>Số chứng chỉ hành nghề</p>
+                  <p className='text-base font-mono'>{selectedPharmacist.lisenseNumber || 'Chưa có'}</p>
+                </div>
+                <div>
                   <p className='text-sm font-medium text-gray-500'>Ngày tham gia</p>
                   <p className='text-base'>
                     {selectedPharmacist.createdAt
@@ -607,6 +725,111 @@ export function PharmacistManagementPage() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className='max-w-2xl'>
+          <DialogHeader>
+            <DialogTitle>Thêm tài khoản dược sĩ</DialogTitle>
+            <DialogDescription>Tạo tài khoản dược sĩ mới để đăng nhập vào phân hệ tư vấn</DialogDescription>
+          </DialogHeader>
+          <div className='space-y-4'>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+              <div className='space-y-2'>
+                <label className='text-sm font-medium'>Họ</label>
+                <Input
+                  value={createFormData.firstName}
+                  onChange={(e) => setCreateFormData({ ...createFormData, firstName: e.target.value })}
+                  placeholder='Nhập họ'
+                  className='border-2 border-[#BFDBFE]'
+                />
+              </div>
+              <div className='space-y-2'>
+                <label className='text-sm font-medium'>Tên</label>
+                <Input
+                  value={createFormData.lastName}
+                  onChange={(e) => setCreateFormData({ ...createFormData, lastName: e.target.value })}
+                  placeholder='Nhập tên'
+                  className='border-2 border-[#BFDBFE]'
+                />
+              </div>
+            </div>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+              <div className='space-y-2'>
+                <label className='text-sm font-medium'>Email</label>
+                <Input
+                  type='email'
+                  value={createFormData.email}
+                  onChange={(e) => setCreateFormData({ ...createFormData, email: e.target.value })}
+                  placeholder='duocsi@medispace.vn'
+                  className='border-2 border-[#BFDBFE]'
+                />
+              </div>
+              <div className='space-y-2'>
+                <label className='text-sm font-medium'>Số điện thoại</label>
+                <Input
+                  type='tel'
+                  value={createFormData.phoneNumber}
+                  onChange={(e) => setCreateFormData({ ...createFormData, phoneNumber: e.target.value })}
+                  placeholder='0901234567'
+                  className='border-2 border-[#BFDBFE]'
+                />
+              </div>
+            </div>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+              <div className='space-y-2'>
+                <label className='text-sm font-medium'>Mật khẩu</label>
+                <Input
+                  type='password'
+                  value={createFormData.password}
+                  onChange={(e) => setCreateFormData({ ...createFormData, password: e.target.value })}
+                  placeholder='Tối thiểu 8 ký tự'
+                  className='border-2 border-[#BFDBFE]'
+                />
+              </div>
+              <div className='space-y-2'>
+                <label className='text-sm font-medium'>Số chứng chỉ hành nghề</label>
+                <Input
+                  value={createFormData.lisenseNumber}
+                  onChange={(e) => setCreateFormData({ ...createFormData, lisenseNumber: e.target.value })}
+                  placeholder='VD: CCHN-DS-000001'
+                  className='border-2 border-[#BFDBFE]'
+                />
+              </div>
+            </div>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+              <div className='space-y-2'>
+                <label className='text-sm font-medium'>Giới tính</label>
+                <Select
+                  value={createFormData.gender}
+                  onValueChange={(gender) => setCreateFormData({ ...createFormData, gender })}
+                >
+                  <SelectTrigger className='border-2 border-[#BFDBFE]'>
+                    <SelectValue placeholder='Chọn giới tính' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='0'>Nam</SelectItem>
+                    <SelectItem value='1'>Nữ</SelectItem>
+                    <SelectItem value='2'>Khác</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className='flex justify-end gap-3 mt-6'>
+              <Button variant='outline' onClick={() => setIsCreateDialogOpen(false)}>
+                Hủy
+              </Button>
+              <Button
+                onClick={handleCreatePharmacist}
+                className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] text-white hover:text-white'
+                disabled={createMutation.isPending}
+              >
+                {createMutation.isPending ? 'Đang tạo...' : 'Tạo tài khoản'}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -655,6 +878,15 @@ export function PharmacistManagementPage() {
                 value={editFormData.phoneNumber}
                 onChange={(e) => setEditFormData({ ...editFormData, phoneNumber: e.target.value })}
                 placeholder='0123456789'
+                className='border-2 border-[#BFDBFE]'
+              />
+            </div>
+            <div className='space-y-2'>
+              <label className='text-sm font-medium'>Số chứng chỉ hành nghề</label>
+              <Input
+                value={editFormData.lisenseNumber}
+                onChange={(e) => setEditFormData({ ...editFormData, lisenseNumber: e.target.value })}
+                placeholder='VD: CCHN-DS-000001'
                 className='border-2 border-[#BFDBFE]'
               />
             </div>
