@@ -50,6 +50,39 @@ const uploadSteps = [
   { id: 'complete', title: 'Hoàn thành', description: 'Kết quả' },
 ]
 
+const PRESCRIPTION_SCAN_DRAFT_KEY = 'medispace_prescription_scan_draft'
+const PRESCRIPTION_SCAN_DRAFT_TTL_MS = 30 * 60 * 1000
+
+interface PrescriptionScanDraft {
+  currentStep: number
+  uploadedImages: UploadedImage[]
+  selectedImageIndex: number
+  ocrData: OCRInitialData | null
+  savedAt: number
+}
+
+const readPrescriptionScanDraft = (): PrescriptionScanDraft | null => {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = window.sessionStorage.getItem(PRESCRIPTION_SCAN_DRAFT_KEY)
+    if (!raw) return null
+    const draft = JSON.parse(raw) as PrescriptionScanDraft
+    if (!draft?.savedAt || Date.now() - draft.savedAt > PRESCRIPTION_SCAN_DRAFT_TTL_MS) {
+      window.sessionStorage.removeItem(PRESCRIPTION_SCAN_DRAFT_KEY)
+      return null
+    }
+    return draft
+  } catch {
+    window.sessionStorage.removeItem(PRESCRIPTION_SCAN_DRAFT_KEY)
+    return null
+  }
+}
+
+const clearPrescriptionScanDraft = () => {
+  if (typeof window === 'undefined') return
+  window.sessionStorage.removeItem(PRESCRIPTION_SCAN_DRAFT_KEY)
+}
+
 interface UploadedPrescriptionPreviewProps {
   images: UploadedImage[]
   selectedIndex: number
@@ -203,10 +236,12 @@ function UploadedPrescriptionPreview({
 export function UploadPrescriptionPage() {
   const navigate = useNavigate()
   const { isAuthenticated, user } = useAuth()
+  const restoredDraftRef = useRef<PrescriptionScanDraft | null>(readPrescriptionScanDraft())
+  const restoredDraft = restoredDraftRef.current
 
-  const [currentStep, setCurrentStep] = useState(1)
-  const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([])
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+  const [currentStep, setCurrentStep] = useState(() => restoredDraft?.currentStep || 1)
+  const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>(() => restoredDraft?.uploadedImages || [])
+  const [selectedImageIndex, setSelectedImageIndex] = useState(() => restoredDraft?.selectedImageIndex || 0)
   const [prescriptionId, setPrescriptionId] = useState<string | null>(null)
   const [prescriptionNumber, setPrescriptionNumber] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -214,7 +249,7 @@ export function UploadPrescriptionPage() {
 
   // OCR state
   const [isScanning, setIsScanning] = useState(false)
-  const [ocrData, setOcrData] = useState<OCRInitialData | null>(null)
+  const [ocrData, setOcrData] = useState<OCRInitialData | null>(() => restoredDraft?.ocrData || null)
   const [scanProgress, setScanProgress] = useState(0)
   const [scanStage, setScanStage] = useState(0) // 0=idle, 1=detect, 2=recognize, 3=extract
   const scanTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -251,6 +286,25 @@ export function UploadPrescriptionPage() {
       if (scanTimerRef.current) clearInterval(scanTimerRef.current)
     }
   }, [])
+
+  useEffect(() => {
+    if (isScanning || currentStep >= 3) return
+    const hasDraftContent = uploadedImages.length > 0 || !!ocrData
+    if (!hasDraftContent) {
+      clearPrescriptionScanDraft()
+      return
+    }
+    window.sessionStorage.setItem(
+      PRESCRIPTION_SCAN_DRAFT_KEY,
+      JSON.stringify({
+        currentStep,
+        uploadedImages,
+        selectedImageIndex,
+        ocrData,
+        savedAt: Date.now(),
+      } satisfies PrescriptionScanDraft),
+    )
+  }, [currentStep, isScanning, ocrData, selectedImageIndex, uploadedImages])
 
   useEffect(() => {
     const uploadedCount = uploadedImages.filter((image) => image.isUploaded && image.url.startsWith('http')).length
@@ -455,6 +509,7 @@ export function UploadPrescriptionPage() {
       const response = await prescriptionsAPI.submitPrescription(prescriptionData)
 
       if (response?.result) {
+        clearPrescriptionScanDraft()
         setPrescriptionId(response.result._id)
         setPrescriptionNumber(response.result.prescriptionNumber)
         setCurrentStep(3)
@@ -822,9 +877,11 @@ export function UploadPrescriptionPage() {
                       variant='ghost'
                       className='text-gray-500 hover:text-[#1E40AF]'
                       onClick={() => {
+                        clearPrescriptionScanDraft()
                         setCurrentStep(1)
                         setUploadedImages([])
                         setSelectedImageIndex(0)
+                        setOcrData(null)
                         setPrescriptionId(null)
                         setPrescriptionNumber(null)
                       }}
