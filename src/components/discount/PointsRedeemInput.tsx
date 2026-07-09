@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Sparkles, Loader2, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react'
+import { Sparkles, Loader2, ChevronDown, ChevronUp } from 'lucide-react'
 import { Button } from '../ui/button'
-import { Slider } from '../ui/slider'
+import { Input } from '../ui/input'
 import { Badge } from '../ui/badge'
 import { apiClient } from '../../services/apiClient'
 
@@ -12,6 +12,7 @@ interface PointsPreview {
   pointsBalance: number
   minRedeem: number
   maxRedeemRatio: number
+  pointsToVnd: number
 }
 
 interface PointsRedeemInputProps {
@@ -77,7 +78,7 @@ export function PointsRedeemInput({ subtotal, onRedeemChange, className }: Point
     }
     setIsApplied(true)
     setError('')
-    const discountAmount = pointsToRedeem // 1 điểm = 1đ
+    const discountAmount = getRedeemAmount(pointsToRedeem)
     onRedeemChange?.(pointsToRedeem, discountAmount)
   }
 
@@ -88,17 +89,30 @@ export function PointsRedeemInput({ subtotal, onRedeemChange, className }: Point
     onRedeemChange?.(0, 0)
   }
 
-  const handleSliderChange = (val: number[]) => {
-    const pts = val[0]
-    setPointsToRedeem(pts)
+  const resetAppliedState = () => {
     if (isApplied) {
       setIsApplied(false)
       onRedeemChange?.(0, 0)
     }
   }
 
+  const handlePointsChange = (value: string) => {
+    const numericValue = value.replace(/[^0-9]/g, '')
+    const pts = Math.min(Number(numericValue || 0), preview?.pointsNeeded || 0)
+    setPointsToRedeem(pts)
+    resetAppliedState()
+  }
+
+  const handleUseMax = () => {
+    setPointsToRedeem(preview?.pointsNeeded || 0)
+    resetAppliedState()
+  }
+
   const formatCurrency = (n: number) => new Intl.NumberFormat('vi-VN').format(n) + 'đ'
   const formatPoints = (n: number) => new Intl.NumberFormat('vi-VN').format(n) + ' điểm'
+  const rawPointValue = Number(preview?.pointsToVnd)
+  const pointValue = Number.isFinite(rawPointValue) && rawPointValue > 0 ? rawPointValue : 1
+  const getRedeemAmount = (points: number) => Math.max(0, Math.floor(points * pointValue))
 
   if (isLoading) {
     return (
@@ -128,14 +142,14 @@ export function PointsRedeemInput({ subtotal, onRedeemChange, className }: Point
           </Badge>
           {isApplied && (
             <Badge className='bg-green-100 text-green-700 text-xs hover:bg-green-100'>
-              -{formatCurrency(pointsToRedeem)}
+              -{formatCurrency(getRedeemAmount(pointsToRedeem))}
             </Badge>
           )}
         </div>
         <div className='flex items-center gap-1'>
           {!preview.canRedeem && (
             <span className='text-xs text-gray-400'>
-              Cần tối thiểu {formatPoints(preview.minRedeem)}
+              {preview.minRedeem > 0 ? `Cần tối thiểu ${formatPoints(preview.minRedeem)}` : 'Bạn chưa có điểm thưởng'}
             </span>
           )}
           {preview.canRedeem && (
@@ -147,66 +161,33 @@ export function PointsRedeemInput({ subtotal, onRedeemChange, className }: Point
       {/* Expanded panel */}
       {isExpanded && preview.canRedeem && (
         <div className='px-4 py-4 bg-white space-y-4'>
-          {/* Info */}
-          <div className='flex items-start gap-2 text-xs text-gray-500 bg-gray-50 p-3 rounded-lg'>
-            <AlertCircle className='w-3.5 h-3.5 shrink-0 mt-0.5' />
-            <p>
-              Tối đa <strong>{formatPoints(preview.pointsNeeded)}</strong> ({formatCurrency(preview.maxRedeemAmount)}) — tương đương ~30% giá trị còn lại sau coupon. 1 điểm = 1đ.
-            </p>
-          </div>
-
-          {/* Slider */}
+          {/* Points input */}
           <div className='space-y-3'>
             <div className='flex justify-between text-sm'>
               <span className='text-gray-600'>Số điểm muốn dùng</span>
-              <span className='font-semibold text-[#1E40AF]'>{formatPoints(pointsToRedeem)}</span>
             </div>
-            <Slider
-              min={0}
-              max={preview.pointsNeeded}
-              step={1000}
-              value={[pointsToRedeem]}
-              onValueChange={handleSliderChange}
-              className='w-full'
-            />
-            <div className='flex justify-between text-xs text-gray-400'>
-              <span>0</span>
-              <span>= {formatCurrency(pointsToRedeem)}</span>
-              <span>{formatPoints(preview.pointsNeeded)}</span>
+            <div className='flex gap-2'>
+              <Input
+                type='text'
+                inputMode='numeric'
+                value={pointsToRedeem ? new Intl.NumberFormat('vi-VN').format(pointsToRedeem) : ''}
+                onChange={e => handlePointsChange(e.target.value)}
+                placeholder='Nhập số điểm'
+                className='h-11 flex-1 text-base font-semibold text-[#0A2463]'
+              />
+              <Button
+                type='button'
+                variant='outline'
+                onClick={handleUseMax}
+                className='h-11 border-[#BFDBFE] text-[#1E40AF] hover:bg-[#F0F6FF]'
+              >
+                Tối đa
+              </Button>
             </div>
-          </div>
-
-          {/* Quick select */}
-          <div className='flex gap-2 flex-wrap'>
-            {[25, 50, 75, 100].map(pct => {
-              const pts = Math.min(
-                Math.floor((preview.pointsNeeded * pct) / 100 / 1000) * 1000,
-                preview.pointsNeeded
-              )
-              return (
-                <button
-                  key={pct}
-                  onClick={() => { setPointsToRedeem(pts); setIsApplied(false); onRedeemChange?.(0, 0) }}
-                  className={`text-xs px-2.5 py-1 rounded-full border transition-all ${
-                    pointsToRedeem === pts
-                      ? 'bg-[#0A2463] text-white border-[#0A2463]'
-                      : 'border-[#BFDBFE] text-[#1E40AF] hover:bg-[#F0F6FF]'
-                  }`}
-                >
-                  {pct}%
-                </button>
-              )
-            })}
-            <button
-              onClick={() => { setPointsToRedeem(preview.pointsNeeded); setIsApplied(false); onRedeemChange?.(0, 0) }}
-              className={`text-xs px-2.5 py-1 rounded-full border transition-all ${
-                pointsToRedeem === preview.pointsNeeded
-                  ? 'bg-[#0A2463] text-white border-[#0A2463]'
-                  : 'border-[#BFDBFE] text-[#1E40AF] hover:bg-[#F0F6FF]'
-              }`}
-            >
-              Tối đa
-            </button>
+            <div className='flex justify-between text-xs text-gray-500'>
+              <span>Tối đa {formatPoints(preview.pointsNeeded)}</span>
+              <span>Giảm {formatCurrency(getRedeemAmount(pointsToRedeem))}</span>
+            </div>
           </div>
 
           {/* Error */}
@@ -230,7 +211,7 @@ export function PointsRedeemInput({ subtotal, onRedeemChange, className }: Point
                 disabled={pointsToRedeem <= 0}
                 className='flex-1 bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white'
               >
-                Dùng {formatPoints(pointsToRedeem)} (-{formatCurrency(pointsToRedeem)})
+                Dùng {formatPoints(pointsToRedeem)} (-{formatCurrency(getRedeemAmount(pointsToRedeem))})
               </Button>
             )}
           </div>

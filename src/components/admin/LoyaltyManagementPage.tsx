@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import {
   Sparkles, Users, TrendingUp, Award, Trophy, Star,
   Loader2, AlertCircle, RefreshCw,
-  Search, Crown, Gift, Clock, Save, Upload
+  Search, Crown, Gift, Clock, Save
 } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
@@ -17,6 +17,12 @@ import { Label } from '../ui/label'
 import { Textarea } from '../ui/textarea'
 import { apiClient } from '../../services/apiClient'
 import { PaginationComponent } from '../shared/PaginationComponent'
+
+const getApiErrorMessage = (error: any, fallback: string) => {
+  const status = error?.response?.status
+  const message = error?.response?.data?.message || error?.message
+  return [status, message || fallback].filter(Boolean).join(': ')
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -96,7 +102,7 @@ export function AdminLoyaltyPage() {
   const [adjustError, setAdjustError] = useState('')
   const [isAdjusting, setIsAdjusting] = useState(false)
   const [programConfig, setProgramConfig] = useState<LoyaltyProgramConfig | null>(null)
-  const [draftConfig, setDraftConfig] = useState<LoyaltyProgramConfig | null>(null)
+  const [editableConfig, setEditableConfig] = useState<LoyaltyProgramConfig | null>(null)
   const [configError, setConfigError] = useState('')
   const [isSavingConfig, setIsSavingConfig] = useState(false)
   const LIMIT = 20
@@ -126,8 +132,8 @@ export function AdminLoyaltyPage() {
       const res = await apiClient.get<any>(`/loyalty/admin/accounts?${params}`)
       setAccounts(res.data.result.accounts || [])
       setTotal(res.data.result.pagination?.total || 0)
-    } catch {
-      setError('Không thể tải danh sách tài khoản loyalty')
+    } catch (err: any) {
+      setError(getApiErrorMessage(err, 'Không thể tải danh sách tài khoản loyalty'))
     } finally {
       setIsLoading(false)
     }
@@ -137,12 +143,11 @@ export function AdminLoyaltyPage() {
     setConfigError('')
     try {
       const res = await apiClient.get<any>('/loyalty/admin/program-config')
-      const published = res.data.result.published as LoyaltyProgramConfig
-      const draft = res.data.result.draft as LoyaltyProgramConfig | null
+      const published = (res.data.result.config || res.data.result.published) as LoyaltyProgramConfig
       setProgramConfig(published)
-      setDraftConfig(draft || { ...published, status: 'draft' })
-    } catch {
-      setConfigError('Không thể tải cấu hình loyalty program.')
+      setEditableConfig({ ...published, status: 'published' })
+    } catch (err: any) {
+      setConfigError(getApiErrorMessage(err, 'Không thể tải cấu hình loyalty program.'))
     }
   }
 
@@ -164,41 +169,28 @@ export function AdminLoyaltyPage() {
 
   const tiers: LoyaltyTier[] = ['member', 'silver', 'gold', 'platinum']
 
-  const updateDraftField = (field: keyof LoyaltyProgramConfig, value: number) => {
-    setDraftConfig(cfg => cfg ? { ...cfg, [field]: value } : cfg)
+  const updateConfigField = (field: keyof LoyaltyProgramConfig, value: number) => {
+    setEditableConfig(cfg => cfg ? { ...cfg, [field]: value } : cfg)
   }
 
-  const updateDraftTier = (code: LoyaltyTier, field: keyof LoyaltyTierRule, value: string | number) => {
-    setDraftConfig(cfg => cfg ? {
+  const updateConfigTier = (code: LoyaltyTier, field: keyof LoyaltyTierRule, value: string | number) => {
+    setEditableConfig(cfg => cfg ? {
       ...cfg,
       tiers: cfg.tiers.map(tier => tier.code === code ? { ...tier, [field]: value } : tier)
     } : cfg)
   }
 
-  const saveProgramDraft = async () => {
-    if (!draftConfig) return
+  const saveProgramConfig = async () => {
+    if (!editableConfig) return
     setIsSavingConfig(true)
     setConfigError('')
     try {
-      const res = await apiClient.put<any>('/loyalty/admin/program-config/draft', draftConfig)
-      setDraftConfig(res.data.result)
-    } catch (err: any) {
-      setConfigError(err?.response?.data?.message || 'Không thể lưu cấu hình loyalty.')
-    } finally {
-      setIsSavingConfig(false)
-    }
-  }
-
-  const publishProgramConfig = async () => {
-    setIsSavingConfig(true)
-    setConfigError('')
-    try {
-      const res = await apiClient.post<any>('/loyalty/admin/program-config/publish')
+      const res = await apiClient.put<any>('/loyalty/admin/program-config', editableConfig)
       setProgramConfig(res.data.result)
-      setDraftConfig({ ...res.data.result, status: 'draft' })
+      setEditableConfig(res.data.result)
       await Promise.all([fetchStats(), fetchAccounts()])
     } catch (err: any) {
-      setConfigError(err?.response?.data?.message || 'Không thể publish cấu hình loyalty.')
+      setConfigError(getApiErrorMessage(err, 'Không thể lưu cấu hình loyalty.'))
     } finally {
       setIsSavingConfig(false)
     }
@@ -235,7 +227,7 @@ export function AdminLoyaltyPage() {
       setAdjustTarget(null)
       await Promise.all([fetchStats(), fetchAccounts()])
     } catch (err: any) {
-      setAdjustError(err?.response?.data?.message || 'Không thể điều chỉnh điểm.')
+      setAdjustError(getApiErrorMessage(err, 'Không thể điều chỉnh điểm.'))
     } finally {
       setIsAdjusting(false)
     }
@@ -358,20 +350,11 @@ export function AdminLoyaltyPage() {
                 <Sparkles className='w-5 h-5 text-[#1E40AF]' />
                 Cấu hình chương trình loyalty
               </CardTitle>
-              {programConfig && (
-                <p className='text-xs text-gray-500 mt-1'>
-                  Đang áp dụng version {programConfig.version} • {programConfig.pointsPerVnd.toLocaleString('vi-VN')}đ = 1 điểm • đổi tối đa {Math.round(programConfig.maxRedeemRatio * 100)}% đơn hàng
-                </p>
-              )}
             </div>
             <div className='flex gap-2'>
-              <Button variant='outline' size='sm' onClick={saveProgramDraft} disabled={!draftConfig || isSavingConfig} className='gap-2'>
+              <Button size='sm' onClick={saveProgramConfig} disabled={!editableConfig || isSavingConfig} className='bg-[#0A2463] hover:bg-[#071A49] text-white gap-2'>
                 <Save className='w-4 h-4' />
-                Lưu nháp
-              </Button>
-              <Button size='sm' onClick={publishProgramConfig} disabled={!draftConfig || isSavingConfig} className='bg-[#0A2463] hover:bg-[#071A49] text-white gap-2'>
-                <Upload className='w-4 h-4' />
-                Publish
+                Lưu cấu hình
               </Button>
             </div>
           </div>
@@ -384,28 +367,28 @@ export function AdminLoyaltyPage() {
             </div>
           )}
 
-          {draftConfig ? (
+          {editableConfig ? (
             <>
               <div className='grid grid-cols-2 lg:grid-cols-5 gap-3'>
                 <div className='space-y-1.5'>
                   <Label className='text-xs'>VNĐ / 1 điểm</Label>
-                  <Input type='number' min={1} value={draftConfig.pointsPerVnd} onChange={e => updateDraftField('pointsPerVnd', Number(e.target.value))} />
+                  <Input type='number' min={1} value={editableConfig.pointsPerVnd} onChange={e => updateConfigField('pointsPerVnd', Number(e.target.value))} />
                 </div>
                 <div className='space-y-1.5'>
                   <Label className='text-xs'>1 điểm = VNĐ</Label>
-                  <Input type='number' min={1} value={draftConfig.pointsToVnd} onChange={e => updateDraftField('pointsToVnd', Number(e.target.value))} />
+                  <Input type='number' min={1} value={editableConfig.pointsToVnd} onChange={e => updateConfigField('pointsToVnd', Number(e.target.value))} />
                 </div>
                 <div className='space-y-1.5'>
                   <Label className='text-xs'>Đổi tối đa (%)</Label>
-                  <Input type='number' min={1} max={100} value={Math.round(draftConfig.maxRedeemRatio * 100)} onChange={e => updateDraftField('maxRedeemRatio', Number(e.target.value) / 100)} />
+                  <Input type='number' min={1} max={100} value={Math.round(editableConfig.maxRedeemRatio * 100)} onChange={e => updateConfigField('maxRedeemRatio', Number(e.target.value) / 100)} />
                 </div>
                 <div className='space-y-1.5'>
                   <Label className='text-xs'>Điểm đổi tối thiểu</Label>
-                  <Input type='number' min={0} value={draftConfig.minRedeem} onChange={e => updateDraftField('minRedeem', Number(e.target.value))} />
+                  <Input type='number' min={0} value={editableConfig.minRedeem} onChange={e => updateConfigField('minRedeem', Number(e.target.value))} />
                 </div>
                 <div className='space-y-1.5'>
                   <Label className='text-xs'>Hết hạn sau ngày</Label>
-                  <Input type='number' min={1} value={draftConfig.expiryDays} onChange={e => updateDraftField('expiryDays', Number(e.target.value))} />
+                  <Input type='number' min={1} value={editableConfig.expiryDays} onChange={e => updateConfigField('expiryDays', Number(e.target.value))} />
                 </div>
               </div>
 
@@ -421,18 +404,18 @@ export function AdminLoyaltyPage() {
                   </TableHeader>
                   <TableBody>
                     {tiers.map(code => {
-                      const tier = draftConfig.tiers.find(t => t.code === code)!
+                      const tier = editableConfig.tiers.find(t => t.code === code)!
                       return (
                         <TableRow key={code} className='border-b border-[#E8EDF5] hover:bg-[#F0F6FF]/30'>
                           <TableCell className='font-medium'>{code}</TableCell>
                           <TableCell>
-                            <Input value={tier.label} onChange={e => updateDraftTier(code, 'label', e.target.value)} />
+                            <Input value={tier.label} onChange={e => updateConfigTier(code, 'label', e.target.value)} />
                           </TableCell>
                           <TableCell>
-                            <Input type='number' min={0} value={tier.minTotalSpent} onChange={e => updateDraftTier(code, 'minTotalSpent', Number(e.target.value))} />
+                            <Input type='number' min={0} value={tier.minTotalSpent} onChange={e => updateConfigTier(code, 'minTotalSpent', Number(e.target.value))} />
                           </TableCell>
                           <TableCell>
-                            <Input type='number' min={0.1} step={0.1} value={tier.multiplier} onChange={e => updateDraftTier(code, 'multiplier', Number(e.target.value))} />
+                            <Input type='number' min={0.1} step={0.1} value={tier.multiplier} onChange={e => updateConfigTier(code, 'multiplier', Number(e.target.value))} />
                           </TableCell>
                         </TableRow>
                       )
