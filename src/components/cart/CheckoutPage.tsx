@@ -63,6 +63,11 @@ const GLOBAL_DEFAULT_SHIPPING_METHODS: ShippingMethod[] = [
   },
 ]
 
+const toSafeAmount = (value: unknown) => {
+  const amount = Number(value)
+  return Number.isFinite(amount) ? amount : 0
+}
+
 const PRESCRIPTION_CHECKOUT_STORAGE_KEY = 'medispace_checkout_prescription_id'
 
 const paymentMethods: PaymentMethod[] = [
@@ -317,9 +322,12 @@ export function CheckoutPage() {
     bgShippingFee = 0
   }
 
-  const shippingFee = bgShippingFee
-  const pointsRedeemBaseAmount = Math.max(0, subtotal - couponDiscount)
-  const total = Math.max(0, subtotal - couponDiscount - pointsDiscount + shippingFee)
+  const shippingFee = toSafeAmount(bgShippingFee)
+  const safeSubtotal = toSafeAmount(subtotal)
+  const safeCouponDiscount = toSafeAmount(couponDiscount)
+  const safePointsDiscount = toSafeAmount(pointsDiscount)
+  const pointsRedeemBaseAmount = Math.max(0, safeSubtotal - safeCouponDiscount)
+  const total = Math.max(0, safeSubtotal - safeCouponDiscount - safePointsDiscount + shippingFee)
 
   const handlePlaceOrder = async () => {
     if (isSubmittingRef.current) return
@@ -865,8 +873,8 @@ export function CheckoutPage() {
                     <PointsRedeemInput
                       subtotal={pointsRedeemBaseAmount}
                       onRedeemChange={(pts, amount) => {
-                        setPointsToRedeem(pts)
-                        setPointsDiscount(amount)
+                        setPointsToRedeem(toSafeAmount(pts))
+                        setPointsDiscount(toSafeAmount(amount))
                       }}
                     />
                   </div>

@@ -126,11 +126,9 @@ export const getDashboardStats = async (): Promise<DashboardStats> => {
  */
 export const getRecentActivities = async (limit?: number): Promise<RecentActivity[]> => {
   try {
-    console.log('Fetching recent activities with limit:', limit)
     const response = await apiClient.get<{ result: RecentActivity[] }>('/admin/dashboard/recent-activities', {
       params: { limit },
     })
-    console.log('Recent activities loaded successfully')
     return response.data.result
   } catch (error) {
     const status = (error as AxiosError).response?.status
