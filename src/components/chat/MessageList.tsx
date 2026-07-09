@@ -23,6 +23,7 @@ interface MessageListProps {
   onSuggestClick?: (content: string) => void
   onFeedbackClick?: (messageId: string, feedback: 'up' | 'down') => void
   suggestions?: { label: string; text: string }[] // Task 2.4: dynamic suggestions
+  showAiAttribution?: boolean
 }
 
 // Default suggestions — dùng khi API không trả về hoặc lỗi
@@ -97,6 +98,7 @@ export function MessageList({
   onSuggestClick,
   onFeedbackClick,
   suggestions, // Task 2.4
+  showAiAttribution = true,
 }: MessageListProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -271,7 +273,7 @@ export function MessageList({
                   <div className={`flex flex-col ${isOwnMessage ? 'items-end' : 'items-start'} max-w-[82%] min-w-0`}>
                     
                     {/* AI Badge */}
-                    {!isOwnMessage && message.isAI && (
+                    {!isOwnMessage && message.isAI && showAiAttribution && (
                       <div className="flex items-center gap-1 mb-1 px-1">
                         <span className="text-[10px] bg-[#F0F6FF] border border-[#BFDBFE] text-[#0A2463] px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
                           <Bot className='w-3 h-3' /> Trợ lý Sức khỏe AI
@@ -346,7 +348,7 @@ export function MessageList({
                     )}
 
                     {/* Feedback & Timestamp row for AI message */}
-                    {!isOwnMessage && message.isAI ? (
+                    {!isOwnMessage && message.isAI && showAiAttribution ? (
                       <div className='flex items-center gap-3 mt-1.5 px-1 w-full flex-wrap'>
                         <span className='text-[10px] text-gray-500'>{formatMessageTime(message.createdAt)}</span>
                         {onRequestHuman && (
