@@ -22,6 +22,7 @@ const normalizeForMatching = (value: string) =>
   value
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[đĐ]/g, 'd')
     .toLowerCase()
 
 const isOperationalOfflineMessage = (message: Message) => {
@@ -41,7 +42,20 @@ const isOperationalOfflineMessage = (message: Message) => {
   return mentionsPharmacistOffline && exposesFallback
 }
 
-const visibleChatMessages = (messages: Message[]) => messages.filter((message) => !isOperationalOfflineMessage(message))
+const isHumanHandoffStatusMessage = (message: Message) => {
+  if (!message.isAI || !message.content) return false
+
+  const content = normalizeForMatching(message.content).replace(/\s+/g, ' ')
+
+  return (
+    content.includes('ket noi ban voi duoc si') ||
+    content.includes('dang ket noi ban voi duoc si') ||
+    (content.includes('dang ket noi') && content.includes('duoc si') && content.includes('medispace'))
+  )
+}
+
+const visibleChatMessages = (messages: Message[]) =>
+  messages.filter((message) => !isOperationalOfflineMessage(message) && !isHumanHandoffStatusMessage(message))
 
 export function ChatWindow({
   conversation,
@@ -359,6 +373,7 @@ export function ChatWindow({
         hasMore={hasMore}
         onRequestHuman={aiMode ? handleRequestHuman : undefined}
         onSuggestClick={aiMode ? handleSendMessage : undefined}
+        showAiAttribution={aiMode}
         onFeedbackClick={handleFeedback}
       />
       {isClosed ? (

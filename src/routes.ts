@@ -40,6 +40,7 @@ export default [
       route('addresses', 'routes/account/addresses.tsx'),
       route('change-password', 'routes/account/change-password.tsx'),
       route('notifications', 'routes/account/notifications.tsx'),
+      route('coupons', 'routes/account/coupons.tsx'),
       route('orders', 'routes/account/orders/index.tsx'),
       route('orders/:orderId', 'routes/account/orders/$orderId.tsx'),
       route('orders/:orderId/return', 'routes/account/orders/$orderId.return.tsx'),

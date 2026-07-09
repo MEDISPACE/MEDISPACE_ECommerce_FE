@@ -202,7 +202,7 @@ export function FloatingChatWidget() {
       {isOpen && !isMinimized && (
         <div
           className={cn(
-            'fixed left-3 right-3 bottom-20 top-[calc(var(--header-height,64px)+0.75rem)] sm:left-auto sm:top-auto sm:right-[88px] sm:bottom-6 z-50 w-auto sm:w-[min(420px,calc(100vw-7rem))] lg:w-[clamp(400px,24vw,440px)] h-auto sm:h-[clamp(560px,72dvh,720px)] sm:max-h-[calc(100dvh-var(--header-height,64px)-2rem)] bg-white rounded-xl sm:rounded-2xl shadow-2xl border border-[#BFDBFE] sm:border-2 flex flex-col overflow-hidden slide-up-animation [--chat-gutter:1rem] sm:[--chat-gutter:1.25rem]',
+            'fixed left-3 right-3 bottom-20 top-[calc(var(--header-height,64px)+0.75rem)] sm:left-auto sm:top-auto sm:right-[88px] sm:bottom-6 z-[120] w-auto sm:w-[min(420px,calc(100vw-7rem))] lg:w-[clamp(400px,24vw,440px)] h-auto sm:h-[clamp(560px,72dvh,720px)] sm:max-h-[calc(100dvh-var(--header-height,64px)-2rem)] bg-white rounded-xl sm:rounded-2xl shadow-2xl border border-[#BFDBFE] sm:border-2 flex flex-col overflow-hidden slide-up-animation [--chat-gutter:1rem] sm:[--chat-gutter:1.25rem]',
           )}
         >
           {/* Header */}
@@ -385,7 +385,7 @@ export function FloatingChatWidget() {
       {/* Minimized State */}
       {isOpen && isMinimized && (
         <div
-          className='fixed left-3 right-3 bottom-20 sm:left-auto sm:right-[88px] sm:bottom-6 sm:w-auto z-50 text-white rounded-lg shadow-xl px-4 py-3 cursor-pointer hover:shadow-2xl transition-shadow bg-[#0A2463] hover:bg-[#1E40AF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF]/30'
+          className='fixed left-3 right-3 bottom-20 sm:left-auto sm:right-[88px] sm:bottom-6 sm:w-auto z-[120] text-white rounded-lg shadow-xl px-4 py-3 cursor-pointer hover:shadow-2xl transition-shadow bg-[#0A2463] hover:bg-[#1E40AF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF]/30'
           onClick={() => setIsMinimized(false)}
         >
           <div className='flex items-center justify-center sm:justify-start gap-2'>
@@ -397,7 +397,7 @@ export function FloatingChatWidget() {
       )}
 
       {/* Floating Button */}
-      <div className='fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50'>
+      <div className='fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[120]'>
         <Button
           onClick={handleToggle}
           className='relative w-14 h-14 rounded-full shadow-2xl bg-[#0A2463] hover:bg-[#1E40AF] text-white transition-all duration-300 hover:scale-110 animate-float focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF]/30 focus-visible:ring-offset-2'
