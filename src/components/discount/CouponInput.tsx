@@ -13,6 +13,18 @@ interface AppliedCoupon {
   type: 'percentage' | 'fixed_amount' | 'fixed' | 'free_shipping'
 }
 
+interface PublicCoupon {
+  _id: string
+  code: string
+  name: string
+  description?: string
+  type: 'percentage' | 'fixed_amount' | 'fixed' | 'free_shipping'
+  value: number
+  minOrderAmount?: number
+  maxDiscountAmount?: number
+  excludePrescriptionItems?: boolean
+}
+
 interface CouponInputProps {
   subtotal: number
   hasPrescriptionItems?: boolean
@@ -36,6 +48,8 @@ export function CouponInput({ subtotal, hasPrescriptionItems = false, items = []
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [publicCoupons, setPublicCoupons] = useState<PublicCoupon[]>([])
+  const [isLoadingPublicCoupons, setIsLoadingPublicCoupons] = useState(false)
 
   // Sync khi initialCoupons thay đổi (do cart load async từ API)
   const prevInitialRef = useRef<string>('')
@@ -46,6 +60,41 @@ export function CouponInput({ subtotal, hasPrescriptionItems = false, items = []
       setAppliedCoupons(initialCoupons)
     }
   }, [initialCoupons])
+
+  useEffect(() => {
+    let mounted = true
+
+    const fetchAvailableCoupons = async () => {
+      setIsLoadingPublicCoupons(true)
+      try {
+        const hasAccessToken = Boolean(localStorage.getItem('medispace_access_token'))
+        const res = await apiClient.get<any>(hasAccessToken ? '/coupons/available' : '/coupons/public')
+        if (mounted) setPublicCoupons(res.data.result || [])
+      } catch (err: any) {
+        const status = err?.response?.status
+        const shouldFallbackToPublic = Boolean(localStorage.getItem('medispace_access_token')) && (status === 401 || status === 403)
+
+        if (shouldFallbackToPublic) {
+          try {
+            const res = await apiClient.get<any>('/coupons/public')
+            if (mounted) setPublicCoupons(res.data.result || [])
+          } catch {
+            if (mounted) setPublicCoupons([])
+          }
+          return
+        }
+
+        if (mounted) setPublicCoupons([])
+      } finally {
+        if (mounted) setIsLoadingPublicCoupons(false)
+      }
+    }
+
+    fetchAvailableCoupons()
+    return () => {
+      mounted = false
+    }
+  }, [])
 
   const selectionSignature = `${subtotal}:${items
     .map(item => `${item.productId}:${item.unit || ''}:${item.quantity || 0}:${item.totalPrice}`)
@@ -103,8 +152,8 @@ export function CouponInput({ subtotal, hasPrescriptionItems = false, items = []
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectionSignature])
 
-  const handleApply = async () => {
-    const code = inputCode.trim().toUpperCase()
+  const handleApply = async (presetCode?: string) => {
+    const code = (presetCode || inputCode).trim().toUpperCase()
     if (!code) {
       setError('Vui lòng nhập mã giảm giá.')
       return
@@ -162,7 +211,7 @@ export function CouponInput({ subtotal, hasPrescriptionItems = false, items = []
         }
 
         setAppliedCoupons(updated)
-        setInputCode('')
+        if (!presetCode) setInputCode('')
         setSuccess(`Áp dụng "${newCoupon.name}" thành công!`)
 
         const totalDiscount = updated
@@ -175,7 +224,6 @@ export function CouponInput({ subtotal, hasPrescriptionItems = false, items = []
         // Normal cart flow — truyền subtotal của items đang được chọn
         const res = await apiClient.post<any>('/coupons/apply', {
           code,
-          selectedSubtotal: subtotal,
           selectedItems: items.map(item => ({ productId: item.productId, unit: item.unit }))
         })
         const data = res.data.result
@@ -183,7 +231,7 @@ export function CouponInput({ subtotal, hasPrescriptionItems = false, items = []
         const newCoupon: AppliedCoupon = data.addedCoupon
         const updated = [...appliedCoupons, newCoupon]
         setAppliedCoupons(updated)
-        setInputCode('')
+        if (!presetCode) setInputCode('')
         setSuccess(`Áp dụng "${newCoupon.name}" thành công!`)
 
         const totalDiscount = updated
@@ -223,10 +271,9 @@ export function CouponInput({ subtotal, hasPrescriptionItems = false, items = []
         .reduce((sum, c) => sum + c.discountAmount, 0)
       const hasFreeShip = updated.some(c => c.type === 'free_shipping')
       onCouponsChange?.(updated, totalDiscount, hasFreeShip)
-    } catch {
-      // silently remove from UI anyway
-      const updated = appliedCoupons.filter(c => c.code !== code)
-      setAppliedCoupons(updated)
+    } catch (err: any) {
+      setError(err?.response?.data?.message || 'Chưa thể xoá mã giảm giá. Vui lòng thử lại.')
+      setSuccess('')
     }
   }
 
@@ -236,6 +283,77 @@ export function CouponInput({ subtotal, hasPrescriptionItems = false, items = []
   const getCouponLabel = (coupon: AppliedCoupon) => {
     if (coupon.type === 'free_shipping') return 'Miễn phí vận chuyển'
     return `-${formatCurrency(coupon.discountAmount)}`
+  }
+
+  const getPublicCouponLabel = (coupon: PublicCoupon) => {
+    if (coupon.type === 'free_shipping') return 'Freeship'
+    if (coupon.type === 'percentage') {
+      return `-${coupon.value}%${coupon.maxDiscountAmount ? ` tối đa ${formatCurrency(coupon.maxDiscountAmount)}` : ''}`
+    }
+    return `-${formatCurrency(coupon.value)}`
+  }
+
+  const getPublicCouponUnavailableReason = (coupon: PublicCoupon) => {
+    if (appliedCoupons.some(applied => applied.code === coupon.code)) return 'Đang áp dụng'
+    if ((coupon.minOrderAmount || 0) > subtotal) return `Cần đơn từ ${formatCurrency(coupon.minOrderAmount || 0)}`
+    if (coupon.excludePrescriptionItems && hasPrescriptionItems) return 'Không áp dụng thuốc kê đơn'
+    if (coupon.type === 'free_shipping' && appliedCoupons.some(applied => applied.type === 'free_shipping')) {
+      return 'Đã có mã freeship'
+    }
+    if (coupon.type !== 'free_shipping' && appliedCoupons.some(applied => applied.type !== 'free_shipping')) {
+      return 'Đã có mã giảm giá'
+    }
+    return ''
+  }
+
+  const visiblePublicCoupons = publicCoupons
+    .filter(coupon => !appliedCoupons.some(applied => applied.code === coupon.code))
+    .map(coupon => ({ coupon, unavailableReason: getPublicCouponUnavailableReason(coupon) }))
+
+  const usableCoupons = visiblePublicCoupons
+    .filter(item => !item.unavailableReason)
+    .slice(0, 3)
+
+  const unavailableCoupons = visiblePublicCoupons
+    .filter(item => item.unavailableReason)
+    .slice(0, 3)
+
+  const hasVisibleCoupons = usableCoupons.length > 0 || unavailableCoupons.length > 0
+
+  const renderCouponRow = (coupon: PublicCoupon, unavailableReason = '') => {
+    const isUnavailable = Boolean(unavailableReason)
+
+    return (
+      <div
+        key={coupon._id || coupon.code}
+        className={`flex items-center justify-between gap-3 rounded-md border px-3 py-2 ${
+          isUnavailable ? 'border-gray-100 bg-gray-50' : 'border-[#BFDBFE] bg-[#F0F6FF]'
+        }`}
+      >
+        <div className='min-w-0'>
+          <div className='flex flex-wrap items-center gap-2'>
+            <code className='rounded bg-white px-2 py-0.5 text-xs font-bold text-[#0A2463]'>
+              {coupon.code}
+            </code>
+            <Badge className={isUnavailable ? 'bg-gray-100 text-gray-600 hover:bg-gray-100' : 'bg-green-100 text-green-800 hover:bg-green-100'}>
+              {getPublicCouponLabel(coupon)}
+            </Badge>
+          </div>
+          <p className='mt-1 truncate text-xs text-gray-600'>{coupon.name}</p>
+          {unavailableReason && <p className='mt-0.5 text-xs text-gray-400'>{unavailableReason}</p>}
+        </div>
+        <Button
+          type='button'
+          size='sm'
+          variant={isUnavailable ? 'outline' : 'default'}
+          disabled={isLoading || isUnavailable}
+          onClick={() => handleApply(coupon.code)}
+          className={isUnavailable ? 'shrink-0' : 'shrink-0 bg-[#0A2463] text-white hover:bg-[#071A49]'}
+        >
+          Áp dụng
+        </Button>
+      </div>
+    )
   }
 
   return (
@@ -255,13 +373,36 @@ export function CouponInput({ subtotal, hasPrescriptionItems = false, items = []
           />
         </div>
         <Button
-          onClick={handleApply}
+          onClick={() => handleApply()}
           disabled={isLoading || !inputCode.trim()}
           className='bg-gradient-to-r from-[#0A2463] to-[#1E40AF] hover:from-[#071A49] hover:to-[#0A2463] text-white px-5 shrink-0'
         >
           {isLoading ? <Loader2 className='w-4 h-4 animate-spin' /> : 'Áp dụng'}
         </Button>
       </div>
+
+      {(isLoadingPublicCoupons || hasVisibleCoupons) && (
+        <div className='mt-3 rounded-lg border border-[#E8EDF5] bg-white p-3'>
+          <div className='mb-2 flex items-center justify-between gap-2'>
+            <span className='text-sm font-semibold text-[#0A2463]'>Mã giảm giá khả dụng</span>
+            {isLoadingPublicCoupons && <Loader2 className='h-3.5 w-3.5 animate-spin text-[#1E40AF]' />}
+          </div>
+          <div className='space-y-2'>
+            {usableCoupons.length > 0 && (
+              <div className='space-y-2'>
+                <p className='text-xs font-semibold uppercase tracking-wide text-green-700'>Dùng được</p>
+                {usableCoupons.map(({ coupon }) => renderCouponRow(coupon))}
+              </div>
+            )}
+            {unavailableCoupons.length > 0 && (
+              <div className='space-y-2'>
+                <p className='text-xs font-semibold uppercase tracking-wide text-gray-500'>Chưa đủ điều kiện</p>
+                {unavailableCoupons.map(({ coupon, unavailableReason }) => renderCouponRow(coupon, unavailableReason))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Error / Success messages */}
       {error && (

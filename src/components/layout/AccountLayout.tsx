@@ -8,6 +8,7 @@ import {
   FileText,
   MapPin,
   Bell,
+  TicketPercent,
   Heart,
   Award,
   Lock,
@@ -79,6 +80,12 @@ const navigationItems = [
     label: 'Thông báo',
     href: '/account/notifications',
     icon: Bell,
+  },
+  {
+    id: 'coupons',
+    label: 'Ưu đãi của tôi',
+    href: '/account/coupons',
+    icon: TicketPercent,
   },
   {
     id: 'wishlist',
