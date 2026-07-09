@@ -347,15 +347,6 @@ export function PrescriptionsPage() {
             </Link>
           )}
 
-          {prescription.status === 'approved' && !prescription.orderId && (
-            <Link to={`/products?prescriptionId=${prescription.id}&rx=verified`}>
-              <Button size='sm' className='bg-green-600 text-white hover:bg-green-700 hover:text-white'>
-                <ShoppingCart className='w-4 h-4 mr-1' />
-                Mua / nạp lại thuốc
-              </Button>
-            </Link>
-          )}
-
           {prescription.status === 'rejected' && (
             <Link to={`/upload-prescription?resubmit=${prescription.id}`}>
               <Button size='sm' variant='outline'>

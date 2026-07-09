@@ -3,10 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Users,
   Search,
-  Plus,
   Trash2,
-  Download,
-  Upload,
   MoreVertical,
   CheckCircle,
   Shield,
@@ -34,6 +31,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Avatar, AvatarFallback } from '../ui/avatar'
 import { Badge } from '../ui/badge'
 import adminService from '~/services/adminService'
+import { useAuth } from '~/contexts/AuthContext'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
@@ -47,6 +45,7 @@ interface UserData {
   lastName: string
   email: string
   phoneNumber: string
+  lisenseNumber?: string
   role: number
   status: number
   createdAt?: string
@@ -67,8 +66,27 @@ interface UsersResponse {
 }
 
 interface ResetPasswordResponse {
-  newPassword: string
   message: string
+}
+
+interface EditUserFormData {
+  firstName: string
+  lastName: string
+  email: string
+  phoneNumber: string
+  role: string
+  lisenseNumber: string
+}
+
+type UpdateUserData = Partial<Pick<UserData, 'firstName' | 'lastName' | 'email' | 'phoneNumber' | 'lisenseNumber' | 'role' | 'status'>>
+
+interface AdminMutationError {
+  response?: {
+    data?: {
+      message?: string
+    }
+  }
+  message?: string
 }
 
 // Role mapping
@@ -93,6 +111,7 @@ const STATUS_MAP: Record<number, string> = {
 
 export function UserManagementPage() {
   const queryClient = useQueryClient()
+  const { user: currentUser } = useAuth()
 
   // State
   const [page, setPage] = useState(1)
@@ -104,11 +123,13 @@ export function UserManagementPage() {
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null)
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [editFormData, setEditFormData] = useState({
+  const [editFormData, setEditFormData] = useState<EditUserFormData>({
     firstName: '',
     lastName: '',
     email: '',
     phoneNumber: '',
+    role: '0',
+    lisenseNumber: '',
   })
 
   // Confirm dialog state
@@ -119,6 +140,11 @@ export function UserManagementPage() {
     onConfirm: () => void
     variant?: 'default' | 'destructive'
   }>({ open: false, title: '', description: '', onConfirm: () => {}, variant: 'default' })
+
+  const isCurrentUser = (userId?: string) => Boolean(userId && currentUser?._id === userId)
+
+  const getMutationErrorMessage = (error: AdminMutationError, fallback: string) =>
+    error.response?.data?.message || error.message || fallback
 
   // Debounce search
   useEffect(() => {
@@ -162,8 +188,8 @@ export function UserManagementPage() {
       toast.success('Đã xóa người dùng thành công')
       queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
     },
-    onError: () => {
-      toast.error('Không thể xóa người dùng')
+    onError: (error: AdminMutationError) => {
+      toast.error(getMutationErrorMessage(error, 'Không thể xóa người dùng'))
     },
   })
 
@@ -173,11 +199,11 @@ export function UserManagementPage() {
       const response = await adminService.resetUserPassword(userId)
       return response as ResetPasswordResponse
     },
-    onSuccess: (data: ResetPasswordResponse) => {
-      toast.success(`Đã reset mật khẩu. Mật khẩu mới: ${data.newPassword}`)
+    onSuccess: () => {
+      toast.success('Đã gửi email đặt lại mật khẩu cho người dùng')
     },
     onError: () => {
-      toast.error('Không thể reset mật khẩu')
+      toast.error('Không thể gửi email đặt lại mật khẩu')
     },
   })
 
@@ -195,18 +221,24 @@ export function UserManagementPage() {
 
   // Update user mutation (for ban/unban and edit)
   const updateMutation = useMutation({
-    mutationFn: ({ userId, data }: { userId: string; data: any }) => adminService.updateUser(userId, data),
+    mutationFn: ({ userId, data }: { userId: string; data: UpdateUserData }) => adminService.updateUser(userId, data),
     onSuccess: () => {
       toast.success('Đã cập nhật thông tin người dùng')
       queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'pharmacists'] })
     },
-    onError: () => {
-      toast.error('Không thể cập nhật thông tin')
+    onError: (error: AdminMutationError) => {
+      toast.error(getMutationErrorMessage(error, 'Không thể cập nhật thông tin'))
     },
   })
 
   // Handlers
   const handleDelete = (userId: string) => {
+    if (isCurrentUser(userId)) {
+      toast.error('Bạn không thể xóa tài khoản đang đăng nhập.')
+      return
+    }
+
     setConfirmDialog({
       open: true,
       title: 'Xóa người dùng',
@@ -220,7 +252,8 @@ export function UserManagementPage() {
     setConfirmDialog({
       open: true,
       title: 'Reset mật khẩu',
-      description: 'Bạn có chắc chắn muốn reset mật khẩu người dùng này? Mật khẩu mới sẽ được tạo tự động.',
+      description:
+        'Bạn có chắc chắn muốn gửi link đặt lại mật khẩu cho người dùng này? Các phiên đăng nhập hiện tại của tài khoản sẽ bị thu hồi.',
       onConfirm: () => resetPasswordMutation.mutate(userId),
     })
   }
@@ -246,6 +279,8 @@ export function UserManagementPage() {
       lastName: user.lastName,
       email: user.email,
       phoneNumber: user.phoneNumber,
+      role: String(user.role),
+      lisenseNumber: user.lisenseNumber || '',
     })
     setIsEditDialogOpen(true)
   }
@@ -253,10 +288,29 @@ export function UserManagementPage() {
   const handleSaveEdit = () => {
     if (!selectedUser) return
 
+    if (isCurrentUser(selectedUser._id) && Number(editFormData.role) !== selectedUser.role) {
+      toast.error('Bạn không thể thay đổi vai trò của chính mình.')
+      return
+    }
+
+    if (editFormData.role === '1' && !editFormData.lisenseNumber.trim()) {
+      toast.error('Vui lòng nhập số chứng chỉ hành nghề khi gán vai trò dược sĩ')
+      return
+    }
+
+    const payload: UpdateUserData = {
+      firstName: editFormData.firstName.trim(),
+      lastName: editFormData.lastName.trim(),
+      email: editFormData.email.trim(),
+      phoneNumber: editFormData.phoneNumber.trim(),
+      role: Number(editFormData.role),
+      lisenseNumber: editFormData.role === '1' ? editFormData.lisenseNumber.trim() : '',
+    }
+
     updateMutation.mutate(
       {
         userId: selectedUser._id,
-        data: editFormData,
+        data: payload,
       },
       {
         onSuccess: () => {
@@ -268,6 +322,11 @@ export function UserManagementPage() {
   }
 
   const handleToggleBan = (user: UserData) => {
+    if (isCurrentUser(user._id)) {
+      toast.error('Bạn không thể khóa tài khoản đang đăng nhập.')
+      return
+    }
+
     const newStatus = user.status === 2 ? 1 : 2
     const action = newStatus === 2 ? 'khóa' : 'mở khóa'
 
@@ -572,6 +631,7 @@ export function UserManagementPage() {
                               <DropdownMenuItem
                                 className='hover:!bg-[#E8EDF5] hover:!border-[#E8EDF5] hover:!text-[#0A2463]'
                                 onClick={() => handleToggleBan(user)}
+                                disabled={isCurrentUser(user._id)}
                               >
                                 <Ban className='w-4 h-4 mr-2' />
                                 {user.status === 2 ? 'Mở khóa' : 'Khóa tài khoản'}
@@ -580,6 +640,7 @@ export function UserManagementPage() {
                               <DropdownMenuItem
                                 onClick={() => handleDelete(user._id)}
                                 className='text-red-600 hover:!bg-red-100 hover:!border-red-100 hover:!text-red-700'
+                                disabled={isCurrentUser(user._id)}
                               >
                                 <Trash2 className='w-4 h-4 mr-2' />
                                 Xóa người dùng
@@ -650,6 +711,12 @@ export function UserManagementPage() {
                   <p className='text-sm font-medium text-gray-500'>Số điện thoại</p>
                   <p className='text-base'>{selectedUser.phoneNumber}</p>
                 </div>
+                {selectedUser.role === 1 && (
+                  <div>
+                    <p className='text-sm font-medium text-gray-500'>Số chứng chỉ hành nghề</p>
+                    <p className='text-base font-mono'>{selectedUser.lisenseNumber || 'Chưa có'}</p>
+                  </div>
+                )}
                 <div>
                   <p className='text-sm font-medium text-gray-500'>Ngày tham gia</p>
                   <p className='text-base'>
@@ -717,6 +784,39 @@ export function UserManagementPage() {
                 placeholder='0123456789'
                 className='border-2 border-[#BFDBFE]'
               />
+            </div>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+              <div className='space-y-2'>
+                <label className='text-sm font-medium'>Vai trò</label>
+                <Select
+                  value={editFormData.role}
+                  onValueChange={(role) => setEditFormData({ ...editFormData, role })}
+                  disabled={isCurrentUser(selectedUser?._id)}
+                >
+                  <SelectTrigger className='border-2 border-[#BFDBFE]'>
+                    <SelectValue placeholder='Chọn vai trò' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='0'>Khách hàng</SelectItem>
+                    <SelectItem value='1'>Dược sĩ</SelectItem>
+                    <SelectItem value='2'>Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+                {isCurrentUser(selectedUser?._id) && (
+                  <p className='text-xs text-gray-500'>Bạn không thể thay đổi vai trò của chính mình.</p>
+                )}
+              </div>
+              {editFormData.role === '1' && (
+                <div className='space-y-2'>
+                  <label className='text-sm font-medium'>Số chứng chỉ hành nghề</label>
+                  <Input
+                    value={editFormData.lisenseNumber}
+                    onChange={(e) => setEditFormData({ ...editFormData, lisenseNumber: e.target.value })}
+                    placeholder='VD: CCHN-DS-000001'
+                    className='border-2 border-[#BFDBFE]'
+                  />
+                </div>
+              )}
             </div>
             <div className='flex justify-end gap-3 mt-6'>
               <Button variant='outline' onClick={() => setIsEditDialogOpen(false)}>

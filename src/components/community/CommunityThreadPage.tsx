@@ -307,7 +307,7 @@ function ReplyBlock({
                 <Button variant='ghost' size='sm' className='h-8 rounded px-2 text-slate-600 hover:text-[#0A2463]' onClick={() => onCopyLink(message._id)}><Link2 className='h-4 w-4' />Link</Button>
                 {isOwner && <Button variant='ghost' size='sm' className='h-8 rounded px-2 text-slate-600 hover:text-[#0A2463]' onClick={() => onEdit(message)}><Pencil className='h-4 w-4' />Sửa</Button>}
                 {isOwner && !message.isThreadStarter && <Button variant='ghost' size='sm' className='h-8 rounded px-2 text-rose-600 hover:text-rose-700' onClick={() => onDelete(message)}><Trash2 className='h-4 w-4' />Xóa</Button>}
-                <Button variant='ghost' size='sm' className='h-8 rounded px-2 text-[#0A2463]' onClick={() => onQuote(message)}><Reply className='h-4 w-4' />Trích dẫn</Button>
+                <Button variant='ghost' size='sm' className='h-8 rounded px-2 text-[#0A2463]' onClick={() => onQuote(message)}><Reply className='h-4 w-4' />Trả lời</Button>
                 <Button variant='ghost' size='sm' className='h-8 rounded px-2 text-rose-600 hover:text-rose-700' onClick={() => onReport(message)}><Flag className='h-4 w-4' />Báo cáo</Button>
               </div>
             </div>
@@ -1199,7 +1199,7 @@ export function CommunityThreadPage() {
                 <div className='mb-3 flex items-start gap-3 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-[#0A2463]'>
                   <Reply className='mt-0.5 h-4 w-4 shrink-0' />
                   <div className='min-w-0 flex-1'>
-                    <p className='text-xs font-semibold'>Đang trích dẫn {authorName(quoteTarget.sender)}</p>
+                    <p className='text-xs font-semibold'>Đang trả lời {authorName(quoteTarget.sender)}</p>
                     <p className='mt-0.5 line-clamp-2 break-words text-xs'>{richTextToPlainText(quoteTarget.content) || (quoteTarget.imageUrl ? 'Đã gửi ảnh' : '')}</p>
                   </div>
                   <button type='button' className='flex h-7 w-7 shrink-0 items-center justify-center rounded text-[#0A2463] hover:bg-[#F0F6FF]' onClick={() => setQuoteTarget(null)} aria-label='Hủy trích dẫn'><X className='h-4 w-4' /></button>
