@@ -30,6 +30,13 @@ import { Link } from 'react-router'
 
 type LoyaltyTier = 'member' | 'silver' | 'gold' | 'platinum'
 
+interface LoyaltyTierRule {
+  code: LoyaltyTier
+  label: string
+  minTotalSpent: number
+  multiplier: number
+}
+
 interface AccountInfo {
   pointsBalance: number
   totalPointsEarned: number
@@ -49,6 +56,7 @@ interface AccountInfo {
     expiryDays: number
     minRedeem: number
     pointsToVnd: number
+    tiers?: LoyaltyTierRule[]
   }
 }
 
@@ -67,39 +75,31 @@ interface LoyaltyTransaction {
 
 const TIER_CONFIG: Record<
   LoyaltyTier,
-  { label: string; color: string; bg: string; icon: React.ReactNode; benefits: string[]; threshold: string }
+  { label: string; color: string; bg: string; icon: React.ReactNode }
 > = {
   member: {
     label: 'Thành Viên',
     color: 'from-gray-400 to-slate-500',
     bg: 'from-gray-50 to-slate-100',
-    threshold: '0đ',
     icon: <Award className='w-6 h-6' />,
-    benefits: ['Tích điểm cơ bản (x1)', 'Ưu đãi sinh nhật'],
   },
   silver: {
     label: 'Bạc',
     color: 'from-gray-300 to-gray-500',
     bg: 'from-gray-50 to-gray-100',
-    threshold: '2.000.000đ',
     icon: <Star className='w-6 h-6' />,
-    benefits: ['Tích điểm x1.2', 'Ưu đãi sinh nhật', 'Freeship 2 lần/tháng'],
   },
   gold: {
     label: 'Vàng',
     color: 'from-yellow-400 to-amber-500',
     bg: 'from-yellow-50 to-amber-50',
-    threshold: '10.000.000đ',
     icon: <Trophy className='w-6 h-6' />,
-    benefits: ['Tích điểm x1.5', 'Ưu đãi sinh nhật VIP', 'Freeship không giới hạn', 'Tư vấn dược sĩ ưu tiên'],
   },
   platinum: {
     label: 'Bạch Kim',
     color: 'from-[#0A2463] to-[#1E40AF]',
     bg: 'from-[#F8FAFB] to-[#F0F6FF]',
-    threshold: '50.000.000đ',
     icon: <Sparkles className='w-6 h-6' />,
-    benefits: ['Tích điểm x2', 'Ưu đãi sinh nhật VIP', 'Freeship không giới hạn', 'Tư vấn 24/7', 'Ưu đãi đặc biệt'],
   },
 }
 
@@ -218,6 +218,11 @@ export function RewardsPage() {
   const tierConfig = TIER_CONFIG[tier]
   const nextTierConfig = account.nextTier ? TIER_CONFIG[account.nextTier] : null
   const tiers: LoyaltyTier[] = ['member', 'silver', 'gold', 'platinum']
+  const getTierRule = (code: LoyaltyTier) => account.config.tiers?.find((rule) => rule.code === code)
+  const getTierLabel = (code: LoyaltyTier) => getTierRule(code)?.label || TIER_CONFIG[code].label
+  const getTierMultiplier = (code: LoyaltyTier) => getTierRule(code)?.multiplier ?? (code === tier ? account.multiplier : 1)
+  const formatMultiplier = (value: number) => `x${Number(value).toLocaleString('vi-VN', { maximumFractionDigits: 2 })}`
+  const multiplierPath = tiers.map((code) => formatMultiplier(getTierMultiplier(code))).join(' → ')
   const visibleTransactions = txTypeFilter === 'all' ? transactions : transactions.filter((tx) => tx.type === txTypeFilter)
 
   return (
@@ -251,7 +256,7 @@ export function RewardsPage() {
                   <span className='text-sm'>Điểm hiện tại</span>
                 </div>
                 <div className='text-5xl font-bold mb-1' data-testid='loyalty-balance'>{formatPoints(account.pointsBalance)}</div>
-                <p className='text-sm opacity-75'>điểm ≈ {formatCurrency(account.pointsBalance)}</p>
+                <p className='text-sm opacity-75'>điểm ≈ {formatCurrency(account.pointsBalance * account.config.pointsToVnd)}</p>
               </div>
 
               {/* Tier */}
@@ -265,8 +270,8 @@ export function RewardsPage() {
                     {tierConfig.icon}
                   </div>
                   <div data-testid='loyalty-tier'>
-                    <div className='text-2xl font-bold'>{tierConfig.label}</div>
-                    <div className='text-sm opacity-75'>x{account.multiplier} nhân điểm</div>
+                    <div className='text-2xl font-bold'>{getTierLabel(tier)}</div>
+                    <div className='text-sm opacity-75'>{formatMultiplier(getTierMultiplier(tier))} nhân điểm</div>
                   </div>
                 </div>
               </div>
@@ -286,7 +291,7 @@ export function RewardsPage() {
             {nextTierConfig && account.nextTierThreshold && (
               <div className='mt-8 p-4 bg-white/10 backdrop-blur-sm rounded-xl'>
                 <div className='flex items-center justify-between mb-2 text-sm'>
-                  <span>Tiến độ lên hạng <strong>{nextTierConfig.label}</strong></span>
+                  <span>Tiến độ lên hạng <strong>{account.nextTier ? getTierLabel(account.nextTier) : nextTierConfig.label}</strong></span>
                   <span>Còn {formatCurrency(account.amountToNextTier)}</span>
                 </div>
                 <Progress value={account.progressToNextTier} className='h-2 bg-white/20' />
@@ -294,7 +299,7 @@ export function RewardsPage() {
             )}
             {!account.nextTier && (
               <div className='mt-8 p-4 bg-white/10 backdrop-blur-sm rounded-xl text-center text-sm'>
-                🏆 Bạn đã đạt hạng cao nhất — <strong>Bạch Kim</strong>!
+                🏆 Bạn đã đạt hạng cao nhất — <strong>{getTierLabel(tier)}</strong>!
               </div>
             )}
           </CardContent>
@@ -336,6 +341,7 @@ export function RewardsPage() {
                 <div className='grid md:grid-cols-4 gap-4'>
                   {tiers.map((t, idx) => {
                     const cfg = TIER_CONFIG[t]
+                    const rule = getTierRule(t)
                     const isCurrent = t === tier
                     return (
                       <motion.div
@@ -354,15 +360,17 @@ export function RewardsPage() {
                             <div className={`w-16 h-16 mx-auto mb-3 bg-gradient-to-br ${cfg.color} rounded-full flex items-center justify-center text-white`}>
                               {cfg.icon}
                             </div>
-                            <h3 className='font-semibold mb-1'>{cfg.label}</h3>
-                            <p className='text-xs text-gray-400 mb-3'>Chi tiêu từ {cfg.threshold}</p>
+                            <h3 className='font-semibold mb-1'>{getTierLabel(t)}</h3>
+                            <p className='text-xs text-gray-400 mb-3'>Chi tiêu từ {formatCurrency(rule?.minTotalSpent ?? 0)}</p>
                             <div className='text-left space-y-1'>
-                              {cfg.benefits.map((b, i) => (
-                                <p key={i} className='text-xs text-gray-600 flex items-start gap-1'>
+                              <p className='text-xs text-gray-600 flex items-start gap-1'>
+                                <CheckCircle className='w-3 h-3 text-green-600 mt-0.5 flex-shrink-0' />
+                                Tích điểm {formatMultiplier(getTierMultiplier(t))}
+                              </p>
+                              <p className='text-xs text-gray-600 flex items-start gap-1'>
                                   <CheckCircle className='w-3 h-3 text-green-600 mt-0.5 flex-shrink-0' />
-                                  {b}
-                                </p>
-                              ))}
+                                  Quyền lợi theo hạng {getTierLabel(t)}
+                              </p>
                             </div>
                           </CardContent>
                         </Card>
@@ -435,13 +443,13 @@ export function RewardsPage() {
                       icon: <ShoppingBag className='w-8 h-8 text-[#1E40AF]' />,
                       title: 'Mua sắm',
                       description: `Tích 1 điểm / ${new Intl.NumberFormat('vi-VN').format(account.config.pointsPerVnd)}đ mua hàng`,
-                      badge: `Hạng ${tierConfig.label}: x${account.multiplier}`,
+                      badge: `Hạng ${getTierLabel(tier)}: ${formatMultiplier(getTierMultiplier(tier))}`,
                     },
                     {
                       icon: <Sparkles className='w-8 h-8 text-[#1E40AF]' />,
                       title: 'Nâng hạng thành viên',
-                      description: 'Nhân điểm cao hơn khi lên hạng Silver, Gold, Platinum',
-                      badge: 'x1 → x1.2 → x1.5 → x2',
+                      description: 'Hệ số tích điểm thay đổi theo cấu hình từng hạng thành viên',
+                      badge: multiplierPath,
                     },
                     {
                       icon: <Clock className='w-8 h-8 text-orange-600' />,
@@ -452,8 +460,8 @@ export function RewardsPage() {
                     {
                       icon: <Gift className='w-8 h-8 text-green-600' />,
                       title: 'Đổi điểm',
-                      description: `Tối thiểu ${new Intl.NumberFormat('vi-VN').format(account.config.minRedeem)} điểm, tối đa ${account.config.maxRedeemRatio * 100}% giá trị đơn`,
-                      badge: '1 điểm = 1đ',
+                      description: `${account.config.minRedeem > 0 ? `Tối thiểu ${new Intl.NumberFormat('vi-VN').format(account.config.minRedeem)} điểm` : 'Có điểm là dùng được'}, tối đa ${account.config.maxRedeemRatio * 100}% giá trị đơn`,
+                      badge: `1 điểm = ${formatCurrency(account.config.pointsToVnd)}`,
                     },
                   ].map((way, index) => (
                     <motion.div

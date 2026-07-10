@@ -68,8 +68,21 @@ export function ProductCard({
   const currentOriginalPrice = currentVariant?.salePrice
     ? currentVariant.price // Giá gốc khi có campaign
     : (currentVariant?.originalPrice || product.originalPrice)
-  const hasDiscount = currentOriginalPrice && currentOriginalPrice > currentPrice
+  const hasDiscount = typeof currentOriginalPrice === 'number' && currentOriginalPrice > currentPrice
+  const explicitDiscountPercentage = Number(product.discountPercentage)
+  const computedDiscountPercentage = hasDiscount
+    ? Math.round(((currentOriginalPrice - currentPrice) / currentOriginalPrice) * 100)
+    : 0
+  const discountPercentage =
+    Number.isFinite(explicitDiscountPercentage) && explicitDiscountPercentage > 0
+      ? Math.round(explicitDiscountPercentage)
+      : computedDiscountPercentage
   const hasCampaign = !!product.campaign
+  const discountBadgeLabel = hasCampaign
+    ? product.campaign!.badgeText
+    : discountPercentage > 0
+      ? `-${discountPercentage}%`
+      : null
   const statusLabel =
     product.status === 'discontinued'
       ? 'Ngừng kinh doanh'
@@ -143,13 +156,13 @@ export function ProductCard({
                     {product.inStock && product.isPrescription && <RxBadge size='sm' />}
                   </div>
 
-                  {(product.isOnSale || hasCampaign) && product.inStock && (
+                  {discountBadgeLabel && product.inStock && (
                     <div className='absolute top-2 right-2'>
                       <Badge
                         className='text-white text-xs px-2 py-0.5 rounded-full'
                         style={{ backgroundColor: product.campaign?.badgeColor || '#f97316' }}
                       >
-                        {hasCampaign ? product.campaign!.badgeText : `-${product.discountPercentage}%`}
+                        {discountBadgeLabel}
                       </Badge>
                     </div>
                   )}
@@ -293,13 +306,13 @@ export function ProductCard({
               {product.inStock && product.isPrescription && <RxBadge size='sm' />}
             </div>
 
-            {(product.isOnSale || hasCampaign) && product.inStock && (
+            {discountBadgeLabel && product.inStock && (
               <div className='absolute top-3 right-3'>
                 <Badge
                   className='text-white text-xs px-2 py-1 rounded-full'
                   style={{ backgroundColor: product.campaign?.badgeColor || '#059669' }}
                 >
-                  {hasCampaign ? product.campaign!.badgeText : `-${product.discountPercentage}%`}
+                  {discountBadgeLabel}
                 </Badge>
               </div>
             )}
