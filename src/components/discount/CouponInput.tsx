@@ -41,6 +41,13 @@ interface CouponInputProps {
   className?: string
 }
 
+const hasStoredAccessToken = () => {
+  if (typeof window === 'undefined') return false
+  const storage = window.localStorage
+  if (!storage || typeof storage.getItem !== 'function') return false
+  return Boolean(storage.getItem('medispace_access_token'))
+}
+
 export function CouponInput({ subtotal, hasPrescriptionItems = false, items = [], initialCoupons = [], isDirectBuy = false, onCouponsChange, className }: CouponInputProps) {
   const { refreshCart } = useCart()
   const [inputCode, setInputCode] = useState('')
@@ -67,12 +74,12 @@ export function CouponInput({ subtotal, hasPrescriptionItems = false, items = []
     const fetchAvailableCoupons = async () => {
       setIsLoadingPublicCoupons(true)
       try {
-        const hasAccessToken = Boolean(localStorage.getItem('medispace_access_token'))
+        const hasAccessToken = hasStoredAccessToken()
         const res = await apiClient.get<any>(hasAccessToken ? '/coupons/available' : '/coupons/public')
         if (mounted) setPublicCoupons(res.data.result || [])
       } catch (err: any) {
         const status = err?.response?.status
-        const shouldFallbackToPublic = Boolean(localStorage.getItem('medispace_access_token')) && (status === 401 || status === 403)
+        const shouldFallbackToPublic = hasStoredAccessToken() && (status === 401 || status === 403)
 
         if (shouldFallbackToPublic) {
           try {

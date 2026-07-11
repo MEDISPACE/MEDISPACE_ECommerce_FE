@@ -10,6 +10,9 @@ export interface OrderListParams {
   page?: number
   limit?: number
   status?: string
+  paymentStatus?: string
+  search?: string
+  scope?: string
   sortBy?: string
   sortOrder?: 'asc' | 'desc'
 }
@@ -20,6 +23,9 @@ export interface OrderListResponse {
     currentPage: number
     pageSize: number
     totalItems: number
+    totalOrders?: number
+    page?: number
+    limit?: number
     totalPages: number
   }
 }
@@ -38,8 +44,22 @@ export interface OrderStatistics {
   processingOrders: number
   completedOrders: number
   cancelledOrders: number
+  returnedOrders?: number
   totalRevenue: number
   averageOrderValue: number
+  revenueOrderCount?: number
+  ordersByStatus?: Array<{ _id: string; count: number }>
+  ordersByPayment?: Array<{ _id: string; count: number }>
+  workflow?: {
+    queueTotal: number
+    mineTotal: number
+    mineActiveTotal: number
+    completedTotal: number
+    returnsTotal: number
+    mineRevenue: number
+    mineRevenueOrderCount: number
+    mineAverageOrderValue: number
+  }
 }
 
 export interface CreateOrderData {
@@ -119,11 +139,11 @@ export const orderService = {
   /**
    * Get order statistics
    */
-  getStatistics: async (startDate?: string, endDate?: string): Promise<OrderStatistics> => {
+  getStatistics: async (startDate?: string, endDate?: string, scope?: string): Promise<OrderStatistics> => {
     const response: AxiosResponse<{ message: string; result: OrderStatistics }> = await apiClient.get(
       '/pharmacist/orders/statistics',
       {
-        params: { startDate, endDate },
+        params: { startDate, endDate, scope },
       },
     )
     return response.data.result

@@ -51,6 +51,8 @@ export interface OrderStats {
   cancelled: number
   revenue: number
   avgOrder: number
+  revenueOrderCount?: number
+  scopeLabel?: string
 }
 
 export interface RoleConfig {

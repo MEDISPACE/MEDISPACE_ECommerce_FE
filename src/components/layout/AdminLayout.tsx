@@ -436,7 +436,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               <div className='flex h-10 items-center gap-2 rounded-lg border border-[#D7E3F5] bg-white px-3'>
                 <TrendingUp className='w-4 h-4 text-[#0A2463]' />
                 <div className='leading-tight'>
-                  <p className='text-[11px] text-gray-600'>Doanh thu</p>
+                  <p className='text-[11px] text-gray-600'>Doanh thu tháng</p>
                   <p className='text-sm font-bold text-[#0A2463]'>
                     {dashboardStats?.revenue.month ? `₫${(dashboardStats.revenue.month / 1000000).toFixed(1)}M` : '...'}
                   </p>
@@ -445,7 +445,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               <div className='flex h-10 items-center gap-2 rounded-lg border border-[#D7E3F5] bg-white px-3'>
                 <ShoppingCart className='w-4 h-4 text-[#1E40AF]' />
                 <div className='leading-tight'>
-                  <p className='text-[11px] text-gray-600'>Đơn hàng</p>
+                  <p className='text-[11px] text-gray-600'>Đơn hôm nay</p>
                   <p className='text-sm font-bold text-[#1E40AF]'>
                     {dashboardStats?.orders.todayCount.toLocaleString() || '...'}
                   </p>
