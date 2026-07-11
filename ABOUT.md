@@ -6,6 +6,11 @@ The application supports pharmaceutical product discovery, cart and checkout, pr
 
 This frontend is designed to work with the MediSpace Node.js backend and Python AI services, including OCR, recommendation, and chat AI services.
 
+Authors:
+
+- Tran Nguyen Quoc Bao
+- Nguyen Huu Thong
+
 Suggested GitHub description:
 
 > React/TypeScript frontend for MediSpace digital pharmacy: e-commerce, prescription OCR, pharmacist chat, AI assistant, loyalty, HealthHub, community, admin, and LiveKit video events.
