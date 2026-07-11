@@ -19,6 +19,11 @@ React Router FE  --->  Node.js API / Socket.IO  --->  MongoDB, Redis, Typesense
         +-- LiveKit WebRTC for video health events
 ```
 
+## Authors
+
+- Tran Nguyen Quoc Bao
+- Nguyen Huu Thong
+
 ## Main Features
 
 - Product catalog: product listing, categories, brands, search, product detail, related products, and wishlist.
