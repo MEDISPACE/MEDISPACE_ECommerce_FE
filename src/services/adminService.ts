@@ -240,8 +240,14 @@ export const getAllOrders = async (params: {
 /**
  * Get order statistics
  */
-export const getOrderStats = async () => {
-  const response = await apiClient.get<{ result: any }>('/admin/orders/stats')
+export const getOrderStats = async (params?: {
+  status?: string
+  paymentStatus?: string
+  search?: string
+  dateFrom?: string
+  dateTo?: string
+}) => {
+  const response = await apiClient.get<{ result: any }>('/admin/orders/stats', { params })
   return response.data.result
 }
 

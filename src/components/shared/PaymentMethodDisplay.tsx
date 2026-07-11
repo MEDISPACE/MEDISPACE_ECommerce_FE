@@ -16,12 +16,12 @@ export function getPaymentMethodName(method?: string | null) {
 
   if (normalized === 'vnpay') return 'VNPay'
   if (normalized === 'payos') return 'PayOS'
-  if (normalized === 'cod') return 'Thanh toán khi nhận hàng (COD)'
+  if (normalized === 'cod') return 'COD'
   if (normalized === 'bank_transfer') return 'Chuyển khoản ngân hàng'
   if (normalized === 'credit_card' || normalized === 'credit_card_pos') return 'Thẻ thanh toán'
   if (normalized === 'cash') return 'Tiền mặt'
 
-  return method || 'Thanh toán khi nhận hàng (COD)'
+  return method || 'COD'
 }
 
 export function normalizePaymentMethod(method?: string | null) {

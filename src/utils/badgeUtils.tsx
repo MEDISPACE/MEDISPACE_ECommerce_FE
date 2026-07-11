@@ -384,14 +384,8 @@ export function getPaymentStatusBadge(
   options?: { showIcon?: boolean; paymentMethod?: string },
 ): ReactElement {
   const config = PAYMENT_STATUS_BADGES[status]
-  const isCodPending = status === 'pending' && options?.paymentMethod?.toLowerCase() === 'cod'
 
-  return (
-    renderBadge(config, {
-      ...options,
-      customLabel: isCodPending ? 'Chờ thu tiền khi nhận hàng' : undefined,
-    }) || <Badge variant='outline'>{status}</Badge>
-  )
+  return renderBadge(config, options) || <Badge variant='outline'>{status}</Badge>
 }
 
 /**

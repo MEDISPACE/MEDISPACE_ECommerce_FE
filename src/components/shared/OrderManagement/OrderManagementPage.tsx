@@ -23,7 +23,7 @@ import { OrderFilters } from './OrderFilters'
 import { OrderStatsCards } from './OrderStatsCards'
 import { OrderTable } from './OrderTable'
 import { OrderDetailsDrawer } from './OrderDetailsDrawer'
-import type { Order, OrderReturnStatus, OrderStatus, PaymentStatus, UserRole } from './types'
+import type { Order, OrderReturnStatus, OrderStats, OrderStatus, PaymentStatus, UserRole } from './types'
 import { PaginationComponent } from '../PaginationComponent'
 import { orderService as pharmacistOrderService } from '../../../services/pharmacist/order.service'
 import { orderService as generalOrderService } from '../../../services/orderService'
@@ -36,6 +36,15 @@ import { OrderStatus as OrderStatusEnum } from '../../../types/order'
 interface OrderManagementPageProps {
   role?: UserRole
 }
+
+type PharmacistOrderScope = 'queue' | 'mine' | 'completed' | 'returns'
+
+const PHARMACIST_SCOPE_OPTIONS: Array<{ value: PharmacistOrderScope; label: string; description: string }> = [
+  { value: 'queue', label: 'Chờ xử lý chung', description: 'Đơn chưa phân công' },
+  { value: 'mine', label: 'Của tôi', description: 'Đơn đang phụ trách' },
+  { value: 'completed', label: 'Đã hoàn tất', description: 'Đơn đã giao' },
+  { value: 'returns', label: 'Đổi/trả', description: 'Đơn phát sinh đổi trả' },
+]
 
 // Helper function to safely format date
 const formatDate = (dateValue: string | Date | undefined): string => {
@@ -72,10 +81,12 @@ const mapApiOrderToOrder = (apiOrder: ApiOrder): Order => {
     orderNumber: apiOrder.orderNumber,
     customerName: addr ? `${addr.firstName ?? ''} ${addr.lastName ?? ''}`.trim() : 'Không có địa chỉ',
     customerPhone: addr?.phone ?? '',
-    products: apiOrder.itemCount,
+    products: apiOrder.itemCount || apiOrder.items?.length || 0,
+    items: apiOrder.itemCount || apiOrder.items?.length || 0,
     total: apiOrder.totalAmount,
     status: toUiOrderStatus(apiOrder.orderStatus),
     paymentStatus: apiOrder.paymentStatus as PaymentStatus,
+    paymentMethod: apiOrder.paymentMethod,
     returnStatus: (apiOrder.returnStatus || 'none') as OrderReturnStatus,
     latestReturnRequestId: apiOrder.latestReturnRequestId,
     returnUpdatedAt: apiOrder.returnUpdatedAt,
@@ -112,6 +123,79 @@ const toApiOrderStatus = (status?: OrderStatus) => {
 const RETURN_FLOW_STATUSES = new Set(['requested', 'approved', 'awaiting_return', 'received', 'refund_processing', 'completed'])
 const isOrderInReturnFlow = (order: Order) => order.status === 'returned' || RETURN_FLOW_STATUSES.has(order.returnStatus || '')
 
+const calculateStatsFromOrders = (orders: Order[]): OrderStats => {
+  const revenueOrders = orders.filter((order) => order.status !== 'cancelled' && order.paymentStatus === 'paid')
+  const revenue = revenueOrders.reduce((sum, order) => sum + order.total, 0)
+
+  return {
+    total: orders.length,
+    pending: orders.filter((order) => order.status === 'pending').length,
+    processing: orders.filter((order) => order.status === 'processing' || order.status === 'shipping').length,
+    delivered: orders.filter((order) => order.status === 'delivered' && !isOrderInReturnFlow(order)).length,
+    returned: orders.filter(isOrderInReturnFlow).length,
+    cancelled: orders.filter((order) => order.status === 'cancelled').length,
+    revenue,
+    avgOrder: revenueOrders.length ? revenue / revenueOrders.length : 0,
+  }
+}
+
+const mapAdminStatsToOrderStats = (stats: any): OrderStats => {
+  const processing = (stats?.processing || 0) + (stats?.shipped || 0)
+  const revenue = stats?.revenue || 0
+  const revenueOrderCount = stats?.revenueOrderCount || 0
+
+  return {
+    total: stats?.total || 0,
+    pending: stats?.pending || 0,
+    processing,
+    delivered: stats?.delivered || 0,
+    returned: stats?.returned || 0,
+    cancelled: stats?.cancelled || 0,
+    revenue,
+    avgOrder: stats?.averageOrderValue ?? (revenueOrderCount ? revenue / revenueOrderCount : 0),
+  }
+}
+
+const mapPharmacistStatsToOrderStats = (stats: any): OrderStats => {
+  if (stats?.workflow) {
+    return {
+      total: stats.workflow.queueTotal || 0,
+      pending: stats.workflow.mineTotal || 0,
+      processing: stats.workflow.mineActiveTotal || 0,
+      delivered: stats.workflow.completedTotal || 0,
+      returned: stats.workflow.returnsTotal || 0,
+      cancelled: stats?.cancelledOrders || 0,
+      revenue: stats.workflow.mineRevenue || 0,
+      avgOrder: stats.workflow.mineAverageOrderValue || 0,
+      revenueOrderCount: stats.workflow.mineRevenueOrderCount || 0,
+    }
+  }
+
+  const ordersByStatus: Array<{ _id: string; count: number }> = Array.isArray(stats?.ordersByStatus)
+    ? stats.ordersByStatus
+    : []
+  const statusCounts = ordersByStatus.reduce<Record<string, number>>((acc, item) => {
+    acc[item._id] = item.count || 0
+    return acc
+  }, {})
+  const total =
+    stats?.totalOrders ??
+    Object.values(statusCounts).reduce((sum, count) => sum + count, 0)
+  const revenue = stats?.totalRevenue || 0
+  const revenueOrderCount = stats?.revenueOrderCount || 0
+
+  return {
+    total,
+    pending: stats?.pendingOrders ?? statusCounts.pending ?? 0,
+    processing: stats?.processingOrders ?? (statusCounts.processing || 0) + (statusCounts.shipped || 0),
+    delivered: stats?.completedOrders ?? statusCounts.delivered ?? 0,
+    returned: stats?.returnedOrders ?? statusCounts.returned ?? 0,
+    cancelled: stats?.cancelledOrders ?? statusCounts.cancelled ?? 0,
+    revenue,
+    avgOrder: stats?.averageOrderValue ?? (revenueOrderCount ? revenue / revenueOrderCount : 0),
+  }
+}
+
 const TERMINAL_ORDER_STATUSES: OrderStatus[] = ['delivered', 'cancelled', 'returned']
 const TERMINAL_PAYMENT_STATUSES: PaymentStatus[] = ['refunded']
 
@@ -145,61 +229,65 @@ const getAllowedPaymentStatuses = (order: Order): PaymentStatus[] => {
   return ['pending', 'paid', 'failed']
 }
 
-// Helper function to check if order is in date range
-const isOrderInDateRange = (orderDate: string, filterDate: string): boolean => {
-  if (filterDate === 'all') return true
+const formatDateParam = (date: Date) => date.toISOString().slice(0, 10)
+
+const getDateRangeParams = (
+  filterDate: string,
+): { dateFrom?: string; dateTo?: string; startDate?: string; endDate?: string } => {
+  if (filterDate === 'all') return {}
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
-  const orderDateObj = new Date(orderDate)
-  orderDateObj.setHours(0, 0, 0, 0)
+  const buildParams = (start: Date, end: Date) => {
+    const endOfDay = new Date(end)
+    endOfDay.setHours(23, 59, 59, 999)
+    return {
+      dateFrom: formatDateParam(start),
+      dateTo: formatDateParam(end),
+      startDate: start.toISOString(),
+      endDate: endOfDay.toISOString(),
+    }
+  }
 
   switch (filterDate) {
     case 'today':
-      return orderDateObj.getTime() === today.getTime()
-
+      return buildParams(today, today)
     case 'yesterday': {
       const yesterday = new Date(today)
       yesterday.setDate(yesterday.getDate() - 1)
-      return orderDateObj.getTime() === yesterday.getTime()
+      return buildParams(yesterday, yesterday)
     }
-
     case 'last7days': {
-      const last7days = new Date(today)
-      last7days.setDate(last7days.getDate() - 7)
-      return orderDateObj >= last7days && orderDateObj <= today
+      const start = new Date(today)
+      start.setDate(start.getDate() - 7)
+      return buildParams(start, today)
     }
-
     case 'last30days': {
-      const last30days = new Date(today)
-      last30days.setDate(last30days.getDate() - 30)
-      return orderDateObj >= last30days && orderDateObj <= today
+      const start = new Date(today)
+      start.setDate(start.getDate() - 30)
+      return buildParams(start, today)
     }
-
     case 'thisMonth':
-      return orderDateObj.getMonth() === today.getMonth() && orderDateObj.getFullYear() === today.getFullYear()
-
-    case 'lastMonth': {
-      const lastMonth = new Date(today)
-      lastMonth.setMonth(lastMonth.getMonth() - 1)
-      return orderDateObj.getMonth() === lastMonth.getMonth() && orderDateObj.getFullYear() === lastMonth.getFullYear()
-    }
-
+      return buildParams(new Date(today.getFullYear(), today.getMonth(), 1), today)
+    case 'lastMonth':
+      return buildParams(new Date(today.getFullYear(), today.getMonth() - 1, 1), new Date(today.getFullYear(), today.getMonth(), 0))
     default:
-      return true
+      return {}
   }
 }
 
 export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps) {
   const config = getConfig(role)
   const [orders, setOrders] = useState<Order[]>([])
-  const [allOrders, setAllOrders] = useState<ApiOrder[]>([]) // Store all orders for date filtering
+  const [orderStats, setOrderStats] = useState<OrderStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('')
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [filterPayment, setFilterPayment] = useState<string>('all')
   const [filterDate, setFilterDate] = useState<string>('all')
+  const [activeScope, setActiveScope] = useState<PharmacistOrderScope>('queue')
   const [showUpdateDialog, setShowUpdateDialog] = useState(false)
   const [showCancelConfirmDialog, setShowCancelConfirmDialog] = useState(false)
   const [showDetailsDrawer, setShowDetailsDrawer] = useState(false)
@@ -209,30 +297,72 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
   const [newPaymentStatus, setNewPaymentStatus] = useState<string>('')
   const [notes, setNotes] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
+  const [totalItems, setTotalItems] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+  const [reloadKey, setReloadKey] = useState(0)
   const ordersPerPage = 10
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery.trim())
+    }, 350)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [searchQuery])
 
   // Fetch orders from API
   useEffect(() => {
     const fetchOrders = async () => {
       try {
         setLoading(true)
+        const dateParams = getDateRangeParams(filterDate)
+        const statusParam = filterStatus !== 'all' ? filterStatus : undefined
+        const paymentParam = filterPayment !== 'all' ? filterPayment : undefined
+        const searchParam = debouncedSearchQuery || undefined
 
         if (role === 'pharmacist') {
           // Use pharmacist-specific API
-          const response = await pharmacistOrderService.getOrders({
-            limit: 100, // Get all orders for now
-          })
-          setAllOrders(response.orders) // Store all orders
+          const [response, statsResponse] = await Promise.all([
+            pharmacistOrderService.getOrders({
+              page: currentPage,
+              limit: ordersPerPage,
+              status: statusParam,
+              paymentStatus: paymentParam,
+              search: searchParam,
+              scope: activeScope,
+            }),
+            pharmacistOrderService.getStatistics(dateParams.startDate, dateParams.endDate, activeScope),
+          ])
           const mappedOrders = response.orders.map(mapApiOrderToOrder)
           setOrders(mappedOrders)
+          setOrderStats(mapPharmacistStatsToOrderStats(statsResponse))
+          setTotalItems(response.pagination.totalItems ?? response.pagination.totalOrders ?? 0)
+          setTotalPages(response.pagination.totalPages || 1)
         } else if (role === 'admin') {
           // Use admin-specific API
-          const response = await adminService.getAllOrders({
-            limit: 100, // Get all orders for now
-          })
-          setAllOrders(response.orders) // Store all orders for date filtering
+          const [response, statsResponse] = await Promise.all([
+            adminService.getAllOrders({
+              page: currentPage,
+              limit: ordersPerPage,
+              status: statusParam,
+              paymentStatus: paymentParam,
+              search: searchParam,
+              dateFrom: dateParams.dateFrom,
+              dateTo: dateParams.dateTo,
+            }),
+            adminService.getOrderStats({
+              status: statusParam,
+              paymentStatus: paymentParam,
+              search: searchParam,
+              dateFrom: dateParams.dateFrom,
+              dateTo: dateParams.dateTo,
+            }),
+          ])
           const mappedOrders = response.orders.map(mapApiOrderToOrder)
           setOrders(mappedOrders)
+          setOrderStats(mapAdminStatsToOrderStats(statsResponse))
+          setTotalItems(response.total || 0)
+          setTotalPages(response.totalPages || 1)
         } else {
           // Use general order API for other roles
           const apiOrders = await generalOrderService.getOrders()
@@ -249,6 +379,9 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
             date: formatDate(order.createdAt),
           }))
           setOrders(mappedOrders)
+          setOrderStats(calculateStatsFromOrders(mappedOrders))
+          setTotalItems(mappedOrders.length)
+          setTotalPages(Math.max(1, Math.ceil(mappedOrders.length / ordersPerPage)))
         }
       } catch (error) {
         const apiError = error as { response?: { data?: { message?: string } } }
@@ -262,57 +395,16 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
     }
 
     fetchOrders()
-  }, [role])
+  }, [role, currentPage, debouncedSearchQuery, filterStatus, filterPayment, filterDate, activeScope, reloadKey])
 
-  // Apply date filter when filterDate changes
-  useEffect(() => {
-    if ((role === 'pharmacist' || role === 'admin') && allOrders.length > 0) {
-      const filtered = allOrders.filter((order) => isOrderInDateRange(order.createdAt, filterDate))
-      const mappedOrders = filtered.map(mapApiOrderToOrder)
-      setOrders(mappedOrders)
-    }
-  }, [filterDate, allOrders, role])
-
-  const stats = {
-    total: orders.length,
-    pending: orders.filter((o) => o.status === 'pending').length,
-    processing: orders.filter((o) => o.status === 'processing' || o.status === 'shipping').length,
-    delivered: orders.filter((o) => o.status === 'delivered' && !isOrderInReturnFlow(o)).length,
-    returned: orders.filter(isOrderInReturnFlow).length,
-    cancelled: orders.filter((o) => o.status === 'cancelled').length,
-    revenue: orders.filter((o) => o.status !== 'cancelled').reduce((sum, o) => sum + o.total, 0),
-    avgOrder:
-      orders.filter((o) => o.status !== 'cancelled').reduce((sum, o) => sum + o.total, 0) /
-        orders.filter((o) => o.status !== 'cancelled').length || 0,
-  }
-
-  const filteredOrders = orders.filter((order) => {
-    const matchesSearch =
-      order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (order.orderNumber && order.orderNumber.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      order.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.customerPhone.includes(searchQuery)
-    const matchesStatus =
-      filterStatus === 'all' ||
-      (filterStatus === 'returned'
-        ? isOrderInReturnFlow(order)
-        : filterStatus === 'delivered'
-          ? order.status === 'delivered' && !isOrderInReturnFlow(order)
-          : order.status === filterStatus)
-    const matchesPayment = filterPayment === 'all' || order.paymentStatus === filterPayment
-    return matchesSearch && matchesStatus && matchesPayment
-  })
-
-  // Pagination calculations
-  const totalPages = Math.ceil(filteredOrders.length / ordersPerPage)
+  const stats = orderStats || calculateStatsFromOrders(orders)
   const startIndex = (currentPage - 1) * ordersPerPage
-  const endIndex = startIndex + ordersPerPage
-  const paginatedOrders = filteredOrders.slice(startIndex, endIndex)
+  const endIndex = startIndex + orders.length
 
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchQuery, filterStatus, filterPayment, filterDate])
+  }, [debouncedSearchQuery, filterStatus, filterPayment, filterDate, activeScope])
 
   const handleViewDetails = async (orderId: string) => {
     try {
@@ -405,6 +497,7 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
       if (normalizedOrder) {
         setOrders(orders.map((o) => (o.id === currentOrder.id ? { ...o, ...normalizedOrder } : o)))
       }
+      setReloadKey((value) => value + 1)
 
       // Show specific message for paid orders cancellation
       if (newStatus === 'cancelled' && currentOrder.paymentStatus === 'paid') {
@@ -499,6 +592,31 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
       {/* Stats Cards */}
       <OrderStatsCards stats={stats} config={config} />
 
+      {role === 'pharmacist' && (
+        <div className='rounded-2xl border border-[#E8EDF5] bg-white p-2 shadow-sm'>
+          <div className='grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4'>
+            {PHARMACIST_SCOPE_OPTIONS.map((option) => {
+              const isActive = activeScope === option.value
+              return (
+                <button
+                  key={option.value}
+                  type='button'
+                  onClick={() => setActiveScope(option.value)}
+                  className={`rounded-xl border px-4 py-3 text-left transition-all ${
+                    isActive
+                      ? 'border-[#1E40AF] bg-[#F0F6FF] text-[#0A2463] shadow-sm'
+                      : 'border-transparent text-gray-700 hover:border-[#BFDBFE] hover:bg-[#F8FBFF]'
+                  }`}
+                >
+                  <span className='block text-sm font-semibold'>{option.label}</span>
+                  <span className='mt-1 block text-xs text-gray-500'>{option.description}</span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Filters & Search */}
       <OrderFilters
         searchQuery={searchQuery}
@@ -518,7 +636,7 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
           <CardTitle className='flex items-center justify-between'>
             <div className='flex items-center gap-2'>
               <ShoppingCart className={`w-5 h-5 text-${config.themeColor}-600`} />
-              Danh sách đơn hàng ({filteredOrders.length})
+              Danh sách đơn hàng
             </div>
             <div className='text-sm text-gray-600 font-normal'>
               Trang {currentPage} / {totalPages || 1}
@@ -527,22 +645,22 @@ export function OrderManagementPage({ role = 'admin' }: OrderManagementPageProps
         </CardHeader>
         <CardContent>
           <OrderTable
-            orders={paginatedOrders}
+            orders={orders}
             onUpdateStatus={handleUpdateStatus}
             onViewDetails={handleViewDetails}
             config={config}
           />
 
-          {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <div className='flex items-center justify-between mt-4 pt-4 border-t border-[#BFDBFE]'>
-              <div className='text-sm text-gray-600'>
-                Hiển thị {startIndex + 1} - {Math.min(endIndex, filteredOrders.length)} / {filteredOrders.length} đơn
-                hàng
-              </div>
-              <PaginationComponent currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+          <div className='flex items-center justify-between mt-4 pt-4 border-t border-[#BFDBFE]'>
+            <div className='text-sm text-gray-600'>
+              Hiển thị {totalItems === 0 ? 0 : startIndex + 1} - {Math.min(endIndex, totalItems)} / {totalItems} đơn
+              hàng
             </div>
-          )}
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <PaginationComponent currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+            )}
+          </div>
         </CardContent>
       </Card>
 
