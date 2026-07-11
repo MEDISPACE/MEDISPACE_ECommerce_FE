@@ -56,7 +56,8 @@ export function OrderTable({ orders, onUpdateStatus, onViewDetails, config }: Or
             <TableHead>Sản phẩm</TableHead>
             <TableHead>Tổng tiền</TableHead>
             {showPharmacistColumn && <TableHead>Dược sĩ xử lý</TableHead>}
-            <TableHead>Thanh toán</TableHead>
+            <TableHead>Hình thức thanh toán</TableHead>
+            <TableHead>Trạng thái thanh toán</TableHead>
             <TableHead>Trạng thái</TableHead>
             <TableHead>Ngày đặt</TableHead>
             <TableHead className='text-right'>Thao tác</TableHead>
@@ -94,7 +95,6 @@ export function OrderTable({ orders, onUpdateStatus, onViewDetails, config }: Or
               </TableCell>
               <TableCell>
                 <p className={`font-semibold text-${config.themeColor}-600`}>{formatCurrency(order.total)}</p>
-                <PaymentMethodDisplay method={order.paymentMethod} className='mt-1 gap-2' logoClassName='h-3.5 w-auto max-w-full' showDescription={false} />
               </TableCell>
               {showPharmacistColumn && (
                 <TableCell>
@@ -109,6 +109,14 @@ export function OrderTable({ orders, onUpdateStatus, onViewDetails, config }: Or
                   )}
                 </TableCell>
               )}
+              <TableCell>
+                <PaymentMethodDisplay
+                  method={order.paymentMethod}
+                  className='gap-2 text-xs'
+                  logoClassName='h-3.5 w-auto max-w-full'
+                  showDescription={false}
+                />
+              </TableCell>
               <TableCell>
                 {getPaymentStatusBadge(order.paymentStatus, { paymentMethod: order.paymentMethod })}
               </TableCell>
