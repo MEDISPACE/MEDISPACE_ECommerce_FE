@@ -1,6 +1,7 @@
 {
   "name": "medispace-ecommerce-fe",
   "private": true,
+  "description": "React/TypeScript frontend for the MediSpace digital pharmacy platform.",
   "type": "module",
   "scripts": {
     "build": "react-router build",
