@@ -22,7 +22,6 @@ import { toast } from 'sonner'
 import { useNotificationPreferences, useNotifications, useUnreadNotificationCount } from '~/hooks/useNotifications'
 import type { NotificationFilter, NotificationPreferences, NotificationType } from '~/types/account'
 
-
 type UiNotification = {
   id: string
   type: NotificationType
@@ -33,8 +32,6 @@ type UiNotification = {
   actionUrl?: string
   actionText?: string
 }
-
-
 
 const DEFAULT_PREFERENCES: NotificationPreferences = {
   channels: { inApp: true, email: true, push: false, sms: false },
@@ -59,19 +56,34 @@ export function NotificationsPage() {
   const { preferences = DEFAULT_PREFERENCES, updatePreferences, isUpdatingPreferences } = useNotificationPreferences()
 
   // Use real hook with live data
-  const filter = activeTab === 'all' || activeTab === 'unread' || activeTab === 'settings'
-    ? activeTab === 'settings' ? 'all' : activeTab as 'all' | 'unread'
-    : activeTab as NotificationFilter
+  const filter =
+    activeTab === 'all' || activeTab === 'unread' || activeTab === 'settings'
+      ? activeTab === 'settings'
+        ? 'all'
+        : (activeTab as 'all' | 'unread')
+      : (activeTab as NotificationFilter)
 
-  const { notifications: rawNotifications, pagination, markAsRead, markAllAsRead, deleteNotification } = useNotifications(filter, page)
+  const {
+    notifications: rawNotifications,
+    pagination,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+  } = useNotifications(filter, page)
   const unreadCount = useUnreadNotificationCount()
 
   // Map API notifications to UI format
   const notifications: UiNotification[] = rawNotifications.map((n) => {
     const obj = n as unknown as {
-      id?: string; _id?: string; type?: string; title?: string
-      message?: string; createdAt?: string; isRead?: boolean
-      actionUrl?: string; actionText?: string
+      id?: string
+      _id?: string
+      type?: string
+      title?: string
+      message?: string
+      createdAt?: string
+      isRead?: boolean
+      actionUrl?: string
+      actionText?: string
     }
     return {
       id: obj._id ?? obj.id ?? '',
@@ -122,16 +134,18 @@ export function NotificationsPage() {
   return (
     <div className='space-y-6' data-testid='notifications-page'>
       {/* Header */}
-      <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-6'>
+      <div>
         <div className='flex flex-col md:flex-row md:items-center justify-between gap-4'>
           <div>
             <div className='flex items-center gap-3'>
-              <h1 className='bg-gradient-to-r from-[#0A2463] via-[#1E40AF] to-[#3B82F6] bg-clip-text text-transparent'>
-                Thông báo
-              </h1>
-              {unreadCount > 0 && <Badge className='bg-red-500 text-white' data-testid='unread-badge'>{unreadCount} chưa đọc</Badge>}
+              <h1 className='text-2xl font-bold text-blue-800 mb-2'>Thông báo</h1>
+              {unreadCount > 0 && (
+                <Badge className='bg-red-500 text-white' data-testid='unread-badge'>
+                  {unreadCount} chưa đọc
+                </Badge>
+              )}
             </div>
-            <p className='text-gray-600 mt-1'>Theo dõi các thông báo quan trọng</p>
+            <p className='text-gray-600'>Theo dõi các thông báo quan trọng</p>
           </div>
 
           <div className='flex gap-2'>
@@ -152,7 +166,13 @@ export function NotificationsPage() {
 
       {/* Tabs */}
       <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5]'>
-        <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setPage(1); }}>
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => {
+            setActiveTab(v)
+            setPage(1)
+          }}
+        >
           <div className='px-6 pt-6'>
             <TabsList className='inline-flex w-full overflow-x-auto bg-[#E8EDF5] p-1 rounded-lg shadow-sm scrollbar-hide'>
               <TabsTrigger
@@ -384,23 +404,17 @@ export function NotificationsPage() {
                           <Label htmlFor='sms'>SMS</Label>
                           <p className='text-sm text-gray-500'>Kênh SMS sẽ được bật khi có nhà cung cấp gửi tin</p>
                         </div>
-                        <Switch
-                          id='sms'
-                          checked={false}
-                          disabled
-                        />
+                        <Switch id='sms' checked={false} disabled />
                       </div>
 
                       <div className='flex items-center justify-between'>
                         <div>
                           <Label htmlFor='push'>Push Notification</Label>
-                          <p className='text-sm text-gray-500'>Thông báo đẩy trình duyệt sẽ được bật sau khi cấu hình web push</p>
+                          <p className='text-sm text-gray-500'>
+                            Thông báo đẩy trình duyệt sẽ được bật sau khi cấu hình web push
+                          </p>
                         </div>
-                        <Switch
-                          id='push'
-                          checked={false}
-                          disabled
-                        />
+                        <Switch id='push' checked={false} disabled />
                       </div>
                     </div>
                   </div>
@@ -419,7 +433,11 @@ export function NotificationsPage() {
                         <Switch
                           id='orderUpdates'
                           checked={preferences.types.order && preferences.types.payment && preferences.types.shipping}
-                          onCheckedChange={(checked) => { handleTypeChange('order', checked); handleTypeChange('payment', checked); handleTypeChange('shipping', checked) }}
+                          onCheckedChange={(checked) => {
+                            handleTypeChange('order', checked)
+                            handleTypeChange('payment', checked)
+                            handleTypeChange('shipping', checked)
+                          }}
                         />
                       </div>
 
@@ -431,7 +449,10 @@ export function NotificationsPage() {
                         <Switch
                           id='prescriptionReminders'
                           checked={preferences.types.prescription && preferences.types.reminder}
-                          onCheckedChange={(checked) => { handleTypeChange('prescription', checked); handleTypeChange('reminder', checked) }}
+                          onCheckedChange={(checked) => {
+                            handleTypeChange('prescription', checked)
+                            handleTypeChange('reminder', checked)
+                          }}
                         />
                       </div>
 
@@ -467,7 +488,10 @@ export function NotificationsPage() {
                         <Switch
                           id='systemAlerts'
                           checked={preferences.types.system && preferences.types.review}
-                          onCheckedChange={(checked) => { handleTypeChange('system', checked); handleTypeChange('review', checked) }}
+                          onCheckedChange={(checked) => {
+                            handleTypeChange('system', checked)
+                            handleTypeChange('review', checked)
+                          }}
                         />
                       </div>
                     </div>
@@ -483,11 +507,7 @@ export function NotificationsPage() {
                         <Label htmlFor='quietHours'>Tắt thông báo từ 21:00 - 07:00</Label>
                         <p className='text-sm text-gray-500'>Sẽ được bật khi backend hỗ trợ khung giờ yên tĩnh riêng</p>
                       </div>
-                      <Switch
-                        id='quietHours'
-                        checked={false}
-                        disabled
-                      />
+                      <Switch id='quietHours' checked={false} disabled />
                     </div>
                   </div>
                 </CardContent>
@@ -546,7 +566,9 @@ export function NotificationsPage() {
                 </PaginationItemUI>
               </PaginationContent>
             </Pagination>
-            <span className='sr-only' data-testid='notifications-page-current'>{page}</span>
+            <span className='sr-only' data-testid='notifications-page-current'>
+              {page}
+            </span>
           </div>
         )}
       </div>

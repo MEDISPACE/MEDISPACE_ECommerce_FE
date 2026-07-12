@@ -181,9 +181,7 @@ export function ChangePasswordPage() {
         )}
         {/* Page Header */}
         <div>
-          <h1 className='text-3xl mb-2 bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text text-transparent'>
-            Đổi mật khẩu
-          </h1>
+          <h1 className='text-2xl font-bold text-blue-800 mb-2'>Đổi mật khẩu</h1>
           <p className='text-gray-600'>Cập nhật mật khẩu để bảo vệ tài khoản của bạn</p>
         </div>
 
@@ -244,7 +242,12 @@ export function ChangePasswordPage() {
 
                     {/* Password Strength Indicator */}
                     {newPassword && (
-                      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className='space-y-2' data-testid='password-strength'>
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className='space-y-2'
+                        data-testid='password-strength'
+                      >
                         <div className='flex items-center justify-between text-sm'>
                           <span className='text-gray-600'>Độ mạnh mật khẩu:</span>
                           <span className={`font-semibold ${passwordStrength.color}`}>{passwordStrength.label}</span>

@@ -178,12 +178,15 @@ export interface SearchResult {
 
 export interface Notification {
   id: string
+  _id?: string
   userId: string
   type: NotificationType
   title: string
   message: string
   isRead: boolean
   actionUrl?: string
+  metadata?: Record<string, unknown>
+  targetRole?: 'customer' | 'admin' | 'pharmacist'
   createdAt: string
   expiresAt?: string
 }

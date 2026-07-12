@@ -5,7 +5,7 @@ import { notificationService } from '../services/notificationService'
 import { useSocketContext } from '../contexts/SocketContext'
 import { useAuth } from '../contexts/AuthContext'
 import { authService } from '../services/authService'
-import { UserStatus } from '../types/user'
+import { UserRole, UserStatus } from '../types/user'
 import type { NotificationFilter, NotificationPreferences } from '../types/account'
 
 export const NOTIFICATIONS_QUERY_KEY = ['notifications'] as const
@@ -21,18 +21,26 @@ const shouldRetryNotificationQuery = (failureCount: number, error: unknown) => {
   return ![401, 403].includes(status ?? 0) && failureCount < 2
 }
 
+const canUserUseNotifications = (
+  authLoading: boolean,
+  isAuthenticated: boolean,
+  user: ReturnType<typeof useAuth>['user'],
+) => {
+  if (authLoading || !isAuthenticated || !authService.getAccessToken() || !user) return false
+  if (user.status === UserStatus.Banned) return false
+  if (user.role === UserRole.Admin || user.role === UserRole.Pharmacist) return true
+  return user.status === UserStatus.Verified
+}
+
 /**
  * Main hook: fetch notification list + real-time socket integration
  */
-export function useNotifications(
-  filter: NotificationFilter = 'all',
-  page = 1
-) {
+export function useNotifications(filter: NotificationFilter = 'all', page = 1) {
   const queryClient = useQueryClient()
   const { isAuthenticated, loading: authLoading, user } = useAuth()
   const { subscribe, unsubscribe } = useSocketContext()
   const subscriberId = useId()
-  const canUseNotifications = !authLoading && isAuthenticated && !!authService.getAccessToken() && user?.status === UserStatus.Verified
+  const canUseNotifications = canUserUseNotifications(authLoading, isAuthenticated, user)
 
   const query = useQuery({
     queryKey: [...NOTIFICATIONS_QUERY_KEY, filter, page],
@@ -103,7 +111,7 @@ export function useNotifications(
 export function useNotificationPreferences() {
   const queryClient = useQueryClient()
   const { isAuthenticated, loading: authLoading, user } = useAuth()
-  const canUseNotifications = !authLoading && isAuthenticated && !!authService.getAccessToken() && user?.status === UserStatus.Verified
+  const canUseNotifications = canUserUseNotifications(authLoading, isAuthenticated, user)
 
   const query = useQuery({
     queryKey: NOTIFICATION_PREFERENCES_QUERY_KEY,
@@ -138,7 +146,7 @@ export function useUnreadNotificationCount() {
   const { isAuthenticated, loading: authLoading, user } = useAuth()
   const { subscribe, unsubscribe } = useSocketContext()
   const subscriberId = useId()
-  const canUseNotifications = !authLoading && isAuthenticated && !!authService.getAccessToken() && user?.status === UserStatus.Verified
+  const canUseNotifications = canUserUseNotifications(authLoading, isAuthenticated, user)
 
   const query = useQuery({
     queryKey: UNREAD_COUNT_QUERY_KEY,
