@@ -196,7 +196,9 @@ export function AccountLayout({ children, breadcrumbItems = [] }: AccountLayoutP
               data-active={isActive ? 'true' : 'false'}
               onClick={() => setIsMobileMenuOpen(false)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
-                isActive ? 'bg-[#F0F6FF] text-[#0A2463] font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                isActive
+                  ? 'bg-[#F0F6FF] text-[#0A2463] font-medium'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
               }`}
             >
               <Icon className='w-5 h-5' />
@@ -209,13 +211,13 @@ export function AccountLayout({ children, breadcrumbItems = [] }: AccountLayoutP
   )
 
   return (
-    <div>
+    <div className='bg-[#F8FAFB] text-gray-900 [color-scheme:light] forced-color-adjust-none'>
       {breadcrumbItems.length > 0 && <UniversalBreadcrumb items={breadcrumbItems} />}
       <div className='max-w-7xl mx-auto px-4 py-6'>
         <div className='grid grid-cols-1 lg:grid-cols-4 gap-6'>
           {/* Desktop Sidebar */}
           <div className='hidden lg:block lg:col-span-1'>
-            <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-6 sticky top-6'>
+            <div className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-6 sticky top-6 text-gray-900 [color-scheme:light] forced-color-adjust-none'>
               <SidebarContent />
             </div>
           </div>
@@ -242,7 +244,7 @@ export function AccountLayout({ children, breadcrumbItems = [] }: AccountLayoutP
 
           {/* Main Content */}
           <div className='lg:col-span-3' data-testid='account-content'>
-            <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-6'>
+            <div className='bg-white backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-6 text-gray-900 [color-scheme:light] forced-color-adjust-none'>
               {children}
             </div>
           </div>

@@ -112,3 +112,18 @@ export interface ReviewsResponse {
     totalPages: number
   }
 }
+
+export interface UserReviewsParams {
+  page?: number
+  limit?: number
+  status?: ReviewStatus
+}
+
+export interface UserReviewsResponse extends ReviewsResponse {
+  statusCounts: {
+    all: number
+    pending: number
+    approved: number
+    rejected: number
+  }
+}

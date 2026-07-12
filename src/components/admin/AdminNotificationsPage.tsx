@@ -25,7 +25,6 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '~/components/ui/pagination'
-import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
 import { vi } from 'date-fns/locale'
 
@@ -46,16 +45,6 @@ interface Props {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const TAB_PILLS: { key: Filter; label: string }[] = [
-  { key: 'all', label: 'Tất cả' },
-  { key: 'unread', label: 'Chưa đọc' },
-  { key: 'order', label: 'Đơn hàng' },
-  { key: 'payment', label: 'Thanh toán' },
-  { key: 'prescription', label: 'Đơn thuốc' },
-  { key: 'return', label: 'Đổi trả' },
-  { key: 'system', label: 'Hệ thống' },
-]
-
 const TYPE_META: Record<string, { icon: React.ElementType; color: string; bg: string; label: string }> = {
   order: { icon: Package, color: 'text-[#1E40AF]', bg: 'bg-[#F0F6FF]', label: 'Đơn hàng' },
   payment: { icon: CreditCard, color: 'text-emerald-600', bg: 'bg-emerald-50', label: 'Thanh toán' },
@@ -70,6 +59,36 @@ const TYPE_META: Record<string, { icon: React.ElementType; color: string; bg: st
   community: { icon: Users, color: 'text-cyan-600', bg: 'bg-cyan-50', label: 'Cộng đồng' },
 }
 const DEFAULT_META = TYPE_META.system
+
+const NOTIFICATION_FILTER_TABS: { key: Filter; label: string }[] = [
+  { key: 'all', label: 'Tất cả' },
+  { key: 'unread', label: 'Chưa đọc' },
+  { key: 'order', label: 'Đơn hàng' },
+  { key: 'payment', label: 'Thanh toán' },
+  { key: 'shipping', label: 'Vận chuyển' },
+  { key: 'prescription', label: 'Đơn thuốc' },
+  { key: 'promotion', label: 'Khuyến mãi' },
+  { key: 'reminder', label: 'Nhắc nhở' },
+  { key: 'review', label: 'Đánh giá' },
+  { key: 'return', label: 'Đổi trả' },
+  { key: 'security', label: 'Bảo mật' },
+  { key: 'community', label: 'Cộng đồng' },
+  { key: 'system', label: 'Hệ thống' },
+]
+
+const typeBadgeClass: Record<string, string> = {
+  order: 'bg-[#E8EDF5] text-[#0A2463]',
+  payment: 'bg-emerald-100 text-emerald-700',
+  shipping: 'bg-sky-100 text-sky-700',
+  prescription: 'bg-green-100 text-green-700',
+  promotion: 'bg-blue-100 text-blue-700',
+  reminder: 'bg-indigo-100 text-indigo-700',
+  system: 'bg-orange-100 text-orange-700',
+  review: 'bg-amber-100 text-amber-700',
+  return: 'bg-violet-100 text-violet-700',
+  security: 'bg-red-100 text-red-700',
+  community: 'bg-cyan-100 text-cyan-700',
+}
 
 // ─── Skeleton row ─────────────────────────────────────────────────────────────
 
@@ -108,7 +127,7 @@ function NotifRow({
     : ''
 
   const handleClick = () => {
-    if (!isRead) onMarkAsRead(id)
+    if (id && !isRead) onMarkAsRead(id)
     if (n.actionUrl) navigate(n.actionUrl as string)
   }
 
@@ -124,9 +143,7 @@ function NotifRow({
       onClick={handleClick}
     >
       {/* Unread indicator bar */}
-      {!isRead && (
-        <span className='absolute left-0 top-3 bottom-3 w-0.5 bg-[#0A2463] rounded-r-full' />
-      )}
+      {!isRead && <span className='absolute left-0 top-3 bottom-3 w-0.5 bg-[#0A2463] rounded-r-full' />}
 
       {/* Type icon */}
       <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${meta.bg}`}>
@@ -146,6 +163,7 @@ function NotifRow({
               title='Xóa thông báo'
               onClick={(e) => {
                 e.stopPropagation()
+                if (!id) return
                 onDelete(id)
               }}
             >
@@ -157,12 +175,7 @@ function NotifRow({
         <div className='flex items-center gap-2 mt-1.5'>
           <Badge
             variant='outline'
-            className={`text-[10px] px-1.5 py-0 h-4 font-medium border-0 ${
-              type === 'order' ? 'bg-[#E8EDF5] text-[#0A2463]' :
-              type === 'prescription' ? 'bg-green-100 text-green-700' :
-              type === 'promotion' ? 'bg-[#E8EDF5] text-[#0A2463]' :
-              'bg-orange-100 text-orange-700'
-            }`}
+            className={`text-[10px] px-1.5 py-0 h-4 font-medium border-0 ${typeBadgeClass[type] ?? typeBadgeClass.system}`}
           >
             {meta.label}
           </Badge>
@@ -180,26 +193,17 @@ export function AdminNotificationsPage({ role = 'admin' }: Props) {
   const [page, setPage] = useState(1)
 
   const unreadCount = useUnreadNotificationCount()
-  const {
-    notifications,
-    pagination,
-    isLoading,
-    isFetching,
-    markAsRead,
-    markAllAsRead,
-    deleteNotification,
-  } = useNotifications(filter, page)
+  const { notifications, pagination, isLoading, isFetching, markAsRead, markAllAsRead, deleteNotification } =
+    useNotifications(filter, page)
 
   const hasMore = pagination ? page < pagination.totalPages : false
 
   const handleDelete = (id: string) => {
     deleteNotification(id)
-    toast.success('Đã xóa thông báo')
   }
 
   const handleMarkAll = () => {
     markAllAsRead()
-    toast.success('Đã đánh dấu tất cả là đã đọc')
   }
 
   // Stats summary: unread / total
@@ -219,8 +223,7 @@ export function AdminNotificationsPage({ role = 'admin' }: Props) {
           <p className='text-gray-600 mt-1'>
             {unreadCount > 0 ? (
               <>
-                Bạn có{' '}
-                <span className='text-red-500 font-semibold'>{unreadCount}</span> thông báo chưa đọc
+                Bạn có <span className='text-red-500 font-semibold'>{unreadCount}</span> thông báo chưa đọc
                 {totalCount > 0 && <span className='text-gray-400'> / {totalCount} tổng</span>}
               </>
             ) : (
@@ -244,8 +247,8 @@ export function AdminNotificationsPage({ role = 'admin' }: Props) {
       {/* ── Filter Tabs (matches InventoryManagementPage tab style) ── */}
       <Card className='bg-white backdrop-blur-lg border-[#E8EDF5]'>
         <CardContent className='p-4'>
-          <div className='flex gap-1 p-1 bg-gray-100 rounded-lg w-fit'>
-            {TAB_PILLS.map((tab) => (
+          <div className='flex flex-wrap gap-1 p-1 bg-gray-100 rounded-lg w-fit max-w-full'>
+            {NOTIFICATION_FILTER_TABS.map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => {
@@ -280,9 +283,7 @@ export function AdminNotificationsPage({ role = 'admin' }: Props) {
           <CardTitle className='flex items-center gap-2'>
             <Bell className='w-5 h-5 text-[#1E40AF]' />
             Danh sách thông báo
-            {isFetching && !isLoading && (
-              <RefreshCw className='w-3.5 h-3.5 text-blue-400 animate-spin ml-1' />
-            )}
+            {isFetching && !isLoading && <RefreshCw className='w-3.5 h-3.5 text-blue-400 animate-spin ml-1' />}
           </CardTitle>
         </CardHeader>
         <CardContent className='p-0'>
@@ -301,9 +302,7 @@ export function AdminNotificationsPage({ role = 'admin' }: Props) {
               </div>
               <p className='text-gray-500 font-medium'>Không có thông báo nào</p>
               <p className='text-gray-400 text-sm mt-1'>
-                {filter === 'unread'
-                  ? 'Bạn đã đọc hết tất cả thông báo 🎉'
-                  : 'Chưa có thông báo trong danh mục này'}
+                {filter === 'unread' ? 'Bạn đã đọc hết tất cả thông báo 🎉' : 'Chưa có thông báo trong danh mục này'}
               </p>
             </div>
           ) : (
@@ -359,10 +358,7 @@ export function AdminNotificationsPage({ role = 'admin' }: Props) {
                     }
 
                     // Show ellipsis for gaps
-                    if (
-                      pageNum === page - 2 ||
-                      pageNum === page + 2
-                    ) {
+                    if (pageNum === page - 2 || pageNum === page + 2) {
                       return (
                         <PaginationItem key={pageNum}>
                           <PaginationEllipsis />

@@ -1,5 +1,21 @@
 import { useState } from 'react'
-import { Bell, Check, Trash2, Package, FileText, Tag, Heart, Settings, AlertCircle, Star, CreditCard, Truck, RotateCcw, Shield, Users } from 'lucide-react'
+import {
+  Bell,
+  Check,
+  Trash2,
+  Package,
+  FileText,
+  Tag,
+  Heart,
+  Settings,
+  AlertCircle,
+  Star,
+  CreditCard,
+  Truck,
+  RotateCcw,
+  Shield,
+  Users,
+} from 'lucide-react'
 import { Link, useNavigate } from 'react-router'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '../ui/button'
@@ -79,7 +95,7 @@ function NotificationListItem({
         !isRead ? 'bg-[#1E40AF]/5' : ''
       }`}
       onClick={() => {
-        if (!isRead) onMarkAsRead(id)
+        if (id && !isRead) onMarkAsRead(id)
         if (n.actionUrl) onNavigate(n.actionUrl)
       }}
     >
@@ -103,6 +119,7 @@ function NotificationListItem({
         className='flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-500'
         onClick={(e) => {
           e.stopPropagation()
+          if (!id) return
           onDelete(id)
         }}
         title='Xóa thông báo'
