@@ -4,9 +4,40 @@
  * This service manages all review-related API interactions.
  */
 
-import type { Review, CreateReviewData, UpdateReviewData, ReviewStats, ReviewsResponse } from '../types/review'
+import type {
+  Review,
+  CreateReviewData,
+  UpdateReviewData,
+  ReviewStats,
+  ReviewsResponse,
+  UserReviewsParams,
+  UserReviewsResponse,
+} from '../types/review'
 import { apiClient } from './apiClient'
 import { API_ENDPOINTS } from '../constants'
+
+function paginateUserReviewsFallback(reviews: Review[], params: UserReviewsParams): UserReviewsResponse {
+  const page = params.page || 1
+  const limit = params.limit || 10
+  const filteredReviews = params.status ? reviews.filter((review) => review.status === params.status) : reviews
+  const start = (page - 1) * limit
+
+  return {
+    reviews: filteredReviews.slice(start, start + limit),
+    pagination: {
+      page,
+      limit,
+      total: filteredReviews.length,
+      totalPages: Math.ceil(filteredReviews.length / limit),
+    },
+    statusCounts: {
+      all: reviews.length,
+      pending: reviews.filter((review) => review.status === 'pending').length,
+      approved: reviews.filter((review) => review.status === 'approved').length,
+      rejected: reviews.filter((review) => review.status === 'rejected').length,
+    },
+  }
+}
 
 export const reviewService = {
   /**
@@ -54,16 +85,36 @@ export const reviewService = {
   /**
    * Get current user's reviews (authenticated)
    */
-  async getUserReviews(): Promise<Review[]> {
-    const response = await apiClient.get(API_ENDPOINTS.REVIEWS.USER)
+  async getUserReviews<T extends UserReviewsParams | undefined = undefined>(
+    params?: T,
+  ): Promise<T extends UserReviewsParams ? UserReviewsResponse : Review[]> {
+    const response = await apiClient.get(API_ENDPOINTS.REVIEWS.USER, { params })
 
     if (response && response.data) {
       const data = response.data as any
-      if (Array.isArray(data.data)) return data.data
-      if (Array.isArray(data)) return data
+      if (data.data?.reviews) return data.data as T extends UserReviewsParams ? UserReviewsResponse : Review[]
+      if (Array.isArray(data.data)) {
+        return (params ? paginateUserReviewsFallback(data.data, params) : data.data) as T extends UserReviewsParams
+          ? UserReviewsResponse
+          : Review[]
+      }
+      if (data.reviews) return data as T extends UserReviewsParams ? UserReviewsResponse : Review[]
+      if (Array.isArray(data)) {
+        return (params ? paginateUserReviewsFallback(data, params) : data) as T extends UserReviewsParams
+          ? UserReviewsResponse
+          : Review[]
+      }
     }
 
-    return []
+    if (params) {
+      return {
+        reviews: [],
+        pagination: { page: params.page || 1, limit: params.limit || 10, total: 0, totalPages: 0 },
+        statusCounts: { all: 0, pending: 0, approved: 0, rejected: 0 },
+      } as unknown as T extends UserReviewsParams ? UserReviewsResponse : Review[]
+    }
+
+    return [] as unknown as T extends UserReviewsParams ? UserReviewsResponse : Review[]
   },
 
   /**

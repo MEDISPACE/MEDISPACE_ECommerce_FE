@@ -7,8 +7,8 @@ export function meta() {
 export default function AccountSettings() {
   return (
     <div className='space-y-6'>
-      <div className='border-b border-gray-200 pb-4'>
-        <h1 className='text-2xl font-bold text-gray-900'>Cài đặt tài khoản</h1>
+      <div>
+        <h1 className='text-2xl font-bold text-blue-800 mb-2'>Cài đặt tài khoản</h1>
         <p className='text-gray-600'>Quản lý cài đặt và bảo mật</p>
       </div>
 

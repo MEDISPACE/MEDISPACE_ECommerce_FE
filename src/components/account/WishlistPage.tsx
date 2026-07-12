@@ -52,7 +52,11 @@ export function WishlistPage() {
 
   // Related dựa trên sản phẩm đầu tiên trong wishlist
   const firstWishlistId = useMemo(() => wishlistProducts[0]?.id || '', [wishlistProducts])
-  const { products: relatedProducts, loading: relatedLoading, algorithm: relatedAlgorithm } = useRelated(firstWishlistId, 8)
+  const {
+    products: relatedProducts,
+    loading: relatedLoading,
+    algorithm: relatedAlgorithm,
+  } = useRelated(firstWishlistId, 8)
   const { products: trendingProducts, loading: trendingLoading, algorithm: trendingAlgorithm } = useTrending(8)
 
   // Fetch wishlist products
@@ -255,16 +259,14 @@ export function WishlistPage() {
   return (
     <div className='space-y-6' data-testid='wishlist-page'>
       {/* Header */}
-      <div className='bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#E8EDF5] p-6'>
+      <div>
         <div className='flex flex-col md:flex-row md:items-center justify-between gap-4'>
           <div>
             <div className='flex items-center gap-3'>
-              <h1 className='bg-gradient-to-r from-[#0A2463] via-[#1E40AF] to-[#3B82F6] bg-clip-text text-transparent'>
-                Sản phẩm yêu thích
-              </h1>
+              <h1 className='text-2xl font-bold text-blue-800 mb-2'>Sản phẩm yêu thích</h1>
               <Badge variant='secondary'>{wishlistProducts.length} sản phẩm</Badge>
             </div>
-            <p className='text-gray-600 mt-1'>Lưu trữ các sản phẩm bạn quan tâm</p>
+            <p className='text-gray-600'>Lưu trữ các sản phẩm bạn quan tâm</p>
           </div>
 
           <div className='flex items-center gap-3'>
@@ -398,7 +400,10 @@ export function WishlistPage() {
 
       {/* Products */}
       {wishlistProducts.length === 0 ? (
-        <Card className='bg-white/80 backdrop-blur-lg shadow-lg border border-[#E8EDF5]' data-testid='wishlist-empty-state'>
+        <Card
+          className='bg-white/80 backdrop-blur-lg shadow-lg border border-[#E8EDF5]'
+          data-testid='wishlist-empty-state'
+        >
           <CardContent className='p-12 text-center'>
             <Heart className='w-16 h-16 mx-auto text-gray-300 mb-4' />
             <h3 className='text-lg font-medium text-gray-900 mb-2'>Danh sách yêu thích trống</h3>
@@ -535,7 +540,11 @@ export function WishlistPage() {
                       className='w-full mt-2 text-[#1E40AF] border-[#BFDBFE] hover:bg-[#F0F6FF]'
                     >
                       <ShoppingCart className='w-4 h-4 mr-2' />
-                      {product.status === 'discontinued' ? 'Ngừng kinh doanh' : product.inStock ? 'Thêm vào giỏ' : 'Hết hàng'}
+                      {product.status === 'discontinued'
+                        ? 'Ngừng kinh doanh'
+                        : product.inStock
+                          ? 'Thêm vào giỏ'
+                          : 'Hết hàng'}
                     </Button>
 
                     <Button

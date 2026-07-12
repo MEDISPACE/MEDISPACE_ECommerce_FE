@@ -73,10 +73,7 @@ interface LoyaltyTransaction {
 
 // ─── Tier config (UI display) ──────────────────────────────────────────────────
 
-const TIER_CONFIG: Record<
-  LoyaltyTier,
-  { label: string; color: string; bg: string; icon: React.ReactNode }
-> = {
+const TIER_CONFIG: Record<LoyaltyTier, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
   member: {
     label: 'Thành Viên',
     color: 'from-gray-400 to-slate-500',
@@ -162,7 +159,7 @@ export function RewardsPage() {
       if (page === 1) {
         setTransactions(res.data.result.transactions)
       } else {
-        setTransactions(prev => [...prev, ...res.data.result.transactions])
+        setTransactions((prev) => [...prev, ...res.data.result.transactions])
       }
       setTxTotal(res.data.result.pagination.total)
       setTxPage(page)
@@ -186,7 +183,13 @@ export function RewardsPage() {
   const formatCurrency = (n: number) => new Intl.NumberFormat('vi-VN').format(n) + 'đ'
   const formatPoints = (n: number) => new Intl.NumberFormat('vi-VN').format(n)
   const formatDate = (d: string) =>
-    new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+    new Date(d).toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
 
   if (isLoading) {
     return (
@@ -220,10 +223,12 @@ export function RewardsPage() {
   const tiers: LoyaltyTier[] = ['member', 'silver', 'gold', 'platinum']
   const getTierRule = (code: LoyaltyTier) => account.config.tiers?.find((rule) => rule.code === code)
   const getTierLabel = (code: LoyaltyTier) => getTierRule(code)?.label || TIER_CONFIG[code].label
-  const getTierMultiplier = (code: LoyaltyTier) => getTierRule(code)?.multiplier ?? (code === tier ? account.multiplier : 1)
+  const getTierMultiplier = (code: LoyaltyTier) =>
+    getTierRule(code)?.multiplier ?? (code === tier ? account.multiplier : 1)
   const formatMultiplier = (value: number) => `x${Number(value).toLocaleString('vi-VN', { maximumFractionDigits: 2 })}`
   const multiplierPath = tiers.map((code) => formatMultiplier(getTierMultiplier(code))).join(' → ')
-  const visibleTransactions = txTypeFilter === 'all' ? transactions : transactions.filter((tx) => tx.type === txTypeFilter)
+  const visibleTransactions =
+    txTypeFilter === 'all' ? transactions : transactions.filter((tx) => tx.type === txTypeFilter)
 
   return (
     <EnhancedPageTransition>
@@ -231,9 +236,7 @@ export function RewardsPage() {
         {/* Page Header */}
         <div className='flex items-center justify-between'>
           <div>
-            <h1 className='text-3xl mb-2 bg-gradient-to-r from-[#0A2463] to-[#1E40AF] bg-clip-text text-transparent'>
-              Điểm thưởng của tôi
-            </h1>
+            <h1 className='text-2xl font-bold text-blue-800 mb-2'>Điểm thưởng của tôi</h1>
             <p className='text-gray-600'>Tích điểm mỗi lần mua sắm và nhận nhiều ưu đãi hấp dẫn</p>
           </div>
           <Button onClick={fetchAccount} variant='outline' size='sm' className='gap-2 hidden sm:flex'>
@@ -255,8 +258,12 @@ export function RewardsPage() {
                   <Sparkles className='w-5 h-5' />
                   <span className='text-sm'>Điểm hiện tại</span>
                 </div>
-                <div className='text-5xl font-bold mb-1' data-testid='loyalty-balance'>{formatPoints(account.pointsBalance)}</div>
-                <p className='text-sm opacity-75'>điểm ≈ {formatCurrency(account.pointsBalance * account.config.pointsToVnd)}</p>
+                <div className='text-5xl font-bold mb-1' data-testid='loyalty-balance'>
+                  {formatPoints(account.pointsBalance)}
+                </div>
+                <p className='text-sm opacity-75'>
+                  điểm ≈ {formatCurrency(account.pointsBalance * account.config.pointsToVnd)}
+                </p>
               </div>
 
               {/* Tier */}
@@ -266,7 +273,9 @@ export function RewardsPage() {
                   <span className='text-sm'>Hạng thành viên</span>
                 </div>
                 <div className='flex items-center gap-3 mb-1'>
-                  <div className={`w-12 h-12 bg-gradient-to-br ${tierConfig.color} rounded-full flex items-center justify-center`}>
+                  <div
+                    className={`w-12 h-12 bg-gradient-to-br ${tierConfig.color} rounded-full flex items-center justify-center`}
+                  >
                     {tierConfig.icon}
                   </div>
                   <div data-testid='loyalty-tier'>
@@ -291,7 +300,10 @@ export function RewardsPage() {
             {nextTierConfig && account.nextTierThreshold && (
               <div className='mt-8 p-4 bg-white/10 backdrop-blur-sm rounded-xl'>
                 <div className='flex items-center justify-between mb-2 text-sm'>
-                  <span>Tiến độ lên hạng <strong>{account.nextTier ? getTierLabel(account.nextTier) : nextTierConfig.label}</strong></span>
+                  <span>
+                    Tiến độ lên hạng{' '}
+                    <strong>{account.nextTier ? getTierLabel(account.nextTier) : nextTierConfig.label}</strong>
+                  </span>
                   <span>Còn {formatCurrency(account.amountToNextTier)}</span>
                 </div>
                 <Progress value={account.progressToNextTier} className='h-2 bg-white/20' />
@@ -312,7 +324,7 @@ export function RewardsPage() {
               { value: 'overview', icon: <Award className='w-4 h-4' />, label: 'Tổng quan' },
               { value: 'earn', icon: <Zap className='w-4 h-4' />, label: 'Cách tích điểm' },
               { value: 'history', icon: <Clock className='w-4 h-4' />, label: 'Lịch sử' },
-            ].map(tab => (
+            ].map((tab) => (
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
@@ -350,26 +362,32 @@ export function RewardsPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.1 }}
                       >
-                        <Card className={`relative overflow-hidden ${isCurrent ? 'border-2 border-[#1E40AF] shadow-lg' : 'border border-gray-200'}`}>
+                        <Card
+                          className={`relative overflow-hidden ${isCurrent ? 'border-2 border-[#1E40AF] shadow-lg' : 'border border-gray-200'}`}
+                        >
                           {isCurrent && (
                             <div className='absolute top-2 right-2'>
                               <Badge className='bg-[#0A2463] text-xs'>Hiện tại</Badge>
                             </div>
                           )}
                           <CardContent className='p-4 text-center'>
-                            <div className={`w-16 h-16 mx-auto mb-3 bg-gradient-to-br ${cfg.color} rounded-full flex items-center justify-center text-white`}>
+                            <div
+                              className={`w-16 h-16 mx-auto mb-3 bg-gradient-to-br ${cfg.color} rounded-full flex items-center justify-center text-white`}
+                            >
                               {cfg.icon}
                             </div>
                             <h3 className='font-semibold mb-1'>{getTierLabel(t)}</h3>
-                            <p className='text-xs text-gray-400 mb-3'>Chi tiêu từ {formatCurrency(rule?.minTotalSpent ?? 0)}</p>
+                            <p className='text-xs text-gray-400 mb-3'>
+                              Chi tiêu từ {formatCurrency(rule?.minTotalSpent ?? 0)}
+                            </p>
                             <div className='text-left space-y-1'>
                               <p className='text-xs text-gray-600 flex items-start gap-1'>
                                 <CheckCircle className='w-3 h-3 text-green-600 mt-0.5 flex-shrink-0' />
                                 Tích điểm {formatMultiplier(getTierMultiplier(t))}
                               </p>
                               <p className='text-xs text-gray-600 flex items-start gap-1'>
-                                  <CheckCircle className='w-3 h-3 text-green-600 mt-0.5 flex-shrink-0' />
-                                  Quyền lợi theo hạng {getTierLabel(t)}
+                                <CheckCircle className='w-3 h-3 text-green-600 mt-0.5 flex-shrink-0' />
+                                Quyền lợi theo hạng {getTierLabel(t)}
                               </p>
                             </div>
                           </CardContent>
@@ -555,7 +573,9 @@ export function RewardsPage() {
                             className='flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-[#F0F6FF] transition-colors'
                           >
                             <div className='flex items-center gap-4'>
-                              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${TRANSACTION_COLORS[tx.type]}`}>
+                              <div
+                                className={`w-10 h-10 rounded-full flex items-center justify-center ${TRANSACTION_COLORS[tx.type]}`}
+                              >
                                 {TRANSACTION_ICONS[tx.type]}
                               </div>
                               <div>
@@ -578,13 +598,13 @@ export function RewardsPage() {
                             </div>
                             <div className='text-right'>
                               <p className={`text-lg font-bold ${isPositive ? 'text-green-600' : 'text-red-500'}`}>
-                                {isPositive ? '+' : ''}{formatPoints(tx.points)} điểm
+                                {isPositive ? '+' : ''}
+                                {formatPoints(tx.points)} điểm
                               </p>
-                              <p className='text-xs text-gray-400' data-testid='loyalty-history-balance'>Số dư: {formatPoints(tx.balanceAfter)}</p>
-                              <Badge
-                                variant='outline'
-                                className='text-xs mt-1'
-                              >
+                              <p className='text-xs text-gray-400' data-testid='loyalty-history-balance'>
+                                Số dư: {formatPoints(tx.balanceAfter)}
+                              </p>
+                              <Badge variant='outline' className='text-xs mt-1'>
                                 {TRANSACTION_LABELS[tx.type] || tx.type}
                               </Badge>
                             </div>

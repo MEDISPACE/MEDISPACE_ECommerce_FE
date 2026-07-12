@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '~/contexts/AuthContext'
 import reviewService from '~/services/reviewService'
-import type { Review, ReviewStats, CreateReviewData, UpdateReviewData } from '~/types/review'
+import type { Review, ReviewStats, CreateReviewData, UpdateReviewData, UserReviewsParams } from '~/types/review'
 import { toast } from 'sonner'
 
 /**
@@ -56,9 +56,11 @@ export function useProductReviews(productId: string) {
 /**
  * Hook for user's reviews
  */
-export function useUserReviews() {
+export function useUserReviews(params?: UserReviewsParams) {
   const { user } = useAuth()
   const [reviews, setReviews] = useState<Review[]>([])
+  const [pagination, setPagination] = useState({ page: 1, limit: params?.limit || 10, total: 0, totalPages: 0 })
+  const [statusCounts, setStatusCounts] = useState({ all: 0, pending: 0, approved: 0, rejected: 0 })
   const [loading, setLoading] = useState(true)
 
   const fetchUserReviews = async () => {
@@ -66,8 +68,22 @@ export function useUserReviews() {
 
     try {
       setLoading(true)
-      const data = await reviewService.getUserReviews()
-      setReviews(data)
+      if (params) {
+        const data = await reviewService.getUserReviews(params)
+        setReviews(data.reviews)
+        setPagination(data.pagination)
+        setStatusCounts(data.statusCounts)
+      } else {
+        const data = await reviewService.getUserReviews()
+        setReviews(data)
+        setPagination({ page: 1, limit: data.length || 10, total: data.length, totalPages: data.length > 0 ? 1 : 0 })
+        setStatusCounts({
+          all: data.length,
+          pending: data.filter((review) => review.status === 'pending').length,
+          approved: data.filter((review) => review.status === 'approved').length,
+          rejected: data.filter((review) => review.status === 'rejected').length,
+        })
+      }
     } catch (error) {
       toast.error('Không thể tải đánh giá của bạn')
     } finally {
@@ -77,10 +93,12 @@ export function useUserReviews() {
 
   useEffect(() => {
     fetchUserReviews()
-  }, [user])
+  }, [user, params?.page, params?.limit, params?.status])
 
   return {
     reviews,
+    pagination,
+    statusCounts,
     loading,
     refetch: fetchUserReviews,
   }

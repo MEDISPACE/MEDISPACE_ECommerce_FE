@@ -38,12 +38,17 @@ export default function MyReturnRequestsList() {
   return (
     <div className='space-y-6 text-gray-900 [color-scheme:light]'>
       {/* Header */}
-      <div className='flex items-center justify-between'>
+      <div className='flex items-start justify-between gap-4'>
         <div>
-          <h2 className='text-2xl font-bold text-blue-900'>Yêu cầu đổi/trả hàng</h2>
-          <p className='text-muted-foreground'>Theo dõi các yêu cầu đổi trả của bạn</p>
+          <h1 className='text-2xl font-bold text-blue-800 mb-2'>Yêu cầu đổi/trả hàng</h1>
+          <p className='text-gray-600'>Theo dõi các yêu cầu đổi trả của bạn</p>
         </div>
-        <Button variant='outline' size='sm' onClick={() => refetch()} className='bg-white text-gray-900 hover:bg-gray-50'>
+        <Button
+          variant='outline'
+          size='sm'
+          onClick={() => refetch()}
+          className='bg-white text-gray-900 hover:bg-gray-50'
+        >
           <RefreshCw className='h-4 w-4 mr-2' />
           Làm mới
         </Button>
@@ -103,7 +108,10 @@ export default function MyReturnRequestsList() {
       {!isLoading && requests.length > 0 && (
         <div className='space-y-4'>
           {requests.map((request: ReturnRequest) => (
-            <Card key={request._id} className='bg-white text-gray-900 hover:shadow-md transition-shadow border-[#E8EDF5]'>
+            <Card
+              key={request._id}
+              className='bg-white text-gray-900 hover:shadow-md transition-shadow border-[#E8EDF5]'
+            >
               <CardContent className='pt-6'>
                 <Link to={`/account/returns/${request._id}`} className='block'>
                   <div className='flex items-start justify-between gap-4'>
