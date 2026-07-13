@@ -100,7 +100,7 @@ export function Header() {
           <div className='flex items-center gap-4'>
             <div className='flex items-center gap-1'>
               <Phone className='w-4 h-4' />
-              <span className='font-semibold'>Hotline: 1800 6928</span>
+              <span className='font-semibold'>Hotline: 1800 8386</span>
             </div>
             <div className='flex items-center gap-1'>
               <MapPin className='w-4 h-4' />
@@ -368,9 +368,9 @@ export function Header() {
 
                   <div className='rounded-lg border border-[#E8EDF5] bg-[#F0F6FF] p-4 text-sm text-blue-900'>
                     <div className='font-semibold'>Cần tư vấn khẩn cấp?</div>
-                    <a href='tel:18006928' className='mt-1 inline-flex items-center gap-2 font-bold text-[#0A2463]'>
+                    <a href='tel:18008386' className='mt-1 inline-flex items-center gap-2 font-bold text-[#0A2463]'>
                       <Phone className='h-4 w-4' />
-                      1800 6928
+                      1800 8386
                     </a>
                   </div>
                 </div>

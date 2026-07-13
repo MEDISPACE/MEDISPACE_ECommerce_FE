@@ -953,7 +953,7 @@ export function CheckoutPage() {
                   </div>
                   <div className='flex items-center gap-2 text-sm text-gray-600'>
                     <Smartphone className='w-4 h-4 text-blue-500' />
-                    <span>Hỗ trợ 24/7: 1800 6928</span>
+                    <span>Hỗ trợ 24/7: 1800 8386</span>
                   </div>
                 </CardContent>
               </Card>
