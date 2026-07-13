@@ -58,9 +58,9 @@ export function Footer() {
           <div>
             <h4 className='font-display font-semibold text-[#0A2463] mb-4'>Liên hệ</h4>
             <div className='space-y-3 text-sm'>
-              <a href='tel:18006928' className='flex items-center gap-2 text-[#4B5E7A] hover:text-[#0A2463]'>
+              <a href='tel:18008386' className='flex items-center gap-2 text-[#4B5E7A] hover:text-[#0A2463]'>
                 <Phone className='w-5 h-5 text-[#0A2463]' />
-                1800 6928
+                1800 8386
               </a>
               <a href='mailto:support@medispace.vn' className='flex items-center gap-2 text-[#4B5E7A] hover:text-[#0A2463]'>
                 <Mail className='w-5 h-5 text-[#0A2463]' />
