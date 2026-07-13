@@ -10,7 +10,7 @@ import { useCart } from '~/contexts/CartContext'
 interface ProductCardProps {
   product: ProductRef
   isOwnMessage?: boolean
-  variant?: 'compact' | 'attachment'
+  variant?: 'compact' | 'attachment' | 'grid'
 }
 
 export function ProductCard({ product, variant = 'compact' }: ProductCardProps) {
@@ -48,7 +48,7 @@ export function ProductCard({ product, variant = 'compact' }: ProductCardProps) 
     <div
       data-chat-product-card
       className={`flex-shrink-0 overflow-hidden rounded-xl border border-white/60 bg-white text-slate-900 shadow-sm transition-all duration-200 hover:shadow-md ${
-        variant === 'attachment' ? 'w-[260px] max-w-full' : 'w-[196px]'
+        variant === 'attachment' ? 'w-[260px] max-w-full' : variant === 'grid' ? 'w-full min-w-0' : 'w-[196px]'
       }`}
     >
       <Link to={`/products/${product.slug}`} className='group block' aria-label={`Xem chi tiet ${product.name}`}>

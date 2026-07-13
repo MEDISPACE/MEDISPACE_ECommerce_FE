@@ -393,12 +393,19 @@ export function MessageList({
                   </div>
                 </div>
 
-                {/* Horizontal carousel of products for AI messages */}
+                {/* Suggested products for AI messages */}
                 {!isOwnMessage && message.suggestedProducts && message.suggestedProducts.length > 0 && (
-                  <div className="flex gap-3 overflow-x-auto py-2.5 w-full scrollbar-hide px-1 mt-1 scroll-smooth" style={{ WebkitOverflowScrolling: 'touch' }}>
-                    {message.suggestedProducts.map((prod) => (
-                      <ProductCard key={prod.productId} product={prod} isOwnMessage={false} />
-                    ))}
+                  <div className='mt-2 w-full px-1'>
+                    <div className='grid grid-cols-2 gap-2 sm:gap-3'>
+                      {message.suggestedProducts.map((prod) => (
+                        <ProductCard
+                          key={prod.productId || prod.slug || prod.name}
+                          product={prod}
+                          isOwnMessage={false}
+                          variant='grid'
+                        />
+                      ))}
+                    </div>
                   </div>
                 )}
 
