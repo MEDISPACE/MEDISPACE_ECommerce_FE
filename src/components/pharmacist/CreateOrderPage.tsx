@@ -662,6 +662,8 @@ export function CreateOrderPage() {
     fetchPrescriptionData()
   }, [navigate, prescriptionId, mappedProductIds.join(',')])
 
+  const OCR_SUGGESTION_ADD_QUANTITY = 1
+
   const handleProductAdd = (product: Product, quantity: number) => {
     const existingItem = orderItems.find((item) => item.product.id === product.id)
 
@@ -691,8 +693,7 @@ export function CreateOrderPage() {
       if (suggestion.matches && suggestion.matches.length > 0) {
         // Pick the best match (first one)
         const match = suggestion.matches[0]
-        const qty = Number(suggestion.medication.quantity) || 1
-        itemsToAdd.push({ product: match, quantity: qty })
+        itemsToAdd.push({ product: match, quantity: OCR_SUGGESTION_ADD_QUANTITY })
         addedCount++
       }
     })
@@ -1196,7 +1197,7 @@ export function CreateOrderPage() {
                             <div className='flex flex-col gap-1.5 flex-shrink-0'>
                               <Button
                                 size='sm'
-                                onClick={() => handleProductAdd(match, Number(suggestion.medication.quantity) || 1)}
+                                onClick={() => handleProductAdd(match, OCR_SUGGESTION_ADD_QUANTITY)}
                                 className='h-8 px-3 bg-[#0A2463] hover:bg-[#071A49] text-white text-xs'
                               >
                                 <Plus className='w-3 h-3 mr-1' /> Thêm
